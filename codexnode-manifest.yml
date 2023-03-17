@@ -12,7 +12,7 @@
 # kind: PersistentVolumeClaim
 # apiVersion: v1
 # metadata:
-#   name: codex-vol
+#   name: codex-volume
 # spec:
 #   accessModes:
 #     - ReadWriteOnce
@@ -44,17 +44,16 @@ spec:
         ports:
         - containerPort: 8080
           name: codex-api-port
-          # hostPort: 8080
         env:
         - name: LOG_LEVEL
           value: WARN
-      #   volumeMounts:
-      #   - mountPath: /datadir
-      #     name: codex-data
+        # volumeMounts:
+        # - mountPath: /datadir
+        #   name: codex-data
       # volumes:
       # - name: codex-data
       #   persistentVolumeClaim:
-      #     claimName: codex-vol
+      #     claimName: codex-volume
 ---
 
 apiVersion: v1
