@@ -1,0 +1,73 @@
+# apiVersion: v1
+# kind: Pod
+# metadata:
+#    name: codex-pod
+# spec:
+#    containers:
+#    - name: codex-node-container
+#      image: thatbenbierens/nim-codex:sha-c9a62de
+#      ports:
+#      - containerPort: 8080
+
+# kind: PersistentVolumeClaim
+# apiVersion: v1
+# metadata:
+#   name: codex-vol
+# spec:
+#   accessModes:
+#     - ReadWriteOnce
+#   resources:
+#     requests:
+#       storage: 1Gi
+#   storageClassName: rbd
+
+# ---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: codex-demo
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      codex-node: dist-test
+  template:
+    metadata:
+      labels:
+        codex-node: dist-test
+    spec:
+      containers:
+      - name: codex-node
+        image: thatbenbierens/nim-codex:sha-c9a62de
+        ports:
+        - containerPort: 8080
+          name: codex-api-port
+          # hostPort: 8080
+        env:
+        - name: LOG_LEVEL
+          value: WARN
+      #   volumeMounts:
+      #   - mountPath: /datadir
+      #     name: codex-data
+      # volumes:
+      # - name: codex-data
+      #   persistentVolumeClaim:
+      #     claimName: codex-vol
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: codex-entrypoint
+  namespace: default
+spec:
+  type: NodePort
+  selector:
+    codex-node: dist-test
+  ports:
+  - protocol: TCP
+    port: 8080
+    targetPort: codex-api-port
+    nodePort: 30001
