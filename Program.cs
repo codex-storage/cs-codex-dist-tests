@@ -1,11 +1,11 @@
 ﻿using k8s;
 using k8s.Models;
 
-public static class Program
+public static class NotProgram
 {
     private const string ns = "codex-test-namespace";
 
-    public static void Main(string[] args)
+    public static void NotMain(string[] args)
     {
         Console.WriteLine("Hello, World!");
 
@@ -62,7 +62,6 @@ public static class Program
                     }
                 }
             }
-
         };
 
         var serviceSpec = new V1Service
