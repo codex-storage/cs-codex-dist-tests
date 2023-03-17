@@ -23,11 +23,20 @@
 
 # ---
 
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: codex-test-namespace
+  labels:
+    name: codex-test-namespace
+
+---
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: codex-demo
-  namespace: default
+  namespace: codex-test-namespace
 spec:
   replicas: 1
   selector:
@@ -60,7 +69,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: codex-entrypoint
-  namespace: default
+  namespace: codex-test-namespace
 spec:
   type: NodePort
   selector:
