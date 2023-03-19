@@ -106,6 +106,11 @@ namespace CodexDistTests.TestCore
             activeService = client.CreateNamespacedService(serviceSpec, k8sNamespace);
 
             // todo: wait until online!
+            while (activeDeployment.Status.AvailableReplicas == null || activeDeployment.Status.AvailableReplicas != 1)
+            {
+                Timing.WaitForServiceDelay();
+                activeDeployment = client.ReadNamespacedDeployment(activeDeployment.Name(), k8sNamespace);
+            }
         }
 
         public CodexNode GetCodexNode()
@@ -123,6 +128,12 @@ namespace CodexDistTests.TestCore
             client.DeleteNamespace(activeNamespace.Name());
 
             // todo: wait until terminated!
+            var pods = client.ListNamespacedPod(k8sNamespace);
+            while (pods.Items.Any())
+            {
+                Timing.WaitForServiceDelay();
+                pods = client.ListNamespacedPod(k8sNamespace);
+            }
         }
     }
 }

@@ -11,5 +11,10 @@
         {
             Utils.Sleep(TimeSpan.FromSeconds(3));
         }
+
+        public static void WaitForServiceDelay()
+        {
+            Utils.Sleep(TimeSpan.FromSeconds(1));
+        }
     }
 }
