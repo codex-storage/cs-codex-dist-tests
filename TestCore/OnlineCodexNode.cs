@@ -9,20 +9,25 @@ namespace CodexDistTests.TestCore
         CodexDebugResponse GetDebugInfo();
         ContentId UploadFile(TestFile file, int retryCounter = 0);
         TestFile? DownloadContent(ContentId contentId);
+        IOfflineCodexNode BringOffline();
     }
 
     public class OnlineCodexNode : IOnlineCodexNode
     {
+        private readonly IK8sManager k8SManager;
         private readonly IFileManager fileManager;
         private readonly int port;
 
-        public OfflineCodexNode Origin { get; }
-
-        public OnlineCodexNode(OfflineCodexNode origin, IFileManager fileManager, int port)
+        public OnlineCodexNode(IK8sManager k8SManager, IFileManager fileManager, int port)
         {
-            Origin = origin;
+            this.k8SManager = k8SManager;
             this.fileManager = fileManager;
             this.port = port;
+        }
+
+        public IOfflineCodexNode BringOffline()
+        {
+            return k8SManager.BringOffline(this);
         }
 
         public CodexDebugResponse GetDebugInfo()
@@ -48,7 +53,7 @@ namespace CodexDistTests.TestCore
             }
             catch (Exception exception)
             {
-                if (retryCounter > 5)
+                if (retryCounter > Timing.HttpCallRetryCount())
                 {
                     Assert.Fail(exception.Message);
                     throw;
@@ -83,7 +88,7 @@ namespace CodexDistTests.TestCore
             }
             catch (Exception exception)
             {
-                if (retryCounter > 5)
+                if (retryCounter > Timing.HttpCallRetryCount())
                 {
                     Assert.Fail(exception.Message);
                     return null;
@@ -108,7 +113,7 @@ namespace CodexDistTests.TestCore
             }
             catch (Exception exception)
             {
-                if (retryCounter > 5)
+                if (retryCounter > Timing.HttpCallRetryCount())
                 {
                     Assert.Fail(exception.Message);
                     throw;

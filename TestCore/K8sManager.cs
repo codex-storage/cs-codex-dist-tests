@@ -1,11 +1,13 @@
 ﻿using k8s;
 using k8s.Models;
+using NUnit.Framework;
 
 namespace CodexDistTests.TestCore
 {
     public interface IK8sManager
     {
         IOnlineCodexNode BringOnline(OfflineCodexNode node);
+        IOfflineCodexNode BringOffline(IOnlineCodexNode node);
     }
 
     public class K8sManager : IK8sManager
@@ -32,8 +34,8 @@ namespace CodexDistTests.TestCore
 
             EnsureTestNamespace(client);
 
-            var activeNode = new ActiveNode(GetFreePort(), GetNodeOrderNumber());
-            var codexNode = new OnlineCodexNode(node, fileManager, activeNode.Port);
+            var activeNode = new ActiveNode(node, GetFreePort(), GetNodeOrderNumber());
+            var codexNode = new OnlineCodexNode(this, fileManager, activeNode.Port);
             activeNodes.Add(codexNode, activeNode);
 
             CreateDeployment(activeNode, client, node);
@@ -48,15 +50,13 @@ namespace CodexDistTests.TestCore
         {
             var client = CreateClient();
 
-            var n = (OnlineCodexNode)node;
-            var activeNode = activeNodes[n];
-            activeNodes.Remove(n);
+            var activeNode = GetAndRemoveActiveNodeFor(node);
 
             var deploymentName = activeNode.Deployment.Name();
             BringOffline(activeNode, client);
             WaitUntilOffline(deploymentName, client);
 
-            return n.Origin;
+            return activeNode.Origin;
         }
 
         public void DeleteAllResources()
@@ -84,40 +84,46 @@ namespace CodexDistTests.TestCore
 
         private void WaitUntilOnline(ActiveNode activeNode, Kubernetes client)
         {
-            while (activeNode.Deployment?.Status.AvailableReplicas == null || activeNode.Deployment.Status.AvailableReplicas != 1)
-            {
-                Timing.WaitForServiceDelay();
-                activeNode.Deployment = client.ReadNamespacedDeployment(activeNode.Deployment.Name(), k8sNamespace);
-            }
+            WaitUntil(() => 
+                activeNode.Deployment?.Status.AvailableReplicas != null &&
+                activeNode.Deployment.Status.AvailableReplicas > 0);
         }
 
         private void WaitUntilOffline(string deploymentName, Kubernetes client)
         {
-            var deployment = client.ReadNamespacedDeployment(deploymentName, k8sNamespace);
-            while (deployment != null && deployment.Status.AvailableReplicas > 0)
+            WaitUntil(() =>
             {
-                Timing.WaitForServiceDelay();
-                deployment = client.ReadNamespacedDeployment(deploymentName, k8sNamespace);
-            }
+                var deployment = client.ReadNamespacedDeployment(deploymentName, k8sNamespace);
+                return deployment == null || deployment.Status.AvailableReplicas == 0;
+            });
         }
 
         private void WaitUntilZeroPods(Kubernetes client)
         {
-            var pods = client.ListNamespacedPod(k8sNamespace);
-            while (pods.Items.Any())
-            {
-                Timing.WaitForServiceDelay();
-                pods = client.ListNamespacedPod(k8sNamespace);
-            }
+            WaitUntil(() =>
+                !client.ListNamespacedPod(k8sNamespace).Items.Any());
         }
 
         private void WaitUntilNamespaceDeleted(Kubernetes client)
         {
-            var namespaces = client.ListNamespace();
-            while (namespaces.Items.Any(n => n.Metadata.Name == k8sNamespace))
+            WaitUntil(() =>
+                client.ListNamespace().Items.All(n => n.Metadata.Name != k8sNamespace));
+        }
+
+        private void WaitUntil(Func<bool> predicate)
+        {
+            var start = DateTime.UtcNow;
+            var state = predicate();
+            while (!state)
             {
-                Timing.WaitForServiceDelay();
-                namespaces = client.ListNamespace();
+                if (DateTime.UtcNow - start > Timing.K8sOperationTimeout())
+                {
+                    Assert.Fail("K8s operation timed out.");
+                    throw new TimeoutException();
+                }
+
+                Timing.WaitForK8sServiceDelay();
+                state = predicate();
             }
         }
 
@@ -250,6 +256,14 @@ namespace CodexDistTests.TestCore
             return new Kubernetes(config);
         }
 
+        private ActiveNode GetAndRemoveActiveNodeFor(IOnlineCodexNode node)
+        {
+            var n = (OnlineCodexNode)node;
+            var activeNode = activeNodes[n];
+            activeNodes.Remove(n);
+            return activeNode;
+        }
+
         private int GetFreePort()
         {
             var port = freePort;
@@ -266,12 +280,14 @@ namespace CodexDistTests.TestCore
 
         public class ActiveNode
         {
-            public ActiveNode(int port, int orderNumber)
+            public ActiveNode(OfflineCodexNode origin, int port, int orderNumber)
             {
+                Origin = origin;
                 SelectorName = orderNumber.ToString().PadLeft(6, '0');
                 Port = port;
             }
 
+            public OfflineCodexNode Origin { get; }
             public string SelectorName { get; }
             public int Port { get; }
             public V1Deployment? Deployment { get; set; }
