@@ -1,139 +1,34 @@
-﻿using k8s;
-using k8s.Models;
+﻿using NUnit.Framework;
 
 namespace CodexDistTests.TestCore
 {
     public abstract class DistTest
     {
-        private const string k8sNamespace = "codex-test-namespace";
+        private FileManager fileManager = null!;
+        private K8sManager k8sManager = null!;
 
-        private V1Namespace? activeNamespace;
-        private V1Deployment? activeDeployment;
-        private V1Service? activeService;
-
-        public void CreateCodexNode()
+        [SetUp]
+        public void SetUpDistTest()
         {
-            var config = KubernetesClientConfiguration.BuildConfigFromConfigFile();
-            var client = new Kubernetes(config);
-
-            var namespaceSpec = new V1Namespace
-            {
-                ApiVersion = "v1",
-                Metadata = new V1ObjectMeta
-                {
-                    Name = k8sNamespace,
-                    Labels = new Dictionary<string, string> { { "name", k8sNamespace } }
-                }
-            };
-            var deploymentSpec = new V1Deployment
-            {
-                ApiVersion = "apps/v1",
-                Metadata = new V1ObjectMeta
-                {
-                    Name = "codex-demo",
-                    NamespaceProperty = k8sNamespace
-                },
-                Spec = new V1DeploymentSpec
-                {
-                    Replicas = 1,
-                    Selector = new V1LabelSelector
-                    {
-                        MatchLabels = new Dictionary<string, string> { { "codex-node", "dist-test" } }
-                    },
-                    Template = new V1PodTemplateSpec
-                    {
-                        Metadata = new V1ObjectMeta
-                        {
-                            Labels = new Dictionary<string, string> { { "codex-node", "dist-test" } }
-                        },
-                        Spec = new V1PodSpec
-                        {
-                            Containers = new List<V1Container>
-                        {
-                            new V1Container
-                            {
-                                Name = "codex-node",
-                                Image = "thatbenbierens/nim-codex:sha-c9a62de",
-                                Ports = new List<V1ContainerPort>
-                                {
-                                    new V1ContainerPort
-                                    {
-                                        ContainerPort = 8080,
-                                        Name = "codex-api-port"
-                                    }
-                                },
-                                Env = new List<V1EnvVar>
-                                {
-                                    new V1EnvVar
-                                    {
-                                        Name = "LOG_LEVEL",
-                                        Value = "WARN"
-                                    }
-                                }
-                            }
-                        }
-                        }
-                    }
-                }
-            };
-            var serviceSpec = new V1Service
-            {
-                ApiVersion = "v1",
-                Metadata = new V1ObjectMeta
-                {
-                    Name = "codex-entrypoint",
-                    NamespaceProperty = k8sNamespace
-                },
-                Spec = new V1ServiceSpec
-                {
-                    Type = "NodePort",
-                    Selector = new Dictionary<string, string> { { "codex-node", "dist-test" } },
-                    Ports = new List<V1ServicePort>
-                {
-                    new V1ServicePort
-                    {
-                        Protocol = "TCP",
-                        Port = 8080,
-                        TargetPort = "codex-api-port",
-                        NodePort = 30001
-                    }
-                }
-                }
-            };
-
-            activeNamespace = client.CreateNamespace(namespaceSpec);
-            activeDeployment = client.CreateNamespacedDeployment(deploymentSpec, k8sNamespace);
-            activeService = client.CreateNamespacedService(serviceSpec, k8sNamespace);
-
-            // todo: wait until online!
-            while (activeDeployment.Status.AvailableReplicas == null || activeDeployment.Status.AvailableReplicas != 1)
-            {
-                Timing.WaitForServiceDelay();
-                activeDeployment = client.ReadNamespacedDeployment(activeDeployment.Name(), k8sNamespace);
-            }
+            fileManager = new FileManager();
+            k8sManager = new K8sManager(fileManager);
         }
 
-        public CodexNode GetCodexNode()
+        [TearDown]
+        public void TearDownDistTest()
         {
-            return new CodexNode(30001); // matches service spec.
+            fileManager.DeleteAllTestFiles();
+            k8sManager.DeleteAllResources();
         }
 
-        public void DestroyCodexNode()
+        public TestFile GenerateTestFile(int size = 1024)
         {
-            var config = KubernetesClientConfiguration.BuildConfigFromConfigFile();
-            var client = new Kubernetes(config);
+            return fileManager.GenerateTestFile(size);
+        }
 
-            client.DeleteNamespacedService(activeService.Name(), k8sNamespace);
-            client.DeleteNamespacedDeployment(activeDeployment.Name(), k8sNamespace);
-            client.DeleteNamespace(activeNamespace.Name());
-
-            // todo: wait until terminated!
-            var pods = client.ListNamespacedPod(k8sNamespace);
-            while (pods.Items.Any())
-            {
-                Timing.WaitForServiceDelay();
-                pods = client.ListNamespacedPod(k8sNamespace);
-            }
+        public IOfflineCodexNode SetupCodexNode()
+        {
+            return new OfflineCodexNode(k8sManager);
         }
     }
 }

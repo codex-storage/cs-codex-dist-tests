@@ -4,12 +4,24 @@ using System.Net.Http.Headers;
 
 namespace CodexDistTests.TestCore
 {
-    public class CodexNode
+    public interface IOnlineCodexNode
     {
+        CodexDebugResponse GetDebugInfo();
+        ContentId UploadFile(TestFile file, int retryCounter = 0);
+        TestFile? DownloadContent(ContentId contentId);
+    }
+
+    public class OnlineCodexNode : IOnlineCodexNode
+    {
+        private readonly IFileManager fileManager;
         private readonly int port;
 
-        public CodexNode(int port)
+        public OfflineCodexNode Origin { get; }
+
+        public OnlineCodexNode(OfflineCodexNode origin, IFileManager fileManager, int port)
         {
+            Origin = origin;
+            this.fileManager = fileManager;
             this.port = port;
         }
 
@@ -18,20 +30,21 @@ namespace CodexDistTests.TestCore
             return HttpGet<CodexDebugResponse>("debug/info");
         }
 
-        public string UploadFile(string filename, int retryCounter = 0)
+        public ContentId UploadFile(TestFile file, int retryCounter = 0)
         {
             try
             {
                 var url = $"http://127.0.0.1:{port}/api/codex/v1/upload";
                 using var client = GetClient();
 
-                var byteData = File.ReadAllBytes(filename);
+                // Todo: If the file is too large to read into memory, we'll need to rewrite this upload POST to be streaming.
+                var byteData = File.ReadAllBytes(file.Filename);
                 using var content = new ByteArrayContent(byteData);
                 content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
                 var response = Utils.Wait(client.PostAsync(url, content));
 
                 var contentId = Utils.Wait(response.Content.ReadAsStringAsync());
-                return contentId;
+                return new ContentId(contentId);
             }
             catch (Exception exception)
             {
@@ -43,14 +56,20 @@ namespace CodexDistTests.TestCore
                 else
                 {
                     Timing.RetryDelay();
-                    return UploadFile(filename, retryCounter + 1);
+                    return UploadFile(file, retryCounter + 1);
                 }
             }
         }
 
-        public byte[]? DownloadContent(string contentId)
+        public TestFile? DownloadContent(ContentId contentId)
         {
-            return HttpGetBytes("download/" + contentId);
+            // Todo: If the file is too large, rewrite to streaming:
+            var bytes = HttpGetBytes("download/" + contentId.Id);
+            if (bytes == null) return null;
+
+            var file = fileManager.CreateEmptyTestFile();
+            File.WriteAllBytes(file.Filename, bytes);
+            return file;
         }
 
         private byte[]? HttpGetBytes(string endpoint, int retryCounter = 0)
@@ -123,5 +142,15 @@ namespace CodexDistTests.TestCore
     {
         public string version { get; set; } = string.Empty;
         public string revision { get; set; } = string.Empty;
+    }
+
+    public class ContentId
+    {
+        public ContentId(string id)
+        {
+            Id = id;
+        }
+        
+        public string Id { get; }
     }
 }
