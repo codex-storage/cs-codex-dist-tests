@@ -11,7 +11,7 @@ namespace CodexDistTests.TestCore
     public class K8sManager : IK8sManager
     {
         private const string k8sNamespace = "codex-test-namespace";
-        private const string codexDockerImage = "thatbenbierens/nim-codex:sha-c9a62de";
+        private readonly CodexDockerImage dockerImage = new CodexDockerImage();
         private readonly IFileManager fileManager;
         private int freePort;
         private int nodeOrderNumber;
@@ -36,7 +36,7 @@ namespace CodexDistTests.TestCore
             var codexNode = new OnlineCodexNode(node, fileManager, activeNode.Port);
             activeNodes.Add(codexNode, activeNode);
 
-            CreateDeployment(activeNode, client);
+            CreateDeployment(activeNode, client, node);
             CreateService(activeNode, client);
 
             WaitUntilOnline(activeNode, client);
@@ -162,7 +162,7 @@ namespace CodexDistTests.TestCore
 
         #region Deployment management
 
-        private void CreateDeployment(ActiveNode node, Kubernetes client)
+        private void CreateDeployment(ActiveNode node, Kubernetes client, OfflineCodexNode codexNode)
         {
             var deploymentSpec = new V1Deployment
             {
@@ -188,7 +188,7 @@ namespace CodexDistTests.TestCore
                                 new V1Container
                                 {
                                     Name = node.GetContainerName(),
-                                    Image = codexDockerImage,
+                                    Image = dockerImage.GetImageTag(),
                                     Ports = new List<V1ContainerPort>
                                     {
                                         new V1ContainerPort
@@ -197,14 +197,7 @@ namespace CodexDistTests.TestCore
                                             Name = node.GetContainerPortName()
                                         }
                                     },
-                                    Env = new List<V1EnvVar>// todo
-                                    {
-                                        new V1EnvVar
-                                        {
-                                            Name = "LOG_LEVEL",
-                                            Value = "WARN"
-                                        }
-                                    }
+                                    Env = dockerImage.CreateEnvironmentVariables(codexNode)
                                 }
                             }
                         }

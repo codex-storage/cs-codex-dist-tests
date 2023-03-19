@@ -15,24 +15,24 @@ namespace CodexDistTests.BasicTests
 
             Assert.That(debugInfo.spr, Is.Not.Empty);
         }
-
+        
         //[Test]
         //public void TwoClientTest()
         //{
-        //    var primaryNodex = SetupCodexNode()
+        //    var primary = SetupCodexNode()
         //                        .WithLogLevel(CodexLogLevel.Warn)
         //                        .WithStorageQuota(1024 * 1024)
         //                        .BringOnline();
 
-        //    var secondaryNodex = SetupCodexNode()
-        //                        .WithBootstrapNode(primaryNodex)
+        //    var secondary = SetupCodexNode()
+        //                        .WithBootstrapNode(primary)
         //                        .BringOnline();
 
         //    var testFile = GenerateTestFile(1024 * 1024);
 
-        //    var contentId = primaryNodex.UploadFile(testFile);
+        //    var contentId = primary.UploadFile(testFile);
 
-        //    var downloadedFile = secondaryNodex.DownloadContent(contentId);
+        //    var downloadedFile = secondary.DownloadContent(contentId);
 
         //    testFile.AssertIsEqual(downloadedFile);
 

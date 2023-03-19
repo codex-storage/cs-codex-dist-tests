@@ -16,9 +16,15 @@ namespace CodexDistTests.TestCore
         private readonly Random random = new Random();
         private readonly List<TestFile> activeFiles = new List<TestFile>();
 
+        public FileManager()
+        {
+            if (!Directory.Exists(Folder)) Directory.CreateDirectory(Folder);
+        }
+
         public TestFile CreateEmptyTestFile()
         {
             var result = new TestFile(Path.Combine(Folder, Guid.NewGuid().ToString() + "_test.bin"));
+            File.Create(result.Filename).Close();
             activeFiles.Add(result);
             return result;
         }

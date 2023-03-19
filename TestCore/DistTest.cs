@@ -17,8 +17,8 @@ namespace CodexDistTests.TestCore
         [TearDown]
         public void TearDownDistTest()
         {
-            fileManager.DeleteAllTestFiles();
             k8sManager.DeleteAllResources();
+            fileManager.DeleteAllTestFiles();
         }
 
         public TestFile GenerateTestFile(int size = 1024)
