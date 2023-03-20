@@ -84,9 +84,11 @@ namespace CodexDistTests.TestCore
 
         private void WaitUntilOnline(ActiveNode activeNode, Kubernetes client)
         {
-            WaitUntil(() => 
-                activeNode.Deployment?.Status.AvailableReplicas != null &&
-                activeNode.Deployment.Status.AvailableReplicas > 0);
+            WaitUntil(() =>
+            {
+                activeNode.Deployment = client.ReadNamespacedDeployment(activeNode.Deployment.Name(), k8sNamespace);
+                return activeNode.Deployment?.Status.AvailableReplicas != null && activeNode.Deployment.Status.AvailableReplicas > 0;
+            });
         }
 
         private void WaitUntilOffline(string deploymentName, Kubernetes client)
@@ -100,14 +102,12 @@ namespace CodexDistTests.TestCore
 
         private void WaitUntilZeroPods(Kubernetes client)
         {
-            WaitUntil(() =>
-                !client.ListNamespacedPod(k8sNamespace).Items.Any());
+            WaitUntil(() => !client.ListNamespacedPod(k8sNamespace).Items.Any());
         }
 
         private void WaitUntilNamespaceDeleted(Kubernetes client)
         {
-            WaitUntil(() =>
-                client.ListNamespace().Items.All(n => n.Metadata.Name != k8sNamespace));
+            WaitUntil(() => client.ListNamespace().Items.All(n => n.Metadata.Name != k8sNamespace));
         }
 
         private void WaitUntil(Func<bool> predicate)
