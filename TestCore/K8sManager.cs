@@ -257,7 +257,7 @@ namespace CodexDistTests.TestCore
         private void DeleteNamespace(Kubernetes client)
         {
             if (activeNamespace == null) return;
-            client.DeleteNamespace(activeNamespace.Name());
+            client.DeleteNamespace(activeNamespace.Name(), null, null, gracePeriodSeconds: 0);
             activeNamespace = null;
         }
 

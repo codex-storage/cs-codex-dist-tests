@@ -10,15 +10,30 @@ namespace CodexDistTests.TestCore
         [SetUp]
         public void SetUpDistTest()
         {
-            fileManager = new FileManager();
-            k8sManager = new K8sManager(fileManager);
+            if (GlobalTestFailure.HasFailed)
+            {
+                Assert.Inconclusive("Skip test: Previous test failed during clean up.");
+            }
+            else
+            {
+                fileManager = new FileManager();
+                k8sManager = new K8sManager(fileManager);
+            }
         }
 
         [TearDown]
         public void TearDownDistTest()
         {
-            k8sManager.DeleteAllResources();
-            fileManager.DeleteAllTestFiles();
+            try
+            {
+                k8sManager.DeleteAllResources();
+                fileManager.DeleteAllTestFiles();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Cleanup has failed." + ex.Message);
+                GlobalTestFailure.HasFailed = true;
+            }
         }
 
         public TestFile GenerateTestFile(int size = 1024)
@@ -30,5 +45,10 @@ namespace CodexDistTests.TestCore
         {
             return new OfflineCodexNode(k8sManager);
         }
+    }
+
+    public static class GlobalTestFailure
+    {
+        public static bool HasFailed { get; set; } = false;
     }
 }

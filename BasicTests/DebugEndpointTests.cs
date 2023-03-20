@@ -53,9 +53,6 @@ namespace CodexDistTests.BasicTests
         //    var downloadedFile = secondary.DownloadContent(contentId);
 
         //    testFile.AssertIsEqual(downloadedFile);
-
-        //    // Test files are automatically deleted.
-        //    // Online nodes are automatically destroyed.
         //}
     }
 }
