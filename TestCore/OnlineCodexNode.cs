@@ -49,6 +49,11 @@ namespace CodexDistTests.TestCore
                 var response = Utils.Wait(client.PostAsync(url, content));
 
                 var contentId = Utils.Wait(response.Content.ReadAsStringAsync());
+                if (contentId.StartsWith("Unable to store block"))
+                {
+                    retryCounter = Timing.HttpCallRetryCount() + 1;
+                    Assert.Fail("Node failed to store block.");
+                }
                 return new ContentId(contentId);
             }
             catch (Exception exception)

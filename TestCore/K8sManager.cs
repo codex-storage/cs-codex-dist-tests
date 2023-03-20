@@ -20,6 +20,7 @@ namespace CodexDistTests.TestCore
 
         private V1Namespace? activeNamespace;
         private readonly Dictionary<OnlineCodexNode, ActiveNode> activeNodes = new Dictionary<OnlineCodexNode, ActiveNode>();
+        private readonly List<string> knownActivePodNames = new List<string>();
 
         public K8sManager(IFileManager fileManager)
         {
@@ -63,11 +64,6 @@ namespace CodexDistTests.TestCore
         {
             var client = CreateClient();
 
-            foreach (var activeNode in activeNodes.Values)
-            {
-                BringOffline(activeNode, client);
-            }
-
             DeleteNamespace(client);
 
             WaitUntilZeroPods(client);
@@ -76,6 +72,7 @@ namespace CodexDistTests.TestCore
 
         private void BringOffline(ActiveNode activeNode, Kubernetes client)
         {
+            DownloadCodexNodeLog(activeNode, client);
             DeleteDeployment(activeNode, client);
             DeleteService(activeNode, client);
         }
@@ -89,6 +86,22 @@ namespace CodexDistTests.TestCore
                 activeNode.Deployment = client.ReadNamespacedDeployment(activeNode.Deployment.Name(), k8sNamespace);
                 return activeNode.Deployment?.Status.AvailableReplicas != null && activeNode.Deployment.Status.AvailableReplicas > 0;
             });
+
+            AssignActivePodNames(activeNode, client);
+        }
+
+        private void AssignActivePodNames(ActiveNode activeNode, Kubernetes client)
+        {
+            var pods = client.ListNamespacedPod(k8sNamespace);
+            var podNames = pods.Items.Select(p => p.Name());
+            foreach (var podName in podNames)
+            {
+                if (!knownActivePodNames.Contains(podName))
+                {
+                    knownActivePodNames.Add(podName);
+                    activeNode.ActivePodNames.Add(podName);
+                }
+            }
         }
 
         private void WaitUntilOffline(string deploymentName, Kubernetes client)
@@ -245,6 +258,7 @@ namespace CodexDistTests.TestCore
         {
             if (activeNamespace == null) return;
             client.DeleteNamespace(activeNamespace.Name());
+            activeNamespace = null;
         }
 
         #endregion
@@ -254,6 +268,21 @@ namespace CodexDistTests.TestCore
             // todo: If the default KubeConfig file does not suffice, change it here:
             var config = KubernetesClientConfiguration.BuildConfigFromConfigFile();
             return new Kubernetes(config);
+        }
+
+        private void DownloadCodexNodeLog(ActiveNode node, Kubernetes client)
+        {
+            //var client = CreateClient();
+            var i = 0;
+            foreach (var podName in node.ActivePodNames)
+            {
+                var stream = client.ReadNamespacedPodLog(podName, k8sNamespace);
+                using (var fileStream = File.Create(node.SelectorName + i.ToString() + ".txt"))
+                {
+                    stream.CopyTo(fileStream);
+                }
+                i++;
+            }
         }
 
         private ActiveNode GetAndRemoveActiveNodeFor(IOnlineCodexNode node)
@@ -292,6 +321,7 @@ namespace CodexDistTests.TestCore
             public int Port { get; }
             public V1Deployment? Deployment { get; set; }
             public V1Service? Service { get; set; }
+            public List<string> ActivePodNames { get; } = new List<string>();
 
             public V1ObjectMeta GetServiceMetadata()
             {
