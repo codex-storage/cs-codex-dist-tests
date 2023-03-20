@@ -41,7 +41,6 @@ namespace CodexDistTests.TestCore
                 IncludeFullPodLogging(k8sManager);
             }
 
-            LogRaw("");
             file = null;
         }
 
@@ -52,26 +51,26 @@ namespace CodexDistTests.TestCore
             return $"{className}.{test.MethodName}";
         }
 
-        private static void LogRaw(string message)
+        private static void LogRaw(string message, string filename)
         {
-            file!.WriteRaw(message);
+            file!.WriteRaw(message, filename);
         }
 
         private static void IncludeFullPodLogging(K8sManager k8sManager)
         {
-            LogRaw("Full pod logging:");
+            Log("Full pod logging:");
             k8sManager.FetchAllPodsLogs(WritePodLog);
         }
 
-        private static void WritePodLog(string nodeDescription, Stream stream)
+        private static void WritePodLog(string id, string nodeDescription, Stream stream)
         {
-            LogRaw("---");
-            LogRaw(nodeDescription);
+            Log($"{nodeDescription} -->> {id}");
+            LogRaw(nodeDescription, id);
             var reader = new StreamReader(stream);
             var line = reader.ReadLine();
             while (line != null)
             {
-                LogRaw(line);
+                LogRaw(line, id);
                 line = reader.ReadLine();
             }
         }
@@ -79,21 +78,21 @@ namespace CodexDistTests.TestCore
 
     public class LogFile
     {
+        private readonly string filepath;
         private readonly string filename;
 
         public LogFile(string name)
         {
             var now = DateTime.UtcNow;
 
-            var filepath = Path.Join(
+            filepath = Path.Join(
                 TestLog.LogRoot,
                 $"{now.Year}-{Pad(now.Month)}",
                 Pad(now.Day));
 
             Directory.CreateDirectory(filepath);
 
-            filename = Path.Combine(filepath,
-                $"{Pad(now.Hour)}-{Pad(now.Minute)}-{Pad(now.Second)}Z_{name.Replace('.', '-')}.log");
+            filename = Path.Combine(filepath, $"{Pad(now.Hour)}-{Pad(now.Minute)}-{Pad(now.Second)}Z_{name.Replace('.', '-')}");
         }
 
         public void Write(string message)
@@ -101,11 +100,11 @@ namespace CodexDistTests.TestCore
             WriteRaw($"{GetTimestamp()} {message}");
         }
 
-        public void WriteRaw(string message)
+        public void WriteRaw(string message, string subfile = "")
         {
             try
             {
-                File.AppendAllLines(filename, new[] {  message });
+                File.AppendAllLines(filename + subfile + ".log", new[] {  message });
             }
             catch (Exception ex)
             {

@@ -72,7 +72,7 @@ namespace CodexDistTests.TestCore
             WaitUntilNamespaceDeleted(client);
         }
 
-        public void FetchAllPodsLogs(Action<string, Stream> onLog)
+        public void FetchAllPodsLogs(Action<string, string, Stream> onLog)
         {
             var client = CreateClient();
             foreach (var node in activeNodes.Values)
@@ -81,7 +81,7 @@ namespace CodexDistTests.TestCore
                 foreach (var podName in node.ActivePodNames)
                 {
                     var stream = client.ReadNamespacedPodLog(podName, k8sNamespace);
-                    onLog($"{nodeDescription}:{podName}", stream);
+                    onLog(node.SelectorName, $"{nodeDescription}:{podName}", stream);
                 }
             }
         }
