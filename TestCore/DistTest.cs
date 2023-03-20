@@ -16,6 +16,7 @@ namespace CodexDistTests.TestCore
             }
             else
             {
+                TestLog.BeginTest();
                 fileManager = new FileManager();
                 k8sManager = new K8sManager(fileManager);
             }
@@ -26,12 +27,13 @@ namespace CodexDistTests.TestCore
         {
             try
             {
+                TestLog.EndTest(k8sManager);
                 k8sManager.DeleteAllResources();
                 fileManager.DeleteAllTestFiles();
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Cleanup has failed." + ex.Message);
+                TestLog.Error("Cleanup failed: " + ex.Message);
                 GlobalTestFailure.HasFailed = true;
             }
         }

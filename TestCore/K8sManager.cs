@@ -43,6 +43,7 @@ namespace CodexDistTests.TestCore
             CreateService(activeNode, client);
 
             WaitUntilOnline(activeNode, client);
+            TestLog.Log($"{activeNode.Describe()} online.");
 
             return codexNode;
         }
@@ -56,6 +57,7 @@ namespace CodexDistTests.TestCore
             var deploymentName = activeNode.Deployment.Name();
             BringOffline(activeNode, client);
             WaitUntilOffline(deploymentName, client);
+            TestLog.Log($"{activeNode.Describe()} offline.");
 
             return activeNode.Origin;
         }
@@ -70,9 +72,22 @@ namespace CodexDistTests.TestCore
             WaitUntilNamespaceDeleted(client);
         }
 
+        public void FetchAllPodsLogs(Action<string, Stream> onLog)
+        {
+            var client = CreateClient();
+            foreach (var node in activeNodes.Values)
+            {
+                var nodeDescription = node.Describe();
+                foreach (var podName in node.ActivePodNames)
+                {
+                    var stream = client.ReadNamespacedPodLog(podName, k8sNamespace);
+                    onLog($"{nodeDescription}:{podName}", stream);
+                }
+            }
+        }
+
         private void BringOffline(ActiveNode activeNode, Kubernetes client)
         {
-            DownloadCodexNodeLog(activeNode, client);
             DeleteDeployment(activeNode, client);
             DeleteService(activeNode, client);
         }
@@ -270,21 +285,6 @@ namespace CodexDistTests.TestCore
             return new Kubernetes(config);
         }
 
-        private void DownloadCodexNodeLog(ActiveNode node, Kubernetes client)
-        {
-            //var client = CreateClient();
-            var i = 0;
-            foreach (var podName in node.ActivePodNames)
-            {
-                var stream = client.ReadNamespacedPodLog(podName, k8sNamespace);
-                using (var fileStream = File.Create(node.SelectorName + i.ToString() + ".txt"))
-                {
-                    stream.CopyTo(fileStream);
-                }
-                i++;
-            }
-        }
-
         private ActiveNode GetAndRemoveActiveNodeFor(IOnlineCodexNode node)
         {
             var n = (OnlineCodexNode)node;
@@ -356,6 +356,11 @@ namespace CodexDistTests.TestCore
             public string GetContainerName()
             {
                 return "codex-test-node";
+            }
+
+            public string Describe()
+            {
+                return $"CodexNode{SelectorName}-Port:{Port}-{Origin.Describe()}";
             }
         }
     }

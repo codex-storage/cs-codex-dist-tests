@@ -52,5 +52,14 @@
             StorageQuota = storageQuotaBytes;
             return this;
         }
+
+        public string Describe()
+        {
+            var result = "";
+            if (LogLevel != null) result += $"LogLevel={LogLevel},";
+            if (BootstrapNode != null) result += "BootstrapNode=set,";
+            if (StorageQuota != null) result += $"StorageQuote={StorageQuota},";
+            return result;
+        }
     }
 }

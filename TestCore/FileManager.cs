@@ -26,6 +26,7 @@ namespace CodexDistTests.TestCore
             var result = new TestFile(Path.Combine(Folder, Guid.NewGuid().ToString() + "_test.bin"));
             File.Create(result.Filename).Close();
             activeFiles.Add(result);
+            TestLog.Log($"Created test file '{result.Filename}'.");
             return result;
         }
 
@@ -33,6 +34,7 @@ namespace CodexDistTests.TestCore
         {
             var result = CreateEmptyTestFile();
             GenerateFileBytes(result, size);
+            TestLog.Log($"Generated {size} bytes of content for file '{result.Filename}'.");
             return result;
         }
 
