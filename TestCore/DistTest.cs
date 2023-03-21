@@ -2,10 +2,23 @@
 
 namespace CodexDistTests.TestCore
 {
+    [SetUpFixture]
     public abstract class DistTest
     {
         private FileManager fileManager = null!;
         private K8sManager k8sManager = null!;
+
+        [OneTimeSetUp]
+        public void GlobalSetup()
+        {
+            // Previous test run may have been interrupted.
+            // Begin by cleaning everything up.
+            fileManager = new FileManager();
+            k8sManager = new K8sManager(fileManager);
+
+            k8sManager.DeleteAllResources();
+            fileManager.DeleteAllTestFiles();
+        }
 
         [SetUp]
         public void SetUpDistTest()
@@ -38,7 +51,7 @@ namespace CodexDistTests.TestCore
             }
         }
 
-        public TestFile GenerateTestFile(int size = 1024)
+        public TestFile GenerateTestFile(ByteSize size)
         {
             return fileManager.GenerateTestFile(size);
         }

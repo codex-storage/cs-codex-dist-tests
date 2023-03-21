@@ -5,7 +5,7 @@ namespace CodexDistTests.TestCore
     public interface IFileManager
     {
         TestFile CreateEmptyTestFile();
-        TestFile GenerateTestFile(int size = 1024);
+        TestFile GenerateTestFile(ByteSize size);
         void DeleteAllTestFiles();
     }
 
@@ -30,7 +30,7 @@ namespace CodexDistTests.TestCore
             return result;
         }
 
-        public TestFile GenerateTestFile(int size = 1024)
+        public TestFile GenerateTestFile(ByteSize size)
         {
             var result = CreateEmptyTestFile();
             GenerateFileBytes(result, size);
@@ -44,17 +44,18 @@ namespace CodexDistTests.TestCore
             activeFiles.Clear();
         }
 
-        private void GenerateFileBytes(TestFile result, int size)
+        private void GenerateFileBytes(TestFile result, ByteSize size)
         {
-            while (size > 0)
+            long bytesLeft = size.SizeInBytes;
+            while (bytesLeft > 0)
             {
-                var length = Math.Min(size, ChunkSize);
+                var length = Math.Min(bytesLeft, ChunkSize);
                 AppendRandomBytesToFile(result, length);
-                size -= length;
+                bytesLeft -= length;
             }
         }
 
-        private void AppendRandomBytesToFile(TestFile result, int length)
+        private void AppendRandomBytesToFile(TestFile result, long length)
         {
             var bytes = new byte[length];
             random.NextBytes(bytes);

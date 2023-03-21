@@ -38,7 +38,7 @@ namespace CodexDistTests.TestCore
                 }
                 if (node.StorageQuota != null)
                 {
-                    AddVar("STORAGE_QUOTA", node.StorageQuota.ToString()!);
+                    AddVar("STORAGE_QUOTA", node.StorageQuota.SizeInBytes.ToString()!);
                 }
             }
 

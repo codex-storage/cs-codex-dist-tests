@@ -18,7 +18,6 @@ namespace CodexDistTests.TestCore
         private readonly Dictionary<OnlineCodexNode, ActiveNode> activeNodes = new Dictionary<OnlineCodexNode, ActiveNode>();
         private readonly List<string> knownActivePodNames = new List<string>();
         private readonly IFileManager fileManager;
-        private V1Namespace? activeNamespace;
 
         public K8sManager(IFileManager fileManager)
         {
@@ -131,7 +130,7 @@ namespace CodexDistTests.TestCore
 
         private void WaitUntilNamespaceDeleted(Kubernetes client)
         {
-            WaitUntil(() => client.ListNamespace().Items.All(n => n.Metadata.Name != K8sNamespace));
+            WaitUntil(() => !IsTestNamespaceOnline(client));
         }
 
         private void WaitUntil(Func<bool> predicate)
@@ -251,7 +250,7 @@ namespace CodexDistTests.TestCore
 
         private void EnsureTestNamespace(Kubernetes client)
         {
-            if (activeNamespace != null) return;
+            if (IsTestNamespaceOnline(client)) return;
 
             var namespaceSpec = new V1Namespace
             {
@@ -262,14 +261,15 @@ namespace CodexDistTests.TestCore
                     Labels = new Dictionary<string, string> { { "name", K8sNamespace } }
                 }
             };
-            activeNamespace = client.CreateNamespace(namespaceSpec);
+            client.CreateNamespace(namespaceSpec);
         }
 
         private void DeleteNamespace(Kubernetes client)
         {
-            if (activeNamespace == null) return;
-            client.DeleteNamespace(activeNamespace.Name(), null, null, gracePeriodSeconds: 0);
-            activeNamespace = null;
+            if (IsTestNamespaceOnline(client))
+            {
+                client.DeleteNamespace(K8sNamespace, null, null, gracePeriodSeconds: 0);
+            }
         }
 
         #endregion
@@ -279,6 +279,11 @@ namespace CodexDistTests.TestCore
             // todo: If the default KubeConfig file does not suffice, change it here:
             var config = KubernetesClientConfiguration.BuildConfigFromConfigFile();
             return new Kubernetes(config);
+        }
+
+        private static bool IsTestNamespaceOnline(Kubernetes client)
+        {
+            return client.ListNamespace().Items.Any(n => n.Metadata.Name == K8sNamespace);
         }
 
         private ActiveNode GetAndRemoveActiveNodeFor(IOnlineCodexNode node)

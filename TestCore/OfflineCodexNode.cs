@@ -4,7 +4,7 @@
     {
         IOfflineCodexNode WithLogLevel(CodexLogLevel level);
         IOfflineCodexNode WithBootstrapNode(IOnlineCodexNode node);
-        IOfflineCodexNode WithStorageQuota(int storageQuotaBytes);
+        IOfflineCodexNode WithStorageQuota(ByteSize storageQuota);
         IOnlineCodexNode BringOnline();
     }
 
@@ -23,7 +23,7 @@
 
         public CodexLogLevel? LogLevel { get; private set; }
         public IOnlineCodexNode? BootstrapNode { get; private set; }
-        public int? StorageQuota { get; private set; }
+        public ByteSize? StorageQuota { get; private set; }
 
         public OfflineCodexNode(IK8sManager k8SManager)
         {
@@ -47,9 +47,9 @@
             return this;
         }
 
-        public IOfflineCodexNode WithStorageQuota(int storageQuotaBytes)
+        public IOfflineCodexNode WithStorageQuota(ByteSize storageQuota)
         {
-            StorageQuota = storageQuotaBytes;
+            StorageQuota = storageQuota;
             return this;
         }
 
@@ -58,7 +58,7 @@
             var result = "";
             if (LogLevel != null) result += $"LogLevel={LogLevel},";
             if (BootstrapNode != null) result += "BootstrapNode=set,";
-            if (StorageQuota != null) result += $"StorageQuote={StorageQuota},";
+            if (StorageQuota != null) result += $"StorageQuote={StorageQuota.SizeInBytes},";
             return result;
         }
     }

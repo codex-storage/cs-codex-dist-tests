@@ -24,10 +24,10 @@ namespace CodexDistTests.BasicTests
         {
             var primary = SetupCodexNode()
                                 .WithLogLevel(CodexLogLevel.Trace)
-                                .WithStorageQuota(1024 * 1024 * 2)
+                                .WithStorageQuota(2.MB())
                                 .BringOnline();
 
-            var testFile = GenerateTestFile(1024 * 1024);
+            var testFile = GenerateTestFile(1.MB());
 
             var contentId = primary.UploadFile(testFile);
 
