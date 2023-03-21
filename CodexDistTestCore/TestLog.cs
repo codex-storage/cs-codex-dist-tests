@@ -8,6 +8,7 @@ namespace CodexDistTestCore
 
         private static LogFile? file = null;
 
+        // This is all way too static. It needs to be cleaned up.
         public static void Log(string message)
         {
             file!.Write(message);
@@ -38,7 +39,8 @@ namespace CodexDistTestCore
             Log($"Finished: {GetTestName()} = {result.Outcome.Status}");
             if (result.Outcome.Status == NUnit.Framework.Interfaces.TestStatus.Failed)
             {
-                IncludeFullPodLogging(k8sManager);
+                var logWriter = new PodLogWriter(file);
+                logWriter.IncludeFullPodLogging(k8sManager);
             }
 
             file = null;
@@ -50,30 +52,40 @@ namespace CodexDistTestCore
             var className = test.ClassName!.Substring(test.ClassName.LastIndexOf('.') + 1);
             return $"{className}.{test.MethodName}";
         }
+    }
 
-        private static void LogRaw(string message, string filename)
+    public class PodLogWriter : IPodLogsHandler
+    {
+        private readonly LogFile file;
+
+        public PodLogWriter(LogFile file)
         {
-            file!.WriteRaw(message, filename);
+            this.file = file;
         }
 
-        private static void IncludeFullPodLogging(K8sManager k8sManager)
+        public void IncludeFullPodLogging(K8sManager k8sManager)
         {
-            Log("Full pod logging:");
-            k8sManager.FetchAllPodsLogs(WritePodLog);
+            TestLog.Log("Full pod logging:");
+            k8sManager.FetchAllPodsLogs(this);
         }
 
-        private static void WritePodLog(int id, string nodeDescription, Stream stream)
+        public void Log(int id, string podDescription, Stream log)
         {
             var logFile = id.ToString().PadLeft(6, '0');
-            Log($"{nodeDescription} -->> {logFile}");
-            LogRaw(nodeDescription, logFile);
-            var reader = new StreamReader(stream);
+            TestLog.Log($"{podDescription} -->> {logFile}");
+            LogRaw(podDescription, logFile);
+            var reader = new StreamReader(log);
             var line = reader.ReadLine();
             while (line != null)
             {
                 LogRaw(line, logFile);
                 line = reader.ReadLine();
             }
+        }
+
+        private void LogRaw(string message, string filename)
+        {
+            file!.WriteRaw(message, filename);
         }
     }
 

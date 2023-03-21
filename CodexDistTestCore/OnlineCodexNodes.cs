@@ -28,17 +28,17 @@ namespace CodexDistTestCore
             }
         }
 
+        public IOfflineCodexNodes BringOffline()
+        {
+            return k8SManager.BringOffline(this);
+        }
+
         public int OrderNumber { get; }
         public OfflineCodexNodes Origin { get; }
         public OnlineCodexNode[] Nodes { get; }
         public V1Deployment? Deployment { get; set; }
         public V1Service? Service { get; set; }
         public List<string> ActivePodNames { get; } = new List<string>();
-
-        public IOfflineCodexNodes BringOffline()
-        {
-            return k8SManager.BringOffline(this);
-        }
 
         public CodexNodeContainer[] GetContainers()
         {
@@ -50,7 +50,7 @@ namespace CodexDistTestCore
             return new V1ObjectMeta
             {
                 Name = "codex-test-entrypoint-" + OrderNumber,
-                NamespaceProperty = K8sManager.K8sNamespace
+                NamespaceProperty = K8sOperations.K8sNamespace
             };
         }
 
@@ -59,7 +59,7 @@ namespace CodexDistTestCore
             return new V1ObjectMeta
             {
                 Name = "codex-test-node-" + OrderNumber,
-                NamespaceProperty = K8sManager.K8sNamespace
+                NamespaceProperty = K8sOperations.K8sNamespace
             };
         }
 
