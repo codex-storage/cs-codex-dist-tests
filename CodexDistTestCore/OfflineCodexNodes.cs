@@ -1,11 +1,11 @@
 ﻿namespace CodexDistTestCore
 {
-    public interface IOfflineCodexNode
+    public interface IOfflineCodexNodes
     {
-        IOfflineCodexNode WithLogLevel(CodexLogLevel level);
-        IOfflineCodexNode WithBootstrapNode(IOnlineCodexNode node);
-        IOfflineCodexNode WithStorageQuota(ByteSize storageQuota);
-        IOnlineCodexNode BringOnline();
+        IOfflineCodexNodes WithLogLevel(CodexLogLevel level);
+        IOfflineCodexNodes WithBootstrapNode(IOnlineCodexNode node);
+        IOfflineCodexNodes WithStorageQuota(ByteSize storageQuota);
+        IOnlineCodexNodes BringOnline();
     }
 
     public enum CodexLogLevel
@@ -17,37 +17,39 @@
         Error
     }
 
-    public class OfflineCodexNode : IOfflineCodexNode
+    public class OfflineCodexNodes : IOfflineCodexNodes
     {
         private readonly IK8sManager k8SManager;
-
+        
+        public int NumberOfNodes { get; }
         public CodexLogLevel? LogLevel { get; private set; }
         public IOnlineCodexNode? BootstrapNode { get; private set; }
         public ByteSize? StorageQuota { get; private set; }
 
-        public OfflineCodexNode(IK8sManager k8SManager)
+        public OfflineCodexNodes(IK8sManager k8SManager, int numberOfNodes)
         {
             this.k8SManager = k8SManager;
+            NumberOfNodes = numberOfNodes;
         }
 
-        public IOnlineCodexNode BringOnline()
+        public IOnlineCodexNodes BringOnline()
         {
             return k8SManager.BringOnline(this);
         }
 
-        public IOfflineCodexNode WithBootstrapNode(IOnlineCodexNode node)
+        public IOfflineCodexNodes WithBootstrapNode(IOnlineCodexNode node)
         {
             BootstrapNode = node;
             return this;
         }
 
-        public IOfflineCodexNode WithLogLevel(CodexLogLevel level)
+        public IOfflineCodexNodes WithLogLevel(CodexLogLevel level)
         {
             LogLevel = level;
             return this;
         }
 
-        public IOfflineCodexNode WithStorageQuota(ByteSize storageQuota)
+        public IOfflineCodexNodes WithStorageQuota(ByteSize storageQuota)
         {
             StorageQuota = storageQuota;
             return this;

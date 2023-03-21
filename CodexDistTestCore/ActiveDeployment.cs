@@ -2,18 +2,18 @@
 
 namespace CodexDistTestCore
 {
-    public class ActiveNode
+    public class ActiveDeployment
     {
-        public ActiveNode(OfflineCodexNode origin, int port, int orderNumber)
+        public ActiveDeployment(OfflineCodexNodes origin, int orderNumber, CodexNodeContainer[] containers)
         {
             Origin = origin;
+            Containers = containers;
             SelectorName = orderNumber.ToString().PadLeft(6, '0');
-            Port = port;
         }
 
-        public OfflineCodexNode Origin { get; }
+        public OfflineCodexNodes Origin { get; }
+        public CodexNodeContainer[] Containers { get; }
         public string SelectorName { get; }
-        public int Port { get; }
         public V1Deployment? Deployment { get; set; }
         public V1Service? Service { get; set; }
         public List<string> ActivePodNames { get; } = new List<string>();
@@ -41,21 +41,9 @@ namespace CodexDistTestCore
             return new Dictionary<string, string> { { "codex-test-node", "dist-test-" + SelectorName } };
         }
 
-        public string GetContainerPortName()
-        {
-            //Caution, was: "codex-api-port" + SelectorName
-            //but string length causes 'UnprocessableEntity' exception in k8s.
-            return "api-" + SelectorName;
-        }
-
-        public string GetContainerName()
-        {
-            return "codex-test-node";
-        }
-
         public string Describe()
         {
-            return $"CodexNode{SelectorName}-Port:{Port}-{Origin.Describe()}";
+            return $"CodexNode{SelectorName}-{Origin.Describe()}";
         }
     }
 }

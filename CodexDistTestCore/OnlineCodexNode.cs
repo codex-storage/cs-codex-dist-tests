@@ -7,25 +7,17 @@ namespace CodexDistTestCore
         CodexDebugResponse GetDebugInfo();
         ContentId UploadFile(TestFile file);
         TestFile? DownloadContent(ContentId contentId);
-        IOfflineCodexNode BringOffline();
     }
 
     public class OnlineCodexNode : IOnlineCodexNode
     {
-        private readonly IK8sManager k8SManager;
         private readonly IFileManager fileManager;
-        private readonly int port;
+        private readonly CodexNodeContainer environment;
 
-        public OnlineCodexNode(IK8sManager k8SManager, IFileManager fileManager, int port)
+        public OnlineCodexNode(IFileManager fileManager, CodexNodeContainer environment)
         {
-            this.k8SManager = k8SManager;
             this.fileManager = fileManager;
-            this.port = port;
-        }
-
-        public IOfflineCodexNode BringOffline()
-        {
-            return k8SManager.BringOffline(this);
+            this.environment = environment;
         }
 
         public CodexDebugResponse GetDebugInfo()
@@ -55,7 +47,7 @@ namespace CodexDistTestCore
 
         private Http Http()
         {
-            return new Http(ip: "127.0.0.1", port: port, baseUrl: "/api/codex/v1");
+            return new Http(ip: "127.0.0.1", port: environment.ServicePort, baseUrl: "/api/codex/v1");
         }
     }
 

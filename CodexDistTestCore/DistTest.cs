@@ -56,9 +56,9 @@ namespace CodexDistTestCore
             return fileManager.GenerateTestFile(size);
         }
 
-        public IOfflineCodexNode SetupCodexNode()
+        public IOfflineCodexNodes SetupCodexNodes(int numberOfNodes)
         {
-            return new OfflineCodexNode(k8sManager);
+            return new OfflineCodexNodes(k8sManager, numberOfNodes);
         }
     }
 

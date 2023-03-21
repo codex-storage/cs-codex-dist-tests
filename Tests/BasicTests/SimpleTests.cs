@@ -11,7 +11,7 @@ namespace Tests.BasicTests
         {
             var dockerImage = new CodexDockerImage();
 
-            var node = SetupCodexNode().BringOnline();
+            var node = SetupCodexNodes(1).BringOnline()[0];
 
             var debugInfo = node.GetDebugInfo();
 
@@ -22,10 +22,10 @@ namespace Tests.BasicTests
         [Test]
         public void OneClientTest()
         {
-            var primary = SetupCodexNode()
+            var primary = SetupCodexNodes(1)
                                 .WithLogLevel(CodexLogLevel.Trace)
                                 .WithStorageQuota(2.MB())
-                                .BringOnline();
+                                .BringOnline()[0];
 
             var testFile = GenerateTestFile(1.MB());
 
