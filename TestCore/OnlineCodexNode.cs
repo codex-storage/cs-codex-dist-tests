@@ -1,13 +1,11 @@
-﻿using Newtonsoft.Json;
-using NUnit.Framework;
-using System.Net.Http.Headers;
+﻿using NUnit.Framework;
 
 namespace CodexDistTests.TestCore
 {
     public interface IOnlineCodexNode
     {
         CodexDebugResponse GetDebugInfo();
-        ContentId UploadFile(TestFile file, int retryCounter = 0);
+        ContentId UploadFile(TestFile file);
         TestFile? DownloadContent(ContentId contentId);
         IOfflineCodexNode BringOffline();
     }
@@ -32,126 +30,33 @@ namespace CodexDistTests.TestCore
 
         public CodexDebugResponse GetDebugInfo()
         {
-            return HttpGet<CodexDebugResponse>("debug/info");
+            return Http().HttpGetJson<CodexDebugResponse>("debug/info");
         }
 
-        public ContentId UploadFile(TestFile file, int retryCounter = 0)
+        public ContentId UploadFile(TestFile file)
         {
-            try
+            using var fileStream = File.OpenRead(file.Filename);
+            var response = Http().HttpPostStream("upload", fileStream);
+            if (response.StartsWith("Unable to store block"))
             {
-                var url = $"http://127.0.0.1:{port}/api/codex/v1/upload";
-                using var client = GetClient();
-
-                // Todo: If the file is too large to read into memory, we'll need to rewrite this upload POST to be streaming.
-                var byteData = File.ReadAllBytes(file.Filename);
-                using var content = new ByteArrayContent(byteData);
-                content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
-                var response = Utils.Wait(client.PostAsync(url, content));
-
-                var contentId = Utils.Wait(response.Content.ReadAsStringAsync());
-                if (contentId.StartsWith("Unable to store block"))
-                {
-                    retryCounter = Timing.HttpCallRetryCount() + 1;
-                    Assert.Fail("Node failed to store block.");
-                }
-                return new ContentId(contentId);
+                Assert.Fail("Node failed to store block.");
             }
-            catch (Exception exception)
-            {
-                if (retryCounter > Timing.HttpCallRetryCount())
-                {
-                    Assert.Fail(exception.Message);
-                    throw;
-                }
-                else
-                {
-                    Timing.RetryDelay();
-                    return UploadFile(file, retryCounter + 1);
-                }
-            }
+            return new ContentId(response);
         }
 
         public TestFile? DownloadContent(ContentId contentId)
         {
-            // Todo: If the file is too large, rewrite to streaming:
-            var bytes = HttpGetBytes("download/" + contentId.Id);
-            if (bytes == null) return null;
-
             var file = fileManager.CreateEmptyTestFile();
-            File.WriteAllBytes(file.Filename, bytes);
+            using var fileStream = File.OpenWrite(file.Filename);
+            using var downloadStream = Http().HttpGetStream("download/" + contentId.Id);
+            downloadStream.CopyTo(fileStream);
             return file;
         }
 
-        private byte[]? HttpGetBytes(string endpoint, int retryCounter = 0)
+        private Http Http()
         {
-            try
-            {
-                using var client = GetClient();
-                var url = $"http://127.0.0.1:{port}/api/codex/v1/" + endpoint;
-                var result = Utils.Wait(client.GetAsync(url));
-                return Utils.Wait(result.Content.ReadAsByteArrayAsync());
-            }
-            catch (Exception exception)
-            {
-                if (retryCounter > Timing.HttpCallRetryCount())
-                {
-                    Assert.Fail(exception.Message);
-                    return null;
-                }
-                else
-                {
-                    Timing.RetryDelay();
-                    return HttpGetBytes(endpoint, retryCounter + 1);
-                }
-            }
+            return new Http(ip: "127.0.0.1", port: port, baseUrl: "/api/codex/v1");
         }
-
-        private T HttpGet<T>(string endpoint, int retryCounter = 0)
-        {
-            try
-            {
-                using var client = GetClient();
-                var url = $"http://127.0.0.1:{port}/api/codex/v1/" + endpoint;
-                var result = Utils.Wait(client.GetAsync(url));
-                var json = Utils.Wait(result.Content.ReadAsStringAsync());
-                return JsonConvert.DeserializeObject<T>(json);
-            }
-            catch (Exception exception)
-            {
-                if (retryCounter > Timing.HttpCallRetryCount())
-                {
-                    Assert.Fail(exception.Message);
-                    throw;
-                }
-                else
-                {
-                    Timing.RetryDelay();
-                    return HttpGet<T>(endpoint, retryCounter + 1);
-                }
-            }
-        }
-
-        private HttpClient GetClient()
-        {
-            var client = new HttpClient();
-            client.Timeout = Timing.HttpCallTimeout();
-            return client;
-        }
-    }
-
-    public class CodexDebugResponse
-    {
-        public string id { get; set; } = string.Empty;
-        public string[] addrs { get; set; } = new string[0];
-        public string repo { get; set; } = string.Empty;
-        public string spr { get; set; } = string.Empty;
-        public CodexDebugVersionResponse codex { get; set; } = new();
-    }
-
-    public class CodexDebugVersionResponse
-    {
-        public string version { get; set; } = string.Empty;
-        public string revision { get; set; } = string.Empty;
     }
 
     public class ContentId

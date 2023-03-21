@@ -12,21 +12,17 @@ namespace CodexDistTests.TestCore
 
     public class K8sManager : IK8sManager
     {
-        private const string k8sNamespace = "codex-test-namespace";
+        public const string K8sNamespace = "codex-test-namespace";
         private readonly CodexDockerImage dockerImage = new CodexDockerImage();
-        private readonly IFileManager fileManager;
-        private int freePort;
-        private int nodeOrderNumber;
-
-        private V1Namespace? activeNamespace;
+        private readonly NumberSource numberSource = new NumberSource();
         private readonly Dictionary<OnlineCodexNode, ActiveNode> activeNodes = new Dictionary<OnlineCodexNode, ActiveNode>();
         private readonly List<string> knownActivePodNames = new List<string>();
+        private readonly IFileManager fileManager;
+        private V1Namespace? activeNamespace;
 
         public K8sManager(IFileManager fileManager)
         {
             this.fileManager = fileManager;
-            freePort = 30001;
-            nodeOrderNumber = 0;
         }
 
         public IOnlineCodexNode BringOnline(OfflineCodexNode node)
@@ -35,7 +31,7 @@ namespace CodexDistTests.TestCore
 
             EnsureTestNamespace(client);
 
-            var activeNode = new ActiveNode(node, GetFreePort(), GetNodeOrderNumber());
+            var activeNode = new ActiveNode(node, numberSource.GetFreePort(), numberSource.GetNodeOrderNumber());
             var codexNode = new OnlineCodexNode(this, fileManager, activeNode.Port);
             activeNodes.Add(codexNode, activeNode);
 
@@ -80,7 +76,7 @@ namespace CodexDistTests.TestCore
                 var nodeDescription = node.Describe();
                 foreach (var podName in node.ActivePodNames)
                 {
-                    var stream = client.ReadNamespacedPodLog(podName, k8sNamespace);
+                    var stream = client.ReadNamespacedPodLog(podName, K8sNamespace);
                     onLog(node.SelectorName, $"{nodeDescription}:{podName}", stream);
                 }
             }
@@ -98,7 +94,7 @@ namespace CodexDistTests.TestCore
         {
             WaitUntil(() =>
             {
-                activeNode.Deployment = client.ReadNamespacedDeployment(activeNode.Deployment.Name(), k8sNamespace);
+                activeNode.Deployment = client.ReadNamespacedDeployment(activeNode.Deployment.Name(), K8sNamespace);
                 return activeNode.Deployment?.Status.AvailableReplicas != null && activeNode.Deployment.Status.AvailableReplicas > 0;
             });
 
@@ -107,7 +103,7 @@ namespace CodexDistTests.TestCore
 
         private void AssignActivePodNames(ActiveNode activeNode, Kubernetes client)
         {
-            var pods = client.ListNamespacedPod(k8sNamespace);
+            var pods = client.ListNamespacedPod(K8sNamespace);
             var podNames = pods.Items.Select(p => p.Name());
             foreach (var podName in podNames)
             {
@@ -123,19 +119,19 @@ namespace CodexDistTests.TestCore
         {
             WaitUntil(() =>
             {
-                var deployment = client.ReadNamespacedDeployment(deploymentName, k8sNamespace);
+                var deployment = client.ReadNamespacedDeployment(deploymentName, K8sNamespace);
                 return deployment == null || deployment.Status.AvailableReplicas == 0;
             });
         }
 
         private void WaitUntilZeroPods(Kubernetes client)
         {
-            WaitUntil(() => !client.ListNamespacedPod(k8sNamespace).Items.Any());
+            WaitUntil(() => !client.ListNamespacedPod(K8sNamespace).Items.Any());
         }
 
         private void WaitUntilNamespaceDeleted(Kubernetes client)
         {
-            WaitUntil(() => client.ListNamespace().Items.All(n => n.Metadata.Name != k8sNamespace));
+            WaitUntil(() => client.ListNamespace().Items.All(n => n.Metadata.Name != K8sNamespace));
         }
 
         private void WaitUntil(Func<bool> predicate)
@@ -182,13 +178,13 @@ namespace CodexDistTests.TestCore
                 }
             };
 
-            node.Service = client.CreateNamespacedService(serviceSpec, k8sNamespace);
+            node.Service = client.CreateNamespacedService(serviceSpec, K8sNamespace);
         }
 
         private void DeleteService(ActiveNode node, Kubernetes client)
         {
             if (node.Service == null) return;
-            client.DeleteNamespacedService(node.Service.Name(), k8sNamespace);
+            client.DeleteNamespacedService(node.Service.Name(), K8sNamespace);
             node.Service = null;
         }
 
@@ -239,13 +235,13 @@ namespace CodexDistTests.TestCore
                 }
             };
 
-            node.Deployment = client.CreateNamespacedDeployment(deploymentSpec, k8sNamespace);
+            node.Deployment = client.CreateNamespacedDeployment(deploymentSpec, K8sNamespace);
         }
 
         private void DeleteDeployment(ActiveNode node, Kubernetes client)
         {
             if (node.Deployment == null) return;
-            client.DeleteNamespacedDeployment(node.Deployment.Name(), k8sNamespace);
+            client.DeleteNamespacedDeployment(node.Deployment.Name(), K8sNamespace);
             node.Deployment = null;
         }
 
@@ -262,8 +258,8 @@ namespace CodexDistTests.TestCore
                 ApiVersion = "v1",
                 Metadata = new V1ObjectMeta
                 {
-                    Name = k8sNamespace,
-                    Labels = new Dictionary<string, string> { { "name", k8sNamespace } }
+                    Name = K8sNamespace,
+                    Labels = new Dictionary<string, string> { { "name", K8sNamespace } }
                 }
             };
             activeNamespace = client.CreateNamespace(namespaceSpec);
@@ -291,77 +287,6 @@ namespace CodexDistTests.TestCore
             var activeNode = activeNodes[n];
             activeNodes.Remove(n);
             return activeNode;
-        }
-
-        private int GetFreePort()
-        {
-            var port = freePort;
-            freePort++;
-            return port;
-        }
-
-        private int GetNodeOrderNumber()
-        {
-            var number = nodeOrderNumber;
-            nodeOrderNumber++;
-            return number;
-        }
-
-        public class ActiveNode
-        {
-            public ActiveNode(OfflineCodexNode origin, int port, int orderNumber)
-            {
-                Origin = origin;
-                SelectorName = orderNumber.ToString().PadLeft(6, '0');
-                Port = port;
-            }
-
-            public OfflineCodexNode Origin { get; }
-            public string SelectorName { get; }
-            public int Port { get; }
-            public V1Deployment? Deployment { get; set; }
-            public V1Service? Service { get; set; }
-            public List<string> ActivePodNames { get; } = new List<string>();
-
-            public V1ObjectMeta GetServiceMetadata()
-            {
-                return new V1ObjectMeta
-                {
-                    Name = "codex-test-entrypoint-" + SelectorName,
-                    NamespaceProperty = k8sNamespace
-                };
-            }
-
-            public V1ObjectMeta GetDeploymentMetadata()
-            {
-                return new V1ObjectMeta
-                {
-                    Name = "codex-test-node-" + SelectorName,
-                    NamespaceProperty = k8sNamespace
-                };
-            }
-
-            public Dictionary<string, string> GetSelector()
-            {
-                return new Dictionary<string, string> { { "codex-test-node", "dist-test-" + SelectorName } };
-            }
-
-            public string GetContainerPortName()
-            {
-                //Caution, was: "codex-api-port" + SelectorName
-                //but string length causes 'UnprocessableEntity' exception in k8s.
-                return "api-" + SelectorName;
-            }
-
-            public string GetContainerName()
-            {
-                return "codex-test-node";
-            }
-
-            public string Describe()
-            {
-                return $"CodexNode{SelectorName}-Port:{Port}-{Origin.Describe()}";
-            }
         }
     }
 }
