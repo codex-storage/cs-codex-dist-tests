@@ -34,7 +34,7 @@ namespace CodexDistTests.TestCore
         {
             var result = CreateEmptyTestFile();
             GenerateFileBytes(result, size);
-            TestLog.Log($"Generated {size} bytes of content for file '{result.Filename}'.");
+            TestLog.Log($"Generated {size.SizeInBytes} bytes of content for file '{result.Filename}'.");
             return result;
         }
 
