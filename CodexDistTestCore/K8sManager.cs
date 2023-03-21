@@ -2,7 +2,7 @@
 using k8s.Models;
 using NUnit.Framework;
 
-namespace CodexDistTests.TestCore
+namespace CodexDistTestCore
 {
     public interface IK8sManager
     {

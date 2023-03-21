@@ -1,6 +1,6 @@
 ﻿using k8s.Models;
 
-namespace CodexDistTests.TestCore
+namespace CodexDistTestCore
 {
     public class ActiveNode
     {

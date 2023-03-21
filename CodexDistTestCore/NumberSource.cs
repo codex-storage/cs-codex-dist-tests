@@ -1,4 +1,4 @@
-﻿namespace CodexDistTests.TestCore
+﻿namespace CodexDistTestCore
 {
     public class NumberSource
     {

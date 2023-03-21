@@ -1,6 +1,6 @@
 ﻿using NUnit.Framework;
 
-namespace CodexDistTests.TestCore
+namespace CodexDistTestCore
 {
     public class TestLog
     {
@@ -13,7 +13,7 @@ namespace CodexDistTests.TestCore
             file!.Write(message);
         }
 
-        public static void Error(string message) 
+        public static void Error(string message)
         {
             Log($"[ERROR] {message}");
         }
@@ -32,7 +32,7 @@ namespace CodexDistTests.TestCore
         {
             if (file == null) throw new InvalidOperationException("No test is started!");
 
-            
+
             var result = TestContext.CurrentContext.Result;
 
             Log($"Finished: {GetTestName()} = {result.Outcome.Status}");
@@ -104,7 +104,7 @@ namespace CodexDistTests.TestCore
         {
             try
             {
-                File.AppendAllLines(filename + subfile + ".log", new[] {  message });
+                File.AppendAllLines(filename + subfile + ".log", new[] { message });
             }
             catch (Exception ex)
             {

@@ -1,6 +1,6 @@
 ﻿using NUnit.Framework;
 
-namespace CodexDistTests.TestCore
+namespace CodexDistTestCore
 {
     [AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
     public class UseLongTimeoutsAttribute : PropertyAttribute
@@ -78,7 +78,7 @@ namespace CodexDistTests.TestCore
         {
             return TimeSpan.FromSeconds(1);
         }
-            
+
         public TimeSpan K8sOperationTimeout()
         {
             return TimeSpan.FromMinutes(5);

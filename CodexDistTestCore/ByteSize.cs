@@ -1,4 +1,4 @@
-﻿namespace CodexDistTests.TestCore
+﻿namespace CodexDistTestCore
 {
     public class ByteSize
     {
@@ -21,37 +21,37 @@
 
         public static ByteSize MB(this long i)
         {
-            return KB(i * Kilo);
+            return (i * Kilo).KB();
         }
 
         public static ByteSize GB(this long i)
         {
-            return MB(i * Kilo);
+            return (i * Kilo).MB();
         }
 
         public static ByteSize TB(this long i)
         {
-            return GB(i * Kilo);
+            return (i * Kilo).GB();
         }
 
         public static ByteSize KB(this int i)
         {
-            return KB(Convert.ToInt64(i));
+            return Convert.ToInt64(i).KB();
         }
 
         public static ByteSize MB(this int i)
         {
-            return MB(Convert.ToInt64(i));
+            return Convert.ToInt64(i).MB();
         }
 
         public static ByteSize GB(this int i)
         {
-            return GB(Convert.ToInt64(i));
+            return Convert.ToInt64(i).GB();
         }
 
         public static ByteSize TB(this int i)
         {
-            return TB(Convert.ToInt64(i));
+            return Convert.ToInt64(i).TB();
         }
     }
 }

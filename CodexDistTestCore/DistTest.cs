@@ -1,6 +1,6 @@
 ﻿using NUnit.Framework;
 
-namespace CodexDistTests.TestCore
+namespace CodexDistTestCore
 {
     [SetUpFixture]
     public abstract class DistTest

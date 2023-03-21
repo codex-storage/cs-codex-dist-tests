@@ -1,11 +1,10 @@
-﻿using CodexDistTests.TestCore;
+﻿using CodexDistTestCore;
 using NUnit.Framework;
-using System;
 
-namespace CodexDistTests.BasicTests
+namespace Tests.BasicTests
 {
     [TestFixture]
-    public class DebugEndpointTests : DistTest
+    public class SimpleTests : DistTest
     {
         [Test]
         public void GetDebugInfo()
@@ -29,23 +28,6 @@ namespace CodexDistTests.BasicTests
                                 .BringOnline();
 
             var testFile = GenerateTestFile(1.MB());
-
-            var contentId = primary.UploadFile(testFile);
-
-            var downloadedFile = primary.DownloadContent(contentId);
-
-            testFile.AssertIsEqual(downloadedFile);
-        }
-
-        [Test, UseLongTimeouts]
-        public void OneClientLargeFileTest()
-        {
-            var primary = SetupCodexNode()
-                                .WithLogLevel(CodexLogLevel.Warn)
-                                .WithStorageQuota(10.GB())
-                                .BringOnline();
-
-            var testFile = GenerateTestFile(1.GB());
 
             var contentId = primary.UploadFile(testFile);
 

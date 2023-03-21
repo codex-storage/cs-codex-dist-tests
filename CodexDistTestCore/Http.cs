@@ -2,7 +2,7 @@
 using NUnit.Framework;
 using System.Net.Http.Headers;
 
-namespace CodexDistTests.TestCore
+namespace CodexDistTestCore
 {
     public class Http
     {
@@ -34,7 +34,7 @@ namespace CodexDistTests.TestCore
 
         public string HttpPostStream(string route, Stream stream)
         {
-            return Retry(() => 
+            return Retry(() =>
             {
                 using var client = GetClient();
                 var url = GetUrl() + route;

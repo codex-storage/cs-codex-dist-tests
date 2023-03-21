@@ -1,4 +1,4 @@
-﻿namespace CodexDistTests.TestCore
+﻿namespace CodexDistTestCore
 {
     public static class Utils
     {

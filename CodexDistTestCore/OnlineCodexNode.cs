@@ -1,6 +1,6 @@
 ﻿using NUnit.Framework;
 
-namespace CodexDistTests.TestCore
+namespace CodexDistTestCore
 {
     public interface IOnlineCodexNode
     {
@@ -65,7 +65,7 @@ namespace CodexDistTests.TestCore
         {
             Id = id;
         }
-        
+
         public string Id { get; }
     }
 }
