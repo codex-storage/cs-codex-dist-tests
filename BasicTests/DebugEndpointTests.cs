@@ -9,11 +9,14 @@ namespace CodexDistTests.BasicTests
         [Test]
         public void GetDebugInfo()
         {
+            var dockerImage = new CodexDockerImage();
+
             var node = SetupCodexNode().BringOnline();
 
             var debugInfo = node.GetDebugInfo();
 
             Assert.That(debugInfo.spr, Is.Not.Empty);
+            Assert.That(debugInfo.codex.revision, Is.EqualTo(dockerImage.GetExpectedImageRevision()));
         }
 
         [Test]

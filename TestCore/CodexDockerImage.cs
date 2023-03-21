@@ -6,7 +6,12 @@ namespace CodexDistTests.TestCore
     {
         public string GetImageTag()
         {
-            return "thatbenbierens/nim-codex:sha-c9a62de";
+            return "thatbenbierens/nim-codex:sha-b204837";
+        }
+
+        public string GetExpectedImageRevision()
+        {
+            return "b20483";
         }
 
         public List<V1EnvVar> CreateEnvironmentVariables(OfflineCodexNode node)
