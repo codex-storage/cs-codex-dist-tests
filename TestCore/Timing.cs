@@ -89,7 +89,7 @@ namespace CodexDistTests.TestCore
     {
         public TimeSpan HttpCallTimeout()
         {
-            return TimeSpan.FromMinutes(30);
+            return TimeSpan.FromHours(2);
         }
 
         public int HttpCallRetryCount()

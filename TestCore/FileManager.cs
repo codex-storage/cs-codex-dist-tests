@@ -11,7 +11,7 @@ namespace CodexDistTests.TestCore
 
     public class FileManager : IFileManager
     {
-        public const int ChunkSize = 1024;
+        public const int ChunkSize = 1024 * 1024;
         private const string Folder = "TestDataFiles";
         private readonly Random random = new Random();
         private readonly List<TestFile> activeFiles = new List<TestFile>();

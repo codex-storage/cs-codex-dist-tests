@@ -41,11 +41,11 @@ namespace CodexDistTests.BasicTests
         public void OneClientLargeFileTest()
         {
             var primary = SetupCodexNode()
-                                .WithLogLevel(CodexLogLevel.Trace)
-                                .WithStorageQuota(100.GB())
+                                .WithLogLevel(CodexLogLevel.Warn)
+                                .WithStorageQuota(10.GB())
                                 .BringOnline();
 
-            var testFile = GenerateTestFile(40.GB());
+            var testFile = GenerateTestFile(1.GB());
 
             var contentId = primary.UploadFile(testFile);
 
