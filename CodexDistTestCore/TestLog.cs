@@ -62,15 +62,16 @@ namespace CodexDistTestCore
             k8sManager.FetchAllPodsLogs(WritePodLog);
         }
 
-        private static void WritePodLog(string id, string nodeDescription, Stream stream)
+        private static void WritePodLog(int id, string nodeDescription, Stream stream)
         {
-            Log($"{nodeDescription} -->> {id}");
-            LogRaw(nodeDescription, id);
+            var logFile = id.ToString().PadLeft(6, '0');
+            Log($"{nodeDescription} -->> {logFile}");
+            LogRaw(nodeDescription, logFile);
             var reader = new StreamReader(stream);
             var line = reader.ReadLine();
             while (line != null)
             {
-                LogRaw(line, id);
+                LogRaw(line, logFile);
                 line = reader.ReadLine();
             }
         }

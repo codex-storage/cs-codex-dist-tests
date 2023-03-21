@@ -15,7 +15,7 @@ namespace CodexDistTestCore
         public const string K8sNamespace = "codex-test-namespace";
         private readonly CodexDockerImage dockerImage = new CodexDockerImage();
         private readonly NumberSource activeDeploymentOrderNumberSource = new NumberSource(0);
-        private readonly Dictionary<OnlineCodexNodes, ActiveDeployment> activeDeployments = new Dictionary<OnlineCodexNodes, ActiveDeployment>();
+        private readonly List<OnlineCodexNodes> activeCodexNodes = new List<OnlineCodexNodes>();
         private readonly List<string> knownActivePodNames = new List<string>();
         private readonly IFileManager fileManager;
 
@@ -24,35 +24,31 @@ namespace CodexDistTestCore
             this.fileManager = fileManager;
         }
 
-        public IOnlineCodexNodes BringOnline(OfflineCodexNodes node)
+        public IOnlineCodexNodes BringOnline(OfflineCodexNodes offline)
         {
             var client = CreateClient();
             EnsureTestNamespace(client);
 
-            var factory = new CodexNodeContainerFactory();
-            var list = new List<OnlineCodexNode>();
-            var containers = new List<CodexNodeContainer>();
-            for (var i = 0; i < node.NumberOfNodes; i++)
-            {
-                var container = factory.CreateNext();
-                containers.Add(container);
+            var containers = CreateContainers(offline.NumberOfNodes);
+            var online = containers.Select(c => new OnlineCodexNode(fileManager, c)).ToArray();
+            var result = new OnlineCodexNodes(activeDeploymentOrderNumberSource.GetNextNumber(), offline, this, online);
+            activeCodexNodes.Add(result);
 
-                var codexNode = new OnlineCodexNode(fileManager, container);
-                list.Add(codexNode);
-            }
+            CreateDeployment(client, result, offline);
+            CreateService(result, client);
 
-            var activeDeployment = new ActiveDeployment(node, activeDeploymentOrderNumberSource.GetNextNumber(), containers.ToArray());
-
-            var result = new OnlineCodexNodes(this, list.ToArray());
-            activeDeployments.Add(result, activeDeployment);
-
-            CreateDeployment(activeDeployment, client, node);
-            CreateService(activeDeployment, client);
-
-            WaitUntilOnline(activeDeployment, client);
-            TestLog.Log($"{node.NumberOfNodes} Codex nodes online.");
+            WaitUntilOnline(result, client);
+            TestLog.Log($"{offline.NumberOfNodes} Codex nodes online.");
 
             return result;
+        }
+
+        private CodexNodeContainer[] CreateContainers(int number)
+        {
+            var factory = new CodexNodeContainerFactory();
+            var containers = new List<CodexNodeContainer>();
+            for (var i = 0; i < number; i++) containers.Add(factory.CreateNext());
+            return containers.ToArray();
         }
 
         public IOfflineCodexNodes BringOffline(IOnlineCodexNodes node)
@@ -79,40 +75,40 @@ namespace CodexDistTestCore
             WaitUntilNamespaceDeleted(client);
         }
 
-        public void FetchAllPodsLogs(Action<string, string, Stream> onLog)
+        public void FetchAllPodsLogs(Action<int, string, Stream> onLog)
         {
             var client = CreateClient();
-            foreach (var node in activeDeployments.Values)
+            foreach (var node in activeCodexNodes)
             {
                 var nodeDescription = node.Describe();
                 foreach (var podName in node.ActivePodNames)
                 {
                     var stream = client.ReadNamespacedPodLog(podName, K8sNamespace);
-                    onLog(node.SelectorName, $"{nodeDescription}:{podName}", stream);
+                    onLog(node.OrderNumber, $"{nodeDescription}:{podName}", stream);
                 }
             }
         }
 
-        private void BringOffline(ActiveDeployment activeNode, Kubernetes client)
+        private void BringOffline(OnlineCodexNodes online, Kubernetes client)
         {
-            DeleteDeployment(activeNode, client);
-            DeleteService(activeNode, client);
+            DeleteDeployment(client, online);
+            DeleteService(client, online);
         }
 
         #region Waiting
 
-        private void WaitUntilOnline(ActiveDeployment activeNode, Kubernetes client)
+        private void WaitUntilOnline(OnlineCodexNodes online, Kubernetes client)
         {
             WaitUntil(() =>
             {
-                activeNode.Deployment = client.ReadNamespacedDeployment(activeNode.Deployment.Name(), K8sNamespace);
-                return activeNode.Deployment?.Status.AvailableReplicas != null && activeNode.Deployment.Status.AvailableReplicas > 0;
+                online.Deployment = client.ReadNamespacedDeployment(online.Deployment.Name(), K8sNamespace);
+                return online.Deployment?.Status.AvailableReplicas != null && online.Deployment.Status.AvailableReplicas > 0;
             });
 
-            AssignActivePodNames(activeNode, client);
+            AssignActivePodNames(online, client);
         }
 
-        private void AssignActivePodNames(ActiveDeployment activeNode, Kubernetes client)
+        private void AssignActivePodNames(OnlineCodexNodes online, Kubernetes client)
         {
             var pods = client.ListNamespacedPod(K8sNamespace);
             var podNames = pods.Items.Select(p => p.Name());
@@ -121,7 +117,7 @@ namespace CodexDistTestCore
                 if (!knownActivePodNames.Contains(podName))
                 {
                     knownActivePodNames.Add(podName);
-                    activeNode.ActivePodNames.Add(podName);
+                    online.ActivePodNames.Add(podName);
                 }
             }
         }
@@ -166,27 +162,28 @@ namespace CodexDistTestCore
 
         #region Service management
 
-        private void CreateService(ActiveDeployment activeDeployment, Kubernetes client)
+        private void CreateService(OnlineCodexNodes online, Kubernetes client)
         {
             var serviceSpec = new V1Service
             {
                 ApiVersion = "v1",
-                Metadata = activeDeployment.GetServiceMetadata(),
+                Metadata = online.GetServiceMetadata(),
                 Spec = new V1ServiceSpec
                 {
                     Type = "NodePort",
-                    Selector = activeDeployment.GetSelector(),
-                    Ports = CreateServicePorts(activeDeployment)
+                    Selector = online.GetSelector(),
+                    Ports = CreateServicePorts(online)
                 }
             };
 
-            activeDeployment.Service = client.CreateNamespacedService(serviceSpec, K8sNamespace);
+            online.Service = client.CreateNamespacedService(serviceSpec, K8sNamespace);
         }
 
-        private List<V1ServicePort> CreateServicePorts(ActiveDeployment activeDeployment)
+        private List<V1ServicePort> CreateServicePorts(OnlineCodexNodes online)
         {
             var result = new List<V1ServicePort>();
-            foreach (var container in activeDeployment.Containers)
+            var containers = online.GetContainers();
+            foreach (var container in containers)
             {
                 result.Add(new V1ServicePort
                 {
@@ -199,51 +196,52 @@ namespace CodexDistTestCore
             return result;
         }
 
-        private void DeleteService(ActiveDeployment node, Kubernetes client)
+        private void DeleteService(Kubernetes client, OnlineCodexNodes online)
         {
-            if (node.Service == null) return;
-            client.DeleteNamespacedService(node.Service.Name(), K8sNamespace);
-            node.Service = null;
+            if (online.Service == null) return;
+            client.DeleteNamespacedService(online.Service.Name(), K8sNamespace);
+            online.Service = null;
         }
 
         #endregion
 
         #region Deployment management
 
-        private void CreateDeployment(ActiveDeployment node, Kubernetes client, OfflineCodexNodes codexNode)
+        private void CreateDeployment(Kubernetes client, OnlineCodexNodes online, OfflineCodexNodes offline)
         {
             var deploymentSpec = new V1Deployment
             {
                 ApiVersion = "apps/v1",
-                Metadata = node.GetDeploymentMetadata(),
+                Metadata = online.GetDeploymentMetadata(),
                 Spec = new V1DeploymentSpec
                 {
                     Replicas = 1,
                     Selector = new V1LabelSelector
                     {
-                        MatchLabels = node.GetSelector()
+                        MatchLabels = online.GetSelector()
                     },
                     Template = new V1PodTemplateSpec
                     {
                         Metadata = new V1ObjectMeta
                         {
-                            Labels = node.GetSelector()
+                            Labels = online.GetSelector()
                         },
                         Spec = new V1PodSpec
                         {
-                            Containers = CreateDeploymentContainers(node, codexNode)
+                            Containers = CreateDeploymentContainers(online, offline)
                         }
                     }
                 }
             };
 
-            node.Deployment = client.CreateNamespacedDeployment(deploymentSpec, K8sNamespace);
+            online.Deployment = client.CreateNamespacedDeployment(deploymentSpec, K8sNamespace);
         }
 
-        private List<V1Container> CreateDeploymentContainers(ActiveDeployment node,OfflineCodexNodes codexNode)
+        private List<V1Container> CreateDeploymentContainers(OnlineCodexNodes online, OfflineCodexNodes offline)
         {
             var result = new List<V1Container>();
-            foreach (var container in node.Containers)
+            var containers = online.GetContainers();
+            foreach (var container in containers)
             {
                 result.Add(new V1Container
                 {
@@ -257,17 +255,17 @@ namespace CodexDistTestCore
                             Name = container.ContainerPortName
                         }
                     },
-                    Env = dockerImage.CreateEnvironmentVariables(codexNode, container)
+                    Env = dockerImage.CreateEnvironmentVariables(offline, container)
                 });
             }
             return result;
         }
 
-        private void DeleteDeployment(ActiveDeployment node, Kubernetes client)
+        private void DeleteDeployment(Kubernetes client, OnlineCodexNodes online)
         {
-            if (node.Deployment == null) return;
-            client.DeleteNamespacedDeployment(node.Deployment.Name(), K8sNamespace);
-            node.Deployment = null;
+            if (online.Deployment == null) return;
+            client.DeleteNamespacedDeployment(online.Deployment.Name(), K8sNamespace);
+            online.Deployment = null;
         }
 
         #endregion
@@ -312,12 +310,11 @@ namespace CodexDistTestCore
             return client.ListNamespace().Items.Any(n => n.Metadata.Name == K8sNamespace);
         }
 
-        private ActiveDeployment GetAndRemoveActiveNodeFor(IOnlineCodexNodes node)
+        private OnlineCodexNodes GetAndRemoveActiveNodeFor(IOnlineCodexNodes node)
         {
             var n = (OnlineCodexNodes)node;
-            var activeNode = activeDeployments[n];
-            activeDeployments.Remove(n);
-            return activeNode;
+            activeCodexNodes.Remove(n);
+            return n;
         }
     }
 }

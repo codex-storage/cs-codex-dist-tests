@@ -12,13 +12,14 @@ namespace CodexDistTestCore
     public class OnlineCodexNode : IOnlineCodexNode
     {
         private readonly IFileManager fileManager;
-        private readonly CodexNodeContainer environment;
 
         public OnlineCodexNode(IFileManager fileManager, CodexNodeContainer environment)
         {
             this.fileManager = fileManager;
-            this.environment = environment;
+            Container = environment;
         }
+
+        public CodexNodeContainer Container { get; }
 
         public CodexDebugResponse GetDebugInfo()
         {
@@ -47,7 +48,7 @@ namespace CodexDistTestCore
 
         private Http Http()
         {
-            return new Http(ip: "127.0.0.1", port: environment.ServicePort, baseUrl: "/api/codex/v1");
+            return new Http(ip: "127.0.0.1", port: Container.ServicePort, baseUrl: "/api/codex/v1");
         }
     }
 
