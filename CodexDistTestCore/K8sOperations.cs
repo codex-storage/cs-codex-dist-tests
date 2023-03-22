@@ -29,7 +29,7 @@ namespace CodexDistTestCore
             CreateService(online);
 
             WaitUntilOnline(online);
-            AssignActivePodNames(online);
+            FetchPodInfo(online);
         }
 
         public void BringOffline(CodexNodeGroup online)
@@ -65,19 +65,24 @@ namespace CodexDistTestCore
             var n = (OnlineCodexNode)node;
             var nodeDescription = $"{online.Describe()} contains {n.GetName()}";
 
-            var stream = client.ReadNamespacedPodLog(online.PodName, K8sNamespace, n.Container.Name);
+            var stream = client.ReadNamespacedPodLog(online.PodInfo!.Name, K8sNamespace, n.Container.Name);
             logHandler.Log(logNumberSource.GetNextNumber(), nodeDescription, stream);
         }
 
-        private void AssignActivePodNames(CodexNodeGroup online)
+        private void FetchPodInfo(CodexNodeGroup online)
         {
-            var pods = client.ListNamespacedPod(K8sNamespace);
-            var podNames = pods.Items.Select(p => p.Name());
+            var pods = client.ListNamespacedPod(K8sNamespace).Items;
 
-            var newPodNames = podNames.Where(p => !knownPods.Contains(p)).ToArray();
-            Assert.That(newPodNames.Length, Is.EqualTo(1), "Expected only 1 pod to be created. Test infra failure.");
+            var newPods = pods.Where(p => !knownPods.Contains(p.Name())).ToArray();
+            Assert.That(newPods.Length, Is.EqualTo(1), "Expected only 1 pod to be created. Test infra failure.");
 
-            online.PodName = newPodNames.Single();
+            var newPod = newPods.Single();
+            online.PodInfo = new PodInfo(newPod.Name(), newPod.Status.PodIP);
+
+            Assert.That(!string.IsNullOrEmpty(online.PodInfo.Name), "Invalid pod name received. Test infra failure.");
+            Assert.That(!string.IsNullOrEmpty(online.PodInfo.Ip), "Invalid pod IP received. Test infra failure.");
+
+            knownPods.Add(newPod.Name());
         }
 
         #region Waiting

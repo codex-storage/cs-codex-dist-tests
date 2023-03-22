@@ -26,6 +26,7 @@ namespace CodexDistTestCore
         }
 
         public CodexNodeContainer Container { get; }
+        public CodexNodeGroup Group { get; internal set; } = null!;
 
         public string GetName()
         {
@@ -78,10 +79,17 @@ namespace CodexDistTestCore
 
         private string GetPeerMultiAddress(OnlineCodexNode peer, CodexDebugResponse peerInfo)
         {
-            // Todo: If peer is in a different pod, we must replace 0.0.0.0 with the address of that pod!
-
-            return peerInfo.addrs.First();
+            var multiAddress = peerInfo.addrs.First();
             // Todo: Is there a case where First address in list is not the way?
+
+            if (Group == peer.Group)
+            {
+                return multiAddress;
+            }
+
+            // The peer we want to connect is in a different pod.
+            // We must replace the default IP with the pod IP in the multiAddress.
+            return multiAddress.Replace("0.0.0.0", peer.Group.PodInfo!.Ip);
         }
 
         private void DownloadToFile(string contentId, TestFile file)

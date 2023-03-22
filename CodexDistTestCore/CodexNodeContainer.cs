@@ -24,19 +24,46 @@
         public string DataDir { get; }
     }
 
+    public class CodexGroupNumberSource
+    {
+        private readonly NumberSource codexNodeGroupNumberSource = new NumberSource(0);
+        private readonly NumberSource groupContainerNameSource = new NumberSource(1);
+        private readonly NumberSource servicePortSource = new NumberSource(30001);
+
+        public int GetNextCodexNodeGroupNumber()
+        {
+            return codexNodeGroupNumberSource.GetNextNumber();
+        }
+
+        public string GetNextServicePortName()
+        {
+            return $"node{groupContainerNameSource.GetNextNumber()}";
+        }
+
+        public int GetNextServicePort()
+        {
+            return servicePortSource.GetNextNumber();
+        }
+    }
+
     public class CodexNodeContainerFactory
     {
         private readonly NumberSource containerNameSource = new NumberSource(1);
-        private readonly NumberSource servicePortSource = new NumberSource(30001);
         private readonly NumberSource codexPortSource = new NumberSource(8080);
+        private readonly CodexGroupNumberSource groupContainerFactory;
+
+        public CodexNodeContainerFactory(CodexGroupNumberSource groupContainerFactory)
+        {
+            this.groupContainerFactory = groupContainerFactory;
+        }
 
         public CodexNodeContainer CreateNext()
         {
             var n = containerNameSource.GetNextNumber();
             return new CodexNodeContainer(
                 name: $"codex-node{n}",
-                servicePort: servicePortSource.GetNextNumber(),
-                servicePortName: $"node{n}",
+                servicePort: groupContainerFactory.GetNextServicePort(),
+                servicePortName: groupContainerFactory.GetNextServicePortName(),
                 apiPort: codexPortSource.GetNextNumber(),
                 containerPortName: $"api-{n}",
                 discoveryPort: codexPortSource.GetNextNumber(),

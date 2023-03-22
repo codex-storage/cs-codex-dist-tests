@@ -19,6 +19,8 @@ namespace CodexDistTestCore
             Origin = origin;
             this.k8SManager = k8SManager;
             Nodes = nodes;
+
+            foreach (var n in nodes) n.Group = this;
         }
 
         public IOnlineCodexNode this[int index]
@@ -39,7 +41,7 @@ namespace CodexDistTestCore
         public OnlineCodexNode[] Nodes { get; }
         public V1Deployment? Deployment { get; set; }
         public V1Service? Service { get; set; }
-        public string? PodName { get; set; }
+        public PodInfo? PodInfo { get; set; }
 
         public CodexNodeContainer[] GetContainers()
         {
@@ -83,5 +85,17 @@ namespace CodexDistTestCore
         {
             return $"CodexNodeGroup#{OrderNumber}-{Origin.Describe()}";
         }
+    }
+
+    public class PodInfo
+    {
+        public PodInfo(string name, string ip)
+        {
+            Name = name;
+            Ip = ip;
+        }
+
+        public string Name { get; }
+        public string Ip { get; }
     }
 }

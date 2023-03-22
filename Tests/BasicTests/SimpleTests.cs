@@ -47,6 +47,25 @@ namespace Tests.BasicTests
             var primary = group[0];
             var secondary = group[1];
 
+            PerformTwoClientTest(primary, secondary);
+        }
+
+        [Test]
+        public void TwoClientTwoPodTest()
+        {
+            var primary = SetupCodexNodes(1)
+                            .WithStorageQuota(2.MB())
+                            .BringOnline()[0];
+
+            var secondary = SetupCodexNodes(1)
+                            .WithStorageQuota(2.MB())
+                            .BringOnline()[0];
+
+            PerformTwoClientTest(primary, secondary);
+        }
+
+        private void PerformTwoClientTest(IOnlineCodexNode primary, IOnlineCodexNode secondary)
+        {
             primary.ConnectToPeer(secondary);
 
             var testFile = GenerateTestFile(1.MB());

@@ -8,7 +8,7 @@
 
     public class K8sManager : IK8sManager
     {
-        private readonly NumberSource onlineCodexNodeOrderNumberSource = new NumberSource(0);
+        private readonly CodexGroupNumberSource codexGroupNumberSource = new CodexGroupNumberSource();
         private readonly List<CodexNodeGroup> onlineCodexNodes = new List<CodexNodeGroup>();
         private readonly KnownK8sPods knownPods = new KnownK8sPods();
         private readonly TestLog log;
@@ -56,14 +56,14 @@
         {
             var containers = CreateContainers(offline.NumberOfNodes);
             var online = containers.Select(c => new OnlineCodexNode(log, fileManager, c)).ToArray();
-            var result = new CodexNodeGroup(onlineCodexNodeOrderNumberSource.GetNextNumber(), offline, this, online);
+            var result = new CodexNodeGroup(codexGroupNumberSource.GetNextCodexNodeGroupNumber(), offline, this, online);
             onlineCodexNodes.Add(result);
             return result;
         }
 
         private CodexNodeContainer[] CreateContainers(int number)
         {
-            var factory = new CodexNodeContainerFactory();
+            var factory = new CodexNodeContainerFactory(codexGroupNumberSource);
             var containers = new List<CodexNodeContainer>();
             for (var i = 0; i < number; i++) containers.Add(factory.CreateNext());
             return containers.ToArray();
