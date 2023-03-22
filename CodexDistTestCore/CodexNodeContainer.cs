@@ -2,10 +2,11 @@
 {
     public class CodexNodeContainer
     {
-        public CodexNodeContainer(string name, int servicePort, int apiPort, string containerPortName, int discoveryPort, int listenPort, string dataDir)
+        public CodexNodeContainer(string name, int servicePort, string servicePortName, int apiPort, string containerPortName, int discoveryPort, int listenPort, string dataDir)
         {
             Name = name;
             ServicePort = servicePort;
+            ServicePortName = servicePortName;
             ApiPort = apiPort;
             ContainerPortName = containerPortName;
             DiscoveryPort = discoveryPort;
@@ -15,6 +16,7 @@
 
         public string Name { get; }
         public int ServicePort { get; }
+        public string ServicePortName { get; }
         public int ApiPort { get; }
         public string ContainerPortName { get; }
         public int DiscoveryPort { get; }
@@ -34,6 +36,7 @@
             return new CodexNodeContainer(
                 name: $"codex-node{n}",
                 servicePort: servicePortSource.GetNextNumber(),
+                servicePortName: $"node{n}",
                 apiPort: codexPortSource.GetNextNumber(),
                 containerPortName: $"api-{n}",
                 discoveryPort: codexPortSource.GetNextNumber(),

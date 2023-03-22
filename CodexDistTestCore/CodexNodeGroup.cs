@@ -1,8 +1,9 @@
 ﻿using k8s.Models;
+using System.Collections;
 
 namespace CodexDistTestCore
 {
-    public interface ICodexNodeGroup
+    public interface ICodexNodeGroup : IEnumerable<IOnlineCodexNode>
     {
         IOfflineCodexNodes BringOffline();
         IOnlineCodexNode this[int index] { get; }
@@ -43,6 +44,16 @@ namespace CodexDistTestCore
         public CodexNodeContainer[] GetContainers()
         {
             return Nodes.Select(n => n.Container).ToArray();
+        }
+
+        public IEnumerator<IOnlineCodexNode> GetEnumerator()
+        {
+            return Nodes.Cast<IOnlineCodexNode>().GetEnumerator();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return Nodes.GetEnumerator();
         }
 
         public V1ObjectMeta GetServiceMetadata()

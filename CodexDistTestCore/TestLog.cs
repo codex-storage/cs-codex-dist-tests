@@ -49,7 +49,14 @@ namespace CodexDistTestCore
         {
             var test = TestContext.CurrentContext.Test;
             var className = test.ClassName!.Substring(test.ClassName.LastIndexOf('.') + 1);
-            return $"{className}.{test.MethodName}";
+            var args = FormatArguments(test);
+            return $"{className}.{test.MethodName}{args}";
+        }
+
+        private static string FormatArguments(TestContext.TestAdapter test)
+        {
+            if (test.Arguments == null || !test.Arguments.Any()) return "";
+            return $"[{string.Join(',', test.Arguments)}]";
         }
     }
 

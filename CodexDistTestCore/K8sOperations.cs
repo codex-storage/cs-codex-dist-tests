@@ -151,8 +151,9 @@ namespace CodexDistTestCore
             {
                 result.Add(new V1ServicePort
                 {
+                    Name = container.ServicePortName,
                     Protocol = "TCP",
-                    Port = 8080,
+                    Port = container.ApiPort,
                     TargetPort = container.ContainerPortName,
                     NodePort = container.ServicePort
                 });
