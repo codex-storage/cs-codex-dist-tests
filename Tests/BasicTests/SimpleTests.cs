@@ -23,9 +23,9 @@ namespace Tests.BasicTests
         public void OneClientTest()
         {
             var primary = SetupCodexNodes(1)
-                                .WithLogLevel(CodexLogLevel.Trace)
-                                .WithStorageQuota(2.MB())
-                                .BringOnline()[0];
+                            .WithLogLevel(CodexLogLevel.Trace)
+                            .WithStorageQuota(2.MB())
+                            .BringOnline()[0];
 
             var testFile = GenerateTestFile(1.MB());
 
@@ -36,26 +36,26 @@ namespace Tests.BasicTests
             testFile.AssertIsEqual(downloadedFile);
         }
 
-        //[Test]
-        //public void TwoClientTest()
-        //{
-        //    var primary = SetupCodexNode()
-        //                        .WithLogLevel(CodexLogLevel.Trace)
-        //                        .WithStorageQuota(1024 * 1024 * 2)
-        //                        .BringOnline();
+        [Test]
+        public void TwoClientOnePodTest()
+        {
+            var group = SetupCodexNodes(2)
+                        .WithLogLevel(CodexLogLevel.Trace)
+                        .WithStorageQuota(2.MB())
+                        .BringOnline();
 
-        //    var secondary = SetupCodexNode()
-        //                        .WithLogLevel(CodexLogLevel.Trace)
-        //                        .WithBootstrapNode(primary)
-        //                        .BringOnline();
+            var primary = group[0];
+            var secondary = group[1];
 
-        //    var testFile = GenerateTestFile(1024 * 1024);
+            primary.ConnectToPeer(secondary);
 
-        //    var contentId = primary.UploadFile(testFile);
+            var testFile = GenerateTestFile(1.MB());
 
-        //    var downloadedFile = secondary.DownloadContent(contentId);
+            var contentId = primary.UploadFile(testFile);
 
-        //    testFile.AssertIsEqual(downloadedFile);
-        //}
+            var downloadedFile = secondary.DownloadContent(contentId);
+
+            testFile.AssertIsEqual(downloadedFile);
+        }
     }
 }

@@ -7,10 +7,14 @@ namespace CodexDistTestCore
         CodexDebugResponse GetDebugInfo();
         ContentId UploadFile(TestFile file);
         TestFile? DownloadContent(ContentId contentId);
+        void ConnectToPeer(IOnlineCodexNode node);
     }
 
     public class OnlineCodexNode : IOnlineCodexNode
     {
+        private const string SuccessfullyConnectedMessage = "Successfully connected to peer";
+        private const string UploadFailedMessage = "Unable to store block";
+
         private readonly TestLog log;
         private readonly IFileManager fileManager;
 
@@ -26,30 +30,53 @@ namespace CodexDistTestCore
         public CodexDebugResponse GetDebugInfo()
         {
             var response = Http().HttpGetJson<CodexDebugResponse>("debug/info");
-            Log("Got DebugInfo with id: " + response.id);
+            Log($"Got DebugInfo with id: {response.id}.");
             return response;
         }
 
         public ContentId UploadFile(TestFile file)
         {
-            Log($"Uploading file of size {file.GetFileSize()}");
+            Log($"Uploading file of size {file.GetFileSize()}...");
             using var fileStream = File.OpenRead(file.Filename);
             var response = Http().HttpPostStream("upload", fileStream);
-            if (response.StartsWith("Unable to store block"))
+            if (response.StartsWith(UploadFailedMessage))
             {
                 Assert.Fail("Node failed to store block.");
             }
-            Log($"Uploaded file. Received contentId: {response}");
+            Log($"Uploaded file. Received contentId: {response}.");
             return new ContentId(response);
         }
 
         public TestFile? DownloadContent(ContentId contentId)
         {
-            Log($"Downloading for contentId: {contentId.Id}");
+            Log($"Downloading for contentId: {contentId.Id}...");
             var file = fileManager.CreateEmptyTestFile();
             DownloadToFile(contentId.Id, file);
-            Log($"Downloaded file of size {file.GetFileSize()} to {file.Filename}");
+            Log($"Downloaded file of size {file.GetFileSize()} to {file.Filename}.");
             return file;
+        }
+
+        public void ConnectToPeer(IOnlineCodexNode node)
+        {
+            var peer = (OnlineCodexNode)node;
+
+            Log($"Connecting to peer <{peer.Container.Name}>...");
+            var peerInfo = node.GetDebugInfo();
+            var peerId = peerInfo.id;
+            var peerMultiAddress = GetPeerMultiAddress(peer, peerInfo);
+
+            var response = Http().HttpGetString($"connect/{peerId}?addrs={peerMultiAddress}");
+
+            Assert.That(response, Is.EqualTo(SuccessfullyConnectedMessage), "Unable to connect codex nodes.");
+            Log($"Successfully connected to peer <{peer.Container.Name}>.");
+        }
+
+        private string GetPeerMultiAddress(OnlineCodexNode peer, CodexDebugResponse peerInfo)
+        {
+            // Todo: If peer is in a different pod, we must replace 0.0.0.0 with the address of that pod!
+
+            return peerInfo.addrs.First();
+            // Todo: Is there a case where First address in list is not the way?
         }
 
         private void DownloadToFile(string contentId, TestFile file)
@@ -66,7 +93,7 @@ namespace CodexDistTestCore
 
         private void Log(string msg)
         {
-            log.Log($"Node {Container.Name}: {msg}");
+            log.Log($"<{Container.Name}>: {msg}");
         }
     }
 
