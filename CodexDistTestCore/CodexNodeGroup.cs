@@ -39,7 +39,7 @@ namespace CodexDistTestCore
         public OnlineCodexNode[] Nodes { get; }
         public V1Deployment? Deployment { get; set; }
         public V1Service? Service { get; set; }
-        public List<string> ActivePodNames { get; } = new List<string>();
+        public string? PodName { get; set; }
 
         public CodexNodeContainer[] GetContainers()
         {

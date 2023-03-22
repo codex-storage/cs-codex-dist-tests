@@ -50,29 +50,34 @@ namespace CodexDistTestCore
 
         public void FetchAllPodsLogs(CodexNodeGroup[] onlines, IPodLogsHandler logHandler)
         {
+            var logNumberSource = new NumberSource(0);
             foreach (var online in onlines)
             {
-                var nodeDescription = online.Describe();
-                foreach (var podName in online.ActivePodNames)
+                foreach (var node in online)
                 {
-                    var stream = client.ReadNamespacedPodLog(podName, K8sNamespace);
-                    logHandler.Log(online.OrderNumber, $"{nodeDescription}:{podName}", stream);
+                    WritePodLogs(online, node, logHandler, logNumberSource);
                 }
             }
+        }
+
+        private void WritePodLogs(CodexNodeGroup online, IOnlineCodexNode node, IPodLogsHandler logHandler, NumberSource logNumberSource)
+        {
+            var n = (OnlineCodexNode)node;
+            var nodeDescription = $"{online.Describe()} contains {n.GetName()}";
+
+            var stream = client.ReadNamespacedPodLog(online.PodName, K8sNamespace, n.Container.Name);
+            logHandler.Log(logNumberSource.GetNextNumber(), nodeDescription, stream);
         }
 
         private void AssignActivePodNames(CodexNodeGroup online)
         {
             var pods = client.ListNamespacedPod(K8sNamespace);
             var podNames = pods.Items.Select(p => p.Name());
-            foreach (var podName in podNames)
-            {
-                if (!knownPods.Contains(podName))
-                {
-                    knownPods.Add(podName);
-                    online.ActivePodNames.Add(podName);
-                }
-            }
+
+            var newPodNames = podNames.Where(p => !knownPods.Contains(p)).ToArray();
+            Assert.That(newPodNames.Length, Is.EqualTo(1), "Expected only 1 pod to be created. Test infra failure.");
+
+            online.PodName = newPodNames.Single();
         }
 
         #region Waiting

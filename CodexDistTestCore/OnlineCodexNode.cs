@@ -27,10 +27,15 @@ namespace CodexDistTestCore
 
         public CodexNodeContainer Container { get; }
 
+        public string GetName()
+        {
+            return $"<{Container.Name}>";
+        }
+
         public CodexDebugResponse GetDebugInfo()
         {
             var response = Http().HttpGetJson<CodexDebugResponse>("debug/info");
-            Log($"Got DebugInfo with id: {response.id}.");
+            Log($"Got DebugInfo with id: '{response.id}'.");
             return response;
         }
 
@@ -43,16 +48,16 @@ namespace CodexDistTestCore
             {
                 Assert.Fail("Node failed to store block.");
             }
-            Log($"Uploaded file. Received contentId: {response}.");
+            Log($"Uploaded file. Received contentId: '{response}'.");
             return new ContentId(response);
         }
 
         public TestFile? DownloadContent(ContentId contentId)
         {
-            Log($"Downloading for contentId: {contentId.Id}...");
+            Log($"Downloading for contentId: '{contentId.Id}'...");
             var file = fileManager.CreateEmptyTestFile();
             DownloadToFile(contentId.Id, file);
-            Log($"Downloaded file of size {file.GetFileSize()} to {file.Filename}.");
+            Log($"Downloaded file of size {file.GetFileSize()} to '{file.Filename}'.");
             return file;
         }
 
@@ -60,7 +65,7 @@ namespace CodexDistTestCore
         {
             var peer = (OnlineCodexNode)node;
 
-            Log($"Connecting to peer <{peer.Container.Name}>...");
+            Log($"Connecting to peer {peer.GetName()}...");
             var peerInfo = node.GetDebugInfo();
             var peerId = peerInfo.id;
             var peerMultiAddress = GetPeerMultiAddress(peer, peerInfo);
@@ -68,7 +73,7 @@ namespace CodexDistTestCore
             var response = Http().HttpGetString($"connect/{peerId}?addrs={peerMultiAddress}");
 
             Assert.That(response, Is.EqualTo(SuccessfullyConnectedMessage), "Unable to connect codex nodes.");
-            Log($"Successfully connected to peer <{peer.Container.Name}>.");
+            Log($"Successfully connected to peer {peer.GetName()}.");
         }
 
         private string GetPeerMultiAddress(OnlineCodexNode peer, CodexDebugResponse peerInfo)
@@ -93,7 +98,7 @@ namespace CodexDistTestCore
 
         private void Log(string msg)
         {
-            log.Log($"<{Container.Name}>: {msg}");
+            log.Log($"{GetName()}: {msg}");
         }
     }
 
