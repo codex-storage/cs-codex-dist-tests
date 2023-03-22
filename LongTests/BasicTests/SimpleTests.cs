@@ -22,5 +22,16 @@ namespace LongTests.BasicTests
 
             testFile.AssertIsEqual(downloadedFile);
         }
+
+        [Test, UseLongTimeouts]
+        public void TestEnvironmentAddressSpaceTest()
+        {
+            var group = SetupCodexNodes(1000).BringOnline();
+
+            var nodeIds = group.Select(n => n.GetDebugInfo().id).ToArray();
+
+            Assert.That(nodeIds.Length, Is.EqualTo(nodeIds.Distinct().Count()),
+                "Not all created nodes provided a unique id.");
+        }
     }
 }
