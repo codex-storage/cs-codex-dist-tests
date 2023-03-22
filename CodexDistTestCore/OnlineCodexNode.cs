@@ -45,13 +45,18 @@ namespace CodexDistTestCore
 
         public TestFile? DownloadContent(ContentId contentId)
         {
-            Log($"Downloading for contentId: {contentId}");
+            Log($"Downloading for contentId: {contentId.Id}");
             var file = fileManager.CreateEmptyTestFile();
-            using var fileStream = File.OpenWrite(file.Filename);
-            using var downloadStream = Http().HttpGetStream("download/" + contentId.Id);
-            downloadStream.CopyTo(fileStream);
-            Log($"Downloaded file of size {file.GetFileSize()}");
+            DownloadToFile(contentId.Id, file);
+            Log($"Downloaded file of size {file.GetFileSize()} to {file.Filename}");
             return file;
+        }
+
+        private void DownloadToFile(string contentId, TestFile file)
+        {
+            using var fileStream = File.OpenWrite(file.Filename);
+            using var downloadStream = Http().HttpGetStream("download/" + contentId);
+            downloadStream.CopyTo(fileStream);
         }
 
         private Http Http()

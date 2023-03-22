@@ -28,7 +28,6 @@ namespace CodexDistTestCore
             var result = new TestFile(Path.Combine(Folder, Guid.NewGuid().ToString() + "_test.bin"));
             File.Create(result.Filename).Close();
             activeFiles.Add(result);
-            log.Log($"Created test file '{result.Filename}'.");
             return result;
         }
 
@@ -85,8 +84,6 @@ namespace CodexDistTestCore
         {
             if (other == null) Assert.Fail("TestFile is null.");
             if (other == this || other!.Filename == Filename) Assert.Fail("TestFile is compared to itself.");
-
-            if (GetFileSize() != other.GetFileSize()) Assert.Fail("file sizes unequal?");
 
             using var stream1 = new FileStream(Filename, FileMode.Open, FileAccess.Read);
             using var stream2 = new FileStream(other.Filename, FileMode.Open, FileAccess.Read);

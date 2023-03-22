@@ -30,8 +30,16 @@ namespace CodexDistTestCore
             var result = TestContext.CurrentContext.Result;
 
             Log($"Finished: {GetTestName()} = {result.Outcome.Status}");
+            
+            if (!string.IsNullOrEmpty(result.Message))
+            {
+                Log(result.Message);
+            }
+
             if (result.Outcome.Status == NUnit.Framework.Interfaces.TestStatus.Failed)
             {
+                Log($"{result.StackTrace}");
+
                 var logWriter = new PodLogWriter(file);
                 logWriter.IncludeFullPodLogging(k8sManager);
             }
