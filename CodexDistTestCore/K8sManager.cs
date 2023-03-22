@@ -2,40 +2,42 @@
 {
     public interface IK8sManager
     {
-        IOnlineCodexNodes BringOnline(OfflineCodexNodes node);
-        IOfflineCodexNodes BringOffline(IOnlineCodexNodes node);
+        ICodexNodeGroup BringOnline(OfflineCodexNodes node);
+        IOfflineCodexNodes BringOffline(ICodexNodeGroup node);
     }
 
     public class K8sManager : IK8sManager
     {
         private readonly NumberSource onlineCodexNodeOrderNumberSource = new NumberSource(0);
-        private readonly List<OnlineCodexNodes> onlineCodexNodes = new List<OnlineCodexNodes>();
+        private readonly List<CodexNodeGroup> onlineCodexNodes = new List<CodexNodeGroup>();
         private readonly KnownK8sPods knownPods = new KnownK8sPods();
+        private readonly TestLog log;
         private readonly IFileManager fileManager;
 
-        public K8sManager(IFileManager fileManager)
+        public K8sManager(TestLog log, IFileManager fileManager)
         {
+            this.log = log;
             this.fileManager = fileManager;
         }
 
-        public IOnlineCodexNodes BringOnline(OfflineCodexNodes offline)
+        public ICodexNodeGroup BringOnline(OfflineCodexNodes offline)
         {
             var online = CreateOnlineCodexNodes(offline);
 
             K8s().BringOnline(online, offline);
 
-            TestLog.Log($"{offline.NumberOfNodes} Codex nodes online.");
+            log.Log($"{online.Describe()} online.");
 
             return online;
         }
 
-        public IOfflineCodexNodes BringOffline(IOnlineCodexNodes node)
+        public IOfflineCodexNodes BringOffline(ICodexNodeGroup node)
         {
             var online = GetAndRemoveActiveNodeFor(node);
 
             K8s().BringOffline(online);
 
-            TestLog.Log($"{online.Describe()} offline.");
+            log.Log($"{online.Describe()} offline.");
 
             return online.Origin;
         }
@@ -50,11 +52,11 @@
             K8s().FetchAllPodsLogs(onlineCodexNodes.ToArray(), logHandler);
         }
 
-        private OnlineCodexNodes CreateOnlineCodexNodes(OfflineCodexNodes offline)
+        private CodexNodeGroup CreateOnlineCodexNodes(OfflineCodexNodes offline)
         {
             var containers = CreateContainers(offline.NumberOfNodes);
-            var online = containers.Select(c => new OnlineCodexNode(fileManager, c)).ToArray();
-            var result = new OnlineCodexNodes(onlineCodexNodeOrderNumberSource.GetNextNumber(), offline, this, online);
+            var online = containers.Select(c => new OnlineCodexNode(log, fileManager, c)).ToArray();
+            var result = new CodexNodeGroup(onlineCodexNodeOrderNumberSource.GetNextNumber(), offline, this, online);
             onlineCodexNodes.Add(result);
             return result;
         }
@@ -67,9 +69,9 @@
             return containers.ToArray();
         }
 
-        private OnlineCodexNodes GetAndRemoveActiveNodeFor(IOnlineCodexNodes node)
+        private CodexNodeGroup GetAndRemoveActiveNodeFor(ICodexNodeGroup node)
         {
-            var n = (OnlineCodexNodes)node;
+            var n = (CodexNodeGroup)node;
             onlineCodexNodes.Remove(n);
             return n;
         }

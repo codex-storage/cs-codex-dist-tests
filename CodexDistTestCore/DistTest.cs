@@ -5,6 +5,7 @@ namespace CodexDistTestCore
     [SetUpFixture]
     public abstract class DistTest
     {
+        private TestLog log = null!;
         private FileManager fileManager = null!;
         private K8sManager k8sManager = null!;
 
@@ -13,11 +14,22 @@ namespace CodexDistTestCore
         {
             // Previous test run may have been interrupted.
             // Begin by cleaning everything up.
-            fileManager = new FileManager();
-            k8sManager = new K8sManager(fileManager);
+            log = new TestLog();
+            fileManager = new FileManager(log);
+            k8sManager = new K8sManager(log, fileManager);
 
-            k8sManager.DeleteAllResources();
-            fileManager.DeleteAllTestFiles();
+            try
+            {
+                k8sManager.DeleteAllResources();
+                fileManager.DeleteAllTestFiles();
+            }
+            catch (Exception ex)
+            {
+                GlobalTestFailure.HasFailed = true;
+                log.Error($"Global setup cleanup failed with: {ex}");
+                throw;
+            }
+            log.Log("Global setup cleanup successful");
         }
 
         [SetUp]
@@ -29,9 +41,9 @@ namespace CodexDistTestCore
             }
             else
             {
-                TestLog.BeginTest();
-                fileManager = new FileManager();
-                k8sManager = new K8sManager(fileManager);
+                log = new TestLog();
+                fileManager = new FileManager(log);
+                k8sManager = new K8sManager(log, fileManager);
             }
         }
 
@@ -40,13 +52,13 @@ namespace CodexDistTestCore
         {
             try
             {
-                TestLog.EndTest(k8sManager);
+                log.EndTest(k8sManager);
                 k8sManager.DeleteAllResources();
                 fileManager.DeleteAllTestFiles();
             }
             catch (Exception ex)
             {
-                TestLog.Error("Cleanup failed: " + ex.Message);
+                log.Error("Cleanup failed: " + ex.Message);
                 GlobalTestFailure.HasFailed = true;
             }
         }

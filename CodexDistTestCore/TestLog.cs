@@ -5,35 +5,28 @@ namespace CodexDistTestCore
     public class TestLog
     {
         public const string LogRoot = "D:/CodexTestLogs";
+        private readonly LogFile file;
 
-        private static LogFile? file = null;
-
-        // This is all way too static. It needs to be cleaned up.
-        public static void Log(string message)
+        public TestLog()
         {
-            file!.Write(message);
-        }
-
-        public static void Error(string message)
-        {
-            Log($"[ERROR] {message}");
-        }
-
-        public static void BeginTest()
-        {
-            if (file != null) throw new InvalidOperationException("Test is already started!");
-
             var name = GetTestName();
             file = new LogFile(name);
 
             Log($"Begin: {name}");
         }
 
-        public static void EndTest(K8sManager k8sManager)
+        public void Log(string message)
         {
-            if (file == null) throw new InvalidOperationException("No test is started!");
+            file.Write(message);
+        }
 
+        public void Error(string message)
+        {
+            Log($"[ERROR] {message}");
+        }
 
+        public void EndTest(K8sManager k8sManager)
+        {
             var result = TestContext.CurrentContext.Result;
 
             Log($"Finished: {GetTestName()} = {result.Outcome.Status}");
@@ -42,8 +35,6 @@ namespace CodexDistTestCore
                 var logWriter = new PodLogWriter(file);
                 logWriter.IncludeFullPodLogging(k8sManager);
             }
-
-            file = null;
         }
 
         private static string GetTestName()
@@ -65,14 +56,14 @@ namespace CodexDistTestCore
 
         public void IncludeFullPodLogging(K8sManager k8sManager)
         {
-            TestLog.Log("Full pod logging:");
+            file.Write("Full pod logging:");
             k8sManager.FetchAllPodsLogs(this);
         }
 
         public void Log(int id, string podDescription, Stream log)
         {
             var logFile = id.ToString().PadLeft(6, '0');
-            TestLog.Log($"{podDescription} -->> {logFile}");
+            file.Write($"{podDescription} -->> {logFile}");
             LogRaw(podDescription, logFile);
             var reader = new StreamReader(log);
             var line = reader.ReadLine();

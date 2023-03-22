@@ -15,10 +15,12 @@ namespace CodexDistTestCore
         private const string Folder = "TestDataFiles";
         private readonly Random random = new Random();
         private readonly List<TestFile> activeFiles = new List<TestFile>();
+        private readonly TestLog log;
 
-        public FileManager()
+        public FileManager(TestLog log)
         {
             if (!Directory.Exists(Folder)) Directory.CreateDirectory(Folder);
+            this.log = log;
         }
 
         public TestFile CreateEmptyTestFile()
@@ -26,7 +28,7 @@ namespace CodexDistTestCore
             var result = new TestFile(Path.Combine(Folder, Guid.NewGuid().ToString() + "_test.bin"));
             File.Create(result.Filename).Close();
             activeFiles.Add(result);
-            TestLog.Log($"Created test file '{result.Filename}'.");
+            log.Log($"Created test file '{result.Filename}'.");
             return result;
         }
 
@@ -34,7 +36,7 @@ namespace CodexDistTestCore
         {
             var result = CreateEmptyTestFile();
             GenerateFileBytes(result, size);
-            TestLog.Log($"Generated {size.SizeInBytes} bytes of content for file '{result.Filename}'.");
+            log.Log($"Generated {size.SizeInBytes} bytes of content for file '{result.Filename}'.");
             return result;
         }
 
@@ -73,10 +75,18 @@ namespace CodexDistTestCore
 
         public string Filename { get; }
 
+        public long GetFileSize()
+        {
+            var info = new FileInfo(Filename);
+            return info.Length;
+        }
+
         public void AssertIsEqual(TestFile? other)
         {
             if (other == null) Assert.Fail("TestFile is null.");
             if (other == this || other!.Filename == Filename) Assert.Fail("TestFile is compared to itself.");
+
+            if (GetFileSize() != other.GetFileSize()) Assert.Fail("file sizes unequal?");
 
             using var stream1 = new FileStream(Filename, FileMode.Open, FileAccess.Read);
             using var stream2 = new FileStream(other.Filename, FileMode.Open, FileAccess.Read);

@@ -2,17 +2,17 @@
 
 namespace CodexDistTestCore
 {
-    public interface IOnlineCodexNodes
+    public interface ICodexNodeGroup
     {
         IOfflineCodexNodes BringOffline();
         IOnlineCodexNode this[int index] { get; }
     }
 
-    public class OnlineCodexNodes : IOnlineCodexNodes
+    public class CodexNodeGroup : ICodexNodeGroup
     {
         private readonly IK8sManager k8SManager;
 
-        public OnlineCodexNodes(int orderNumber, OfflineCodexNodes origin, IK8sManager k8SManager, OnlineCodexNode[] nodes)
+        public CodexNodeGroup(int orderNumber, OfflineCodexNodes origin, IK8sManager k8SManager, OnlineCodexNode[] nodes)
         {
             OrderNumber = orderNumber;
             Origin = origin;
@@ -70,7 +70,7 @@ namespace CodexDistTestCore
 
         public string Describe()
         {
-            return $"CodexNode{OrderNumber}-{Origin.Describe()}";
+            return $"CodexNodeGroup#{OrderNumber}-{Origin.Describe()}";
         }
     }
 }

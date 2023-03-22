@@ -5,7 +5,7 @@
         IOfflineCodexNodes WithLogLevel(CodexLogLevel level);
         IOfflineCodexNodes WithBootstrapNode(IOnlineCodexNode node);
         IOfflineCodexNodes WithStorageQuota(ByteSize storageQuota);
-        IOnlineCodexNodes BringOnline();
+        ICodexNodeGroup BringOnline();
     }
 
     public enum CodexLogLevel
@@ -32,7 +32,7 @@
             NumberOfNodes = numberOfNodes;
         }
 
-        public IOnlineCodexNodes BringOnline()
+        public ICodexNodeGroup BringOnline()
         {
             return k8SManager.BringOnline(this);
         }
@@ -57,11 +57,15 @@
 
         public string Describe()
         {
-            var result = "";
-            if (LogLevel != null) result += $"LogLevel={LogLevel},";
-            if (BootstrapNode != null) result += "BootstrapNode=set,";
-            if (StorageQuota != null) result += $"StorageQuote={StorageQuota.SizeInBytes},";
-            return result;
+            var args = string.Join(',', DescribeArgs());
+            return $"{NumberOfNodes} CodexNodes with [{args}]";
+        }
+
+        private IEnumerable<string> DescribeArgs()
+        {
+            if (LogLevel != null) yield return ($"LogLevel={LogLevel}");
+            if (BootstrapNode != null) yield return ("BootstrapNode=set");
+            if (StorageQuota != null) yield return ($"StorageQuote={StorageQuota.SizeInBytes}");
         }
     }
 }

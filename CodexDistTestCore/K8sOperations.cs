@@ -21,7 +21,7 @@ namespace CodexDistTestCore
             client = new Kubernetes(config);
         }
 
-        public void BringOnline(OnlineCodexNodes online, OfflineCodexNodes offline)
+        public void BringOnline(CodexNodeGroup online, OfflineCodexNodes offline)
         {
             EnsureTestNamespace();
 
@@ -32,7 +32,7 @@ namespace CodexDistTestCore
             AssignActivePodNames(online);
         }
 
-        public void BringOffline(OnlineCodexNodes online)
+        public void BringOffline(CodexNodeGroup online)
         {
             var deploymentName = online.Deployment.Name();
             DeleteDeployment(online);
@@ -48,7 +48,7 @@ namespace CodexDistTestCore
             WaitUntilNamespaceDeleted();
         }
 
-        public void FetchAllPodsLogs(OnlineCodexNodes[] onlines, IPodLogsHandler logHandler)
+        public void FetchAllPodsLogs(CodexNodeGroup[] onlines, IPodLogsHandler logHandler)
         {
             foreach (var online in onlines)
             {
@@ -61,7 +61,7 @@ namespace CodexDistTestCore
             }
         }
 
-        private void AssignActivePodNames(OnlineCodexNodes online)
+        private void AssignActivePodNames(CodexNodeGroup online)
         {
             var pods = client.ListNamespacedPod(K8sNamespace);
             var podNames = pods.Items.Select(p => p.Name());
@@ -77,7 +77,7 @@ namespace CodexDistTestCore
 
         #region Waiting
 
-        private void WaitUntilOnline(OnlineCodexNodes online)
+        private void WaitUntilOnline(CodexNodeGroup online)
         {
             WaitUntil(() =>
             {
@@ -126,7 +126,7 @@ namespace CodexDistTestCore
 
         #region Service management
 
-        private void CreateService(OnlineCodexNodes online)
+        private void CreateService(CodexNodeGroup online)
         {
             var serviceSpec = new V1Service
             {
@@ -143,7 +143,7 @@ namespace CodexDistTestCore
             online.Service = client.CreateNamespacedService(serviceSpec, K8sNamespace);
         }
 
-        private List<V1ServicePort> CreateServicePorts(OnlineCodexNodes online)
+        private List<V1ServicePort> CreateServicePorts(CodexNodeGroup online)
         {
             var result = new List<V1ServicePort>();
             var containers = online.GetContainers();
@@ -160,7 +160,7 @@ namespace CodexDistTestCore
             return result;
         }
 
-        private void DeleteService(OnlineCodexNodes online)
+        private void DeleteService(CodexNodeGroup online)
         {
             if (online.Service == null) return;
             client.DeleteNamespacedService(online.Service.Name(), K8sNamespace);
@@ -171,7 +171,7 @@ namespace CodexDistTestCore
 
         #region Deployment management
 
-        private void CreateDeployment(OnlineCodexNodes online, OfflineCodexNodes offline)
+        private void CreateDeployment(CodexNodeGroup online, OfflineCodexNodes offline)
         {
             var deploymentSpec = new V1Deployment
             {
@@ -201,7 +201,7 @@ namespace CodexDistTestCore
             online.Deployment = client.CreateNamespacedDeployment(deploymentSpec, K8sNamespace);
         }
 
-        private List<V1Container> CreateDeploymentContainers(OnlineCodexNodes online, OfflineCodexNodes offline)
+        private List<V1Container> CreateDeploymentContainers(CodexNodeGroup online, OfflineCodexNodes offline)
         {
             var result = new List<V1Container>();
             var containers = online.GetContainers();
@@ -225,7 +225,7 @@ namespace CodexDistTestCore
             return result;
         }
 
-        private void DeleteDeployment(OnlineCodexNodes online)
+        private void DeleteDeployment(CodexNodeGroup online)
         {
             if (online.Deployment == null) return;
             client.DeleteNamespacedDeployment(online.Deployment.Name(), K8sNamespace);
