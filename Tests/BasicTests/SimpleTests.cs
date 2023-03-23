@@ -11,7 +11,7 @@ namespace Tests.BasicTests
         {
             var dockerImage = new CodexDockerImage();
 
-            var node = SetupCodexNode().BringOnline();
+            var node = SetupCodexNodes(1).BringOnline()[0];
 
             var debugInfo = node.GetDebugInfo();
 
@@ -22,10 +22,10 @@ namespace Tests.BasicTests
         [Test]
         public void OneClientTest()
         {
-            var primary = SetupCodexNode()
-                                .WithLogLevel(CodexLogLevel.Trace)
-                                .WithStorageQuota(2.MB())
-                                .BringOnline();
+            var primary = SetupCodexNodes(1)
+                            .WithLogLevel(CodexLogLevel.Trace)
+                            .WithStorageQuota(2.MB())
+                            .BringOnline()[0];
 
             var testFile = GenerateTestFile(1.MB());
 
@@ -36,26 +36,45 @@ namespace Tests.BasicTests
             testFile.AssertIsEqual(downloadedFile);
         }
 
-        //[Test]
-        //public void TwoClientTest()
-        //{
-        //    var primary = SetupCodexNode()
-        //                        .WithLogLevel(CodexLogLevel.Trace)
-        //                        .WithStorageQuota(1024 * 1024 * 2)
-        //                        .BringOnline();
+        [Test]
+        public void TwoClientOnePodTest()
+        {
+            var group = SetupCodexNodes(2)
+                        .WithLogLevel(CodexLogLevel.Trace)
+                        .WithStorageQuota(2.MB())
+                        .BringOnline();
 
-        //    var secondary = SetupCodexNode()
-        //                        .WithLogLevel(CodexLogLevel.Trace)
-        //                        .WithBootstrapNode(primary)
-        //                        .BringOnline();
+            var primary = group[0];
+            var secondary = group[1];
 
-        //    var testFile = GenerateTestFile(1024 * 1024);
+            PerformTwoClientTest(primary, secondary);
+        }
 
-        //    var contentId = primary.UploadFile(testFile);
+        [Test]
+        public void TwoClientTwoPodTest()
+        {
+            var primary = SetupCodexNodes(1)
+                            .WithStorageQuota(2.MB())
+                            .BringOnline()[0];
 
-        //    var downloadedFile = secondary.DownloadContent(contentId);
+            var secondary = SetupCodexNodes(1)
+                            .WithStorageQuota(2.MB())
+                            .BringOnline()[0];
 
-        //    testFile.AssertIsEqual(downloadedFile);
-        //}
+            PerformTwoClientTest(primary, secondary);
+        }
+
+        private void PerformTwoClientTest(IOnlineCodexNode primary, IOnlineCodexNode secondary)
+        {
+            primary.ConnectToPeer(secondary);
+
+            var testFile = GenerateTestFile(1.MB());
+
+            var contentId = primary.UploadFile(testFile);
+
+            var downloadedFile = secondary.DownloadContent(contentId);
+
+            testFile.AssertIsEqual(downloadedFile);
+        }
     }
 }

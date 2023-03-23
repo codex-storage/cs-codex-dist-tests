@@ -4,17 +4,17 @@ using NUnit.Framework;
 namespace LongTests.BasicTests
 {
     [TestFixture]
-    public class SimpleTests : DistTest
+    public class LargeFileTests : DistTest
     {
         [Test, UseLongTimeouts]
         public void OneClientLargeFileTest()
         {
-            var primary = SetupCodexNode()
+            var primary = SetupCodexNodes(1)
                                 .WithLogLevel(CodexLogLevel.Warn)
-                                .WithStorageQuota(10.GB())
-                                .BringOnline();
+                                .WithStorageQuota(20.GB())
+                                .BringOnline()[0];
 
-            var testFile = GenerateTestFile(1.GB());
+            var testFile = GenerateTestFile(10.GB());
 
             var contentId = primary.UploadFile(testFile);
 

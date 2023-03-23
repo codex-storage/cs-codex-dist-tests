@@ -5,74 +5,93 @@ namespace CodexDistTestCore
     public class TestLog
     {
         public const string LogRoot = "D:/CodexTestLogs";
+        private readonly LogFile file;
 
-        private static LogFile? file = null;
-
-        public static void Log(string message)
+        public TestLog()
         {
-            file!.Write(message);
-        }
-
-        public static void Error(string message)
-        {
-            Log($"[ERROR] {message}");
-        }
-
-        public static void BeginTest()
-        {
-            if (file != null) throw new InvalidOperationException("Test is already started!");
-
             var name = GetTestName();
             file = new LogFile(name);
 
             Log($"Begin: {name}");
         }
 
-        public static void EndTest(K8sManager k8sManager)
+        public void Log(string message)
         {
-            if (file == null) throw new InvalidOperationException("No test is started!");
+            file.Write(message);
+        }
 
+        public void Error(string message)
+        {
+            Log($"[ERROR] {message}");
+        }
 
+        public void EndTest(K8sManager k8sManager)
+        {
             var result = TestContext.CurrentContext.Result;
 
             Log($"Finished: {GetTestName()} = {result.Outcome.Status}");
-            if (result.Outcome.Status == NUnit.Framework.Interfaces.TestStatus.Failed)
+            
+            if (!string.IsNullOrEmpty(result.Message))
             {
-                IncludeFullPodLogging(k8sManager);
+                Log(result.Message);
             }
 
-            file = null;
+            if (result.Outcome.Status == NUnit.Framework.Interfaces.TestStatus.Failed)
+            {
+                Log($"{result.StackTrace}");
+
+                var logWriter = new PodLogWriter(file);
+                logWriter.IncludeFullPodLogging(k8sManager);
+            }
         }
 
         private static string GetTestName()
         {
             var test = TestContext.CurrentContext.Test;
             var className = test.ClassName!.Substring(test.ClassName.LastIndexOf('.') + 1);
-            return $"{className}.{test.MethodName}";
+            var args = FormatArguments(test);
+            return $"{className}.{test.MethodName}{args}";
         }
 
-        private static void LogRaw(string message, string filename)
+        private static string FormatArguments(TestContext.TestAdapter test)
         {
-            file!.WriteRaw(message, filename);
+            if (test.Arguments == null || !test.Arguments.Any()) return "";
+            return $"[{string.Join(',', test.Arguments)}]";
+        }
+    }
+
+    public class PodLogWriter : IPodLogsHandler
+    {
+        private readonly LogFile file;
+
+        public PodLogWriter(LogFile file)
+        {
+            this.file = file;
         }
 
-        private static void IncludeFullPodLogging(K8sManager k8sManager)
+        public void IncludeFullPodLogging(K8sManager k8sManager)
         {
-            Log("Full pod logging:");
-            k8sManager.FetchAllPodsLogs(WritePodLog);
+            file.Write("Full pod logging:");
+            k8sManager.FetchAllPodsLogs(this);
         }
 
-        private static void WritePodLog(string id, string nodeDescription, Stream stream)
+        public void Log(int id, string podDescription, Stream log)
         {
-            Log($"{nodeDescription} -->> {id}");
-            LogRaw(nodeDescription, id);
-            var reader = new StreamReader(stream);
+            var logFile = id.ToString().PadLeft(6, '0');
+            file.Write($"{podDescription} -->> {logFile}");
+            LogRaw(podDescription, logFile);
+            var reader = new StreamReader(log);
             var line = reader.ReadLine();
             while (line != null)
             {
-                LogRaw(line, id);
+                LogRaw(line, logFile);
                 line = reader.ReadLine();
             }
+        }
+
+        private void LogRaw(string message, string filename)
+        {
+            file!.WriteRaw(message, filename);
         }
     }
 

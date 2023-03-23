@@ -1,28 +1,3 @@
-# apiVersion: v1
-# kind: Pod
-# metadata:
-#    name: codex-pod
-# spec:
-#    containers:
-#    - name: codex-node-container
-#      image: thatbenbierens/nim-codex:sha-c9a62de
-#      ports:
-#      - containerPort: 8080
-
-# kind: PersistentVolumeClaim
-# apiVersion: v1
-# metadata:
-#   name: codex-volume
-# spec:
-#   accessModes:
-#     - ReadWriteOnce
-#   resources:
-#     requests:
-#       storage: 1Gi
-#   storageClassName: rbd
-
-# ---
-
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -48,21 +23,35 @@ spec:
         codex-node: dist-test
     spec:
       containers:
-      - name: codex-node
-        image: thatbenbierens/nim-codex:sha-c9a62de
+      - name: codex-node1
+        image: thatbenbierens/nim-codex:sha-b204837
         ports:
         - containerPort: 8080
-          name: codex-api-port
+          name: api-1
         env:
-        - name: LOG_LEVEL
-          value: WARN
-        # volumeMounts:
-        # - mountPath: /datadir
-        #   name: codex-data
-      # volumes:
-      # - name: codex-data
-      #   persistentVolumeClaim:
-      #     claimName: codex-volume
+        - name: API_PORT
+          value: "8080"
+        - name: DATA_DIR
+          value: datadir1
+        - name: DISC_PORT
+          value: "8081"
+        - name: LISTEN_ADDRS
+          value: "/ip4/0.0.0.0/tcp/8082"
+      - name: codex-node2
+        image: thatbenbierens/nim-codex:sha-b204837
+        ports:
+        - containerPort: 8083
+          name: api-2
+        env:
+        - name: API_PORT
+          value: "8083"
+        - name: DATA_DIR
+          value: datadir2
+        - name: DISC_PORT
+          value: "8084"
+        - name: LISTEN_ADDRS
+          value: "/ip4/0.0.0.0/tcp/8085"
+          
 ---
 
 apiVersion: v1
@@ -75,7 +64,14 @@ spec:
   selector:
     codex-node: dist-test
   ports:
-  - protocol: TCP
+  - name: "node1"
+    protocol: TCP
     port: 8080
-    targetPort: codex-api-port
+    targetPort: api-1
     nodePort: 30001
+  - name: "node2"
+    protocol: TCP
+    port: 8083
+    targetPort: api-2
+    nodePort: 30002
+

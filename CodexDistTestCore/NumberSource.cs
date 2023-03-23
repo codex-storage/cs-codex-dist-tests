@@ -2,27 +2,18 @@
 {
     public class NumberSource
     {
-        private int freePort;
-        private int nodeOrderNumber;
+        private int number;
 
-        public NumberSource()
+        public NumberSource(int start)
         {
-            freePort = 30001;
-            nodeOrderNumber = 0;
+            number = start;
         }
 
-        public int GetFreePort()
+        public int GetNextNumber()
         {
-            var port = freePort;
-            freePort++;
-            return port;
-        }
-
-        public int GetNodeOrderNumber()
-        {
-            var number = nodeOrderNumber;
-            nodeOrderNumber++;
-            return number;
+            var n = number;
+            number++;
+            return n;
         }
     }
 }

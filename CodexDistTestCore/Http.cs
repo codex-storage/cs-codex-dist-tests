@@ -20,16 +20,20 @@ namespace CodexDistTestCore
             if (!this.baseUrl.EndsWith("/")) this.baseUrl += "/";
         }
 
-        public T HttpGetJson<T>(string route)
+        public string HttpGetString(string route)
         {
             return Retry(() =>
             {
                 using var client = GetClient();
                 var url = GetUrl() + route;
                 var result = Utils.Wait(client.GetAsync(url));
-                var json = Utils.Wait(result.Content.ReadAsStringAsync());
-                return JsonConvert.DeserializeObject<T>(json)!;
+                return Utils.Wait(result.Content.ReadAsStringAsync());
             });
+        }
+
+        public T HttpGetJson<T>(string route)
+        {
+            return JsonConvert.DeserializeObject<T>(HttpGetString(route))!;
         }
 
         public string HttpPostStream(string route, Stream stream)
@@ -75,6 +79,7 @@ namespace CodexDistTestCore
                 }
                 catch (Exception exception)
                 {
+                    Timing.HttpCallRetryDelay();
                     retryCounter++;
                     if (retryCounter > Timing.HttpCallRetryCount())
                     {

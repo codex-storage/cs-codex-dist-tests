@@ -14,10 +14,10 @@ namespace CodexDistTestCore
             return "b20483";
         }
 
-        public List<V1EnvVar> CreateEnvironmentVariables(OfflineCodexNode node)
+        public List<V1EnvVar> CreateEnvironmentVariables(OfflineCodexNodes node, CodexNodeContainer environment)
         {
             var formatter = new EnvFormatter();
-            formatter.Create(node);
+            formatter.Create(node, environment);
             return formatter.Result;
         }
 
@@ -25,8 +25,13 @@ namespace CodexDistTestCore
         {
             public List<V1EnvVar> Result { get; } = new List<V1EnvVar>();
 
-            public void Create(OfflineCodexNode node)
+            public void Create(OfflineCodexNodes node, CodexNodeContainer environment)
             {
+                AddVar("API_PORT", environment.ApiPort.ToString());
+                AddVar("DATA_DIR", environment.DataDir);
+                AddVar("DISC_PORT", environment.DiscoveryPort.ToString());
+                AddVar("LISTEN_ADDRS", $"/ip4/0.0.0.0/tcp/{environment.ListenPort}");
+
                 if (node.BootstrapNode != null)
                 {
                     var debugInfo = node.BootstrapNode.GetDebugInfo();
