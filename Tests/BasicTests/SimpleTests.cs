@@ -11,7 +11,8 @@ namespace Tests.BasicTests
         {
             var dockerImage = new CodexDockerImage();
 
-            var node = SetupCodexNodes(1).BringOnline()[0];
+            var node = SetupCodexNodes(1)
+                        .BringOnline()[0];
 
             var debugInfo = node.GetDebugInfo();
 
@@ -23,8 +24,6 @@ namespace Tests.BasicTests
         public void OneClientTest()
         {
             var primary = SetupCodexNodes(1)
-                            .WithLogLevel(CodexLogLevel.Trace)
-                            .WithStorageQuota(2.MB())
                             .BringOnline()[0];
 
             var testFile = GenerateTestFile(1.MB());
@@ -37,11 +36,9 @@ namespace Tests.BasicTests
         }
 
         [Test]
-        public void TwoClientOnePodTest()
+        public void TwoClientsOnePodTest()
         {
             var group = SetupCodexNodes(2)
-                        .WithLogLevel(CodexLogLevel.Trace)
-                        .WithStorageQuota(2.MB())
                         .BringOnline();
 
             var primary = group[0];
@@ -51,14 +48,26 @@ namespace Tests.BasicTests
         }
 
         [Test]
-        public void TwoClientTwoPodTest()
+        public void TwoClientsTwoPodsTest()
         {
             var primary = SetupCodexNodes(1)
-                            .WithStorageQuota(2.MB())
                             .BringOnline()[0];
 
             var secondary = SetupCodexNodes(1)
-                            .WithStorageQuota(2.MB())
+                            .BringOnline()[0];
+
+            PerformTwoClientTest(primary, secondary);
+        }
+
+        [Test]
+        public void TwoClientsTwoLocationsTest()
+        {
+            var primary = SetupCodexNodes(1)
+                            .At(CodexNodeLocation.BensLaptop)
+                            .BringOnline()[0];
+
+            var secondary = SetupCodexNodes(1)
+                            .At(CodexNodeLocation.BensOldGamingMachine)
                             .BringOnline()[0];
 
             PerformTwoClientTest(primary, secondary);

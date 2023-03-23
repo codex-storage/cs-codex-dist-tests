@@ -2,6 +2,7 @@
 {
     public interface IOfflineCodexNodes
     {
+        IOfflineCodexNodes At(CodexNodeLocation location);
         IOfflineCodexNodes WithLogLevel(CodexLogLevel level);
         IOfflineCodexNodes WithBootstrapNode(IOnlineCodexNode node);
         IOfflineCodexNodes WithStorageQuota(ByteSize storageQuota);
@@ -17,11 +18,19 @@
         Error
     }
 
+    public enum CodexNodeLocation
+    {
+        Unspecified,
+        BensLaptop,
+        BensOldGamingMachine,
+    }
+
     public class OfflineCodexNodes : IOfflineCodexNodes
     {
         private readonly IK8sManager k8SManager;
         
         public int NumberOfNodes { get; }
+        public CodexNodeLocation Location { get; private set; }
         public CodexLogLevel? LogLevel { get; private set; }
         public IOnlineCodexNode? BootstrapNode { get; private set; }
         public ByteSize? StorageQuota { get; private set; }
@@ -30,11 +39,18 @@
         {
             this.k8SManager = k8SManager;
             NumberOfNodes = numberOfNodes;
+            Location = CodexNodeLocation.Unspecified;
         }
 
         public ICodexNodeGroup BringOnline()
         {
             return k8SManager.BringOnline(this);
+        }
+
+        public IOfflineCodexNodes At(CodexNodeLocation location)
+        {
+            Location = location;
+            return this;
         }
 
         public IOfflineCodexNodes WithBootstrapNode(IOnlineCodexNode node)
