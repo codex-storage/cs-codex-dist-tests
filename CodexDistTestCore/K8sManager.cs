@@ -24,7 +24,7 @@
         {
             var online = CreateOnlineCodexNodes(offline);
 
-            K8s().BringOnline(online, offline);
+            K8s(k => k.BringOnline(online, offline));
 
             log.Log($"{online.Describe()} online.");
 
@@ -35,7 +35,7 @@
         {
             var online = GetAndRemoveActiveNodeFor(node);
 
-            K8s().BringOffline(online);
+            K8s(k => k.BringOffline(online));
 
             log.Log($"{online.Describe()} offline.");
 
@@ -44,12 +44,12 @@
 
         public void DeleteAllResources()
         {
-            K8s().DeleteAllResources();
+            K8s(k => k.DeleteAllResources());
         }
 
         public void FetchAllPodsLogs(IPodLogsHandler logHandler)
         {
-            K8s().FetchAllPodsLogs(onlineCodexNodes.ToArray(), logHandler);
+            K8s(k => k.FetchAllPodsLogs(onlineCodexNodes.ToArray(), logHandler));
         }
 
         private CodexNodeGroup CreateOnlineCodexNodes(OfflineCodexNodes offline)
@@ -76,9 +76,11 @@
             return n;
         }
 
-        private K8sOperations K8s()
+        private void K8s(Action<K8sOperations> action)
         {
-            return new K8sOperations(knownPods);
+            var k8s = new K8sOperations(knownPods);
+            action(k8s);
+            k8s.Close();
         }
     }
 }

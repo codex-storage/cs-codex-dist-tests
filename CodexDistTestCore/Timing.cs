@@ -25,9 +25,9 @@ namespace CodexDistTestCore
             return GetTimes().HttpCallRetryCount();
         }
 
-        public static void RetryDelay()
+        public static void HttpCallRetryDelay()
         {
-            Utils.Sleep(GetTimes().RetryDelay());
+            Utils.Sleep(GetTimes().HttpCallRetryDelay());
         }
 
         public static void WaitForK8sServiceDelay()
@@ -52,7 +52,7 @@ namespace CodexDistTestCore
     {
         TimeSpan HttpCallTimeout();
         int HttpCallRetryCount();
-        TimeSpan RetryDelay();
+        TimeSpan HttpCallRetryDelay();
         TimeSpan WaitForK8sServiceDelay();
         TimeSpan K8sOperationTimeout();
     }
@@ -69,7 +69,7 @@ namespace CodexDistTestCore
             return 5;
         }
 
-        public TimeSpan RetryDelay()
+        public TimeSpan HttpCallRetryDelay()
         {
             return TimeSpan.FromSeconds(3);
         }
@@ -97,7 +97,7 @@ namespace CodexDistTestCore
             return 2;
         }
 
-        public TimeSpan RetryDelay()
+        public TimeSpan HttpCallRetryDelay()
         {
             return TimeSpan.FromMinutes(5);
         }

@@ -79,6 +79,7 @@ namespace CodexDistTestCore
                 }
                 catch (Exception exception)
                 {
+                    Timing.HttpCallRetryDelay();
                     retryCounter++;
                     if (retryCounter > Timing.HttpCallRetryCount())
                     {

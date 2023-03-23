@@ -21,6 +21,11 @@ namespace CodexDistTestCore
             client = new Kubernetes(config);
         }
 
+        public void Close()
+        {
+            client.Dispose();
+        }
+
         public void BringOnline(CodexNodeGroup online, OfflineCodexNodes offline)
         {
             EnsureTestNamespace();
