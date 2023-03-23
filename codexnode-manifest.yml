@@ -27,26 +27,30 @@ spec:
         image: thatbenbierens/nim-codex:sha-b204837
         ports:
         - containerPort: 8080
-          name: codex-api-port1
+          name: api-1
         env:
         - name: API_PORT
           value: "8080"
         - name: DATA_DIR
           value: datadir1
+        - name: DISC_PORT
+          value: "8081"
+        - name: LISTEN_ADDRS
+          value: "/ip4/0.0.0.0/tcp/8082"
       - name: codex-node2
         image: thatbenbierens/nim-codex:sha-b204837
         ports:
-        - containerPort: 8081
-          name: codex-api-port2
+        - containerPort: 8083
+          name: api-2
         env:
         - name: API_PORT
-          value: "8081"
+          value: "8083"
         - name: DATA_DIR
           value: datadir2
         - name: DISC_PORT
-          value: "8091"
+          value: "8084"
         - name: LISTEN_ADDRS
-          value: "/ip4/0.0.0.0/tcp/8072"
+          value: "/ip4/0.0.0.0/tcp/8085"
           
 ---
 
@@ -63,11 +67,11 @@ spec:
   - name: "node1"
     protocol: TCP
     port: 8080
-    targetPort: codex-api-port1
+    targetPort: api-1
     nodePort: 30001
   - name: "node2"
     protocol: TCP
-    port: 8081
-    targetPort: codex-api-port2
+    port: 8083
+    targetPort: api-2
     nodePort: 30002
 
