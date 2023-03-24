@@ -208,6 +208,7 @@ namespace CodexDistTestCore
                         },
                         Spec = new V1PodSpec
                         {
+                            NodeSelector = CreateNodeSelector(offline),
                             Containers = CreateDeploymentContainers(online, offline)
                         }
                     }
@@ -215,6 +216,22 @@ namespace CodexDistTestCore
             };
 
             online.Deployment = client.CreateNamespacedDeployment(deploymentSpec, K8sNamespace);
+        }
+
+        private IDictionary<string, string> CreateNodeSelector(OfflineCodexNodes offline)
+        {
+            switch (offline.Location)
+            {
+                case Location.Unspecified:
+                    return new Dictionary<string, string>();
+                case Location.BensLaptop:
+                    return new Dictionary<string, string> { { "codex-test-location", "worker01" } };
+                case Location.BensOldGamingMachine:
+                    return new Dictionary<string, string> { { "codex-test-location", "worker02" } };
+            }
+
+            Assert.Fail("Unknown location selected: " + offline.Location);
+            throw new InvalidOperationException();
         }
 
         private List<V1Container> CreateDeploymentContainers(CodexNodeGroup online, OfflineCodexNodes offline)
