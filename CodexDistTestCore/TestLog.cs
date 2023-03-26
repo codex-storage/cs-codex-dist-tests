@@ -5,12 +5,16 @@ namespace CodexDistTestCore
 {
     public class TestLog
     {
+        private readonly NumberSource subfileNumberSource = new NumberSource(0);
         private readonly LogFile file;
+        private readonly DateTime now;
 
         public TestLog()
         {
+            now = DateTime.UtcNow;
+
             var name = GetTestName();
-            file = new LogFile(name);
+            file = new LogFile(now, name);
 
             Log($"Begin: {name}");
         }
@@ -40,9 +44,14 @@ namespace CodexDistTestCore
             {
                 Log($"{result.StackTrace}");
 
-                var logWriter = new PodLogWriter(file);
+                var logWriter = new PodLogWriter(CreateSubfile());
                 logWriter.IncludeFullPodLogging(k8sManager);
             }
+        }
+
+        public LogFile CreateSubfile()
+        {
+            return new LogFile(now, $"{GetTestName()}_{subfileNumberSource.GetNextNumber().ToString().PadLeft(6, '0')}");
         }
 
         private static string GetTestName()
@@ -77,21 +86,20 @@ namespace CodexDistTestCore
 
         public void Log(int id, string podDescription, Stream log)
         {
-            var logFile = id.ToString().PadLeft(6, '0');
-            file.Write($"{podDescription} -->> {logFile}");
-            LogRaw(podDescription, logFile);
+            file.Write($"{podDescription} -->> {file.FilenameWithoutPath}");
+            LogRaw(podDescription);
             var reader = new StreamReader(log);
             var line = reader.ReadLine();
             while (line != null)
             {
-                LogRaw(line, logFile);
+                LogRaw(line);
                 line = reader.ReadLine();
             }
         }
 
-        private void LogRaw(string message, string filename)
+        private void LogRaw(string message)
         {
-            file!.WriteRaw(message, filename);
+            file!.WriteRaw(message);
         }
     }
 
@@ -100,10 +108,8 @@ namespace CodexDistTestCore
         private readonly string filepath;
         private readonly string filename;
 
-        public LogFile(string name)
+        public LogFile(DateTime now, string name)
         {
-            var now = DateTime.UtcNow;
-
             filepath = Path.Join(
                 LogConfig.LogRoot,
                 $"{now.Year}-{Pad(now.Month)}",
@@ -111,19 +117,23 @@ namespace CodexDistTestCore
 
             Directory.CreateDirectory(filepath);
 
-            filename = Path.Combine(filepath, $"{Pad(now.Hour)}-{Pad(now.Minute)}-{Pad(now.Second)}Z_{name.Replace('.', '-')}");
+            FilenameWithoutPath = $"{Pad(now.Hour)}-{Pad(now.Minute)}-{Pad(now.Second)}Z_{name.Replace('.', '-')}.log";
+
+            filename = Path.Combine(filepath, FilenameWithoutPath);
         }
+
+        public string FilenameWithoutPath { get; }
 
         public void Write(string message)
         {
             WriteRaw($"{GetTimestamp()} {message}");
         }
 
-        public void WriteRaw(string message, string subfile = "")
+        public void WriteRaw(string message)
         {
             try
             {
-                File.AppendAllLines(filename + subfile + ".log", new[] { message });
+                File.AppendAllLines(filename, new[] { message });
             }
             catch (Exception ex)
             {
