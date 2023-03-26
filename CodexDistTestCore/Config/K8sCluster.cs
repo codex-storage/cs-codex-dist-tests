@@ -1,37 +1,39 @@
 ﻿using k8s;
-using NUnit.Framework;
 
 namespace CodexDistTestCore.Config
 {
     public class K8sCluster
     {
         public const string K8sNamespace = "codex-test-namespace";
+        private const string KubeConfigFile = "C:\\kube\\config";
+        private readonly Dictionary<Location, string> K8sNodeLocationMap = new Dictionary<Location, string>
+        {
+            { Location.BensLaptop, "worker01" },
+            { Location.BensOldGamingMachine, "worker02" },
+        };
+
+        private KubernetesClientConfiguration? config;
 
         public KubernetesClientConfiguration GetK8sClientConfig()
         {
-            // todo: If the default KubeConfig file does not suffice, change it here:
-            return KubernetesClientConfiguration.BuildConfigFromConfigFile();
+            if (config != null) return config;
+            config = KubernetesClientConfiguration.BuildConfigFromConfigFile(KubeConfigFile);
+            return config;
         }
 
         public string GetIp()
         {
-            return "127.0.0.1";
+            var c = GetK8sClientConfig();
+
+            var host = c.Host.Replace("https://", "");
+
+            return host.Substring(0, host.IndexOf(':'));
         }
 
         public string GetNodeLabelForLocation(Location location)
         {
-            switch (location)
-            {
-                case Location.Unspecified:
-                    return string.Empty;
-                case Location.BensLaptop:
-                    return "worker01";
-                case Location.BensOldGamingMachine:
-                    return "worker02";
-            }
-
-            Assert.Fail("Unknown location selected: " + location);
-            throw new InvalidOperationException();
+            if (location == Location.Unspecified) return string.Empty;
+            return K8sNodeLocationMap[location];
         }
     }
 }

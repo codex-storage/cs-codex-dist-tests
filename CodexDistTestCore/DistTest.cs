@@ -1,4 +1,5 @@
-﻿using NUnit.Framework;
+﻿using CodexDistTestCore.Config;
+using NUnit.Framework;
 
 namespace CodexDistTestCore
 {
@@ -41,7 +42,10 @@ namespace CodexDistTestCore
             }
             else
             {
+                var dockerImage = new CodexDockerImage();
                 log = new TestLog();
+                log.Log($"Using docker image '{dockerImage.GetImageTag()}'");
+
                 fileManager = new FileManager(log);
                 k8sManager = new K8sManager(log, fileManager);
             }

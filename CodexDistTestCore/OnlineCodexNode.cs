@@ -16,7 +16,7 @@ namespace CodexDistTestCore
         private const string SuccessfullyConnectedMessage = "Successfully connected to peer";
         private const string UploadFailedMessage = "Unable to store block";
 
-        private readonly K8sCluster k8SCluster = new K8sCluster();
+        private readonly K8sCluster k8sCluster = new K8sCluster();
         private readonly TestLog log;
         private readonly IFileManager fileManager;
 
@@ -103,7 +103,7 @@ namespace CodexDistTestCore
 
         private Http Http()
         {
-            return new Http(ip: k8SCluster.GetIp(), port: Container.ServicePort, baseUrl: "/api/codex/v1");
+            return new Http(ip: k8sCluster.GetIp(), port: Container.ServicePort, baseUrl: "/api/codex/v1");
         }
 
         private void Log(string msg)

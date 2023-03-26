@@ -8,7 +8,7 @@ namespace CodexDistTestCore
     public class K8sOperations
     {
         private readonly CodexDockerImage dockerImage = new CodexDockerImage();
-        private readonly K8sCluster k8SCluster = new K8sCluster();
+        private readonly K8sCluster k8sCluster = new K8sCluster();
         private readonly Kubernetes client;
         private readonly KnownK8sPods knownPods;
 
@@ -16,7 +16,7 @@ namespace CodexDistTestCore
         {
             this.knownPods = knownPods;
 
-            client = new Kubernetes(k8SCluster.GetK8sClientConfig());
+            client = new Kubernetes(k8sCluster.GetK8sClientConfig());
         }
 
         public void Close()
@@ -222,7 +222,7 @@ namespace CodexDistTestCore
 
             return new Dictionary<string, string> 
             { 
-                { "codex-test-location", k8SCluster.GetNodeLabelForLocation(offline.Location) }
+                { "codex-test-location", k8sCluster.GetNodeLabelForLocation(offline.Location) }
             };
         }
 
