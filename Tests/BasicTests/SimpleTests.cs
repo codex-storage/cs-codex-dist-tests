@@ -1,4 +1,5 @@
 ﻿using CodexDistTestCore;
+using CodexDistTestCore.Config;
 using NUnit.Framework;
 
 namespace Tests.BasicTests

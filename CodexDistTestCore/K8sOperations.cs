@@ -1,4 +1,5 @@
-﻿using k8s;
+﻿using CodexDistTestCore.Config;
+using k8s;
 using k8s.Models;
 using NUnit.Framework;
 
@@ -6,9 +7,8 @@ namespace CodexDistTestCore
 {
     public class K8sOperations
     {
-        public const string K8sNamespace = "codex-test-namespace";
-
         private readonly CodexDockerImage dockerImage = new CodexDockerImage();
+        private readonly K8sCluster k8SCluster = new K8sCluster();
         private readonly Kubernetes client;
         private readonly KnownK8sPods knownPods;
 
@@ -16,9 +16,7 @@ namespace CodexDistTestCore
         {
             this.knownPods = knownPods;
 
-            // todo: If the default KubeConfig file does not suffice, change it here:
-            var config = KubernetesClientConfiguration.BuildConfigFromConfigFile();
-            client = new Kubernetes(config);
+            client = new Kubernetes(k8SCluster.GetK8sClientConfig());
         }
 
         public void Close()
@@ -220,18 +218,12 @@ namespace CodexDistTestCore
 
         private IDictionary<string, string> CreateNodeSelector(OfflineCodexNodes offline)
         {
-            switch (offline.Location)
-            {
-                case Location.Unspecified:
-                    return new Dictionary<string, string>();
-                case Location.BensLaptop:
-                    return new Dictionary<string, string> { { "codex-test-location", "worker01" } };
-                case Location.BensOldGamingMachine:
-                    return new Dictionary<string, string> { { "codex-test-location", "worker02" } };
-            }
+            if (offline.Location == Location.Unspecified) return new Dictionary<string, string>();
 
-            Assert.Fail("Unknown location selected: " + offline.Location);
-            throw new InvalidOperationException();
+            return new Dictionary<string, string> 
+            { 
+                { "codex-test-location", k8SCluster.GetNodeLabelForLocation(offline.Location) }
+            };
         }
 
         private List<V1Container> CreateDeploymentContainers(CodexNodeGroup online, OfflineCodexNodes offline)
@@ -291,6 +283,11 @@ namespace CodexDistTestCore
             {
                 client.DeleteNamespace(K8sNamespace, null, null, gracePeriodSeconds: 0);
             }
+        }
+
+        private string K8sNamespace
+        {
+            get { return K8sCluster.K8sNamespace; }
         }
 
         #endregion

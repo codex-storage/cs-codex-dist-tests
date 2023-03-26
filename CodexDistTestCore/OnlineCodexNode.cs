@@ -1,4 +1,5 @@
-﻿using NUnit.Framework;
+﻿using CodexDistTestCore.Config;
+using NUnit.Framework;
 
 namespace CodexDistTestCore
 {
@@ -15,6 +16,7 @@ namespace CodexDistTestCore
         private const string SuccessfullyConnectedMessage = "Successfully connected to peer";
         private const string UploadFailedMessage = "Unable to store block";
 
+        private readonly K8sCluster k8SCluster = new K8sCluster();
         private readonly TestLog log;
         private readonly IFileManager fileManager;
 
@@ -101,7 +103,7 @@ namespace CodexDistTestCore
 
         private Http Http()
         {
-            return new Http(ip: "127.0.0.1", port: Container.ServicePort, baseUrl: "/api/codex/v1");
+            return new Http(ip: k8SCluster.GetIp(), port: Container.ServicePort, baseUrl: "/api/codex/v1");
         }
 
         private void Log(string msg)

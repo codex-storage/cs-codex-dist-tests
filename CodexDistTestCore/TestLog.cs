@@ -1,10 +1,10 @@
-﻿using NUnit.Framework;
+﻿using CodexDistTestCore.Config;
+using NUnit.Framework;
 
 namespace CodexDistTestCore
 {
     public class TestLog
     {
-        public const string LogRoot = "D:/CodexTestLogs";
         private readonly LogFile file;
 
         public TestLog()
@@ -105,7 +105,7 @@ namespace CodexDistTestCore
             var now = DateTime.UtcNow;
 
             filepath = Path.Join(
-                TestLog.LogRoot,
+                LogConfig.LogRoot,
                 $"{now.Year}-{Pad(now.Month)}",
                 Pad(now.Day));
 

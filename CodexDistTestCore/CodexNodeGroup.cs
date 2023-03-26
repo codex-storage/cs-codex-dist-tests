@@ -1,4 +1,5 @@
-﻿using k8s.Models;
+﻿using CodexDistTestCore.Config;
+using k8s.Models;
 using System.Collections;
 
 namespace CodexDistTestCore
@@ -63,7 +64,7 @@ namespace CodexDistTestCore
             return new V1ObjectMeta
             {
                 Name = "codex-test-entrypoint-" + OrderNumber,
-                NamespaceProperty = K8sOperations.K8sNamespace
+                NamespaceProperty = K8sCluster.K8sNamespace
             };
         }
 
@@ -72,7 +73,7 @@ namespace CodexDistTestCore
             return new V1ObjectMeta
             {
                 Name = "codex-test-node-" + OrderNumber,
-                NamespaceProperty = K8sOperations.K8sNamespace
+                NamespaceProperty = K8sCluster.K8sNamespace
             };
         }
 

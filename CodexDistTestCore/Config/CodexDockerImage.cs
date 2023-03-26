@@ -1,6 +1,6 @@
 ﻿using k8s.Models;
 
-namespace CodexDistTestCore
+namespace CodexDistTestCore.Config
 {
     public class CodexDockerImage
     {
