@@ -83,7 +83,15 @@ namespace CodexDistTestCore
             var result = TestContext.CurrentContext.Result;
             if (result.Outcome.Status == NUnit.Framework.Interfaces.TestStatus.Failed)
             {
-                k8sManager.ForEachOnlineGroup(DownloadLogs);
+                if (IsDownloadingLogsEnabled())
+                {
+                    log.Log("Downloading all CodexNode logs because of test failure...");
+                    k8sManager.ForEachOnlineGroup(DownloadLogs);
+                }
+                else
+                {
+                    log.Log("Skipping download of all CodexNode logs due to [DontDownloadLogsOnFailure] attribute.");
+                }
             }
         }
 
@@ -95,6 +103,12 @@ namespace CodexDistTestCore
                 var n = (OnlineCodexNode)node;
                 downloader.DownloadLog(n);
             }
+        }
+
+        private bool IsDownloadingLogsEnabled()
+        {
+            var testProperties = TestContext.CurrentContext.Test.Properties;
+            return !testProperties.ContainsKey(PodLogDownloader.DontDownloadLogsOnFailureKey);
         }
     }
 

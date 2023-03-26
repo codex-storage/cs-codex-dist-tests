@@ -1,12 +1,25 @@
-﻿namespace CodexDistTestCore
+﻿using NUnit.Framework;
+
+namespace CodexDistTestCore
 {
     public interface IPodLogHandler
     {
         void Log(Stream log);
     }
 
+    [AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
+    public class DontDownloadLogsOnFailureAttribute : PropertyAttribute
+    {
+        public DontDownloadLogsOnFailureAttribute()
+            : base(Timing.UseLongTimeoutsKey)
+        {
+        }
+    }
+
     public class PodLogDownloader
     {
+        public const string DontDownloadLogsOnFailureKey = "DontDownloadLogsOnFailure";
+
         private readonly TestLog log;
         private readonly IK8sManager k8SManager;
 
