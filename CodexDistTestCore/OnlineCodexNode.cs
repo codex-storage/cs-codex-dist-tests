@@ -9,6 +9,7 @@ namespace CodexDistTestCore
         ContentId UploadFile(TestFile file);
         TestFile? DownloadContent(ContentId contentId);
         void ConnectToPeer(IOnlineCodexNode node);
+        CodexNodeLog DownloadLog();
     }
 
     public class OnlineCodexNode : IOnlineCodexNode
@@ -77,6 +78,16 @@ namespace CodexDistTestCore
 
             Assert.That(response, Is.EqualTo(SuccessfullyConnectedMessage), "Unable to connect codex nodes.");
             Log($"Successfully connected to peer {peer.GetName()}.");
+        }
+
+        public CodexNodeLog DownloadLog()
+        {
+            return Group.DownloadLog(this);
+        }
+
+        public string Describe()
+        {
+            return $"{Group.Describe()} contains {GetName()}";
         }
 
         private string GetPeerMultiAddress(OnlineCodexNode peer, CodexDebugResponse peerInfo)

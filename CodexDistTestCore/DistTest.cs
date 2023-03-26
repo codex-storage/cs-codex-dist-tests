@@ -56,7 +56,8 @@ namespace CodexDistTestCore
         {
             try
             {
-                log.EndTest(k8sManager);
+                log.EndTest();
+                IncludeLogsOnTestFailure();
                 k8sManager.DeleteAllResources();
                 fileManager.DeleteAllTestFiles();
             }
@@ -75,6 +76,25 @@ namespace CodexDistTestCore
         public IOfflineCodexNodes SetupCodexNodes(int numberOfNodes)
         {
             return new OfflineCodexNodes(k8sManager, numberOfNodes);
+        }
+
+        private void IncludeLogsOnTestFailure()
+        {
+            var result = TestContext.CurrentContext.Result;
+            if (result.Outcome.Status == NUnit.Framework.Interfaces.TestStatus.Failed)
+            {
+                k8sManager.ForEachOnlineGroup(DownloadLogs);
+            }
+        }
+
+        private void DownloadLogs(CodexNodeGroup group)
+        {
+            foreach (var node in group)
+            {
+                var downloader = new PodLogDownloader(log, k8sManager);
+                var n = (OnlineCodexNode)node;
+                downloader.DownloadLog(n);
+            }
         }
     }
 

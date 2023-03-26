@@ -12,10 +12,12 @@ namespace CodexDistTestCore
 
     public class CodexNodeGroup : ICodexNodeGroup
     {
+        private readonly TestLog log;
         private readonly IK8sManager k8SManager;
 
-        public CodexNodeGroup(int orderNumber, OfflineCodexNodes origin, IK8sManager k8SManager, OnlineCodexNode[] nodes)
+        public CodexNodeGroup(TestLog log, int orderNumber, OfflineCodexNodes origin, IK8sManager k8SManager, OnlineCodexNode[] nodes)
         {
+            this.log = log;
             OrderNumber = orderNumber;
             Origin = origin;
             this.k8SManager = k8SManager;
@@ -75,6 +77,13 @@ namespace CodexDistTestCore
                 Name = "codex-test-node-" + OrderNumber,
                 NamespaceProperty = K8sCluster.K8sNamespace
             };
+        }
+
+        public CodexNodeLog DownloadLog(IOnlineCodexNode node)
+        {
+            var logDownloader = new PodLogDownloader(log, k8SManager);
+            var n = (OnlineCodexNode)node;
+            return logDownloader.DownloadLog(n);
         }
 
         public Dictionary<string, string> GetSelector()

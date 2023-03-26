@@ -29,23 +29,15 @@ namespace CodexDistTestCore
             Log($"[ERROR] {message}");
         }
 
-        public void EndTest(K8sManager k8sManager)
+        public void EndTest()
         {
             var result = TestContext.CurrentContext.Result;
 
             Log($"Finished: {GetTestName()} = {result.Outcome.Status}");
-            
             if (!string.IsNullOrEmpty(result.Message))
             {
                 Log(result.Message);
-            }
-
-            if (result.Outcome.Status == NUnit.Framework.Interfaces.TestStatus.Failed)
-            {
                 Log($"{result.StackTrace}");
-
-                var logWriter = new PodLogWriter(CreateSubfile());
-                logWriter.IncludeFullPodLogging(k8sManager);
             }
         }
 
@@ -69,44 +61,9 @@ namespace CodexDistTestCore
         }
     }
 
-    public class PodLogWriter : IPodLogsHandler
-    {
-        private readonly LogFile file;
-
-        public PodLogWriter(LogFile file)
-        {
-            this.file = file;
-        }
-
-        public void IncludeFullPodLogging(K8sManager k8sManager)
-        {
-            file.Write("Full pod logging:");
-            k8sManager.FetchAllPodsLogs(this);
-        }
-
-        public void Log(int id, string podDescription, Stream log)
-        {
-            file.Write($"{podDescription} -->> {file.FilenameWithoutPath}");
-            LogRaw(podDescription);
-            var reader = new StreamReader(log);
-            var line = reader.ReadLine();
-            while (line != null)
-            {
-                LogRaw(line);
-                line = reader.ReadLine();
-            }
-        }
-
-        private void LogRaw(string message)
-        {
-            file!.WriteRaw(message);
-        }
-    }
-
     public class LogFile
     {
         private readonly string filepath;
-        private readonly string filename;
 
         public LogFile(DateTime now, string name)
         {
@@ -118,10 +75,10 @@ namespace CodexDistTestCore
             Directory.CreateDirectory(filepath);
 
             FilenameWithoutPath = $"{Pad(now.Hour)}-{Pad(now.Minute)}-{Pad(now.Second)}Z_{name.Replace('.', '-')}.log";
-
-            filename = Path.Combine(filepath, FilenameWithoutPath);
+            FullFilename = Path.Combine(filepath, FilenameWithoutPath);
         }
 
+        public string FullFilename { get; }
         public string FilenameWithoutPath { get; }
 
         public void Write(string message)
@@ -133,7 +90,7 @@ namespace CodexDistTestCore
         {
             try
             {
-                File.AppendAllLines(filename, new[] { message });
+                File.AppendAllLines(FullFilename, new[] { message });
             }
             catch (Exception ex)
             {

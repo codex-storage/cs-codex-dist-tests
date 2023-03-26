@@ -51,25 +51,10 @@ namespace CodexDistTestCore
             WaitUntilNamespaceDeleted();
         }
 
-        public void FetchAllPodsLogs(CodexNodeGroup[] onlines, IPodLogsHandler logHandler)
+        public void FetchPodLog(OnlineCodexNode node, IPodLogHandler logHandler)
         {
-            var logNumberSource = new NumberSource(0);
-            foreach (var online in onlines)
-            {
-                foreach (var node in online)
-                {
-                    WritePodLogs(online, node, logHandler, logNumberSource);
-                }
-            }
-        }
-
-        private void WritePodLogs(CodexNodeGroup online, IOnlineCodexNode node, IPodLogsHandler logHandler, NumberSource logNumberSource)
-        {
-            var n = (OnlineCodexNode)node;
-            var nodeDescription = $"{online.Describe()} contains {n.GetName()}";
-
-            var stream = client.ReadNamespacedPodLog(online.PodInfo!.Name, K8sNamespace, n.Container.Name);
-            logHandler.Log(logNumberSource.GetNextNumber(), nodeDescription, stream);
+            var stream = client.ReadNamespacedPodLog(node.Group.PodInfo!.Name, K8sNamespace, node.Container.Name);
+            logHandler.Log(stream);
         }
 
         private void FetchPodInfo(CodexNodeGroup online)
