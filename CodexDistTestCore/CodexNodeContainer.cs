@@ -2,7 +2,7 @@
 {
     public class CodexNodeContainer
     {
-        public CodexNodeContainer(string name, int servicePort, string servicePortName, int apiPort, string containerPortName, int discoveryPort, int listenPort, string dataDir)
+        public CodexNodeContainer(string name, int servicePort, string servicePortName, int apiPort, string containerPortName, int discoveryPort, int listenPort, string dataDir, int metricsPort)
         {
             Name = name;
             ServicePort = servicePort;
@@ -12,6 +12,7 @@
             DiscoveryPort = discoveryPort;
             ListenPort = listenPort;
             DataDir = dataDir;
+            MetricsPort = metricsPort;
         }
 
         public string Name { get; }
@@ -22,6 +23,7 @@
         public int DiscoveryPort { get; }
         public int ListenPort { get; }
         public string DataDir { get; }
+        public int MetricsPort { get; }
     }
 
     public class CodexGroupNumberSource
@@ -57,7 +59,7 @@
             this.groupContainerFactory = groupContainerFactory;
         }
 
-        public CodexNodeContainer CreateNext()
+        public CodexNodeContainer CreateNext(OfflineCodexNodes offline)
         {
             var n = containerNameSource.GetNextNumber();
             return new CodexNodeContainer(
@@ -68,8 +70,15 @@
                 containerPortName: $"api-{n}",
                 discoveryPort: codexPortSource.GetNextNumber(),
                 listenPort: codexPortSource.GetNextNumber(),
-                dataDir: $"datadir{n}"
+                dataDir: $"datadir{n}",
+                metricsPort: GetMetricsPort(offline)
             );
+        }
+
+        private int GetMetricsPort(OfflineCodexNodes offline)
+        {
+            if (offline.MetricsEnabled) return codexPortSource.GetNextNumber();
+            return 0;
         }
     }
 }

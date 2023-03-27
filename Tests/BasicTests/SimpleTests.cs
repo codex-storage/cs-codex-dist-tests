@@ -79,6 +79,17 @@ namespace Tests.BasicTests
             PerformTwoClientTest(primary, secondary);
         }
 
+        [Test]
+        public void MetricsExample()
+        {
+            var group = SetupCodexNodes(1)
+                            .EnableMetrics()
+                            .BringOnline();
+
+            var metrics = BeginGatheringMetrics(group);
+            
+        }
+
         private void PerformTwoClientTest(IOnlineCodexNode primary, IOnlineCodexNode secondary)
         {
             primary.ConnectToPeer(secondary);

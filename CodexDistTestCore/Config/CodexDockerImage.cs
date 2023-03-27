@@ -25,12 +25,12 @@ namespace CodexDistTestCore.Config
         {
             public List<V1EnvVar> Result { get; } = new List<V1EnvVar>();
 
-            public void Create(OfflineCodexNodes node, CodexNodeContainer environment)
+            public void Create(OfflineCodexNodes node, CodexNodeContainer container)
             {
-                AddVar("API_PORT", environment.ApiPort.ToString());
-                AddVar("DATA_DIR", environment.DataDir);
-                AddVar("DISC_PORT", environment.DiscoveryPort.ToString());
-                AddVar("LISTEN_ADDRS", $"/ip4/0.0.0.0/tcp/{environment.ListenPort}");
+                AddVar("API_PORT", container.ApiPort.ToString());
+                AddVar("DATA_DIR", container.DataDir);
+                AddVar("DISC_PORT", container.DiscoveryPort.ToString());
+                AddVar("LISTEN_ADDRS", $"/ip4/0.0.0.0/tcp/{container.ListenPort}");
 
                 if (node.BootstrapNode != null)
                 {
@@ -44,6 +44,11 @@ namespace CodexDistTestCore.Config
                 if (node.StorageQuota != null)
                 {
                     AddVar("STORAGE_QUOTA", node.StorageQuota.SizeInBytes.ToString()!);
+                }
+                if (node.MetricsEnabled)
+                {
+                    AddVar("METRICS_ADDR", "0.0.0.0");
+                    AddVar("METRICS_PORT", container.MetricsPort.ToString());
                 }
             }
 

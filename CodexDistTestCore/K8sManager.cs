@@ -60,18 +60,18 @@
 
         private CodexNodeGroup CreateOnlineCodexNodes(OfflineCodexNodes offline)
         {
-            var containers = CreateContainers(offline.NumberOfNodes);
+            var containers = CreateContainers(offline);
             var online = containers.Select(c => new OnlineCodexNode(log, fileManager, c)).ToArray();
             var result = new CodexNodeGroup(log, codexGroupNumberSource.GetNextCodexNodeGroupNumber(), offline, this, online);
             onlineCodexNodeGroups.Add(result);
             return result;
         }
 
-        private CodexNodeContainer[] CreateContainers(int number)
+        private CodexNodeContainer[] CreateContainers(OfflineCodexNodes offline)
         {
             var factory = new CodexNodeContainerFactory(codexGroupNumberSource);
             var containers = new List<CodexNodeContainer>();
-            for (var i = 0; i < number; i++) containers.Add(factory.CreateNext());
+            for (var i = 0; i < offline.NumberOfNodes; i++) containers.Add(factory.CreateNext(offline));
             return containers.ToArray();
         }
 

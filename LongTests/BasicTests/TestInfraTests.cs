@@ -8,7 +8,9 @@ namespace LongTests.BasicTests
         [Test, UseLongTimeouts]
         public void TestInfraShouldHave1000AddressSpacesPerPod()
         {
-            var group = SetupCodexNodes(1000).BringOnline();
+            var group = SetupCodexNodes(1000)
+                            .EnableMetrics() // Increases use of port address space per node.
+                            .BringOnline();
 
             var nodeIds = group.Select(n => n.GetDebugInfo().id).ToArray();
 
