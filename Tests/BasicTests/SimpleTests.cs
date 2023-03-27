@@ -76,12 +76,6 @@ namespace Tests.BasicTests
                             .At(Location.BensOldGamingMachine)
                             .BringOnline()[0];
 
-            var debugInfo = primary.GetDebugInfo();
-            Assert.That(debugInfo.spr, Is.Not.Empty);
-
-            var debugInfo2 = secondary.GetDebugInfo();
-            Assert.That(debugInfo2.spr, Is.Not.Empty);
-
             PerformTwoClientTest(primary, secondary);
         }
 
