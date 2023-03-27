@@ -1,4 +1,5 @@
-﻿using NUnit.Framework;
+﻿using CodexDistTestCore.Config;
+using NUnit.Framework;
 
 namespace CodexDistTestCore
 {
@@ -12,20 +13,19 @@ namespace CodexDistTestCore
     public class FileManager : IFileManager
     {
         public const int ChunkSize = 1024 * 1024;
-        private const string Folder = "TestDataFiles";
         private readonly Random random = new Random();
         private readonly List<TestFile> activeFiles = new List<TestFile>();
         private readonly TestLog log;
 
         public FileManager(TestLog log)
         {
-            if (!Directory.Exists(Folder)) Directory.CreateDirectory(Folder);
+            if (!Directory.Exists(FileManagerConfig.Folder)) Directory.CreateDirectory(FileManagerConfig.Folder);
             this.log = log;
         }
 
         public TestFile CreateEmptyTestFile()
         {
-            var result = new TestFile(Path.Combine(Folder, Guid.NewGuid().ToString() + "_test.bin"));
+            var result = new TestFile(Path.Combine(FileManagerConfig.Folder, Guid.NewGuid().ToString() + "_test.bin"));
             File.Create(result.Filename).Close();
             activeFiles.Add(result);
             return result;

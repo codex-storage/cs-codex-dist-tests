@@ -1,4 +1,5 @@
-﻿using NUnit.Framework;
+﻿using CodexDistTestCore.Config;
+using NUnit.Framework;
 
 namespace CodexDistTestCore
 {
@@ -41,7 +42,10 @@ namespace CodexDistTestCore
             }
             else
             {
+                var dockerImage = new CodexDockerImage();
                 log = new TestLog();
+                log.Log($"Using docker image '{dockerImage.GetImageTag()}'");
+
                 fileManager = new FileManager(log);
                 k8sManager = new K8sManager(log, fileManager);
             }
@@ -52,7 +56,8 @@ namespace CodexDistTestCore
         {
             try
             {
-                log.EndTest(k8sManager);
+                log.EndTest();
+                IncludeLogsOnTestFailure();
                 k8sManager.DeleteAllResources();
                 fileManager.DeleteAllTestFiles();
             }
@@ -71,6 +76,39 @@ namespace CodexDistTestCore
         public IOfflineCodexNodes SetupCodexNodes(int numberOfNodes)
         {
             return new OfflineCodexNodes(k8sManager, numberOfNodes);
+        }
+
+        private void IncludeLogsOnTestFailure()
+        {
+            var result = TestContext.CurrentContext.Result;
+            if (result.Outcome.Status == NUnit.Framework.Interfaces.TestStatus.Failed)
+            {
+                if (IsDownloadingLogsEnabled())
+                {
+                    log.Log("Downloading all CodexNode logs because of test failure...");
+                    k8sManager.ForEachOnlineGroup(DownloadLogs);
+                }
+                else
+                {
+                    log.Log("Skipping download of all CodexNode logs due to [DontDownloadLogsOnFailure] attribute.");
+                }
+            }
+        }
+
+        private void DownloadLogs(CodexNodeGroup group)
+        {
+            foreach (var node in group)
+            {
+                var downloader = new PodLogDownloader(log, k8sManager);
+                var n = (OnlineCodexNode)node;
+                downloader.DownloadLog(n);
+            }
+        }
+
+        private bool IsDownloadingLogsEnabled()
+        {
+            var testProperties = TestContext.CurrentContext.Test.Properties;
+            return !testProperties.ContainsKey(PodLogDownloader.DontDownloadLogsOnFailureKey);
         }
     }
 

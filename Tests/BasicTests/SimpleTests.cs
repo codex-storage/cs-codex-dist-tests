@@ -1,4 +1,5 @@
 ﻿using CodexDistTestCore;
+using CodexDistTestCore.Config;
 using NUnit.Framework;
 
 namespace Tests.BasicTests
@@ -19,13 +20,20 @@ namespace Tests.BasicTests
             Assert.That(debugInfo.codex.revision, Is.EqualTo(dockerImage.GetExpectedImageRevision()));
         }
 
+        [Test, DontDownloadLogsOnFailure]
+        public void CanAccessLogs()
+        {
+            var node = SetupCodexNodes(1).BringOnline()[0];
+
+            var log = node.DownloadLog();
+
+            log.AssertLogContains("Started codex node");
+        }
+
         [Test]
         public void OneClientTest()
         {
-            var primary = SetupCodexNodes(1)
-                            .WithLogLevel(CodexLogLevel.Trace)
-                            .WithStorageQuota(2.MB())
-                            .BringOnline()[0];
+            var primary = SetupCodexNodes(1).BringOnline()[0];
 
             var testFile = GenerateTestFile(1.MB());
 
@@ -37,12 +45,9 @@ namespace Tests.BasicTests
         }
 
         [Test]
-        public void TwoClientOnePodTest()
+        public void TwoClientsOnePodTest()
         {
-            var group = SetupCodexNodes(2)
-                        .WithLogLevel(CodexLogLevel.Trace)
-                        .WithStorageQuota(2.MB())
-                        .BringOnline();
+            var group = SetupCodexNodes(2).BringOnline();
 
             var primary = group[0];
             var secondary = group[1];
@@ -51,14 +56,24 @@ namespace Tests.BasicTests
         }
 
         [Test]
-        public void TwoClientTwoPodTest()
+        public void TwoClientsTwoPodsTest()
+        {
+            var primary = SetupCodexNodes(1).BringOnline()[0];
+
+            var secondary = SetupCodexNodes(1).BringOnline()[0];
+
+            PerformTwoClientTest(primary, secondary);
+        }
+
+        [Test]
+        public void TwoClientsTwoLocationsTest()
         {
             var primary = SetupCodexNodes(1)
-                            .WithStorageQuota(2.MB())
+                            .At(Location.BensLaptop)
                             .BringOnline()[0];
 
             var secondary = SetupCodexNodes(1)
-                            .WithStorageQuota(2.MB())
+                            .At(Location.BensOldGamingMachine)
                             .BringOnline()[0];
 
             PerformTwoClientTest(primary, secondary);

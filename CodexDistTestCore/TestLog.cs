@@ -1,16 +1,20 @@
-﻿using NUnit.Framework;
+﻿using CodexDistTestCore.Config;
+using NUnit.Framework;
 
 namespace CodexDistTestCore
 {
     public class TestLog
     {
-        public const string LogRoot = "D:/CodexTestLogs";
+        private readonly NumberSource subfileNumberSource = new NumberSource(0);
         private readonly LogFile file;
+        private readonly DateTime now;
 
         public TestLog()
         {
+            now = DateTime.UtcNow;
+
             var name = GetTestName();
-            file = new LogFile(name);
+            file = new LogFile(now, name);
 
             Log($"Begin: {name}");
         }
@@ -25,24 +29,21 @@ namespace CodexDistTestCore
             Log($"[ERROR] {message}");
         }
 
-        public void EndTest(K8sManager k8sManager)
+        public void EndTest()
         {
             var result = TestContext.CurrentContext.Result;
 
             Log($"Finished: {GetTestName()} = {result.Outcome.Status}");
-            
             if (!string.IsNullOrEmpty(result.Message))
             {
                 Log(result.Message);
-            }
-
-            if (result.Outcome.Status == NUnit.Framework.Interfaces.TestStatus.Failed)
-            {
                 Log($"{result.StackTrace}");
-
-                var logWriter = new PodLogWriter(file);
-                logWriter.IncludeFullPodLogging(k8sManager);
             }
+        }
+
+        public LogFile CreateSubfile()
+        {
+            return new LogFile(now, $"{GetTestName()}_{subfileNumberSource.GetNextNumber().ToString().PadLeft(6, '0')}");
         }
 
         private static string GetTestName()
@@ -60,70 +61,36 @@ namespace CodexDistTestCore
         }
     }
 
-    public class PodLogWriter : IPodLogsHandler
-    {
-        private readonly LogFile file;
-
-        public PodLogWriter(LogFile file)
-        {
-            this.file = file;
-        }
-
-        public void IncludeFullPodLogging(K8sManager k8sManager)
-        {
-            file.Write("Full pod logging:");
-            k8sManager.FetchAllPodsLogs(this);
-        }
-
-        public void Log(int id, string podDescription, Stream log)
-        {
-            var logFile = id.ToString().PadLeft(6, '0');
-            file.Write($"{podDescription} -->> {logFile}");
-            LogRaw(podDescription, logFile);
-            var reader = new StreamReader(log);
-            var line = reader.ReadLine();
-            while (line != null)
-            {
-                LogRaw(line, logFile);
-                line = reader.ReadLine();
-            }
-        }
-
-        private void LogRaw(string message, string filename)
-        {
-            file!.WriteRaw(message, filename);
-        }
-    }
-
     public class LogFile
     {
         private readonly string filepath;
-        private readonly string filename;
 
-        public LogFile(string name)
+        public LogFile(DateTime now, string name)
         {
-            var now = DateTime.UtcNow;
-
             filepath = Path.Join(
-                TestLog.LogRoot,
+                LogConfig.LogRoot,
                 $"{now.Year}-{Pad(now.Month)}",
                 Pad(now.Day));
 
             Directory.CreateDirectory(filepath);
 
-            filename = Path.Combine(filepath, $"{Pad(now.Hour)}-{Pad(now.Minute)}-{Pad(now.Second)}Z_{name.Replace('.', '-')}");
+            FilenameWithoutPath = $"{Pad(now.Hour)}-{Pad(now.Minute)}-{Pad(now.Second)}Z_{name.Replace('.', '-')}.log";
+            FullFilename = Path.Combine(filepath, FilenameWithoutPath);
         }
+
+        public string FullFilename { get; }
+        public string FilenameWithoutPath { get; }
 
         public void Write(string message)
         {
             WriteRaw($"{GetTimestamp()} {message}");
         }
 
-        public void WriteRaw(string message, string subfile = "")
+        public void WriteRaw(string message)
         {
             try
             {
-                File.AppendAllLines(filename + subfile + ".log", new[] { message });
+                File.AppendAllLines(FullFilename, new[] { message });
             }
             catch (Exception ex)
             {

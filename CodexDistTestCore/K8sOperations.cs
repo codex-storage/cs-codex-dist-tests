@@ -1,4 +1,5 @@
-﻿using k8s;
+﻿using CodexDistTestCore.Config;
+using k8s;
 using k8s.Models;
 using NUnit.Framework;
 
@@ -6,9 +7,8 @@ namespace CodexDistTestCore
 {
     public class K8sOperations
     {
-        public const string K8sNamespace = "codex-test-namespace";
-
         private readonly CodexDockerImage dockerImage = new CodexDockerImage();
+        private readonly K8sCluster k8sCluster = new K8sCluster();
         private readonly Kubernetes client;
         private readonly KnownK8sPods knownPods;
 
@@ -16,9 +16,7 @@ namespace CodexDistTestCore
         {
             this.knownPods = knownPods;
 
-            // todo: If the default KubeConfig file does not suffice, change it here:
-            var config = KubernetesClientConfiguration.BuildConfigFromConfigFile();
-            client = new Kubernetes(config);
+            client = new Kubernetes(k8sCluster.GetK8sClientConfig());
         }
 
         public void Close()
@@ -53,25 +51,10 @@ namespace CodexDistTestCore
             WaitUntilNamespaceDeleted();
         }
 
-        public void FetchAllPodsLogs(CodexNodeGroup[] onlines, IPodLogsHandler logHandler)
+        public void FetchPodLog(OnlineCodexNode node, IPodLogHandler logHandler)
         {
-            var logNumberSource = new NumberSource(0);
-            foreach (var online in onlines)
-            {
-                foreach (var node in online)
-                {
-                    WritePodLogs(online, node, logHandler, logNumberSource);
-                }
-            }
-        }
-
-        private void WritePodLogs(CodexNodeGroup online, IOnlineCodexNode node, IPodLogsHandler logHandler, NumberSource logNumberSource)
-        {
-            var n = (OnlineCodexNode)node;
-            var nodeDescription = $"{online.Describe()} contains {n.GetName()}";
-
-            var stream = client.ReadNamespacedPodLog(online.PodInfo!.Name, K8sNamespace, n.Container.Name);
-            logHandler.Log(logNumberSource.GetNextNumber(), nodeDescription, stream);
+            var stream = client.ReadNamespacedPodLog(node.Group.PodInfo!.Name, K8sNamespace, node.Container.Name);
+            logHandler.Log(stream);
         }
 
         private void FetchPodInfo(CodexNodeGroup online)
@@ -208,6 +191,7 @@ namespace CodexDistTestCore
                         },
                         Spec = new V1PodSpec
                         {
+                            NodeSelector = CreateNodeSelector(offline),
                             Containers = CreateDeploymentContainers(online, offline)
                         }
                     }
@@ -215,6 +199,16 @@ namespace CodexDistTestCore
             };
 
             online.Deployment = client.CreateNamespacedDeployment(deploymentSpec, K8sNamespace);
+        }
+
+        private IDictionary<string, string> CreateNodeSelector(OfflineCodexNodes offline)
+        {
+            if (offline.Location == Location.Unspecified) return new Dictionary<string, string>();
+
+            return new Dictionary<string, string> 
+            { 
+                { "codex-test-location", k8sCluster.GetNodeLabelForLocation(offline.Location) }
+            };
         }
 
         private List<V1Container> CreateDeploymentContainers(CodexNodeGroup online, OfflineCodexNodes offline)
@@ -274,6 +268,11 @@ namespace CodexDistTestCore
             {
                 client.DeleteNamespace(K8sNamespace, null, null, gracePeriodSeconds: 0);
             }
+        }
+
+        private string K8sNamespace
+        {
+            get { return K8sCluster.K8sNamespace; }
         }
 
         #endregion

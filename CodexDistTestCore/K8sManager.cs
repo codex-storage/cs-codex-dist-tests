@@ -4,12 +4,13 @@
     {
         ICodexNodeGroup BringOnline(OfflineCodexNodes node);
         IOfflineCodexNodes BringOffline(ICodexNodeGroup node);
+        void FetchPodLog(OnlineCodexNode node, IPodLogHandler logHandler);
     }
 
     public class K8sManager : IK8sManager
     {
         private readonly CodexGroupNumberSource codexGroupNumberSource = new CodexGroupNumberSource();
-        private readonly List<CodexNodeGroup> onlineCodexNodes = new List<CodexNodeGroup>();
+        private readonly List<CodexNodeGroup> onlineCodexNodeGroups = new List<CodexNodeGroup>();
         private readonly KnownK8sPods knownPods = new KnownK8sPods();
         private readonly TestLog log;
         private readonly IFileManager fileManager;
@@ -47,17 +48,22 @@
             K8s(k => k.DeleteAllResources());
         }
 
-        public void FetchAllPodsLogs(IPodLogsHandler logHandler)
+        public void ForEachOnlineGroup(Action<CodexNodeGroup> action)
         {
-            K8s(k => k.FetchAllPodsLogs(onlineCodexNodes.ToArray(), logHandler));
+            foreach (var group in onlineCodexNodeGroups) action(group);
+        }
+
+        public void FetchPodLog(OnlineCodexNode node, IPodLogHandler logHandler)
+        {
+            K8s(k => k.FetchPodLog(node, logHandler));
         }
 
         private CodexNodeGroup CreateOnlineCodexNodes(OfflineCodexNodes offline)
         {
             var containers = CreateContainers(offline.NumberOfNodes);
             var online = containers.Select(c => new OnlineCodexNode(log, fileManager, c)).ToArray();
-            var result = new CodexNodeGroup(codexGroupNumberSource.GetNextCodexNodeGroupNumber(), offline, this, online);
-            onlineCodexNodes.Add(result);
+            var result = new CodexNodeGroup(log, codexGroupNumberSource.GetNextCodexNodeGroupNumber(), offline, this, online);
+            onlineCodexNodeGroups.Add(result);
             return result;
         }
 
@@ -72,7 +78,7 @@
         private CodexNodeGroup GetAndRemoveActiveNodeFor(ICodexNodeGroup node)
         {
             var n = (CodexNodeGroup)node;
-            onlineCodexNodes.Remove(n);
+            onlineCodexNodeGroups.Remove(n);
             return n;
         }
 
