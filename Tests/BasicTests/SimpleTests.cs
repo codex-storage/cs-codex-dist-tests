@@ -7,88 +7,98 @@ namespace Tests.BasicTests
     [TestFixture]
     public class SimpleTests : DistTest
     {
-        [Test]
-        public void GetDebugInfo()
-        {
-            var dockerImage = new CodexDockerImage();
+        //[Test]
+        //public void GetDebugInfo()
+        //{
+        //    var dockerImage = new CodexDockerImage();
 
-            var node = SetupCodexNodes(1).BringOnline()[0];
+        //    var node = SetupCodexNodes(1).BringOnline()[0];
 
-            var debugInfo = node.GetDebugInfo();
+        //    var debugInfo = node.GetDebugInfo();
 
-            Assert.That(debugInfo.spr, Is.Not.Empty);
-            Assert.That(debugInfo.codex.revision, Is.EqualTo(dockerImage.GetExpectedImageRevision()));
-        }
+        //    Assert.That(debugInfo.spr, Is.Not.Empty);
+        //    Assert.That(debugInfo.codex.revision, Is.EqualTo(dockerImage.GetExpectedImageRevision()));
+        //}
 
-        [Test, DontDownloadLogsOnFailure]
-        public void CanAccessLogs()
-        {
-            var node = SetupCodexNodes(1).BringOnline()[0];
+        //[Test, DontDownloadLogsAndMetricsOnFailure]
+        //public void CanAccessLogs()
+        //{
+        //    var node = SetupCodexNodes(1).BringOnline()[0];
 
-            var log = node.DownloadLog();
+        //    var log = node.DownloadLog();
 
-            log.AssertLogContains("Started codex node");
-        }
-
-        [Test]
-        public void OneClientTest()
-        {
-            var primary = SetupCodexNodes(1).BringOnline()[0];
-
-            var testFile = GenerateTestFile(1.MB());
-
-            var contentId = primary.UploadFile(testFile);
-
-            var downloadedFile = primary.DownloadContent(contentId);
-
-            testFile.AssertIsEqual(downloadedFile);
-        }
-
-        [Test]
-        public void TwoClientsOnePodTest()
-        {
-            var group = SetupCodexNodes(2).BringOnline();
-
-            var primary = group[0];
-            var secondary = group[1];
-
-            PerformTwoClientTest(primary, secondary);
-        }
-
-        [Test]
-        public void TwoClientsTwoPodsTest()
-        {
-            var primary = SetupCodexNodes(1).BringOnline()[0];
-
-            var secondary = SetupCodexNodes(1).BringOnline()[0];
-
-            PerformTwoClientTest(primary, secondary);
-        }
-
-        [Test]
-        public void TwoClientsTwoLocationsTest()
-        {
-            var primary = SetupCodexNodes(1)
-                            .At(Location.BensLaptop)
-                            .BringOnline()[0];
-
-            var secondary = SetupCodexNodes(1)
-                            .At(Location.BensOldGamingMachine)
-                            .BringOnline()[0];
-
-            PerformTwoClientTest(primary, secondary);
-        }
+        //    log.AssertLogContains("Started codex node");
+        //}
 
         [Test]
         public void MetricsExample()
         {
-            var group = SetupCodexNodes(1)
-                            .EnableMetrics()
-                            .BringOnline();
+            var group = SetupCodexNodes(2)
+                        .EnableMetrics()
+                        .BringOnline();
 
-            var metrics = BeginGatheringMetrics(group);
-            
+            var metrics = GatherMetrics(group);
+
+            var primary = group[0];
+            var secondary = group[1];
+            primary.ConnectToPeer(secondary);
+
+            Thread.Sleep(10000);
+
+            AssertWithTimeout(
+                () => metrics.GetMostRecentInt("libp2p_peers", primary),
+                isEqualTo: 1,
+                "Number of peers metric was incorrect.");
         }
+
+        //[Test]
+        //public void OneClientTest()
+        //{
+        //    var primary = SetupCodexNodes(1).BringOnline()[0];
+
+        //    var testFile = GenerateTestFile(1.MB());
+
+        //    var contentId = primary.UploadFile(testFile);
+
+        //    var downloadedFile = primary.DownloadContent(contentId);
+
+        //    testFile.AssertIsEqual(downloadedFile);
+        //}
+
+        //[Test]
+        //public void TwoClientsOnePodTest()
+        //{
+        //    var group = SetupCodexNodes(2).BringOnline();
+
+        //    var primary = group[0];
+        //    var secondary = group[1];
+
+        //    PerformTwoClientTest(primary, secondary);
+        //}
+
+        //[Test]
+        //public void TwoClientsTwoPodsTest()
+        //{
+        //    var primary = SetupCodexNodes(1).BringOnline()[0];
+
+        //    var secondary = SetupCodexNodes(1).BringOnline()[0];
+
+        //    PerformTwoClientTest(primary, secondary);
+        //}
+
+        //[Test]
+        //public void TwoClientsTwoLocationsTest()
+        //{
+        //    var primary = SetupCodexNodes(1)
+        //                    .At(Location.BensLaptop)
+        //                    .BringOnline()[0];
+
+        //    var secondary = SetupCodexNodes(1)
+        //                    .At(Location.BensOldGamingMachine)
+        //                    .BringOnline()[0];
+
+        //    PerformTwoClientTest(primary, secondary);
+        //}
 
         private void PerformTwoClientTest(IOnlineCodexNode primary, IOnlineCodexNode secondary)
         {

@@ -9,6 +9,7 @@ namespace CodexDistTestCore
         private TestLog log = null!;
         private FileManager fileManager = null!;
         private K8sManager k8sManager = null!;
+        private MetricsAggregator metricsAggregator = null!;
 
         [OneTimeSetUp]
         public void GlobalSetup()
@@ -48,6 +49,7 @@ namespace CodexDistTestCore
 
                 fileManager = new FileManager(log);
                 k8sManager = new K8sManager(log, fileManager);
+                metricsAggregator = new MetricsAggregator(log, k8sManager);
             }
         }
 
@@ -57,7 +59,7 @@ namespace CodexDistTestCore
             try
             {
                 log.EndTest();
-                IncludeLogsOnTestFailure();
+                IncludeLogsAndMetricsOnTestFailure();
                 k8sManager.DeleteAllResources();
                 fileManager.DeleteAllTestFiles();
             }
@@ -78,19 +80,57 @@ namespace CodexDistTestCore
             return new OfflineCodexNodes(k8sManager, numberOfNodes);
         }
 
-        private void IncludeLogsOnTestFailure()
+        public MetricsAccess GatherMetrics(ICodexNodeGroup group)
+        {
+            return GatherMetrics(group.ToArray());
+        }
+
+        public MetricsAccess GatherMetrics(params IOnlineCodexNode[] nodes)
+        {
+            Assert.That(nodes.All(n => HasMetricsEnable(n)),
+                "Incorrect test setup: Metrics were not enabled on (all) provided OnlineCodexNodes. " +
+                "To use metrics, please use 'EnableMetrics()' when setting up Codex nodes.");
+
+            return metricsAggregator.BeginCollectingMetricsFor(nodes);
+        }
+
+        public void AssertWithTimeout<T>(Func<T> operation, T isEqualTo, string message)
+        {
+            AssertWithTimeout(operation, isEqualTo, TimeSpan.FromMinutes(10), message);
+        }
+
+        public void AssertWithTimeout<T>(Func<T> operation, T isEqualTo, TimeSpan timeout, string message)
+        {
+            var start = DateTime.UtcNow;
+
+            while (true)
+            {
+                var result = operation();
+                if (result!.Equals(isEqualTo)) return;
+                if (DateTime.UtcNow - start > timeout)
+                {
+                    Assert.That(result, Is.EqualTo(isEqualTo), message);
+                    return;
+                }
+
+                Utils.Sleep(TimeSpan.FromSeconds(10));
+            }
+        }
+
+        private void IncludeLogsAndMetricsOnTestFailure()
         {
             var result = TestContext.CurrentContext.Result;
             if (result.Outcome.Status == NUnit.Framework.Interfaces.TestStatus.Failed)
             {
-                if (IsDownloadingLogsEnabled())
+                if (IsDownloadingLogsAndMetricsEnabled())
                 {
-                    log.Log("Downloading all CodexNode logs because of test failure...");
+                    log.Log("Downloading all CodexNode logs and metrics because of test failure...");
                     k8sManager.ForEachOnlineGroup(DownloadLogs);
+                    metricsAggregator.DownloadAllMetrics();
                 }
                 else
                 {
-                    log.Log("Skipping download of all CodexNode logs due to [DontDownloadLogsOnFailure] attribute.");
+                    log.Log("Skipping download of all CodexNode logs and metrics due to [DontDownloadLogsAndMetricsOnFailure] attribute.");
                 }
             }
         }
@@ -105,10 +145,15 @@ namespace CodexDistTestCore
             }
         }
 
-        private bool IsDownloadingLogsEnabled()
+        private bool IsDownloadingLogsAndMetricsEnabled()
         {
             var testProperties = TestContext.CurrentContext.Test.Properties;
             return !testProperties.ContainsKey(PodLogDownloader.DontDownloadLogsOnFailureKey);
+        }
+
+        private bool HasMetricsEnable(IOnlineCodexNode n)
+        {
+            return ((OnlineCodexNode)n).Group.Origin.MetricsEnabled;
         }
     }
 

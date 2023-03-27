@@ -1,5 +1,6 @@
 ﻿using CodexDistTestCore.Config;
 using k8s;
+using k8s.KubeConfigModels;
 using k8s.Models;
 using NUnit.Framework;
 
@@ -57,7 +58,30 @@ namespace CodexDistTestCore
             logHandler.Log(stream);
         }
 
+        public PrometheusInfo BringOnlinePrometheus(int servicePort)
+        {
+            EnsureTestNamespace();
+
+            var spec = new K8sPrometheusSpecs();
+            CreatePrometheusDeployment(spec);
+            CreatePrometheusService(spec, servicePort);
+            WaitUntilPrometheusOnline(spec);
+
+            return new PrometheusInfo(servicePort, FetchNewPod());
+        }
+
+        public void UploadFileToPod(string podName, string containerName, Stream fileStream, string destinationPath)
+        {
+            var cp = new K8sCp(client);
+            Utils.Wait(cp.CopyFileToPodAsync(podName, K8sCluster.K8sNamespace, containerName, fileStream, destinationPath));
+        }
+
         private void FetchPodInfo(CodexNodeGroup online)
+        {
+            online.PodInfo = FetchNewPod();
+        }
+
+        private PodInfo FetchNewPod()
         {
             var pods = client.ListNamespacedPod(K8sNamespace).Items;
 
@@ -65,12 +89,13 @@ namespace CodexDistTestCore
             Assert.That(newPods.Length, Is.EqualTo(1), "Expected only 1 pod to be created. Test infra failure.");
 
             var newPod = newPods.Single();
-            online.PodInfo = new PodInfo(newPod.Name(), newPod.Status.PodIP);
+            var info = new PodInfo(newPod.Name(), newPod.Status.PodIP);
 
-            Assert.That(!string.IsNullOrEmpty(online.PodInfo.Name), "Invalid pod name received. Test infra failure.");
-            Assert.That(!string.IsNullOrEmpty(online.PodInfo.Ip), "Invalid pod IP received. Test infra failure.");
+            Assert.That(!string.IsNullOrEmpty(info.Name), "Invalid pod name received. Test infra failure.");
+            Assert.That(!string.IsNullOrEmpty(info.Ip), "Invalid pod IP received. Test infra failure.");
 
             knownPods.Add(newPod.Name());
+            return info;
         }
 
         #region Waiting
@@ -101,6 +126,16 @@ namespace CodexDistTestCore
         private void WaitUntilNamespaceDeleted()
         {
             WaitUntil(() => !IsTestNamespaceOnline());
+        }
+
+        private void WaitUntilPrometheusOnline(K8sPrometheusSpecs spec)
+        {
+            var deploymentName = spec.GetDeploymentName();
+            WaitUntil(() =>
+            {
+                var deployment = client.ReadNamespacedDeployment(deploymentName, K8sNamespace);
+                return deployment?.Status.AvailableReplicas != null && deployment.Status.AvailableReplicas > 0;
+            });
         }
 
         private void WaitUntil(Func<bool> predicate)
@@ -164,6 +199,11 @@ namespace CodexDistTestCore
             if (online.Service == null) return;
             client.DeleteNamespacedService(online.Service.Name(), K8sNamespace);
             online.Service = null;
+        }
+
+        private void CreatePrometheusService(K8sPrometheusSpecs spec, int servicePort)
+        {
+            client.CreateNamespacedService(spec.CreatePrometheusService(servicePort), K8sNamespace);
         }
 
         #endregion
@@ -232,6 +272,7 @@ namespace CodexDistTestCore
                     Env = dockerImage.CreateEnvironmentVariables(offline, container)
                 });
             }
+
             return result;
         }
 
@@ -240,6 +281,11 @@ namespace CodexDistTestCore
             if (online.Deployment == null) return;
             client.DeleteNamespacedDeployment(online.Deployment.Name(), K8sNamespace);
             online.Deployment = null;
+        }
+
+        private void CreatePrometheusDeployment(K8sPrometheusSpecs spec)
+        {
+            client.CreateNamespacedDeployment(spec.CreatePrometheusDeployment(), K8sNamespace);
         }
 
         #endregion
