@@ -87,11 +87,13 @@ namespace CodexDistTestCore
 
         public MetricsAccess GatherMetrics(params IOnlineCodexNode[] nodes)
         {
-            Assert.That(nodes.All(n => HasMetricsEnable(n)),
+            var onlineNodes = nodes.Cast<OnlineCodexNode>().ToArray();
+
+            Assert.That(onlineNodes.All(n => n.Group.Origin.MetricsEnabled),
                 "Incorrect test setup: Metrics were not enabled on (all) provided OnlineCodexNodes. " +
                 "To use metrics, please use 'EnableMetrics()' when setting up Codex nodes.");
 
-            return metricsAggregator.BeginCollectingMetricsFor(nodes);
+            return metricsAggregator.BeginCollectingMetricsFor(onlineNodes);
         }
 
         public void AssertWithTimeout<T>(Func<T> operation, T isEqualTo, string message)
@@ -149,11 +151,6 @@ namespace CodexDistTestCore
         {
             var testProperties = TestContext.CurrentContext.Test.Properties;
             return !testProperties.ContainsKey(PodLogDownloader.DontDownloadLogsOnFailureKey);
-        }
-
-        private bool HasMetricsEnable(IOnlineCodexNode n)
-        {
-            return ((OnlineCodexNode)n).Group.Origin.MetricsEnabled;
         }
     }
 

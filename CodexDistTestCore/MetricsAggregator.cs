@@ -1,4 +1,5 @@
 ﻿using NUnit.Framework;
+using System.Text;
 
 namespace CodexDistTestCore
 {
@@ -6,7 +7,6 @@ namespace CodexDistTestCore
     {
         private readonly TestLog log;
         private readonly K8sManager k8sManager;
-        private readonly List<OnlineCodexNode> activeMetricsNodes = new List<OnlineCodexNode>();
         private PrometheusInfo? activePrometheus;
 
         public MetricsAggregator(TestLog log, K8sManager k8sManager)
@@ -15,71 +15,57 @@ namespace CodexDistTestCore
             this.k8sManager = k8sManager;
         }
 
-        public MetricsAccess BeginCollectingMetricsFor(IOnlineCodexNode[] nodes)
+        public MetricsAccess BeginCollectingMetricsFor(OnlineCodexNode[] nodes)
         {
-            EnsurePrometheusPod();
+            if (activePrometheus != null)
+            {
+                Assert.Fail("Incorrect test setup: 'GatherMetrics' may be called only once during a test run. Metrics service targets cannot be changed once started. :(");
+                throw new InvalidOperationException();
+            }
 
-            AddNewCodexNodes(nodes);
+            log.Log($"Starting metrics collecting for {nodes.Length} nodes...");
 
-            // Get IPS and ports from all nodes, format prometheus configuration
-            var config = GeneratePrometheusConfig();
-            // Create config file inside prometheus pod
-            k8sManager.UploadFileToPod(
-                activePrometheus!.PodInfo.Name,
-                K8sPrometheusSpecs.ContainerName,
-                config,
-                K8sPrometheusSpecs.ConfigFilepath);
+            var config = GeneratePrometheusConfig(nodes);
+            StartPrometheusPod(config);
 
-            // HTTP POST request to the /-/reload endpoint (when the --web.enable-lifecycle flag is enabled). 
-
-            return new MetricsAccess();
+            log.Log("Metrics service started.");
+            return new MetricsAccess(activePrometheus!);
         }
 
         public void DownloadAllMetrics()
         {
         }
 
-        private void EnsurePrometheusPod()
+        private void StartPrometheusPod(string config)
         {
             if (activePrometheus != null) return;
-            activePrometheus = k8sManager.BringOnlinePrometheus();
+            activePrometheus = k8sManager.BringOnlinePrometheus(config);
         }
 
-        private void AddNewCodexNodes(IOnlineCodexNode[] nodes)
+        private string GeneratePrometheusConfig(OnlineCodexNode[] nodes)
         {
-            activeMetricsNodes.AddRange(nodes.Where(n => !activeMetricsNodes.Contains(n)).Cast<OnlineCodexNode>());
-        }
+            var config = "";
+            config += "global:\n";
+            config += "  scrape_interval: 30s\n";
+            config += "  scrape_timeout: 10s\n";
+            config += "\n";
+            config += "scrape_configs:\n";
+            config += "  - job_name: services\n";
+            config += "    metrics_path: /metrics\n";
+            config += "    static_configs:\n";
+            config += "      - targets:\n";
+            config += "          - 'prometheus:9090'\n";
 
-        private Stream GeneratePrometheusConfig()
-        {
-            var stream = new MemoryStream();
-            using var writer = new StreamWriter(stream);
-
-            writer.WriteLine("global:");
-            writer.WriteLine("  scrape_interval: 30s");
-            writer.WriteLine("  scrape_timeout: 10s");
-            writer.WriteLine("");
-            writer.WriteLine("rule_files:");
-            writer.WriteLine("  - alert.yml");
-            writer.WriteLine("");
-            writer.WriteLine("scrape_configs:");
-            writer.WriteLine("  - job_name: services");
-            writer.WriteLine("    metrics_path: /metrics");
-            writer.WriteLine("    static_configs:");
-            writer.WriteLine("      - targets:");
-            writer.WriteLine("          - 'prometheus:9090'");
-
-            foreach (var node in activeMetricsNodes)
+            foreach (var node in nodes)
             {
                 var ip = node.Group.PodInfo!.Ip;
-                var port = node.Container.ServicePort;
-                writer.WriteLine($"          - '{ip}:{port}'");
+                var port = node.Container.MetricsPort;
+                config += $"          - '{ip}:{port}'\n";
             }
 
-            return stream;
+            var bytes = Encoding.ASCII.GetBytes(config);
+            return Convert.ToBase64String(bytes);
         }
-
-
     }
 
     public class PrometheusInfo

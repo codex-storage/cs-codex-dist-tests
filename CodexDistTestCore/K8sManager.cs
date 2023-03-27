@@ -58,16 +58,13 @@
             K8s(k => k.FetchPodLog(node, logHandler));
         }
 
-        public PrometheusInfo BringOnlinePrometheus()
+        public PrometheusInfo BringOnlinePrometheus(string config)
         {
-            PrometheusInfo? info = null;
-            K8s(k => info = k.BringOnlinePrometheus(codexGroupNumberSource.GetNextServicePort()));
-            return info!;
-        }
+            var spec = new K8sPrometheusSpecs(codexGroupNumberSource.GetNextServicePort(), config);
 
-        public void UploadFileToPod(string podName, string containerName, Stream fileStream, string destinationPath)
-        {
-            K8s(k => k.UploadFileToPod(podName, containerName, fileStream, destinationPath));
+            PrometheusInfo? info = null;
+            K8s(k => info = k.BringOnlinePrometheus(spec));
+            return info!;
         }
 
         private CodexNodeGroup CreateOnlineCodexNodes(OfflineCodexNodes offline)

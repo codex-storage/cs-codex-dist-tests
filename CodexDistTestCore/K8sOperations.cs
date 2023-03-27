@@ -58,22 +58,15 @@ namespace CodexDistTestCore
             logHandler.Log(stream);
         }
 
-        public PrometheusInfo BringOnlinePrometheus(int servicePort)
+        public PrometheusInfo BringOnlinePrometheus(K8sPrometheusSpecs spec)
         {
             EnsureTestNamespace();
 
-            var spec = new K8sPrometheusSpecs();
             CreatePrometheusDeployment(spec);
-            CreatePrometheusService(spec, servicePort);
+            CreatePrometheusService(spec);
             WaitUntilPrometheusOnline(spec);
 
-            return new PrometheusInfo(servicePort, FetchNewPod());
-        }
-
-        public void UploadFileToPod(string podName, string containerName, Stream fileStream, string destinationPath)
-        {
-            var cp = new K8sCp(client);
-            Utils.Wait(cp.CopyFileToPodAsync(podName, K8sCluster.K8sNamespace, containerName, fileStream, destinationPath));
+            return new PrometheusInfo(spec.ServicePort, FetchNewPod());
         }
 
         private void FetchPodInfo(CodexNodeGroup online)
@@ -201,9 +194,9 @@ namespace CodexDistTestCore
             online.Service = null;
         }
 
-        private void CreatePrometheusService(K8sPrometheusSpecs spec, int servicePort)
+        private void CreatePrometheusService(K8sPrometheusSpecs spec)
         {
-            client.CreateNamespacedService(spec.CreatePrometheusService(servicePort), K8sNamespace);
+            client.CreateNamespacedService(spec.CreatePrometheusService(), K8sNamespace);
         }
 
         #endregion

@@ -7,8 +7,17 @@ namespace CodexDistTestCore
     {
         public const string ContainerName = "dtest-prom";
         public const string ConfigFilepath = "/etc/prometheus/prometheus.yml";
-        private const string dockerImage = "prom/prometheus:v2.30.3";
+        private const string dockerImage = "thatbenbierens/prometheus-envconf:latest";
         private const string portName = "prom-1";
+        private readonly string config;
+
+        public K8sPrometheusSpecs(int servicePort, string config)
+        {
+            ServicePort = servicePort;
+            this.config = config;
+        }
+
+        public int ServicePort { get; }
 
         public string GetDeploymentName()
         {
@@ -54,10 +63,14 @@ namespace CodexDistTestCore
                                             Name = portName
                                         }
                                     },
-                                    Command = new List<string>
+                                    Env = new List<V1EnvVar>
                                     {
-                                        $"--web.enable-lifecycle --config.file={ConfigFilepath}"
-                                    },
+                                        new V1EnvVar
+                                        {
+                                            Name = "PROM_CONFIG",
+                                            Value = config
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -68,7 +81,7 @@ namespace CodexDistTestCore
             return deploymentSpec;
         }
 
-        public V1Service CreatePrometheusService(int servicePort)
+        public V1Service CreatePrometheusService()
         {
             var serviceSpec = new V1Service
             {
@@ -90,7 +103,7 @@ namespace CodexDistTestCore
                             Protocol = "TCP",
                             Port = 9090,
                             TargetPort = portName,
-                            NodePort = servicePort
+                            NodePort = ServicePort
                         }
                     }
                 }

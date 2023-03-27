@@ -43,8 +43,6 @@ namespace Tests.BasicTests
             var secondary = group[1];
             primary.ConnectToPeer(secondary);
 
-            Thread.Sleep(10000);
-
             AssertWithTimeout(
                 () => metrics.GetMostRecentInt("libp2p_peers", primary),
                 isEqualTo: 1,
