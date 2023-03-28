@@ -5,9 +5,10 @@ namespace CodexDistTestCore
 {
     public class MetricsAggregator
     {
+        private readonly NumberSource prometheusNumberSource = new NumberSource(0);
         private readonly TestLog log;
         private readonly K8sManager k8sManager;
-        private PrometheusInfo? activePrometheus;
+        private readonly Dictionary<PrometheusInfo, OnlineCodexNode[]> activePrometheuses = new Dictionary<PrometheusInfo, OnlineCodexNode[]>();
 
         public MetricsAggregator(TestLog log, K8sManager k8sManager)
         {
@@ -17,29 +18,25 @@ namespace CodexDistTestCore
 
         public MetricsAccess BeginCollectingMetricsFor(OnlineCodexNode[] nodes)
         {
-            if (activePrometheus != null)
+            var alreadyStartedNodes = nodes.Where(n => activePrometheuses.Values.Any(v => v.Contains(n)));
+            if (alreadyStartedNodes.Any())
             {
-                Assert.Fail("Incorrect test setup: 'GatherMetrics' may be called only once during a test run. Metrics service targets cannot be changed once started. :(");
+                Assert.Fail("Incorrect test setup: 'GatherMetrics' was already called on one or more of these OnlineCodexNodes.");
                 throw new InvalidOperationException();
             }
 
             log.Log($"Starting metrics collecting for {nodes.Length} nodes...");
 
             var config = GeneratePrometheusConfig(nodes);
-            StartPrometheusPod(config);
+            var prometheus = k8sManager.BringOnlinePrometheus(config, prometheusNumberSource.GetNextNumber());
+            activePrometheuses.Add(prometheus, nodes);
 
             log.Log("Metrics service started.");
-            return new MetricsAccess(activePrometheus!);
+            return new MetricsAccess(prometheus, nodes);
         }
 
         public void DownloadAllMetrics()
         {
-        }
-
-        private void StartPrometheusPod(string config)
-        {
-            if (activePrometheus != null) return;
-            activePrometheus = k8sManager.BringOnlinePrometheus(config);
         }
 
         private string GeneratePrometheusConfig(OnlineCodexNode[] nodes)

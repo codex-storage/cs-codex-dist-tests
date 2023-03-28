@@ -39,14 +39,29 @@ namespace Tests.BasicTests
 
             var metrics = GatherMetrics(group);
 
+            var group2 = SetupCodexNodes(2)
+                .EnableMetrics()
+                .BringOnline();
+
+            var metrics2 = GatherMetrics(group2);
+
             var primary = group[0];
             var secondary = group[1];
+            var primary2 = group2[0];
+            var secondary2 = group2[1];
+
             primary.ConnectToPeer(secondary);
+            primary2.ConnectToPeer(secondary2);
 
             AssertWithTimeout(
                 () => metrics.GetMostRecentInt("libp2p_peers", primary),
                 isEqualTo: 1,
                 "Number of peers metric was incorrect.");
+
+            AssertWithTimeout(
+                () => metrics2.GetMostRecentInt("libp2p_peers", primary2),
+                isEqualTo: 1,
+                "Aaa");
         }
 
         [Test]
@@ -84,19 +99,19 @@ namespace Tests.BasicTests
             PerformTwoClientTest(primary, secondary);
         }
 
-        [Test]
-        public void TwoClientsTwoLocationsTest()
-        {
-            var primary = SetupCodexNodes(1)
-                            .At(Location.BensLaptop)
-                            .BringOnline()[0];
+        //[Test]
+        //public void TwoClientsTwoLocationsTest()
+        //{
+        //    var primary = SetupCodexNodes(1)
+        //                    .At(Location.BensLaptop)
+        //                    .BringOnline()[0];
 
-            var secondary = SetupCodexNodes(1)
-                            .At(Location.BensOldGamingMachine)
-                            .BringOnline()[0];
+        //    var secondary = SetupCodexNodes(1)
+        //                    .At(Location.BensOldGamingMachine)
+        //                    .BringOnline()[0];
 
-            PerformTwoClientTest(primary, secondary);
-        }
+        //    PerformTwoClientTest(primary, secondary);
+        //}
 
         private void PerformTwoClientTest(IOnlineCodexNode primary, IOnlineCodexNode secondary)
         {

@@ -11,17 +11,19 @@ namespace CodexDistTestCore
         private const string portName = "prom-1";
         private readonly string config;
 
-        public K8sPrometheusSpecs(int servicePort, string config)
+        public K8sPrometheusSpecs(int servicePort, int prometheusNumber, string config)
         {
             ServicePort = servicePort;
+            PrometheusNumber = prometheusNumber;
             this.config = config;
         }
 
         public int ServicePort { get; }
+        public int PrometheusNumber { get; }
 
         public string GetDeploymentName()
         {
-            return "test-prom";
+            return "test-prom" + PrometheusNumber;
         }
 
         public V1Deployment CreatePrometheusDeployment()
@@ -88,7 +90,7 @@ namespace CodexDistTestCore
                 ApiVersion = "v1",
                 Metadata = new V1ObjectMeta
                 {
-                    Name = "codex-prom-service",
+                    Name = "codex-prom-service" + PrometheusNumber,
                     NamespaceProperty = K8sCluster.K8sNamespace
                 },
                 Spec = new V1ServiceSpec
@@ -99,7 +101,7 @@ namespace CodexDistTestCore
                     {
                         new V1ServicePort
                         {
-                            Name = "prom-service",
+                            Name = "prom-service" + PrometheusNumber,
                             Protocol = "TCP",
                             Port = 9090,
                             TargetPort = portName,

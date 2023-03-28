@@ -1,4 +1,5 @@
 ﻿using CodexDistTestCore.Config;
+using NUnit.Framework;
 
 namespace CodexDistTestCore
 {
@@ -11,18 +12,23 @@ namespace CodexDistTestCore
     {
         private readonly K8sCluster k8sCluster = new K8sCluster();
         private readonly Http http;
+        private readonly OnlineCodexNode[] nodes;
 
-        public MetricsAccess(PrometheusInfo prometheusInfo)
+        public MetricsAccess(PrometheusInfo prometheusInfo, OnlineCodexNode[] nodes)
         {
             http = new Http(
                 k8sCluster.GetIp(),
                 prometheusInfo.ServicePort,
                 "api/v1");
+            this.nodes = nodes;
         }
 
         public int? GetMostRecentInt(string metricName, IOnlineCodexNode node)
         {
             var n = (OnlineCodexNode)node;
+            CollectionAssert.Contains(nodes, n, "Incorrect test setup: Attempt to get metrics for OnlineCodexNode from the wrong MetricsAccess object. " +
+                "(This CodexNode is tracked by a different instance.)");
+
             var pod = n.Group.PodInfo!;
 
             var response = http.HttpGetJson<PrometheusQueryResponse>($"query?query=last_over_time({metricName}[12h])");

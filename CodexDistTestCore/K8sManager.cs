@@ -58,9 +58,9 @@
             K8s(k => k.FetchPodLog(node, logHandler));
         }
 
-        public PrometheusInfo BringOnlinePrometheus(string config)
+        public PrometheusInfo BringOnlinePrometheus(string config, int prometheusNumber)
         {
-            var spec = new K8sPrometheusSpecs(codexGroupNumberSource.GetNextServicePort(), config);
+            var spec = new K8sPrometheusSpecs(codexGroupNumberSource.GetNextServicePort(), prometheusNumber, config);
 
             PrometheusInfo? info = null;
             K8s(k => info = k.BringOnlinePrometheus(spec));
