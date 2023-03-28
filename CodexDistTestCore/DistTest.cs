@@ -115,7 +115,7 @@ namespace CodexDistTestCore
                     return;
                 }
 
-                Utils.Sleep(TimeSpan.FromSeconds(10));
+                Utils.Sleep(TimeSpan.FromSeconds(2));
             }
         }
 

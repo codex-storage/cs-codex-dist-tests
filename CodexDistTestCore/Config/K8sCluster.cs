@@ -18,6 +18,7 @@ namespace CodexDistTestCore.Config
         {
             if (config != null) return config;
             config = KubernetesClientConfiguration.BuildConfigFromConfigFile(KubeConfigFile);
+            //config = KubernetesClientConfiguration.BuildDefaultConfig();
             return config;
         }
 

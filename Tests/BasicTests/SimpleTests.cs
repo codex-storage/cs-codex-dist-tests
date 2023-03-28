@@ -7,28 +7,28 @@ namespace Tests.BasicTests
     [TestFixture]
     public class SimpleTests : DistTest
     {
-        //[Test]
-        //public void GetDebugInfo()
-        //{
-        //    var dockerImage = new CodexDockerImage();
+        [Test]
+        public void GetDebugInfo()
+        {
+            var dockerImage = new CodexDockerImage();
 
-        //    var node = SetupCodexNodes(1).BringOnline()[0];
+            var node = SetupCodexNodes(1).BringOnline()[0];
 
-        //    var debugInfo = node.GetDebugInfo();
+            var debugInfo = node.GetDebugInfo();
 
-        //    Assert.That(debugInfo.spr, Is.Not.Empty);
-        //    Assert.That(debugInfo.codex.revision, Is.EqualTo(dockerImage.GetExpectedImageRevision()));
-        //}
+            Assert.That(debugInfo.spr, Is.Not.Empty);
+            Assert.That(debugInfo.codex.revision, Is.EqualTo(dockerImage.GetExpectedImageRevision()));
+        }
 
-        //[Test, DontDownloadLogsAndMetricsOnFailure]
-        //public void CanAccessLogs()
-        //{
-        //    var node = SetupCodexNodes(1).BringOnline()[0];
+        [Test, DontDownloadLogsAndMetricsOnFailure]
+        public void CanAccessLogs()
+        {
+            var node = SetupCodexNodes(1).BringOnline()[0];
 
-        //    var log = node.DownloadLog();
+            var log = node.DownloadLog();
 
-        //    log.AssertLogContains("Started codex node");
-        //}
+            log.AssertLogContains("Started codex node");
+        }
 
         [Test]
         public void MetricsExample()
@@ -49,54 +49,54 @@ namespace Tests.BasicTests
                 "Number of peers metric was incorrect.");
         }
 
-        //[Test]
-        //public void OneClientTest()
-        //{
-        //    var primary = SetupCodexNodes(1).BringOnline()[0];
+        [Test]
+        public void OneClientTest()
+        {
+            var primary = SetupCodexNodes(1).BringOnline()[0];
 
-        //    var testFile = GenerateTestFile(1.MB());
+            var testFile = GenerateTestFile(1.MB());
 
-        //    var contentId = primary.UploadFile(testFile);
+            var contentId = primary.UploadFile(testFile);
 
-        //    var downloadedFile = primary.DownloadContent(contentId);
+            var downloadedFile = primary.DownloadContent(contentId);
 
-        //    testFile.AssertIsEqual(downloadedFile);
-        //}
+            testFile.AssertIsEqual(downloadedFile);
+        }
 
-        //[Test]
-        //public void TwoClientsOnePodTest()
-        //{
-        //    var group = SetupCodexNodes(2).BringOnline();
+        [Test]
+        public void TwoClientsOnePodTest()
+        {
+            var group = SetupCodexNodes(2).BringOnline();
 
-        //    var primary = group[0];
-        //    var secondary = group[1];
+            var primary = group[0];
+            var secondary = group[1];
 
-        //    PerformTwoClientTest(primary, secondary);
-        //}
+            PerformTwoClientTest(primary, secondary);
+        }
 
-        //[Test]
-        //public void TwoClientsTwoPodsTest()
-        //{
-        //    var primary = SetupCodexNodes(1).BringOnline()[0];
+        [Test]
+        public void TwoClientsTwoPodsTest()
+        {
+            var primary = SetupCodexNodes(1).BringOnline()[0];
 
-        //    var secondary = SetupCodexNodes(1).BringOnline()[0];
+            var secondary = SetupCodexNodes(1).BringOnline()[0];
 
-        //    PerformTwoClientTest(primary, secondary);
-        //}
+            PerformTwoClientTest(primary, secondary);
+        }
 
-        //[Test]
-        //public void TwoClientsTwoLocationsTest()
-        //{
-        //    var primary = SetupCodexNodes(1)
-        //                    .At(Location.BensLaptop)
-        //                    .BringOnline()[0];
+        [Test]
+        public void TwoClientsTwoLocationsTest()
+        {
+            var primary = SetupCodexNodes(1)
+                            .At(Location.BensLaptop)
+                            .BringOnline()[0];
 
-        //    var secondary = SetupCodexNodes(1)
-        //                    .At(Location.BensOldGamingMachine)
-        //                    .BringOnline()[0];
+            var secondary = SetupCodexNodes(1)
+                            .At(Location.BensOldGamingMachine)
+                            .BringOnline()[0];
 
-        //    PerformTwoClientTest(primary, secondary);
-        //}
+            PerformTwoClientTest(primary, secondary);
+        }
 
         private void PerformTwoClientTest(IOnlineCodexNode primary, IOnlineCodexNode secondary)
         {

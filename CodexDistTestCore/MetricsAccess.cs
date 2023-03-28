@@ -4,7 +4,7 @@ namespace CodexDistTestCore
 {
     public interface IMetricsAccess
     {
-        int GetMostRecentInt(string metricName, IOnlineCodexNode node);
+        int? GetMostRecentInt(string metricName, IOnlineCodexNode node);
     }
 
     public class MetricsAccess : IMetricsAccess
@@ -20,38 +20,43 @@ namespace CodexDistTestCore
                 "api/v1");
         }
 
-        public int GetMostRecentInt(string metricName, IOnlineCodexNode node)
+        public int? GetMostRecentInt(string metricName, IOnlineCodexNode node)
         {
-            var now = DateTime.UtcNow;
-            var off = new DateTimeOffset(now);
-            var nowUnix = off.ToUnixTimeSeconds();
+            var n = (OnlineCodexNode)node;
+            var pod = n.Group.PodInfo!;
 
-            var hour = now.AddHours(-1);
-            var off2 = new DateTimeOffset(hour);
-            var hourUnix = off2.ToUnixTimeSeconds();
+            var response = http.HttpGetJson<PrometheusQueryResponse>($"query?query=last_over_time({metricName}[12h])");
+            if (response.status != "success") return null;
 
-            var response = http.HttpGetJson<PrometheusQueryRangeResponse>($"query_range?query=libp2p_peers&start={hourUnix}&end={nowUnix}&step=100");
+            var forNode = response.data.result.SingleOrDefault(d => d.metric.instance == $"{pod.Ip}:{n.Container.MetricsPort}");
+            if (forNode == null) return null;
 
-            return 0;
+            if (forNode.value == null || forNode.value.Length == 0) return null;
+
+            if (forNode.value.Length != 2) throw new InvalidOperationException("Expected value to be [double, string].");
+            // [0] = double, timestamp
+            // [1] = string, value
+
+            return Convert.ToInt32(forNode.value[1]);
         }
     }
 
-    public class PrometheusQueryRangeResponse
+    public class PrometheusQueryResponse
     {
         public string status { get; set; } = string.Empty;
-        public PrometheusQueryRangeResponseData data { get; set; } = new();
+        public PrometheusQueryResponseData data { get; set; } = new();
     }
 
-    public class PrometheusQueryRangeResponseData
+    public class PrometheusQueryResponseData
     {
         public string resultType { get; set; } = string.Empty;
-        public PrometheusQueryRangeResponseDataResultEntry[] result { get; set; } = Array.Empty<PrometheusQueryRangeResponseDataResultEntry>();
+        public PrometheusQueryResponseDataResultEntry[] result { get; set; } = Array.Empty<PrometheusQueryResponseDataResultEntry>();
     }
 
-    public class PrometheusQueryRangeResponseDataResultEntry
+    public class PrometheusQueryResponseDataResultEntry
     {
         public ResultEntryMetric metric { get; set; } = new();
-        public ResultEntryValue[] values { get; set; } = Array.Empty<ResultEntryValue>();
+        public object[] value { get; set; } = Array.Empty<object>();
     }
 
     public class ResultEntryMetric
@@ -59,10 +64,5 @@ namespace CodexDistTestCore
         public string __name__ { get; set; } = string.Empty;
         public string instance { get; set; } = string.Empty;
         public string job { get; set; } = string.Empty;
-    }
-
-    public class ResultEntryValue
-    {
-
     }
 }
