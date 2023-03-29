@@ -8,7 +8,7 @@ namespace CodexDistTestCore
         private readonly NumberSource prometheusNumberSource = new NumberSource(0);
         private readonly TestLog log;
         private readonly K8sManager k8sManager;
-        private readonly Dictionary<PrometheusInfo, OnlineCodexNode[]> activePrometheuses = new Dictionary<PrometheusInfo, OnlineCodexNode[]>();
+        private readonly Dictionary<MetricsQuery, OnlineCodexNode[]> activePrometheuses = new Dictionary<MetricsQuery, OnlineCodexNode[]>();
 
         public MetricsAggregator(TestLog log, K8sManager k8sManager)
         {
@@ -29,10 +29,11 @@ namespace CodexDistTestCore
 
             var config = GeneratePrometheusConfig(nodes);
             var prometheus = k8sManager.BringOnlinePrometheus(config, prometheusNumberSource.GetNextNumber());
-            activePrometheuses.Add(prometheus, nodes);
+            var query = new MetricsQuery(prometheus);
+            activePrometheuses.Add(query, nodes);
 
             log.Log("Metrics service started.");
-            return new MetricsAccess(prometheus, nodes);
+            return new MetricsAccess(query, nodes);
         }
 
         public void DownloadAllMetrics()
@@ -51,7 +52,6 @@ namespace CodexDistTestCore
             config += "    metrics_path: /metrics\n";
             config += "    static_configs:\n";
             config += "      - targets:\n";
-            config += "          - 'prometheus:9090'\n";
 
             foreach (var node in nodes)
             {
