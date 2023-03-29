@@ -96,29 +96,6 @@ namespace CodexDistTestCore
             return metricsAggregator.BeginCollectingMetricsFor(onlineNodes);
         }
 
-        public void AssertWithTimeout<T>(Func<T> operation, T isEqualTo, string message)
-        {
-            AssertWithTimeout(operation, isEqualTo, TimeSpan.FromMinutes(10), message);
-        }
-
-        public void AssertWithTimeout<T>(Func<T> operation, T isEqualTo, TimeSpan timeout, string message)
-        {
-            var start = DateTime.UtcNow;
-
-            while (true)
-            {
-                var result = operation();
-                if (result!.Equals(isEqualTo)) return;
-                if (DateTime.UtcNow - start > timeout)
-                {
-                    Assert.That(result, Is.EqualTo(isEqualTo), message);
-                    return;
-                }
-
-                Utils.Sleep(TimeSpan.FromSeconds(2));
-            }
-        }
-
         private void IncludeLogsAndMetricsOnTestFailure()
         {
             var result = TestContext.CurrentContext.Result;

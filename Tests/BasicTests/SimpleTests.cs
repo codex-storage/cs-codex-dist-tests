@@ -31,7 +31,7 @@ namespace Tests.BasicTests
         }
 
         [Test]
-        public void MetricsExample()
+        public void TwoMetricsExample()
         {
             var group = SetupCodexNodes(2)
                         .EnableMetrics()
@@ -53,15 +53,8 @@ namespace Tests.BasicTests
             primary.ConnectToPeer(secondary);
             primary2.ConnectToPeer(secondary2);
 
-            AssertWithTimeout(
-                () => metrics.GetMostRecentInt("libp2p_peers", primary),
-                isEqualTo: 1,
-                "Number of peers metric was incorrect.");
-
-            AssertWithTimeout(
-                () => metrics2.GetMostRecentInt("libp2p_peers", primary2),
-                isEqualTo: 1,
-                "Aaa");
+            metrics.AssertThat(primary, "libp2p_peers", Is.EqualTo(1));
+            metrics2.AssertThat(primary2, "libp2p_peers", Is.EqualTo(1));
         }
 
         [Test]

@@ -80,28 +80,30 @@ namespace CodexDistTestCore
             return info.Length;
         }
 
-        public void AssertIsEqual(TestFile? other)
+        public void AssertIsEqual(TestFile? actual)
         {
-            if (other == null) Assert.Fail("TestFile is null.");
-            if (other == this || other!.Filename == Filename) Assert.Fail("TestFile is compared to itself.");
+            if (actual == null) Assert.Fail("TestFile is null.");
+            if (actual == this || actual!.Filename == Filename) Assert.Fail("TestFile is compared to itself.");
 
-            using var stream1 = new FileStream(Filename, FileMode.Open, FileAccess.Read);
-            using var stream2 = new FileStream(other.Filename, FileMode.Open, FileAccess.Read);
+            Assert.That(actual.GetFileSize(), Is.EqualTo(GetFileSize()), "Files are not of equal length.");
 
-            var bytes1 = new byte[FileManager.ChunkSize];
-            var bytes2 = new byte[FileManager.ChunkSize];
+            using var streamExpected = new FileStream(Filename, FileMode.Open, FileAccess.Read);
+            using var streamActual = new FileStream(actual.Filename, FileMode.Open, FileAccess.Read);
 
-            var read1 = 0;
-            var read2 = 0;
+            var bytesExpected = new byte[FileManager.ChunkSize];
+            var bytesActual = new byte[FileManager.ChunkSize];
+
+            var readExpected = 0;
+            var readActual = 0;
 
             while (true)
             {
-                read1 = stream1.Read(bytes1, 0, FileManager.ChunkSize);
-                read2 = stream2.Read(bytes2, 0, FileManager.ChunkSize);
+                readExpected = streamExpected.Read(bytesExpected, 0, FileManager.ChunkSize);
+                readActual = streamActual.Read(bytesActual, 0, FileManager.ChunkSize);
 
-                if (read1 == 0 && read2 == 0) return;
-                Assert.That(read1, Is.EqualTo(read2), "Files are not of equal length.");
-                CollectionAssert.AreEqual(bytes1, bytes2, "Files are not binary-equal.");
+                if (readExpected == 0 && readActual == 0) return;
+                Assert.That(readActual, Is.EqualTo(readExpected), "Unable to read buffers of equal length.");
+                CollectionAssert.AreEqual(bytesExpected, bytesActual, "Files are not binary-equal.");
             }
         }
     }

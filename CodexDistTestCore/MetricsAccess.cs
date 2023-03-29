@@ -1,11 +1,12 @@
 ﻿using CodexDistTestCore.Config;
 using NUnit.Framework;
+using NUnit.Framework.Constraints;
 
 namespace CodexDistTestCore
 {
     public interface IMetricsAccess
     {
-        int? GetMostRecentInt(string metricName, IOnlineCodexNode node);
+        void AssertThat(IOnlineCodexNode node, string metricName, IResolveConstraint constraint, string message = "");
     }
 
     public class MetricsAccess : IMetricsAccess
@@ -23,27 +24,59 @@ namespace CodexDistTestCore
             this.nodes = nodes;
         }
 
-        public int? GetMostRecentInt(string metricName, IOnlineCodexNode node)
+        public void AssertThat(IOnlineCodexNode node, string metricName, IResolveConstraint constraint, string message = "")
+        {
+            var metricValue = GetMetricWithTimeout(metricName, node);
+            Assert.That(metricValue, constraint, message);
+        }
+
+        private double GetMetricWithTimeout(string metricName, IOnlineCodexNode node)
+        {
+            var start = DateTime.UtcNow;
+
+            while (true)
+            {
+                var mostRecent = GetMostRecent(metricName, node);
+                if (mostRecent != null) return Convert.ToDouble(mostRecent);
+                if (DateTime.UtcNow - start > Timing.WaitForMetricTimeout())
+                {
+                    Assert.Fail($"Timeout: Unable to get metric '{metricName}'.");
+                    throw new TimeoutException();
+                }
+
+                Utils.Sleep(TimeSpan.FromSeconds(2));
+            }
+        }
+
+        private object? GetMostRecent(string metricName, IOnlineCodexNode node)
         {
             var n = (OnlineCodexNode)node;
             CollectionAssert.Contains(nodes, n, "Incorrect test setup: Attempt to get metrics for OnlineCodexNode from the wrong MetricsAccess object. " +
                 "(This CodexNode is tracked by a different instance.)");
 
-            var pod = n.Group.PodInfo!;
+            var response = GetMetric(metricName);
+            if (response == null) return null;
 
+            var value = GetValueFromResponse(n, response);
+            if (value == null) return null;
+            if (value.Length != 2) throw new InvalidOperationException("Expected value to be [double, string].");
+            return value[1];
+        }
+
+        private PrometheusQueryResponse? GetMetric(string metricName)
+        {
             var response = http.HttpGetJson<PrometheusQueryResponse>($"query?query=last_over_time({metricName}[12h])");
             if (response.status != "success") return null;
+            return response;
+        }
 
-            var forNode = response.data.result.SingleOrDefault(d => d.metric.instance == $"{pod.Ip}:{n.Container.MetricsPort}");
+        private object[]? GetValueFromResponse(OnlineCodexNode node, PrometheusQueryResponse response)
+        {
+            var pod = node.Group.PodInfo!;
+            var forNode = response.data.result.SingleOrDefault(d => d.metric.instance == $"{pod.Ip}:{node.Container.MetricsPort}");
             if (forNode == null) return null;
-
             if (forNode.value == null || forNode.value.Length == 0) return null;
-
-            if (forNode.value.Length != 2) throw new InvalidOperationException("Expected value to be [double, string].");
-            // [0] = double, timestamp
-            // [1] = string, value
-
-            return Convert.ToInt32(forNode.value[1]);
+            return forNode.value;
         }
     }
 
