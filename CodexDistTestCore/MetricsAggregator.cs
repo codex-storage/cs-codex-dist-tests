@@ -38,6 +38,8 @@ namespace CodexDistTestCore
 
         public void DownloadAllMetrics()
         {
+            var download = new MetricsDownloader(log, activePrometheuses);
+            download.DownloadAllMetrics();
         }
 
         private string GeneratePrometheusConfig(OnlineCodexNode[] nodes)

@@ -50,12 +50,9 @@ namespace CodexDistTestCore
 
         private MetricsSet? GetMostRecent(string metricName, OnlineCodexNode node)
         {
-            var result = query.GetMostRecent(metricName);
+            var result = query.GetMostRecent(metricName, node);
             if (result == null) return null;
-
-            var pod = node.Group.PodInfo!;
-            var instance = $"{pod.Ip}:{node.Container.MetricsPort}";
-            return result.Sets.SingleOrDefault(r => r.Instance == instance);
+            return result.Sets.LastOrDefault();
         }
     }
 }

@@ -53,6 +53,8 @@ namespace Tests.BasicTests
             primary.ConnectToPeer(secondary);
             primary2.ConnectToPeer(secondary2);
 
+            Thread.Sleep(TimeSpan.FromMinutes(5));
+
             metrics.AssertThat(primary, "libp2p_peers", Is.EqualTo(1));
             metrics2.AssertThat(primary2, "libp2p_peers", Is.EqualTo(1));
         }
@@ -92,19 +94,19 @@ namespace Tests.BasicTests
             PerformTwoClientTest(primary, secondary);
         }
 
-        //[Test]
-        //public void TwoClientsTwoLocationsTest()
-        //{
-        //    var primary = SetupCodexNodes(1)
-        //                    .At(Location.BensLaptop)
-        //                    .BringOnline()[0];
+        [Test]
+        public void TwoClientsTwoLocationsTest()
+        {
+            var primary = SetupCodexNodes(1)
+                            .At(Location.BensLaptop)
+                            .BringOnline()[0];
 
-        //    var secondary = SetupCodexNodes(1)
-        //                    .At(Location.BensOldGamingMachine)
-        //                    .BringOnline()[0];
+            var secondary = SetupCodexNodes(1)
+                            .At(Location.BensOldGamingMachine)
+                            .BringOnline()[0];
 
-        //    PerformTwoClientTest(primary, secondary);
-        //}
+            PerformTwoClientTest(primary, secondary);
+        }
 
         private void PerformTwoClientTest(IOnlineCodexNode primary, IOnlineCodexNode secondary)
         {

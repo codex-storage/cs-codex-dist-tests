@@ -1,6 +1,5 @@
 ﻿using CodexDistTestCore.Config;
 using NUnit.Framework;
-using System.Xml.Linq;
 
 namespace CodexDistTestCore
 {
@@ -52,9 +51,9 @@ namespace CodexDistTestCore
             file.ConcatToFilename("_FAILED");
         }
 
-        public LogFile CreateSubfile()
+        public LogFile CreateSubfile(string ext = "log")
         {
-            return new LogFile(now, $"{GetTestName()}_{subfileNumberSource.GetNextNumber().ToString().PadLeft(6, '0')}");
+            return new LogFile(now, $"{GetTestName()}_{subfileNumberSource.GetNextNumber().ToString().PadLeft(6, '0')}", ext);
         }
 
         private static string GetTestName()
@@ -76,12 +75,14 @@ namespace CodexDistTestCore
     {
         private readonly DateTime now;
         private string name;
+        private readonly string ext;
         private readonly string filepath;
 
-        public LogFile(DateTime now, string name)
+        public LogFile(DateTime now, string name, string ext = "log")
         {
             this.now = now;
             this.name = name;
+            this.ext = ext;
 
             filepath = Path.Join(
                 LogConfig.LogRoot,
@@ -136,7 +137,7 @@ namespace CodexDistTestCore
 
         private void GenerateFilename()
         {
-            FilenameWithoutPath = $"{Pad(now.Hour)}-{Pad(now.Minute)}-{Pad(now.Second)}Z_{name.Replace('.', '-')}.log";
+            FilenameWithoutPath = $"{Pad(now.Hour)}-{Pad(now.Minute)}-{Pad(now.Second)}Z_{name.Replace('.', '-')}.{ext}";
             FullFilename = Path.Combine(filepath, FilenameWithoutPath);
         }
     }

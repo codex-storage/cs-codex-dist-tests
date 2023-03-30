@@ -16,9 +16,9 @@ namespace CodexDistTestCore
                 "api/v1");
         }
 
-        public Metrics? GetMostRecent(string metricName)
+        public Metrics? GetMostRecent(string metricName, OnlineCodexNode node)
         {
-            var response = GetLastOverTime(metricName);
+            var response = GetLastOverTime(metricName, GetInstanceStringForNode(node));
             if (response == null) return null;
 
             return new Metrics
@@ -38,23 +38,19 @@ namespace CodexDistTestCore
         {
             var response = GetAll(metricName);
             if (response == null) return null;
-
-            return new Metrics
-            {
-                Sets = response.data.result.Select(r =>
-                {
-                    return new MetricsSet
-                    {
-                        Instance = r.metric.instance,
-                        Values = MapMultipleValues(r.values)
-                    };
-                }).ToArray()
-            };
+            return MapResponseToMetrics(response);
         }
 
-        private PrometheusQueryResponse? GetLastOverTime(string metricName)
+        public Metrics? GetAllMetricsForNode(OnlineCodexNode node)
         {
-            var response = http.HttpGetJson<PrometheusQueryResponse>($"query?query=last_over_time({metricName}{GetQueryTimeRange()})");
+            var response = http.HttpGetJson<PrometheusQueryResponse>($"query?query={GetInstanceStringForNode(node)}{GetQueryTimeRange()}");
+            if (response.status != "success") return null;
+            return MapResponseToMetrics(response);
+        }
+
+        private PrometheusQueryResponse? GetLastOverTime(string metricName, string instanceString)
+        {
+            var response = http.HttpGetJson<PrometheusQueryResponse>($"query?query=last_over_time({metricName}{instanceString}{GetQueryTimeRange()})");
             if (response.status != "success") return null;
             return response;
         }
@@ -64,6 +60,22 @@ namespace CodexDistTestCore
             var response = http.HttpGetJson<PrometheusQueryResponse>($"query?query={metricName}{GetQueryTimeRange()}");
             if (response.status != "success") return null;
             return response;
+        }
+
+        private Metrics MapResponseToMetrics(PrometheusQueryResponse response)
+        {
+            return new Metrics
+            {
+                Sets = response.data.result.Select(r =>
+                {
+                    return new MetricsSet
+                    {
+                        Name = r.metric.__name__,
+                        Instance = r.metric.instance,
+                        Values = MapMultipleValues(r.values)
+                    };
+                }).ToArray()
+            };
         }
 
         private MetricsSetValue[] MapSingleValue(object[] value)
@@ -98,6 +110,17 @@ namespace CodexDistTestCore
             };            
         }
 
+        private string GetInstanceNameForNode(OnlineCodexNode node)
+        {
+            var pod = node.Group.PodInfo!;
+            return $"{pod.Ip}:{node.Container.MetricsPort}";
+        }
+
+        private string GetInstanceStringForNode(OnlineCodexNode node)
+        {
+            return "{instance=\"" + GetInstanceNameForNode(node) + "\"}";
+        }
+
         private string GetQueryTimeRange()
         {
             return "[12h]";
@@ -122,6 +145,7 @@ namespace CodexDistTestCore
 
     public class MetricsSet
     {
+        public string Name { get; set; } = string.Empty;
         public string Instance { get; set; } = string.Empty;
         public MetricsSetValue[] Values { get; set; } = Array.Empty<MetricsSetValue>();
     }
@@ -156,5 +180,11 @@ namespace CodexDistTestCore
         public string __name__ { get; set; } = string.Empty;
         public string instance { get; set; } = string.Empty;
         public string job { get; set; } = string.Empty;
+    }
+
+    public class PrometheusAllNamesResponse
+    {
+        public string status { get; set; } = string.Empty;
+        public string[] data { get; set; } = Array.Empty<string>();
     }
 }
