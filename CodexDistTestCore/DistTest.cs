@@ -8,7 +8,7 @@ namespace CodexDistTestCore
     {
         private TestLog log = null!;
         private FileManager fileManager = null!;
-        private K8sManager k8sManager = null!;
+        public K8sManager k8sManager = null!;
         private MetricsAggregator metricsAggregator = null!;
 
         [OneTimeSetUp]

@@ -43,6 +43,12 @@
             return online.Origin;
         }
 
+        public void ExampleOfCMD(IOnlineCodexNode node)
+        {
+            var n = (OnlineCodexNode)node;
+            K8s(k => k.ExampleOfCommandExecution(n));
+        }
+
         public void DeleteAllResources()
         {
             K8s(k => k.DeleteAllResources());

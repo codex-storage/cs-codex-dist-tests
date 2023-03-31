@@ -25,6 +25,29 @@ namespace CodexDistTestCore
             client.Dispose();
         }
 
+        private Task Callback(Stream stdIn, Stream stdOut, Stream stdErr)
+        {
+            using var streamReader = new StreamReader(stdOut);
+            var lines = new List<string>();
+            var line = streamReader.ReadLine();
+            while (line != null) 
+            {
+                lines.Add(line);
+                line = streamReader.ReadLine();
+            }
+
+            Assert.That(lines.Any(l => l.Contains("FOO76543")));
+
+
+            return Task.CompletedTask;
+        }
+
+        public void ExampleOfCommandExecution(OnlineCodexNode node)
+        {
+            Utils.Wait(client.NamespacedPodExecAsync(
+                node.Group.PodInfo!.Name, K8sNamespace, node.Container.Name, new[] { "echo", "FOO76543" }, false, Callback, new CancellationToken()));
+        }
+
         public void BringOnline(CodexNodeGroup online, OfflineCodexNodes offline)
         {
             EnsureTestNamespace();
