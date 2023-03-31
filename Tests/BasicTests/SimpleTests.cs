@@ -91,6 +91,7 @@ namespace Tests.BasicTests
         }
 
         [Test]
+        [Ignore("Requires Location map to be configured for k8s cluster.")]
         public void TwoClientsTwoLocationsTest()
         {
             var primary = SetupCodexNodes(1)
