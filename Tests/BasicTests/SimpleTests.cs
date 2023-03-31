@@ -37,13 +37,9 @@ namespace Tests.BasicTests
                         .EnableMetrics()
                         .BringOnline();
 
-            var metrics = GatherMetrics(group);
-
             var group2 = SetupCodexNodes(2)
-                .EnableMetrics()
-                .BringOnline();
-
-            var metrics2 = GatherMetrics(group2);
+                        .EnableMetrics()
+                        .BringOnline();
 
             var primary = group[0];
             var secondary = group[1];
@@ -55,8 +51,8 @@ namespace Tests.BasicTests
 
             Thread.Sleep(TimeSpan.FromMinutes(5));
 
-            metrics.AssertThat(primary, "libp2p_peers", Is.EqualTo(1));
-            metrics2.AssertThat(primary2, "libp2p_peers", Is.EqualTo(1));
+            primary.Metrics.AssertThat("libp2p_peers", Is.EqualTo(1));
+            primary2.Metrics.AssertThat("libp2p_peers", Is.EqualTo(1));
         }
 
         [Test]

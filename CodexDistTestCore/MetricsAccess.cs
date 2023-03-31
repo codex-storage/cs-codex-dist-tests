@@ -5,27 +5,32 @@ namespace CodexDistTestCore
 {
     public interface IMetricsAccess
     {
-        void AssertThat(IOnlineCodexNode node, string metricName, IResolveConstraint constraint, string message = "");
+        void AssertThat(string metricName, IResolveConstraint constraint, string message = "");
+    }
+
+    public class MetricsUnavailable : IMetricsAccess
+    {
+        public void AssertThat(string metricName, IResolveConstraint constraint, string message = "")
+        {
+            Assert.Fail("Incorrect test setup: Metrics were not enabled for this group of Codex nodes. Add 'EnableMetrics()' after 'SetupCodexNodes()' to enable it.");
+            throw new InvalidOperationException();
+        }
     }
 
     public class MetricsAccess : IMetricsAccess
     {
         private readonly MetricsQuery query;
-        private readonly OnlineCodexNode[] nodes;
+        private readonly OnlineCodexNode node;
 
-        public MetricsAccess(MetricsQuery query, OnlineCodexNode[] nodes)
+        public MetricsAccess(MetricsQuery query, OnlineCodexNode node)
         {
             this.query = query;
-            this.nodes = nodes;
+            this.node = node;
         }
 
-        public void AssertThat(IOnlineCodexNode node, string metricName, IResolveConstraint constraint, string message = "")
+        public void AssertThat(string metricName, IResolveConstraint constraint, string message = "")
         {
-            var n = (OnlineCodexNode)node;
-            CollectionAssert.Contains(nodes, n, "Incorrect test setup: Attempt to get metrics for OnlineCodexNode from the wrong MetricsAccess object. " +
-                "(This CodexNode is tracked by a different instance.)");
-
-            var metricSet = GetMetricWithTimeout(metricName, n);
+            var metricSet = GetMetricWithTimeout(metricName, node);
             var metricValue = metricSet.Values[0].Value;
             Assert.That(metricValue, constraint, message);
         }

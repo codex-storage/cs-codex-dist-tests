@@ -9,7 +9,8 @@ namespace CodexDistTestCore
         ContentId UploadFile(TestFile file);
         TestFile? DownloadContent(ContentId contentId);
         void ConnectToPeer(IOnlineCodexNode node);
-        CodexNodeLog DownloadLog();
+        ICodexNodeLog DownloadLog();
+        IMetricsAccess Metrics { get; }
     }
 
     public class OnlineCodexNode : IOnlineCodexNode
@@ -30,6 +31,7 @@ namespace CodexDistTestCore
 
         public CodexNodeContainer Container { get; }
         public CodexNodeGroup Group { get; internal set; } = null!;
+        public IMetricsAccess Metrics { get; set; } = new MetricsUnavailable();
 
         public string GetName()
         {
@@ -80,7 +82,7 @@ namespace CodexDistTestCore
             Log($"Successfully connected to peer {peer.GetName()}.");
         }
 
-        public CodexNodeLog DownloadLog()
+        public ICodexNodeLog DownloadLog()
         {
             return Group.DownloadLog(this);
         }

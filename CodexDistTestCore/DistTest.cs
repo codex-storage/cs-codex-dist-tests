@@ -9,7 +9,6 @@ namespace CodexDistTestCore
         private TestLog log = null!;
         private FileManager fileManager = null!;
         private K8sManager k8sManager = null!;
-        private MetricsAggregator metricsAggregator = null!;
 
         [OneTimeSetUp]
         public void GlobalSetup()
@@ -49,7 +48,6 @@ namespace CodexDistTestCore
 
                 fileManager = new FileManager(log);
                 k8sManager = new K8sManager(log, fileManager);
-                metricsAggregator = new MetricsAggregator(log, k8sManager);
             }
         }
 
@@ -80,22 +78,6 @@ namespace CodexDistTestCore
             return new OfflineCodexNodes(k8sManager, numberOfNodes);
         }
 
-        public MetricsAccess GatherMetrics(ICodexNodeGroup group)
-        {
-            return GatherMetrics(group.ToArray());
-        }
-
-        public MetricsAccess GatherMetrics(params IOnlineCodexNode[] nodes)
-        {
-            var onlineNodes = nodes.Cast<OnlineCodexNode>().ToArray();
-
-            Assert.That(onlineNodes.All(n => n.Group.Origin.MetricsEnabled),
-                "Incorrect test setup: Metrics were not enabled on (all) provided OnlineCodexNodes. " +
-                "To use metrics, please use 'EnableMetrics()' when setting up Codex nodes.");
-
-            return metricsAggregator.BeginCollectingMetricsFor(onlineNodes);
-        }
-
         private void IncludeLogsAndMetricsOnTestFailure()
         {
             var result = TestContext.CurrentContext.Result;
@@ -105,7 +87,7 @@ namespace CodexDistTestCore
                 {
                     log.Log("Downloading all CodexNode logs and metrics because of test failure...");
                     k8sManager.ForEachOnlineGroup(DownloadLogs);
-                    metricsAggregator.DownloadAllMetrics();
+                    k8sManager.DownloadAllMetrics();
                 }
                 else
                 {

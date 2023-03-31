@@ -2,7 +2,12 @@
 
 namespace CodexDistTestCore
 {
-    public class CodexNodeLog
+    public interface ICodexNodeLog
+    {
+        void AssertLogContains(string expectedString);
+    }
+
+    public class CodexNodeLog : ICodexNodeLog
     {
         private readonly LogFile logFile;
 

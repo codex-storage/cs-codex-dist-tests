@@ -14,11 +14,13 @@
         private readonly KnownK8sPods knownPods = new KnownK8sPods();
         private readonly TestLog log;
         private readonly IFileManager fileManager;
+        private readonly MetricsAggregator metricsAggregator;
 
         public K8sManager(TestLog log, IFileManager fileManager)
         {
             this.log = log;
             this.fileManager = fileManager;
+            metricsAggregator = new MetricsAggregator(log, this);
         }
 
         public ICodexNodeGroup BringOnline(OfflineCodexNodes offline)
@@ -28,6 +30,11 @@
             K8s(k => k.BringOnline(online, offline));
 
             log.Log($"{online.Describe()} online.");
+
+            if (offline.MetricsEnabled)
+            {
+                BringOnlineMetrics(online);
+            }
 
             return online;
         }
@@ -65,6 +72,18 @@
             PrometheusInfo? info = null;
             K8s(k => info = k.BringOnlinePrometheus(spec));
             return info!;
+        }
+
+        public void DownloadAllMetrics()
+        {
+            metricsAggregator.DownloadAllMetrics();
+        }
+
+        private void BringOnlineMetrics(CodexNodeGroup group)
+        {
+            var onlineNodes = group.Nodes.Cast<OnlineCodexNode>().ToArray();
+
+            metricsAggregator.BeginCollectingMetricsFor(onlineNodes);
         }
 
         private CodexNodeGroup CreateOnlineCodexNodes(OfflineCodexNodes offline)
