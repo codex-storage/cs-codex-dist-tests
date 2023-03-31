@@ -20,7 +20,7 @@ namespace Tests.BasicTests
             Assert.That(debugInfo.codex.revision, Is.EqualTo(dockerImage.GetExpectedImageRevision()));
         }
 
-        [Test, DontDownloadLogsOnFailure]
+        [Test, DontDownloadLogsAndMetricsOnFailure]
         public void CanAccessLogs()
         {
             var node = SetupCodexNodes(1).BringOnline()[0];
@@ -28,6 +28,31 @@ namespace Tests.BasicTests
             var log = node.DownloadLog();
 
             log.AssertLogContains("Started codex node");
+        }
+
+        [Test]
+        public void TwoMetricsExample()
+        {
+            var group = SetupCodexNodes(2)
+                        .EnableMetrics()
+                        .BringOnline();
+
+            var group2 = SetupCodexNodes(2)
+                        .EnableMetrics()
+                        .BringOnline();
+
+            var primary = group[0];
+            var secondary = group[1];
+            var primary2 = group2[0];
+            var secondary2 = group2[1];
+
+            primary.ConnectToPeer(secondary);
+            primary2.ConnectToPeer(secondary2);
+
+            Thread.Sleep(TimeSpan.FromMinutes(5));
+
+            primary.Metrics.AssertThat("libp2p_peers", Is.EqualTo(1));
+            primary2.Metrics.AssertThat("libp2p_peers", Is.EqualTo(1));
         }
 
         [Test]
@@ -66,6 +91,7 @@ namespace Tests.BasicTests
         }
 
         [Test]
+        [Ignore("Requires Location map to be configured for k8s cluster.")]
         public void TwoClientsTwoLocationsTest()
         {
             var primary = SetupCodexNodes(1)

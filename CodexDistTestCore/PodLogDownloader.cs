@@ -8,9 +8,9 @@ namespace CodexDistTestCore
     }
 
     [AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
-    public class DontDownloadLogsOnFailureAttribute : PropertyAttribute
+    public class DontDownloadLogsAndMetricsOnFailureAttribute : PropertyAttribute
     {
-        public DontDownloadLogsOnFailureAttribute()
+        public DontDownloadLogsAndMetricsOnFailureAttribute()
             : base(Timing.UseLongTimeoutsKey)
         {
         }

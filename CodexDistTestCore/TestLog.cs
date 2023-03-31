@@ -39,11 +39,21 @@ namespace CodexDistTestCore
                 Log(result.Message);
                 Log($"{result.StackTrace}");
             }
+
+            if (result.Outcome.Status == NUnit.Framework.Interfaces.TestStatus.Failed)
+            {
+                RenameLogFile();
+            }
         }
 
-        public LogFile CreateSubfile()
+        private void RenameLogFile()
         {
-            return new LogFile(now, $"{GetTestName()}_{subfileNumberSource.GetNextNumber().ToString().PadLeft(6, '0')}");
+            file.ConcatToFilename("_FAILED");
+        }
+
+        public LogFile CreateSubfile(string ext = "log")
+        {
+            return new LogFile(now, $"{GetTestName()}_{subfileNumberSource.GetNextNumber().ToString().PadLeft(6, '0')}", ext);
         }
 
         private static string GetTestName()
@@ -63,10 +73,17 @@ namespace CodexDistTestCore
 
     public class LogFile
     {
+        private readonly DateTime now;
+        private string name;
+        private readonly string ext;
         private readonly string filepath;
 
-        public LogFile(DateTime now, string name)
+        public LogFile(DateTime now, string name, string ext = "log")
         {
+            this.now = now;
+            this.name = name;
+            this.ext = ext;
+
             filepath = Path.Join(
                 LogConfig.LogRoot,
                 $"{now.Year}-{Pad(now.Month)}",
@@ -74,12 +91,11 @@ namespace CodexDistTestCore
 
             Directory.CreateDirectory(filepath);
 
-            FilenameWithoutPath = $"{Pad(now.Hour)}-{Pad(now.Minute)}-{Pad(now.Second)}Z_{name.Replace('.', '-')}.log";
-            FullFilename = Path.Combine(filepath, FilenameWithoutPath);
+            GenerateFilename();
         }
 
-        public string FullFilename { get; }
-        public string FilenameWithoutPath { get; }
+        public string FullFilename { get; private set; } = string.Empty;
+        public string FilenameWithoutPath { get; private set; } = string.Empty;
 
         public void Write(string message)
         {
@@ -98,6 +114,17 @@ namespace CodexDistTestCore
             }
         }
 
+        public void ConcatToFilename(string toAdd)
+        {
+            var oldFullName = FullFilename;
+
+            name += toAdd;
+
+            GenerateFilename();
+
+            File.Move(oldFullName, FullFilename);
+        }
+
         private static string Pad(int n)
         {
             return n.ToString().PadLeft(2, '0');
@@ -106,6 +133,12 @@ namespace CodexDistTestCore
         private static string GetTimestamp()
         {
             return $"[{DateTime.UtcNow.ToString("u")}]";
+        }
+
+        private void GenerateFilename()
+        {
+            FilenameWithoutPath = $"{Pad(now.Hour)}-{Pad(now.Minute)}-{Pad(now.Second)}Z_{name.Replace('.', '-')}.{ext}";
+            FullFilename = Path.Combine(filepath, FilenameWithoutPath);
         }
     }
 }

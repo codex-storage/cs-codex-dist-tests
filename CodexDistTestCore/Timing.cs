@@ -40,6 +40,11 @@ namespace CodexDistTestCore
             return GetTimes().K8sOperationTimeout();
         }
 
+        public static TimeSpan WaitForMetricTimeout()
+        {
+            return GetTimes().WaitForMetricTimeout();
+        }
+
         private static ITimeSet GetTimes()
         {
             var testProperties = TestContext.CurrentContext.Test.Properties;
@@ -55,6 +60,7 @@ namespace CodexDistTestCore
         TimeSpan HttpCallRetryDelay();
         TimeSpan WaitForK8sServiceDelay();
         TimeSpan K8sOperationTimeout();
+        TimeSpan WaitForMetricTimeout();
     }
 
     public class DefaultTimeSet : ITimeSet
@@ -83,6 +89,11 @@ namespace CodexDistTestCore
         {
             return TimeSpan.FromMinutes(5);
         }
+
+        public TimeSpan WaitForMetricTimeout()
+        {
+            return TimeSpan.FromSeconds(30);
+        }
     }
 
     public class LongTimeSet : ITimeSet
@@ -110,6 +121,11 @@ namespace CodexDistTestCore
         public TimeSpan K8sOperationTimeout()
         {
             return TimeSpan.FromMinutes(15);
+        }
+
+        public TimeSpan WaitForMetricTimeout()
+        {
+            return TimeSpan.FromMinutes(5);
         }
     }
 }

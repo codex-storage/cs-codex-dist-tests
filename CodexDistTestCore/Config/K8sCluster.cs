@@ -17,7 +17,8 @@ namespace CodexDistTestCore.Config
         public KubernetesClientConfiguration GetK8sClientConfig()
         {
             if (config != null) return config;
-            config = KubernetesClientConfiguration.BuildConfigFromConfigFile(KubeConfigFile);
+            //config = KubernetesClientConfiguration.BuildConfigFromConfigFile(KubeConfigFile);
+            config = KubernetesClientConfiguration.BuildDefaultConfig();
             return config;
         }
 

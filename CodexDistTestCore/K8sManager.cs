@@ -14,11 +14,13 @@
         private readonly KnownK8sPods knownPods = new KnownK8sPods();
         private readonly TestLog log;
         private readonly IFileManager fileManager;
+        private readonly MetricsAggregator metricsAggregator;
 
         public K8sManager(TestLog log, IFileManager fileManager)
         {
             this.log = log;
             this.fileManager = fileManager;
+            metricsAggregator = new MetricsAggregator(log, this);
         }
 
         public ICodexNodeGroup BringOnline(OfflineCodexNodes offline)
@@ -28,6 +30,11 @@
             K8s(k => k.BringOnline(online, offline));
 
             log.Log($"{online.Describe()} online.");
+
+            if (offline.MetricsEnabled)
+            {
+                BringOnlineMetrics(online);
+            }
 
             return online;
         }
@@ -58,20 +65,41 @@
             K8s(k => k.FetchPodLog(node, logHandler));
         }
 
+        public PrometheusInfo BringOnlinePrometheus(string config, int prometheusNumber)
+        {
+            var spec = new K8sPrometheusSpecs(codexGroupNumberSource.GetNextServicePort(), prometheusNumber, config);
+
+            PrometheusInfo? info = null;
+            K8s(k => info = k.BringOnlinePrometheus(spec));
+            return info!;
+        }
+
+        public void DownloadAllMetrics()
+        {
+            metricsAggregator.DownloadAllMetrics();
+        }
+
+        private void BringOnlineMetrics(CodexNodeGroup group)
+        {
+            var onlineNodes = group.Nodes.Cast<OnlineCodexNode>().ToArray();
+
+            metricsAggregator.BeginCollectingMetricsFor(onlineNodes);
+        }
+
         private CodexNodeGroup CreateOnlineCodexNodes(OfflineCodexNodes offline)
         {
-            var containers = CreateContainers(offline.NumberOfNodes);
+            var containers = CreateContainers(offline);
             var online = containers.Select(c => new OnlineCodexNode(log, fileManager, c)).ToArray();
             var result = new CodexNodeGroup(log, codexGroupNumberSource.GetNextCodexNodeGroupNumber(), offline, this, online);
             onlineCodexNodeGroups.Add(result);
             return result;
         }
 
-        private CodexNodeContainer[] CreateContainers(int number)
+        private CodexNodeContainer[] CreateContainers(OfflineCodexNodes offline)
         {
             var factory = new CodexNodeContainerFactory(codexGroupNumberSource);
             var containers = new List<CodexNodeContainer>();
-            for (var i = 0; i < number; i++) containers.Add(factory.CreateNext());
+            for (var i = 0; i < offline.NumberOfNodes; i++) containers.Add(factory.CreateNext(offline));
             return containers.ToArray();
         }
 

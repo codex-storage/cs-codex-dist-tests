@@ -57,7 +57,7 @@ namespace CodexDistTestCore
             try
             {
                 log.EndTest();
-                IncludeLogsOnTestFailure();
+                IncludeLogsAndMetricsOnTestFailure();
                 k8sManager.DeleteAllResources();
                 fileManager.DeleteAllTestFiles();
             }
@@ -78,19 +78,20 @@ namespace CodexDistTestCore
             return new OfflineCodexNodes(k8sManager, numberOfNodes);
         }
 
-        private void IncludeLogsOnTestFailure()
+        private void IncludeLogsAndMetricsOnTestFailure()
         {
             var result = TestContext.CurrentContext.Result;
             if (result.Outcome.Status == NUnit.Framework.Interfaces.TestStatus.Failed)
             {
-                if (IsDownloadingLogsEnabled())
+                if (IsDownloadingLogsAndMetricsEnabled())
                 {
-                    log.Log("Downloading all CodexNode logs because of test failure...");
+                    log.Log("Downloading all CodexNode logs and metrics because of test failure...");
                     k8sManager.ForEachOnlineGroup(DownloadLogs);
+                    k8sManager.DownloadAllMetrics();
                 }
                 else
                 {
-                    log.Log("Skipping download of all CodexNode logs due to [DontDownloadLogsOnFailure] attribute.");
+                    log.Log("Skipping download of all CodexNode logs and metrics due to [DontDownloadLogsAndMetricsOnFailure] attribute.");
                 }
             }
         }
@@ -105,7 +106,7 @@ namespace CodexDistTestCore
             }
         }
 
-        private bool IsDownloadingLogsEnabled()
+        private bool IsDownloadingLogsAndMetricsEnabled()
         {
             var testProperties = TestContext.CurrentContext.Test.Properties;
             return !testProperties.ContainsKey(PodLogDownloader.DontDownloadLogsOnFailureKey);

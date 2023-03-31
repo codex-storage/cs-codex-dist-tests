@@ -6,6 +6,7 @@
         IOfflineCodexNodes WithLogLevel(CodexLogLevel level);
         IOfflineCodexNodes WithBootstrapNode(IOnlineCodexNode node);
         IOfflineCodexNodes WithStorageQuota(ByteSize storageQuota);
+        IOfflineCodexNodes EnableMetrics();
         ICodexNodeGroup BringOnline();
     }
 
@@ -34,12 +35,14 @@
         public CodexLogLevel? LogLevel { get; private set; }
         public IOnlineCodexNode? BootstrapNode { get; private set; }
         public ByteSize? StorageQuota { get; private set; }
+        public bool MetricsEnabled { get; private set; }
 
         public OfflineCodexNodes(IK8sManager k8SManager, int numberOfNodes)
         {
             this.k8SManager = k8SManager;
             NumberOfNodes = numberOfNodes;
             Location = Location.Unspecified;
+            MetricsEnabled = false;
         }
 
         public ICodexNodeGroup BringOnline()
@@ -68,6 +71,12 @@
         public IOfflineCodexNodes WithStorageQuota(ByteSize storageQuota)
         {
             StorageQuota = storageQuota;
+            return this;
+        }
+
+        public IOfflineCodexNodes EnableMetrics()
+        {
+            MetricsEnabled = true;
             return this;
         }
 
