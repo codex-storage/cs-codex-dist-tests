@@ -38,16 +38,18 @@ namespace CodexDistTestCore.Marketplace
                 FetchAccountAndGenesisJson();
             }
 
-            Assert.That(bootstrapAccount, Is.Not.Empty, "Unable to fetch account for bootstrap geth node. Test infra failure.");
-            Assert.That(bootstrapGenesisJson, Is.Not.Empty, "Unable to fetch genesis-json for bootstrap geth node. Test infra failure.");
+            Assert.That(bootstrapAccount, Is.Not.Empty, "Unable to fetch account for geth bootstrap node. Test infra failure.");
+            Assert.That(bootstrapGenesisJson, Is.Not.Empty, "Unable to fetch genesis-json for geth bootstrap node. Test infra failure.");
 
             gethBootstrapNode!.GenesisJsonBase64 = Convert.ToBase64String(Encoding.ASCII.GetBytes(bootstrapGenesisJson));
+
+            log.Log($"Initialized geth bootstrap node with account '{bootstrapAccount}'");
         }
 
         private void FetchAccountAndGenesisJson()
         {
-            bootstrapAccount = ExecuteCommand("cat", "account_string.txt");
-            bootstrapGenesisJson = ExecuteCommand("cat", "genesis.json");
+            bootstrapAccount = ExecuteCommand("cat", GethDockerImage.AccountFilename);
+            bootstrapGenesisJson = ExecuteCommand("cat", GethDockerImage.GenesisFilename);
         }
 
         private string ExecuteCommand(string command, params string[] arguments)

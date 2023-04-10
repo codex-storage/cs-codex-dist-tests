@@ -6,6 +6,8 @@ namespace CodexDistTestCore.Marketplace
     public static class GethDockerImage
     {
         public const string Image = "thatbenbierens/geth-confenv:latest";
+        public const string AccountFilename = "account_string.txt";
+        public const string GenesisFilename = "genesis.json";
     }
 
     public class K8sGethBoostrapSpecs

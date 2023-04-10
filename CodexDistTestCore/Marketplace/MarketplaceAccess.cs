@@ -13,6 +13,33 @@ namespace CodexDistTestCore.Marketplace
 
     public class MarketplaceAccess : IMarketplaceAccess
     {
+        private readonly K8sManager k8sManager;
+        private readonly TestLog log;
+        private string account = string.Empty;
+
+        public MarketplaceAccess(K8sManager k8sManager, TestLog log)
+        {
+            this.k8sManager = k8sManager;
+            this.log = log;
+        }
+
+        public void Initialize(PodInfo pod, GethCompanionNodeContainer gethCompanionNodeContainer)
+        {
+            FetchAccount(pod, gethCompanionNodeContainer);
+            if (string.IsNullOrEmpty(account))
+            {
+                Thread.Sleep(TimeSpan.FromSeconds(15));
+                FetchAccount(pod, gethCompanionNodeContainer);
+            }
+            Assert.That(account, Is.Not.Empty, "Unable to fetch account for geth companion node. Test infra failure.");
+            log.Log($"Initialized Geth companion node with account '{account}'");
+        }
+
+        private void FetchAccount(PodInfo pod, GethCompanionNodeContainer gethCompanionNodeContainer)
+        {
+            account = k8sManager.ExecuteCommand(pod, gethCompanionNodeContainer.Name, "cat", GethDockerImage.AccountFilename);
+        }
+
         public void AdvertiseContract(ContentId contentId, float maxPricePerMBPerSecond, float minRequiredCollateral, float minRequiredNumberOfDuplicates)
         {
             throw new NotImplementedException();

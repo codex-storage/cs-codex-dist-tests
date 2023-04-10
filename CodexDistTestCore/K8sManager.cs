@@ -30,23 +30,27 @@ namespace CodexDistTestCore
 
         public ICodexNodeGroup BringOnline(OfflineCodexNodes offline)
         {
-            var online = CreateOnlineCodexNodes(offline);
+            var group = CreateOnlineCodexNodes(offline);
 
             if (offline.MarketplaceConfig != null)
             {
-                online.GethInfo = BringOnlineMarketplace();
+                group.GethInfo = BringOnlineMarketplace();
             }
 
-            K8s(k => k.BringOnline(online, offline));
-
-            log.Log($"{online.Describe()} online.");
+            K8s(k => k.BringOnline(group, offline));
 
             if (offline.MetricsEnabled)
             {
-                BringOnlineMetrics(online);
+                BringOnlineMetrics(group);
+            }
+            if (offline.MarketplaceConfig != null)
+            {
+                ConnectMarketplace(group);
             }
 
-            return online;
+            log.Log($"{group.Describe()} online.");
+
+            return group;
         }
 
         public IOfflineCodexNodes BringOffline(ICodexNodeGroup node)
@@ -107,6 +111,21 @@ namespace CodexDistTestCore
         private GethInfo BringOnlineMarketplace()
         {
             return marketplaceController.BringOnlineMarketplace();
+        }
+
+        private void ConnectMarketplace(CodexNodeGroup group)
+        {
+            foreach (var node in DowncastNodes(group))
+            {
+                ConnectMarketplace(group, node);
+            }
+        }
+
+        private void ConnectMarketplace(CodexNodeGroup group, OnlineCodexNode node)
+        {
+            var access = new MarketplaceAccess(this, log);
+            access.Initialize(group.PodInfo!, node.Container.GethCompanionNodeContainer!);
+            node.Marketplace = access;
         }
 
         private CodexNodeGroup CreateOnlineCodexNodes(OfflineCodexNodes offline)
