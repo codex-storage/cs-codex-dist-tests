@@ -4,12 +4,13 @@ namespace CodexDistTestCore.Marketplace
 {
     public class GethCompanionNodeContainer
     {
-        public GethCompanionNodeContainer(string name, int servicePort, string servicePortName, int apiPort, string containerPortName)
+        public GethCompanionNodeContainer(string name, int servicePort, string servicePortName, int apiPort, int rpcPort, string containerPortName)
         {
             Name = name;
             ServicePort = servicePort;
             ServicePortName = servicePortName;
             ApiPort = apiPort;
+            RpcPort = rpcPort;
             ContainerPortName = containerPortName;
         }
 
@@ -17,6 +18,7 @@ namespace CodexDistTestCore.Marketplace
         public int ServicePort { get; }
         public string ServicePortName { get; }
         public int ApiPort { get; }
+        public int RpcPort { get; }
         public string ContainerPortName { get; }
 
         public V1Container CreateDeploymentContainer(GethInfo gethInfo)
@@ -34,7 +36,19 @@ namespace CodexDistTestCore.Marketplace
                         }
                     },
                 // todo: use env vars to connect this node to the bootstrap node provided by gethInfo.podInfo & gethInfo.servicePort & gethInfo.genesisJsonBase64
-                //Env = dockerImage.CreateEnvironmentVariables(offline, container)
+                Env = new List<V1EnvVar>
+                {
+                    new V1EnvVar
+                    {
+                        Name = "GETH_ARGS",
+                        Value = $"--port {ApiPort} --discovery.port {ApiPort} --authrpc.port {RpcPort}"
+                    },
+                    new V1EnvVar
+                    {
+                        Name = "GENESIS_JSON",
+                        Value = gethInfo.GenesisJsonBase64
+                    }
+                }
             };
         }
 

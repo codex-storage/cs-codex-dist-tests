@@ -31,13 +31,23 @@ namespace CodexDistTestCore.Marketplace
 
         private void ExtractAccountAndGenesisJson()
         {
-            bootstrapAccount = ExecuteCommand("cat", "account_string.txt");
-            bootstrapGenesisJson = ExecuteCommand("cat", "genesis.json");
+            FetchAccountAndGenesisJson();
+            if (string.IsNullOrEmpty(bootstrapAccount) || string.IsNullOrEmpty(bootstrapGenesisJson))
+            {
+                Thread.Sleep(TimeSpan.FromSeconds(15));
+                FetchAccountAndGenesisJson();
+            }
 
             Assert.That(bootstrapAccount, Is.Not.Empty, "Unable to fetch account for bootstrap geth node. Test infra failure.");
             Assert.That(bootstrapGenesisJson, Is.Not.Empty, "Unable to fetch genesis-json for bootstrap geth node. Test infra failure.");
 
             gethBootstrapNode!.GenesisJsonBase64 = Convert.ToBase64String(Encoding.ASCII.GetBytes(bootstrapGenesisJson));
+        }
+
+        private void FetchAccountAndGenesisJson()
+        {
+            bootstrapAccount = ExecuteCommand("cat", "account_string.txt");
+            bootstrapGenesisJson = ExecuteCommand("cat", "genesis.json");
         }
 
         private string ExecuteCommand(string command, params string[] arguments)

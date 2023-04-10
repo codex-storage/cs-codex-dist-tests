@@ -96,6 +96,7 @@ namespace CodexDistTestCore
                 servicePort: groupContainerFactory.GetNextServicePort(),
                 servicePortName: groupContainerFactory.GetNextServicePortName(),
                 apiPort: codexPortSource.GetNextNumber(),
+                rpcPort: codexPortSource.GetNextNumber(),
                 containerPortName: $"geth-{n}"
             );
         }

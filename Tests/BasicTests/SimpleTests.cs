@@ -34,7 +34,7 @@ namespace Tests.BasicTests
         [Test]
         public void MarketplaceExample()
         {
-            var primary = SetupCodexNodes(1)
+            var primary = SetupCodexNodes(4)
                             .WithStorageQuota(10.GB())
                             .EnableMarketplace(initialBalance: 20)
                             .BringOnline()[0];
