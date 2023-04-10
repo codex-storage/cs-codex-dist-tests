@@ -16,15 +16,8 @@ namespace CodexDistTestCore
             this.k8sManager = k8sManager;
         }
 
-        public MetricsAccess BeginCollectingMetricsFor(OnlineCodexNode[] nodes)
+        public void BeginCollectingMetricsFor(OnlineCodexNode[] nodes)
         {
-            var alreadyStartedNodes = nodes.Where(n => activePrometheuses.Values.Any(v => v.Contains(n)));
-            if (alreadyStartedNodes.Any())
-            {
-                Assert.Fail("Incorrect test setup: 'GatherMetrics' was already called on one or more of these OnlineCodexNodes.");
-                throw new InvalidOperationException();
-            }
-
             log.Log($"Starting metrics collecting for {nodes.Length} nodes...");
 
             var config = GeneratePrometheusConfig(nodes);
@@ -33,7 +26,11 @@ namespace CodexDistTestCore
             activePrometheuses.Add(query, nodes);
 
             log.Log("Metrics service started.");
-            return new MetricsAccess(query, nodes);
+
+            foreach(var node in nodes)
+            {
+                node.Metrics = new MetricsAccess(query, node);
+            }
         }
 
         public void DownloadAllMetrics()
