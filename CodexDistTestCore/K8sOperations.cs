@@ -3,6 +3,7 @@ using CodexDistTestCore.Metrics;
 using k8s;
 using k8s.KubeConfigModels;
 using k8s.Models;
+using Nethereum.Merkle.Patricia;
 using NUnit.Framework;
 
 namespace CodexDistTestCore
@@ -24,29 +25,6 @@ namespace CodexDistTestCore
         public void Close()
         {
             client.Dispose();
-        }
-
-        private Task Callback(Stream stdIn, Stream stdOut, Stream stdErr)
-        {
-            using var streamReader = new StreamReader(stdOut);
-            var lines = new List<string>();
-            var line = streamReader.ReadLine();
-            while (line != null) 
-            {
-                lines.Add(line);
-                line = streamReader.ReadLine();
-            }
-
-            Assert.That(lines.Any(l => l.Contains("FOO76543")));
-
-
-            return Task.CompletedTask;
-        }
-
-        public void ExampleOfCommandExecution(OnlineCodexNode node)
-        {
-            Utils.Wait(client.NamespacedPodExecAsync(
-                node.Group.PodInfo!.Name, K8sNamespace, node.Container.Name, new[] { "echo", "FOO76543" }, false, Callback, new CancellationToken()));
         }
 
         public void BringOnline(CodexNodeGroup online, OfflineCodexNodes offline)
@@ -82,6 +60,13 @@ namespace CodexDistTestCore
             logHandler.Log(stream);
         }
 
+        public string ExecuteCommand(PodInfo pod, string containerName, string command, params string[] arguments)
+        {
+            var runner = new CommandRunner(client, pod, containerName, command, arguments);
+            runner.Run();
+            return runner.GetStdOut();
+        }
+
         public PrometheusInfo BringOnlinePrometheus(K8sPrometheusSpecs spec)
         {
             EnsureTestNamespace();
@@ -91,6 +76,14 @@ namespace CodexDistTestCore
             WaitUntilPrometheusOnline(spec);
 
             return new PrometheusInfo(spec.ServicePort, FetchNewPod());
+        }
+
+        public PodInfo BringOnlineGethBootstrapNode()
+        {
+            EnsureTestNamespace();
+
+            return FetchNewPod();
+
         }
 
         private void FetchPodInfo(CodexNodeGroup online)
@@ -343,6 +336,51 @@ namespace CodexDistTestCore
         private bool IsTestNamespaceOnline()
         {
             return client.ListNamespace().Items.Any(n => n.Metadata.Name == K8sNamespace);
+        }
+
+        private class CommandRunner
+        {
+            private readonly Kubernetes client;
+            private readonly PodInfo pod;
+            private readonly string containerName;
+            private readonly string command;
+            private readonly string[] arguments;
+            private readonly List<string> lines = new List<string>();
+
+            public CommandRunner(Kubernetes client, PodInfo pod, string containerName, string command, string[] arguments)
+            {
+                this.client = client;
+                this.pod = pod;
+                this.containerName = containerName;
+                this.command = command;
+                this.arguments = arguments;
+            }
+
+            public void Run()
+            {
+                var input = new[] { command }.Concat(arguments).ToArray();
+
+                Utils.Wait(client.NamespacedPodExecAsync(
+                    pod.Name, K8sCluster.K8sNamespace, containerName, input, false, Callback, new CancellationToken()));
+            }
+
+            public string GetStdOut()
+            {
+                return string.Join(Environment.NewLine, lines);
+            }
+
+            private Task Callback(Stream stdIn, Stream stdOut, Stream stdErr)
+            {
+                using var streamReader = new StreamReader(stdOut);
+                var line = streamReader.ReadLine();
+                while (line != null)
+                {
+                    lines.Add(line);
+                    line = streamReader.ReadLine();
+                }
+
+                return Task.CompletedTask;
+            }
         }
     }
 }

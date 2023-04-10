@@ -1,4 +1,5 @@
-﻿using CodexDistTestCore.Metrics;
+﻿using CodexDistTestCore.Marketplace;
+using CodexDistTestCore.Metrics;
 
 namespace CodexDistTestCore
 {
@@ -17,17 +18,24 @@ namespace CodexDistTestCore
         private readonly TestLog log;
         private readonly IFileManager fileManager;
         private readonly MetricsAggregator metricsAggregator;
+        private readonly MarketplaceController marketplaceController;
 
         public K8sManager(TestLog log, IFileManager fileManager)
         {
             this.log = log;
             this.fileManager = fileManager;
             metricsAggregator = new MetricsAggregator(log, this);
+            marketplaceController = new MarketplaceController(log, this);
         }
 
         public ICodexNodeGroup BringOnline(OfflineCodexNodes offline)
         {
             var online = CreateOnlineCodexNodes(offline);
+
+            if (offline.MarketplaceConfig != null)
+            {
+                BringOnlineMarketplace();
+            }
 
             K8s(k => k.BringOnline(online, offline));
 
@@ -52,10 +60,9 @@ namespace CodexDistTestCore
             return online.Origin;
         }
 
-        public void ExampleOfCMD(IOnlineCodexNode node)
+        public string ExecuteCommand(PodInfo pod, string containerName, string command, params string[] arguments)
         {
-            var n = (OnlineCodexNode)node;
-            K8s(k => k.ExampleOfCommandExecution(n));
+            return K8s(k => k.ExecuteCommand(pod, containerName, command, arguments));
         }
 
         public void DeleteAllResources()
@@ -77,9 +84,12 @@ namespace CodexDistTestCore
         {
             var spec = new K8sPrometheusSpecs(codexGroupNumberSource.GetNextServicePort(), prometheusNumber, config);
 
-            PrometheusInfo? info = null;
-            K8s(k => info = k.BringOnlinePrometheus(spec));
-            return info!;
+            return K8s(k => k.BringOnlinePrometheus(spec));
+        }
+
+        public PodInfo BringOnlineGethBootstrapNode()
+        {
+            return K8s(k => k.BringOnlineGethBootstrapNode());
         }
 
         public void DownloadAllMetrics()
@@ -89,9 +99,12 @@ namespace CodexDistTestCore
 
         private void BringOnlineMetrics(CodexNodeGroup group)
         {
-            var onlineNodes = group.Nodes.Cast<OnlineCodexNode>().ToArray();
+            metricsAggregator.BeginCollectingMetricsFor(DowncastNodes(group));
+        }
 
-            metricsAggregator.BeginCollectingMetricsFor(onlineNodes);
+        private void BringOnlineMarketplace()
+        {
+            marketplaceController.BringOnlineMarketplace();
         }
 
         private CodexNodeGroup CreateOnlineCodexNodes(OfflineCodexNodes offline)
@@ -123,6 +136,19 @@ namespace CodexDistTestCore
             var k8s = new K8sOperations(knownPods);
             action(k8s);
             k8s.Close();
+        }
+
+        private T K8s<T>(Func<K8sOperations, T> action)
+        {
+            var k8s = new K8sOperations(knownPods);
+            var result = action(k8s);
+            k8s.Close();
+            return result;
+        }
+
+        private static OnlineCodexNode[] DowncastNodes(CodexNodeGroup group)
+        {
+            return group.Nodes.Cast<OnlineCodexNode>().ToArray();
         }
     }
 }
