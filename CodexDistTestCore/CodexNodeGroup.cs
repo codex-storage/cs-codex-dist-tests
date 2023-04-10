@@ -1,4 +1,5 @@
 ﻿using CodexDistTestCore.Config;
+using CodexDistTestCore.Marketplace;
 using k8s.Models;
 using System.Collections;
 
@@ -45,6 +46,7 @@ namespace CodexDistTestCore
         public V1Deployment? Deployment { get; set; }
         public V1Service? Service { get; set; }
         public PodInfo? PodInfo { get; set; }
+        public GethInfo? GethInfo { get; set; }
 
         public CodexNodeContainer[] GetContainers()
         {

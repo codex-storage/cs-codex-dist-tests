@@ -2,10 +2,9 @@
 using CodexDistTestCore.Marketplace;
 using CodexDistTestCore.Metrics;
 using k8s;
-using k8s.KubeConfigModels;
 using k8s.Models;
-using Nethereum.Merkle.Patricia;
 using NUnit.Framework;
+using System.Numerics;
 
 namespace CodexDistTestCore
 {
@@ -79,7 +78,7 @@ namespace CodexDistTestCore
             return new PrometheusInfo(spec.ServicePort, FetchNewPod());
         }
 
-        public PodInfo BringOnlineGethBootstrapNode(K8sGethBoostrapSpecs spec)
+        public GethInfo BringOnlineGethBootstrapNode(K8sGethBoostrapSpecs spec)
         {
             EnsureTestNamespace();
 
@@ -87,7 +86,7 @@ namespace CodexDistTestCore
             CreateGethBootstrapService(spec);
             WaitUntilGethBootstrapOnline(spec);
 
-            return FetchNewPod();
+            return new GethInfo(spec, FetchNewPod());
         }
 
         private void FetchPodInfo(CodexNodeGroup online)
@@ -213,6 +212,11 @@ namespace CodexDistTestCore
                     TargetPort = container.ContainerPortName,
                     NodePort = container.ServicePort
                 });
+
+                if (container.GethCompanionNodeContainer != null)
+                {
+                    result.Add(container.GethCompanionNodeContainer.CreateServicePort());
+                }
             }
             return result;
         }
@@ -299,6 +303,11 @@ namespace CodexDistTestCore
                     },
                     Env = dockerImage.CreateEnvironmentVariables(offline, container)
                 });
+
+                if (container.GethCompanionNodeContainer != null)
+                {
+                    result.Add(container.GethCompanionNodeContainer.CreateDeploymentContainer(online.GethInfo!));
+                }
             }
 
             return result;

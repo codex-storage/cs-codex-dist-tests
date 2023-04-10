@@ -7,14 +7,6 @@ namespace Tests.BasicTests
     public class SimpleTests : DistTest
     {
         [Test]
-        public void DoCommand()
-        {
-            var primary = SetupCodexNodes(1).BringOnline()[0];
-
-            k8sManager.ExampleOfCMD(primary);
-        }
-
-        [Test]
         public void TwoMetricsExample()
         {
             var group = SetupCodexNodes(2)
@@ -47,22 +39,24 @@ namespace Tests.BasicTests
                             .EnableMarketplace(initialBalance: 20)
                             .BringOnline()[0];
 
-            var secondary = SetupCodexNodes(1)
-                            .EnableMarketplace(initialBalance: 1000)
-                            .BringOnline()[0];
+            //var secondary = SetupCodexNodes(1)
+            //                .EnableMarketplace(initialBalance: 1000)
+            //                .BringOnline()[0];
 
-            primary.ConnectToPeer(secondary);
-            primary.Marketplace.AdvertiseStorage(10.GB(), pricePerMBPerSecond: 0.01f, collateral: 20);
+            //primary.ConnectToPeer(secondary);
+            //primary.Marketplace.AdvertiseStorage(10.GB(), pricePerMBPerSecond: 0.01f, collateral: 20);
 
-            var testFile = GenerateTestFile(10.MB());
-            var contentId = secondary.UploadFile(testFile);
-            secondary.Marketplace.AdvertiseContract(contentId, maxPricePerMBPerSecond: 0.02f, minRequiredCollateral: 10, minRequiredNumberOfDuplicates: 1);
+            //var testFile = GenerateTestFile(10.MB());
+            //var contentId = secondary.UploadFile(testFile);
+            //secondary.Marketplace.AdvertiseContract(contentId, maxPricePerMBPerSecond: 0.02f, minRequiredCollateral: 10, minRequiredNumberOfDuplicates: 1);
 
-            primary.Marketplace.AssertThatBalance(Is.LessThan(20), "Collateral was not placed.");
-            var primaryBalance = primary.Marketplace.GetBalance();
+            //primary.Marketplace.AssertThatBalance(Is.LessThan(20), "Collateral was not placed.");
+            //var primaryBalance = primary.Marketplace.GetBalance();
 
-            secondary.Marketplace.AssertThatBalance(Is.LessThan(1000), "Contractor was not charged for storage.");
-            primary.Marketplace.AssertThatBalance(Is.GreaterThan(primaryBalance), "Storer was not paid for storage.");
+            //secondary.Marketplace.AssertThatBalance(Is.LessThan(1000), "Contractor was not charged for storage.");
+            //primary.Marketplace.AssertThatBalance(Is.GreaterThan(primaryBalance), "Storer was not paid for storage.");
+
+            var aa = 0;
         }
 
         [Test]

@@ -34,7 +34,7 @@ namespace CodexDistTestCore
 
             if (offline.MarketplaceConfig != null)
             {
-                BringOnlineMarketplace();
+                online.GethInfo = BringOnlineMarketplace();
             }
 
             K8s(k => k.BringOnline(online, offline));
@@ -87,7 +87,7 @@ namespace CodexDistTestCore
             return K8s(k => k.BringOnlinePrometheus(spec));
         }
 
-        public PodInfo BringOnlineGethBootstrapNode()
+        public GethInfo BringOnlineGethBootstrapNode()
         {
             var spec = new K8sGethBoostrapSpecs(codexGroupNumberSource.GetNextServicePort());
 
@@ -104,9 +104,9 @@ namespace CodexDistTestCore
             metricsAggregator.BeginCollectingMetricsFor(DowncastNodes(group));
         }
 
-        private void BringOnlineMarketplace()
+        private GethInfo BringOnlineMarketplace()
         {
-            marketplaceController.BringOnlineMarketplace();
+            return marketplaceController.BringOnlineMarketplace();
         }
 
         private CodexNodeGroup CreateOnlineCodexNodes(OfflineCodexNodes offline)

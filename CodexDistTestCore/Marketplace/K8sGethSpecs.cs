@@ -3,10 +3,14 @@ using k8s.Models;
 
 namespace CodexDistTestCore.Marketplace
 {
+    public static class GethDockerImage
+    {
+        public const string Image = "thatbenbierens/geth-confenv:latest";
+    }
+
     public class K8sGethBoostrapSpecs
     {
         public const string ContainerName = "dtest-gethb";
-        private const string dockerImage = "thatbenbierens/geth-confenv:latest";
         private const string portName = "gethb";
         private const string genesisJsonBase64 = "ewogICAgImNvbmZpZyI6IHsKICAgICAgImNoYWluSWQiOiAxMjM0NSwKICAgICAgImhvbWVzdGVhZEJsb2NrIjogMCwKICAgICAgImVpcDE1MEJsb2NrIjogMCwKICAgICAgImVpcDE1NUJsb2NrIjogMCwKICAgICAgImVpcDE1OEJsb2NrIjogMCwKICAgICAgImJ5emFudGl1bUJsb2NrIjogMCwKICAgICAgImNvbnN0YW50aW5vcGxlQmxvY2siOiAwLAogICAgICAicGV0ZXJzYnVyZ0Jsb2NrIjogMCwKICAgICAgImlzdGFuYnVsQmxvY2siOiAwLAogICAgICAibXVpckdsYWNpZXJCbG9jayI6IDAsCiAgICAgICJiZXJsaW5CbG9jayI6IDAsCiAgICAgICJsb25kb25CbG9jayI6IDAsCiAgICAgICJhcnJvd0dsYWNpZXJCbG9jayI6IDAsCiAgICAgICJncmF5R2xhY2llckJsb2NrIjogMCwKICAgICAgImNsaXF1ZSI6IHsKICAgICAgICAicGVyaW9kIjogNSwKICAgICAgICAiZXBvY2giOiAzMDAwMAogICAgICB9CiAgICB9LAogICAgImRpZmZpY3VsdHkiOiAiMSIsCiAgICAiZ2FzTGltaXQiOiAiODAwMDAwMDAwIiwKICAgICJleHRyYWRhdGEiOiAiMHgwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwN2RmOWE4NzVhMTc0YjNiYzU2NWU2NDI0YTAwNTBlYmMxYjJkMWQ4MjAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAiLAogICAgImFsbG9jIjogewogICAgICAiQUNDT1VOVF9IRVJFIjogeyAiYmFsYW5jZSI6ICI1MDAwMDAiIH0KICAgIH0KICB9";
 
@@ -52,7 +56,7 @@ namespace CodexDistTestCore.Marketplace
                                 new V1Container
                                 {
                                     Name = ContainerName,
-                                    Image = dockerImage,
+                                    Image = GethDockerImage.Image,
                                     Ports = new List<V1ContainerPort>
                                     {
                                         new V1ContainerPort

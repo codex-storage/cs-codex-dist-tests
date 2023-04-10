@@ -1,8 +1,10 @@
-﻿namespace CodexDistTestCore
+﻿using CodexDistTestCore.Marketplace;
+
+namespace CodexDistTestCore
 {
     public class CodexNodeContainer
     {
-        public CodexNodeContainer(string name, int servicePort, string servicePortName, int apiPort, string containerPortName, int discoveryPort, int listenPort, string dataDir, int metricsPort)
+        public CodexNodeContainer(string name, int servicePort, string servicePortName, int apiPort, string containerPortName, int discoveryPort, int listenPort, string dataDir, int metricsPort, GethCompanionNodeContainer? gethCompanionNodeContainer)
         {
             Name = name;
             ServicePort = servicePort;
@@ -13,6 +15,7 @@
             ListenPort = listenPort;
             DataDir = dataDir;
             MetricsPort = metricsPort;
+            GethCompanionNodeContainer = gethCompanionNodeContainer;
         }
 
         public string Name { get; }
@@ -24,6 +27,8 @@
         public int ListenPort { get; }
         public string DataDir { get; }
         public int MetricsPort { get; }
+
+        public GethCompanionNodeContainer? GethCompanionNodeContainer { get; }
     }
 
     public class CodexGroupNumberSource
@@ -71,7 +76,8 @@
                 discoveryPort: codexPortSource.GetNextNumber(),
                 listenPort: codexPortSource.GetNextNumber(),
                 dataDir: $"datadir{n}",
-                metricsPort: GetMetricsPort(offline)
+                metricsPort: GetMetricsPort(offline),
+                CreateGethNodeContainer(offline, n)
             );
         }
 
@@ -79,6 +85,19 @@
         {
             if (offline.MetricsEnabled) return codexPortSource.GetNextNumber();
             return 0;
+        }
+
+        private GethCompanionNodeContainer? CreateGethNodeContainer(OfflineCodexNodes offline, int n)
+        {
+            if (offline.MarketplaceConfig == null) return null;
+
+            return new GethCompanionNodeContainer(
+                name: $"geth-node{n}",
+                servicePort: groupContainerFactory.GetNextServicePort(),
+                servicePortName: groupContainerFactory.GetNextServicePortName(),
+                apiPort: codexPortSource.GetNextNumber(),
+                containerPortName: $"geth-{n}"
+            );
         }
     }
 }
