@@ -1,4 +1,6 @@
-﻿namespace CodexDistTestCore.Marketplace
+﻿using NUnit.Framework;
+
+namespace CodexDistTestCore.Marketplace
 {
     public class MarketplaceController
     {
@@ -28,6 +30,9 @@
         {
             bootstrapAccount = ExecuteCommand("cat", "account_string.txt");
             bootstrapGenesisJson = ExecuteCommand("cat", "genesis.json");
+
+            Assert.That(bootstrapAccount, Is.Not.Empty, "Unable to fetch account for bootstrap geth node. Test infra failure.");
+            Assert.That(bootstrapGenesisJson, Is.Not.Empty, "Unable to fetch genesis-json for bootstrap geth node. Test infra failure.");
         }
 
         private string ExecuteCommand(string command, params string[] arguments)

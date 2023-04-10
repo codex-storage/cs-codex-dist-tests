@@ -1,4 +1,5 @@
 ﻿using CodexDistTestCore.Config;
+using CodexDistTestCore.Marketplace;
 using CodexDistTestCore.Metrics;
 using k8s;
 using k8s.KubeConfigModels;
@@ -78,12 +79,15 @@ namespace CodexDistTestCore
             return new PrometheusInfo(spec.ServicePort, FetchNewPod());
         }
 
-        public PodInfo BringOnlineGethBootstrapNode()
+        public PodInfo BringOnlineGethBootstrapNode(K8sGethBoostrapSpecs spec)
         {
             EnsureTestNamespace();
 
-            return FetchNewPod();
+            CreateGethBootstrapDeployment(spec);
+            CreateGethBootstrapService(spec);
+            WaitUntilGethBootstrapOnline(spec);
 
+            return FetchNewPod();
         }
 
         private void FetchPodInfo(CodexNodeGroup online)
@@ -140,7 +144,16 @@ namespace CodexDistTestCore
 
         private void WaitUntilPrometheusOnline(K8sPrometheusSpecs spec)
         {
-            var deploymentName = spec.GetDeploymentName();
+            WaitUntilDeploymentOnline(spec.GetDeploymentName());
+        }
+
+        private void WaitUntilGethBootstrapOnline(K8sGethBoostrapSpecs spec)
+        {
+            WaitUntilDeploymentOnline(spec.GetDeploymentName());
+        }
+
+        private void WaitUntilDeploymentOnline(string deploymentName)
+        {
             WaitUntil(() =>
             {
                 var deployment = client.ReadNamespacedDeployment(deploymentName, K8sNamespace);
@@ -214,6 +227,11 @@ namespace CodexDistTestCore
         private void CreatePrometheusService(K8sPrometheusSpecs spec)
         {
             client.CreateNamespacedService(spec.CreatePrometheusService(), K8sNamespace);
+        }
+
+        private void CreateGethBootstrapService(K8sGethBoostrapSpecs spec)
+        {
+            client.CreateNamespacedService(spec.CreateGethBootstrapService(), K8sNamespace);
         }
 
         #endregion
@@ -296,6 +314,11 @@ namespace CodexDistTestCore
         private void CreatePrometheusDeployment(K8sPrometheusSpecs spec)
         {
             client.CreateNamespacedDeployment(spec.CreatePrometheusDeployment(), K8sNamespace);
+        }
+
+        private void CreateGethBootstrapDeployment(K8sGethBoostrapSpecs spec)
+        {
+            client.CreateNamespacedDeployment(spec.CreateGethBootstrapDeployment(), K8sNamespace);
         }
 
         #endregion

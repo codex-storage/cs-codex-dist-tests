@@ -63,14 +63,14 @@ namespace CodexDistTestCore.Marketplace
                                     },
                                     Env = new List<V1EnvVar>
                                     {
+                                        //new V1EnvVar
+                                        //{
+                                        //    Name = "GETH_ARGS",
+                                        //    Value = "--qwerty"
+                                        //},
                                         new V1EnvVar
                                         {
-                                            Name = "GETH_ARGS",
-                                            Value = "--qwerty"
-                                        },
-                                        new V1EnvVar
-                                        {
-                                            Name = "GENSIS_JSON",
+                                            Name = "GENESIS_JSON",
                                             Value = genesisJsonBase64
                                         },
                                         new V1EnvVar

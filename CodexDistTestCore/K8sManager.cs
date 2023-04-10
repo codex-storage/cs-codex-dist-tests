@@ -89,7 +89,9 @@ namespace CodexDistTestCore
 
         public PodInfo BringOnlineGethBootstrapNode()
         {
-            return K8s(k => k.BringOnlineGethBootstrapNode());
+            var spec = new K8sGethBoostrapSpecs(codexGroupNumberSource.GetNextServicePort());
+
+            return K8s(k => k.BringOnlineGethBootstrapNode(spec));
         }
 
         public void DownloadAllMetrics()
