@@ -1,4 +1,6 @@
-﻿namespace CodexDistTestCore
+﻿using CodexDistTestCore.Metrics;
+
+namespace CodexDistTestCore
 {
     public interface IK8sManager
     {

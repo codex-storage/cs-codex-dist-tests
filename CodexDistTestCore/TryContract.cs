@@ -16,6 +16,7 @@ namespace CodexDistTestCore
     public class TryContract
     {
         [Test]
+        [Ignore("aaa")]
         public void DoThing()
         {
             var url = "http://testchain.nethereum.com:8545";

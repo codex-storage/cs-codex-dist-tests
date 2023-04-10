@@ -1,7 +1,7 @@
 ﻿using NUnit.Framework;
 using NUnit.Framework.Constraints;
 
-namespace CodexDistTestCore
+namespace CodexDistTestCore.Metrics
 {
     public interface IMetricsAccess
     {

@@ -1,7 +1,7 @@
 ﻿using CodexDistTestCore.Config;
 using k8s.Models;
 
-namespace CodexDistTestCore
+namespace CodexDistTestCore.Metrics
 {
     public class K8sPrometheusSpecs
     {
@@ -31,7 +31,7 @@ namespace CodexDistTestCore
             var deploymentSpec = new V1Deployment
             {
                 ApiVersion = "apps/v1",
-                Metadata =  new V1ObjectMeta
+                Metadata = new V1ObjectMeta
                 {
                     Name = GetDeploymentName(),
                     NamespaceProperty = K8sCluster.K8sNamespace

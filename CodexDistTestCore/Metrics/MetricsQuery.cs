@@ -1,7 +1,7 @@
 ﻿using CodexDistTestCore.Config;
 using System.Globalization;
 
-namespace CodexDistTestCore
+namespace CodexDistTestCore.Metrics
 {
     public class MetricsQuery
     {
@@ -107,7 +107,7 @@ namespace CodexDistTestCore
             {
                 Timestamp = ToTimestamp(value[0]),
                 Value = ToValue(value[1])
-            };            
+            };
         }
 
         private string GetInstanceNameForNode(OnlineCodexNode node)

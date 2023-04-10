@@ -1,7 +1,7 @@
 ﻿using NUnit.Framework;
 using System.Text;
 
-namespace CodexDistTestCore
+namespace CodexDistTestCore.Metrics
 {
     public class MetricsAggregator
     {
@@ -27,7 +27,7 @@ namespace CodexDistTestCore
 
             log.Log("Metrics service started.");
 
-            foreach(var node in nodes)
+            foreach (var node in nodes)
             {
                 node.Metrics = new MetricsAccess(query, node);
             }

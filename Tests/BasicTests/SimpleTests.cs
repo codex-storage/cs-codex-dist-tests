@@ -40,6 +40,32 @@ namespace Tests.BasicTests
         }
 
         [Test]
+        public void MarketplaceExample()
+        {
+            var primary = SetupCodexNodes(1)
+                            .WithStorageQuota(10.GB())
+                            .EnableMarketplace(initialBalance: 20)
+                            .BringOnline()[0];
+
+            var secondary = SetupCodexNodes(1)
+                            .EnableMarketplace(initialBalance: 1000)
+                            .BringOnline()[0];
+
+            primary.ConnectToPeer(secondary);
+            primary.Marketplace.AdvertiseStorage(10.GB(), pricePerMBPerSecond: 0.01f, collateral: 20);
+
+            var testFile = GenerateTestFile(10.MB());
+            var contentId = secondary.UploadFile(testFile);
+            secondary.Marketplace.AdvertiseContract(contentId, maxPricePerMBPerSecond: 0.02f, minRequiredCollateral: 10, minRequiredNumberOfDuplicates: 1);
+
+            primary.Marketplace.AssertThatBalance(Is.LessThan(20), "Collateral was not placed.");
+            var primaryBalance = primary.Marketplace.GetBalance();
+
+            secondary.Marketplace.AssertThatBalance(Is.LessThan(1000), "Contractor was not charged for storage.");
+            primary.Marketplace.AssertThatBalance(Is.GreaterThan(primaryBalance), "Storer was not paid for storage.");
+        }
+
+        [Test]
         public void OneClientTest()
         {
             var primary = SetupCodexNodes(1).BringOnline()[0];

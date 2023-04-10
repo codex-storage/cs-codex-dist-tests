@@ -1,6 +1,6 @@
 ﻿using System.Globalization;
 
-namespace CodexDistTestCore
+namespace CodexDistTestCore.Metrics
 {
     public class MetricsDownloader
     {

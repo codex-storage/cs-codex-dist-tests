@@ -1,4 +1,5 @@
 ﻿using CodexDistTestCore.Config;
+using CodexDistTestCore.Metrics;
 using k8s;
 using k8s.KubeConfigModels;
 using k8s.Models;

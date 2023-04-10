@@ -1,4 +1,6 @@
 ﻿using CodexDistTestCore.Config;
+using CodexDistTestCore.Marketplace;
+using CodexDistTestCore.Metrics;
 using NUnit.Framework;
 
 namespace CodexDistTestCore
@@ -11,6 +13,7 @@ namespace CodexDistTestCore
         void ConnectToPeer(IOnlineCodexNode node);
         ICodexNodeLog DownloadLog();
         IMetricsAccess Metrics { get; }
+        IMarketplaceAccess Marketplace { get; }
     }
 
     public class OnlineCodexNode : IOnlineCodexNode
@@ -32,6 +35,7 @@ namespace CodexDistTestCore
         public CodexNodeContainer Container { get; }
         public CodexNodeGroup Group { get; internal set; } = null!;
         public IMetricsAccess Metrics { get; set; } = new MetricsUnavailable();
+        public IMarketplaceAccess Marketplace { set; get; } = new MarketplaceUnavailable();
 
         public string GetName()
         {
