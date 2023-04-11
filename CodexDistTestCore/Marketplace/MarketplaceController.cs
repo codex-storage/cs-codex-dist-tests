@@ -29,6 +29,14 @@ namespace CodexDistTestCore.Marketplace
             return gethBootstrapNode;
         }
 
+        public void AddToBalance(string account, int amount)
+        {
+            if (amount < 1 || string.IsNullOrEmpty(account)) Assert.Fail("Invalid arguments for AddToBalance");
+
+            // call the bootstrap node and convince it to give 'account' 'amount' tokens somehow.
+            throw new NotImplementedException();
+        }
+
         private void ExtractAccountAndGenesisJson()
         {
             FetchAccountAndGenesisJson();

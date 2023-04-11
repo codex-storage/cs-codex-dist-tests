@@ -123,8 +123,8 @@ namespace CodexDistTestCore
 
         private void ConnectMarketplace(CodexNodeGroup group, OnlineCodexNode node)
         {
-            var access = new MarketplaceAccess(this, log);
-            access.Initialize(group.PodInfo!, node.Container.GethCompanionNodeContainer!);
+            var access = new MarketplaceAccess(this, marketplaceController, log, group, node.Container.GethCompanionNodeContainer!);
+            access.Initialize();
             node.Marketplace = access;
         }
 

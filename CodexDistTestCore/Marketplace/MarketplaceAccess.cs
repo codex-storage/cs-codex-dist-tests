@@ -14,30 +14,33 @@ namespace CodexDistTestCore.Marketplace
     public class MarketplaceAccess : IMarketplaceAccess
     {
         private readonly K8sManager k8sManager;
+        private readonly MarketplaceController marketplaceController;
         private readonly TestLog log;
+        private readonly CodexNodeGroup group;
+        private readonly GethCompanionNodeContainer gethCompanionNodeContainer;
         private string account = string.Empty;
 
-        public MarketplaceAccess(K8sManager k8sManager, TestLog log)
+        public MarketplaceAccess(
+                                K8sManager k8sManager, 
+                                MarketplaceController marketplaceController,
+                                TestLog log,
+                                CodexNodeGroup group, 
+                                GethCompanionNodeContainer gethCompanionNodeContainer)
         {
             this.k8sManager = k8sManager;
+            this.marketplaceController = marketplaceController;
             this.log = log;
+            this.group = group;
+            this.gethCompanionNodeContainer = gethCompanionNodeContainer;
         }
 
-        public void Initialize(PodInfo pod, GethCompanionNodeContainer gethCompanionNodeContainer)
+        public void Initialize()
         {
-            FetchAccount(pod, gethCompanionNodeContainer);
-            if (string.IsNullOrEmpty(account))
-            {
-                Thread.Sleep(TimeSpan.FromSeconds(15));
-                FetchAccount(pod, gethCompanionNodeContainer);
-            }
-            Assert.That(account, Is.Not.Empty, "Unable to fetch account for geth companion node. Test infra failure.");
-            log.Log($"Initialized Geth companion node with account '{account}'");
-        }
+            EnsureAccount();
 
-        private void FetchAccount(PodInfo pod, GethCompanionNodeContainer gethCompanionNodeContainer)
-        {
-            account = k8sManager.ExecuteCommand(pod, gethCompanionNodeContainer.Name, "cat", GethDockerImage.AccountFilename);
+            marketplaceController.AddToBalance(account, group.Origin.MarketplaceConfig!.InitialBalance);
+
+            log.Log($"Initialized Geth companion node with account '{account}' and initial balance {group.Origin.MarketplaceConfig!.InitialBalance}");
         }
 
         public void AdvertiseContract(ContentId contentId, float maxPricePerMBPerSecond, float minRequiredCollateral, float minRequiredNumberOfDuplicates)
@@ -58,6 +61,22 @@ namespace CodexDistTestCore.Marketplace
         public float GetBalance()
         {
             throw new NotImplementedException();
+        }
+
+        private void EnsureAccount()
+        {
+            FetchAccount();
+            if (string.IsNullOrEmpty(account))
+            {
+                Thread.Sleep(TimeSpan.FromSeconds(15));
+                FetchAccount();
+            }
+            Assert.That(account, Is.Not.Empty, "Unable to fetch account for geth companion node. Test infra failure.");
+        }
+
+        private void FetchAccount()
+        {
+            account = k8sManager.ExecuteCommand(group.PodInfo!, gethCompanionNodeContainer.Name, "cat", GethDockerImage.AccountFilename);
         }
     }
 
