@@ -5,8 +5,8 @@ namespace CodexDistTestCore.Marketplace
 {
     public interface IMarketplaceAccess
     {
-        void AdvertiseStorage(ByteSize size, float pricePerMBPerSecond, float collateral);
-        void AdvertiseContract(ContentId contentId, float maxPricePerMBPerSecond, float minRequiredCollateral, float minRequiredNumberOfDuplicates);
+        void MakeStorageAvailable(ByteSize size, int minPricePerBytePerSecond, float maxCollateral);
+        void RequestStorage(ContentId contentId, int pricePerBytePerSecond, float requiredCollateral, float minRequiredNumberOfNodes);
         void AssertThatBalance(IResolveConstraint constraint, string message = "");
         float GetBalance();
     }
@@ -48,7 +48,7 @@ namespace CodexDistTestCore.Marketplace
             throw new NotImplementedException();
         }
 
-        public void AdvertiseStorage(ByteSize size, float pricePerMBPerSecond, float collateral)
+        public void MakeStorageAvailable(ByteSize size, float pricePerMBPerSecond, float collateral)
         {
             throw new NotImplementedException();
         }
@@ -87,7 +87,7 @@ namespace CodexDistTestCore.Marketplace
             Unavailable();
         }
 
-        public void AdvertiseStorage(ByteSize size, float pricePerMBPerSecond, float collateral)
+        public void MakeStorageAvailable(ByteSize size, float pricePerMBPerSecond, float collateral)
         {
             Unavailable();
         }

@@ -34,7 +34,7 @@ namespace CodexDistTestCore
 
             if (offline.MarketplaceConfig != null)
             {
-                group.GethInfo = BringOnlineMarketplace();
+                group.GethInfo = marketplaceController.BringOnlineMarketplace(offline);
             }
 
             K8s(k => k.BringOnline(group, offline));
@@ -106,11 +106,6 @@ namespace CodexDistTestCore
         private void BringOnlineMetrics(CodexNodeGroup group)
         {
             metricsAggregator.BeginCollectingMetricsFor(DowncastNodes(group));
-        }
-
-        private GethInfo BringOnlineMarketplace()
-        {
-            return marketplaceController.BringOnlineMarketplace();
         }
 
         private void ConnectMarketplace(CodexNodeGroup group)

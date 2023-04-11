@@ -1,5 +1,6 @@
 ﻿using CodexDistTestCore.Config;
 using k8s.Models;
+using System.Xml.Linq;
 
 namespace CodexDistTestCore.Marketplace
 {
@@ -124,6 +125,37 @@ namespace CodexDistTestCore.Marketplace
             };
 
             return serviceSpec;
+        }
+
+        public V1Deployment CreateGethCompanionDeployment(GethInfo gethInfo)
+        {
+            return new V1Container
+            {
+                Name = Name,
+                Image = GethDockerImage.Image,
+                Ports = new List<V1ContainerPort>
+                    {
+                        new V1ContainerPort
+                        {
+                            ContainerPort = ApiPort,
+                            Name = ContainerPortName
+                        }
+                    },
+                // todo: use env vars to connect this node to the bootstrap node provided by gethInfo.podInfo & gethInfo.servicePort & gethInfo.genesisJsonBase64
+                Env = new List<V1EnvVar>
+                {
+                    new V1EnvVar
+                    {
+                        Name = "GETH_ARGS",
+                        Value = $"--port {ApiPort} --discovery.port {ApiPort} --authrpc.port {RpcPort}"
+                    },
+                    new V1EnvVar
+                    {
+                        Name = "GENESIS_JSON",
+                        Value = gethInfo.GenesisJsonBase64
+                    }
+                }
+            };
         }
 
         private Dictionary<string, string> CreateSelector()

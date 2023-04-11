@@ -1,10 +1,8 @@
-﻿using CodexDistTestCore.Marketplace;
-
-namespace CodexDistTestCore
+﻿namespace CodexDistTestCore
 {
     public class CodexNodeContainer
     {
-        public CodexNodeContainer(string name, int servicePort, string servicePortName, int apiPort, string containerPortName, int discoveryPort, int listenPort, string dataDir, int metricsPort, GethCompanionNodeContainer? gethCompanionNodeContainer)
+        public CodexNodeContainer(string name, int servicePort, string servicePortName, int apiPort, string containerPortName, int discoveryPort, int listenPort, string dataDir, int metricsPort)
         {
             Name = name;
             ServicePort = servicePort;
@@ -15,7 +13,6 @@ namespace CodexDistTestCore
             ListenPort = listenPort;
             DataDir = dataDir;
             MetricsPort = metricsPort;
-            GethCompanionNodeContainer = gethCompanionNodeContainer;
         }
 
         public string Name { get; }
@@ -27,8 +24,6 @@ namespace CodexDistTestCore
         public int ListenPort { get; }
         public string DataDir { get; }
         public int MetricsPort { get; }
-
-        public GethCompanionNodeContainer? GethCompanionNodeContainer { get; }
     }
 
     public class CodexGroupNumberSource
@@ -57,11 +52,11 @@ namespace CodexDistTestCore
     {
         private readonly NumberSource containerNameSource = new NumberSource(1);
         private readonly NumberSource codexPortSource = new NumberSource(8080);
-        private readonly CodexGroupNumberSource groupContainerFactory;
+        private readonly CodexGroupNumberSource numberSource;
 
-        public CodexNodeContainerFactory(CodexGroupNumberSource groupContainerFactory)
+        public CodexNodeContainerFactory(CodexGroupNumberSource numberSource)
         {
-            this.groupContainerFactory = groupContainerFactory;
+            this.numberSource = numberSource;
         }
 
         public CodexNodeContainer CreateNext(OfflineCodexNodes offline)
@@ -69,15 +64,14 @@ namespace CodexDistTestCore
             var n = containerNameSource.GetNextNumber();
             return new CodexNodeContainer(
                 name: $"codex-node{n}",
-                servicePort: groupContainerFactory.GetNextServicePort(),
-                servicePortName: groupContainerFactory.GetNextServicePortName(),
+                servicePort: numberSource.GetNextServicePort(),
+                servicePortName: numberSource.GetNextServicePortName(),
                 apiPort: codexPortSource.GetNextNumber(),
                 containerPortName: $"api-{n}",
                 discoveryPort: codexPortSource.GetNextNumber(),
                 listenPort: codexPortSource.GetNextNumber(),
                 dataDir: $"datadir{n}",
-                metricsPort: GetMetricsPort(offline),
-                CreateGethNodeContainer(offline, n)
+                metricsPort: GetMetricsPort(offline)
             );
         }
 
@@ -87,18 +81,5 @@ namespace CodexDistTestCore
             return 0;
         }
 
-        private GethCompanionNodeContainer? CreateGethNodeContainer(OfflineCodexNodes offline, int n)
-        {
-            if (offline.MarketplaceConfig == null) return null;
-
-            return new GethCompanionNodeContainer(
-                name: $"geth-node{n}",
-                servicePort: groupContainerFactory.GetNextServicePort(),
-                servicePortName: groupContainerFactory.GetNextServicePortName(),
-                apiPort: codexPortSource.GetNextNumber(),
-                rpcPort: codexPortSource.GetNextNumber(),
-                containerPortName: $"geth-{n}"
-            );
-        }
     }
 }

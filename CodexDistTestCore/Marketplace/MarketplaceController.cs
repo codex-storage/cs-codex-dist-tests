@@ -17,16 +17,32 @@ namespace CodexDistTestCore.Marketplace
             this.k8sManager = k8sManager;
         }
 
-        public GethInfo BringOnlineMarketplace()
+        public GethInfo BringOnlineMarketplace(OfflineCodexNodes offline)
         {
             if (gethBootstrapNode != null) return gethBootstrapNode;
 
             log.Log("Starting Geth bootstrap node...");
             gethBootstrapNode = k8sManager.BringOnlineGethBootstrapNode();
             ExtractAccountAndGenesisJson();
-            log.Log("Geth boothstrap node started.");
+            log.Log($"Geth boothstrap node started. Initializing companions for {offline.NumberOfNodes} Codex nodes.");
+
+
+
 
             return gethBootstrapNode;
+        }
+
+
+        private GethCompanionNodeContainer? CreateGethNodeContainer(OfflineCodexNodes offline, int n)
+        {
+            return new GethCompanionNodeContainer(
+                name: $"geth-node{n}",
+                servicePort: numberSource.GetNextServicePort(),
+                servicePortName: numberSource.GetNextServicePortName(),
+                apiPort: codexPortSource.GetNextNumber(),
+                rpcPort: codexPortSource.GetNextNumber(),
+                containerPortName: $"geth-{n}"
+            );
         }
 
         public void AddToBalance(string account, int amount)
@@ -62,20 +78,22 @@ namespace CodexDistTestCore.Marketplace
 
         private string ExecuteCommand(string command, params string[] arguments)
         {
-            return k8sManager.ExecuteCommand(gethBootstrapNode!.Pod, K8sGethBoostrapSpecs.ContainerName, command, arguments);
+            return k8sManager.ExecuteCommand(gethBootstrapNode!.BootstrapPod, K8sGethBoostrapSpecs.ContainerName, command, arguments);
         }
     }
 
     public class GethInfo
     {
-        public GethInfo(K8sGethBoostrapSpecs spec, PodInfo pod)
+        public GethInfo(K8sGethBoostrapSpecs spec, PodInfo bootstrapPod, PodInfo companionPod)
         {
             Spec = spec;
-            Pod = pod;
+            BootstrapPod = bootstrapPod;
+            CompanionPod = companionPod;
         }
 
         public K8sGethBoostrapSpecs Spec { get; }
-        public PodInfo Pod { get; }
+        public PodInfo BootstrapPod { get; }
+        public PodInfo CompanionPod { get; }
         public string GenesisJsonBase64 { get; set; } = string.Empty;
     }
 }
