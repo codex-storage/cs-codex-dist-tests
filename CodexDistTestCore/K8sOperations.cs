@@ -4,7 +4,6 @@ using CodexDistTestCore.Metrics;
 using k8s;
 using k8s.Models;
 using NUnit.Framework;
-using System.Numerics;
 
 namespace CodexDistTestCore
 {
@@ -78,7 +77,7 @@ namespace CodexDistTestCore
             return new PrometheusInfo(spec.ServicePort, FetchNewPod());
         }
 
-        public GethInfo BringOnlineGethBootstrapNode(K8sGethBoostrapSpecs spec)
+        public PodInfo BringOnlineGethBootstrapNode(K8sGethBoostrapSpecs spec)
         {
             EnsureTestNamespace();
 
@@ -86,7 +85,17 @@ namespace CodexDistTestCore
             CreateGethBootstrapService(spec);
             WaitUntilGethBootstrapOnline(spec);
 
-            return new GethInfo(spec, FetchNewPod());
+            return FetchNewPod();
+        }
+
+        public PodInfo BringOnlineGethCompanionGroup(GethBootstrapInfo info, GethCompanionGroup group)
+        {
+            EnsureTestNamespace();
+
+            CreateGethCompanionDeployment(info, group);
+            WaitUntilGethCompanionGroupOnline(info.Spec, group);
+
+            return FetchNewPod();
         }
 
         private void FetchPodInfo(CodexNodeGroup online)
@@ -148,7 +157,12 @@ namespace CodexDistTestCore
 
         private void WaitUntilGethBootstrapOnline(K8sGethBoostrapSpecs spec)
         {
-            WaitUntilDeploymentOnline(spec.GetDeploymentName());
+            WaitUntilDeploymentOnline(spec.GetBootstrapDeploymentName());
+        }
+
+        private void WaitUntilGethCompanionGroupOnline(K8sGethBoostrapSpecs spec, GethCompanionGroup group)
+        {
+            WaitUntilDeploymentOnline(spec.GetCompanionDeploymentName(group));
         }
 
         private void WaitUntilDeploymentOnline(string deploymentName)
@@ -212,11 +226,6 @@ namespace CodexDistTestCore
                     TargetPort = container.ContainerPortName,
                     NodePort = container.ServicePort
                 });
-
-                if (container.GethCompanionNodeContainer != null)
-                {
-                    result.Add(container.GethCompanionNodeContainer.CreateServicePort());
-                }
             }
             return result;
         }
@@ -303,11 +312,6 @@ namespace CodexDistTestCore
                     },
                     Env = dockerImage.CreateEnvironmentVariables(offline, container)
                 });
-
-                if (container.GethCompanionNodeContainer != null)
-                {
-                    result.Add(container.GethCompanionNodeContainer.CreateDeploymentContainer(online.GethInfo!));
-                }
             }
 
             return result;
@@ -328,6 +332,11 @@ namespace CodexDistTestCore
         private void CreateGethBootstrapDeployment(K8sGethBoostrapSpecs spec)
         {
             client.CreateNamespacedDeployment(spec.CreateGethBootstrapDeployment(), K8sNamespace);
+        }
+
+        private void CreateGethCompanionDeployment(GethBootstrapInfo info, GethCompanionGroup group)
+        {
+            client.CreateNamespacedDeployment(info.Spec.CreateGethCompanionDeployment(group, info), K8sNamespace);
         }
 
         #endregion

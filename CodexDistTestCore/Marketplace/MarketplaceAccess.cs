@@ -17,38 +17,37 @@ namespace CodexDistTestCore.Marketplace
         private readonly MarketplaceController marketplaceController;
         private readonly TestLog log;
         private readonly CodexNodeGroup group;
-        private readonly GethCompanionNodeContainer gethCompanionNodeContainer;
-        private string account = string.Empty;
+        private readonly GethCompanionNodeContainer container;
 
         public MarketplaceAccess(
                                 K8sManager k8sManager, 
                                 MarketplaceController marketplaceController,
                                 TestLog log,
-                                CodexNodeGroup group, 
-                                GethCompanionNodeContainer gethCompanionNodeContainer)
+                                CodexNodeGroup group,
+                                GethCompanionNodeContainer container)
         {
             this.k8sManager = k8sManager;
             this.marketplaceController = marketplaceController;
             this.log = log;
             this.group = group;
-            this.gethCompanionNodeContainer = gethCompanionNodeContainer;
+            this.container = container;
         }
 
         public void Initialize()
         {
             EnsureAccount();
 
-            marketplaceController.AddToBalance(account, group.Origin.MarketplaceConfig!.InitialBalance);
+            marketplaceController.AddToBalance(container.Account, group.Origin.MarketplaceConfig!.InitialBalance);
 
-            log.Log($"Initialized Geth companion node with account '{account}' and initial balance {group.Origin.MarketplaceConfig!.InitialBalance}");
+            log.Log($"Initialized Geth companion node with account '{container.Account}' and initial balance {group.Origin.MarketplaceConfig!.InitialBalance}");
         }
 
-        public void AdvertiseContract(ContentId contentId, float maxPricePerMBPerSecond, float minRequiredCollateral, float minRequiredNumberOfDuplicates)
+        public void RequestStorage(ContentId contentId, int pricePerBytePerSecond, float requiredCollateral, float minRequiredNumberOfNodes)
         {
             throw new NotImplementedException();
         }
 
-        public void MakeStorageAvailable(ByteSize size, float pricePerMBPerSecond, float collateral)
+        public void MakeStorageAvailable(ByteSize size, int minPricePerBytePerSecond, float maxCollateral)
         {
             throw new NotImplementedException();
         }
@@ -66,28 +65,28 @@ namespace CodexDistTestCore.Marketplace
         private void EnsureAccount()
         {
             FetchAccount();
-            if (string.IsNullOrEmpty(account))
+            if (string.IsNullOrEmpty(container.Account))
             {
                 Thread.Sleep(TimeSpan.FromSeconds(15));
                 FetchAccount();
             }
-            Assert.That(account, Is.Not.Empty, "Unable to fetch account for geth companion node. Test infra failure.");
+            Assert.That(container.Account, Is.Not.Empty, "Unable to fetch account for geth companion node. Test infra failure.");
         }
 
         private void FetchAccount()
         {
-            account = k8sManager.ExecuteCommand(group.PodInfo!, gethCompanionNodeContainer.Name, "cat", GethDockerImage.AccountFilename);
+            container.Account = k8sManager.ExecuteCommand(group.PodInfo!, container.Name, "cat", GethDockerImage.AccountFilename);
         }
     }
 
     public class MarketplaceUnavailable : IMarketplaceAccess
     {
-        public void AdvertiseContract(ContentId contentId, float maxPricePerMBPerSecond, float minRequiredCollateral, float minRequiredNumberOfDuplicates)
+        public void RequestStorage(ContentId contentId, int pricePerBytePerSecond, float requiredCollateral, float minRequiredNumberOfNodes)
         {
             Unavailable();
         }
 
-        public void MakeStorageAvailable(ByteSize size, float pricePerMBPerSecond, float collateral)
+        public void MakeStorageAvailable(ByteSize size, int minPricePerBytePerSecond, float maxCollateral)
         {
             Unavailable();
         }

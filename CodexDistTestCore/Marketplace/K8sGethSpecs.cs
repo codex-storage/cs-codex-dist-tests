@@ -1,6 +1,5 @@
 ﻿using CodexDistTestCore.Config;
 using k8s.Models;
-using System.Xml.Linq;
 
 namespace CodexDistTestCore.Marketplace
 {
@@ -24,9 +23,14 @@ namespace CodexDistTestCore.Marketplace
 
         public int ServicePort { get; }
 
-        public string GetDeploymentName()
+        public string GetBootstrapDeploymentName()
         {
             return "test-gethb";
+        }
+
+        public string GetCompanionDeploymentName(GethCompanionGroup group)
+        {
+            return "test-geth" + group.Number;
         }
 
         public V1Deployment CreateGethBootstrapDeployment()
@@ -36,7 +40,7 @@ namespace CodexDistTestCore.Marketplace
                 ApiVersion = "apps/v1",
                 Metadata = new V1ObjectMeta
                 {
-                    Name = GetDeploymentName(),
+                    Name = GetBootstrapDeploymentName(),
                     NamespaceProperty = K8sCluster.K8sNamespace
                 },
                 Spec = new V1DeploymentSpec
@@ -44,13 +48,13 @@ namespace CodexDistTestCore.Marketplace
                     Replicas = 1,
                     Selector = new V1LabelSelector
                     {
-                        MatchLabels = CreateSelector()
+                        MatchLabels = CreateBootstrapSelector()
                     },
                     Template = new V1PodTemplateSpec
                     {
                         Metadata = new V1ObjectMeta
                         {
-                            Labels = CreateSelector()
+                            Labels = CreateBootstrapSelector()
                         },
                         Spec = new V1PodSpec
                         {
@@ -109,7 +113,7 @@ namespace CodexDistTestCore.Marketplace
                 Spec = new V1ServiceSpec
                 {
                     Type = "NodePort",
-                    Selector = CreateSelector(),
+                    Selector = CreateBootstrapSelector(),
                     Ports = new List<V1ServicePort>
                     {
                         new V1ServicePort
@@ -127,18 +131,52 @@ namespace CodexDistTestCore.Marketplace
             return serviceSpec;
         }
 
-        public V1Deployment CreateGethCompanionDeployment(GethInfo gethInfo)
+        public V1Deployment CreateGethCompanionDeployment(GethCompanionGroup group, GethBootstrapInfo info)
+        {
+            var deploymentSpec = new V1Deployment
+            {
+                ApiVersion = "apps/v1",
+                Metadata = new V1ObjectMeta
+                {
+                    Name = GetCompanionDeploymentName(group),
+                    NamespaceProperty = K8sCluster.K8sNamespace
+                },
+                Spec = new V1DeploymentSpec
+                {
+                    Replicas = 1,
+                    Selector = new V1LabelSelector
+                    {
+                        MatchLabels = CreateCompanionSelector()
+                    },
+                    Template = new V1PodTemplateSpec
+                    {
+                        Metadata = new V1ObjectMeta
+                        {
+                            Labels = CreateCompanionSelector()
+                        },
+                        Spec = new V1PodSpec
+                        {
+                            Containers = group.Containers.Select(c => CreateContainer(c, info)).ToList()
+                        }
+                    }
+                }
+            };
+
+            return deploymentSpec;
+        }
+
+        private static V1Container CreateContainer(GethCompanionNodeContainer container, GethBootstrapInfo info)
         {
             return new V1Container
             {
-                Name = Name,
+                Name = container.Name,
                 Image = GethDockerImage.Image,
                 Ports = new List<V1ContainerPort>
                     {
                         new V1ContainerPort
                         {
-                            ContainerPort = ApiPort,
-                            Name = ContainerPortName
+                            ContainerPort = container.ApiPort,
+                            Name = container.ContainerPortName
                         }
                     },
                 // todo: use env vars to connect this node to the bootstrap node provided by gethInfo.podInfo & gethInfo.servicePort & gethInfo.genesisJsonBase64
@@ -147,20 +185,25 @@ namespace CodexDistTestCore.Marketplace
                     new V1EnvVar
                     {
                         Name = "GETH_ARGS",
-                        Value = $"--port {ApiPort} --discovery.port {ApiPort} --authrpc.port {RpcPort}"
+                        Value = $"--port {container.ApiPort} --discovery.port {container.ApiPort} --authrpc.port {container.RpcPort}"
                     },
                     new V1EnvVar
                     {
                         Name = "GENESIS_JSON",
-                        Value = gethInfo.GenesisJsonBase64
+                        Value = info.GenesisJsonBase64
                     }
                 }
             };
         }
 
-        private Dictionary<string, string> CreateSelector()
+        private Dictionary<string, string> CreateBootstrapSelector()
         {
             return new Dictionary<string, string> { { "test-gethb", "dtest-gethb" } };
+        }
+
+        private Dictionary<string, string> CreateCompanionSelector()
+        {
+            return new Dictionary<string, string> { { "test-gethc", "dtest-gethc" } };
         }
     }
 }

@@ -34,7 +34,7 @@ namespace CodexDistTestCore
 
             if (offline.MarketplaceConfig != null)
             {
-                group.GethInfo = marketplaceController.BringOnlineMarketplace(offline);
+                group.GethCompanionGroup = marketplaceController.BringOnlineMarketplace(offline);
             }
 
             K8s(k => k.BringOnline(group, offline));
@@ -91,11 +91,19 @@ namespace CodexDistTestCore
             return K8s(k => k.BringOnlinePrometheus(spec));
         }
 
-        public GethInfo BringOnlineGethBootstrapNode()
+        public K8sGethBoostrapSpecs CreateGethBootstrapNodeSpec()
         {
-            var spec = new K8sGethBoostrapSpecs(codexGroupNumberSource.GetNextServicePort());
+            return new K8sGethBoostrapSpecs(codexGroupNumberSource.GetNextServicePort());
+        }
 
+        public PodInfo BringOnlineGethBootstrapNode(K8sGethBoostrapSpecs spec)
+        {
             return K8s(k => k.BringOnlineGethBootstrapNode(spec));
+        }
+
+        public PodInfo BringOnlineGethCompanionGroup(GethBootstrapInfo info, GethCompanionGroup group)
+        {
+            return K8s(k => k.BringOnlineGethCompanionGroup(info, group));
         }
 
         public void DownloadAllMetrics()
@@ -110,15 +118,15 @@ namespace CodexDistTestCore
 
         private void ConnectMarketplace(CodexNodeGroup group)
         {
-            foreach (var node in DowncastNodes(group))
+            for (var i = 0; i < group.Nodes.Length; i++)
             {
-                ConnectMarketplace(group, node);
+                ConnectMarketplace(group, group.Nodes[i], group.GethCompanionGroup!.Containers[i]);
             }
         }
 
-        private void ConnectMarketplace(CodexNodeGroup group, OnlineCodexNode node)
+        private void ConnectMarketplace(CodexNodeGroup group, OnlineCodexNode node, GethCompanionNodeContainer container)
         {
-            var access = new MarketplaceAccess(this, marketplaceController, log, group, node.Container.GethCompanionNodeContainer!);
+            var access = new MarketplaceAccess(this, marketplaceController, log, group, container);
             access.Initialize();
             node.Marketplace = access;
         }

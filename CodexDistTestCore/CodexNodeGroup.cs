@@ -46,7 +46,7 @@ namespace CodexDistTestCore
         public V1Deployment? Deployment { get; set; }
         public V1Service? Service { get; set; }
         public PodInfo? PodInfo { get; set; }
-        public GethInfo? GethInfo { get; set; }
+        public GethCompanionGroup? GethCompanionGroup { get; set; }
 
         public CodexNodeContainer[] GetContainers()
         {
