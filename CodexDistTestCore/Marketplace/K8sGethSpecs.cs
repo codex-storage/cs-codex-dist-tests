@@ -14,7 +14,7 @@ namespace CodexDistTestCore.Marketplace
     {
         public const string ContainerName = "dtest-gethb";
         private const string portName = "gethb";
-        private const string genesisJsonBase64 = "ewogICAgImNvbmZpZyI6IHsKICAgICAgImNoYWluSWQiOiAxMjM0NSwKICAgICAgImhvbWVzdGVhZEJsb2NrIjogMCwKICAgICAgImVpcDE1MEJsb2NrIjogMCwKICAgICAgImVpcDE1NUJsb2NrIjogMCwKICAgICAgImVpcDE1OEJsb2NrIjogMCwKICAgICAgImJ5emFudGl1bUJsb2NrIjogMCwKICAgICAgImNvbnN0YW50aW5vcGxlQmxvY2siOiAwLAogICAgICAicGV0ZXJzYnVyZ0Jsb2NrIjogMCwKICAgICAgImlzdGFuYnVsQmxvY2siOiAwLAogICAgICAibXVpckdsYWNpZXJCbG9jayI6IDAsCiAgICAgICJiZXJsaW5CbG9jayI6IDAsCiAgICAgICJsb25kb25CbG9jayI6IDAsCiAgICAgICJhcnJvd0dsYWNpZXJCbG9jayI6IDAsCiAgICAgICJncmF5R2xhY2llckJsb2NrIjogMCwKICAgICAgImNsaXF1ZSI6IHsKICAgICAgICAicGVyaW9kIjogNSwKICAgICAgICAiZXBvY2giOiAzMDAwMAogICAgICB9CiAgICB9LAogICAgImRpZmZpY3VsdHkiOiAiMSIsCiAgICAiZ2FzTGltaXQiOiAiODAwMDAwMDAwIiwKICAgICJleHRyYWRhdGEiOiAiMHgwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwN2RmOWE4NzVhMTc0YjNiYzU2NWU2NDI0YTAwNTBlYmMxYjJkMWQ4MjAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAiLAogICAgImFsbG9jIjogewogICAgICAiQUNDT1VOVF9IRVJFIjogeyAiYmFsYW5jZSI6ICI1MDAwMDAiIH0KICAgIH0KICB9";
+        private const string genesisJsonBase64 = "ewogICAgImNvbmZpZyI6IHsKICAgICAgImNoYWluSWQiOiA3ODk5ODgsCiAgICAgICJob21lc3RlYWRCbG9jayI6IDAsCiAgICAgICJlaXAxNTBCbG9jayI6IDAsCiAgICAgICJlaXAxNTVCbG9jayI6IDAsCiAgICAgICJlaXAxNThCbG9jayI6IDAsCiAgICAgICJieXphbnRpdW1CbG9jayI6IDAsCiAgICAgICJjb25zdGFudGlub3BsZUJsb2NrIjogMCwKICAgICAgInBldGVyc2J1cmdCbG9jayI6IDAsCiAgICAgICJpc3RhbmJ1bEJsb2NrIjogMCwKICAgICAgIm11aXJHbGFjaWVyQmxvY2siOiAwLAogICAgICAiYmVybGluQmxvY2siOiAwLAogICAgICAibG9uZG9uQmxvY2siOiAwLAogICAgICAiYXJyb3dHbGFjaWVyQmxvY2siOiAwLAogICAgICAiZ3JheUdsYWNpZXJCbG9jayI6IDAsCiAgICAgICJjbGlxdWUiOiB7CiAgICAgICAgInBlcmlvZCI6IDUsCiAgICAgICAgImVwb2NoIjogMzAwMDAKICAgICAgfQogICAgfSwKICAgICJkaWZmaWN1bHR5IjogIjEiLAogICAgImdhc0xpbWl0IjogIjgwMDAwMDAwMCIsCiAgICAiZXh0cmFkYXRhIjogIjB4MDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMEFDQ09VTlRfSEVSRTAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAiLAogICAgImFsbG9jIjogewogICAgICAiMHhBQ0NPVU5UX0hFUkUiOiB7ICJiYWxhbmNlIjogIjUwMDAwMCIgfQogICAgfQogIH0=";
 
         public K8sGethBoostrapSpecs(int servicePort)
         {
@@ -68,7 +68,7 @@ namespace CodexDistTestCore.Marketplace
                                     {
                                         new V1ContainerPort
                                         {
-                                            ContainerPort = 9090,
+                                            ContainerPort = 8545,
                                             Name = portName
                                         }
                                     },
@@ -77,7 +77,7 @@ namespace CodexDistTestCore.Marketplace
                                         //new V1EnvVar
                                         //{
                                         //    Name = "GETH_ARGS",
-                                        //    Value = "--qwerty"
+                                        //    Value = ""
                                         //},
                                         new V1EnvVar
                                         {
@@ -120,7 +120,7 @@ namespace CodexDistTestCore.Marketplace
                         {
                             Name = "gethb-service",
                             Protocol = "TCP",
-                            Port = 9090,
+                            Port = 8545,
                             TargetPort = portName,
                             NodePort = ServicePort
                         }
@@ -185,7 +185,7 @@ namespace CodexDistTestCore.Marketplace
                     new V1EnvVar
                     {
                         Name = "GETH_ARGS",
-                        Value = $"--port {container.ApiPort} --discovery.port {container.ApiPort} --authrpc.port {container.RpcPort}"
+                        Value = $"--port {container.ApiPort} --discovery.port {container.ApiPort} --http.port {container.RpcPort}"
                     },
                     new V1EnvVar
                     {

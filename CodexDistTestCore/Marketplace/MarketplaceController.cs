@@ -1,4 +1,8 @@
-﻿using NUnit.Framework;
+﻿using CodexDistTestCore.Config;
+using Nethereum.Web3;
+using Nethereum.Web3.Accounts;
+using Nethereum.Web3.Accounts.Managed;
+using NUnit.Framework;
 using System.Text;
 
 namespace CodexDistTestCore.Marketplace
@@ -39,7 +43,7 @@ namespace CodexDistTestCore.Marketplace
             log.Log("Starting Geth bootstrap node...");
             var spec = k8sManager.CreateGethBootstrapNodeSpec();
             var pod = k8sManager.BringOnlineGethBootstrapNode(spec);
-            var (account, genesisJson) = ExtractAccountAndGenesisJson();
+            var (account, genesisJson) = ExtractAccountAndGenesisJson(pod);
             bootstrapInfo = new GethBootstrapInfo(spec, pod, account, genesisJson);
             log.Log($"Geth boothstrap node started.");
         }
@@ -62,21 +66,40 @@ namespace CodexDistTestCore.Marketplace
             );
         }
 
-        public void AddToBalance(string account, int amount)
+
+        private readonly K8sCluster k8sCluster = new K8sCluster();
+
+        public void AddToBalance(string account, decimal amount)
         {
             if (amount < 1 || string.IsNullOrEmpty(account)) Assert.Fail("Invalid arguments for AddToBalance");
 
             // call the bootstrap node and convince it to give 'account' 'amount' tokens somehow.
-            throw new NotImplementedException();
+
+            var ip = k8sCluster.GetIp();
+            var port = bootstrapInfo!.Spec.ServicePort;
+
+            var bootstrapaccount = new ManagedAccount(bootstrapInfo.Account, "qwerty!@#$%^");
+            var web3 = new Web3(bootstrapaccount, $"http://{ip}:{port}");
+
+            var blockNumber1 = Utils.Wait(web3.Eth.Blocks.GetBlockNumber.SendRequestAsync());
+            Thread.Sleep(TimeSpan.FromSeconds(12));
+            var blockNumber2 = Utils.Wait(web3.Eth.Blocks.GetBlockNumber.SendRequestAsync());
+
+
+
+            var receipt = Utils.Wait(web3.Eth.GetEtherTransferService().TransferEtherAndWaitForReceiptAsync(account, amount));
+
+            var a = 0;
+
         }
 
-        private (string, string) ExtractAccountAndGenesisJson()
+        private (string, string) ExtractAccountAndGenesisJson(PodInfo pod)
         {
-            var (account, genesisJson) = FetchAccountAndGenesisJson();
+            var (account, genesisJson) = FetchAccountAndGenesisJson(pod);
             if (string.IsNullOrEmpty(account) || string.IsNullOrEmpty(genesisJson))
             {
                 Thread.Sleep(TimeSpan.FromSeconds(15));
-                (account, genesisJson) = FetchAccountAndGenesisJson();
+                (account, genesisJson) = FetchAccountAndGenesisJson(pod);
             }
 
             Assert.That(account, Is.Not.Empty, "Unable to fetch account for geth bootstrap node. Test infra failure.");
@@ -88,16 +111,16 @@ namespace CodexDistTestCore.Marketplace
             return (account, encoded);
         }
 
-        private (string, string) FetchAccountAndGenesisJson()
+        private (string, string) FetchAccountAndGenesisJson(PodInfo pod)
         {
-            var bootstrapAccount = ExecuteCommand("cat", GethDockerImage.AccountFilename);
-            var bootstrapGenesisJson = ExecuteCommand("cat", GethDockerImage.GenesisFilename);
+            var bootstrapAccount = ExecuteCommand(pod, "cat", GethDockerImage.AccountFilename);
+            var bootstrapGenesisJson = ExecuteCommand(pod, "cat", GethDockerImage.GenesisFilename);
             return (bootstrapAccount, bootstrapGenesisJson);
         }
 
-        private string ExecuteCommand(string command, params string[] arguments)
+        private string ExecuteCommand(PodInfo pod, string command, params string[] arguments)
         {
-            return k8sManager.ExecuteCommand(bootstrapInfo!.Pod, K8sGethBoostrapSpecs.ContainerName, command, arguments);
+            return k8sManager.ExecuteCommand(pod, K8sGethBoostrapSpecs.ContainerName, command, arguments);
         }
     }
 

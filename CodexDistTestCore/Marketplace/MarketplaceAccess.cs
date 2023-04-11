@@ -75,7 +75,7 @@ namespace CodexDistTestCore.Marketplace
 
         private void FetchAccount()
         {
-            container.Account = k8sManager.ExecuteCommand(group.PodInfo!, container.Name, "cat", GethDockerImage.AccountFilename);
+            container.Account = k8sManager.ExecuteCommand(group.GethCompanionGroup!.Pod!, container.Name, "cat", GethDockerImage.AccountFilename);
         }
     }
 
