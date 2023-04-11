@@ -292,10 +292,10 @@ namespace CodexDistTestCore
             };
         }
 
-        private List<V1Container> CreateDeploymentContainers(CodexNodeGroup online, OfflineCodexNodes offline)
+        private List<V1Container> CreateDeploymentContainers(CodexNodeGroup group, OfflineCodexNodes offline)
         {
             var result = new List<V1Container>();
-            var containers = online.GetContainers();
+            var containers = group.GetContainers();
             foreach (var container in containers)
             {
                 result.Add(new V1Container
@@ -317,11 +317,11 @@ namespace CodexDistTestCore
             return result;
         }
 
-        private void DeleteDeployment(CodexNodeGroup online)
+        private void DeleteDeployment(CodexNodeGroup group)
         {
-            if (online.Deployment == null) return;
-            client.DeleteNamespacedDeployment(online.Deployment.Name(), K8sNamespace);
-            online.Deployment = null;
+            if (group.Deployment == null) return;
+            client.DeleteNamespacedDeployment(group.Deployment.Name(), K8sNamespace);
+            group.Deployment = null;
         }
 
         private void CreatePrometheusDeployment(K8sPrometheusSpecs spec)

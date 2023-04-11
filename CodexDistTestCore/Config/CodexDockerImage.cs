@@ -50,16 +50,12 @@ namespace CodexDistTestCore.Config
                     AddVar("METRICS_ADDR", "0.0.0.0");
                     AddVar("METRICS_PORT", container.MetricsPort.ToString());
                 }
-                if (container.GethCompanionNodeContainer != null)
+                if (node.MarketplaceConfig != null)
                 {
-                    // well, darn: To get the account here, the geth companion needs to have been started and account string fetched.
-                    // but the codex node and geth companion node are in the same pod. so they start at the same time.
-                    // so we cannot start the codex node with the correct account string at the same time as we start the geth node that
-                    // is supposed to generate that string.
-                    // begin rework: Separate pod for geth companion node.
-//ETH_PROVIDER
-//ETH_ACCOUNT
-//ETH_DEPLOYMENT
+                    //ETH_PROVIDER
+                    //ETH_ACCOUNT
+                    //ETH_DEPLOYMENT
+                    AddVar("ETH_ACCOUNT", container.GethCompanionNodeContainer!.Account);
                 }
             }
 

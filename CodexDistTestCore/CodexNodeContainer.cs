@@ -1,4 +1,6 @@
-﻿namespace CodexDistTestCore
+﻿using CodexDistTestCore.Marketplace;
+
+namespace CodexDistTestCore
 {
     public class CodexNodeContainer
     {
@@ -24,6 +26,8 @@
         public int ListenPort { get; }
         public string DataDir { get; }
         public int MetricsPort { get; }
+
+        public GethCompanionNodeContainer? GethCompanionNodeContainer { get; set; } // :C
     }
 
     public class CodexGroupNumberSource

@@ -35,6 +35,7 @@ namespace CodexDistTestCore
             if (offline.MarketplaceConfig != null)
             {
                 group.GethCompanionGroup = marketplaceController.BringOnlineMarketplace(offline);
+                ConnectMarketplace(group);
             }
 
             K8s(k => k.BringOnline(group, offline));
@@ -42,10 +43,6 @@ namespace CodexDistTestCore
             if (offline.MetricsEnabled)
             {
                 BringOnlineMetrics(group);
-            }
-            if (offline.MarketplaceConfig != null)
-            {
-                ConnectMarketplace(group);
             }
 
             log.Log($"{group.Describe()} online.");
@@ -126,6 +123,8 @@ namespace CodexDistTestCore
 
         private void ConnectMarketplace(CodexNodeGroup group, OnlineCodexNode node, GethCompanionNodeContainer container)
         {
+            node.Container.GethCompanionNodeContainer = container; // :c
+
             var access = new MarketplaceAccess(this, marketplaceController, log, group, container);
             access.Initialize();
             node.Marketplace = access;
