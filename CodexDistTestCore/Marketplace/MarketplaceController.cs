@@ -3,6 +3,7 @@ using Nethereum.Web3;
 using Nethereum.Web3.Accounts;
 using Nethereum.Web3.Accounts.Managed;
 using NUnit.Framework;
+using System.Numerics;
 using System.Text;
 
 namespace CodexDistTestCore.Marketplace
@@ -78,16 +79,24 @@ namespace CodexDistTestCore.Marketplace
             var ip = k8sCluster.GetIp();
             var port = bootstrapInfo!.Spec.ServicePort;
 
-            var bootstrapaccount = new ManagedAccount(bootstrapInfo.Account, "qwerty!@#$%^");
-            var web3 = new Web3(bootstrapaccount, $"http://{ip}:{port}");
+            //var bootstrapaccount = new ManagedAccount(bootstrapInfo.Account, "qwerty!@#$%^");
+            var web3 = new Web3($"http://{ip}:{port}");
 
             var blockNumber1 = Utils.Wait(web3.Eth.Blocks.GetBlockNumber.SendRequestAsync());
-            Thread.Sleep(TimeSpan.FromSeconds(12));
+            Thread.Sleep(TimeSpan.FromSeconds(5));
             var blockNumber2 = Utils.Wait(web3.Eth.Blocks.GetBlockNumber.SendRequestAsync());
 
+            var bootstrapBalance = Utils.Wait(web3.Eth.GetBalance.SendRequestAsync(bootstrapInfo.Account));
+            var targetBalance = Utils.Wait(web3.Eth.GetBalance.SendRequestAsync(account));
 
+            var bigint = new BigInteger(amount);
+            var str = bigint.ToString("X");
+            var value = new Nethereum.Hex.HexTypes.HexBigInteger(str);
+            var aaa = Utils.Wait(web3.Eth.TransactionManager.SendTransactionAsync(bootstrapInfo.Account, account, value));
 
-            var receipt = Utils.Wait(web3.Eth.GetEtherTransferService().TransferEtherAndWaitForReceiptAsync(account, amount));
+            //var receipt = Utils.Wait(web3.Eth.GetEtherTransferService().TransferEtherAndWaitForReceiptAsync(account, amount));
+
+            targetBalance = Utils.Wait(web3.Eth.GetBalance.SendRequestAsync(account));
 
             var a = 0;
 

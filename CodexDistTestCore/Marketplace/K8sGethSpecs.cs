@@ -14,7 +14,7 @@ namespace CodexDistTestCore.Marketplace
     {
         public const string ContainerName = "dtest-gethb";
         private const string portName = "gethb";
-        private const string genesisJsonBase64 = "ewogICAgImNvbmZpZyI6IHsKICAgICAgImNoYWluSWQiOiA3ODk5ODgsCiAgICAgICJob21lc3RlYWRCbG9jayI6IDAsCiAgICAgICJlaXAxNTBCbG9jayI6IDAsCiAgICAgICJlaXAxNTVCbG9jayI6IDAsCiAgICAgICJlaXAxNThCbG9jayI6IDAsCiAgICAgICJieXphbnRpdW1CbG9jayI6IDAsCiAgICAgICJjb25zdGFudGlub3BsZUJsb2NrIjogMCwKICAgICAgInBldGVyc2J1cmdCbG9jayI6IDAsCiAgICAgICJpc3RhbmJ1bEJsb2NrIjogMCwKICAgICAgIm11aXJHbGFjaWVyQmxvY2siOiAwLAogICAgICAiYmVybGluQmxvY2siOiAwLAogICAgICAibG9uZG9uQmxvY2siOiAwLAogICAgICAiYXJyb3dHbGFjaWVyQmxvY2siOiAwLAogICAgICAiZ3JheUdsYWNpZXJCbG9jayI6IDAsCiAgICAgICJjbGlxdWUiOiB7CiAgICAgICAgInBlcmlvZCI6IDUsCiAgICAgICAgImVwb2NoIjogMzAwMDAKICAgICAgfQogICAgfSwKICAgICJkaWZmaWN1bHR5IjogIjEiLAogICAgImdhc0xpbWl0IjogIjgwMDAwMDAwMCIsCiAgICAiZXh0cmFkYXRhIjogIjB4MDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMEFDQ09VTlRfSEVSRTAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAiLAogICAgImFsbG9jIjogewogICAgICAiMHhBQ0NPVU5UX0hFUkUiOiB7ICJiYWxhbmNlIjogIjUwMDAwMCIgfQogICAgfQogIH0=";
+        private const string genesisJsonBase64 = "ewogICAgImNvbmZpZyI6IHsKICAgICAgImNoYWluSWQiOiA3ODk5ODgsCiAgICAgICJob21lc3RlYWRCbG9jayI6IDAsCiAgICAgICJlaXAxNTBCbG9jayI6IDAsCiAgICAgICJlaXAxNTVCbG9jayI6IDAsCiAgICAgICJlaXAxNThCbG9jayI6IDAsCiAgICAgICJieXphbnRpdW1CbG9jayI6IDAsCiAgICAgICJjb25zdGFudGlub3BsZUJsb2NrIjogMCwKICAgICAgInBldGVyc2J1cmdCbG9jayI6IDAsCiAgICAgICJpc3RhbmJ1bEJsb2NrIjogMCwKICAgICAgIm11aXJHbGFjaWVyQmxvY2siOiAwLAogICAgICAiYmVybGluQmxvY2siOiAwLAogICAgICAibG9uZG9uQmxvY2siOiAwLAogICAgICAiYXJyb3dHbGFjaWVyQmxvY2siOiAwLAogICAgICAiZ3JheUdsYWNpZXJCbG9jayI6IDAsCiAgICAgICJjbGlxdWUiOiB7CiAgICAgICAgInBlcmlvZCI6IDUsCiAgICAgICAgImVwb2NoIjogMzAwMDAKICAgICAgfQogICAgfSwKICAgICJkaWZmaWN1bHR5IjogIjEiLAogICAgImdhc0xpbWl0IjogIjgwMDAwMDAwMCIsCiAgICAiZXh0cmFkYXRhIjogIjB4MDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMEFDQ09VTlRfSEVSRTAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAiLAogICAgImFsbG9jIjogewogICAgICAiMHhBQ0NPVU5UX0hFUkUiOiB7ICJiYWxhbmNlIjogIjUwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAiIH0KICAgIH0KICB9";
 
         public K8sGethBoostrapSpecs(int servicePort)
         {
@@ -74,11 +74,11 @@ namespace CodexDistTestCore.Marketplace
                                     },
                                     Env = new List<V1EnvVar>
                                     {
-                                        //new V1EnvVar
-                                        //{
-                                        //    Name = "GETH_ARGS",
-                                        //    Value = ""
-                                        //},
+                                        new V1EnvVar
+                                        {
+                                            Name = "GETH_ARGS",
+                                            Value = ""
+                                        },
                                         new V1EnvVar
                                         {
                                             Name = "GENESIS_JSON",
