@@ -4,7 +4,7 @@ namespace CodexDistTestCore.Config
 {
     public class K8sCluster
     {
-        public const string K8sNamespace = "codex-test-namespace";
+        public const string K8sNamespace = "";
         private const string KubeConfigFile = "C:\\kube\\config";
         private readonly Dictionary<Location, string> K8sNodeLocationMap = new Dictionary<Location, string>
         {

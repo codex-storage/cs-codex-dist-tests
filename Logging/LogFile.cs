@@ -7,14 +7,14 @@
         private readonly string ext;
         private readonly string filepath;
 
-        public LogFile(DateTime now, string name, string ext = "log")
+        public LogFile(LogConfig config, DateTime now, string name, string ext = "log")
         {
             this.now = now;
             this.name = name;
             this.ext = ext;
 
             filepath = Path.Join(
-                LogConfig.LogRoot,
+                config.LogRoot,
                 $"{now.Year}-{Pad(now.Month)}",
                 Pad(now.Day));
 

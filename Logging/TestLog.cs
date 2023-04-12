@@ -8,13 +8,15 @@ namespace Logging
         private readonly NumberSource subfileNumberSource = new NumberSource(0);
         private readonly LogFile file;
         private readonly DateTime now;
+        private readonly LogConfig config;
 
-        public TestLog()
+        public TestLog(LogConfig config)
         {
+            this.config = config;
             now = DateTime.UtcNow;
 
             var name = GetTestName();
-            file = new LogFile(now, name);
+            file = new LogFile(config, now, name);
 
             Log($"Begin: {name}");
         }
@@ -53,7 +55,7 @@ namespace Logging
 
         public LogFile CreateSubfile(string ext = "log")
         {
-            return new LogFile(now, $"{GetTestName()}_{subfileNumberSource.GetNextNumber().ToString().PadLeft(6, '0')}", ext);
+            return new LogFile(config, now, $"{GetTestName()}_{subfileNumberSource.GetNextNumber().ToString().PadLeft(6, '0')}", ext);
         }
 
         private static string GetTestName()
@@ -70,5 +72,4 @@ namespace Logging
             return $"[{string.Join(',', test.Arguments)}]";
         }
     }
-
 }

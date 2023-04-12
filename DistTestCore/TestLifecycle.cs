@@ -1,31 +1,24 @@
-﻿using DistTestCore.Codex;
-using KubernetesWorkflow;
+﻿using Logging;
 
 namespace DistTestCore
 {
     public class TestLifecycle
     {
-        private readonly WorkflowCreator workflowCreator = new WorkflowCreator();
-
-        public void SetUpCodexNodes()
+        public TestLifecycle(Configuration configuration)
         {
-            var config = new CodexStartupConfig()
-            {
-                StorageQuota = 10.MB(),
-                Location = Location.Unspecified,
-                LogLevel = CodexLogLevel.Error,
-                MetricsEnabled = false,
-            };
+            Log = new TestLog(configuration.GetLogConfig());
+            FileManager = new FileManager(Log, configuration);
+            CodexStarter = new CodexStarter(Log, configuration);
+        }
 
-            var workflow = workflowCreator.CreateWorkflow();
-            var startupConfig = new StartupConfig();
-            startupConfig.Add(config);
-            var containers = workflow.Start(3, new CodexContainerRecipe(), startupConfig);
+        public TestLog Log { get; }
+        public FileManager FileManager { get; }
+        public CodexStarter CodexStarter { get; }
 
-            foreach (var c in containers.Containers)
-            {
-                var access = new CodexAccess(c);
-            }
+        public void DeleteAllResources()
+        {
+            CodexStarter.DeleteAllResources();
+            FileManager.DeleteAllTestFiles();
         }
     }
 }

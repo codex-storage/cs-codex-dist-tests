@@ -2,6 +2,11 @@
 {
     public class LogConfig
     {
-        public const string LogRoot = "D:/CodexTestLogs";
+        public LogConfig(string logRoot)
+        {
+            LogRoot = logRoot;
+        }
+        
+        public string LogRoot { get; }
     }
 }
