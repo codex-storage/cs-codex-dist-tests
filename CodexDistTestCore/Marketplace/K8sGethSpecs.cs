@@ -185,7 +185,7 @@ namespace CodexDistTestCore.Marketplace
                     new V1EnvVar
                     {
                         Name = "GETH_ARGS",
-                        Value = $"--port {container.ApiPort} --discovery.port {container.ApiPort} --http.port {container.RpcPort}"
+                        Value = $"--port {container.ApiPort} --discovery.port {container.ApiPort} --authrpc.port {container.AuthRpcPort} --http.port {container.RpcPort}"
                     },
                     new V1EnvVar
                     {

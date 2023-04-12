@@ -8,7 +8,7 @@ namespace CodexDistTestCore.Marketplace
         void MakeStorageAvailable(ByteSize size, int minPricePerBytePerSecond, float maxCollateral);
         void RequestStorage(ContentId contentId, int pricePerBytePerSecond, float requiredCollateral, float minRequiredNumberOfNodes);
         void AssertThatBalance(IResolveConstraint constraint, string message = "");
-        float GetBalance();
+        decimal GetBalance();
     }
 
     public class MarketplaceAccess : IMarketplaceAccess
@@ -57,9 +57,9 @@ namespace CodexDistTestCore.Marketplace
             throw new NotImplementedException();
         }
 
-        public float GetBalance()
+        public decimal GetBalance()
         {
-            throw new NotImplementedException();
+            return marketplaceController.GetBalance(container.Account);
         }
 
         private void EnsureAccount()
@@ -96,10 +96,10 @@ namespace CodexDistTestCore.Marketplace
             Unavailable();
         }
 
-        public float GetBalance()
+        public decimal GetBalance()
         {
             Unavailable();
-            return 0.0f;
+            return 0;
         }
 
         private void Unavailable()

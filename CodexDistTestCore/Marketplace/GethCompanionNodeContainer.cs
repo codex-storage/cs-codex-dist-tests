@@ -15,16 +15,18 @@
 
     public class GethCompanionNodeContainer
     {
-        public GethCompanionNodeContainer(string name, int apiPort, int rpcPort, string containerPortName)
+        public GethCompanionNodeContainer(string name, int apiPort, int rpcPort, string containerPortName, int authRpcPort)
         {
             Name = name;
             ApiPort = apiPort;
+            AuthRpcPort = authRpcPort;
             RpcPort = rpcPort;
             ContainerPortName = containerPortName;
         }
 
         public string Name { get; }
         public int ApiPort { get; }
+        public int AuthRpcPort { get; }
         public int RpcPort { get; }
         public string ContainerPortName { get; }
 

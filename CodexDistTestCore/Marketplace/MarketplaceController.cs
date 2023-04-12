@@ -62,11 +62,11 @@ namespace CodexDistTestCore.Marketplace
             return new GethCompanionNodeContainer(
                 name: $"geth-node{n}",
                 apiPort: numberSource.GetNextNumber(),
+                authRpcPort: numberSource.GetNextNumber(),
                 rpcPort: numberSource.GetNextNumber(),
                 containerPortName: $"geth-{n}"
             );
         }
-
 
         private readonly K8sCluster k8sCluster = new K8sCluster();
 
@@ -76,30 +76,38 @@ namespace CodexDistTestCore.Marketplace
 
             // call the bootstrap node and convince it to give 'account' 'amount' tokens somehow.
 
-            var ip = k8sCluster.GetIp();
-            var port = bootstrapInfo!.Spec.ServicePort;
+            var web3 = CreateWeb3();
 
-            //var bootstrapaccount = new ManagedAccount(bootstrapInfo.Account, "qwerty!@#$%^");
-            var web3 = new Web3($"http://{ip}:{port}");
+            //var blockNumber1 = Utils.Wait(web3.Eth.Blocks.GetBlockNumber.SendRequestAsync());
+            //Thread.Sleep(TimeSpan.FromSeconds(5));
+            //var blockNumber2 = Utils.Wait(web3.Eth.Blocks.GetBlockNumber.SendRequestAsync());
 
-            var blockNumber1 = Utils.Wait(web3.Eth.Blocks.GetBlockNumber.SendRequestAsync());
-            Thread.Sleep(TimeSpan.FromSeconds(5));
-            var blockNumber2 = Utils.Wait(web3.Eth.Blocks.GetBlockNumber.SendRequestAsync());
-
-            var bootstrapBalance = Utils.Wait(web3.Eth.GetBalance.SendRequestAsync(bootstrapInfo.Account));
-            var targetBalance = Utils.Wait(web3.Eth.GetBalance.SendRequestAsync(account));
+            //var bootstrapBalance = Utils.Wait(web3.Eth.GetBalance.SendRequestAsync(bootstrapInfo.Account));
+            
 
             var bigint = new BigInteger(amount);
             var str = bigint.ToString("X");
             var value = new Nethereum.Hex.HexTypes.HexBigInteger(str);
-            var aaa = Utils.Wait(web3.Eth.TransactionManager.SendTransactionAsync(bootstrapInfo.Account, account, value));
+            var aaa = Utils.Wait(web3.Eth.TransactionManager.SendTransactionAsync(bootstrapInfo!.Account, account, value));
+            var receipt = Utils.Wait(web3.Eth.TransactionManager.TransactionReceiptService.PollForReceiptAsync(aaa));
 
             //var receipt = Utils.Wait(web3.Eth.GetEtherTransferService().TransferEtherAndWaitForReceiptAsync(account, amount));
+            //var targetBalance = Utils.Wait(web3.Eth.GetBalance.SendRequestAsync(account));
+        }
 
-            targetBalance = Utils.Wait(web3.Eth.GetBalance.SendRequestAsync(account));
+        public decimal GetBalance(string account)
+        {
+            var web3 = CreateWeb3();
+            var bigInt = Utils.Wait(web3.Eth.GetBalance.SendRequestAsync(account));
+            return (decimal)bigInt.Value;
+        }
 
-            var a = 0;
-
+        private Web3 CreateWeb3()
+        {
+            var ip = k8sCluster.GetIp();
+            var port = bootstrapInfo!.Spec.ServicePort;
+            //var bootstrapaccount = new ManagedAccount(bootstrapInfo.Account, "qwerty!@#$%^");
+            return new Web3($"http://{ip}:{port}");
         }
 
         private (string, string) ExtractAccountAndGenesisJson(PodInfo pod)

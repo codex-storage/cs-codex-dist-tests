@@ -34,10 +34,20 @@ namespace Tests.BasicTests
         [Test]
         public void MarketplaceExample()
         {
-            var primary = SetupCodexNodes(1)
+            var group = SetupCodexNodes(4)
                             .WithStorageQuota(10.GB())
                             .EnableMarketplace(initialBalance: 20)
-                            .BringOnline()[0];
+                            .BringOnline();
+
+            foreach (var node in group)
+            {
+                Assert.That(node.Marketplace.GetBalance(), Is.EqualTo(20));
+            }
+
+            // WIP: Balance is now only ETH.
+            // todo: All nodes should have plenty of ETH to pay for transactions.
+            // todo: Upload our own token, use this exclusively. ETH should be invisibile to the tests.
+
 
             //var secondary = SetupCodexNodes(1)
             //                .EnableMarketplace(initialBalance: 1000)
@@ -56,8 +66,6 @@ namespace Tests.BasicTests
 
             //secondary.Marketplace.AssertThatBalance(Is.LessThan(1000), "Contractor was not charged for storage.");
             //primary.Marketplace.AssertThatBalance(Is.GreaterThan(primaryBalance), "Storer was not paid for storage.");
-
-            var aa = 0;
         }
 
         [Test]
