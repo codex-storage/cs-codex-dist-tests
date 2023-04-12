@@ -36,5 +36,16 @@ namespace KubernetesWorkflow
             if (location == Location.Unspecified) return string.Empty;
             return K8sNodeLocationMap[location];
         }
+
+        // make configurable from test env!
+        public TimeSpan K8sOperationTimeout()
+        {
+            return TimeSpan.FromMinutes(5);
+        }
+
+        public TimeSpan WaitForK8sServiceDelay()
+        {
+            return TimeSpan.FromSeconds(5);
+        }
     }
 }

@@ -14,9 +14,7 @@
 
             Initialize(config);
 
-            var name = $"ctnr{containerNumber}";
-
-            return new ContainerRecipe(name, Image, exposedPorts.ToArray(), internalPorts.ToArray(), envVars.ToArray());
+            return new ContainerRecipe(containerNumber, Image, exposedPorts.ToArray(), internalPorts.ToArray(), envVars.ToArray());
         }
 
         protected abstract string Image { get; }

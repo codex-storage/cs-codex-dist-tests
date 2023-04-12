@@ -341,44 +341,6 @@ namespace CodexDistTestCore
 
         #endregion
 
-        #region Namespace management
-
-        private void EnsureTestNamespace()
-        {
-            if (IsTestNamespaceOnline()) return;
-
-            var namespaceSpec = new V1Namespace
-            {
-                ApiVersion = "v1",
-                Metadata = new V1ObjectMeta
-                {
-                    Name = K8sNamespace,
-                    Labels = new Dictionary<string, string> { { "name", K8sNamespace } }
-                }
-            };
-            client.CreateNamespace(namespaceSpec);
-        }
-
-        private void DeleteNamespace()
-        {
-            if (IsTestNamespaceOnline())
-            {
-                client.DeleteNamespace(K8sNamespace, null, null, gracePeriodSeconds: 0);
-            }
-        }
-
-        private string K8sNamespace
-        {
-            get { return K8sCluster.K8sNamespace; }
-        }
-
-        #endregion
-
-        private bool IsTestNamespaceOnline()
-        {
-            return client.ListNamespace().Items.Any(n => n.Metadata.Name == K8sNamespace);
-        }
-
         private class CommandRunner
         {
             private readonly Kubernetes client;

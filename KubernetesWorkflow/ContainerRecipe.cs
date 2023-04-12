@@ -2,16 +2,17 @@
 {
     public class ContainerRecipe
     {
-        public ContainerRecipe(string name, string image, Port[] exposedPorts, Port[] internalPorts, EnvVar[] envVars)
+        public ContainerRecipe(int number, string image, Port[] exposedPorts, Port[] internalPorts, EnvVar[] envVars)
         {
-            Name = name;
+            Number = number;
             Image = image;
             ExposedPorts = exposedPorts;
             InternalPorts = internalPorts;
             EnvVars = envVars;
         }
 
-        public string Name { get; }
+        public string Name { get { return $"ctnr{Number}"; } }
+        public int Number { get; }
         public string Image { get; }
         public Port[] ExposedPorts { get; }
         public Port[] InternalPorts { get; }
