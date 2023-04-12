@@ -1,4 +1,5 @@
 ﻿using DistTestCore.Codex;
+using KubernetesWorkflow;
 
 namespace DistTestCore
 {
@@ -12,32 +13,17 @@ namespace DistTestCore
         //ICodexSetupConfig EnableMarketplace(int initialBalance);
         ICodexNodeGroup BringOnline();
     }
-
-    public enum Location
-    {
-        Unspecified,
-        BensLaptop,
-        BensOldGamingMachine,
-    }
-
-    public class CodexSetupConfig : ICodexSetupConfig
+    
+    public class CodexSetupConfig : CodexStartupConfig, ICodexSetupConfig
     {
         private readonly CodexStarter starter;
 
         public int NumberOfNodes { get; }
-        public Location Location { get; private set; }
-        public CodexLogLevel? LogLevel { get; private set; }
-        //public IOnlineCodexNode? BootstrapNode { get; private set; }
-        public ByteSize? StorageQuota { get; private set; }
-        public bool MetricsEnabled { get; private set; }
-        //public MarketplaceInitialConfig? MarketplaceConfig { get; private set; }
 
         public CodexSetupConfig(CodexStarter starter, int numberOfNodes)
         {
             this.starter = starter;
             NumberOfNodes = numberOfNodes;
-            Location = Location.Unspecified;
-            MetricsEnabled = false;
         }
 
         public ICodexNodeGroup BringOnline()

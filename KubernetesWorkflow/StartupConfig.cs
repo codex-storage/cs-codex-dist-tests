@@ -11,7 +11,7 @@
 
         public T Get<T>()
         {
-            var match = configs.Single(c => c.GetType() == typeof(T));
+            var match = configs.Single(c => typeof(T).IsAssignableFrom(c.GetType()));
             return (T)match;
         }
     }

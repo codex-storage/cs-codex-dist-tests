@@ -1,4 +1,5 @@
-﻿using KubernetesWorkflow;
+﻿using DistTestCore.Codex;
+using KubernetesWorkflow;
 using Logging;
 
 namespace DistTestCore
@@ -14,7 +15,13 @@ namespace DistTestCore
 
         public ICodexNodeGroup BringOnline(CodexSetupConfig codexSetupConfig)
         {
+            var workflow = workflowCreator.CreateWorkflow();
+            var startupConfig = new StartupConfig();
+            startupConfig.Add(codexSetupConfig);
             
+            var runningContainers = workflow.Start(codexSetupConfig.NumberOfNodes, codexSetupConfig.Location, new CodexContainerRecipe(), startupConfig);
+
+            // create access objects. Easy, right?
         }
 
         public void DeleteAllResources()
