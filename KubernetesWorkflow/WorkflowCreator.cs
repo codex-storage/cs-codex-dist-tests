@@ -6,8 +6,13 @@ namespace KubernetesWorkflow
     {
         private readonly NumberSource numberSource = new NumberSource(0);
         private readonly NumberSource servicePortNumberSource = new NumberSource(30001);
-        private readonly K8sCluster cluster = new K8sCluster();
         private readonly KnownK8sPods knownPods = new KnownK8sPods();
+        private readonly K8sCluster cluster;
+
+        public WorkflowCreator(Configuration configuration)
+        {
+            cluster = new K8sCluster(configuration);
+        }
 
         public StartupWorkflow CreateWorkflow()
         {

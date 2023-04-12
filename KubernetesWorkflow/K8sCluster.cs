@@ -4,21 +4,28 @@ namespace KubernetesWorkflow
 {
     public class K8sCluster
     {
-        public const string K8sNamespace = "codex-test-namespace";
-        private const string KubeConfigFile = "C:\\kube\\config";
-        private readonly Dictionary<Location, string> K8sNodeLocationMap = new Dictionary<Location, string>
-        {
-            { Location.BensLaptop, "worker01" },
-            { Location.BensOldGamingMachine, "worker02" },
-        };
-
         private KubernetesClientConfiguration? config;
+
+        public K8sCluster(Configuration configuration)
+        {
+            Configuration = configuration;
+        }
+       
+        public Configuration Configuration { get; }
 
         public KubernetesClientConfiguration GetK8sClientConfig()
         {
             if (config != null) return config;
-            //config = KubernetesClientConfiguration.BuildConfigFromConfigFile(KubeConfigFile);
-            config = KubernetesClientConfiguration.BuildDefaultConfig();
+
+            if (Configuration.KubeConfigFile != null)
+            {
+                config = KubernetesClientConfiguration.BuildConfigFromConfigFile(Configuration.KubeConfigFile);
+            }
+            else
+            {
+                config = KubernetesClientConfiguration.BuildDefaultConfig();
+            }
+
             return config;
         }
 
@@ -34,18 +41,17 @@ namespace KubernetesWorkflow
         public string GetNodeLabelForLocation(Location location)
         {
             if (location == Location.Unspecified) return string.Empty;
-            return K8sNodeLocationMap[location];
+            return Configuration.LocationMap.Single(l => l.Location == location).WorkerName;
         }
 
-        // make configurable from test env!
         public TimeSpan K8sOperationTimeout()
         {
-            return TimeSpan.FromMinutes(5);
+            return Configuration.OperationTimeout;
         }
 
         public TimeSpan WaitForK8sServiceDelay()
         {
-            return TimeSpan.FromSeconds(5);
+            return Configuration.RetryDelay;
         }
     }
 }

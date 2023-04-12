@@ -71,7 +71,7 @@ namespace KubernetesWorkflow
 
         private string K8sNamespace
         {
-            get { return K8sCluster.K8sNamespace; }
+            get { return cluster.Configuration.K8sNamespace; }
         }
 
         private bool IsTestNamespaceOnline()
@@ -135,7 +135,7 @@ namespace KubernetesWorkflow
             return new V1ObjectMeta
             {
                 Name = "deploy-" + workflowNumberSource.WorkflowNumber,
-                NamespaceProperty = K8sCluster.K8sNamespace
+                NamespaceProperty = K8sNamespace
             };
         }
 
@@ -190,29 +190,6 @@ namespace KubernetesWorkflow
             return $"P{workflowNumberSource.WorkflowNumber}-{recipe.Number}-{port.Number}";
         }
 
-
-        //private void DeleteDeployment(CodexNodeGroup group)
-        //{
-        //    if (group.Deployment == null) return;
-        //    client.DeleteNamespacedDeployment(group.Deployment.Name(), K8sNamespace);
-        //    group.Deployment = null;
-        //}
-
-        //private void CreatePrometheusDeployment(K8sPrometheusSpecs spec)
-        //{
-        //    client.CreateNamespacedDeployment(spec.CreatePrometheusDeployment(), K8sNamespace);
-        //}
-
-        //private void CreateGethBootstrapDeployment(K8sGethBoostrapSpecs spec)
-        //{
-        //    client.CreateNamespacedDeployment(spec.CreateGethBootstrapDeployment(), K8sNamespace);
-        //}
-
-        //private void CreateGethCompanionDeployment(GethBootstrapInfo info, GethCompanionGroup group)
-        //{
-        //    client.CreateNamespacedDeployment(info.Spec.CreateGethCompanionDeployment(group, info), K8sNamespace);
-        //}
-
         #endregion
 
         #region Service management
@@ -251,7 +228,7 @@ namespace KubernetesWorkflow
             return new V1ObjectMeta
             {
                 Name = "deploy-" + workflowNumberSource.WorkflowNumber,
-                NamespaceProperty = K8sCluster.K8sNamespace
+                NamespaceProperty = K8sNamespace
             };
         }
 
@@ -288,49 +265,9 @@ namespace KubernetesWorkflow
             return result;
         }
 
-        //private void DeleteService(CodexNodeGroup online)
-        //{
-        //    if (online.Service == null) return;
-        //    client.DeleteNamespacedService(online.Service.Name(), K8sNamespace);
-        //    online.Service = null;
-        //}
-
-        //private void CreatePrometheusService(K8sPrometheusSpecs spec)
-        //{
-        //    client.CreateNamespacedService(spec.CreatePrometheusService(), K8sNamespace);
-        //}
-
-        //private void CreateGethBootstrapService(K8sGethBoostrapSpecs spec)
-        //{
-        //    client.CreateNamespacedService(spec.CreateGethBootstrapService(), K8sNamespace);
-        //}
-
         #endregion
 
         #region Waiting
-
-        //private void WaitUntilOnline(CodexNodeGroup online)
-        //{
-        //    WaitUntil(() =>
-        //    {
-        //        online.Deployment = client.ReadNamespacedDeployment(online.Deployment.Name(), K8sNamespace);
-        //        return online.Deployment?.Status.AvailableReplicas != null && online.Deployment.Status.AvailableReplicas > 0;
-        //    });
-        //}
-
-        //private void WaitUntilOffline(string deploymentName)
-        //{
-        //    WaitUntil(() =>
-        //    {
-        //        var deployment = client.ReadNamespacedDeployment(deploymentName, K8sNamespace);
-        //        return deployment == null || deployment.Status.AvailableReplicas == 0;
-        //    });
-        //}
-
-        //private void WaitUntilZeroPods()
-        //{
-        //    WaitUntil(() => !client.ListNamespacedPod(K8sNamespace).Items.Any());
-        //}
 
         private void WaitUntilNamespaceCreated() 
         {
@@ -341,21 +278,6 @@ namespace KubernetesWorkflow
         {
             WaitUntil(() => !IsTestNamespaceOnline());
         }
-
-        //private void WaitUntilPrometheusOnline(K8sPrometheusSpecs spec)
-        //{
-        //    WaitUntilDeploymentOnline(spec.GetDeploymentName());
-        //}
-
-        //private void WaitUntilGethBootstrapOnline(K8sGethBoostrapSpecs spec)
-        //{
-        //    WaitUntilDeploymentOnline(spec.GetBootstrapDeploymentName());
-        //}
-
-        //private void WaitUntilGethCompanionGroupOnline(K8sGethBoostrapSpecs spec, GethCompanionGroup group)
-        //{
-        //    WaitUntilDeploymentOnline(spec.GetCompanionDeploymentName(group));
-        //}
 
         private void WaitUntilDeploymentCreated(V1Deployment deploymentSpec)
         {
