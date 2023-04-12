@@ -1,4 +1,4 @@
-﻿namespace CodexDistTestCore.Config
+﻿namespace Logging
 {
     public class LogConfig
     {

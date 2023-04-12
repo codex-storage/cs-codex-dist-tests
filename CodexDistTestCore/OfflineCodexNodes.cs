@@ -13,15 +13,6 @@ namespace CodexDistTestCore
         ICodexNodeGroup BringOnline();
     }
 
-    public enum CodexLogLevel
-    {
-        Trace,
-        Debug,
-        Info,
-        Warn,
-        Error
-    }
-
     public enum Location
     {
         Unspecified,

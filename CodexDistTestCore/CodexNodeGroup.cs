@@ -99,15 +99,5 @@ namespace CodexDistTestCore
         }
     }
 
-    public class PodInfo
-    {
-        public PodInfo(string name, string ip)
-        {
-            Name = name;
-            Ip = ip;
-        }
 
-        public string Name { get; }
-        public string Ip { get; }
-    }
 }
