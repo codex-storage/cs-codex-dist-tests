@@ -115,8 +115,11 @@ namespace DistTestCore
 
             OnEachCodexNode(node =>
             {
-                var m = (MetricsAccess)node.Metrics;
-                metricsDownloader.DownloadAllMetricsForNode(node.GetName(), m);
+                var m = node.Metrics as MetricsAccess;
+                if (m != null)
+                {
+                    metricsDownloader.DownloadAllMetricsForNode(node.GetName(), m);
+                }
             });
         }
 
