@@ -17,16 +17,23 @@
         public Port[] ExposedPorts { get; }
         public Port[] InternalPorts { get; }
         public EnvVar[] EnvVars { get; }
+
+        public Port GetPortByTag(string tag)
+        {
+            return ExposedPorts.Concat(InternalPorts).Single(p => p.Tag == tag);
+        }
     }
 
     public class Port
     {
-        public Port(int number)
+        public Port(int number, string tag)
         {
             Number = number;
+            Tag = tag;
         }
 
         public int Number { get; }
+        public string Tag { get; }
     }
 
     public class EnvVar

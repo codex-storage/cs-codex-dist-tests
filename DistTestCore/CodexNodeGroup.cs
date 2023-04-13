@@ -14,12 +14,12 @@ namespace DistTestCore
     {
         private readonly TestLifecycle lifecycle;
 
-        public CodexNodeGroup(TestLifecycle lifecycle, CodexSetup setup, RunningContainers containers)
+        public CodexNodeGroup(TestLifecycle lifecycle, CodexSetup setup, RunningContainers containers, ICodexNodeFactory codexNodeFactory)
         {
             this.lifecycle = lifecycle;
             Setup = setup;
             Containers = containers;
-            Nodes = containers.Containers.Select(c => CreateOnlineCodexNode(c)).ToArray();
+            Nodes = containers.Containers.Select(c => CreateOnlineCodexNode(c, codexNodeFactory)).ToArray();
         }
 
         public IOnlineCodexNode this[int index]
@@ -73,14 +73,13 @@ namespace DistTestCore
 
         public string Describe()
         {
-            var orderNumber = Containers.RunningPod.Ip;
-            return $"CodexNodeGroup@{orderNumber}-{Setup.Describe()}";
+            return $"CodexNodeGroup@{Containers.Describe()}-{Setup.Describe()}";
         }
 
-        private OnlineCodexNode CreateOnlineCodexNode(RunningContainer c)
+        private OnlineCodexNode CreateOnlineCodexNode(RunningContainer c, ICodexNodeFactory factory)
         {
             var access = new CodexAccess(c);
-            return new OnlineCodexNode(lifecycle, access, this);
+            return factory.CreateOnlineCodexNode(access, this);
         }
     }
 }

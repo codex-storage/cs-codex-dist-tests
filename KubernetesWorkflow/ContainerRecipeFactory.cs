@@ -28,28 +28,28 @@
         protected int ContainerNumber { get; private set; } = 0;
         protected abstract void Initialize(StartupConfig config);
 
-        protected Port AddExposedPort()
+        protected Port AddExposedPort(string tag = "")
         {
-            var p = factory.CreatePort();
+            var p = factory.CreatePort(tag);
             exposedPorts.Add(p);
             return p;
         }
 
-        protected Port AddInternalPort()
+        protected Port AddInternalPort(string tag = "")
         {
-            var p = factory.CreatePort();
+            var p = factory.CreatePort(tag);
             internalPorts.Add(p);
             return p;
         }
 
-        protected void AddExposedPortAndVar(string name)
+        protected void AddExposedPortAndVar(string name, string tag = "")
         {
-            AddEnvVar(name, AddExposedPort());
+            AddEnvVar(name, AddExposedPort(tag));
         }
 
-        protected void AddInternalPortAndVar(string name)
+        protected void AddInternalPortAndVar(string name, string tag = "")
         {
-            AddEnvVar(name, AddInternalPort());
+            AddEnvVar(name, AddInternalPort(tag));
         }
 
         protected void AddEnvVar(string name, string value)

@@ -1,20 +1,27 @@
 ﻿using DistTestCore.CodexLogsAndMetrics;
+using KubernetesWorkflow;
 using Logging;
 
 namespace DistTestCore
 {
     public class TestLifecycle
     {
+        private readonly WorkflowCreator workflowCreator;
+
         public TestLifecycle(Configuration configuration)
         {
             Log = new TestLog(configuration.GetLogConfig());
+            workflowCreator = new WorkflowCreator(configuration.GetK8sConfiguration());
+
             FileManager = new FileManager(Log, configuration);
-            CodexStarter = new CodexStarter(this, configuration);
+            CodexStarter = new CodexStarter(this, workflowCreator);
+            PrometheusStarter = new PrometheusStarter(this, workflowCreator);
         }
 
         public TestLog Log { get; }
         public FileManager FileManager { get; }
         public CodexStarter CodexStarter { get; }
+        public PrometheusStarter PrometheusStarter { get; }
 
         public void DeleteAllResources()
         {

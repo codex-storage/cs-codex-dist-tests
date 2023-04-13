@@ -5,31 +5,27 @@ namespace DistTestCore
 {
     public class CodexStarter
     {
-        private readonly WorkflowCreator workflowCreator;
         private readonly TestLifecycle lifecycle;
+        private readonly WorkflowCreator workflowCreator;
 
-        public CodexStarter(TestLifecycle lifecycle, Configuration configuration)
+        public CodexStarter(TestLifecycle lifecycle, WorkflowCreator workflowCreator)
         {
-            workflowCreator = new WorkflowCreator(configuration.GetK8sConfiguration());
             this.lifecycle = lifecycle;
+            this.workflowCreator = workflowCreator;
         }
 
         public List<CodexNodeGroup> RunningGroups { get; } = new List<CodexNodeGroup>();
 
         public ICodexNodeGroup BringOnline(CodexSetup codexSetup)
         {
-            Log($"Starting {codexSetup.Describe()}...");
+            var containers = StartCodexContainers(codexSetup);
 
-            var workflow = CreateWorkflow();
-            var startupConfig = new StartupConfig();
-            startupConfig.Add(codexSetup);
+            var metricAccessFactory = lifecycle.PrometheusStarter.CollectMetricsFor(codexSetup, containers);
             
-            var runningContainers = workflow.Start(codexSetup.NumberOfNodes, codexSetup.Location, new CodexContainerRecipe(), startupConfig);
+            var codexNodeFactory = new CodexNodeFactory(lifecycle, metricAccessFactory);
 
-            var group = new CodexNodeGroup(lifecycle, codexSetup, runningContainers);
-            RunningGroups.Add(group);
+            var group = CreateCodexGroup(codexSetup, containers, codexNodeFactory);
 
-            Log($"Started at '{group.Containers.RunningPod.Ip}'");
             return group;
         }
 
@@ -54,6 +50,26 @@ namespace DistTestCore
         {
             var workflow = CreateWorkflow();
             workflow.DownloadContainerLog(container, logHandler);
+        }
+        
+        private RunningContainers StartCodexContainers(CodexSetup codexSetup)
+        {
+            Log($"Starting {codexSetup.Describe()}...");
+
+            var workflow = CreateWorkflow();
+            var startupConfig = new StartupConfig();
+            startupConfig.Add(codexSetup);
+
+            return workflow.Start(codexSetup.NumberOfNodes, codexSetup.Location, new CodexContainerRecipe(), startupConfig);
+        }
+
+        private CodexNodeGroup CreateCodexGroup(CodexSetup codexSetup, RunningContainers runningContainers, CodexNodeFactory codexNodeFactory)
+        {
+            var group = new CodexNodeGroup(lifecycle, codexSetup, runningContainers, codexNodeFactory);
+            RunningGroups.Add(group);
+
+            Log($"Started at '{group.Containers.RunningPod.Ip}'");
+            return group;
         }
 
         private StartupWorkflow CreateWorkflow()

@@ -277,7 +277,7 @@ namespace KubernetesWorkflow
             foreach (var port in recipe.ExposedPorts)
             {
                 var servicePort = workflowNumberSource.GetServicePort();
-                usedPorts.Add(new Port(servicePort));
+                usedPorts.Add(new Port(servicePort, ""));
 
                 result.Add(new V1ServicePort
                 {

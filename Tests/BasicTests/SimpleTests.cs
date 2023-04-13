@@ -78,30 +78,30 @@ namespace Tests.BasicTests
             log.AssertLogContains("Uploaded file");
         }
 
-        //[Test]
-        //public void TwoMetricsExample()
-        //{
-        //    var group = SetupCodexNodes(2)
-        //                .EnableMetrics()
-        //                .BringOnline();
+        [Test]
+        public void TwoMetricsExample()
+        {
+            var group = SetupCodexNodes(2)
+                        .EnableMetrics()
+                        .BringOnline();
 
-        //    var group2 = SetupCodexNodes(2)
-        //                .EnableMetrics()
-        //                .BringOnline();
+            var group2 = SetupCodexNodes(2)
+                        .EnableMetrics()
+                        .BringOnline();
 
-        //    var primary = group[0];
-        //    var secondary = group[1];
-        //    var primary2 = group2[0];
-        //    var secondary2 = group2[1];
+            var primary = group[0];
+            var secondary = group[1];
+            var primary2 = group2[0];
+            var secondary2 = group2[1];
 
-        //    primary.ConnectToPeer(secondary);
-        //    primary2.ConnectToPeer(secondary2);
+            primary.ConnectToPeer(secondary);
+            primary2.ConnectToPeer(secondary2);
 
-        //    Thread.Sleep(TimeSpan.FromMinutes(5));
+            Thread.Sleep(TimeSpan.FromMinutes(5));
 
-        //    primary.Metrics.AssertThat("libp2p_peers", Is.EqualTo(1));
-        //    primary2.Metrics.AssertThat("libp2p_peers", Is.EqualTo(1));
-        //}
+            primary.Metrics.AssertThat("libp2p_peers", Is.EqualTo(1));
+            primary2.Metrics.AssertThat("libp2p_peers", Is.EqualTo(1));
+        }
 
         //[Test]
         //public void MarketplaceExample()

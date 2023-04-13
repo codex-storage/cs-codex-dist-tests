@@ -12,6 +12,11 @@
         public StartupConfig StartupConfig { get; }
         public RunningPod RunningPod { get; }
         public RunningContainer[] Containers { get; }
+
+        public string Describe()
+        {
+            return $"[{RunningPod.Ip}]";
+        }
     }
 
     public class RunningContainer

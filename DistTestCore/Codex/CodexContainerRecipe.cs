@@ -4,6 +4,8 @@ namespace DistTestCore.Codex
 {
     public class CodexContainerRecipe : ContainerRecipeFactory
     {
+        public const string MetricsPortTag = "metrics_port";
+
         protected override string Image => "thatbenbierens/nim-codex:sha-b204837";
 
         protected override void Initialize(StartupConfig startupConfig)
@@ -28,7 +30,7 @@ namespace DistTestCore.Codex
             if (config.MetricsEnabled)
             {
                 AddEnvVar("METRICS_ADDR", "0.0.0.0");
-                AddInternalPortAndVar("METRICS_PORT");
+                AddInternalPortAndVar("METRICS_PORT", tag: MetricsPortTag);
             }
         }
     }
