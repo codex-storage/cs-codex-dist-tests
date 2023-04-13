@@ -32,15 +32,14 @@ namespace DistTestCore
 
         public ICodexSetup BringOffline()
         {
-            var result = Setup;
-            var containers = Containers;
+            lifecycle.CodexStarter.BringOffline(this);
 
+            var result = Setup;
             // Clear everything. Prevent accidental use.
             Setup = null!;
-            Containers = null!;
             Nodes = Array.Empty<OnlineCodexNode>();
+            Containers = null!;
 
-            lifecycle.CodexStarter.BringOffline(containers);
             return result;
         }
 

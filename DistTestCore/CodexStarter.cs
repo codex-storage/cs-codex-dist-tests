@@ -1,7 +1,5 @@
 ﻿using DistTestCore.Codex;
-using DistTestCore.CodexLogs;
 using KubernetesWorkflow;
-using Nethereum.Merkle.Patricia;
 
 namespace DistTestCore
 {
@@ -16,27 +14,40 @@ namespace DistTestCore
             this.lifecycle = lifecycle;
         }
 
+        public List<CodexNodeGroup> RunningGroups { get; } = new List<CodexNodeGroup>();
+
         public ICodexNodeGroup BringOnline(CodexSetup codexSetup)
         {
+            Log($"Starting {codexSetup.Describe()}...");
+
             var workflow = CreateWorkflow();
             var startupConfig = new StartupConfig();
             startupConfig.Add(codexSetup);
             
             var runningContainers = workflow.Start(codexSetup.NumberOfNodes, codexSetup.Location, new CodexContainerRecipe(), startupConfig);
 
-            return new CodexNodeGroup(lifecycle, codexSetup, runningContainers);
+            var group = new CodexNodeGroup(lifecycle, codexSetup, runningContainers);
+            RunningGroups.Add(group);
+
+            Log($"Started at '{group.Containers.RunningPod.Ip}'");
+            return group;
         }
 
-        public void BringOffline(RunningContainers runningContainers)
+        public void BringOffline(CodexNodeGroup group)
         {
+            Log($"Stopping {group.Describe()}...");
             var workflow = CreateWorkflow();
-            workflow.Stop(runningContainers);
+            workflow.Stop(group.Containers);
+            RunningGroups.Remove(group);
+            Log("Stopped.");
         }
 
         public void DeleteAllResources()
         {
             var workflow = CreateWorkflow();
             workflow.DeleteAllResources();
+
+            RunningGroups.Clear();
         }
 
         public void DownloadLog(RunningContainer container, ILogHandler logHandler)
@@ -48,6 +59,11 @@ namespace DistTestCore
         private StartupWorkflow CreateWorkflow()
         {
             return workflowCreator.CreateWorkflow();
+        }
+
+        private void Log(string msg)
+        {
+            lifecycle.Log.Log(msg);
         }
     }
 }

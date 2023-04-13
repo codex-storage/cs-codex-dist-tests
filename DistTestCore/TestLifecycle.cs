@@ -1,4 +1,4 @@
-﻿using DistTestCore.CodexLogs;
+﻿using DistTestCore.CodexLogsAndMetrics;
 using Logging;
 
 namespace DistTestCore
@@ -28,6 +28,7 @@ namespace DistTestCore
             var description = node.Describe();
             var handler = new LogDownloadHandler(description, subFile);
 
+            Log.Log($"Downloading logs for {description} to file {subFile.FilenameWithoutPath}");
             CodexStarter.DownloadLog(node.CodexAccess.Container, handler);
 
             return new CodexNodeLog(subFile);

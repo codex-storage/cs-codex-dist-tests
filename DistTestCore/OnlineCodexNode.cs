@@ -1,5 +1,5 @@
 ﻿using DistTestCore.Codex;
-using DistTestCore.CodexLogs;
+using DistTestCore.CodexLogsAndMetrics;
 using NUnit.Framework;
 
 namespace DistTestCore

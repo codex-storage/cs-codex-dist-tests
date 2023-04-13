@@ -7,15 +7,6 @@ namespace CodexDistTestCore
         void Log(Stream log);
     }
 
-    [AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
-    public class DontDownloadLogsAndMetricsOnFailureAttribute : PropertyAttribute
-    {
-        public DontDownloadLogsAndMetricsOnFailureAttribute()
-            : base(Timing.UseLongTimeoutsKey)
-        {
-        }
-    }
-
     public class PodLogDownloader
     {
         public const string DontDownloadLogsOnFailureKey = "DontDownloadLogsOnFailure";

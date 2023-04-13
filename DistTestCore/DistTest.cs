@@ -1,4 +1,5 @@
-﻿using NUnit.Framework;
+﻿using DistTestCore.CodexLogsAndMetrics;
+using NUnit.Framework;
 
 namespace DistTestCore
 {
@@ -68,20 +69,20 @@ namespace DistTestCore
 
         private void IncludeLogsAndMetricsOnTestFailure()
         {
-            //var result = TestContext.CurrentContext.Result;
-            //if (result.Outcome.Status == NUnit.Framework.Interfaces.TestStatus.Failed)
-            //{
-            //    if (IsDownloadingLogsAndMetricsEnabled())
-            //    {
-            //        log.Log("Downloading all CodexNode logs and metrics because of test failure...");
-            //        k8sManager.ForEachOnlineGroup(DownloadLogs);
-            //        k8sManager.DownloadAllMetrics();
-            //    }
-            //    else
-            //    {
-            //        log.Log("Skipping download of all CodexNode logs and metrics due to [DontDownloadLogsAndMetricsOnFailure] attribute.");
-            //    }
-            //}
+            var result = TestContext.CurrentContext.Result;
+            if (result.Outcome.Status == NUnit.Framework.Interfaces.TestStatus.Failed)
+            {
+                if (IsDownloadingLogsAndMetricsEnabled())
+                {
+                    Log("Downloading all CodexNode logs and metrics because of test failure...");
+                    DownloadAllLogs();
+                    //k8sManager.DownloadAllMetrics();
+                }
+                else
+                {
+                    Log("Skipping download of all CodexNode logs and metrics due to [DontDownloadLogsAndMetricsOnFailure] attribute.");
+                }
+            }
         }
 
         private void Log(string msg)
@@ -99,21 +100,20 @@ namespace DistTestCore
             lifecycle = new TestLifecycle(new Configuration());
         }
 
-        private void DownloadLogs(CodexNodeGroup group)
+        private void DownloadAllLogs()
         {
-            //foreach (var node in group)
-            //{
-            //    var downloader = new PodLogDownloader(log, k8sManager);
-            //    var n = (OnlineCodexNode)node;
-            //    downloader.DownloadLog(n);
-            //}
+            var allNodes = lifecycle.CodexStarter.RunningGroups.SelectMany(g => g.Nodes);
+            foreach (var node in allNodes) 
+            {
+                lifecycle.DownloadLog(node);
+            }
         }
 
-        //private bool IsDownloadingLogsAndMetricsEnabled()
-        //{
-        //    var testProperties = TestContext.CurrentContext.Test.Properties;
-        //    return !testProperties.ContainsKey(PodLogDownloader.DontDownloadLogsOnFailureKey);
-        //}
+        private bool IsDownloadingLogsAndMetricsEnabled()
+        {
+            var testProperties = TestContext.CurrentContext.Test.Properties;
+            return !testProperties.ContainsKey(DontDownloadLogsAndMetricsOnFailureAttribute.DontDownloadKey);
+        }
     }
 
     public static class GlobalTestFailure
