@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json;
 using NUnit.Framework;
 using System.Net.Http.Headers;
+using Utils;
 
 namespace DistTestCore
 {
@@ -26,8 +27,8 @@ namespace DistTestCore
             {
                 using var client = GetClient();
                 var url = GetUrl() + route;
-                var result = Utils.Wait(client.GetAsync(url));
-                return Utils.Wait(result.Content.ReadAsStringAsync());
+                var result = Time.Wait(client.GetAsync(url));
+                return Time.Wait(result.Content.ReadAsStringAsync());
             });
         }
 
@@ -45,9 +46,9 @@ namespace DistTestCore
 
                 var content = new StreamContent(stream);
                 content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
-                var response = Utils.Wait(client.PostAsync(url, content));
+                var response = Time.Wait(client.PostAsync(url, content));
 
-                return Utils.Wait(response.Content.ReadAsStringAsync());
+                return Time.Wait(response.Content.ReadAsStringAsync());
             });
         }
 
@@ -58,7 +59,7 @@ namespace DistTestCore
                 var client = GetClient();
                 var url = GetUrl() + route;
 
-                return Utils.Wait(client.GetStreamAsync(url));
+                return Time.Wait(client.GetStreamAsync(url));
             });
         }
 

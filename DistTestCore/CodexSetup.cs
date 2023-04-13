@@ -3,24 +3,24 @@ using KubernetesWorkflow;
 
 namespace DistTestCore
 {
-    public interface ICodexSetupConfig
+    public interface ICodexSetup
     {
-        ICodexSetupConfig At(Location location);
-        ICodexSetupConfig WithLogLevel(CodexLogLevel level);
+        ICodexSetup At(Location location);
+        ICodexSetup WithLogLevel(CodexLogLevel level);
         //ICodexStartupConfig WithBootstrapNode(IOnlineCodexNode node);
-        ICodexSetupConfig WithStorageQuota(ByteSize storageQuota);
-        ICodexSetupConfig EnableMetrics();
+        ICodexSetup WithStorageQuota(ByteSize storageQuota);
+        ICodexSetup EnableMetrics();
         //ICodexSetupConfig EnableMarketplace(int initialBalance);
         ICodexNodeGroup BringOnline();
     }
     
-    public class CodexSetupConfig : CodexStartupConfig, ICodexSetupConfig
+    public class CodexSetup : CodexStartupConfig, ICodexSetup
     {
         private readonly CodexStarter starter;
 
         public int NumberOfNodes { get; }
 
-        public CodexSetupConfig(CodexStarter starter, int numberOfNodes)
+        public CodexSetup(CodexStarter starter, int numberOfNodes)
         {
             this.starter = starter;
             NumberOfNodes = numberOfNodes;
@@ -31,7 +31,7 @@ namespace DistTestCore
             return starter.BringOnline(this);
         }
 
-        public ICodexSetupConfig At(Location location)
+        public ICodexSetup At(Location location)
         {
             Location = location;
             return this;
@@ -43,19 +43,19 @@ namespace DistTestCore
         //    return this;
         //}
 
-        public ICodexSetupConfig WithLogLevel(CodexLogLevel level)
+        public ICodexSetup WithLogLevel(CodexLogLevel level)
         {
             LogLevel = level;
             return this;
         }
 
-        public ICodexSetupConfig WithStorageQuota(ByteSize storageQuota)
+        public ICodexSetup WithStorageQuota(ByteSize storageQuota)
         {
             StorageQuota = storageQuota;
             return this;
         }
 
-        public ICodexSetupConfig EnableMetrics()
+        public ICodexSetup EnableMetrics()
         {
             MetricsEnabled = true;
             return this;

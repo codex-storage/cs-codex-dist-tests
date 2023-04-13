@@ -4,12 +4,12 @@ namespace DistTestCore.Codex
 {
     public class CodexAccess
     {
-        private readonly RunningContainer runningContainer;
-
         public CodexAccess(RunningContainer runningContainer)
         {
-            this.runningContainer = runningContainer;
+            Container = runningContainer;
         }
+
+        public RunningContainer Container { get; }
 
         public CodexDebugResponse GetDebugInfo()
         {
@@ -18,11 +18,26 @@ namespace DistTestCore.Codex
             return response;
         }
 
+        public string UploadFile(FileStream fileStream)
+        {
+            return Http().HttpPostStream("upload", fileStream);
+        }
+
+        public Stream DownloadFile(string contentId)
+        {
+            return Http().HttpGetStream("download/" + contentId);
+        }
+
         private Http Http()
         {
-            var ip = runningContainer.Pod.Cluster.GetIp();
-            var port = runningContainer.ServicePorts[0].Number;
+            var ip = Container.Pod.Cluster.GetIp();
+            var port = Container.ServicePorts[0].Number;
             return new Http(ip, port, baseUrl: "/api/codex/v1");
+        }
+
+        public string ConnectToPeer(string peerId, string peerMultiAddress)
+        {
+            return Http().HttpGetString($"connect/{peerId}?addrs={peerMultiAddress}");
         }
     }
 

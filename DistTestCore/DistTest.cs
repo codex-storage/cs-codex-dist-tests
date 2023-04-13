@@ -61,27 +61,27 @@ namespace DistTestCore
             return lifecycle.FileManager.GenerateTestFile(size);
         }
 
-        public ICodexSetupConfig SetupCodexNodes(int numberOfNodes)
+        public ICodexSetup SetupCodexNodes(int numberOfNodes)
         {
-            return new CodexSetupConfig(lifecycle.CodexStarter, numberOfNodes);
+            return new CodexSetup(lifecycle.CodexStarter, numberOfNodes);
         }
 
         private void IncludeLogsAndMetricsOnTestFailure()
         {
-            var result = TestContext.CurrentContext.Result;
-            if (result.Outcome.Status == NUnit.Framework.Interfaces.TestStatus.Failed)
-            {
-                if (IsDownloadingLogsAndMetricsEnabled())
-                {
-                    log.Log("Downloading all CodexNode logs and metrics because of test failure...");
-                    k8sManager.ForEachOnlineGroup(DownloadLogs);
-                    k8sManager.DownloadAllMetrics();
-                }
-                else
-                {
-                    log.Log("Skipping download of all CodexNode logs and metrics due to [DontDownloadLogsAndMetricsOnFailure] attribute.");
-                }
-            }
+            //var result = TestContext.CurrentContext.Result;
+            //if (result.Outcome.Status == NUnit.Framework.Interfaces.TestStatus.Failed)
+            //{
+            //    if (IsDownloadingLogsAndMetricsEnabled())
+            //    {
+            //        log.Log("Downloading all CodexNode logs and metrics because of test failure...");
+            //        k8sManager.ForEachOnlineGroup(DownloadLogs);
+            //        k8sManager.DownloadAllMetrics();
+            //    }
+            //    else
+            //    {
+            //        log.Log("Skipping download of all CodexNode logs and metrics due to [DontDownloadLogsAndMetricsOnFailure] attribute.");
+            //    }
+            //}
         }
 
         private void Log(string msg)
@@ -101,19 +101,19 @@ namespace DistTestCore
 
         private void DownloadLogs(CodexNodeGroup group)
         {
-            foreach (var node in group)
-            {
-                var downloader = new PodLogDownloader(log, k8sManager);
-                var n = (OnlineCodexNode)node;
-                downloader.DownloadLog(n);
-            }
+            //foreach (var node in group)
+            //{
+            //    var downloader = new PodLogDownloader(log, k8sManager);
+            //    var n = (OnlineCodexNode)node;
+            //    downloader.DownloadLog(n);
+            //}
         }
 
-        private bool IsDownloadingLogsAndMetricsEnabled()
-        {
-            var testProperties = TestContext.CurrentContext.Test.Properties;
-            return !testProperties.ContainsKey(PodLogDownloader.DontDownloadLogsOnFailureKey);
-        }
+        //private bool IsDownloadingLogsAndMetricsEnabled()
+        //{
+        //    var testProperties = TestContext.CurrentContext.Test.Properties;
+        //    return !testProperties.ContainsKey(PodLogDownloader.DontDownloadLogsOnFailureKey);
+        //}
     }
 
     public static class GlobalTestFailure

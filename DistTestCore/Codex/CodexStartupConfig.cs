@@ -1,4 +1,6 @@
-﻿namespace DistTestCore.Codex
+﻿using KubernetesWorkflow;
+
+namespace DistTestCore.Codex
 {
     public class CodexStartupConfig
     {

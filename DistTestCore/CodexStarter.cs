@@ -1,27 +1,28 @@
 ﻿using DistTestCore.Codex;
 using KubernetesWorkflow;
-using Logging;
 
 namespace DistTestCore
 {
     public class CodexStarter
     {
         private readonly WorkflowCreator workflowCreator;
+        private readonly TestLifecycle lifecycle;
 
-        public CodexStarter(TestLog log, Configuration configuration)
+        public CodexStarter(TestLifecycle lifecycle, Configuration configuration)
         {
             workflowCreator = new WorkflowCreator(configuration.GetK8sConfiguration());
+            this.lifecycle = lifecycle;
         }
 
-        public ICodexNodeGroup BringOnline(CodexSetupConfig codexSetupConfig)
+        public ICodexNodeGroup BringOnline(CodexSetup codexSetup)
         {
             var workflow = workflowCreator.CreateWorkflow();
             var startupConfig = new StartupConfig();
-            startupConfig.Add(codexSetupConfig);
+            startupConfig.Add(codexSetup);
             
-            var runningContainers = workflow.Start(codexSetupConfig.NumberOfNodes, codexSetupConfig.Location, new CodexContainerRecipe(), startupConfig);
+            var runningContainers = workflow.Start(codexSetup.NumberOfNodes, codexSetup.Location, new CodexContainerRecipe(), startupConfig);
 
-            // create access objects. Easy, right?
+            return new CodexNodeGroup(lifecycle, codexSetup, runningContainers);
         }
 
         public void DeleteAllResources()

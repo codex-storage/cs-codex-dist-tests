@@ -8,7 +8,7 @@ namespace DistTestCore
         {
             Log = new TestLog(configuration.GetLogConfig());
             FileManager = new FileManager(Log, configuration);
-            CodexStarter = new CodexStarter(Log, configuration);
+            CodexStarter = new CodexStarter(this, configuration);
         }
 
         public TestLog Log { get; }

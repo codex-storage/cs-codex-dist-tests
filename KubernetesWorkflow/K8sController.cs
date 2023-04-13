@@ -187,7 +187,7 @@ namespace KubernetesWorkflow
 
         private string GetNameForPort(ContainerRecipe recipe, Port port)
         {
-            return $"P{workflowNumberSource.WorkflowNumber}-{recipe.Number}-{port.Number}";
+            return $"p{workflowNumberSource.WorkflowNumber}-{recipe.Number}-{port.Number}";
         }
 
         #endregion
