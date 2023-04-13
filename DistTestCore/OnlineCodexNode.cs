@@ -1,4 +1,5 @@
 ﻿using DistTestCore.Codex;
+using DistTestCore.CodexLogs;
 using NUnit.Framework;
 
 namespace DistTestCore
@@ -9,7 +10,7 @@ namespace DistTestCore
         ContentId UploadFile(TestFile file);
         TestFile? DownloadContent(ContentId contentId);
         void ConnectToPeer(IOnlineCodexNode node);
-        //ICodexNodeLog DownloadLog();
+        ICodexNodeLog DownloadLog();
         //IMetricsAccess Metrics { get; }
         //IMarketplaceAccess Marketplace { get; }
     }
@@ -76,10 +77,10 @@ namespace DistTestCore
             Log($"Successfully connected to peer {peer.GetName()}.");
         }
 
-        //public ICodexNodeLog DownloadLog()
-        //{
-        //    return Group.DownloadLog(this);
-        //}
+        public ICodexNodeLog DownloadLog()
+        {
+            return lifecycle.DownloadLog(this);
+        }
 
         public string Describe()
         {

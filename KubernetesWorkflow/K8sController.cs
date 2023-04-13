@@ -43,6 +43,12 @@ namespace KubernetesWorkflow
             WaitUntilPodOffline(pod.Name);
         }
 
+        public void DownloadPodLog(RunningPod pod, ContainerRecipe recipe, ILogHandler logHandler)
+        {
+            var stream = client.ReadNamespacedPodLog(pod.Name, K8sNamespace, recipe.Name);
+            logHandler.Log(stream);
+        }
+
         public void DeleteAllResources()
         {
             DeleteNamespace();

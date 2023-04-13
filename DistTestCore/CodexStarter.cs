@@ -1,5 +1,7 @@
 ﻿using DistTestCore.Codex;
+using DistTestCore.CodexLogs;
 using KubernetesWorkflow;
+using Nethereum.Merkle.Patricia;
 
 namespace DistTestCore
 {
@@ -35,6 +37,12 @@ namespace DistTestCore
         {
             var workflow = CreateWorkflow();
             workflow.DeleteAllResources();
+        }
+
+        public void DownloadLog(RunningContainer container, ILogHandler logHandler)
+        {
+            var workflow = CreateWorkflow();
+            workflow.DownloadContainerLog(container, logHandler);
         }
 
         private StartupWorkflow CreateWorkflow()

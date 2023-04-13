@@ -1,4 +1,5 @@
 ﻿using DistTestCore;
+using DistTestCore.Codex;
 using KubernetesWorkflow;
 using NUnit.Framework;
 
@@ -61,6 +62,20 @@ namespace Tests.BasicTests
                             .BringOnline()[0];
 
             PerformTwoClientTest(primary, secondary);
+        }
+
+        [Test]
+        public void CodexLogExample()
+        {
+            var primary = SetupCodexNodes(1)
+                            .WithLogLevel(CodexLogLevel.Trace)
+                            .BringOnline()[0];
+
+            primary.UploadFile(GenerateTestFile(5.MB()));
+
+            var log = primary.DownloadLog();
+
+            log.AssertLogContains("Uploaded file");
         }
 
         //[Test]

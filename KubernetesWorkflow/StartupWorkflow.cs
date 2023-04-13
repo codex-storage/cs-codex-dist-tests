@@ -34,6 +34,14 @@
             });
         }
 
+        public void DownloadContainerLog(RunningContainer container, ILogHandler logHandler)
+        {
+            K8s(controller =>
+            {
+                controller.DownloadPodLog(container.Pod, container.Recipe, logHandler);
+            });
+        }
+
         public void DeleteAllResources()
         {
             K8s(controller =>
@@ -72,6 +80,10 @@
             controller.Dispose();
             return result;
         }
+    }
 
+    public interface ILogHandler
+    {
+        void Log(Stream log);
     }
 }

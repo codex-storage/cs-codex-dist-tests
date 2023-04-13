@@ -1,4 +1,5 @@
-﻿using Logging;
+﻿using DistTestCore.CodexLogs;
+using Logging;
 
 namespace DistTestCore
 {
@@ -19,6 +20,17 @@ namespace DistTestCore
         {
             CodexStarter.DeleteAllResources();
             FileManager.DeleteAllTestFiles();
+        }
+
+        public ICodexNodeLog DownloadLog(OnlineCodexNode node)
+        {
+            var subFile = Log.CreateSubfile();
+            var description = node.Describe();
+            var handler = new LogDownloadHandler(description, subFile);
+
+            CodexStarter.DownloadLog(node.CodexAccess.Container, handler);
+
+            return new CodexNodeLog(subFile);
         }
     }
 }
