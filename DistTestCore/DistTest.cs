@@ -1,4 +1,5 @@
 ﻿using DistTestCore.CodexLogsAndMetrics;
+using DistTestCore.Metrics;
 using NUnit.Framework;
 
 namespace DistTestCore
@@ -76,7 +77,7 @@ namespace DistTestCore
                 {
                     Log("Downloading all CodexNode logs and metrics because of test failure...");
                     DownloadAllLogs();
-                    //k8sManager.DownloadAllMetrics();
+                    DownloadAllMetrics();
                 }
                 else
                 {
@@ -102,10 +103,29 @@ namespace DistTestCore
 
         private void DownloadAllLogs()
         {
-            var allNodes = lifecycle.CodexStarter.RunningGroups.SelectMany(g => g.Nodes);
-            foreach (var node in allNodes) 
+            OnEachCodexNode(node =>
             {
                 lifecycle.DownloadLog(node);
+            });
+        }
+
+        private void DownloadAllMetrics()
+        {
+            var metricsDownloader = new MetricsDownloader(lifecycle.Log);
+
+            OnEachCodexNode(node =>
+            {
+                var m = (MetricsAccess)node.Metrics;
+                metricsDownloader.DownloadAllMetricsForNode(node.GetName(), m);
+            });
+        }
+
+        private void OnEachCodexNode(Action<OnlineCodexNode> action)
+        {
+            var allNodes = lifecycle.CodexStarter.RunningGroups.SelectMany(g => g.Nodes);
+            foreach (var node in allNodes)
+            {
+                action(node);
             }
         }
 

@@ -37,6 +37,11 @@ namespace DistTestCore.Metrics
             Assert.That(metricValue, constraint, message);
         }
 
+        public Metrics? GetAllMetrics()
+        {
+            return query.GetAllMetricsForNode(node);
+        }
+
         private MetricsSet GetMetricWithTimeout(string metricName)
         {
             var start = DateTime.UtcNow;

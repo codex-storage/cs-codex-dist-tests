@@ -6,39 +6,21 @@ namespace DistTestCore.Metrics
     public class MetricsDownloader
     {
         private readonly TestLog log;
-        private readonly Dictionary<MetricsQuery, OnlineCodexNode[]> activePrometheuses;
 
-        public MetricsDownloader(TestLog log, Dictionary<MetricsQuery, OnlineCodexNode[]> activePrometheuses)
+        public MetricsDownloader(TestLog log)
         {
             this.log = log;
-            this.activePrometheuses = activePrometheuses;
         }
 
-        public void DownloadAllMetrics()
+        public void DownloadAllMetricsForNode(string nodeName, MetricsAccess access)
         {
-            foreach (var pair in activePrometheuses)
-            {
-                DownloadAllMetrics(pair.Key, pair.Value);
-            }
-        }
-
-        private void DownloadAllMetrics(MetricsQuery query, OnlineCodexNode[] nodes)
-        {
-            foreach (var node in nodes)
-            {
-                DownloadAllMetricsForNode(query, node);
-            }
-        }
-
-        private void DownloadAllMetricsForNode(MetricsQuery query, OnlineCodexNode node)
-        {
-            var metrics = query.GetAllMetricsForNode(node.CodexAccess.Container);
+            var metrics = access.GetAllMetrics();
             if (metrics == null || metrics.Sets.Length == 0 || metrics.Sets.All(s => s.Values.Length == 0)) return;
 
             var headers = new[] { "timestamp" }.Concat(metrics.Sets.Select(s => s.Name)).ToArray();
             var map = CreateValueMap(metrics);
 
-            WriteToFile(node.GetName(), headers, map);
+            WriteToFile(nodeName, headers, map);
         }
 
         private void WriteToFile(string nodeName, string[] headers, Dictionary<DateTime, List<string>> map)
