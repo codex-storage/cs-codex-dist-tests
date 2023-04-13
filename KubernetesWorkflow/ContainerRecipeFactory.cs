@@ -14,7 +14,14 @@
 
             Initialize(config);
 
-            return new ContainerRecipe(containerNumber, Image, exposedPorts.ToArray(), internalPorts.ToArray(), envVars.ToArray());
+            var recipe = new ContainerRecipe(containerNumber, Image, exposedPorts.ToArray(), internalPorts.ToArray(), envVars.ToArray());
+
+            exposedPorts.Clear();
+            internalPorts.Clear();
+            envVars.Clear();
+            this.factory = null!;
+
+            return recipe;
         }
 
         protected abstract string Image { get; }

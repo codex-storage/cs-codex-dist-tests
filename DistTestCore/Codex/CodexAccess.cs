@@ -30,7 +30,7 @@ namespace DistTestCore.Codex
 
         private Http Http()
         {
-            var ip = Container.Pod.Cluster.GetIp();
+            var ip = Container.Pod.Cluster.IP;
             var port = Container.ServicePorts[0].Number;
             return new Http(ip, port, baseUrl: "/api/codex/v1");
         }

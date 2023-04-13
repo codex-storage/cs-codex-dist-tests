@@ -4,38 +4,19 @@ namespace KubernetesWorkflow
 {
     public class K8sCluster
     {
-        private KubernetesClientConfiguration? config;
-
         public K8sCluster(Configuration configuration)
         {
             Configuration = configuration;
         }
        
         public Configuration Configuration { get; }
+        public string IP { get; private set; } = string.Empty;
 
         public KubernetesClientConfiguration GetK8sClientConfig()
         {
-            if (config != null) return config;
-
-            if (Configuration.KubeConfigFile != null)
-            {
-                config = KubernetesClientConfiguration.BuildConfigFromConfigFile(Configuration.KubeConfigFile);
-            }
-            else
-            {
-                config = KubernetesClientConfiguration.BuildDefaultConfig();
-            }
-
+            var config = GetConfig();
+            UpdateIp(config);
             return config;
-        }
-
-        public string GetIp()
-        {
-            var c = GetK8sClientConfig();
-
-            var host = c.Host.Replace("https://", "");
-
-            return host.Substring(0, host.IndexOf(':'));
         }
 
         public string GetNodeLabelForLocation(Location location)
@@ -52,6 +33,24 @@ namespace KubernetesWorkflow
         public TimeSpan WaitForK8sServiceDelay()
         {
             return Configuration.RetryDelay;
+        }
+
+        private KubernetesClientConfiguration GetConfig()
+        {
+            if (Configuration.KubeConfigFile != null)
+            {
+                return KubernetesClientConfiguration.BuildConfigFromConfigFile(Configuration.KubeConfigFile);
+            }
+            else
+            {
+                return KubernetesClientConfiguration.BuildDefaultConfig();
+            }
+        }
+
+        private void UpdateIp(KubernetesClientConfiguration config)
+        {
+            var host = config.Host.Replace("https://", "");
+            IP = host.Substring(0, host.IndexOf(':'));
         }
     }
 }

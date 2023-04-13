@@ -227,7 +227,7 @@ namespace KubernetesWorkflow
         {
             return new V1ObjectMeta
             {
-                Name = "deploy-" + workflowNumberSource.WorkflowNumber,
+                Name = "service-" + workflowNumberSource.WorkflowNumber,
                 NamespaceProperty = K8sNamespace
             };
         }
