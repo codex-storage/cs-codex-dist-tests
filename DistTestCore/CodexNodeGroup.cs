@@ -6,7 +6,7 @@ namespace DistTestCore
 {
     public interface ICodexNodeGroup : IEnumerable<IOnlineCodexNode>
     {
-        //ICodexSetup BringOffline();
+        ICodexSetup BringOffline();
         IOnlineCodexNode this[int index] { get; }
     }
 
@@ -30,14 +30,23 @@ namespace DistTestCore
             }
         }
 
-        //public ICodexSetup BringOffline()
-        //{
-        //    //return k8SManager.BringOffline(this);
-        //}
+        public ICodexSetup BringOffline()
+        {
+            var result = Setup;
+            var containers = Containers;
 
-        public CodexSetup Setup { get; }
-        public RunningContainers Containers { get; }
-        public OnlineCodexNode[] Nodes { get; }
+            // Clear everything. Prevent accidental use.
+            Setup = null!;
+            Containers = null!;
+            Nodes = Array.Empty<OnlineCodexNode>();
+
+            lifecycle.CodexStarter.BringOffline(containers);
+            return result;
+        }
+
+        public CodexSetup Setup { get; private set; }
+        public RunningContainers Containers { get; private set; }
+        public OnlineCodexNode[] Nodes { get; private set; }
 
         //public GethCompanionGroup? GethCompanionGroup { get; set; }
 

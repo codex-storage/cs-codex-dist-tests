@@ -16,7 +16,7 @@ namespace DistTestCore
 
         public ICodexNodeGroup BringOnline(CodexSetup codexSetup)
         {
-            var workflow = workflowCreator.CreateWorkflow();
+            var workflow = CreateWorkflow();
             var startupConfig = new StartupConfig();
             startupConfig.Add(codexSetup);
             
@@ -25,10 +25,21 @@ namespace DistTestCore
             return new CodexNodeGroup(lifecycle, codexSetup, runningContainers);
         }
 
+        public void BringOffline(RunningContainers runningContainers)
+        {
+            var workflow = CreateWorkflow();
+            workflow.Stop(runningContainers);
+        }
+
         public void DeleteAllResources()
         {
-            var workflow = workflowCreator.CreateWorkflow();
+            var workflow = CreateWorkflow();
             workflow.DeleteAllResources();
+        }
+
+        private StartupWorkflow CreateWorkflow()
+        {
+            return workflowCreator.CreateWorkflow();
         }
     }
 }

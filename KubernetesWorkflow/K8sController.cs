@@ -28,11 +28,19 @@ namespace KubernetesWorkflow
         {
             EnsureTestNamespace();
 
-            CreateDeployment(containerRecipes, location);
-            var servicePortsMap = CreateService(containerRecipes);
+            var deploymentName = CreateDeployment(containerRecipes, location);
+            var (serviceName, servicePortsMap) = CreateService(containerRecipes);
             var (podName, podIp) = FetchNewPod();
 
-            return new RunningPod(cluster, podName, podIp, servicePortsMap);
+            return new RunningPod(cluster, podName, podIp, deploymentName, serviceName, servicePortsMap);
+        }
+
+        public void Stop(RunningPod pod)
+        {
+            if (!string.IsNullOrEmpty(pod.ServiceName)) DeleteService(pod.ServiceName);
+            DeleteDeployment(pod.DeploymentName);
+            WaitUntilDeploymentOffline(pod.DeploymentName);
+            WaitUntilPodOffline(pod.Name);
         }
 
         public void DeleteAllResources()
@@ -83,7 +91,7 @@ namespace KubernetesWorkflow
 
         #region Deployment management
 
-        private void CreateDeployment(ContainerRecipe[] containerRecipes, Location location)
+        private string CreateDeployment(ContainerRecipe[] containerRecipes, Location location)
         {
             var deploymentSpec = new V1Deployment
             {
@@ -112,7 +120,15 @@ namespace KubernetesWorkflow
             };
 
             client.CreateNamespacedDeployment(deploymentSpec, K8sNamespace);
-            WaitUntilDeploymentCreated(deploymentSpec);
+            WaitUntilDeploymentOnline(deploymentSpec.Metadata.Name);
+
+            return deploymentSpec.Metadata.Name;
+        }
+
+        private void DeleteDeployment(string deploymentName)
+        {
+            client.DeleteNamespacedDeployment(deploymentName, K8sNamespace);
+            WaitUntilDeploymentOffline(deploymentName);
         }
 
         private IDictionary<string, string> CreateNodeSelector(Location location)
@@ -194,7 +210,7 @@ namespace KubernetesWorkflow
 
         #region Service management
 
-        private Dictionary<ContainerRecipe, Port[]> CreateService(ContainerRecipe[] containerRecipes)
+        private (string, Dictionary<ContainerRecipe, Port[]>) CreateService(ContainerRecipe[] containerRecipes)
         {
             var result = new Dictionary<ContainerRecipe, Port[]>();
 
@@ -204,7 +220,7 @@ namespace KubernetesWorkflow
             {
                 // None of these container-recipes wish to expose anything via a serice port.
                 // So, we don't have to create a service.
-                return result;
+                return (string.Empty, result);
             }
 
             var serviceSpec = new V1Service
@@ -220,7 +236,13 @@ namespace KubernetesWorkflow
             };
 
             client.CreateNamespacedService(serviceSpec, K8sNamespace);
-            return result;
+
+            return (serviceSpec.Metadata.Name, result);
+        }
+
+        private void DeleteService(string serviceName)
+        {
+            client.DeleteNamespacedService(serviceName, K8sNamespace);
         }
 
         private V1ObjectMeta CreateServiceMetadata()
@@ -279,17 +301,32 @@ namespace KubernetesWorkflow
             WaitUntil(() => !IsTestNamespaceOnline());
         }
 
-        private void WaitUntilDeploymentCreated(V1Deployment deploymentSpec)
-        {
-            WaitUntilDeploymentOnline(deploymentSpec.Metadata.Name);
-        }
-
         private void WaitUntilDeploymentOnline(string deploymentName)
         {
             WaitUntil(() =>
             {
                 var deployment = client.ReadNamespacedDeployment(deploymentName, K8sNamespace);
                 return deployment?.Status.AvailableReplicas != null && deployment.Status.AvailableReplicas > 0;
+            });
+        }
+
+        private void WaitUntilDeploymentOffline(string deploymentName)
+        {
+            WaitUntil(() =>
+            {
+                var deployments = client.ListNamespacedDeployment(K8sNamespace);
+                var deployment = deployments.Items.SingleOrDefault(d => d.Metadata.Name == deploymentName);
+                return deployment == null || deployment.Status.AvailableReplicas == 0;
+            });
+        }
+
+        private void WaitUntilPodOffline(string podName)
+        {
+            WaitUntil(() =>
+            {
+                var pods = client.ListNamespacedPod(K8sNamespace).Items;
+                var pod = pods.SingleOrDefault(p => p.Metadata.Name == podName);
+                return pod == null;
             });
         }
 

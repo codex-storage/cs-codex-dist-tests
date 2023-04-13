@@ -12,13 +12,19 @@ namespace Tests.BasicTests
         {
             var primary = SetupCodexNodes(1).BringOnline()[0];
 
-            var testFile = GenerateTestFile(1.MB());
+            PerformOneClientTest(primary);
+        }
 
-            var contentId = primary.UploadFile(testFile);
+        [Test]
+        public void RestartTest()
+        {
+            var group = SetupCodexNodes(1).BringOnline();
 
-            var downloadedFile = primary.DownloadContent(contentId);
+            var setup = group.BringOffline();
 
-            testFile.AssertIsEqual(downloadedFile);
+            var primary = setup.BringOnline()[0];
+
+            PerformOneClientTest(primary);
         }
 
         [Test]
@@ -118,6 +124,17 @@ namespace Tests.BasicTests
         //    //secondary.Marketplace.AssertThatBalance(Is.LessThan(1000), "Contractor was not charged for storage.");
         //    //primary.Marketplace.AssertThatBalance(Is.GreaterThan(primaryBalance), "Storer was not paid for storage.");
         //}
+
+        private void PerformOneClientTest(IOnlineCodexNode primary)
+        {
+            var testFile = GenerateTestFile(1.MB());
+
+            var contentId = primary.UploadFile(testFile);
+
+            var downloadedFile = primary.DownloadContent(contentId);
+
+            testFile.AssertIsEqual(downloadedFile);
+        }
 
         private void PerformTwoClientTest(IOnlineCodexNode primary, IOnlineCodexNode secondary)
         {

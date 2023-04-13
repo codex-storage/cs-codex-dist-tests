@@ -4,13 +4,14 @@ namespace KubernetesWorkflow
 {
     public class WorkflowNumberSource
     {
-        private readonly NumberSource containerNumberSource = new NumberSource(0);
         private readonly NumberSource servicePortNumberSource;
+        private readonly NumberSource containerNumberSource;
 
-        public WorkflowNumberSource(int workflowNumber, NumberSource servicePortNumberSource)
+        public WorkflowNumberSource(int workflowNumber, NumberSource servicePortNumberSource, NumberSource containerNumberSource)
         {
             WorkflowNumber = workflowNumber;
             this.servicePortNumberSource = servicePortNumberSource;
+            this.containerNumberSource = containerNumberSource;
         }
 
         public int WorkflowNumber { get; }

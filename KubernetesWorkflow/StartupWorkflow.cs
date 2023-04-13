@@ -26,6 +26,14 @@
             });
         }
 
+        public void Stop(RunningContainers runningContainers)
+        {
+            K8s(controller =>
+            {
+                controller.Stop(runningContainers.RunningPod);
+            });
+        }
+
         public void DeleteAllResources()
         {
             K8s(controller =>
