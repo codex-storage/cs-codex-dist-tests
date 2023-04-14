@@ -2,13 +2,14 @@
 {
     public class ContainerRecipe
     {
-        public ContainerRecipe(int number, string image, Port[] exposedPorts, Port[] internalPorts, EnvVar[] envVars)
+        public ContainerRecipe(int number, string image, Port[] exposedPorts, Port[] internalPorts, EnvVar[] envVars, object[] additionals)
         {
             Number = number;
             Image = image;
             ExposedPorts = exposedPorts;
             InternalPorts = internalPorts;
             EnvVars = envVars;
+            Additionals = additionals;
         }
 
         public string Name { get { return $"ctnr{Number}"; } }
@@ -17,6 +18,7 @@
         public Port[] ExposedPorts { get; }
         public Port[] InternalPorts { get; }
         public EnvVar[] EnvVars { get; }
+        public object[] Additionals { get; }
 
         public Port GetPortByTag(string tag)
         {

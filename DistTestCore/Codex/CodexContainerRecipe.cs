@@ -5,9 +5,10 @@ namespace DistTestCore.Codex
 {
     public class CodexContainerRecipe : ContainerRecipeFactory
     {
+        public const string DockerImage = "thatbenbierens/nim-codex:sha-b204837";
         public const string MetricsPortTag = "metrics_port";
 
-        protected override string Image => "thatbenbierens/nim-codex:sha-b204837";
+        protected override string Image => DockerImage;
 
         protected override void Initialize(StartupConfig startupConfig)
         {
@@ -38,6 +39,7 @@ namespace DistTestCore.Codex
             {
                 var gethConfig = startupConfig.Get<GethStartResult>();
                 var companionNode = gethConfig.CompanionNodes[Index];
+                Additional(companionNode);
 
                 // Bootstrap node access from within the cluster:
                 //var ip = gethConfig.BootstrapNode.RunningContainers.RunningPod.Ip;

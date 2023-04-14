@@ -4,10 +4,12 @@ namespace DistTestCore.Marketplace
 {
     public class GethContainerRecipe : ContainerRecipeFactory
     {
-        protected override string Image => "thatbenbierens/geth-confenv:latest";
+        public const string DockerImage = "thatbenbierens/geth-confenv:latest";
         public const string HttpPortTag = "http_port";
         public const string AccountFilename = "account_string.txt";
         public const string GenesisFilename = "genesis.json";
+        
+        protected override string Image => DockerImage;
 
         protected override void Initialize(StartupConfig startupConfig)
         {

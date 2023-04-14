@@ -17,7 +17,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Utils", "Utils\Utils.csproj
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Logging", "Logging\Logging.csproj", "{8481A4A6-4BDD-41B0-A3EB-EF53F7BD40D1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nethereum", "Nethereum\Nethereum.csproj", "{D6C3555E-D52D-4993-A87B-71AB650398FD}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NethereumWorkflow", "Nethereum\NethereumWorkflow.csproj", "{D6C3555E-D52D-4993-A87B-71AB650398FD}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

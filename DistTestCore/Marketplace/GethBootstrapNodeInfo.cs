@@ -1,4 +1,6 @@
 ﻿using KubernetesWorkflow;
+using Logging;
+using NethereumWorkflow;
 
 namespace DistTestCore.Marketplace
 {
@@ -14,5 +16,14 @@ namespace DistTestCore.Marketplace
         public RunningContainers RunningContainers { get; }
         public string Account { get; }
         public string GenesisJsonBase64 { get; }
+
+        public NethereumInteraction StartInteraction(TestLog log)
+        {
+            var ip = RunningContainers.RunningPod.Cluster.IP;
+            var port = RunningContainers.Containers[0].ServicePorts[0].Number;
+
+            var creator = new NethereumInteractionCreator(log, ip, port, Account);
+            return creator.CreateWorkflow();
+        }
     }
 }

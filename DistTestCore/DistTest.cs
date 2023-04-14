@@ -1,5 +1,8 @@
-﻿using DistTestCore.Logs;
+﻿using DistTestCore.Codex;
+using DistTestCore.Logs;
+using DistTestCore.Marketplace;
 using DistTestCore.Metrics;
+using Logging;
 using NUnit.Framework;
 
 namespace DistTestCore
@@ -8,6 +11,7 @@ namespace DistTestCore
     public abstract class DistTest
     {
         private TestLifecycle lifecycle = null!;
+        private TestLog log = null!;
 
         [OneTimeSetUp]
         public void GlobalSetup()
@@ -26,7 +30,10 @@ namespace DistTestCore
                 Error($"Global setup cleanup failed with: {ex}");
                 throw;
             }
-            Log("Global setup cleanup successful");
+            log.Log("Global setup cleanup successful");
+            log.Log($"Codex image: {CodexContainerRecipe.DockerImage}");
+            log.Log($"Prometheus image: {PrometheusContainerRecipe.DockerImage}");
+            log.Log($"Geth image: {GethContainerRecipe.DockerImage}");
         }
 
         [SetUp]
@@ -38,6 +45,7 @@ namespace DistTestCore
             }
             else
             {
+                log.Log($"Run: {TestContext.CurrentContext.Test.Name}");
                 CreateNewTestLifecycle();
             }
         }
@@ -47,6 +55,7 @@ namespace DistTestCore
         {
             try
             {
+                log.Log($"{TestContext.CurrentContext.Test.Name} = {TestContext.CurrentContext.Result.Outcome.Status}");
                 lifecycle.Log.EndTest();
                 IncludeLogsAndMetricsOnTestFailure();
                 lifecycle.DeleteAllResources();

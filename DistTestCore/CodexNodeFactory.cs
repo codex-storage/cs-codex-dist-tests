@@ -25,7 +25,7 @@ namespace DistTestCore
         public OnlineCodexNode CreateOnlineCodexNode(CodexAccess access, CodexNodeGroup group)
         {
             var metricsAccess = metricsAccessFactory.CreateMetricsAccess(access.Container);
-            var marketplaceAccess = marketplaceAccessFactory.CreateMarketplaceAccess();
+            var marketplaceAccess = marketplaceAccessFactory.CreateMarketplaceAccess(access);
             return new OnlineCodexNode(lifecycle, access, group, metricsAccess, marketplaceAccess);
         }
     }

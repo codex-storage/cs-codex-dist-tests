@@ -103,42 +103,42 @@ namespace Tests.BasicTests
             primary2.Metrics.AssertThat("libp2p_peers", Is.EqualTo(1));
         }
 
-        //[Test]
-        //public void MarketplaceExample()
-        //{
-        //    var group = SetupCodexNodes(4)
-        //                    .WithStorageQuota(10.GB())
-        //                    .EnableMarketplace(initialBalance: 20)
-        //                    .BringOnline();
+        [Test]
+        public void MarketplaceExample()
+        {
+            var group = SetupCodexNodes(4)
+                            .WithStorageQuota(10.GB())
+                            .EnableMarketplace(initialBalance: 20)
+                            .BringOnline();
 
-        //    foreach (var node in group)
-        //    {
-        //        Assert.That(node.Marketplace.GetBalance(), Is.EqualTo(20));
-        //    }
+            foreach (var node in group)
+            {
+                Assert.That(node.Marketplace.GetBalance(), Is.EqualTo(20));
+            }
 
-        //    // WIP: Balance is now only ETH.
-        //    // todo: All nodes should have plenty of ETH to pay for transactions.
-        //    // todo: Upload our own token, use this exclusively. ETH should be invisibile to the tests.
+            // WIP: Balance is now only ETH.
+            // todo: All nodes should have plenty of ETH to pay for transactions.
+            // todo: Upload our own token, use this exclusively. ETH should be invisibile to the tests.
 
 
-        //    //var secondary = SetupCodexNodes(1)
-        //    //                .EnableMarketplace(initialBalance: 1000)
-        //    //                .BringOnline()[0];
+            //var secondary = SetupCodexNodes(1)
+            //                .EnableMarketplace(initialBalance: 1000)
+            //                .BringOnline()[0];
 
-        //    //primary.ConnectToPeer(secondary);
-        //    //primary.Marketplace.MakeStorageAvailable(10.GB(), minPricePerBytePerSecond: 1, maxCollateral: 20);
+            //primary.ConnectToPeer(secondary);
+            //primary.Marketplace.MakeStorageAvailable(10.GB(), minPricePerBytePerSecond: 1, maxCollateral: 20);
 
-        //    //var testFile = GenerateTestFile(10.MB());
-        //    //var contentId = secondary.UploadFile(testFile);
-        //    //secondary.Marketplace.RequestStorage(contentId, pricePerBytePerSecond: 2,
-        //    //    requiredCollateral: 10, minRequiredNumberOfNodes: 1);
+            //var testFile = GenerateTestFile(10.MB());
+            //var contentId = secondary.UploadFile(testFile);
+            //secondary.Marketplace.RequestStorage(contentId, pricePerBytePerSecond: 2,
+            //    requiredCollateral: 10, minRequiredNumberOfNodes: 1);
 
-        //    //primary.Marketplace.AssertThatBalance(Is.LessThan(20), "Collateral was not placed.");
-        //    //var primaryBalance = primary.Marketplace.GetBalance();
+            //primary.Marketplace.AssertThatBalance(Is.LessThan(20), "Collateral was not placed.");
+            //var primaryBalance = primary.Marketplace.GetBalance();
 
-        //    //secondary.Marketplace.AssertThatBalance(Is.LessThan(1000), "Contractor was not charged for storage.");
-        //    //primary.Marketplace.AssertThatBalance(Is.GreaterThan(primaryBalance), "Storer was not paid for storage.");
-        //}
+            //secondary.Marketplace.AssertThatBalance(Is.LessThan(1000), "Contractor was not charged for storage.");
+            //primary.Marketplace.AssertThatBalance(Is.GreaterThan(primaryBalance), "Storer was not paid for storage.");
+        }
 
         private void PerformOneClientTest(IOnlineCodexNode primary)
         {

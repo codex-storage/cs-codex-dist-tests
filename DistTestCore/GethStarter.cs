@@ -5,34 +5,41 @@ namespace DistTestCore
 {
     public class GethStarter
     {
-        private readonly TestLifecycle lifecycle;
-        private readonly GethBootstrapNodeStarter bootstrapNodeStarter;
+        private readonly GethBootstrapNodeCache bootstrapNodeCache;
         private readonly GethCompanionNodeStarter companionNodeStarter;
-        private GethBootstrapNodeInfo? bootstrapNode;
+        private readonly TestLifecycle lifecycle;
 
         public GethStarter(TestLifecycle lifecycle, WorkflowCreator workflowCreator)
         {
-            this.lifecycle = lifecycle;
-
-            bootstrapNodeStarter = new GethBootstrapNodeStarter(lifecycle, workflowCreator);
+            bootstrapNodeCache = new GethBootstrapNodeCache(new GethBootstrapNodeStarter(lifecycle, workflowCreator));
             companionNodeStarter = new GethCompanionNodeStarter(lifecycle, workflowCreator);
+            this.lifecycle = lifecycle;
         }
 
         public GethStartResult BringOnlineMarketplaceFor(CodexSetup codexSetup)
         {
             if (codexSetup.MarketplaceConfig == null) return CreateMarketplaceUnavailableResult();
 
-            EnsureBootstrapNode();
-            var companionNodes = StartCompanionNodes(codexSetup);
+            var bootstrapNode = bootstrapNodeCache.Get();
+            var companionNodes = StartCompanionNodes(codexSetup, bootstrapNode);
 
-            TransferInitialBalance(codexSetup.MarketplaceConfig.InitialBalance, bootstrapNode, companionNodes);
+            TransferInitialBalance(bootstrapNode, codexSetup.MarketplaceConfig.InitialBalance, companionNodes);
 
-            return new GethStartResult(CreateMarketplaceAccessFactory(), bootstrapNode!, companionNodes);
+            return CreateGethStartResult(bootstrapNode, companionNodes);
         }
 
-        private void TransferInitialBalance(int initialBalance, GethBootstrapNodeInfo? bootstrapNode, GethCompanionNodeInfo[] companionNodes)
+        private void TransferInitialBalance(GethBootstrapNodeInfo bootstrapNode, int initialBalance, GethCompanionNodeInfo[] companionNodes)
         {
-            aaaa
+            var interaction = bootstrapNode.StartInteraction(lifecycle.Log);
+            foreach (var node in companionNodes)
+            {
+                interaction.TransferTo(node.Account, initialBalance);
+            }
+        }
+
+        private GethStartResult CreateGethStartResult(GethBootstrapNodeInfo bootstrapNode, GethCompanionNodeInfo[] companionNodes)
+        {
+            return new GethStartResult(CreateMarketplaceAccessFactory(bootstrapNode), bootstrapNode, companionNodes);
         }
 
         private GethStartResult CreateMarketplaceUnavailableResult()
@@ -40,20 +47,34 @@ namespace DistTestCore
             return new GethStartResult(new MarketplaceUnavailableAccessFactory(), null!, Array.Empty<GethCompanionNodeInfo>());
         }
 
-        private IMarketplaceAccessFactory CreateMarketplaceAccessFactory()
+        private IMarketplaceAccessFactory CreateMarketplaceAccessFactory(GethBootstrapNodeInfo bootstrapNode)
         {
-            throw new NotImplementedException();
+            return new GethMarketplaceAccessFactory(lifecycle.Log, bootstrapNode!);
         }
 
-        private void EnsureBootstrapNode()
+        private GethCompanionNodeInfo[] StartCompanionNodes(CodexSetup codexSetup, GethBootstrapNodeInfo bootstrapNode)
         {
-            if (bootstrapNode != null) return;
-            bootstrapNode = bootstrapNodeStarter.StartGethBootstrapNode();
+            return companionNodeStarter.StartCompanionNodesFor(codexSetup, bootstrapNode);
+        }
+    }
+
+    public class GethBootstrapNodeCache
+    {
+        private readonly GethBootstrapNodeStarter bootstrapNodeStarter;
+        private GethBootstrapNodeInfo? bootstrapNode;
+
+        public GethBootstrapNodeCache(GethBootstrapNodeStarter bootstrapNodeStarter)
+        {
+            this.bootstrapNodeStarter = bootstrapNodeStarter;
         }
 
-        private GethCompanionNodeInfo[] StartCompanionNodes(CodexSetup codexSetup)
+        public GethBootstrapNodeInfo Get()
         {
-            return companionNodeStarter.StartCompanionNodesFor(codexSetup, bootstrapNode!);
+            if (bootstrapNode == null)
+            {
+                bootstrapNode = bootstrapNodeStarter.StartGethBootstrapNode();
+            }
+            return bootstrapNode;
         }
     }
 }

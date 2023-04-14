@@ -16,6 +16,6 @@
   <ItemGroup>
     <ProjectReference Include="..\KubernetesWorkflow\KubernetesWorkflow.csproj" />
     <ProjectReference Include="..\Logging\Logging.csproj" />
-    <ProjectReference Include="..\Nethereum\Nethereum.csproj" />
+    <ProjectReference Include="..\Nethereum\NethereumWorkflow.csproj" />
   </ItemGroup>
 </Project>

@@ -15,21 +15,14 @@ namespace DistTestCore.Marketplace
     public class MarketplaceAccess : IMarketplaceAccess
     {
         private readonly TestLog log;
-        private readonly CodexNodeGroup group;
+        private readonly GethBootstrapNodeInfo bootstrapNode;
+        private readonly GethCompanionNodeInfo companionNode;
 
-        public MarketplaceAccess(TestLog log, CodexNodeGroup group)
+        public MarketplaceAccess(TestLog log, GethBootstrapNodeInfo bootstrapNode, GethCompanionNodeInfo companionNode)
         {
             this.log = log;
-            this.group = group;
-        }
-
-        public void Initialize()
-        {
-            EnsureAccount();
-
-            marketplaceController.AddToBalance(container.Account, group.Origin.MarketplaceConfig!.InitialBalance);
-
-            log.Log($"Initialized Geth companion node with account '{container.Account}' and initial balance {group.Origin.MarketplaceConfig!.InitialBalance}");
+            this.bootstrapNode = bootstrapNode;
+            this.companionNode = companionNode;
         }
 
         public void RequestStorage(ContentId contentId, int pricePerBytePerSecond, float requiredCollateral, float minRequiredNumberOfNodes)
@@ -44,12 +37,13 @@ namespace DistTestCore.Marketplace
 
         public void AssertThatBalance(IResolveConstraint constraint, string message = "")
         {
-            throw new NotImplementedException();
+            Assert.That(GetBalance(), constraint, message);
         }
 
         public decimal GetBalance()
         {
-            return marketplaceController.GetBalance(container.Account);
+            var interaction = bootstrapNode.StartInteraction(log);
+            return interaction.GetBalance(companionNode.Account);
         }
     }
 

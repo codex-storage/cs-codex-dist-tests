@@ -69,7 +69,6 @@ namespace DistTestCore
         {
             var group = new CodexNodeGroup(lifecycle, codexSetup, runningContainers, codexNodeFactory);
             RunningGroups.Add(group);
-
             return group;
         }
 
