@@ -18,16 +18,21 @@ namespace DistTestCore
 
         public ICodexNodeGroup BringOnline(CodexSetup codexSetup)
         {
-            var something = lifecycle.GethStarter.BringOnlineMarketplaceFor(codexSetup);
+            Log($"Starting {codexSetup.Describe()}...");
+            var gethStartResult = lifecycle.GethStarter.BringOnlineMarketplaceFor(codexSetup);
 
-            var containers = StartCodexContainers(codexSetup);
+            var startupConfig = new StartupConfig();
+            startupConfig.Add(codexSetup);
+            startupConfig.Add(gethStartResult);
+
+            var containers = StartCodexContainers(startupConfig, codexSetup.NumberOfNodes, codexSetup.Location);
 
             var metricAccessFactory = lifecycle.PrometheusStarter.CollectMetricsFor(codexSetup, containers);
             
-            var codexNodeFactory = new CodexNodeFactory(lifecycle, metricAccessFactory);
+            var codexNodeFactory = new CodexNodeFactory(lifecycle, metricAccessFactory, gethStartResult.MarketplaceAccessFactory);
 
             var group = CreateCodexGroup(codexSetup, containers, codexNodeFactory);
-
+            Log($"Started at '{group.Containers.RunningPod.Ip}'");
             return group;
         }
 
@@ -54,15 +59,10 @@ namespace DistTestCore
             workflow.DownloadContainerLog(container, logHandler);
         }
         
-        private RunningContainers StartCodexContainers(CodexSetup codexSetup)
+        private RunningContainers StartCodexContainers(StartupConfig startupConfig, int numberOfNodes, Location location)
         {
-            Log($"Starting {codexSetup.Describe()}...");
-
             var workflow = CreateWorkflow();
-            var startupConfig = new StartupConfig();
-            startupConfig.Add(codexSetup);
-
-            return workflow.Start(codexSetup.NumberOfNodes, codexSetup.Location, new CodexContainerRecipe(), startupConfig);
+            return workflow.Start(numberOfNodes, location, new CodexContainerRecipe(), startupConfig);
         }
 
         private CodexNodeGroup CreateCodexGroup(CodexSetup codexSetup, RunningContainers runningContainers, CodexNodeFactory codexNodeFactory)
@@ -70,7 +70,6 @@ namespace DistTestCore
             var group = new CodexNodeGroup(lifecycle, codexSetup, runningContainers, codexNodeFactory);
             RunningGroups.Add(group);
 
-            Log($"Started at '{group.Containers.RunningPod.Ip}'");
             return group;
         }
 

@@ -68,7 +68,7 @@
             var result = new List<ContainerRecipe>();
             for (var i = 0; i < numberOfContainers; i++)
             {
-                result.Add(recipeFactory.CreateRecipe(numberSource.GetContainerNumber(), componentFactory, startupConfig));
+                result.Add(recipeFactory.CreateRecipe(i ,numberSource.GetContainerNumber(), componentFactory, startupConfig));
             }
 
             return result.ToArray();

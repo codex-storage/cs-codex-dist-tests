@@ -1,4 +1,5 @@
 ﻿using DistTestCore.Codex;
+using DistTestCore.Marketplace;
 using DistTestCore.Metrics;
 
 namespace DistTestCore
@@ -12,17 +13,20 @@ namespace DistTestCore
     {
         private readonly TestLifecycle lifecycle;
         private readonly IMetricsAccessFactory metricsAccessFactory;
+        private readonly IMarketplaceAccessFactory marketplaceAccessFactory;
 
-        public CodexNodeFactory(TestLifecycle lifecycle, IMetricsAccessFactory metricsAccessFactory)
+        public CodexNodeFactory(TestLifecycle lifecycle, IMetricsAccessFactory metricsAccessFactory, IMarketplaceAccessFactory marketplaceAccessFactory)
         {
             this.lifecycle = lifecycle;
             this.metricsAccessFactory = metricsAccessFactory;
+            this.marketplaceAccessFactory = marketplaceAccessFactory;
         }
 
         public OnlineCodexNode CreateOnlineCodexNode(CodexAccess access, CodexNodeGroup group)
         {
             var metricsAccess = metricsAccessFactory.CreateMetricsAccess(access.Container);
-            return new OnlineCodexNode(lifecycle, access, group, metricsAccess);
+            var marketplaceAccess = marketplaceAccessFactory.CreateMarketplaceAccess();
+            return new OnlineCodexNode(lifecycle, access, group, metricsAccess, marketplaceAccess);
         }
     }
 }

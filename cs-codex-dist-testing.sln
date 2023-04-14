@@ -9,13 +9,15 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestsLong", "LongTests\Test
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CodexDistTestCore", "CodexDistTestCore\CodexDistTestCore.csproj", "{19306DE1-CEE5-4F7B-AA5D-FD91926D853D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DistTestCore", "DistTestCore\DistTestCore.csproj", "{47F31305-6E68-4827-8E39-7B41DAA1CE7A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DistTestCore", "DistTestCore\DistTestCore.csproj", "{47F31305-6E68-4827-8E39-7B41DAA1CE7A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KubernetesWorkflow", "KubernetesWorkflow\KubernetesWorkflow.csproj", "{359123AA-3D9B-4442-80F4-19E32E3EC9EA}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "KubernetesWorkflow", "KubernetesWorkflow\KubernetesWorkflow.csproj", "{359123AA-3D9B-4442-80F4-19E32E3EC9EA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Utils", "Utils\Utils.csproj", "{957DE3B8-9571-450A-8609-B267DCA8727C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Utils", "Utils\Utils.csproj", "{957DE3B8-9571-450A-8609-B267DCA8727C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Logging", "Logging\Logging.csproj", "{8481A4A6-4BDD-41B0-A3EB-EF53F7BD40D1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Logging", "Logging\Logging.csproj", "{8481A4A6-4BDD-41B0-A3EB-EF53F7BD40D1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nethereum", "Nethereum\Nethereum.csproj", "{D6C3555E-D52D-4993-A87B-71AB650398FD}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -51,6 +53,10 @@ Global
 		{8481A4A6-4BDD-41B0-A3EB-EF53F7BD40D1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8481A4A6-4BDD-41B0-A3EB-EF53F7BD40D1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8481A4A6-4BDD-41B0-A3EB-EF53F7BD40D1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D6C3555E-D52D-4993-A87B-71AB650398FD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D6C3555E-D52D-4993-A87B-71AB650398FD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D6C3555E-D52D-4993-A87B-71AB650398FD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D6C3555E-D52D-4993-A87B-71AB650398FD}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

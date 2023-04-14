@@ -1,4 +1,5 @@
 ﻿using DistTestCore.Codex;
+using DistTestCore.Marketplace;
 using KubernetesWorkflow;
 
 namespace DistTestCore
@@ -10,7 +11,7 @@ namespace DistTestCore
         //ICodexStartupConfig WithBootstrapNode(IOnlineCodexNode node);
         ICodexSetup WithStorageQuota(ByteSize storageQuota);
         ICodexSetup EnableMetrics();
-        //ICodexSetupConfig EnableMarketplace(int initialBalance);
+        ICodexSetup EnableMarketplace(int initialBalance);
         ICodexNodeGroup BringOnline();
     }
     
@@ -61,11 +62,11 @@ namespace DistTestCore
             return this;
         }
 
-        //public ICodexSetupConfig EnableMarketplace(int initialBalance)
-        //{
-        //    MarketplaceConfig = new MarketplaceInitialConfig(initialBalance);
-        //    return this;
-        //}
+        public ICodexSetup EnableMarketplace(int initialBalance)
+        {
+            MarketplaceConfig = new MarketplaceInitialConfig(initialBalance);
+            return this;
+        }
 
         public string Describe()
         {

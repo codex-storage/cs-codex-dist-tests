@@ -1,5 +1,6 @@
 ﻿using DistTestCore.Codex;
 using DistTestCore.Logs;
+using DistTestCore.Marketplace;
 using DistTestCore.Metrics;
 using NUnit.Framework;
 
@@ -13,7 +14,7 @@ namespace DistTestCore
         void ConnectToPeer(IOnlineCodexNode node);
         ICodexNodeLog DownloadLog();
         IMetricsAccess Metrics { get; }
-        //IMarketplaceAccess Marketplace { get; }
+        IMarketplaceAccess Marketplace { get; }
     }
 
     public class OnlineCodexNode : IOnlineCodexNode
@@ -22,17 +23,19 @@ namespace DistTestCore
         private const string UploadFailedMessage = "Unable to store block";
         private readonly TestLifecycle lifecycle;
 
-        public OnlineCodexNode(TestLifecycle lifecycle, CodexAccess codexAccess, CodexNodeGroup group, IMetricsAccess metricsAccess)
+        public OnlineCodexNode(TestLifecycle lifecycle, CodexAccess codexAccess, CodexNodeGroup group, IMetricsAccess metricsAccess, IMarketplaceAccess marketplaceAccess)
         {
             this.lifecycle = lifecycle;
             CodexAccess = codexAccess;
             Group = group;
             Metrics = metricsAccess;
+            Marketplace = marketplaceAccess;
         }
 
         public CodexAccess CodexAccess { get; }
         public CodexNodeGroup Group { get; }
         public IMetricsAccess Metrics { get; }
+        public IMarketplaceAccess Marketplace { get; }
 
         public string GetName()
         {

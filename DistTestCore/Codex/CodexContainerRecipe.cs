@@ -1,4 +1,5 @@
-﻿using KubernetesWorkflow;
+﻿using DistTestCore.Marketplace;
+using KubernetesWorkflow;
 
 namespace DistTestCore.Codex
 {
@@ -31,6 +32,20 @@ namespace DistTestCore.Codex
             {
                 AddEnvVar("METRICS_ADDR", "0.0.0.0");
                 AddInternalPortAndVar("METRICS_PORT", tag: MetricsPortTag);
+            }
+
+            if (config.MarketplaceConfig != null)
+            {
+                var gethConfig = startupConfig.Get<GethStartResult>();
+                var companionNode = gethConfig.CompanionNodes[Index];
+
+                // Bootstrap node access from within the cluster:
+                //var ip = gethConfig.BootstrapNode.RunningContainers.RunningPod.Ip;
+                //var port = gethConfig.BootstrapNode.RunningContainers.Containers[0].Recipe.GetPortByTag(GethContainerRecipe.HttpPortTag);
+
+                //AddEnvVar("ETH_PROVIDER", "todo");
+                //AddEnvVar("ETH_ACCOUNT", companionNode.Account);
+                //AddEnvVar("ETH_DEPLOYMENT", "todo");
             }
         }
     }

@@ -6,23 +6,43 @@ namespace DistTestCore
     public class GethStarter
     {
         private readonly TestLifecycle lifecycle;
-        private readonly WorkflowCreator workflowCreator;
         private readonly GethBootstrapNodeStarter bootstrapNodeStarter;
+        private readonly GethCompanionNodeStarter companionNodeStarter;
         private GethBootstrapNodeInfo? bootstrapNode;
 
         public GethStarter(TestLifecycle lifecycle, WorkflowCreator workflowCreator)
         {
             this.lifecycle = lifecycle;
-            this.workflowCreator = workflowCreator;
 
             bootstrapNodeStarter = new GethBootstrapNodeStarter(lifecycle, workflowCreator);
+            companionNodeStarter = new GethCompanionNodeStarter(lifecycle, workflowCreator);
         }
 
-        public object BringOnlineMarketplaceFor(CodexSetup codexSetup)
+        public GethStartResult BringOnlineMarketplaceFor(CodexSetup codexSetup)
         {
+            if (codexSetup.MarketplaceConfig == null) return CreateMarketplaceUnavailableResult();
+
             EnsureBootstrapNode();
-            StartCompanionNodes(codexSetup);
-            return null!;
+            var companionNodes = StartCompanionNodes(codexSetup);
+
+            TransferInitialBalance(codexSetup.MarketplaceConfig.InitialBalance, bootstrapNode, companionNodes);
+
+            return new GethStartResult(CreateMarketplaceAccessFactory(), bootstrapNode!, companionNodes);
+        }
+
+        private void TransferInitialBalance(int initialBalance, GethBootstrapNodeInfo? bootstrapNode, GethCompanionNodeInfo[] companionNodes)
+        {
+            aaaa
+        }
+
+        private GethStartResult CreateMarketplaceUnavailableResult()
+        {
+            return new GethStartResult(new MarketplaceUnavailableAccessFactory(), null!, Array.Empty<GethCompanionNodeInfo>());
+        }
+
+        private IMarketplaceAccessFactory CreateMarketplaceAccessFactory()
+        {
+            throw new NotImplementedException();
         }
 
         private void EnsureBootstrapNode()
@@ -31,14 +51,9 @@ namespace DistTestCore
             bootstrapNode = bootstrapNodeStarter.StartGethBootstrapNode();
         }
 
-        private void StartCompanionNodes(CodexSetup codexSetup)
+        private GethCompanionNodeInfo[] StartCompanionNodes(CodexSetup codexSetup)
         {
-            throw new NotImplementedException();
-        }
-
-        private void Log(string msg)
-        {
-            lifecycle.Log.Log(msg);
+            return companionNodeStarter.StartCompanionNodesFor(codexSetup, bootstrapNode!);
         }
     }
 }

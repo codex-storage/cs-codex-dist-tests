@@ -7,10 +7,11 @@
         private readonly List<EnvVar> envVars = new List<EnvVar>();
         private RecipeComponentFactory factory = null!;
 
-        public ContainerRecipe CreateRecipe(int containerNumber, RecipeComponentFactory factory, StartupConfig config)
+        public ContainerRecipe CreateRecipe(int index, int containerNumber, RecipeComponentFactory factory, StartupConfig config)
         {
             this.factory = factory;
             ContainerNumber = containerNumber;
+            Index = index;
 
             Initialize(config);
 
@@ -26,6 +27,7 @@
 
         protected abstract string Image { get; }
         protected int ContainerNumber { get; private set; } = 0;
+        protected int Index { get; private set; } = 0;
         protected abstract void Initialize(StartupConfig config);
 
         protected Port AddExposedPort(string tag = "")

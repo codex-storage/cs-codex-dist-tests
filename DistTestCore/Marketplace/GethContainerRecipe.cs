@@ -5,6 +5,7 @@ namespace DistTestCore.Marketplace
     public class GethContainerRecipe : ContainerRecipeFactory
     {
         protected override string Image => "thatbenbierens/geth-confenv:latest";
+        public const string HttpPortTag = "http_port";
         public const string AccountFilename = "account_string.txt";
         public const string GenesisFilename = "genesis.json";
 
@@ -30,7 +31,7 @@ namespace DistTestCore.Marketplace
             var port = AddInternalPort();
             var discovery = AddInternalPort();
             var authRpc = AddInternalPort();
-            var httpPort = AddInternalPort();
+            var httpPort = AddInternalPort(tag: HttpPortTag);
             return $"--port {port.Number} --discovery.port {discovery.Number} --authrpc.port {authRpc.Number} --http.port {httpPort.Number}";
         }
     }
