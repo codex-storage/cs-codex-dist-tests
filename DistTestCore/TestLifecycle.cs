@@ -8,9 +8,9 @@ namespace DistTestCore
     {
         private readonly WorkflowCreator workflowCreator;
 
-        public TestLifecycle(Configuration configuration)
+        public TestLifecycle(TestLog log, Configuration configuration)
         {
-            Log = new TestLog(configuration.GetLogConfig());
+            Log = log;
             workflowCreator = new WorkflowCreator(configuration.GetK8sConfiguration());
 
             FileManager = new FileManager(Log, configuration);
@@ -37,7 +37,7 @@ namespace DistTestCore
             var description = node.Describe();
             var handler = new LogDownloadHandler(description, subFile);
 
-            Log.Log($"Downloading logs for {description} to file {subFile.FilenameWithoutPath}");
+            Log.Log($"Downloading logs for {description} to file '{subFile.FullFilename}'");
             CodexStarter.DownloadLog(node.CodexAccess.Container, handler);
 
             return new CodexNodeLog(subFile);

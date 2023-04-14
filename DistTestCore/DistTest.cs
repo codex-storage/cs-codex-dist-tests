@@ -2,27 +2,35 @@
 using DistTestCore.Logs;
 using DistTestCore.Marketplace;
 using DistTestCore.Metrics;
+using KubernetesWorkflow;
 using Logging;
 using NUnit.Framework;
+using Utils;
 
 namespace DistTestCore
 {
     [SetUpFixture]
     public abstract class DistTest
     {
+        private readonly Configuration configuration = new Configuration();
+        private FixtureLog fixtureLog = null!;
         private TestLifecycle lifecycle = null!;
-        private TestLog log = null!;
+        private DateTime testStart = DateTime.MinValue;
 
         [OneTimeSetUp]
         public void GlobalSetup()
         {
             // Previous test run may have been interrupted.
             // Begin by cleaning everything up.
-            CreateNewTestLifecycle();
+            fixtureLog = new FixtureLog(configuration.GetLogConfig());
 
             try
             {
-                lifecycle.DeleteAllResources();
+                Stopwatch.Measure(fixtureLog, "Global setup", () =>
+                {
+                    var wc = new WorkflowCreator(configuration.GetK8sConfiguration());
+                    wc.CreateWorkflow().DeleteAllResources();
+                });                
             }
             catch (Exception ex)
             {
@@ -30,10 +38,11 @@ namespace DistTestCore
                 Error($"Global setup cleanup failed with: {ex}");
                 throw;
             }
-            log.Log("Global setup cleanup successful");
-            log.Log($"Codex image: {CodexContainerRecipe.DockerImage}");
-            log.Log($"Prometheus image: {PrometheusContainerRecipe.DockerImage}");
-            log.Log($"Geth image: {GethContainerRecipe.DockerImage}");
+
+            fixtureLog.Log("Global setup cleanup successful");
+            fixtureLog.Log($"Codex image: {CodexContainerRecipe.DockerImage}");
+            fixtureLog.Log($"Prometheus image: {PrometheusContainerRecipe.DockerImage}");
+            fixtureLog.Log($"Geth image: {GethContainerRecipe.DockerImage}");
         }
 
         [SetUp]
@@ -45,7 +54,6 @@ namespace DistTestCore
             }
             else
             {
-                log.Log($"Run: {TestContext.CurrentContext.Test.Name}");
                 CreateNewTestLifecycle();
             }
         }
@@ -55,10 +63,7 @@ namespace DistTestCore
         {
             try
             {
-                log.Log($"{TestContext.CurrentContext.Test.Name} = {TestContext.CurrentContext.Result.Outcome.Status}");
-                lifecycle.Log.EndTest();
-                IncludeLogsAndMetricsOnTestFailure();
-                lifecycle.DeleteAllResources();
+                DisposeTestLifecycle();
             }
             catch (Exception ex)
             {
@@ -82,6 +87,8 @@ namespace DistTestCore
             var result = TestContext.CurrentContext.Result;
             if (result.Outcome.Status == NUnit.Framework.Interfaces.TestStatus.Failed)
             {
+                fixtureLog.MarkAsFailed();
+
                 if (IsDownloadingLogsAndMetricsEnabled())
                 {
                     Log("Downloading all CodexNode logs and metrics because of test failure...");
@@ -107,7 +114,29 @@ namespace DistTestCore
 
         private void CreateNewTestLifecycle()
         {
-            lifecycle = new TestLifecycle(new Configuration());
+            Stopwatch.Measure(fixtureLog, $"Setup for {GetCurrentTestName()}", () =>
+            {
+                lifecycle = new TestLifecycle(fixtureLog.CreateTestLog(), configuration);
+                testStart = DateTime.UtcNow;
+            });
+        }
+
+        private void DisposeTestLifecycle()
+        {
+            fixtureLog.Log($"{GetCurrentTestName()} = {GetTestResult()} ({GetTestDuration()})");
+            Stopwatch.Measure(fixtureLog, $"Teardown for {GetCurrentTestName()}", () =>
+            {
+                lifecycle.Log.EndTest();
+                IncludeLogsAndMetricsOnTestFailure();
+                lifecycle.DeleteAllResources();
+                lifecycle = null!;
+            });
+        }
+
+        private string GetTestDuration()
+        {
+            var testDuration = DateTime.UtcNow - testStart;
+            return Time.FormatDuration(testDuration);
         }
 
         private void DownloadAllLogs()
@@ -139,6 +168,16 @@ namespace DistTestCore
             {
                 action(node);
             }
+        }
+
+        private string GetCurrentTestName()
+        {
+            return $"[{TestContext.CurrentContext.Test.Name}]";
+        }
+
+        private string GetTestResult()
+        {
+            return TestContext.CurrentContext.Result.Outcome.Status.ToString();
         }
 
         private bool IsDownloadingLogsAndMetricsEnabled()

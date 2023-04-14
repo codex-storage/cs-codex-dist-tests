@@ -73,7 +73,7 @@ namespace DistTestCore
 
         public string Describe()
         {
-            return $"CodexNodeGroup@{Containers.Describe()}-{Setup.Describe()}";
+            return $"<CodexNodeGroup@{Containers.Describe()}-{Setup.Describe()}>";
         }
 
         private OnlineCodexNode CreateOnlineCodexNode(RunningContainer c, ICodexNodeFactory factory)

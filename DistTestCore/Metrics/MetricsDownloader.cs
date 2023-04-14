@@ -26,7 +26,7 @@ namespace DistTestCore.Metrics
         private void WriteToFile(string nodeName, string[] headers, Dictionary<DateTime, List<string>> map)
         {
             var file = log.CreateSubfile("csv");
-            log.Log($"Downloading metrics for {nodeName} to file {file.FilenameWithoutPath}");
+            log.Log($"Downloading metrics for {nodeName} to file {file.FullFilename}");
 
             file.WriteRaw(string.Join(",", headers));
 

@@ -3,39 +3,30 @@ using Utils;
 
 namespace Logging
 {
-    public class TestLog
+    public class TestLog : BaseLog
     {
         private readonly NumberSource subfileNumberSource = new NumberSource(0);
-        private readonly LogFile file;
-        private readonly DateTime now;
-        private readonly LogConfig config;
+        private readonly string methodName;
+        private readonly string fullName;
 
-        public TestLog(LogConfig config)
+        public TestLog(string folder)
         {
-            this.config = config;
-            now = DateTime.UtcNow;
+            methodName = GetMethodName();
+            fullName = Path.Combine(folder, methodName);
 
-            var name = GetTestName();
-            file = new LogFile(config, now, name);
-
-            Log($"Begin: {name}");
+            Log($"Begin: {methodName}");
         }
 
-        public void Log(string message)
+        public LogFile CreateSubfile(string ext = "log")
         {
-            file.Write(message);
-        }
-
-        public void Error(string message)
-        {
-            Log($"[ERROR] {message}");
+            return new LogFile($"{fullName}_{GetSubfileNumber()}", ext);
         }
 
         public void EndTest()
         {
             var result = TestContext.CurrentContext.Result;
 
-            Log($"Finished: {GetTestName()} = {result.Outcome.Status}");
+            Log($"Finished: {methodName} = {result.Outcome.Status}");
             if (!string.IsNullOrEmpty(result.Message))
             {
                 Log(result.Message);
@@ -44,26 +35,24 @@ namespace Logging
 
             if (result.Outcome.Status == NUnit.Framework.Interfaces.TestStatus.Failed)
             {
-                RenameLogFile();
+                MarkAsFailed();
             }
         }
-
-        private void RenameLogFile()
+        protected override LogFile CreateLogFile()
         {
-            file.ConcatToFilename("_FAILED");
+            return new LogFile(fullName, "log");
         }
 
-        public LogFile CreateSubfile(string ext = "log")
-        {
-            return new LogFile(config, now, $"{GetTestName()}_{subfileNumberSource.GetNextNumber().ToString().PadLeft(6, '0')}", ext);
-        }
-
-        private static string GetTestName()
+        private string GetMethodName()
         {
             var test = TestContext.CurrentContext.Test;
-            var className = test.ClassName!.Substring(test.ClassName.LastIndexOf('.') + 1);
             var args = FormatArguments(test);
-            return $"{className}.{test.MethodName}{args}";
+            return $"{test.MethodName}{args}";
+        }
+
+        private string GetSubfileNumber()
+        {
+            return subfileNumberSource.GetNextNumber().ToString().PadLeft(6, '0');
         }
 
         private static string FormatArguments(TestContext.TestAdapter test)

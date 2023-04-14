@@ -2,29 +2,19 @@
 {
     public class LogFile
     {
-        private readonly DateTime now;
-        private string name;
-        private readonly string ext;
-        private readonly string filepath;
+        private readonly string extension;
+        private string filename;
 
-        public LogFile(LogConfig config, DateTime now, string name, string ext = "log")
+        public LogFile(string filename, string extension)
         {
-            this.now = now;
-            this.name = name;
-            this.ext = ext;
+            this.filename = filename;
+            this.extension = extension;
+            FullFilename = filename + "." + extension;
 
-            filepath = Path.Join(
-                config.LogRoot,
-                $"{now.Year}-{Pad(now.Month)}",
-                Pad(now.Day));
-
-            Directory.CreateDirectory(filepath);
-
-            GenerateFilename();
+            EnsurePathExists(filename);
         }
 
-        public string FullFilename { get; private set; } = string.Empty;
-        public string FilenameWithoutPath { get; private set; } = string.Empty;
+        public string FullFilename { get; private set; }
 
         public void Write(string message)
         {
@@ -47,16 +37,10 @@
         {
             var oldFullName = FullFilename;
 
-            name += toAdd;
-
-            GenerateFilename();
+            filename += toAdd;
+            FullFilename = filename + "." + extension;
 
             File.Move(oldFullName, FullFilename);
-        }
-
-        private static string Pad(int n)
-        {
-            return n.ToString().PadLeft(2, '0');
         }
 
         private static string GetTimestamp()
@@ -64,10 +48,10 @@
             return $"[{DateTime.UtcNow.ToString("u")}]";
         }
 
-        private void GenerateFilename()
+        private void EnsurePathExists(string filename)
         {
-            FilenameWithoutPath = $"{Pad(now.Hour)}-{Pad(now.Minute)}-{Pad(now.Second)}Z_{name.Replace('.', '-')}.{ext}";
-            FullFilename = Path.Combine(filepath, FilenameWithoutPath);
+            var path = new FileInfo(filename).Directory!.FullName;
+            Directory.CreateDirectory(path);
         }
     }
 }

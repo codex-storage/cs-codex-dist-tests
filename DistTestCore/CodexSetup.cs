@@ -71,7 +71,7 @@ namespace DistTestCore
         public string Describe()
         {
             var args = string.Join(',', DescribeArgs());
-            return $"{NumberOfNodes} CodexNodes with [{args}]";
+            return $"({NumberOfNodes} CodexNodes with [{args}])";
         }
 
         private IEnumerable<string> DescribeArgs()

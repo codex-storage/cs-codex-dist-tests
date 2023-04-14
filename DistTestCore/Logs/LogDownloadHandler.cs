@@ -21,7 +21,7 @@ namespace DistTestCore.Logs
 
         public void Log(Stream stream)
         {
-            log.Write($"{description} -->> {log.FilenameWithoutPath}");
+            log.Write($"{description} -->> {log.FullFilename}");
             log.WriteRaw(description);
             var reader = new StreamReader(stream);
             var line = reader.ReadLine();

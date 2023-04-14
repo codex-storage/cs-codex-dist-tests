@@ -29,7 +29,7 @@ namespace DistTestCore.Logs
                 line = streamReader.ReadLine();
             }
 
-            Assert.Fail($"Unable to find string '{expectedString}' in CodexNode log file {logFile.FilenameWithoutPath}");
+            Assert.Fail($"Unable to find string '{expectedString}' in CodexNode log file {logFile.FullFilename}");
         }
     }
 }
