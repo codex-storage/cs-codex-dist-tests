@@ -18,6 +18,8 @@ namespace DistTestCore
 
         public ICodexNodeGroup BringOnline(CodexSetup codexSetup)
         {
+            var something = lifecycle.GethStarter.BringOnlineMarketplaceFor(codexSetup);
+
             var containers = StartCodexContainers(codexSetup);
 
             var metricAccessFactory = lifecycle.PrometheusStarter.CollectMetricsFor(codexSetup, containers);

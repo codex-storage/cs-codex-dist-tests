@@ -1,7 +1,7 @@
 ﻿using KubernetesWorkflow;
 using Logging;
 
-namespace DistTestCore.CodexLogsAndMetrics
+namespace DistTestCore.Logs
 {
     public class LogDownloadHandler : ILogHandler
     {

@@ -1,6 +1,6 @@
 ﻿using NUnit.Framework;
 
-namespace DistTestCore.CodexLogsAndMetrics
+namespace DistTestCore.Logs
 {
     [AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
     public class DontDownloadLogsAndMetricsOnFailureAttribute : PropertyAttribute

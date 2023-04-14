@@ -49,6 +49,13 @@ namespace KubernetesWorkflow
             logHandler.Log(stream);
         }
 
+        public string ExecuteCommand(RunningPod pod, string containerName, string command, params string[] args)
+        {
+            var runner = new CommandRunner(client, K8sNamespace, pod, containerName, command, args);
+            runner.Run();
+            return runner.GetStdOut();
+        }
+
         public void DeleteAllResources()
         {
             DeleteNamespace();

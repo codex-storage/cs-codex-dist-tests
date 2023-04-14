@@ -1,4 +1,4 @@
-﻿using DistTestCore.CodexLogsAndMetrics;
+﻿using DistTestCore.Logs;
 using DistTestCore.Metrics;
 using NUnit.Framework;
 

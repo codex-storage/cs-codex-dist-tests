@@ -1,7 +1,7 @@
 ﻿using Logging;
 using NUnit.Framework;
 
-namespace DistTestCore.CodexLogsAndMetrics
+namespace DistTestCore.Logs
 {
     public interface ICodexNodeLog
     {

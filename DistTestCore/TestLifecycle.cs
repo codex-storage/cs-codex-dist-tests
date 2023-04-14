@@ -1,4 +1,4 @@
-﻿using DistTestCore.CodexLogsAndMetrics;
+﻿using DistTestCore.Logs;
 using KubernetesWorkflow;
 using Logging;
 
@@ -16,12 +16,14 @@ namespace DistTestCore
             FileManager = new FileManager(Log, configuration);
             CodexStarter = new CodexStarter(this, workflowCreator);
             PrometheusStarter = new PrometheusStarter(this, workflowCreator);
+            GethStarter = new GethStarter(this, workflowCreator);
         }
 
         public TestLog Log { get; }
         public FileManager FileManager { get; }
         public CodexStarter CodexStarter { get; }
         public PrometheusStarter PrometheusStarter { get; }
+        public GethStarter GethStarter { get; }
 
         public void DeleteAllResources()
         {

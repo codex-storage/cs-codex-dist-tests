@@ -42,6 +42,14 @@
             });
         }
 
+        public string ExecuteCommand(RunningContainer container, string command, params string[] args)
+        {
+            return K8s(controller =>
+            {
+                return controller.ExecuteCommand(container.Pod, container.Recipe.Name, command, args);
+            });
+        }
+
         public void DeleteAllResources()
         {
             K8s(controller =>
