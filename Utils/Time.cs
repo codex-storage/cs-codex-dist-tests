@@ -22,5 +22,21 @@
             result += $"{d.Seconds} secs";
             return result;
         }
+
+        public static void WaitUntil(Func<bool> predicate, TimeSpan timeout, TimeSpan retryTime)
+        {
+            var start = DateTime.UtcNow;
+            var state = predicate();
+            while (!state)
+            {
+                if (DateTime.UtcNow - start > timeout)
+                {
+                    throw new TimeoutException("Operation timed out.");
+                }
+
+                Sleep(retryTime);
+                state = predicate();
+            }
+        }
     }
 }

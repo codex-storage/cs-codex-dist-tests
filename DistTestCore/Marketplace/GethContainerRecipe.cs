@@ -29,7 +29,7 @@ namespace DistTestCore.Marketplace
             if (config.IsBootstrapNode)
             {
                 AddEnvVar("IS_BOOTSTRAP", "1");
-                var exposedPort = AddExposedPort();
+                var exposedPort = AddExposedPort(tag: HttpPortTag);
                 return $"--http.port {exposedPort.Number} --discovery.port {discovery.Number} --nodiscover";
             }
 

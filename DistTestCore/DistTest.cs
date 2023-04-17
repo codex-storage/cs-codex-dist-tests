@@ -35,7 +35,7 @@ namespace DistTestCore
             catch (Exception ex)
             {
                 GlobalTestFailure.HasFailed = true;
-                Error($"Global setup cleanup failed with: {ex}");
+                fixtureLog.Error($"Global setup cleanup failed with: {ex}");
                 throw;
             }
 
@@ -67,7 +67,7 @@ namespace DistTestCore
             }
             catch (Exception ex)
             {
-                Error("Cleanup failed: " + ex.Message);
+                fixtureLog.Error("Cleanup failed: " + ex.Message);
                 GlobalTestFailure.HasFailed = true;
             }
         }
@@ -80,36 +80,6 @@ namespace DistTestCore
         public ICodexSetup SetupCodexNodes(int numberOfNodes)
         {
             return new CodexSetup(lifecycle.CodexStarter, numberOfNodes);
-        }
-
-        private void IncludeLogsAndMetricsOnTestFailure()
-        {
-            var result = TestContext.CurrentContext.Result;
-            if (result.Outcome.Status == NUnit.Framework.Interfaces.TestStatus.Failed)
-            {
-                fixtureLog.MarkAsFailed();
-
-                if (IsDownloadingLogsAndMetricsEnabled())
-                {
-                    Log("Downloading all CodexNode logs and metrics because of test failure...");
-                    DownloadAllLogs();
-                    DownloadAllMetrics();
-                }
-                else
-                {
-                    Log("Skipping download of all CodexNode logs and metrics due to [DontDownloadLogsAndMetricsOnFailure] attribute.");
-                }
-            }
-        }
-
-        private void Log(string msg)
-        {
-            lifecycle.Log.Log(msg);
-        }
-
-        private void Error(string msg)
-        {
-            lifecycle.Log.Error(msg);
         }
 
         private void CreateNewTestLifecycle()
@@ -131,6 +101,26 @@ namespace DistTestCore
                 lifecycle.DeleteAllResources();
                 lifecycle = null!;
             });
+        }
+
+        private void IncludeLogsAndMetricsOnTestFailure()
+        {
+            var result = TestContext.CurrentContext.Result;
+            if (result.Outcome.Status == NUnit.Framework.Interfaces.TestStatus.Failed)
+            {
+                fixtureLog.MarkAsFailed();
+
+                if (IsDownloadingLogsAndMetricsEnabled())
+                {
+                    lifecycle.Log.Log("Downloading all CodexNode logs and metrics because of test failure...");
+                    DownloadAllLogs();
+                    DownloadAllMetrics();
+                }
+                else
+                {
+                    lifecycle.Log.Log("Skipping download of all CodexNode logs and metrics due to [DontDownloadLogsAndMetricsOnFailure] attribute.");
+                }
+            }
         }
 
         private string GetTestDuration()

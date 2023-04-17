@@ -1,5 +1,6 @@
 ﻿using k8s;
 using k8s.Models;
+using Utils;
 
 namespace KubernetesWorkflow
 {
@@ -345,18 +346,7 @@ namespace KubernetesWorkflow
 
         private void WaitUntil(Func<bool> predicate)
         {
-            var start = DateTime.UtcNow;
-            var state = predicate();
-            while (!state)
-            {
-                if (DateTime.UtcNow - start > cluster.K8sOperationTimeout())
-                {
-                    throw new TimeoutException("K8s operation timed out.");
-                }
-
-                cluster.WaitForK8sServiceDelay();
-                state = predicate();
-            }
+            Time.WaitUntil(predicate, cluster.K8sOperationTimeout(), cluster.WaitForK8sServiceDelay());
         }
 
         #endregion
