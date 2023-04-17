@@ -40,13 +40,25 @@ namespace DistTestCore.Marketplace
 
         private string Retry(Func<string> fetch)
         {
-            var result = fetch();
+            var result = Catch(fetch);
             if (string.IsNullOrEmpty(result))
             {
                 Thread.Sleep(TimeSpan.FromSeconds(5));
                 result = fetch();
             }
             return result;
+        }
+
+        private string Catch(Func<string> fetch)
+        {
+            try
+            {
+                return fetch();
+            }
+            catch
+            {
+                return string.Empty;
+            }
         }
 
         private string FetchGenesisJson()
