@@ -13,9 +13,7 @@ namespace DistTestCore.Codex
 
         public CodexDebugResponse GetDebugInfo()
         {
-            var response = Http().HttpGetJson<CodexDebugResponse>("debug/info");
-            //Log($"Got DebugInfo with id: '{response.id}'.");
-            return response;
+            return Http().HttpGetJson<CodexDebugResponse>("debug/info");
         }
 
         public string UploadFile(FileStream fileStream)

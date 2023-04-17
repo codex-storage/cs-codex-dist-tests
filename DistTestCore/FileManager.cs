@@ -14,7 +14,6 @@ namespace DistTestCore
     {
         public const int ChunkSize = 1024 * 1024;
         private readonly Random random = new Random();
-        private readonly List<TestFile> activeFiles = new List<TestFile>();
         private readonly TestLog log;
         private readonly string folder;
 
@@ -22,7 +21,7 @@ namespace DistTestCore
         {
             folder = configuration.GetFileManagerFolder();
 
-            if (!Directory.Exists(folder)) Directory.CreateDirectory(folder);
+            EnsureDirectory();
             this.log = log;
         }
 
@@ -30,7 +29,6 @@ namespace DistTestCore
         {
             var result = new TestFile(Path.Combine(folder, Guid.NewGuid().ToString() + "_test.bin"));
             File.Create(result.Filename).Close();
-            activeFiles.Add(result);
             return result;
         }
 
@@ -44,8 +42,7 @@ namespace DistTestCore
 
         public void DeleteAllTestFiles()
         {
-            foreach (var file in activeFiles) File.Delete(file.Filename);
-            activeFiles.Clear();
+            DeleteDirectory();
         }
 
         private void GenerateFileBytes(TestFile result, ByteSize size)
@@ -65,6 +62,16 @@ namespace DistTestCore
             random.NextBytes(bytes);
             using var stream = new FileStream(result.Filename, FileMode.Append);
             stream.Write(bytes, 0, bytes.Length);
+        }
+
+        private void EnsureDirectory()
+        {
+            if (!Directory.Exists(folder)) Directory.CreateDirectory(folder);
+        }
+
+        private void DeleteDirectory()
+        {
+            Directory.Delete(folder, true);
         }
     }
 

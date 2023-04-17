@@ -10,8 +10,8 @@ namespace Logging
         public FixtureLog(LogConfig config)
         {
             start = DateTime.UtcNow;
-            var folder = DetermineFolder(config);   // "root/2023-04 /14"
-            var fixtureName = GetFixtureName();     // "11-09-23Z_ExampleTests"
+            var folder = DetermineFolder(config);
+            var fixtureName = GetFixtureName();
             fullName = Path.Combine(folder, fixtureName);
         }
 
