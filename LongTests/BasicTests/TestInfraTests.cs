@@ -1,4 +1,5 @@
-﻿using CodexDistTestCore;
+﻿using DistTestCore;
+using DistTestCore.Codex;
 using NUnit.Framework;
 
 namespace TestsLong.BasicTests
