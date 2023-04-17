@@ -3,15 +3,16 @@ using Logging;
 
 namespace DistTestCore.Logs
 {
-    public class LogDownloadHandler : ILogHandler
+    public class LogDownloadHandler : LogHandler, ILogHandler
     {
-        private readonly string description;
         private readonly LogFile log;
 
         public LogDownloadHandler(string description, LogFile log)
         {
-            this.description = description;
             this.log = log;
+
+            log.Write($"{description} -->> {log.FullFilename}");
+            log.WriteRaw(description);
         }
 
         public CodexNodeLog CreateCodexNodeLog()
@@ -19,17 +20,9 @@ namespace DistTestCore.Logs
             return new CodexNodeLog(log);
         }
 
-        public void Log(Stream stream)
+        protected override void ProcessLine(string line)
         {
-            log.Write($"{description} -->> {log.FullFilename}");
-            log.WriteRaw(description);
-            var reader = new StreamReader(stream);
-            var line = reader.ReadLine();
-            while (line != null)
-            {
-                log.WriteRaw(line);
-                line = reader.ReadLine();
-            }
+            log.WriteRaw(line);
         }
     }
 }

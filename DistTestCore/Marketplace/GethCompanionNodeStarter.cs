@@ -38,7 +38,7 @@ namespace DistTestCore.Marketplace
         private StartupConfig CreateCompanionNodeStartupConfig(GethBootstrapNodeInfo bootstrapNode)
         {
             var config = new StartupConfig();
-            config.Add(new GethStartupConfig(false, bootstrapNode.GenesisJsonBase64));
+            config.Add(new GethStartupConfig(false, bootstrapNode.GenesisJsonBase64, bootstrapNode));
             return config;
         }
 

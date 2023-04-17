@@ -26,16 +26,18 @@ namespace DistTestCore.Marketplace
             var extractor = new GethInfoExtractor(workflow, containers.Containers[0]);
             var account = extractor.ExtractAccount();
             var genesisJsonBase64 = extractor.ExtractGenesisJsonBase64();
+            var pubKey = extractor.ExtractPubKey();
+            var discoveryPort = containers.Containers[0].Recipe.GetPortByTag(GethContainerRecipe.DiscoveryPortTag);
 
             Log($"Geth bootstrap node started with account '{account}'");
 
-            return new GethBootstrapNodeInfo(containers, account, genesisJsonBase64);
+            return new GethBootstrapNodeInfo(containers, account, genesisJsonBase64, pubKey, discoveryPort);
         }
 
         private StartupConfig CreateBootstrapStartupConfig()
         {
             var config = new StartupConfig();
-            config.Add(new GethStartupConfig(true, bootstrapGenesisJsonBase64));
+            config.Add(new GethStartupConfig(true, bootstrapGenesisJsonBase64, null!));
             return config;
         }
 

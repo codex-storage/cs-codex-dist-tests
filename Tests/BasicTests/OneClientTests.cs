@@ -15,7 +15,6 @@ namespace Tests.BasicTests
         }
 
         [Test]
-        [Ignore("Unstable.")]
         public void RestartTest()
         {
             var group = SetupCodexNodes(1).BringOnline();

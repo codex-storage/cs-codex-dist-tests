@@ -45,7 +45,7 @@ namespace KubernetesWorkflow
 
         public void DownloadPodLog(RunningPod pod, ContainerRecipe recipe, ILogHandler logHandler)
         {
-            var stream = client.ReadNamespacedPodLog(pod.Name, K8sNamespace, recipe.Name);
+            using var stream = client.ReadNamespacedPodLog(pod.Name, K8sNamespace, recipe.Name);
             logHandler.Log(stream);
         }
 

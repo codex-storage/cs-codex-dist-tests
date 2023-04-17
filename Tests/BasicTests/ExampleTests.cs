@@ -49,7 +49,7 @@ namespace Tests.BasicTests
         [Test]
         public void MarketplaceExample()
         {
-            var group = SetupCodexNodes(4)
+            var group = SetupCodexNodes(2)
                             .WithStorageQuota(10.GB())
                             .EnableMarketplace(initialBalance: 20)
                             .BringOnline();

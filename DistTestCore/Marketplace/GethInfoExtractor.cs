@@ -17,7 +17,6 @@ namespace DistTestCore.Marketplace
         public string ExtractAccount()
         {
             var account = Retry(FetchAccount);
-            
             if (string.IsNullOrEmpty(account)) throw new InvalidOperationException("Unable to fetch account for geth node. Test infra failure.");
 
             return account;
@@ -26,12 +25,17 @@ namespace DistTestCore.Marketplace
         public string ExtractGenesisJsonBase64()
         {
             var genesisJson = Retry(FetchGenesisJson);
-
             if (string.IsNullOrEmpty(genesisJson)) throw new InvalidOperationException("Unable to fetch genesis-json for geth node. Test infra failure.");
 
-            var encoded = Convert.ToBase64String(Encoding.ASCII.GetBytes(genesisJson));
+            return Convert.ToBase64String(Encoding.ASCII.GetBytes(genesisJson));
+        }
 
-            return encoded;
+        public string ExtractPubKey()
+        {
+            var pubKey = Retry(FetchPubKey);
+            if (string.IsNullOrEmpty(pubKey)) throw new InvalidOperationException("Unable to fetch enode from geth node. Test infra failure.");
+
+            return pubKey;
         }
 
         private string Retry(Func<string> fetch)
@@ -53,6 +57,42 @@ namespace DistTestCore.Marketplace
         private string FetchAccount()
         {
             return workflow.ExecuteCommand(container, "cat", GethContainerRecipe.AccountFilename);
+        }
+
+        private string FetchPubKey()
+        {
+            var enodeFinder = new PubKeyFinder();
+            workflow.DownloadContainerLog(container, enodeFinder);
+            return enodeFinder.GetPubKey();
+        }
+    }
+
+    public class PubKeyFinder : LogHandler, ILogHandler
+    {
+        private const string openTag = "self=\"enode://";
+        private string pubKey = string.Empty;
+
+        public string GetPubKey()
+        {
+            return pubKey;
+        }
+
+        protected override void ProcessLine(string line)
+        {
+            if (line.Contains(openTag))
+            {
+                ExtractPubKey(line);
+            }
+        }
+
+        private void ExtractPubKey(string line)
+        {
+            var openIndex = line.IndexOf(openTag) + openTag.Length;
+            var closeIndex = line.IndexOf("@");
+
+            pubKey = line.Substring(
+                    startIndex: openIndex,
+                    length: closeIndex - openIndex);
         }
     }
 }
