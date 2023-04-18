@@ -3,7 +3,7 @@ using KubernetesWorkflow;
 
 namespace DistTestCore
 {
-    public class GethStarter
+    public class GethStarter // basestarter
     {
         private readonly MarketplaceNetworkCache marketplaceNetworkCache;
         private readonly GethCompanionNodeStarter companionNodeStarter;
@@ -36,8 +36,10 @@ namespace DistTestCore
             foreach (var node in companionNodes)
             {
                 interaction.TransferTo(node.Account, marketplaceConfig.InitialEth.Wei);
-                // wrong level: mintTestTokens? interactions knows nothing about contract details!
-                //interaction.MintTestTokens(node.Account, marketplaceConfig.InitialTestTokens.Amount);
+
+                var tokenAddress = interaction.GetTokenAddress(marketplaceNetwork.Marketplace.Address);
+
+                interaction.MintTestTokens(node.Account, marketplaceConfig.InitialTestTokens.Amount, tokenAddress);
             }
         }
 

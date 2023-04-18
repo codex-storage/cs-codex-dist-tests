@@ -9,7 +9,8 @@ namespace DistTestCore.Marketplace
         public const string DiscoveryPortTag = "disc_port";
         public const string AccountFilename = "account_string.txt";
         public const string GenesisFilename = "genesis.json";
-        
+        public const string BootstrapPrivateKeyFilename = "bootstrap_private.key";
+
         protected override string Image => DockerImage;
 
         protected override void Initialize(StartupConfig startupConfig)

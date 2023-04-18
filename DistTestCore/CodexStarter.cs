@@ -3,7 +3,7 @@ using KubernetesWorkflow;
 
 namespace DistTestCore
 {
-    public class CodexStarter
+    public class CodexStarter // basestarter
     {
         private readonly TestLifecycle lifecycle;
         private readonly WorkflowCreator workflowCreator;

@@ -9,13 +9,15 @@ namespace NethereumWorkflow
         private readonly string ip;
         private readonly int port;
         private readonly string rootAccount;
+        private readonly string privateKey;
 
-        public NethereumInteractionCreator(TestLog log, string ip, int port, string rootAccount)
+        public NethereumInteractionCreator(TestLog log, string ip, int port, string rootAccount, string privateKey)
         {
             this.log = log;
             this.ip = ip;
             this.port = port;
             this.rootAccount = rootAccount;
+            this.privateKey = privateKey;
         }
 
         public NethereumInteraction CreateWorkflow()
@@ -25,8 +27,8 @@ namespace NethereumWorkflow
 
         private Web3 CreateWeb3()
         {
-            //var bootstrapaccount = new ManagedAccount(bootstrapInfo.Account, "qwerty!@#$%^");
-            return new Web3($"http://{ip}:{port}");
+            var account = new Nethereum.Web3.Accounts.Account(privateKey);
+            return new Web3(account, $"http://{ip}:{port}");
         }
     }
 }

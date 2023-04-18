@@ -39,6 +39,14 @@ namespace DistTestCore.Marketplace
             return pubKey;
         }
 
+        public string ExtractBootstrapPrivateKey()
+        {
+            var privKey = Retry(FetchBootstrapPrivateKey);
+            if (string.IsNullOrEmpty(privKey)) throw new InvalidOperationException("Unable to fetch private key from geth node. Test infra failure.");
+
+            return privKey;
+        }
+
         public string ExtractMarketplaceAddress()
         {
             var marketplaceAddress = Retry(FetchMarketplaceAddress);
@@ -78,6 +86,11 @@ namespace DistTestCore.Marketplace
         private string FetchAccount()
         {
             return workflow.ExecuteCommand(container, "cat", GethContainerRecipe.AccountFilename);
+        }
+
+        private string FetchBootstrapPrivateKey()
+        {
+            return workflow.ExecuteCommand(container, "cat", GethContainerRecipe.BootstrapPrivateKeyFilename);
         }
 
         private string FetchMarketplaceAddress()

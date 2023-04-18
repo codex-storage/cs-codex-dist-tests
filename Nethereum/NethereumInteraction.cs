@@ -1,4 +1,6 @@
 ﻿using Logging;
+using Nethereum.ABI.FunctionEncoding.Attributes;
+using Nethereum.Contracts;
 using Nethereum.Hex.HexTypes;
 using Nethereum.Web3;
 using System.Numerics;
@@ -30,12 +32,28 @@ namespace NethereumWorkflow
             Log($"Transferred {amount} to {account}");
         }
 
-        public void MintTestTokens(string account, decimal amount)
+        public string GetTokenAddress(string marketplaceAddress)
+        {
+            var function = new GetTokenFunction();
+
+            var handler = web3.Eth.GetContractQueryHandler<GetTokenFunction>();
+            var result = Time.Wait(handler.QueryAsync<string>(marketplaceAddress, function));
+
+            return result;
+        }
+
+        public void MintTestTokens(string account, decimal amount, string tokenAddress)
         {
             if (amount < 1 || string.IsNullOrEmpty(account)) throw new ArgumentException("Invalid arguments for MintTestTokens");
 
-            // - address of token? -> address of marketplace?
-            // - nethereum do contract call
+            var function = new MintTokensFunction
+            {
+                Holder = account,
+                Amount = ToBig(amount)
+            };
+
+            var handler = web3.Eth.GetContractTransactionHandler<MintTokensFunction>();
+            Time.Wait(handler.SendRequestAndWaitForReceiptAsync(tokenAddress, function));
         }
 
         public decimal GetBalance(string account)
@@ -48,9 +66,14 @@ namespace NethereumWorkflow
 
         private HexBigInteger ToHexBig(decimal amount)
         {
-            var bigint = new BigInteger(amount);
+            var bigint = ToBig(amount);
             var str = bigint.ToString("X");
             return new HexBigInteger(str);
+        }
+
+        private BigInteger ToBig(decimal amount)
+        {
+            return new BigInteger(amount);
         }
 
         private decimal ToDecimal(HexBigInteger hexBigInteger)
@@ -62,5 +85,20 @@ namespace NethereumWorkflow
         {
             log.Log(msg);
         }
+    }
+
+    [Function("token", "address")]
+    public class GetTokenFunction : FunctionMessage
+    {
+    }
+
+    [Function("mint")]
+    public class MintTokensFunction : FunctionMessage
+    {
+        [Parameter("address", "holder", 1)]
+        public string Holder { get; set; }
+
+        [Parameter("uint256", "amount", 2)]
+        public BigInteger Amount { get; set; }
     }
 }

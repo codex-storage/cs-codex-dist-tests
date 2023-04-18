@@ -3,24 +3,22 @@ using Utils;
 
 namespace DistTestCore.Marketplace
 {
-    public class CodexContractsStarter
+    public class CodexContractsStarter : BaseStarter
     {
         private const string readyString = "Done! Sleeping indefinitely...";
-        private readonly TestLifecycle lifecycle;
-        private readonly WorkflowCreator workflowCreator;
 
         public CodexContractsStarter(TestLifecycle lifecycle, WorkflowCreator workflowCreator)
+            : base(lifecycle, workflowCreator)
         {
-            this.lifecycle = lifecycle;
-            this.workflowCreator = workflowCreator;
         }
 
         public MarketplaceInfo Start(RunningContainer bootstrapContainer)
         {
+            LogStart("Deploying Codex contracts...");
+
             var workflow = workflowCreator.CreateWorkflow();
             var startupConfig = CreateStartupConfig(bootstrapContainer);
 
-            lifecycle.Log.Log("Deploying Codex contracts...");
             var containers = workflow.Start(1, Location.Unspecified, new CodexContractsContainerRecipe(), startupConfig);
             if (containers.Containers.Length != 1) throw new InvalidOperationException("Expected 1 Codex contracts container to be created. Test infra failure.");
             var container = containers.Containers[0];
@@ -35,7 +33,7 @@ namespace DistTestCore.Marketplace
             var extractor = new ContainerInfoExtractor(workflow, container);
             var marketplaceAddress = extractor.ExtractMarketplaceAddress();
 
-            lifecycle.Log.Log("Contracts deployed.");
+            LogEnd("Contracts deployed.");
 
             return new MarketplaceInfo(marketplaceAddress);
         }

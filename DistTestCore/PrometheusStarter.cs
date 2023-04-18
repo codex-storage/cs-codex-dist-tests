@@ -5,7 +5,7 @@ using System.Text;
 
 namespace DistTestCore
 {
-    public class PrometheusStarter
+    public class PrometheusStarter // basestarter
     {
         private readonly TestLifecycle lifecycle;
         private readonly WorkflowCreator workflowCreator;
