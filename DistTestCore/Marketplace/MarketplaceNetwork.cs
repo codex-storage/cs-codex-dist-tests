@@ -16,13 +16,7 @@ namespace DistTestCore.Marketplace
 
         public NethereumInteraction StartInteraction(TestLog log)
         {
-            var ip = Bootstrap.RunningContainers.RunningPod.Cluster.IP;
-            var port = Bootstrap.RunningContainers.Containers[0].ServicePorts[0].Number;
-            var account = Bootstrap.Account;
-            var privateKey = Bootstrap.PrivateKey;
-
-            var creator = new NethereumInteractionCreator(log, ip, port, account, privateKey);
-            return creator.CreateWorkflow();
+            return Bootstrap.StartInteraction(log);
         }
     }
 }

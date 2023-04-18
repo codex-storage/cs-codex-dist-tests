@@ -56,10 +56,16 @@ namespace NethereumWorkflow
             Time.Wait(handler.SendRequestAndWaitForReceiptAsync(tokenAddress, function));
         }
 
-        public decimal GetBalance(string account)
+        public decimal GetBalance(string tokenAddress, string account)
         {
-            var bigInt = Time.Wait(web3.Eth.GetBalance.SendRequestAsync(account));
-            var result = ToDecimal(bigInt);
+            var function = new GetTokenBalanceFunction
+            {
+                Owner = account
+            };
+
+            var handler = web3.Eth.GetContractQueryHandler<GetTokenBalanceFunction>();
+            var result = ToDecimal(Time.Wait(handler.QueryAsync<BigInteger>(tokenAddress, function)));
+
             Log($"Balance of {account} is {result}");
             return result;
         }
@@ -81,6 +87,11 @@ namespace NethereumWorkflow
             return (decimal)hexBigInteger.Value;
         }
 
+        private decimal ToDecimal(BigInteger bigInteger)
+        {
+            return (decimal)bigInteger;
+        }
+
         private void Log(string msg)
         {
             log.Log(msg);
@@ -100,5 +111,12 @@ namespace NethereumWorkflow
 
         [Parameter("uint256", "amount", 2)]
         public BigInteger Amount { get; set; }
+    }
+
+    [Function("balanceOf", "uint256")]
+    public class GetTokenBalanceFunction :FunctionMessage
+    {
+        [Parameter("address", "owner", 1)]
+        public string Owner { get; set; }
     }
 }

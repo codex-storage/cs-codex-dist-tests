@@ -26,6 +26,16 @@ namespace DistTestCore.Codex
             return Http().HttpGetStream("download/" + contentId);
         }
 
+        public CodexSalesAvailabilityResponse SalesAvailability(CodexSalesAvailabilityRequest request)
+        {
+            return Http().HttpPostJson<CodexSalesAvailabilityRequest, CodexSalesAvailabilityResponse>("sales/availability", request);
+        }
+
+        public CodexSalesRequestStorageResponse RequestStorage(CodexSalesRequestStorageRequest request, string contentId)
+        {
+            return Http().HttpPostJson<CodexSalesRequestStorageRequest, CodexSalesRequestStorageResponse>($"storage/request/{contentId}", request);
+        }
+
         private Http Http()
         {
             var ip = Container.Pod.Cluster.IP;
@@ -52,5 +62,38 @@ namespace DistTestCore.Codex
     {
         public string version { get; set; } = string.Empty;
         public string revision { get; set; } = string.Empty;
+    }
+
+    public class CodexSalesAvailabilityRequest
+    {
+        public string size { get; set; } = string.Empty;
+        public string duration { get; set; } = string.Empty;
+        public string minPrice { get; set; } = string.Empty;
+        public string maxCollateral { get; set; } = string.Empty;
+    }
+
+    public class CodexSalesAvailabilityResponse
+    {
+        public string id { get; set; } = string.Empty;
+        public string size { get; set; } = string.Empty;
+        public string duration { get; set; } = string.Empty;
+        public string minPrice { get; set; } = string.Empty;
+        public string maxCollateral { get; set; } = string.Empty;
+    }
+
+    public class CodexSalesRequestStorageRequest
+    {
+        public string duration { get; set; } = string.Empty;
+        public string proofProbability { get; set; } = string.Empty;
+        public string reward { get; set; } = string.Empty;
+        public string collateral { get; set; } = string.Empty;
+        public string? expiry { get; set; }
+        public uint? nodes { get; set; }
+        public uint? tolerance { get; set;}
+    }
+
+    public class CodexSalesRequestStorageResponse
+    {
+        public string purchaseId { get; set; } = string.Empty;
     }
 }

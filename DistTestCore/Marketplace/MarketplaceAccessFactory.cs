@@ -30,7 +30,7 @@ namespace DistTestCore.Marketplace
         public IMarketplaceAccess CreateMarketplaceAccess(CodexAccess access)
         {
             var companionNode = GetGethCompanionNode(access);
-            return new MarketplaceAccess(log, marketplaceNetwork, companionNode);
+            return new MarketplaceAccess(log, marketplaceNetwork, companionNode, access);
         }
 
         private GethCompanionNodeInfo GetGethCompanionNode(CodexAccess access)

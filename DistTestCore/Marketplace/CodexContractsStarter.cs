@@ -12,12 +12,12 @@ namespace DistTestCore.Marketplace
         {
         }
 
-        public MarketplaceInfo Start(RunningContainer bootstrapContainer)
+        public MarketplaceInfo Start(GethBootstrapNodeInfo bootstrapNode)
         {
             LogStart("Deploying Codex contracts...");
 
             var workflow = workflowCreator.CreateWorkflow();
-            var startupConfig = CreateStartupConfig(bootstrapContainer);
+            var startupConfig = CreateStartupConfig(bootstrapNode.RunningContainers.Containers[0]);
 
             var containers = workflow.Start(1, Location.Unspecified, new CodexContractsContainerRecipe(), startupConfig);
             if (containers.Containers.Length != 1) throw new InvalidOperationException("Expected 1 Codex contracts container to be created. Test infra failure.");
@@ -33,9 +33,12 @@ namespace DistTestCore.Marketplace
             var extractor = new ContainerInfoExtractor(workflow, container);
             var marketplaceAddress = extractor.ExtractMarketplaceAddress();
 
+            var interaction = bootstrapNode.StartInteraction(lifecycle.Log);
+            var tokenAddress = interaction.GetTokenAddress(marketplaceAddress);
+
             LogEnd("Contracts deployed.");
 
-            return new MarketplaceInfo(marketplaceAddress);
+            return new MarketplaceInfo(marketplaceAddress, tokenAddress);
         }
 
         private void WaitUntil(Func<bool> predicate)
@@ -54,12 +57,14 @@ namespace DistTestCore.Marketplace
 
     public class MarketplaceInfo
     {
-        public MarketplaceInfo(string address)
+        public MarketplaceInfo(string address, string tokenAddress)
         {
             Address = address;
+            TokenAddress = tokenAddress;
         }
 
         public string Address { get; }
+        public string TokenAddress { get; }
     }
 
     public class ContractsReadyLogHandler : LogHandler

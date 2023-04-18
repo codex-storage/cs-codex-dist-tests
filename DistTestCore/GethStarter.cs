@@ -32,7 +32,7 @@ namespace DistTestCore
         private void TransferInitialBalance(MarketplaceNetwork marketplaceNetwork, MarketplaceInitialConfig marketplaceConfig, GethCompanionNodeInfo[] companionNodes)
         {
             var interaction = marketplaceNetwork.StartInteraction(lifecycle.Log);
-            var tokenAddress = interaction.GetTokenAddress(marketplaceNetwork.Marketplace.Address);
+            var tokenAddress = marketplaceNetwork.Marketplace.TokenAddress;
 
             foreach (var node in companionNodes)
             {
@@ -79,7 +79,7 @@ namespace DistTestCore
             if (network == null)
             {
                 var bootstrapInfo = bootstrapNodeStarter.StartGethBootstrapNode();
-                var marketplaceInfo = codexContractsStarter.Start(bootstrapInfo.RunningContainers.Containers[0]);
+                var marketplaceInfo = codexContractsStarter.Start(bootstrapInfo);
                 network = new MarketplaceNetwork(bootstrapInfo, marketplaceInfo );
             }
             return network;

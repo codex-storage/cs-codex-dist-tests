@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json;
 using NUnit.Framework;
 using System.Net.Http.Headers;
+using System.Net.Http.Json;
 using Utils;
 
 namespace DistTestCore
@@ -35,6 +36,19 @@ namespace DistTestCore
         public T HttpGetJson<T>(string route)
         {
             return JsonConvert.DeserializeObject<T>(HttpGetString(route))!;
+        }
+
+        public TResponse HttpPostJson<TRequest, TResponse>(string route, TRequest body)
+        {
+            return Retry(() =>
+            {
+                using var client = GetClient();
+                var url = GetUrl() + route;
+                using var content = JsonContent.Create(body);
+                var result = Time.Wait(client.PostAsync(url, content));
+                var json = Time.Wait(result.Content.ReadAsStringAsync());
+                return JsonConvert.DeserializeObject<TResponse>(json)!;
+            });
         }
 
         public string HttpPostStream(string route, Stream stream)
