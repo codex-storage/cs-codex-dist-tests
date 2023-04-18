@@ -6,6 +6,7 @@ namespace DistTestCore.Marketplace
     {
         public const string DockerImage = "thatbenbierens/geth-confenv:latest";
         public const string HttpPortTag = "http_port";
+        public const string WsPortTag = "ws_port";
         public const string DiscoveryPortTag = "disc_port";
         public const string AccountFilename = "account_string.txt";
         public const string GenesisFilename = "genesis.json";
@@ -37,14 +38,14 @@ namespace DistTestCore.Marketplace
             var port = AddInternalPort();
             var authRpc = AddInternalPort();
             var httpPort = AddInternalPort(tag: HttpPortTag);
+            var wsPort = AddInternalPort(tag: WsPortTag);
 
             var bootPubKey = config.BootstrapNode.PubKey;
             var bootIp = config.BootstrapNode.RunningContainers.Containers[0].Pod.Ip;
             var bootPort = config.BootstrapNode.DiscoveryPort.Number;
             var bootstrapArg = $"--bootnodes enode://{bootPubKey}@{bootIp}:{bootPort}";
-            // geth --bootnodes enode://pubkey1@ip1:port1
 
-            return $"--port {port.Number} --discovery.port {discovery.Number} --authrpc.port {authRpc.Number} --http.port {httpPort.Number} --nodiscover {bootstrapArg}";
+            return $"--port {port.Number} --discovery.port {discovery.Number} --authrpc.port {authRpc.Number} --http.port {httpPort.Number} --ws --ws.port {wsPort.Number} --nodiscover {bootstrapArg}";
         }
     }
 }

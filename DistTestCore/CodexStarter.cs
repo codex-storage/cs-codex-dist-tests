@@ -3,22 +3,18 @@ using KubernetesWorkflow;
 
 namespace DistTestCore
 {
-    public class CodexStarter // basestarter
+    public class CodexStarter : BaseStarter
     {
-        private readonly TestLifecycle lifecycle;
-        private readonly WorkflowCreator workflowCreator;
-
         public CodexStarter(TestLifecycle lifecycle, WorkflowCreator workflowCreator)
+            : base(lifecycle, workflowCreator)
         {
-            this.lifecycle = lifecycle;
-            this.workflowCreator = workflowCreator;
         }
 
         public List<CodexNodeGroup> RunningGroups { get; } = new List<CodexNodeGroup>();
 
         public ICodexNodeGroup BringOnline(CodexSetup codexSetup)
         {
-            Log($"Starting {codexSetup.Describe()}...");
+            LogStart($"Starting {codexSetup.Describe()}...");
             var gethStartResult = lifecycle.GethStarter.BringOnlineMarketplaceFor(codexSetup);
 
             var startupConfig = new StartupConfig();
@@ -32,17 +28,17 @@ namespace DistTestCore
             var codexNodeFactory = new CodexNodeFactory(lifecycle, metricAccessFactory, gethStartResult.MarketplaceAccessFactory);
 
             var group = CreateCodexGroup(codexSetup, containers, codexNodeFactory);
-            Log($"Started at '{group.Containers.RunningPod.Ip}'");
+            LogEnd($"Started at '{group.Containers.RunningPod.Ip}'");
             return group;
         }
 
         public void BringOffline(CodexNodeGroup group)
         {
-            Log($"Stopping {group.Describe()}...");
+            LogStart($"Stopping {group.Describe()}...");
             var workflow = CreateWorkflow();
             workflow.Stop(group.Containers);
             RunningGroups.Remove(group);
-            Log("Stopped.");
+            LogEnd("Stopped.");
         }
 
         public void DeleteAllResources()
@@ -75,11 +71,6 @@ namespace DistTestCore
         private StartupWorkflow CreateWorkflow()
         {
             return workflowCreator.CreateWorkflow();
-        }
-
-        private void Log(string msg)
-        {
-            lifecycle.Log.Log(msg);
         }
     }
 }

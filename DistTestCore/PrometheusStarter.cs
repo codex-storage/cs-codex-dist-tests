@@ -5,22 +5,18 @@ using System.Text;
 
 namespace DistTestCore
 {
-    public class PrometheusStarter // basestarter
+    public class PrometheusStarter : BaseStarter
     {
-        private readonly TestLifecycle lifecycle;
-        private readonly WorkflowCreator workflowCreator;
-
         public PrometheusStarter(TestLifecycle lifecycle, WorkflowCreator workflowCreator)
+            : base(lifecycle, workflowCreator)
         {
-            this.lifecycle = lifecycle;
-            this.workflowCreator = workflowCreator;
         }
 
         public IMetricsAccessFactory CollectMetricsFor(CodexSetup codexSetup, RunningContainers containers)
         {
             if (!codexSetup.MetricsEnabled) return new MetricsUnavailableAccessFactory();
 
-            Log($"Starting metrics server for {containers.Describe()}");
+            LogStart($"Starting metrics server for {containers.Describe()}");
             var startupConfig = new StartupConfig();
             startupConfig.Add(new PrometheusStartupConfig(GeneratePrometheusConfig(containers.Containers)));
 
@@ -28,7 +24,7 @@ namespace DistTestCore
             var runningContainers = workflow.Start(1, Location.Unspecified, new PrometheusContainerRecipe(), startupConfig);
             if (runningContainers.Containers.Length != 1) throw new InvalidOperationException("Expected only 1 Prometheus container to be created.");
 
-            Log("Metrics server started.");
+            LogEnd("Metrics server started.");
 
             return new CodexNodeMetricsAccessFactory(runningContainers);
         }
@@ -55,11 +51,6 @@ namespace DistTestCore
 
             var bytes = Encoding.ASCII.GetBytes(config);
             return Convert.ToBase64String(bytes);
-        }
-
-        private void Log(string msg)
-        {
-            lifecycle.Log.Log(msg);
         }
     }
 }

@@ -3,19 +3,18 @@ using KubernetesWorkflow;
 
 namespace DistTestCore
 {
-    public class GethStarter // basestarter
+    public class GethStarter : BaseStarter
     {
         private readonly MarketplaceNetworkCache marketplaceNetworkCache;
         private readonly GethCompanionNodeStarter companionNodeStarter;
-        private readonly TestLifecycle lifecycle;
 
         public GethStarter(TestLifecycle lifecycle, WorkflowCreator workflowCreator)
+            : base(lifecycle, workflowCreator)
         {
             marketplaceNetworkCache = new MarketplaceNetworkCache(
                 new GethBootstrapNodeStarter(lifecycle, workflowCreator),
                 new CodexContractsStarter(lifecycle, workflowCreator));
             companionNodeStarter = new GethCompanionNodeStarter(lifecycle, workflowCreator);
-            this.lifecycle = lifecycle;
         }
 
         public GethStartResult BringOnlineMarketplaceFor(CodexSetup codexSetup)
@@ -33,12 +32,11 @@ namespace DistTestCore
         private void TransferInitialBalance(MarketplaceNetwork marketplaceNetwork, MarketplaceInitialConfig marketplaceConfig, GethCompanionNodeInfo[] companionNodes)
         {
             var interaction = marketplaceNetwork.StartInteraction(lifecycle.Log);
+            var tokenAddress = interaction.GetTokenAddress(marketplaceNetwork.Marketplace.Address);
+
             foreach (var node in companionNodes)
             {
                 interaction.TransferTo(node.Account, marketplaceConfig.InitialEth.Wei);
-
-                var tokenAddress = interaction.GetTokenAddress(marketplaceNetwork.Marketplace.Address);
-
                 interaction.MintTestTokens(node.Account, marketplaceConfig.InitialTestTokens.Amount, tokenAddress);
             }
         }

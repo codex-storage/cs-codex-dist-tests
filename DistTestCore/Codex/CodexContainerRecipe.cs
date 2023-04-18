@@ -41,13 +41,12 @@ namespace DistTestCore.Codex
                 var companionNode = gethConfig.CompanionNodes[Index];
                 Additional(companionNode);
 
-                // Bootstrap node access from within the cluster:
-                //var ip = gethConfig.BootstrapNode.RunningContainers.RunningPod.Ip;
-                //var port = gethConfig.BootstrapNode.RunningContainers.Containers[0].Recipe.GetPortByTag(GethContainerRecipe.HttpPortTag);
+                var ip = companionNode.RunningContainer.Pod.Ip;
+                var port = companionNode.RunningContainer.Recipe.GetPortByTag(GethContainerRecipe.WsPortTag).Number;
 
-                //AddEnvVar("ETH_PROVIDER", "todo");
-                //AddEnvVar("ETH_ACCOUNT", companionNode.Account);
-                //AddEnvVar("ETH_DEPLOYMENT", "todo");
+                AddEnvVar("ETH_PROVIDER", $"ws://{ip}:{port}");
+                AddEnvVar("ETH_ACCOUNT", companionNode.Account);
+                AddEnvVar("ETH_MARKETPLACE_ADDRESS", gethConfig.MarketplaceNetwork.Marketplace.Address);
             }
         }
     }
