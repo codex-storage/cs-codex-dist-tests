@@ -15,13 +15,13 @@ namespace DistTestCore.Marketplace
     public class MarketplaceAccess : IMarketplaceAccess
     {
         private readonly TestLog log;
-        private readonly GethBootstrapNodeInfo bootstrapNode;
+        private readonly MarketplaceNetwork marketplaceNetwork;
         private readonly GethCompanionNodeInfo companionNode;
 
-        public MarketplaceAccess(TestLog log, GethBootstrapNodeInfo bootstrapNode, GethCompanionNodeInfo companionNode)
+        public MarketplaceAccess(TestLog log, MarketplaceNetwork marketplaceNetwork, GethCompanionNodeInfo companionNode)
         {
             this.log = log;
-            this.bootstrapNode = bootstrapNode;
+            this.marketplaceNetwork = marketplaceNetwork;
             this.companionNode = companionNode;
         }
 
@@ -42,7 +42,7 @@ namespace DistTestCore.Marketplace
 
         public decimal GetBalance()
         {
-            var interaction = bootstrapNode.StartInteraction(log);
+            var interaction = marketplaceNetwork.StartInteraction(log);
             return interaction.GetBalance(companionNode.Account);
         }
     }

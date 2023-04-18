@@ -10,7 +10,7 @@
         public long SizeInBytes { get; }
     }
 
-    public static class IntExtensions
+    public static class ByteSizeIntExtensions
     {
         private const long Kilo = 1024;
 

@@ -11,7 +11,8 @@ namespace DistTestCore
         //ICodexStartupConfig WithBootstrapNode(IOnlineCodexNode node);
         ICodexSetup WithStorageQuota(ByteSize storageQuota);
         ICodexSetup EnableMetrics();
-        ICodexSetup EnableMarketplace(int initialBalance);
+        ICodexSetup EnableMarketplace(TestToken initialBalance);
+        ICodexSetup EnableMarketplace(TestToken initialBalance, Ether initialEther);
         ICodexNodeGroup BringOnline();
     }
     
@@ -62,9 +63,14 @@ namespace DistTestCore
             return this;
         }
 
-        public ICodexSetup EnableMarketplace(int initialBalance)
+        public ICodexSetup EnableMarketplace(TestToken initialBalance)
         {
-            MarketplaceConfig = new MarketplaceInitialConfig(initialBalance);
+            return EnableMarketplace(initialBalance, 1000.Eth());
+        }
+
+        public ICodexSetup EnableMarketplace(TestToken initialBalance, Ether initialEther)
+        {
+            MarketplaceConfig = new MarketplaceInitialConfig(initialEther, initialBalance);
             return this;
         }
 

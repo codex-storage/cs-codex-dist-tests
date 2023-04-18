@@ -51,7 +51,7 @@ namespace Tests.BasicTests
         {
             var group = SetupCodexNodes(2)
                             .WithStorageQuota(10.GB())
-                            .EnableMarketplace(initialBalance: 20)
+                            .EnableMarketplace(20.TestTokens())
                             .BringOnline();
 
             foreach (var node in group)

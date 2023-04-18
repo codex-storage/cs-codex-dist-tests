@@ -2,11 +2,13 @@
 {
     public class MarketplaceInitialConfig
     {
-        public MarketplaceInitialConfig(int initialBalance)
+        public MarketplaceInitialConfig(Ether initialEth, TestToken initialTestTokens)
         {
-            InitialBalance = initialBalance;
+            InitialEth = initialEth;
+            InitialTestTokens = initialTestTokens;
         }
 
-        public int InitialBalance { get; }
+        public Ether InitialEth { get; }
+        public TestToken InitialTestTokens { get; }
     }
 }

@@ -1,14 +1,15 @@
 ﻿using KubernetesWorkflow;
+using Newtonsoft.Json;
 using System.Text;
 
 namespace DistTestCore.Marketplace
 {
-    public class GethInfoExtractor
+    public class ContainerInfoExtractor
     {
         private readonly StartupWorkflow workflow;
         private readonly RunningContainer container;
 
-        public GethInfoExtractor(StartupWorkflow workflow, RunningContainer container)
+        public ContainerInfoExtractor(StartupWorkflow workflow, RunningContainer container)
         {
             this.workflow = workflow;
             this.container = container;
@@ -36,6 +37,14 @@ namespace DistTestCore.Marketplace
             if (string.IsNullOrEmpty(pubKey)) throw new InvalidOperationException("Unable to fetch enode from geth node. Test infra failure.");
 
             return pubKey;
+        }
+
+        public string ExtractMarketplaceAddress()
+        {
+            var marketplaceAddress = Retry(FetchMarketplaceAddress);
+            if (string.IsNullOrEmpty(marketplaceAddress)) throw new InvalidOperationException("Unable to fetch marketplace account from codex-contracts node. Test infra failure.");
+
+            return marketplaceAddress;
         }
 
         private string Retry(Func<string> fetch)
@@ -69,6 +78,13 @@ namespace DistTestCore.Marketplace
         private string FetchAccount()
         {
             return workflow.ExecuteCommand(container, "cat", GethContainerRecipe.AccountFilename);
+        }
+
+        private string FetchMarketplaceAddress()
+        {
+            var json = workflow.ExecuteCommand(container, "cat", CodexContractsContainerRecipe.MarketplaceAddressFilename);
+            var marketplace = JsonConvert.DeserializeObject<MarketplaceJson>(json);
+            return marketplace!.address;
         }
 
         private string FetchPubKey()
@@ -106,5 +122,10 @@ namespace DistTestCore.Marketplace
                     startIndex: openIndex,
                     length: closeIndex - openIndex);
         }
+    }
+
+    public class MarketplaceJson
+    {
+        public string address { get; set; } = string.Empty;
     }
 }

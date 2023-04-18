@@ -19,18 +19,18 @@ namespace DistTestCore.Marketplace
     public class GethMarketplaceAccessFactory : IMarketplaceAccessFactory
     {
         private readonly TestLog log;
-        private readonly GethBootstrapNodeInfo bootstrapNode;
+        private readonly MarketplaceNetwork marketplaceNetwork;
 
-        public GethMarketplaceAccessFactory(TestLog log, GethBootstrapNodeInfo bootstrapNode)
+        public GethMarketplaceAccessFactory(TestLog log, MarketplaceNetwork marketplaceNetwork)
         {
             this.log = log;
-            this.bootstrapNode = bootstrapNode;
+            this.marketplaceNetwork = marketplaceNetwork;
         }
 
         public IMarketplaceAccess CreateMarketplaceAccess(CodexAccess access)
         {
             var companionNode = GetGethCompanionNode(access);
-            return new MarketplaceAccess(log, bootstrapNode, companionNode);
+            return new MarketplaceAccess(log, marketplaceNetwork, companionNode);
         }
 
         private GethCompanionNodeInfo GetGethCompanionNode(CodexAccess access)

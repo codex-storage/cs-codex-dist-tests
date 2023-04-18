@@ -30,6 +30,14 @@ namespace NethereumWorkflow
             Log($"Transferred {amount} to {account}");
         }
 
+        public void MintTestTokens(string account, decimal amount)
+        {
+            if (amount < 1 || string.IsNullOrEmpty(account)) throw new ArgumentException("Invalid arguments for MintTestTokens");
+
+            // - address of token? -> address of marketplace?
+            // - nethereum do contract call
+        }
+
         public decimal GetBalance(string account)
         {
             var bigInt = Time.Wait(web3.Eth.GetBalance.SendRequestAsync(account));

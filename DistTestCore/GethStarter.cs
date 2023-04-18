@@ -5,13 +5,15 @@ namespace DistTestCore
 {
     public class GethStarter
     {
-        private readonly GethBootstrapNodeCache bootstrapNodeCache;
+        private readonly MarketplaceNetworkCache marketplaceNetworkCache;
         private readonly GethCompanionNodeStarter companionNodeStarter;
         private readonly TestLifecycle lifecycle;
 
         public GethStarter(TestLifecycle lifecycle, WorkflowCreator workflowCreator)
         {
-            bootstrapNodeCache = new GethBootstrapNodeCache(new GethBootstrapNodeStarter(lifecycle, workflowCreator));
+            marketplaceNetworkCache = new MarketplaceNetworkCache(
+                new GethBootstrapNodeStarter(lifecycle, workflowCreator),
+                new CodexContractsStarter(lifecycle, workflowCreator));
             companionNodeStarter = new GethCompanionNodeStarter(lifecycle, workflowCreator);
             this.lifecycle = lifecycle;
         }
@@ -20,26 +22,28 @@ namespace DistTestCore
         {
             if (codexSetup.MarketplaceConfig == null) return CreateMarketplaceUnavailableResult();
 
-            var bootstrapNode = bootstrapNodeCache.Get();
-            var companionNodes = StartCompanionNodes(codexSetup, bootstrapNode);
+            var marketplaceNetwork = marketplaceNetworkCache.Get();
+            var companionNodes = StartCompanionNodes(codexSetup, marketplaceNetwork);
 
-            TransferInitialBalance(bootstrapNode, codexSetup.MarketplaceConfig.InitialBalance, companionNodes);
+            TransferInitialBalance(marketplaceNetwork, codexSetup.MarketplaceConfig, companionNodes);
 
-            return CreateGethStartResult(bootstrapNode, companionNodes);
+            return CreateGethStartResult(marketplaceNetwork, companionNodes);
         }
 
-        private void TransferInitialBalance(GethBootstrapNodeInfo bootstrapNode, int initialBalance, GethCompanionNodeInfo[] companionNodes)
+        private void TransferInitialBalance(MarketplaceNetwork marketplaceNetwork, MarketplaceInitialConfig marketplaceConfig, GethCompanionNodeInfo[] companionNodes)
         {
-            var interaction = bootstrapNode.StartInteraction(lifecycle.Log);
+            var interaction = marketplaceNetwork.StartInteraction(lifecycle.Log);
             foreach (var node in companionNodes)
             {
-                interaction.TransferTo(node.Account, initialBalance);
+                interaction.TransferTo(node.Account, marketplaceConfig.InitialEth.Wei);
+                // wrong level: mintTestTokens? interactions knows nothing about contract details!
+                //interaction.MintTestTokens(node.Account, marketplaceConfig.InitialTestTokens.Amount);
             }
         }
 
-        private GethStartResult CreateGethStartResult(GethBootstrapNodeInfo bootstrapNode, GethCompanionNodeInfo[] companionNodes)
+        private GethStartResult CreateGethStartResult(MarketplaceNetwork marketplaceNetwork, GethCompanionNodeInfo[] companionNodes)
         {
-            return new GethStartResult(CreateMarketplaceAccessFactory(bootstrapNode), bootstrapNode, companionNodes);
+            return new GethStartResult(CreateMarketplaceAccessFactory(marketplaceNetwork), marketplaceNetwork, companionNodes);
         }
 
         private GethStartResult CreateMarketplaceUnavailableResult()
@@ -47,34 +51,38 @@ namespace DistTestCore
             return new GethStartResult(new MarketplaceUnavailableAccessFactory(), null!, Array.Empty<GethCompanionNodeInfo>());
         }
 
-        private IMarketplaceAccessFactory CreateMarketplaceAccessFactory(GethBootstrapNodeInfo bootstrapNode)
+        private IMarketplaceAccessFactory CreateMarketplaceAccessFactory(MarketplaceNetwork marketplaceNetwork)
         {
-            return new GethMarketplaceAccessFactory(lifecycle.Log, bootstrapNode!);
+            return new GethMarketplaceAccessFactory(lifecycle.Log, marketplaceNetwork);
         }
 
-        private GethCompanionNodeInfo[] StartCompanionNodes(CodexSetup codexSetup, GethBootstrapNodeInfo bootstrapNode)
+        private GethCompanionNodeInfo[] StartCompanionNodes(CodexSetup codexSetup, MarketplaceNetwork marketplaceNetwork)
         {
-            return companionNodeStarter.StartCompanionNodesFor(codexSetup, bootstrapNode);
+            return companionNodeStarter.StartCompanionNodesFor(codexSetup, marketplaceNetwork.Bootstrap);
         }
     }
 
-    public class GethBootstrapNodeCache
+    public class MarketplaceNetworkCache
     {
         private readonly GethBootstrapNodeStarter bootstrapNodeStarter;
-        private GethBootstrapNodeInfo? bootstrapNode;
+        private readonly CodexContractsStarter codexContractsStarter;
+        private MarketplaceNetwork? network;
 
-        public GethBootstrapNodeCache(GethBootstrapNodeStarter bootstrapNodeStarter)
+        public MarketplaceNetworkCache(GethBootstrapNodeStarter bootstrapNodeStarter, CodexContractsStarter codexContractsStarter)
         {
             this.bootstrapNodeStarter = bootstrapNodeStarter;
+            this.codexContractsStarter = codexContractsStarter;
         }
 
-        public GethBootstrapNodeInfo Get()
+        public MarketplaceNetwork Get()
         {
-            if (bootstrapNode == null)
+            if (network == null)
             {
-                bootstrapNode = bootstrapNodeStarter.StartGethBootstrapNode();
+                var bootstrapInfo = bootstrapNodeStarter.StartGethBootstrapNode();
+                var marketplaceInfo = codexContractsStarter.Start(bootstrapInfo.RunningContainers.Containers[0]);
+                network = new MarketplaceNetwork(bootstrapInfo, marketplaceInfo );
             }
-            return bootstrapNode;
+            return network;
         }
     }
 }

@@ -30,7 +30,7 @@ namespace DistTestCore.Marketplace
 
         private GethCompanionNodeInfo CreateCompanionInfo(StartupWorkflow workflow, RunningContainer container)
         {
-            var extractor = new GethInfoExtractor(workflow, container);
+            var extractor = new ContainerInfoExtractor(workflow, container);
             var account = extractor.ExtractAccount();
             return new GethCompanionNodeInfo(container, account);
         }

@@ -15,7 +15,7 @@ namespace DistTestCore.Marketplace
             this.workflowCreator = workflowCreator;
         }
 
-        public void Start(RunningContainer bootstrapContainer)
+        public MarketplaceInfo Start(RunningContainer bootstrapContainer)
         {
             var workflow = workflowCreator.CreateWorkflow();
             var startupConfig = CreateStartupConfig(bootstrapContainer);
@@ -32,7 +32,12 @@ namespace DistTestCore.Marketplace
                 return logHandler.Found;
             });
 
+            var extractor = new ContainerInfoExtractor(workflow, container);
+            var marketplaceAddress = extractor.ExtractMarketplaceAddress();
+
             lifecycle.Log.Log("Contracts deployed.");
+
+            return new MarketplaceInfo(marketplaceAddress);
         }
 
         private void WaitUntil(Func<bool> predicate)
@@ -47,6 +52,16 @@ namespace DistTestCore.Marketplace
             startupConfig.Add(contractsConfig);
             return startupConfig;
         }
+    }
+
+    public class MarketplaceInfo
+    {
+        public MarketplaceInfo(string address)
+        {
+            Address = address;
+        }
+
+        public string Address { get; }
     }
 
     public class ContractsReadyLogHandler : LogHandler
