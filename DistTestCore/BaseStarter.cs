@@ -28,12 +28,12 @@ namespace DistTestCore
 
         protected void Log(string msg)
         {
-            lifecycle.Log.Log($"{GetClassName} {msg}");
+            lifecycle.Log.Log($"{GetClassName()} {msg}");
         }
 
         private string GetClassName()
         {
-            return GetType().Name;
+            return $"({GetType().Name})";
         }
     }
 }

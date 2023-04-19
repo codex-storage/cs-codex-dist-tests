@@ -8,6 +8,7 @@ namespace DistTestCore
 {
     public interface IOnlineCodexNode
     {
+        string GetName();
         CodexDebugResponse GetDebugInfo();
         ContentId UploadFile(TestFile file);
         TestFile? DownloadContent(ContentId contentId);

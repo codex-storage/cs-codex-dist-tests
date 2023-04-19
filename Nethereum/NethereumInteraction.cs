@@ -10,6 +10,7 @@ namespace NethereumWorkflow
 {
     public class NethereumInteraction
     {
+        private readonly List<Task> openTasks = new List<Task>();
         private readonly TestLog log;
         private readonly Web3 web3;
         private readonly string rootAccount;
@@ -21,25 +22,21 @@ namespace NethereumWorkflow
             this.rootAccount = rootAccount;
         }
 
-        public void TransferTo(string account, decimal amount)
-        {
-            if (amount < 1 || string.IsNullOrEmpty(account)) throw new ArgumentException("Invalid arguments for AddToBalance");
-
-            var value = ToHexBig(amount);
-            var transactionId = Time.Wait(web3.Eth.TransactionManager.SendTransactionAsync(rootAccount, account, value));
-            Time.Wait(web3.Eth.TransactionManager.TransactionReceiptService.PollForReceiptAsync(transactionId));
-
-            Log($"Transferred {amount} to {account}");
-        }
-
         public string GetTokenAddress(string marketplaceAddress)
         {
             var function = new GetTokenFunction();
 
             var handler = web3.Eth.GetContractQueryHandler<GetTokenFunction>();
-            var result = Time.Wait(handler.QueryAsync<string>(marketplaceAddress, function));
+            return Time.Wait(handler.QueryAsync<string>(marketplaceAddress, function));
+        }
 
-            return result;
+        public void TransferWeiTo(string account, decimal amount)
+        {
+            if (amount < 1 || string.IsNullOrEmpty(account)) throw new ArgumentException("Invalid arguments for AddToBalance");
+
+            var value = ToHexBig(amount);
+            var transactionId = Time.Wait(web3.Eth.TransactionManager.SendTransactionAsync(rootAccount, account, value));
+            openTasks.Add(web3.Eth.TransactionManager.TransactionReceiptService.PollForReceiptAsync(transactionId));
         }
 
         public void MintTestTokens(string account, decimal amount, string tokenAddress)
@@ -53,7 +50,7 @@ namespace NethereumWorkflow
             };
 
             var handler = web3.Eth.GetContractTransactionHandler<MintTokensFunction>();
-            Time.Wait(handler.SendRequestAndWaitForReceiptAsync(tokenAddress, function));
+            openTasks.Add(handler.SendRequestAndWaitForReceiptAsync(tokenAddress, function));
         }
 
         public decimal GetBalance(string tokenAddress, string account)
@@ -66,8 +63,16 @@ namespace NethereumWorkflow
             var handler = web3.Eth.GetContractQueryHandler<GetTokenBalanceFunction>();
             var result = ToDecimal(Time.Wait(handler.QueryAsync<BigInteger>(tokenAddress, function)));
 
-            Log($"Balance of {account} is {result}");
+            Log($"Balance of {account} is {result} TestTokens.");
             return result;
+        }
+
+        public void WaitForAllTransactions()
+        {
+            var tasks = openTasks.ToArray();
+            openTasks.Clear();
+
+            Task.WaitAll(tasks);
         }
 
         private HexBigInteger ToHexBig(decimal amount)

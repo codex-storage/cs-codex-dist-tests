@@ -19,9 +19,11 @@ namespace DistTestCore.Marketplace
             var containers = workflow.Start(codexSetup.NumberOfNodes, Location.Unspecified, new GethContainerRecipe(), startupConfig);
             if (containers.Containers.Length != codexSetup.NumberOfNodes) throw new InvalidOperationException("Expected a Geth companion node to be created for each Codex node. Test infra failure.");
 
-            LogEnd("Initialized companion nodes.");
+            var result = containers.Containers.Select(c => CreateCompanionInfo(workflow, c)).ToArray();
 
-            return containers.Containers.Select(c => CreateCompanionInfo(workflow, c)).ToArray();
+            LogEnd($"Initialized {codexSetup.NumberOfNodes} companion nodes. Their accounts: [{string.Join(",", result.Select(c => c.Account))}]");
+
+            return result;
         }
 
         private GethCompanionNodeInfo CreateCompanionInfo(StartupWorkflow workflow, RunningContainer container)

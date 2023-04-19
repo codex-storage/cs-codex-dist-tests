@@ -24,7 +24,9 @@ namespace DistTestCore
             var marketplaceNetwork = marketplaceNetworkCache.Get();
             var companionNodes = StartCompanionNodes(codexSetup, marketplaceNetwork);
 
+            LogStart("Setting up initial balance...");
             TransferInitialBalance(marketplaceNetwork, codexSetup.MarketplaceConfig, companionNodes);
+            LogEnd($"Initial balance of {codexSetup.MarketplaceConfig.InitialTestTokens.Amount} TestTokens set for {codexSetup.NumberOfNodes} nodes.");
 
             return CreateGethStartResult(marketplaceNetwork, companionNodes);
         }
@@ -36,9 +38,11 @@ namespace DistTestCore
 
             foreach (var node in companionNodes)
             {
-                interaction.TransferTo(node.Account, marketplaceConfig.InitialEth.Wei);
+                interaction.TransferWeiTo(node.Account, marketplaceConfig.InitialEth.Wei);
                 interaction.MintTestTokens(node.Account, marketplaceConfig.InitialTestTokens.Amount, tokenAddress);
             }
+
+            interaction.WaitForAllTransactions();
         }
 
         private GethStartResult CreateGethStartResult(MarketplaceNetwork marketplaceNetwork, GethCompanionNodeInfo[] companionNodes)

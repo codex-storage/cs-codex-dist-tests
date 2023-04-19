@@ -14,6 +14,7 @@ namespace DistTestCore
 
         public ICodexNodeGroup BringOnline(CodexSetup codexSetup)
         {
+            LogSeparator();
             LogStart($"Starting {codexSetup.Describe()}...");
             var gethStartResult = lifecycle.GethStarter.BringOnlineMarketplaceFor(codexSetup);
 
@@ -28,7 +29,8 @@ namespace DistTestCore
             var codexNodeFactory = new CodexNodeFactory(lifecycle, metricAccessFactory, gethStartResult.MarketplaceAccessFactory);
 
             var group = CreateCodexGroup(codexSetup, containers, codexNodeFactory);
-            LogEnd($"Started at '{group.Containers.RunningPod.Ip}'");
+            LogEnd($"Started {codexSetup.NumberOfNodes} nodes at '{group.Containers.RunningPod.Ip}'. They are: [{string.Join(",", group.Select(n => n.GetName()))}]");
+            LogSeparator();
             return group;
         }
 
@@ -71,6 +73,11 @@ namespace DistTestCore
         private StartupWorkflow CreateWorkflow()
         {
             return workflowCreator.CreateWorkflow();
+        }
+
+        private void LogSeparator()
+        {
+            Log("----------------------------------------------------------------------------");
         }
     }
 }
