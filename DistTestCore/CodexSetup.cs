@@ -84,7 +84,7 @@ namespace DistTestCore
         {
             if (LogLevel != null) yield return $"LogLevel={LogLevel}";
             //if (BootstrapNode != null) yield return "BootstrapNode=set-not-shown-here";
-            if (StorageQuota != null) yield return $"StorageQuote={StorageQuota.SizeInBytes}";
+            if (StorageQuota != null) yield return $"StorageQuote={StorageQuota}";
         }
     }
 }

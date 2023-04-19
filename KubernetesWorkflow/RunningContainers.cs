@@ -28,6 +28,11 @@
             ServicePorts = servicePorts;
         }
 
+        public string GetName()
+        {
+            return $"<{Recipe.Name}>";
+        }
+
         public RunningPod Pod { get; }
         public ContainerRecipe Recipe { get; }
         public Port[] ServicePorts { get; }

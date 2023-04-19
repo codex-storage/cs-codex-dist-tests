@@ -61,10 +61,7 @@ namespace NethereumWorkflow
             };
 
             var handler = web3.Eth.GetContractQueryHandler<GetTokenBalanceFunction>();
-            var result = ToDecimal(Time.Wait(handler.QueryAsync<BigInteger>(tokenAddress, function)));
-
-            Log($"Balance of {account} is {result} TestTokens.");
-            return result;
+            return ToDecimal(Time.Wait(handler.QueryAsync<BigInteger>(tokenAddress, function)));
         }
 
         public void WaitForAllTransactions()
@@ -87,19 +84,9 @@ namespace NethereumWorkflow
             return new BigInteger(amount);
         }
 
-        private decimal ToDecimal(HexBigInteger hexBigInteger)
-        {
-            return (decimal)hexBigInteger.Value;
-        }
-
         private decimal ToDecimal(BigInteger bigInteger)
         {
             return (decimal)bigInteger;
-        }
-
-        private void Log(string msg)
-        {
-            log.Log(msg);
         }
     }
 

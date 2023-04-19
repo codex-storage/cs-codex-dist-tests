@@ -26,7 +26,7 @@ namespace DistTestCore
 
             LogStart("Setting up initial balance...");
             TransferInitialBalance(marketplaceNetwork, codexSetup.MarketplaceConfig, companionNodes);
-            LogEnd($"Initial balance of {codexSetup.MarketplaceConfig.InitialTestTokens.Amount} TestTokens set for {codexSetup.NumberOfNodes} nodes.");
+            LogEnd($"Initial balance of {codexSetup.MarketplaceConfig.InitialTestTokens} set for {codexSetup.NumberOfNodes} nodes.");
 
             return CreateGethStartResult(marketplaceNetwork, companionNodes);
         }

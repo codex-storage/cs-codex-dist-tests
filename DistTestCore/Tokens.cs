@@ -18,6 +18,11 @@
         }
 
         public decimal Amount { get; }
+
+        public override string ToString()
+        {
+            return $"{Amount} TestTokens";
+        }
     }
 
     public static class TokensIntExtensions

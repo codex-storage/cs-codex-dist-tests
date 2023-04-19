@@ -40,7 +40,7 @@ namespace DistTestCore
 
         public string GetName()
         {
-            return $"<{CodexAccess.Container.Recipe.Name}>";
+            return CodexAccess.Container.GetName();
         }
 
         public CodexDebugResponse GetDebugInfo()

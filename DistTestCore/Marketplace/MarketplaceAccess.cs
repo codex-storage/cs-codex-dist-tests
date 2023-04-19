@@ -3,6 +3,7 @@ using Logging;
 using NUnit.Framework;
 using NUnit.Framework.Constraints;
 using System.Numerics;
+using Utils;
 
 namespace DistTestCore.Marketplace
 {
@@ -11,7 +12,7 @@ namespace DistTestCore.Marketplace
         string MakeStorageAvailable(ByteSize size, TestToken minPricePerBytePerSecond, TestToken maxCollateral, TimeSpan maxDuration);
         string RequestStorage(ContentId contentId, TestToken pricePerBytePerSecond, TestToken requiredCollateral, uint minRequiredNumberOfNodes, int proofProbability, TimeSpan duration);
         void AssertThatBalance(IResolveConstraint constraint, string message = "");
-        decimal GetBalance();
+        TestToken GetBalance();
     }
 
     public class MarketplaceAccess : IMarketplaceAccess
@@ -42,22 +43,39 @@ namespace DistTestCore.Marketplace
                 tolerance = null,
             };
 
+            Log($"Requesting storage for: {contentId.Id}... (" +
+                $"pricePerBytePerSecond: {pricePerBytePerSecond}," +
+                $"requiredCollateral: {requiredCollateral}," +
+                $"minRequiredNumberOfNodes: {minRequiredNumberOfNodes}," +
+                $"proofProbability: {proofProbability}," +
+                $"duration: {Time.FormatDuration(duration)})");
+
             var response = codexAccess.RequestStorage(request, contentId.Id);
+
+            Log($"Storage requested successfully. PurchaseId: {response.purchaseId}");
 
             return response.purchaseId;
         }
 
-        public string MakeStorageAvailable(ByteSize size, TestToken minPricePerBytePerSecond, TestToken maxCollateral, TimeSpan duration)
+        public string MakeStorageAvailable(ByteSize size, TestToken minPricePerBytePerSecond, TestToken maxCollateral, TimeSpan maxDuration)
         {
             var request = new CodexSalesAvailabilityRequest
             {
                 size = ToHexBigInt(size.SizeInBytes),
-                duration = ToHexBigInt(duration.TotalSeconds),
+                duration = ToHexBigInt(maxDuration.TotalSeconds),
                 maxCollateral = ToHexBigInt(maxCollateral),
                 minPrice = ToHexBigInt(minPricePerBytePerSecond)
             };
 
+            Log($"Making storage available... (" +
+                $"size: {size}," +
+                $"minPricePerBytePerSecond: {minPricePerBytePerSecond}," +
+                $"maxCollateral: {maxCollateral}," +
+                $"maxDuration: {Time.FormatDuration(maxDuration)}");
+
             var response = codexAccess.SalesAvailability(request);
+
+            Log($"Storage successfully made available. Id: {response.id}");
 
             return response.id;
         }
@@ -78,10 +96,21 @@ namespace DistTestCore.Marketplace
             Assert.That(GetBalance(), constraint, message);
         }
 
-        public decimal GetBalance()
+        public TestToken GetBalance()
         {
             var interaction = marketplaceNetwork.StartInteraction(log);
-            return interaction.GetBalance(marketplaceNetwork.Marketplace.TokenAddress, companionNode.Account);
+            var account = companionNode.Account;
+            var amount = interaction.GetBalance(marketplaceNetwork.Marketplace.TokenAddress, account);
+            var balance = new TestToken(amount);
+
+            Log($"Balance of {codexAccess.Container.GetName()}({account}) is {balance}.");
+
+            return balance;
+        }
+
+        private void Log(string msg)
+        {
+            log.Log(msg);
         }
     }
 
@@ -104,10 +133,10 @@ namespace DistTestCore.Marketplace
             Unavailable();
         }
 
-        public decimal GetBalance()
+        public TestToken GetBalance()
         {
             Unavailable();
-            return 0;
+            return new TestToken(0);
         }
 
         private void Unavailable()

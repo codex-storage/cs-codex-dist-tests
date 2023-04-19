@@ -63,7 +63,6 @@ namespace Tests.BasicTests
 
             primary.ConnectToPeer(secondary);
 
-            // Gives 503 - Persistance not enabled in current codex image.
             primary.Marketplace.MakeStorageAvailable(
                 size: 10.GB(),
                 minPricePerBytePerSecond: 1.TestTokens(),
@@ -73,7 +72,6 @@ namespace Tests.BasicTests
             var testFile = GenerateTestFile(10.MB());
             var contentId = secondary.UploadFile(testFile);
 
-            // Gives 500 - Persistance not enabled in current codex image.
             secondary.Marketplace.RequestStorage(contentId,
                 pricePerBytePerSecond: 2.TestTokens(),
                 requiredCollateral: 10.TestTokens(),

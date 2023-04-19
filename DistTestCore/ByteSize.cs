@@ -8,6 +8,11 @@
         }
 
         public long SizeInBytes { get; }
+
+        public override string ToString()
+        {
+            return $"{SizeInBytes} bytes";
+        }
     }
 
     public static class ByteSizeIntExtensions
