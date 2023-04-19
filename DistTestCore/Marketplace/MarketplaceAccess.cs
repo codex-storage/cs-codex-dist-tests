@@ -44,10 +44,10 @@ namespace DistTestCore.Marketplace
             };
 
             Log($"Requesting storage for: {contentId.Id}... (" +
-                $"pricePerBytePerSecond: {pricePerBytePerSecond}," +
-                $"requiredCollateral: {requiredCollateral}," +
-                $"minRequiredNumberOfNodes: {minRequiredNumberOfNodes}," +
-                $"proofProbability: {proofProbability}," +
+                $"pricePerBytePerSecond: {pricePerBytePerSecond}, " +
+                $"requiredCollateral: {requiredCollateral}, " +
+                $"minRequiredNumberOfNodes: {minRequiredNumberOfNodes}, " +
+                $"proofProbability: {proofProbability}, " +
                 $"duration: {Time.FormatDuration(duration)})");
 
             var response = codexAccess.RequestStorage(request, contentId.Id);
@@ -68,10 +68,10 @@ namespace DistTestCore.Marketplace
             };
 
             Log($"Making storage available... (" +
-                $"size: {size}," +
-                $"minPricePerBytePerSecond: {minPricePerBytePerSecond}," +
-                $"maxCollateral: {maxCollateral}," +
-                $"maxDuration: {Time.FormatDuration(maxDuration)}");
+                $"size: {size}, " +
+                $"minPricePerBytePerSecond: {minPricePerBytePerSecond}, " +
+                $"maxCollateral: {maxCollateral}, " +
+                $"maxDuration: {Time.FormatDuration(maxDuration)})");
 
             var response = codexAccess.SalesAvailability(request);
 
@@ -103,14 +103,14 @@ namespace DistTestCore.Marketplace
             var amount = interaction.GetBalance(marketplaceNetwork.Marketplace.TokenAddress, account);
             var balance = new TestToken(amount);
 
-            Log($"Balance of {codexAccess.Container.GetName()}({account}) is {balance}.");
+            Log($"Balance of {account} is {balance}.");
 
             return balance;
         }
 
         private void Log(string msg)
         {
-            log.Log(msg);
+            log.Log($"{codexAccess.Container.GetName()} {msg}");
         }
     }
 

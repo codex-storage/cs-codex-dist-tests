@@ -8,6 +8,21 @@
         }
 
         public decimal Wei { get; }
+
+        public override bool Equals(object? obj)
+        {
+            return obj is Ether ether && Wei == ether.Wei;
+        }
+
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(Wei);
+        }
+
+        public override string ToString()
+        {
+            return $"{Wei} Wei";
+        }
     }
 
     public class TestToken
@@ -18,6 +33,16 @@
         }
 
         public decimal Amount { get; }
+
+        public override bool Equals(object? obj)
+        {
+            return obj is TestToken token && Amount == token.Amount;
+        }
+
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(Amount);
+        }
 
         public override string ToString()
         {

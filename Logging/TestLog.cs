@@ -14,7 +14,7 @@ namespace Logging
             methodName = GetMethodName();
             fullName = Path.Combine(folder, methodName);
 
-            Log($"Begin: {methodName}");
+            Log($"*** Begin: {methodName}");
         }
 
         public LogFile CreateSubfile(string ext = "log")
@@ -26,7 +26,7 @@ namespace Logging
         {
             var result = TestContext.CurrentContext.Result;
 
-            Log($"Finished: {methodName} = {result.Outcome.Status}");
+            Log($"*** Finished: {methodName} = {result.Outcome.Status}");
             if (!string.IsNullOrEmpty(result.Message))
             {
                 Log(result.Message);

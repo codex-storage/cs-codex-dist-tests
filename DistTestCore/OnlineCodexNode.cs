@@ -91,7 +91,7 @@ namespace DistTestCore
 
         public string Describe()
         {
-            return $"({Group.Describe()} contains {GetName()})";
+            return $"({GetName()} in {Group.Describe()})";
         }
 
         private string GetPeerMultiAddress(OnlineCodexNode peer, CodexDebugResponse peerInfo)

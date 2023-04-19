@@ -11,10 +11,12 @@ namespace DistTestCore.Logs
     public class CodexNodeLog : ICodexNodeLog
     {
         private readonly LogFile logFile;
+        private readonly OnlineCodexNode owner;
 
-        public CodexNodeLog(LogFile logFile)
+        public CodexNodeLog(LogFile logFile, OnlineCodexNode owner)
         {
             this.logFile = logFile;
+            this.owner = owner;
         }
 
         public void AssertLogContains(string expectedString)
@@ -29,7 +31,7 @@ namespace DistTestCore.Logs
                 line = streamReader.ReadLine();
             }
 
-            Assert.Fail($"Unable to find string '{expectedString}' in CodexNode log file {logFile.FullFilename}");
+            Assert.Fail($"{owner.GetName()} Unable to find string '{expectedString}' in CodexNode log file {logFile.FullFilename}");
         }
     }
 }

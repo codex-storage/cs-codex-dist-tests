@@ -26,7 +26,7 @@ namespace DistTestCore
 
             LogEnd("Metrics server started.");
 
-            return new CodexNodeMetricsAccessFactory(runningContainers);
+            return new CodexNodeMetricsAccessFactory(lifecycle, runningContainers);
         }
 
         private string GeneratePrometheusConfig(RunningContainer[] nodes)

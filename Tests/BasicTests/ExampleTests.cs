@@ -41,7 +41,7 @@ namespace Tests.BasicTests
             primary.ConnectToPeer(secondary);
             primary2.ConnectToPeer(secondary2);
 
-            Thread.Sleep(TimeSpan.FromMinutes(5));
+            Thread.Sleep(TimeSpan.FromMinutes(2));
 
             primary.Metrics.AssertThat("libp2p_peers", Is.EqualTo(1));
             primary2.Metrics.AssertThat("libp2p_peers", Is.EqualTo(1));
@@ -55,7 +55,7 @@ namespace Tests.BasicTests
                             .EnableMarketplace(initialBalance: 234.TestTokens())
                             .BringOnline()[0];
 
-            Assert.That(primary.Marketplace.GetBalance(), Is.EqualTo(234));
+            primary.Marketplace.AssertThatBalance(Is.EqualTo(234.TestTokens()));
 
             var secondary = SetupCodexNodes(1)
                             .EnableMarketplace(initialBalance: 1000.TestTokens())

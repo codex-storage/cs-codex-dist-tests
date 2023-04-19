@@ -1,4 +1,5 @@
 ﻿using KubernetesWorkflow;
+using Logging;
 using NUnit.Framework;
 using NUnit.Framework.Constraints;
 using Utils;
@@ -10,22 +11,15 @@ namespace DistTestCore.Metrics
         void AssertThat(string metricName, IResolveConstraint constraint, string message = "");
     }
 
-    public class MetricsUnavailable : IMetricsAccess
-    {
-        public void AssertThat(string metricName, IResolveConstraint constraint, string message = "")
-        {
-            Assert.Fail("Incorrect test setup: Metrics were not enabled for this group of Codex nodes. Add 'EnableMetrics()' after 'SetupCodexNodes()' to enable it.");
-            throw new InvalidOperationException();
-        }
-    }
-
     public class MetricsAccess : IMetricsAccess
     {
+        private readonly TestLog log;
         private readonly MetricsQuery query;
         private readonly RunningContainer node;
 
-        public MetricsAccess(MetricsQuery query, RunningContainer node)
+        public MetricsAccess(TestLog log, MetricsQuery query, RunningContainer node)
         {
+            this.log = log;
             this.query = query;
             this.node = node;
         }
@@ -34,6 +28,9 @@ namespace DistTestCore.Metrics
         {
             var metricSet = GetMetricWithTimeout(metricName);
             var metricValue = metricSet.Values[0].Value;
+
+            log.Log($"{node.GetName()} metric '{metricName}' = {metricValue}");
+
             Assert.That(metricValue, constraint, message);
         }
 
@@ -65,6 +62,15 @@ namespace DistTestCore.Metrics
             var result = query.GetMostRecent(metricName, node);
             if (result == null) return null;
             return result.Sets.LastOrDefault();
+        }
+    }
+
+    public class MetricsUnavailable : IMetricsAccess
+    {
+        public void AssertThat(string metricName, IResolveConstraint constraint, string message = "")
+        {
+            Assert.Fail("Incorrect test setup: Metrics were not enabled for this group of Codex nodes. Add 'EnableMetrics()' after 'SetupCodexNodes()' to enable it.");
+            throw new InvalidOperationException();
         }
     }
 }

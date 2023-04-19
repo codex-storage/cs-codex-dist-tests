@@ -40,9 +40,9 @@ namespace DistTestCore
             }
 
             fixtureLog.Log("Global setup cleanup successful");
-            fixtureLog.Log($"Codex image: {CodexContainerRecipe.DockerImage}");
-            fixtureLog.Log($"Prometheus image: {PrometheusContainerRecipe.DockerImage}");
-            fixtureLog.Log($"Geth image: {GethContainerRecipe.DockerImage}");
+            fixtureLog.Log($"Codex image: '{CodexContainerRecipe.DockerImage}'");
+            fixtureLog.Log($"Prometheus image: '{PrometheusContainerRecipe.DockerImage}'");
+            fixtureLog.Log($"Geth image: '{GethContainerRecipe.DockerImage}'");
         }
 
         [SetUp]

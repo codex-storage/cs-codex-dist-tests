@@ -9,6 +9,16 @@
 
         public long SizeInBytes { get; }
 
+        public override bool Equals(object? obj)
+        {
+            return obj is ByteSize size && SizeInBytes == size.SizeInBytes;
+        }
+
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(SizeInBytes);
+        }
+
         public override string ToString()
         {
             return $"{SizeInBytes} bytes";

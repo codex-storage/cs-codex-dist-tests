@@ -35,20 +35,22 @@ namespace DistTestCore
 
         public T HttpGetJson<T>(string route)
         {
-            return JsonConvert.DeserializeObject<T>(HttpGetString(route))!;
+            var json = HttpGetString(route);
+            return TryJsonDeserialize<T>(json);
         }
 
         public TResponse HttpPostJson<TRequest, TResponse>(string route, TRequest body)
         {
-            return Retry(() =>
+            var json = Retry(() =>
             {
                 using var client = GetClient();
                 var url = GetUrl() + route;
                 using var content = JsonContent.Create(body);
                 var result = Time.Wait(client.PostAsync(url, content));
-                var json = Time.Wait(result.Content.ReadAsStringAsync());
-                return JsonConvert.DeserializeObject<TResponse>(json)!;
+                return Time.Wait(result.Content.ReadAsStringAsync());
             });
+
+            return TryJsonDeserialize<TResponse>(json);
         }
 
         public string HttpPostStream(string route, Stream stream)
@@ -98,10 +100,24 @@ namespace DistTestCore
                     retryCounter++;
                     if (retryCounter > Timing.HttpCallRetryCount())
                     {
-                        Assert.Fail(exception.Message);
+                        Assert.Fail(exception.ToString());
                         throw;
                     }
                 }
+            }
+        }
+
+        private static T TryJsonDeserialize<T>(string json)
+        {
+            try
+            {
+                return JsonConvert.DeserializeObject<T>(json)!;
+            }
+            catch (Exception exception)
+            {
+                var msg = $"Failed to deserialize JSON: '{json}' with exception: {exception}";
+                Assert.Fail(msg);
+                throw new InvalidOperationException(msg, exception);
             }
         }
 

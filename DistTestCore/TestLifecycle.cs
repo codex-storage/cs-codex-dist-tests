@@ -35,12 +35,12 @@ namespace DistTestCore
         {
             var subFile = Log.CreateSubfile();
             var description = node.Describe();
-            var handler = new LogDownloadHandler(description, subFile);
+            var handler = new LogDownloadHandler(node, description, subFile);
 
             Log.Log($"Downloading logs for {description} to file '{subFile.FullFilename}'");
             CodexStarter.DownloadLog(node.CodexAccess.Container, handler);
 
-            return new CodexNodeLog(subFile);
+            return new CodexNodeLog(subFile, node);
         }
     }
 }

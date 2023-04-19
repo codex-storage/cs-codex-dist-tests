@@ -17,17 +17,19 @@ namespace DistTestCore.Metrics
 
     public class CodexNodeMetricsAccessFactory : IMetricsAccessFactory
     {
+        private readonly TestLifecycle lifecycle;
         private readonly RunningContainers prometheusContainer;
 
-        public CodexNodeMetricsAccessFactory(RunningContainers prometheusContainer)
+        public CodexNodeMetricsAccessFactory(TestLifecycle lifecycle, RunningContainers prometheusContainer)
         {
+            this.lifecycle = lifecycle;
             this.prometheusContainer = prometheusContainer;
         }
 
         public IMetricsAccess CreateMetricsAccess(RunningContainer codexContainer)
         {
             var query = new MetricsQuery(prometheusContainer);
-            return new MetricsAccess(query, codexContainer);
+            return new MetricsAccess(lifecycle.Log, query, codexContainer);
         }
     }
 }
