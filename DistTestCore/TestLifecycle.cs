@@ -34,7 +34,7 @@ namespace DistTestCore
         public ICodexNodeLog DownloadLog(OnlineCodexNode node)
         {
             var subFile = Log.CreateSubfile();
-            var description = node.Describe();
+            var description = node.GetName();
             var handler = new LogDownloadHandler(node, description, subFile);
 
             Log.Log($"Downloading logs for {description} to file '{subFile.FullFilename}'");

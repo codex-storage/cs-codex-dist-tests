@@ -15,7 +15,7 @@
 
         public string Describe()
         {
-            return $"[{RunningPod.Ip}]";
+            return string.Join(",", Containers.Select(c => c.GetName()));
         }
     }
 
