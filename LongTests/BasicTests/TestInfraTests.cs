@@ -1,7 +1,8 @@
-﻿using CodexDistTestCore;
+﻿using DistTestCore;
+using DistTestCore.Codex;
 using NUnit.Framework;
 
-namespace LongTests.BasicTests
+namespace TestsLong.BasicTests
 {
     public class TestInfraTests : DistTest
     {

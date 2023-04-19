@@ -1,7 +1,8 @@
-﻿using CodexDistTestCore;
+﻿using DistTestCore;
+using DistTestCore.Codex;
 using NUnit.Framework;
 
-namespace LongTests.BasicTests
+namespace TestsLong.BasicTests
 {
     [TestFixture]
     public class LargeFileTests : DistTest
