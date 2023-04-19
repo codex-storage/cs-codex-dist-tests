@@ -23,14 +23,6 @@ namespace DistTestCore.Marketplace
             return account;
         }
 
-        public string ExtractGenesisJsonBase64()
-        {
-            var genesisJson = Retry(FetchGenesisJson);
-            if (string.IsNullOrEmpty(genesisJson)) throw new InvalidOperationException("Unable to fetch genesis-json for geth node. Test infra failure.");
-
-            return Convert.ToBase64String(Encoding.ASCII.GetBytes(genesisJson));
-        }
-
         public string ExtractPubKey()
         {
             var pubKey = Retry(FetchPubKey);
@@ -76,11 +68,6 @@ namespace DistTestCore.Marketplace
             {
                 return string.Empty;
             }
-        }
-
-        private string FetchGenesisJson()
-        {
-            return workflow.ExecuteCommand(container, "cat", GethContainerRecipe.GenesisFilename);
         }
 
         private string FetchAccount()

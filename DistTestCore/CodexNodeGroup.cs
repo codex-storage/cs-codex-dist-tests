@@ -78,8 +78,8 @@ namespace DistTestCore
             }
             catch (Exception e)
             {
-                lifecycle.Log.Error($"Failed to start codex node: {e}");
-                throw;
+                lifecycle.Log.Error($"Failed to start codex node: {e}. Test infra failure.");
+                throw new InvalidOperationException($"Failed to start codex node. Test infra failure.", e);
             }
         }
     }
