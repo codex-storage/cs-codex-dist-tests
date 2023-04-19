@@ -51,7 +51,7 @@ namespace Tests.BasicTests
         public void MarketplaceExample()
         {
             var primary = SetupCodexNodes(1)
-                            .WithStorageQuota(10.GB())
+                            .WithStorageQuota(11.GB())
                             .EnableMarketplace(initialBalance: 234.TestTokens())
                             .BringOnline()[0];
 
@@ -79,13 +79,14 @@ namespace Tests.BasicTests
                 proofProbability: 5,
                 duration: TimeSpan.FromMinutes(2));
 
-            Time.Sleep(TimeSpan.FromMinutes(3));
+            Time.Sleep(TimeSpan.FromMinutes(1));
 
-            primary.Marketplace.AssertThatBalance(Is.LessThan(20), "Collateral was not placed.");
-            var primaryBalance = primary.Marketplace.GetBalance();
+            primary.Marketplace.AssertThatBalance(Is.LessThan(234.TestTokens()), "Collateral was not placed.");
 
-            secondary.Marketplace.AssertThatBalance(Is.LessThan(1000), "Contractor was not charged for storage.");
-            primary.Marketplace.AssertThatBalance(Is.GreaterThan(primaryBalance), "Storer was not paid for storage.");
+            Time.Sleep(TimeSpan.FromMinutes(2));
+
+            primary.Marketplace.AssertThatBalance(Is.GreaterThan(234.TestTokens()), "Storer was not paid for storage.");
+            secondary.Marketplace.AssertThatBalance(Is.LessThan(1000.TestTokens()), "Contractor was not charged for storage.");
         }
     }
 }
