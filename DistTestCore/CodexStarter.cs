@@ -1,0 +1,83 @@
+﻿using DistTestCore.Codex;
+using KubernetesWorkflow;
+
+namespace DistTestCore
+{
+    public class CodexStarter : BaseStarter
+    {
+        public CodexStarter(TestLifecycle lifecycle, WorkflowCreator workflowCreator)
+            : base(lifecycle, workflowCreator)
+        {
+        }
+
+        public List<CodexNodeGroup> RunningGroups { get; } = new List<CodexNodeGroup>();
+
+        public ICodexNodeGroup BringOnline(CodexSetup codexSetup)
+        {
+            LogSeparator();
+            LogStart($"Starting {codexSetup.Describe()}...");
+            var gethStartResult = lifecycle.GethStarter.BringOnlineMarketplaceFor(codexSetup);
+
+            var startupConfig = new StartupConfig();
+            startupConfig.Add(codexSetup);
+            startupConfig.Add(gethStartResult);
+
+            var containers = StartCodexContainers(startupConfig, codexSetup.NumberOfNodes, codexSetup.Location);
+
+            var metricAccessFactory = lifecycle.PrometheusStarter.CollectMetricsFor(codexSetup, containers);
+            
+            var codexNodeFactory = new CodexNodeFactory(lifecycle, metricAccessFactory, gethStartResult.MarketplaceAccessFactory);
+
+            var group = CreateCodexGroup(codexSetup, containers, codexNodeFactory);
+            LogEnd($"Started {codexSetup.NumberOfNodes} nodes at '{group.Containers.RunningPod.Ip}'. They are: {group.Describe()}");
+            LogSeparator();
+            return group;
+        }
+
+        public void BringOffline(CodexNodeGroup group)
+        {
+            LogStart($"Stopping {group.Describe()}...");
+            var workflow = CreateWorkflow();
+            workflow.Stop(group.Containers);
+            RunningGroups.Remove(group);
+            LogEnd("Stopped.");
+        }
+
+        public void DeleteAllResources()
+        {
+            var workflow = CreateWorkflow();
+            workflow.DeleteAllResources();
+
+            RunningGroups.Clear();
+        }
+
+        public void DownloadLog(RunningContainer container, ILogHandler logHandler)
+        {
+            var workflow = CreateWorkflow();
+            workflow.DownloadContainerLog(container, logHandler);
+        }
+        
+        private RunningContainers StartCodexContainers(StartupConfig startupConfig, int numberOfNodes, Location location)
+        {
+            var workflow = CreateWorkflow();
+            return workflow.Start(numberOfNodes, location, new CodexContainerRecipe(), startupConfig);
+        }
+
+        private CodexNodeGroup CreateCodexGroup(CodexSetup codexSetup, RunningContainers runningContainers, CodexNodeFactory codexNodeFactory)
+        {
+            var group = new CodexNodeGroup(lifecycle, codexSetup, runningContainers, codexNodeFactory);
+            RunningGroups.Add(group);
+            return group;
+        }
+
+        private StartupWorkflow CreateWorkflow()
+        {
+            return workflowCreator.CreateWorkflow();
+        }
+
+        private void LogSeparator()
+        {
+            Log("----------------------------------------------------------------------------");
+        }
+    }
+}
