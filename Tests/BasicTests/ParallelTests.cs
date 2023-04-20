@@ -1,7 +1,6 @@
 using CodexDistTestCore;
 using CodexDistTestCore.Config;
 using NUnit.Framework;
-
 namespace Tests.ParallelTests
 {
     [TestFixture]
@@ -10,15 +9,15 @@ namespace Tests.ParallelTests
         [Test]
         public void TwoNodeDownloads()
         {
-            ParallelDownload(2, 64.MB());
+            ParallelDownload(3, 64.MB());
         }
         [Test]
-        public void FiveNodeDownloads()
+        public void FourNodeDownloads()
         {
             ParallelDownload(5, 1000.MB());
         }
         [Test]
-        public void TenNodeDownloads()
+        public void NineNodeDownloads()
         {
             ParallelDownload(10, 16.MB());
         }
@@ -45,9 +44,10 @@ namespace Tests.ParallelTests
 
             for (int i = 1; i < numberOfNodes; i++)
             {
-                new Task(() => { download(contentId, group[i], testFile); }).Start();
+                // new Task(() => { download(contentId, group[i], testFile); }).Start();
+                download(contentId, group[i], testFile);
             }
-            Task.WaitAll();
+            // Task.WaitAll();
         }
     }
 
@@ -55,9 +55,9 @@ namespace Tests.ParallelTests
     public class UploadTests : DistTest
     {
         [Test]
-        public void TwoNodeUploads()
+        public void ThreeNodeUploads()
         {
-            ParallelUpload(2, 64.MB());
+            ParallelUpload(3, 64.MB());
         }
         [Test]
         public void FiveNodeUploads()
@@ -84,14 +84,16 @@ namespace Tests.ParallelTests
             for (int i = 1; i < numberOfNodes; i++)
             {
                 testfiles.Add(GenerateTestFile(filesize));
-                new Task(() => { upload(host, testfiles[i - 1], contentIds, i - 1); }).Start();
+                // new Task(() => { upload(host, testfiles[i - 1], contentIds, i - 1); }).Start();
+                upload(host, testfiles[i - 1], contentIds, i - 1);
             }
-            Task.WaitAll();
+            // Task.WaitAll();
             for (int i = 0; i < testfiles.Count; i++)
             {
-                new Task(() => { download(contentIds[i], group[i + 1], testfiles[i]); }).Start();
+                // new Task(() => { download(contentIds[i], group[i + 1], testfiles[i]); }).Start();
+                download(contentIds[i], group[i + 1], testfiles[i]);
             }
-            Task.WaitAll();
+            // Task.WaitAll();
         }
 
         void download(ContentId contentId, CodexDistTestCore.IOnlineCodexNode node, TestFile testFile)
