@@ -1,5 +1,5 @@
-using CodexDistTestCore;
-using CodexDistTestCore.Config;
+using DistTestCore;
+using KubernetesWorkflow;
 using NUnit.Framework;
 namespace Tests.ParallelTests
 {
@@ -21,7 +21,7 @@ namespace Tests.ParallelTests
         {
             ParallelDownload(10, 16.MB());
         }
-        public void download(ContentId contentId, CodexDistTestCore.IOnlineCodexNode node, TestFile testFile)
+        public void download(ContentId contentId, IOnlineCodexNode node, TestFile testFile)
         {
             var downloadedFile = node.DownloadContent(contentId);
             testFile.AssertIsEqual(downloadedFile);
@@ -96,12 +96,12 @@ namespace Tests.ParallelTests
             // Task.WaitAll();
         }
 
-        void download(ContentId contentId, CodexDistTestCore.IOnlineCodexNode node, TestFile testFile)
+        void download(ContentId contentId, IOnlineCodexNode node, TestFile testFile)
         {
             var downloadedFile = node.DownloadContent(contentId);
             testFile.AssertIsEqual(downloadedFile);
         }
-        void upload(CodexDistTestCore.IOnlineCodexNode host, TestFile testfile, List<ContentId> contentIds, int pos)
+        void upload(IOnlineCodexNode host, TestFile testfile, List<ContentId> contentIds, int pos)
         {
             contentIds[pos] = host.UploadFile(testfile);
         }
