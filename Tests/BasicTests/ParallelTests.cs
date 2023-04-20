@@ -57,13 +57,51 @@ namespace Tests.ParallelTests
         [Test]
         public void TwoNodeUploads()
         {
+            ParallelUpload(2, 64.MB());
         }
-
+        [Test]
         public void FiveNodeUploads()
         {
+            ParallelUpload(5, 1000.MB());
         }
+        [Test]
         public void TenNodeUploads()
         {
+            ParallelUpload(10, 16.MB());
+        }
+        void ParallelUpload(int numberOfNodes, ByteSize filesize)
+        {
+            var group = SetupCodexNodes(numberOfNodes).EnableMetrics().BringOnline();
+
+            var host = group[0];
+
+            for (int i = 1; i < numberOfNodes; i++)
+            {
+                host.ConnectToPeer(group[i]);
+            }
+            var testfiles = new List<TestFile>();
+            var contentIds = new List<ContentId>();
+            for (int i = 1; i < numberOfNodes; i++)
+            {
+                testfiles.Add(GenerateTestFile(filesize));
+                new Task(() => { upload(host, testfiles[i - 1], contentIds, i - 1); }).Start();
+            }
+            Task.WaitAll();
+            for (int i = 0; i < testfiles.Count; i++)
+            {
+                new Task(() => { download(contentIds[i], group[i + 1], testfiles[i]); }).Start();
+            }
+            Task.WaitAll();
+        }
+
+        void download(ContentId contentId, CodexDistTestCore.IOnlineCodexNode node, TestFile testFile)
+        {
+            var downloadedFile = node.DownloadContent(contentId);
+            testFile.AssertIsEqual(downloadedFile);
+        }
+        void upload(CodexDistTestCore.IOnlineCodexNode host, TestFile testfile, List<ContentId> contentIds, int pos)
+        {
+            contentIds[pos] = host.UploadFile(testfile);
         }
     }
     [TestFixture]
