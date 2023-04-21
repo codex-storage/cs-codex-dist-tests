@@ -8,7 +8,7 @@ namespace DistTestCore
     {
         ICodexSetup At(Location location);
         ICodexSetup WithLogLevel(CodexLogLevel level);
-        //ICodexStartupConfig WithBootstrapNode(IOnlineCodexNode node);
+        ICodexSetup WithBootstrapNode(IOnlineCodexNode node);
         ICodexSetup WithStorageQuota(ByteSize storageQuota);
         ICodexSetup EnableMetrics();
         ICodexSetup EnableMarketplace(TestToken initialBalance);
@@ -30,7 +30,24 @@ namespace DistTestCore
 
         public ICodexNodeGroup BringOnline()
         {
-            return starter.BringOnline(this);
+            var group = starter.BringOnline(this);
+            ConnectToBootstrapNode(group);
+            return group;
+        }
+
+        private void ConnectToBootstrapNode(ICodexNodeGroup group)
+        {
+            if (BootstrapNode == null) return;
+
+            // TODO:
+            // node.ConnectToPeer uses the '/api/codex/vi/connect/' endpoint to make the connection.
+            // This should be replaced by injecting the bootstrap node's SPR into the env-vars of the new node containers. (Easy!)
+            // However, NAT isn't figure out yet. So connecting with SPR doesn't (always?) work.
+            // So for now, ConnectToPeer
+            foreach (var node in group)
+            {
+                node.ConnectToPeer(BootstrapNode);
+            }
         }
 
         public ICodexSetup At(Location location)
@@ -39,11 +56,11 @@ namespace DistTestCore
             return this;
         }
 
-        //public ICodexSetupConfig WithBootstrapNode(IOnlineCodexNode node)
-        //{
-        //    BootstrapNode = node;
-        //    return this;
-        //}
+        public ICodexSetup WithBootstrapNode(IOnlineCodexNode node)
+        {
+            BootstrapNode = node;
+            return this;
+        }
 
         public ICodexSetup WithLogLevel(CodexLogLevel level)
         {
@@ -77,13 +94,13 @@ namespace DistTestCore
         public string Describe()
         {
             var args = string.Join(',', DescribeArgs());
-            return $"({NumberOfNodes} CodexNodes with [{args}])";
+            return $"({NumberOfNodes} CodexNodes with args:[{args}])";
         }
 
         private IEnumerable<string> DescribeArgs()
         {
             if (LogLevel != null) yield return $"LogLevel={LogLevel}";
-            //if (BootstrapNode != null) yield return "BootstrapNode=set-not-shown-here";
+            if (BootstrapNode != null) yield return $"BootstrapNode={BootstrapNode.GetName()}";
             if (StorageQuota != null) yield return $"StorageQuote={StorageQuota}";
         }
     }

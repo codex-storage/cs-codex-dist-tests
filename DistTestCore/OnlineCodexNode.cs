@@ -23,6 +23,7 @@ namespace DistTestCore
         private const string SuccessfullyConnectedMessage = "Successfully connected to peer";
         private const string UploadFailedMessage = "Unable to store block";
         private readonly TestLifecycle lifecycle;
+        private CodexDebugResponse? debugInfo;
 
         public OnlineCodexNode(TestLifecycle lifecycle, CodexAccess codexAccess, CodexNodeGroup group, IMetricsAccess metricsAccess, IMarketplaceAccess marketplaceAccess)
         {
@@ -45,9 +46,11 @@ namespace DistTestCore
 
         public CodexDebugResponse GetDebugInfo()
         {
-            var response = CodexAccess.GetDebugInfo();
-            Log($"Got DebugInfo with id: '{response.id}'.");
-            return response;
+            if (debugInfo != null) return debugInfo;
+
+            debugInfo = CodexAccess.GetDebugInfo();
+            Log($"Got DebugInfo with id: '{debugInfo.id}'.");
+            return debugInfo;
         }
 
         public ContentId UploadFile(TestFile file)
@@ -89,11 +92,6 @@ namespace DistTestCore
             return lifecycle.DownloadLog(this);
         }
 
-        public string Describe()
-        {
-            return $"({GetName()} in {Group.Describe()})";
-        }
-
         private string GetPeerMultiAddress(OnlineCodexNode peer, CodexDebugResponse peerInfo)
         {
             var multiAddress = peerInfo.addrs.First();
@@ -112,8 +110,16 @@ namespace DistTestCore
         private void DownloadToFile(string contentId, TestFile file)
         {
             using var fileStream = File.OpenWrite(file.Filename);
-            using var downloadStream = CodexAccess.DownloadFile(contentId);
-            downloadStream.CopyTo(fileStream);
+            try
+            {
+                using var downloadStream = CodexAccess.DownloadFile(contentId);
+                downloadStream.CopyTo(fileStream);
+            }
+            catch
+            {
+                Log($"Failed to download file '{contentId}'.");
+                throw;
+            }
         }
 
         private void Log(string msg)
