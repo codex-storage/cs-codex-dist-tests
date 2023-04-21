@@ -97,7 +97,8 @@ namespace DistTestCore.Marketplace
 
     public class PubKeyFinder : LogHandler, ILogHandler
     {
-        private const string openTag = "self=\"enode://";
+        private const string openTag = "self=enode://";
+        private const string openTagQuote = "self=\"enode://";
         private string pubKey = string.Empty;
 
         public string GetPubKey()
@@ -109,13 +110,17 @@ namespace DistTestCore.Marketplace
         {
             if (line.Contains(openTag))
             {
-                ExtractPubKey(line);
+                ExtractPubKey(openTag, line);
+            }
+            else if (line.Contains(openTagQuote))
+            {
+                ExtractPubKey(openTagQuote, line);
             }
         }
 
-        private void ExtractPubKey(string line)
+        private void ExtractPubKey(string tag, string line)
         {
-            var openIndex = line.IndexOf(openTag) + openTag.Length;
+            var openIndex = line.IndexOf(tag) + tag.Length;
             var closeIndex = line.IndexOf("@");
 
             pubKey = line.Substring(

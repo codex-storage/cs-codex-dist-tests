@@ -28,11 +28,21 @@ namespace DistTestCore.Marketplace
 
             if (config.IsBootstrapNode)
             {
-                AddEnvVar("IS_BOOTSTRAP", "1");
-                var exposedPort = AddExposedPort(tag: HttpPortTag);
-                return $"--http.port {exposedPort.Number} --discovery.port {discovery.Number} --nodiscover";
+                return CreateBootstapArgs(discovery);
             }
 
+            return CreateCompanionArgs(discovery, config);
+        }
+
+        private string CreateBootstapArgs(Port discovery)
+        {
+            AddEnvVar("IS_BOOTSTRAP", "1");
+            var exposedPort = AddExposedPort(tag: HttpPortTag);
+            return $"--http.port {exposedPort.Number} --port {discovery.Number} --discovery.port {discovery.Number}";
+        }
+
+        private string CreateCompanionArgs(Port discovery, GethStartupConfig config)
+        {
             var port = AddInternalPort();
             var authRpc = AddInternalPort();
             var httpPort = AddInternalPort(tag: HttpPortTag);
@@ -43,7 +53,7 @@ namespace DistTestCore.Marketplace
             var bootPort = config.BootstrapNode.DiscoveryPort.Number;
             var bootstrapArg = $"--bootnodes enode://{bootPubKey}@{bootIp}:{bootPort}";
 
-            return $"--port {port.Number} --discovery.port {discovery.Number} --authrpc.port {authRpc.Number} --http.port {httpPort.Number} --ws --ws.addr 0.0.0.0 --ws.port {wsPort.Number} --nodiscover {bootstrapArg}";
+            return $"--port {port.Number} --discovery.port {discovery.Number} --authrpc.port {authRpc.Number} --http.port {httpPort.Number} --ws --ws.addr 0.0.0.0 --ws.port {wsPort.Number} {bootstrapArg}";
         }
     }
 }
