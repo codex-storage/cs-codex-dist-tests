@@ -52,9 +52,14 @@ namespace DistTestCore.Marketplace
 
             var response = codexAccess.RequestStorage(request, contentId.Id);
 
-            Log($"Storage requested successfully. PurchaseId: {response.purchaseId}");
+            if (response == "Purchasing not available")
+            {
+                throw new InvalidOperationException(response);
+            }
 
-            return response.purchaseId;
+            Log($"Storage requested successfully. PurchaseId: {response}");
+
+            return response;
         }
 
         public string MakeStorageAvailable(ByteSize size, TestToken minPricePerBytePerSecond, TestToken maxCollateral, TimeSpan maxDuration)

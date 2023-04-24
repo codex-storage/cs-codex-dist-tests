@@ -85,6 +85,19 @@ namespace NethereumWorkflow
                 try
                 {
                     var contract = web3.Eth.GetContract(marketplaceAbi, marketplaceAddress);
+
+                    if (contract != null)
+                    {
+                        var aaa = 0;
+
+                        var func = contract.GetFunction("myRequests");
+                        var input = func.CreateCallInput();
+                        var result = Time.Wait(func.CallAsync(input));
+
+                        var eeee = 0;
+                    }
+
+
                     return contract != null;
                 }
                 catch
@@ -92,6 +105,8 @@ namespace NethereumWorkflow
                     return false;
                 }
             }, TimeSpan.FromMinutes(1), TimeSpan.FromSeconds(1));
+
+            Thread.Sleep(TimeSpan.FromMinutes(2));
         }
 
         private HexBigInteger ToHexBig(decimal amount)

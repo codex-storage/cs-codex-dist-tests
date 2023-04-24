@@ -41,7 +41,13 @@ namespace DistTestCore
 
         public TResponse HttpPostJson<TRequest, TResponse>(string route, TRequest body)
         {
-            var json = Retry(() =>
+            var json = HttpPostJson(route, body);
+            return TryJsonDeserialize<TResponse>(json);
+        }
+
+        public string HttpPostJson<TRequest>(string route, TRequest body)
+        {
+            return Retry(() =>
             {
                 using var client = GetClient();
                 var url = GetUrl() + route;
@@ -49,8 +55,6 @@ namespace DistTestCore
                 var result = Time.Wait(client.PostAsync(url, content));
                 return Time.Wait(result.Content.ReadAsStringAsync());
             });
-
-            return TryJsonDeserialize<TResponse>(json);
         }
 
         public string HttpPostStream(string route, Stream stream)

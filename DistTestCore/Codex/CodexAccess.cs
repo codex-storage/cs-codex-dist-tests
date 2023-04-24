@@ -31,9 +31,9 @@ namespace DistTestCore.Codex
             return Http().HttpPostJson<CodexSalesAvailabilityRequest, CodexSalesAvailabilityResponse>("sales/availability", request);
         }
 
-        public CodexSalesRequestStorageResponse RequestStorage(CodexSalesRequestStorageRequest request, string contentId)
+        public string RequestStorage(CodexSalesRequestStorageRequest request, string contentId)
         {
-            return Http().HttpPostJson<CodexSalesRequestStorageRequest, CodexSalesRequestStorageResponse>($"storage/request/{contentId}", request);
+            return Http().HttpPostJson($"storage/request/{contentId}", request);
         }
 
         private Http Http()
@@ -90,10 +90,5 @@ namespace DistTestCore.Codex
         public string? expiry { get; set; }
         public uint? nodes { get; set; }
         public uint? tolerance { get; set;}
-    }
-
-    public class CodexSalesRequestStorageResponse
-    {
-        public string purchaseId { get; set; } = string.Empty;
     }
 }

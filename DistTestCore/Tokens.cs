@@ -1,6 +1,6 @@
 ﻿namespace DistTestCore
 {
-    public class Ether
+    public class Ether : IComparable<Ether>
     {
         public Ether(decimal wei)
         {
@@ -8,6 +8,11 @@
         }
 
         public decimal Wei { get; }
+
+        public int CompareTo(Ether? other)
+        {
+            return Wei.CompareTo(other!.Wei);
+        }
 
         public override bool Equals(object? obj)
         {
@@ -25,7 +30,7 @@
         }
     }
 
-    public class TestToken
+    public class TestToken : IComparable<TestToken>
     {
         public TestToken(decimal amount)
         {
@@ -33,6 +38,11 @@
         }
 
         public decimal Amount { get; }
+
+        public int CompareTo(TestToken? other)
+        {
+            return Amount.CompareTo(other!.Amount);
+        }
 
         public override bool Equals(object? obj)
         {

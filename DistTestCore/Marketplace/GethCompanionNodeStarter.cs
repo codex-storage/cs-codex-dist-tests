@@ -41,8 +41,15 @@ namespace DistTestCore.Marketplace
 
         private void EnsureCompanionNodeIsSynced(GethCompanionNodeInfo node, MarketplaceNetwork marketplace)
         {
-            var interaction = node.StartInteraction(lifecycle.Log);
-            interaction.EnsureSynced(marketplace.Marketplace.Address, marketplace.Marketplace.Abi);
+            try
+            {
+                var interaction = node.StartInteraction(lifecycle.Log);
+                interaction.EnsureSynced(marketplace.Marketplace.Address, marketplace.Marketplace.Abi);
+            }
+            catch (Exception e)
+            {
+                throw new Exception("Geth companion node did not sync within timeout. Test infra failure.", e);
+            }
         }
 
         private StartupConfig CreateCompanionNodeStartupConfig(GethBootstrapNodeInfo bootstrapNode)
