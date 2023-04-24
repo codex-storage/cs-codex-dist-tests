@@ -22,7 +22,7 @@ namespace DistTestCore.Marketplace
             var extractor = new ContainerInfoExtractor(workflow, bootstrapContainer);
             var account = extractor.ExtractAccount();
             var pubKey = extractor.ExtractPubKey();
-            var privateKey = extractor.ExtractBootstrapPrivateKey();
+            var privateKey = extractor.ExtractPrivateKey();
             var discoveryPort = bootstrapContainer.Recipe.GetPortByTag(GethContainerRecipe.DiscoveryPortTag);
 
             LogEnd($"Geth bootstrap node started with account '{account}'");

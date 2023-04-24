@@ -1,4 +1,5 @@
 ﻿using DistTestCore;
+using DistTestCore.Codex;
 using NUnit.Framework;
 using Utils;
 
@@ -17,7 +18,7 @@ namespace Tests.DurabilityTests
 
             // There is 1 minute of time for the nodes to connect to each other.
             // (Should be easy, they're in the same pod.)
-            Time.Sleep(TimeSpan.FromMinutes(1));
+            Time.Sleep(TimeSpan.FromMinutes(6));
             bootstrapNode.BringOffline();
 
             var file = GenerateTestFile(10.MB());
@@ -30,10 +31,10 @@ namespace Tests.DurabilityTests
         [Test]
         public void DataRetentionTest()
         {
-            var bootstrapNode = SetupCodexNodes(1).BringOnline()[0];
+            var bootstrapNode = SetupCodexNodes(1).WithLogLevel(CodexLogLevel.Trace).BringOnline()[0];
 
-            var startGroup = SetupCodexNodes(2).WithBootstrapNode(bootstrapNode).BringOnline();
-            var finishGroup = SetupCodexNodes(10).WithBootstrapNode(bootstrapNode).BringOnline();
+            var startGroup = SetupCodexNodes(2).WithLogLevel(CodexLogLevel.Trace).WithBootstrapNode(bootstrapNode).BringOnline();
+            var finishGroup = SetupCodexNodes(10).WithLogLevel(CodexLogLevel.Trace).WithBootstrapNode(bootstrapNode).BringOnline();
 
             var file = GenerateTestFile(10.MB());
 

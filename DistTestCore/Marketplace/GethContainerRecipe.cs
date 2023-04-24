@@ -8,7 +8,7 @@ namespace DistTestCore.Marketplace
         public const string HttpPortTag = "http_port";
         public const string DiscoveryPortTag = "disc_port";
         public const string AccountFilename = "account_string.txt";
-        public const string BootstrapPrivateKeyFilename = "bootstrap_private.key";
+        public const string PrivateKeyFilename = "private.key";
 
         protected override string Image => DockerImage;
 
@@ -44,7 +44,7 @@ namespace DistTestCore.Marketplace
         {
             var port = AddInternalPort();
             var authRpc = AddInternalPort();
-            var httpPort = AddInternalPort(tag: HttpPortTag);
+            var httpPort = AddExposedPort(tag: HttpPortTag);
 
             var bootPubKey = config.BootstrapNode.PubKey;
             var bootIp = config.BootstrapNode.RunningContainers.Containers[0].Pod.Ip;

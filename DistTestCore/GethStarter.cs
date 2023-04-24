@@ -62,7 +62,7 @@ namespace DistTestCore
 
         private GethCompanionNodeInfo[] StartCompanionNodes(CodexSetup codexSetup, MarketplaceNetwork marketplaceNetwork)
         {
-            return companionNodeStarter.StartCompanionNodesFor(codexSetup, marketplaceNetwork.Bootstrap);
+            return companionNodeStarter.StartCompanionNodesFor(codexSetup, marketplaceNetwork);
         }
     }
 

@@ -21,6 +21,11 @@ namespace DistTestCore.Codex
             var listenPort = AddInternalPort();
             AddEnvVar("LISTEN_ADDRS", $"/ip4/0.0.0.0/tcp/{listenPort.Number}");
 
+            if (!string.IsNullOrEmpty(config.BootstrapSpr))
+            {
+                AddEnvVar("BOOTSTRAP_SPR", config.BootstrapSpr);
+            }
+
             if (config.LogLevel != null)
             {
                 AddEnvVar("LOG_LEVEL", config.LogLevel.ToString()!.ToUpperInvariant());

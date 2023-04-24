@@ -72,6 +72,28 @@ namespace NethereumWorkflow
             Task.WaitAll(tasks);
         }
 
+        public void EnsureSynced(string marketplaceAddress, string marketplaceAbi)
+        {
+            Time.WaitUntil(() =>
+            {
+                return !Time.Wait(web3.Eth.Syncing.SendRequestAsync()).IsSyncing;
+            }, TimeSpan.FromMinutes(1), TimeSpan.FromSeconds(1));
+
+
+            Time.WaitUntil(() =>
+            {
+                try
+                {
+                    var contract = web3.Eth.GetContract(marketplaceAbi, marketplaceAddress);
+                    return contract != null;
+                }
+                catch
+                {
+                    return false;
+                }
+            }, TimeSpan.FromMinutes(1), TimeSpan.FromSeconds(1));
+        }
+
         private HexBigInteger ToHexBig(decimal amount)
         {
             var bigint = ToBig(amount);
@@ -106,7 +128,7 @@ namespace NethereumWorkflow
     }
 
     [Function("balanceOf", "uint256")]
-    public class GetTokenBalanceFunction :FunctionMessage
+    public class GetTokenBalanceFunction : FunctionMessage
     {
         [Parameter("address", "owner", 1)]
         public string Owner { get; set; }

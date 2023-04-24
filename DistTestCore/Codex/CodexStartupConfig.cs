@@ -10,6 +10,6 @@ namespace DistTestCore.Codex
         public ByteSize? StorageQuota { get; set; }
         public bool MetricsEnabled { get; set; }
         public MarketplaceInitialConfig? MarketplaceConfig { get; set; }
-        public IOnlineCodexNode? BootstrapNode { get; set; }
+        public string? BootstrapSpr { get; set; }
     }
 }

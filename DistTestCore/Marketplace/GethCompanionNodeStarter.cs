@@ -9,17 +9,22 @@ namespace DistTestCore.Marketplace
         {
         }
 
-        public GethCompanionNodeInfo[] StartCompanionNodesFor(CodexSetup codexSetup, GethBootstrapNodeInfo bootstrapNode)
+        public GethCompanionNodeInfo[] StartCompanionNodesFor(CodexSetup codexSetup, MarketplaceNetwork marketplace)
         {
             LogStart($"Initializing companions for {codexSetup.NumberOfNodes} Codex nodes.");
 
-            var startupConfig = CreateCompanionNodeStartupConfig(bootstrapNode);
+            var startupConfig = CreateCompanionNodeStartupConfig(marketplace.Bootstrap);
 
             var workflow = workflowCreator.CreateWorkflow();
             var containers = workflow.Start(codexSetup.NumberOfNodes, Location.Unspecified, new GethContainerRecipe(), startupConfig);
             if (containers.Containers.Length != codexSetup.NumberOfNodes) throw new InvalidOperationException("Expected a Geth companion node to be created for each Codex node. Test infra failure.");
 
             var result = containers.Containers.Select(c => CreateCompanionInfo(workflow, c)).ToArray();
+
+            foreach (var node in result)
+            {
+                EnsureCompanionNodeIsSynced(node, marketplace);
+            }
 
             LogEnd($"Initialized {codexSetup.NumberOfNodes} companion nodes. Their accounts: [{string.Join(",", result.Select(c => c.Account))}]");
 
@@ -30,7 +35,14 @@ namespace DistTestCore.Marketplace
         {
             var extractor = new ContainerInfoExtractor(workflow, container);
             var account = extractor.ExtractAccount();
-            return new GethCompanionNodeInfo(container, account);
+            var privKey = extractor.ExtractPrivateKey();
+            return new GethCompanionNodeInfo(container, account, privKey);
+        }
+
+        private void EnsureCompanionNodeIsSynced(GethCompanionNodeInfo node, MarketplaceNetwork marketplace)
+        {
+            var interaction = node.StartInteraction(lifecycle.Log);
+            interaction.EnsureSynced(marketplace.Marketplace.Address, marketplace.Marketplace.Abi);
         }
 
         private StartupConfig CreateCompanionNodeStartupConfig(GethBootstrapNodeInfo bootstrapNode)

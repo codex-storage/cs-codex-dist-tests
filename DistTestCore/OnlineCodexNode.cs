@@ -23,7 +23,6 @@ namespace DistTestCore
         private const string SuccessfullyConnectedMessage = "Successfully connected to peer";
         private const string UploadFailedMessage = "Unable to store block";
         private readonly TestLifecycle lifecycle;
-        private CodexDebugResponse? debugInfo;
 
         public OnlineCodexNode(TestLifecycle lifecycle, CodexAccess codexAccess, CodexNodeGroup group, IMetricsAccess metricsAccess, IMarketplaceAccess marketplaceAccess)
         {
@@ -46,9 +45,7 @@ namespace DistTestCore
 
         public CodexDebugResponse GetDebugInfo()
         {
-            if (debugInfo != null) return debugInfo;
-
-            debugInfo = CodexAccess.GetDebugInfo();
+            var debugInfo = CodexAccess.GetDebugInfo();
             Log($"Got DebugInfo with id: '{debugInfo.id}'.");
             return debugInfo;
         }

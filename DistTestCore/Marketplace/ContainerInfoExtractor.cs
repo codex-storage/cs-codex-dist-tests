@@ -1,5 +1,9 @@
-﻿using KubernetesWorkflow;
+﻿using IdentityModel.OidcClient;
+using KubernetesWorkflow;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
+using Newtonsoft.Json.Linq;
+using Utils;
 
 namespace DistTestCore.Marketplace
 {
@@ -30,9 +34,9 @@ namespace DistTestCore.Marketplace
             return pubKey;
         }
 
-        public string ExtractBootstrapPrivateKey()
+        public string ExtractPrivateKey()
         {
-            var privKey = Retry(FetchBootstrapPrivateKey);
+            var privKey = Retry(FetchPrivateKey);
             if (string.IsNullOrEmpty(privKey)) throw new InvalidOperationException("Unable to fetch private key from geth node. Test infra failure.");
 
             return privKey;
@@ -46,14 +50,23 @@ namespace DistTestCore.Marketplace
             return marketplaceAddress;
         }
 
+        public string ExtractMarketplaceAbi()
+        {
+            var marketplaceAbi = Retry(FetchMarketplaceAbi);
+            if (string.IsNullOrEmpty(marketplaceAbi)) throw new InvalidOperationException("Unable to fetch marketplace artifacts from codex-contracts node. Test infra failure.");
+
+            return marketplaceAbi;
+        }
+
         private string Retry(Func<string> fetch)
         {
-            var result = Catch(fetch);
-            if (string.IsNullOrEmpty(result))
+            var result = string.Empty;
+            Time.WaitUntil(() =>
             {
-                Thread.Sleep(TimeSpan.FromSeconds(5));
-                result = fetch();
-            }
+                result = Catch(fetch);
+                return !string.IsNullOrEmpty(result);
+            }, TimeSpan.FromMinutes(1), TimeSpan.FromSeconds(3));
+
             return result;
         }
 
@@ -74,9 +87,9 @@ namespace DistTestCore.Marketplace
             return workflow.ExecuteCommand(container, "cat", GethContainerRecipe.AccountFilename);
         }
 
-        private string FetchBootstrapPrivateKey()
+        private string FetchPrivateKey()
         {
-            return workflow.ExecuteCommand(container, "cat", GethContainerRecipe.BootstrapPrivateKeyFilename);
+            return workflow.ExecuteCommand(container, "cat", GethContainerRecipe.PrivateKeyFilename);
         }
 
         private string FetchMarketplaceAddress()
@@ -84,6 +97,15 @@ namespace DistTestCore.Marketplace
             var json = workflow.ExecuteCommand(container, "cat", CodexContractsContainerRecipe.MarketplaceAddressFilename);
             var marketplace = JsonConvert.DeserializeObject<MarketplaceJson>(json);
             return marketplace!.address;
+        }
+
+        private string FetchMarketplaceAbi()
+        {
+            var json = workflow.ExecuteCommand(container, "cat", CodexContractsContainerRecipe.MarketplaceArtifactFilename);
+
+            var artifact = JObject.Parse(json);
+            var abi = artifact["abi"];
+            return abi!.ToString(Formatting.None);
         }
 
         private string FetchPubKey()

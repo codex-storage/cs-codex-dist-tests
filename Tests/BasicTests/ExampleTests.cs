@@ -51,6 +51,7 @@ namespace Tests.BasicTests
         public void MarketplaceExample()
         {
             var primary = SetupCodexNodes(1)
+                            .WithLogLevel(CodexLogLevel.Trace)
                             .WithStorageQuota(11.GB())
                             .EnableMarketplace(initialBalance: 234.TestTokens())
                             .BringOnline()[0];
@@ -58,10 +59,10 @@ namespace Tests.BasicTests
             primary.Marketplace.AssertThatBalance(Is.EqualTo(234.TestTokens()));
 
             var secondary = SetupCodexNodes(1)
+                            .WithLogLevel(CodexLogLevel.Trace)
+                            .WithBootstrapNode(primary)
                             .EnableMarketplace(initialBalance: 1000.TestTokens())
                             .BringOnline()[0];
-
-            primary.ConnectToPeer(secondary);
 
             primary.Marketplace.MakeStorageAvailable(
                 size: 10.GB(),
