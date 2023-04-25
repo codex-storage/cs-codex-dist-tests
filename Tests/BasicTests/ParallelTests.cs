@@ -7,47 +7,45 @@ namespace Tests.ParallelTests
     public class DownloadTests : DistTest
     {
         [Test]
-        public void TwoNodeDownloads()
+        public void ThreeNodeDownloads()
         {
-            ParallelDownload(3, 64.MB());
+            ParallelDownload(3, 5000.MB());
         }
         [Test]
-        public void FourNodeDownloads()
+        public void FiveNodeDownloads()
         {
             ParallelDownload(5, 1000.MB());
         }
         [Test]
-        public void NineNodeDownloads()
+        public void TenNodeDownloads()
         {
-            ParallelDownload(10, 16.MB());
-        }
-        public void download(ContentId contentId, IOnlineCodexNode node, TestFile testFile)
-        {
-            var downloadedFile = node.DownloadContent(contentId);
-            testFile.AssertIsEqual(downloadedFile);
+            ParallelDownload(10, 256.MB());
         }
 
         void ParallelDownload(int numberOfNodes, ByteSize filesize)
         {
-            var group = SetupCodexNodes(numberOfNodes).EnableMetrics().BringOnline();
+            var group = SetupCodexNodes(numberOfNodes).BringOnline();
+            var host = SetupCodexNodes(1).BringOnline()[0];
 
-            var host = group[0];
-
-            for (int i = 1; i < numberOfNodes; i++)
+            foreach (var node in group)
             {
-                host.ConnectToPeer(group[i]);
+                host.ConnectToPeer(node);
             }
 
             var testFile = GenerateTestFile(filesize);
-
             var contentId = host.UploadFile(testFile);
-
-            for (int i = 1; i < numberOfNodes; i++)
+            var list = new List<Task<TestFile?>>();
+            
+            foreach (var node in group)
             {
-                // new Task(() => { download(contentId, group[i], testFile); }).Start();
-                download(contentId, group[i], testFile);
+                list.Add(Task.Run(() => { return node.DownloadContent(contentId); }));
             }
-            // Task.WaitAll();
+
+            Task.WaitAll(list.ToArray());
+            foreach (var task in list)
+            {
+                testFile.AssertIsEqual(task.Result);
+            }
         }
     }
 
@@ -57,53 +55,48 @@ namespace Tests.ParallelTests
         [Test]
         public void ThreeNodeUploads()
         {
-            ParallelUpload(3, 64.MB());
+            ParallelUpload(3, 50.MB());
         }
         [Test]
         public void FiveNodeUploads()
         {
-            ParallelUpload(5, 1000.MB());
+            ParallelUpload(5, 750.MB());
         }
         [Test]
         public void TenNodeUploads()
         {
-            ParallelUpload(10, 16.MB());
+            ParallelUpload(10, 25.MB());
         }
         void ParallelUpload(int numberOfNodes, ByteSize filesize)
         {
-            var group = SetupCodexNodes(numberOfNodes).EnableMetrics().BringOnline();
+            var group = SetupCodexNodes(numberOfNodes).BringOnline();
+            var host = SetupCodexNodes(1).BringOnline()[0];
 
-            var host = group[0];
-
-            for (int i = 1; i < numberOfNodes; i++)
+            foreach (var node in group)
             {
-                host.ConnectToPeer(group[i]);
+                host.ConnectToPeer(node);
             }
+
             var testfiles = new List<TestFile>();
-            var contentIds = new List<ContentId>();
-            for (int i = 1; i < numberOfNodes; i++)
+            var contentIds = new List<Task<ContentId>>();
+
+            for (int i = 0; i < group.Count(); i++)
             {
                 testfiles.Add(GenerateTestFile(filesize));
-                // new Task(() => { upload(host, testfiles[i - 1], contentIds, i - 1); }).Start();
-                upload(host, testfiles[i - 1], contentIds, i - 1);
+                var n = i;
+                contentIds.Add(Task.Run(() => { return host.UploadFile(testfiles[n]); }));
             }
-            // Task.WaitAll();
-            for (int i = 0; i < testfiles.Count; i++)
+            var downloads = new List<Task<TestFile?>>();
+            for (int i = 0; i < group.Count(); i++)
             {
-                // new Task(() => { download(contentIds[i], group[i + 1], testfiles[i]); }).Start();
-                download(contentIds[i], group[i + 1], testfiles[i]);
+                var n = i;
+                downloads.Add(Task.Run(() => { return group[n].DownloadContent(contentIds[n].Result); }));
             }
-            // Task.WaitAll();
-        }
-
-        void download(ContentId contentId, IOnlineCodexNode node, TestFile testFile)
-        {
-            var downloadedFile = node.DownloadContent(contentId);
-            testFile.AssertIsEqual(downloadedFile);
-        }
-        void upload(IOnlineCodexNode host, TestFile testfile, List<ContentId> contentIds, int pos)
-        {
-            contentIds[pos] = host.UploadFile(testfile);
+            Task.WaitAll(downloads.ToArray());
+            for (int i = 0; i < group.Count(); i++)
+            {
+                testfiles[i].AssertIsEqual(downloads[i].Result);
+            }
         }
     }
     [TestFixture]
