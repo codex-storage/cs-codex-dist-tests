@@ -19,7 +19,7 @@ namespace DistTestCore.Marketplace
             if (containers.Containers.Length != 1) throw new InvalidOperationException("Expected 1 Geth bootstrap node to be created. Test infra failure.");
             var bootstrapContainer = containers.Containers[0];
 
-            var extractor = new ContainerInfoExtractor(workflow, bootstrapContainer);
+            var extractor = new ContainerInfoExtractor(lifecycle.Log, workflow, bootstrapContainer);
             var account = extractor.ExtractAccount();
             var pubKey = extractor.ExtractPubKey();
             var privateKey = extractor.ExtractPrivateKey();

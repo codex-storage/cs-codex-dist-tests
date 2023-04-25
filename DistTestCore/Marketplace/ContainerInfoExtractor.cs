@@ -1,4 +1,5 @@
 ﻿using KubernetesWorkflow;
+using Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Utils;
@@ -7,17 +8,20 @@ namespace DistTestCore.Marketplace
 {
     public class ContainerInfoExtractor
     {
+        private readonly BaseLog log;
         private readonly StartupWorkflow workflow;
         private readonly RunningContainer container;
 
-        public ContainerInfoExtractor(StartupWorkflow workflow, RunningContainer container)
+        public ContainerInfoExtractor(BaseLog log, StartupWorkflow workflow, RunningContainer container)
         {
+            this.log = log;
             this.workflow = workflow;
             this.container = container;
         }
 
         public string ExtractAccount()
         {
+            log.Debug();
             var account = Retry(FetchAccount);
             if (string.IsNullOrEmpty(account)) throw new InvalidOperationException("Unable to fetch account for geth node. Test infra failure.");
 
@@ -26,6 +30,7 @@ namespace DistTestCore.Marketplace
 
         public string ExtractPubKey()
         {
+            log.Debug();
             var pubKey = Retry(FetchPubKey);
             if (string.IsNullOrEmpty(pubKey)) throw new InvalidOperationException("Unable to fetch enode from geth node. Test infra failure.");
 
@@ -34,6 +39,7 @@ namespace DistTestCore.Marketplace
 
         public string ExtractPrivateKey()
         {
+            log.Debug();
             var privKey = Retry(FetchPrivateKey);
             if (string.IsNullOrEmpty(privKey)) throw new InvalidOperationException("Unable to fetch private key from geth node. Test infra failure.");
 
@@ -42,6 +48,7 @@ namespace DistTestCore.Marketplace
 
         public string ExtractMarketplaceAddress()
         {
+            log.Debug();
             var marketplaceAddress = Retry(FetchMarketplaceAddress);
             if (string.IsNullOrEmpty(marketplaceAddress)) throw new InvalidOperationException("Unable to fetch marketplace account from codex-contracts node. Test infra failure.");
 
@@ -50,6 +57,7 @@ namespace DistTestCore.Marketplace
 
         public string ExtractMarketplaceAbi()
         {
+            log.Debug();
             var marketplaceAbi = Retry(FetchMarketplaceAbi);
             if (string.IsNullOrEmpty(marketplaceAbi)) throw new InvalidOperationException("Unable to fetch marketplace artifacts from codex-contracts node. Test infra failure.");
 

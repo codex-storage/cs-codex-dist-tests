@@ -30,7 +30,7 @@ namespace DistTestCore.Marketplace
                 return logHandler.Found;
             });
 
-            var extractor = new ContainerInfoExtractor(workflow, container);
+            var extractor = new ContainerInfoExtractor(lifecycle.Log, workflow, container);
             var marketplaceAddress = extractor.ExtractMarketplaceAddress();
             var abi = extractor.ExtractMarketplaceAbi();
 
