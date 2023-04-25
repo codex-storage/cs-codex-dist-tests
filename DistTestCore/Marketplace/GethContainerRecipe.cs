@@ -9,6 +9,7 @@ namespace DistTestCore.Marketplace
         public const string DiscoveryPortTag = "disc_port";
         public const string AccountFilename = "account_string.txt";
         public const string PrivateKeyFilename = "private.key";
+        private const string defaultArgs = "--ipcdisable --syncmode full";
 
         protected override string Image => DockerImage;
 
@@ -37,7 +38,7 @@ namespace DistTestCore.Marketplace
         {
             AddEnvVar("IS_BOOTSTRAP", "1");
             var exposedPort = AddExposedPort(tag: HttpPortTag);
-            return $"--http.port {exposedPort.Number} --port {discovery.Number} --discovery.port {discovery.Number}";
+            return $"--http.port {exposedPort.Number} --port {discovery.Number} --discovery.port {discovery.Number} {defaultArgs}";
         }
 
         private string CreateCompanionArgs(Port discovery, GethStartupConfig config)
@@ -49,9 +50,9 @@ namespace DistTestCore.Marketplace
             var bootPubKey = config.BootstrapNode.PubKey;
             var bootIp = config.BootstrapNode.RunningContainers.Containers[0].Pod.Ip;
             var bootPort = config.BootstrapNode.DiscoveryPort.Number;
-            var bootstrapArg = $"--bootnodes enode://{bootPubKey}@{bootIp}:{bootPort}";
+            var bootstrapArg = $"--bootnodes enode://{bootPubKey}@{bootIp}:{bootPort} --nat=extip:{bootIp}";
 
-            return $"--port {port.Number} --discovery.port {discovery.Number} --authrpc.port {authRpc.Number} --http.addr 0.0.0.0 --http.port {httpPort.Number} --ws --ws.addr 0.0.0.0 --ws.port {httpPort.Number} {bootstrapArg}";
+            return $"--port {port.Number} --discovery.port {discovery.Number} --authrpc.port {authRpc.Number} --http.addr 0.0.0.0 --http.port {httpPort.Number} --ws --ws.addr 0.0.0.0 --ws.port {httpPort.Number} {bootstrapArg} {defaultArgs}";
         }
     }
 }
