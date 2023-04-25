@@ -1,16 +1,19 @@
-﻿using Nethereum.Web3;
+﻿using Logging;
+using Nethereum.Web3;
 
 namespace NethereumWorkflow
 {
     public class NethereumInteractionCreator
     {
+        private readonly BaseLog log;
         private readonly string ip;
         private readonly int port;
         private readonly string rootAccount;
         private readonly string privateKey;
 
-        public NethereumInteractionCreator(string ip, int port, string rootAccount, string privateKey)
+        public NethereumInteractionCreator(BaseLog log, string ip, int port, string rootAccount, string privateKey)
         {
+            this.log = log;
             this.ip = ip;
             this.port = port;
             this.rootAccount = rootAccount;
@@ -19,7 +22,7 @@ namespace NethereumWorkflow
 
         public NethereumInteraction CreateWorkflow()
         {
-            return new NethereumInteraction(CreateWeb3(), rootAccount);
+            return new NethereumInteraction(log, CreateWeb3(), rootAccount);
         }
 
         private Web3 CreateWeb3()

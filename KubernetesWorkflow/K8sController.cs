@@ -1,18 +1,21 @@
 ﻿using k8s;
 using k8s.Models;
+using Logging;
 using Utils;
 
 namespace KubernetesWorkflow
 {
     public class K8sController
     {
+        private readonly BaseLog log;
         private readonly K8sCluster cluster;
         private readonly KnownK8sPods knownPods;
         private readonly WorkflowNumberSource workflowNumberSource;
         private readonly Kubernetes client;
 
-        public K8sController(K8sCluster cluster, KnownK8sPods knownPods, WorkflowNumberSource workflowNumberSource)
+        public K8sController(BaseLog log, K8sCluster cluster, KnownK8sPods knownPods, WorkflowNumberSource workflowNumberSource)
         {
+            this.log = log;
             this.cluster = cluster;
             this.knownPods = knownPods;
             this.workflowNumberSource = workflowNumberSource;
@@ -27,6 +30,7 @@ namespace KubernetesWorkflow
         
         public RunningPod BringOnline(ContainerRecipe[] containerRecipes, Location location)
         {
+            log.Debug();
             EnsureTestNamespace();
 
             var deploymentName = CreateDeployment(containerRecipes, location);
@@ -38,6 +42,7 @@ namespace KubernetesWorkflow
 
         public void Stop(RunningPod pod)
         {
+            log.Debug();
             if (!string.IsNullOrEmpty(pod.ServiceName)) DeleteService(pod.ServiceName);
             DeleteDeployment(pod.DeploymentName);
             WaitUntilDeploymentOffline(pod.DeploymentName);
@@ -46,12 +51,14 @@ namespace KubernetesWorkflow
 
         public void DownloadPodLog(RunningPod pod, ContainerRecipe recipe, ILogHandler logHandler)
         {
+            log.Debug();
             using var stream = client.ReadNamespacedPodLog(pod.Name, K8sNamespace, recipe.Name);
             logHandler.Log(stream);
         }
 
         public string ExecuteCommand(RunningPod pod, string containerName, string command, params string[] args)
         {
+            log.Debug($"{containerName}: {command} ({string.Join(",", args)})");
             var runner = new CommandRunner(client, K8sNamespace, pod, containerName, command, args);
             runner.Run();
             return runner.GetStdOut();
@@ -59,6 +66,7 @@ namespace KubernetesWorkflow
 
         public void DeleteAllResources()
         {
+            log.Debug();
             DeleteNamespace();
 
             WaitUntilNamespaceDeleted();
@@ -346,7 +354,15 @@ namespace KubernetesWorkflow
 
         private void WaitUntil(Func<bool> predicate)
         {
-            Time.WaitUntil(predicate, cluster.K8sOperationTimeout(), cluster.WaitForK8sServiceDelay());
+            var sw = Stopwatch.Begin(log, true);
+            try
+            {
+                Time.WaitUntil(predicate, cluster.K8sOperationTimeout(), cluster.WaitForK8sServiceDelay());
+            }
+            finally
+            {
+                sw.End("", 1);
+            }
         }
 
         #endregion

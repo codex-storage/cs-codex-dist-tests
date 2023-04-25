@@ -43,7 +43,7 @@ namespace DistTestCore.Marketplace
         {
             try
             {
-                var interaction = node.StartInteraction();
+                var interaction = node.StartInteraction(lifecycle.Log);
                 interaction.EnsureSynced(marketplace.Marketplace.Address, marketplace.Marketplace.Abi);
             }
             catch (Exception e)

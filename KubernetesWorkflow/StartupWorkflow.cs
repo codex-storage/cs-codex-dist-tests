@@ -1,16 +1,18 @@
-﻿using System.IO;
+﻿using Logging;
 
 namespace KubernetesWorkflow
 {
     public class StartupWorkflow
     {
+        private readonly BaseLog log;
         private readonly WorkflowNumberSource numberSource;
         private readonly K8sCluster cluster;
         private readonly KnownK8sPods knownK8SPods;
         private readonly RecipeComponentFactory componentFactory = new RecipeComponentFactory();
 
-        internal StartupWorkflow(WorkflowNumberSource numberSource, K8sCluster cluster, KnownK8sPods knownK8SPods)
+        internal StartupWorkflow(BaseLog log, WorkflowNumberSource numberSource, K8sCluster cluster, KnownK8sPods knownK8SPods)
         {
+            this.log = log;
             this.numberSource = numberSource;
             this.cluster = cluster;
             this.knownK8SPods = knownK8SPods;
@@ -60,13 +62,15 @@ namespace KubernetesWorkflow
             });
         }
 
-        private static RunningContainer[] CreateContainers(RunningPod runningPod, ContainerRecipe[] recipes)
+        private RunningContainer[] CreateContainers(RunningPod runningPod, ContainerRecipe[] recipes)
         {
+            log.Debug();
             return recipes.Select(r => new RunningContainer(runningPod, r, runningPod.GetServicePortsForContainerRecipe(r))).ToArray();
         }
 
         private ContainerRecipe[] CreateRecipes(int numberOfContainers, ContainerRecipeFactory recipeFactory, StartupConfig startupConfig)
         {
+            log.Debug();
             var result = new List<ContainerRecipe>();
             for (var i = 0; i < numberOfContainers; i++)
             {
@@ -78,14 +82,14 @@ namespace KubernetesWorkflow
 
         private void K8s(Action<K8sController> action)
         {
-            var controller = new K8sController(cluster, knownK8SPods, numberSource);
+            var controller = new K8sController(log, cluster, knownK8SPods, numberSource);
             action(controller);
             controller.Dispose();
         }
 
         private T K8s<T>(Func<K8sController, T> action)
         {
-            var controller = new K8sController(cluster, knownK8SPods, numberSource);
+            var controller = new K8sController(log, cluster, knownK8SPods, numberSource);
             var result = action(controller);
             controller.Dispose();
             return result;

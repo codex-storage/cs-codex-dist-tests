@@ -1,4 +1,5 @@
-﻿using Nethereum.ABI.FunctionEncoding.Attributes;
+﻿using Logging;
+using Nethereum.ABI.FunctionEncoding.Attributes;
 using Nethereum.Contracts;
 using Nethereum.Hex.HexTypes;
 using Nethereum.Web3;
@@ -10,17 +11,20 @@ namespace NethereumWorkflow
     public class NethereumInteraction
     {
         private readonly List<Task> openTasks = new List<Task>();
+        private readonly BaseLog log;
         private readonly Web3 web3;
         private readonly string rootAccount;
 
-        internal NethereumInteraction(Web3 web3, string rootAccount)
+        internal NethereumInteraction(BaseLog log, Web3 web3, string rootAccount)
         {
+            this.log = log;
             this.web3 = web3;
             this.rootAccount = rootAccount;
         }
 
         public string GetTokenAddress(string marketplaceAddress)
         {
+            log.Debug(marketplaceAddress);
             var function = new GetTokenFunction();
 
             var handler = web3.Eth.GetContractQueryHandler<GetTokenFunction>();
@@ -29,6 +33,7 @@ namespace NethereumWorkflow
 
         public void TransferWeiTo(string account, decimal amount)
         {
+            log.Debug($"{amount} --> {account}");
             if (amount < 1 || string.IsNullOrEmpty(account)) throw new ArgumentException("Invalid arguments for AddToBalance");
 
             var value = ToHexBig(amount);
@@ -38,6 +43,7 @@ namespace NethereumWorkflow
 
         public void MintTestTokens(string account, decimal amount, string tokenAddress)
         {
+            log.Debug($"({tokenAddress}) {amount} --> {account}");
             if (amount < 1 || string.IsNullOrEmpty(account)) throw new ArgumentException("Invalid arguments for MintTestTokens");
 
             var function = new MintTokensFunction
@@ -52,6 +58,7 @@ namespace NethereumWorkflow
 
         public decimal GetBalance(string tokenAddress, string account)
         {
+            log.Debug($"({tokenAddress}) {account}");
             var function = new GetTokenBalanceFunction
             {
                 Owner = account
@@ -77,6 +84,7 @@ namespace NethereumWorkflow
 
         private void WaitUntilSynced()
         {
+            log.Debug();
             Time.WaitUntil(() =>
             {
                 var sync = Time.Wait(web3.Eth.Syncing.SendRequestAsync());
@@ -89,6 +97,7 @@ namespace NethereumWorkflow
 
         private void WaitForContract(string marketplaceAddress, string marketplaceAbi)
         {
+            log.Debug();
             Time.WaitUntil(() =>
             {
                 try

@@ -34,7 +34,7 @@ namespace DistTestCore.Marketplace
             var marketplaceAddress = extractor.ExtractMarketplaceAddress();
             var abi = extractor.ExtractMarketplaceAbi();
 
-            var interaction = bootstrapNode.StartInteraction();
+            var interaction = bootstrapNode.StartInteraction(lifecycle.Log);
             var tokenAddress = interaction.GetTokenAddress(marketplaceAddress);
 
             LogEnd("Contracts deployed.");

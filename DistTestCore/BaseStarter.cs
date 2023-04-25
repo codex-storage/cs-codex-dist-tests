@@ -1,4 +1,5 @@
 ﻿using KubernetesWorkflow;
+using Logging;
 
 namespace DistTestCore
 {

@@ -103,7 +103,7 @@ namespace DistTestCore.Marketplace
 
         public TestToken GetBalance()
         {
-            var interaction = marketplaceNetwork.StartInteraction();
+            var interaction = marketplaceNetwork.StartInteraction(log);
             var account = companionNode.Account;
             var amount = interaction.GetBalance(marketplaceNetwork.Marketplace.TokenAddress, account);
             var balance = new TestToken(amount);

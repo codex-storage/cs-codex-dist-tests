@@ -6,18 +6,21 @@ namespace Logging
     {
         private readonly DateTime start;
         private readonly string fullName;
+        private readonly LogConfig config;
 
         public FixtureLog(LogConfig config)
+            : base(config.DebugEnabled)
         {
             start = DateTime.UtcNow;
             var folder = DetermineFolder(config);
             var fixtureName = GetFixtureName();
             fullName = Path.Combine(folder, fixtureName);
+            this.config = config;
         }
 
         public TestLog CreateTestLog()
         {
-            return new TestLog(fullName);
+            return new TestLog(fullName, config.DebugEnabled);
         }
 
         protected override LogFile CreateLogFile()

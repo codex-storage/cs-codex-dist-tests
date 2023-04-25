@@ -28,7 +28,7 @@ namespace DistTestCore
             {
                 Stopwatch.Measure(fixtureLog, "Global setup", () =>
                 {
-                    var wc = new WorkflowCreator(configuration.GetK8sConfiguration());
+                    var wc = new WorkflowCreator(fixtureLog, configuration.GetK8sConfiguration());
                     wc.CreateWorkflow().DeleteAllResources();
                 });                
             }
