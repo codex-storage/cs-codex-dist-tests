@@ -10,10 +10,9 @@ namespace TestsLong.BasicTests
         [Test, UseLongTimeouts]
         public void OneClientLargeFileTest()
         {
-            var primary = SetupCodexNodes(1)
+            var primary = SetupCodexNode(s => s
                                 .WithLogLevel(CodexLogLevel.Warn)
-                                .WithStorageQuota(20.GB())
-                                .BringOnline()[0];
+                                .WithStorageQuota(20.GB()));
 
             var testFile = GenerateTestFile(10.GB());
 

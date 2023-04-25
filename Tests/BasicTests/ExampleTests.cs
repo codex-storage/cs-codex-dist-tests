@@ -11,9 +11,7 @@ namespace Tests.BasicTests
         [Test]
         public void CodexLogExample()
         {
-            var primary = SetupCodexNodes(1)
-                            .WithLogLevel(CodexLogLevel.Trace)
-                            .BringOnline()[0];
+            var primary = SetupCodexNode(s => s.WithLogLevel(CodexLogLevel.Trace));
 
             primary.UploadFile(GenerateTestFile(5.MB()));
 
@@ -25,13 +23,8 @@ namespace Tests.BasicTests
         [Test]
         public void TwoMetricsExample()
         {
-            var group = SetupCodexNodes(2)
-                        .EnableMetrics()
-                        .BringOnline();
-
-            var group2 = SetupCodexNodes(2)
-                        .EnableMetrics()
-                        .BringOnline();
+            var group = SetupCodexNodes(2, s => s.EnableMetrics());
+            var group2 = SetupCodexNodes(2, s => s.EnableMetrics());
 
             var primary = group[0];
             var secondary = group[1];
@@ -50,19 +43,17 @@ namespace Tests.BasicTests
         [Test]
         public void MarketplaceExample()
         {
-            var primary = SetupCodexNodes(1)
+            var primary = SetupCodexNode(s => s
                             .WithLogLevel(CodexLogLevel.Trace)
                             .WithStorageQuota(11.GB())
-                            .EnableMarketplace(initialBalance: 234.TestTokens())
-                            .BringOnline()[0];
+                            .EnableMarketplace(initialBalance: 234.TestTokens()));
 
             primary.Marketplace.AssertThatBalance(Is.EqualTo(234.TestTokens()));
 
-            var secondary = SetupCodexNodes(1)
+            var secondary = SetupCodexNode(s => s
                             .WithLogLevel(CodexLogLevel.Trace)
                             .WithBootstrapNode(primary)
-                            .EnableMarketplace(initialBalance: 1000.TestTokens())
-                            .BringOnline()[0];
+                            .EnableMarketplace(initialBalance: 1000.TestTokens()));
 
             primary.Marketplace.MakeStorageAvailable(
                 size: 10.GB(),

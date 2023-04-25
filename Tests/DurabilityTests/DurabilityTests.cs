@@ -11,8 +11,8 @@ namespace Tests.DurabilityTests
         [Test]
         public void BootstrapNodeDisappearsTest()
         {
-            var bootstrapNode = SetupCodexNodes(1).BringOnline();
-            var group = SetupCodexNodes(2).WithBootstrapNode(bootstrapNode[0]).BringOnline();
+            var bootstrapNode = SetupCodexNode();
+            var group = SetupCodexNodes(2, s => s.WithBootstrapNode(bootstrapNode));
             var primary = group[0];
             var secondary = group[1];
 
@@ -31,10 +31,10 @@ namespace Tests.DurabilityTests
         [Test]
         public void DataRetentionTest()
         {
-            var bootstrapNode = SetupCodexNodes(1).WithLogLevel(CodexLogLevel.Trace).BringOnline()[0];
+            var bootstrapNode = SetupCodexNode(s => s.WithLogLevel(CodexLogLevel.Trace));
 
-            var startGroup = SetupCodexNodes(2).WithLogLevel(CodexLogLevel.Trace).WithBootstrapNode(bootstrapNode).BringOnline();
-            var finishGroup = SetupCodexNodes(10).WithLogLevel(CodexLogLevel.Trace).WithBootstrapNode(bootstrapNode).BringOnline();
+            var startGroup = SetupCodexNodes(2, s => s.WithLogLevel(CodexLogLevel.Trace).WithBootstrapNode(bootstrapNode));
+            var finishGroup = SetupCodexNodes(10, s => s.WithLogLevel(CodexLogLevel.Trace).WithBootstrapNode(bootstrapNode));
 
             var file = GenerateTestFile(10.MB());
 

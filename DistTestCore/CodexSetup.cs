@@ -13,24 +13,15 @@ namespace DistTestCore
         ICodexSetup EnableMetrics();
         ICodexSetup EnableMarketplace(TestToken initialBalance);
         ICodexSetup EnableMarketplace(TestToken initialBalance, Ether initialEther);
-        ICodexNodeGroup BringOnline();
     }
     
     public class CodexSetup : CodexStartupConfig, ICodexSetup
     {
-        private readonly CodexStarter starter;
-
         public int NumberOfNodes { get; }
 
-        public CodexSetup(CodexStarter starter, int numberOfNodes)
+        public CodexSetup(int numberOfNodes)
         {
-            this.starter = starter;
             NumberOfNodes = numberOfNodes;
-        }
-
-        public ICodexNodeGroup BringOnline()
-        {
-            return starter.BringOnline(this);
         }
 
         public ICodexSetup At(Location location)

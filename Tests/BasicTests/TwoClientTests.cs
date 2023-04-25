@@ -10,7 +10,7 @@ namespace Tests.BasicTests
         [Test]
         public void TwoClientsOnePodTest()
         {
-            var group = SetupCodexNodes(2).BringOnline();
+            var group = SetupCodexNodes(2);
 
             var primary = group[0];
             var secondary = group[1];
@@ -21,9 +21,8 @@ namespace Tests.BasicTests
         [Test]
         public void TwoClientsTwoPodsTest()
         {
-            var primary = SetupCodexNodes(1).BringOnline()[0];
-
-            var secondary = SetupCodexNodes(1).BringOnline()[0];
+            var primary = SetupCodexNode();
+            var secondary = SetupCodexNode();
 
             PerformTwoClientTest(primary, secondary);
         }
@@ -32,13 +31,8 @@ namespace Tests.BasicTests
         [Ignore("Requires Location map to be configured for k8s cluster.")]
         public void TwoClientsTwoLocationsTest()
         {
-            var primary = SetupCodexNodes(1)
-                            .At(Location.BensLaptop)
-                            .BringOnline()[0];
-
-            var secondary = SetupCodexNodes(1)
-                            .At(Location.BensOldGamingMachine)
-                            .BringOnline()[0];
+            var primary = SetupCodexNode(s => s.At(Location.BensLaptop));
+            var secondary = SetupCodexNode(s => s.At(Location.BensOldGamingMachine));
 
             PerformTwoClientTest(primary, secondary);
         }

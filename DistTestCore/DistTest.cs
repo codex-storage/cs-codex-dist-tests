@@ -77,9 +77,33 @@ namespace DistTestCore
             return lifecycle.FileManager.GenerateTestFile(size);
         }
 
-        public ICodexSetup SetupCodexNodes(int numberOfNodes)
+        public IOnlineCodexNode SetupCodexNode()
         {
-            return new CodexSetup(lifecycle.CodexStarter, numberOfNodes);
+            return SetupCodexNode(s => { });
+        }
+
+        public IOnlineCodexNode SetupCodexNode(Action<ICodexSetup> setup)
+        {
+            return SetupCodexNodes(1, setup)[0];
+        }
+
+        public ICodexNodeGroup SetupCodexNodes(int numberOfNodes)
+        {
+            return SetupCodexNodes(numberOfNodes, s => { });
+        }
+
+        public ICodexNodeGroup SetupCodexNodes(int numberOfNodes, Action<ICodexSetup> setup)
+        {
+            var codexSetup = new CodexSetup(numberOfNodes);
+
+            setup(codexSetup);
+
+            return BringOnline(codexSetup);
+        }
+
+        public ICodexNodeGroup BringOnline(ICodexSetup codexSetup)
+        {
+            return lifecycle.CodexStarter.BringOnline((CodexSetup)codexSetup);
         }
 
         private void CreateNewTestLifecycle()

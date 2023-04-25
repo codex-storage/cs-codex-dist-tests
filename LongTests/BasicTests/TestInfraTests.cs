@@ -9,9 +9,7 @@ namespace TestsLong.BasicTests
         [Test, UseLongTimeouts]
         public void TestInfraShouldHave1000AddressSpacesPerPod()
         {
-            var group = SetupCodexNodes(1000)
-                            .EnableMetrics() // Increases use of port address space per node.
-                            .BringOnline();
+            var group = SetupCodexNodes(1000, s => s.EnableMetrics()); // Increases use of port address space per node.
 
             var nodeIds = group.Select(n => n.GetDebugInfo().id).ToArray();
 
@@ -24,7 +22,7 @@ namespace TestsLong.BasicTests
         {
             for (var i = 0; i < 20; i++)
             {
-                var n = SetupCodexNodes(1).BringOnline()[0];
+                var n = SetupCodexNode();
 
                 Assert.That(!string.IsNullOrEmpty(n.GetDebugInfo().id));
             }
@@ -33,10 +31,9 @@ namespace TestsLong.BasicTests
         [Test, UseLongTimeouts]
         public void DownloadConsistencyTest()
         {
-            var primary = SetupCodexNodes(1)
+            var primary = SetupCodexNode(s => s
                             .WithLogLevel(CodexLogLevel.Trace)
-                            .WithStorageQuota(2.MB())
-                            .BringOnline()[0];
+                            .WithStorageQuota(2.MB()));
 
             var testFile = GenerateTestFile(1.MB());
 

@@ -16,6 +16,7 @@ namespace DistTestCore
         ICodexNodeLog DownloadLog();
         IMetricsAccess Metrics { get; }
         IMarketplaceAccess Marketplace { get; }
+        ICodexSetup BringOffline();
     }
 
     public class OnlineCodexNode : IOnlineCodexNode
@@ -87,6 +88,11 @@ namespace DistTestCore
         public ICodexNodeLog DownloadLog()
         {
             return lifecycle.DownloadLog(this);
+        }
+
+        public ICodexSetup BringOffline()
+        {
+            return Group.BringOffline();
         }
 
         private string GetPeerMultiAddress(OnlineCodexNode peer, CodexDebugResponse peerInfo)

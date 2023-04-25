@@ -9,7 +9,7 @@ namespace Tests.BasicTests
         [Test]
         public void OneClientTest()
         {
-            var primary = SetupCodexNodes(1).BringOnline()[0];
+            var primary = SetupCodexNode();
 
             PerformOneClientTest(primary);
         }
@@ -17,11 +17,11 @@ namespace Tests.BasicTests
         [Test]
         public void RestartTest()
         {
-            var group = SetupCodexNodes(1).BringOnline();
+            var primary = SetupCodexNode();
 
-            var setup = group.BringOffline();
+            var setup = primary.BringOffline();
 
-            var primary = setup.BringOnline()[0];
+            primary = BringOnline(setup)[0];
 
             PerformOneClientTest(primary);
         }
