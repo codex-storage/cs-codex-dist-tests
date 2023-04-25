@@ -1,5 +1,4 @@
-﻿using Logging;
-using Nethereum.ABI.FunctionEncoding.Attributes;
+﻿using Nethereum.ABI.FunctionEncoding.Attributes;
 using Nethereum.Contracts;
 using Nethereum.Hex.HexTypes;
 using Nethereum.Web3;
@@ -11,13 +10,11 @@ namespace NethereumWorkflow
     public class NethereumInteraction
     {
         private readonly List<Task> openTasks = new List<Task>();
-        private readonly TestLog log;
         private readonly Web3 web3;
         private readonly string rootAccount;
 
-        internal NethereumInteraction(TestLog log, Web3 web3, string rootAccount)
+        internal NethereumInteraction(Web3 web3, string rootAccount)
         {
-            this.log = log;
             this.web3 = web3;
             this.rootAccount = rootAccount;
         }
@@ -74,30 +71,29 @@ namespace NethereumWorkflow
 
         public void EnsureSynced(string marketplaceAddress, string marketplaceAbi)
         {
+            WaitUntilSynced();
+            WaitForContract(marketplaceAddress, marketplaceAbi);
+        }
+
+        private void WaitUntilSynced()
+        {
             Time.WaitUntil(() =>
             {
-                return !Time.Wait(web3.Eth.Syncing.SendRequestAsync()).IsSyncing;
+                var sync = Time.Wait(web3.Eth.Syncing.SendRequestAsync());
+                var number = Time.Wait(web3.Eth.Blocks.GetBlockNumber.SendRequestAsync());
+                var numberOfBlocks = ToDecimal(number);
+                return !sync.IsSyncing && numberOfBlocks > 256;
+
             }, TimeSpan.FromMinutes(1), TimeSpan.FromSeconds(1));
+        }
 
-
+        private void WaitForContract(string marketplaceAddress, string marketplaceAbi)
+        {
             Time.WaitUntil(() =>
             {
                 try
                 {
                     var contract = web3.Eth.GetContract(marketplaceAbi, marketplaceAddress);
-
-                    if (contract != null)
-                    {
-                        var aaa = 0;
-
-                        var func = contract.GetFunction("myRequests");
-                        var input = func.CreateCallInput();
-                        var result = Time.Wait(func.CallAsync(input));
-
-                        var eeee = 0;
-                    }
-
-
                     return contract != null;
                 }
                 catch
@@ -105,8 +101,6 @@ namespace NethereumWorkflow
                     return false;
                 }
             }, TimeSpan.FromMinutes(1), TimeSpan.FromSeconds(1));
-
-            Thread.Sleep(TimeSpan.FromMinutes(2));
         }
 
         private HexBigInteger ToHexBig(decimal amount)
@@ -119,6 +113,11 @@ namespace NethereumWorkflow
         private BigInteger ToBig(decimal amount)
         {
             return new BigInteger(amount);
+        }
+
+        private decimal ToDecimal(HexBigInteger hexBigInteger)
+        {
+            return ToDecimal(hexBigInteger.Value);
         }
 
         private decimal ToDecimal(BigInteger bigInteger)

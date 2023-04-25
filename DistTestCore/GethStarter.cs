@@ -33,7 +33,7 @@ namespace DistTestCore
 
         private void TransferInitialBalance(MarketplaceNetwork marketplaceNetwork, MarketplaceInitialConfig marketplaceConfig, GethCompanionNodeInfo[] companionNodes)
         {
-            var interaction = marketplaceNetwork.StartInteraction(lifecycle.Log);
+            var interaction = marketplaceNetwork.StartInteraction();
             var tokenAddress = marketplaceNetwork.Marketplace.TokenAddress;
 
             foreach (var node in companionNodes)
