@@ -23,8 +23,8 @@ namespace Tests.ParallelTests
         }
         void ParallelUpload(int numberOfNodes, ByteSize filesize)
         {
-            var group = SetupCodexNodes(numberOfNodes).BringOnline();
-            var host = SetupCodexNodes(1).BringOnline()[0];
+            var group = SetupCodexNodes(numberOfNodes);
+            var host = SetupCodexNode();
 
             foreach (var node in group)
             {
