@@ -3,6 +3,7 @@
     public class LogFile
     {
         private readonly string extension;
+        private readonly object fileLock = new object();
         private string filename;
 
         public LogFile(string filename, string extension)
@@ -25,7 +26,10 @@
         {
             try
             {
-                File.AppendAllLines(FullFilename, new[] { message });
+                lock (fileLock)
+                { 
+                    File.AppendAllLines(FullFilename, new[] { message });
+                }
             }
             catch (Exception ex)
             {
