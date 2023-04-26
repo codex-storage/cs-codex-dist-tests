@@ -106,6 +106,11 @@ namespace DistTestCore
             return lifecycle.CodexStarter.BringOnline((CodexSetup)codexSetup);
         }
 
+        protected BaseLog Log
+        {
+            get { return lifecycle.Log; }
+        }
+
         private void CreateNewTestLifecycle()
         {
             Stopwatch.Measure(fixtureLog, $"Setup for {GetCurrentTestName()}", () =>
