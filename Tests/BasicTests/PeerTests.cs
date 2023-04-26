@@ -48,11 +48,14 @@ namespace Tests.BasicTests
 
         private void AssertKnows(CodexDebugResponse a, CodexDebugResponse b)
         {
-            Log.Debug($"Looking for {b.id} in engine-peers [{string.Join(",", a.enginePeers.Select(p => p.peerId))}]");
-            Log.Debug($"Looking for {b.id} in switch-peers [{string.Join(",", a.switchPeers.Select(p => p.peerId))}]");
+            var enginePeers = string.Join(",", a.enginePeers.Select(p => p.peerId));
+            var switchPeers = string.Join(",", a.switchPeers.Select(p => p.peerId));
 
-            Assert.That(a.enginePeers.Any(p => p.peerId == b.id), "Expected peerId not found in engine-peers");
-            Assert.That(a.switchPeers.Any(p => p.peerId == b.id), "Expected peerId not found in switch-peers");
+            Log.Debug($"Looking for {b.id} in engine-peers [{enginePeers}]");
+            Log.Debug($"Looking for {b.id} in switch-peers [{switchPeers}]");
+
+            Assert.That(a.enginePeers.Any(p => p.peerId == b.id), $"Expected peerId '{b.id}' not found in engine-peers [{enginePeers}]");
+            Assert.That(a.switchPeers.Any(p => p.peerId == b.id), $"Expected peerId '{b.id}' not found in switch-peers [{switchPeers}]");
         }
     }
 }
