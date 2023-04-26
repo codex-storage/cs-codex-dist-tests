@@ -92,7 +92,7 @@ namespace NethereumWorkflow
                 var numberOfBlocks = ToDecimal(number);
                 return !sync.IsSyncing && numberOfBlocks > 256;
 
-            }, TimeSpan.FromMinutes(1), TimeSpan.FromSeconds(1));
+            }, TimeSpan.FromMinutes(1), TimeSpan.FromSeconds(3));
         }
 
         private void WaitForContract(string marketplaceAddress, string marketplaceAbi)
@@ -109,7 +109,7 @@ namespace NethereumWorkflow
                 {
                     return false;
                 }
-            }, TimeSpan.FromMinutes(1), TimeSpan.FromSeconds(1));
+            }, TimeSpan.FromMinutes(1), TimeSpan.FromSeconds(3));
         }
 
         private HexBigInteger ToHexBig(decimal amount)

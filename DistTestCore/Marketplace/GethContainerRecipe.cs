@@ -7,9 +7,19 @@ namespace DistTestCore.Marketplace
         public const string DockerImage = "thatbenbierens/geth-confenv:latest";
         public const string HttpPortTag = "http_port";
         public const string DiscoveryPortTag = "disc_port";
-        public const string AccountFilename = "account_string.txt";
-        public const string PrivateKeyFilename = "private.key";
         private const string defaultArgs = "--ipcdisable --syncmode full";
+
+        public static string GetAccountFilename(int? orderNumber)
+        {
+            if (orderNumber == null) return "account_string.txt";
+            return $"account_string_{orderNumber.Value}.txt";
+        }
+
+        public static string GetPrivateKeyFilename(int? orderNumber)
+        {
+            if (orderNumber == null) return "private.key";
+            return $"private_{orderNumber.Value}.key";
+        }
 
         protected override string Image => DockerImage;
 
@@ -43,6 +53,8 @@ namespace DistTestCore.Marketplace
 
         private string CreateCompanionArgs(Port discovery, GethStartupConfig config)
         {
+            AddEnvVar("NUMBER_OF_ACCOUNTS", config.NumberOfCompanionAccounts.ToString());
+
             var port = AddInternalPort();
             var authRpc = AddInternalPort();
             var httpPort = AddExposedPort(tag: HttpPortTag);

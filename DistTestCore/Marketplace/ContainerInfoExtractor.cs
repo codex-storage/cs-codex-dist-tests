@@ -19,10 +19,10 @@ namespace DistTestCore.Marketplace
             this.container = container;
         }
 
-        public string ExtractAccount()
+        public string ExtractAccount(int? orderNumber)
         {
             log.Debug();
-            var account = Retry(FetchAccount);
+            var account = Retry(() => FetchAccount(orderNumber));
             if (string.IsNullOrEmpty(account)) throw new InvalidOperationException("Unable to fetch account for geth node. Test infra failure.");
 
             return account;
@@ -37,10 +37,10 @@ namespace DistTestCore.Marketplace
             return pubKey;
         }
 
-        public string ExtractPrivateKey()
+        public string ExtractPrivateKey(int? orderNumber)
         {
             log.Debug();
-            var privKey = Retry(FetchPrivateKey);
+            var privKey = Retry(() => FetchPrivateKey(orderNumber));
             if (string.IsNullOrEmpty(privKey)) throw new InvalidOperationException("Unable to fetch private key from geth node. Test infra failure.");
 
             return privKey;
@@ -88,14 +88,14 @@ namespace DistTestCore.Marketplace
             }
         }
 
-        private string FetchAccount()
+        private string FetchAccount(int? orderNumber)
         {
-            return workflow.ExecuteCommand(container, "cat", GethContainerRecipe.AccountFilename);
+            return workflow.ExecuteCommand(container, "cat", GethContainerRecipe.GetAccountFilename(orderNumber));
         }
 
-        private string FetchPrivateKey()
+        private string FetchPrivateKey(int? orderNumber)
         {
-            return workflow.ExecuteCommand(container, "cat", GethContainerRecipe.PrivateKeyFilename);
+            return workflow.ExecuteCommand(container, "cat", GethContainerRecipe.GetPrivateKeyFilename(orderNumber));
         }
 
         private string FetchMarketplaceAddress()

@@ -22,37 +22,37 @@ namespace DistTestCore
             if (codexSetup.MarketplaceConfig == null) return CreateMarketplaceUnavailableResult();
 
             var marketplaceNetwork = marketplaceNetworkCache.Get();
-            var companionNodes = StartCompanionNodes(codexSetup, marketplaceNetwork);
+            var companionNode = StartCompanionNode(codexSetup, marketplaceNetwork);
 
             LogStart("Setting up initial balance...");
-            TransferInitialBalance(marketplaceNetwork, codexSetup.MarketplaceConfig, companionNodes);
+            TransferInitialBalance(marketplaceNetwork, codexSetup.MarketplaceConfig, companionNode);
             LogEnd($"Initial balance of {codexSetup.MarketplaceConfig.InitialTestTokens} set for {codexSetup.NumberOfNodes} nodes.");
 
-            return CreateGethStartResult(marketplaceNetwork, companionNodes);
+            return CreateGethStartResult(marketplaceNetwork, companionNode);
         }
 
-        private void TransferInitialBalance(MarketplaceNetwork marketplaceNetwork, MarketplaceInitialConfig marketplaceConfig, GethCompanionNodeInfo[] companionNodes)
+        private void TransferInitialBalance(MarketplaceNetwork marketplaceNetwork, MarketplaceInitialConfig marketplaceConfig, GethCompanionNodeInfo companionNode)
         {
             var interaction = marketplaceNetwork.StartInteraction(lifecycle.Log);
             var tokenAddress = marketplaceNetwork.Marketplace.TokenAddress;
 
-            foreach (var node in companionNodes)
+            foreach (var account in companionNode.Accounts)
             {
-                interaction.TransferWeiTo(node.Account, marketplaceConfig.InitialEth.Wei);
-                interaction.MintTestTokens(node.Account, marketplaceConfig.InitialTestTokens.Amount, tokenAddress);
+                interaction.TransferWeiTo(account.Account, marketplaceConfig.InitialEth.Wei);
+                interaction.MintTestTokens(account.Account, marketplaceConfig.InitialTestTokens.Amount, tokenAddress);
             }
 
             interaction.WaitForAllTransactions();
         }
 
-        private GethStartResult CreateGethStartResult(MarketplaceNetwork marketplaceNetwork, GethCompanionNodeInfo[] companionNodes)
+        private GethStartResult CreateGethStartResult(MarketplaceNetwork marketplaceNetwork, GethCompanionNodeInfo companionNode)
         {
-            return new GethStartResult(CreateMarketplaceAccessFactory(marketplaceNetwork), marketplaceNetwork, companionNodes);
+            return new GethStartResult(CreateMarketplaceAccessFactory(marketplaceNetwork), marketplaceNetwork, companionNode);
         }
 
         private GethStartResult CreateMarketplaceUnavailableResult()
         {
-            return new GethStartResult(new MarketplaceUnavailableAccessFactory(), null!, Array.Empty<GethCompanionNodeInfo>());
+            return new GethStartResult(new MarketplaceUnavailableAccessFactory(), null!, null!);
         }
 
         private IMarketplaceAccessFactory CreateMarketplaceAccessFactory(MarketplaceNetwork marketplaceNetwork)
@@ -60,9 +60,9 @@ namespace DistTestCore
             return new GethMarketplaceAccessFactory(lifecycle.Log, marketplaceNetwork);
         }
 
-        private GethCompanionNodeInfo[] StartCompanionNodes(CodexSetup codexSetup, MarketplaceNetwork marketplaceNetwork)
+        private GethCompanionNodeInfo StartCompanionNode(CodexSetup codexSetup, MarketplaceNetwork marketplaceNetwork)
         {
-            return companionNodeStarter.StartCompanionNodesFor(codexSetup, marketplaceNetwork);
+            return companionNodeStarter.StartCompanionNodeFor(codexSetup, marketplaceNetwork);
         }
     }
 

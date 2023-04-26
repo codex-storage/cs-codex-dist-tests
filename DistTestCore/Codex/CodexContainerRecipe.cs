@@ -5,7 +5,8 @@ namespace DistTestCore.Codex
 {
     public class CodexContainerRecipe : ContainerRecipeFactory
     {
-        public const string DockerImage = "thatbenbierens/nim-codex:sha-bf5512b";
+        //public const string DockerImage = "thatbenbierens/nim-codex:sha-bf5512b";
+        public const string DockerImage = "thatbenbierens/codexlocal:latest";
         public const string MetricsPortTag = "metrics_port";
 
         protected override string Image => DockerImage;
@@ -43,14 +44,15 @@ namespace DistTestCore.Codex
             if (config.MarketplaceConfig != null)
             {
                 var gethConfig = startupConfig.Get<GethStartResult>();
-                var companionNode = gethConfig.CompanionNodes[Index];
-                Additional(companionNode);
+                var companionNode = gethConfig.CompanionNode;
+                var companionNodeAccount = companionNode.Accounts[Index];
+                Additional(companionNodeAccount);
 
                 var ip = companionNode.RunningContainer.Pod.Ip;
                 var port = companionNode.RunningContainer.Recipe.GetPortByTag(GethContainerRecipe.HttpPortTag).Number;
 
                 AddEnvVar("ETH_PROVIDER", $"ws://{ip}:{port}");
-                AddEnvVar("ETH_ACCOUNT", companionNode.Account);
+                AddEnvVar("ETH_ACCOUNT", companionNodeAccount.Account);
                 AddEnvVar("ETH_MARKETPLACE_ADDRESS", gethConfig.MarketplaceNetwork.Marketplace.Address);
             }
         }
