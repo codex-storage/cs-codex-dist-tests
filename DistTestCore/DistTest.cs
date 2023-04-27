@@ -5,6 +5,7 @@ using DistTestCore.Metrics;
 using KubernetesWorkflow;
 using Logging;
 using NUnit.Framework;
+using System.Reflection;
 using Utils;
 
 namespace DistTestCore
@@ -13,15 +14,23 @@ namespace DistTestCore
     public abstract class DistTest
     {
         private readonly Configuration configuration = new Configuration();
+        private readonly Assembly[] testAssemblies;
         private FixtureLog fixtureLog = null!;
         private TestLifecycle lifecycle = null!;
         private DateTime testStart = DateTime.MinValue;
+
+        public DistTest()
+        {
+            var assemblies = AppDomain.CurrentDomain.GetAssemblies();
+            testAssemblies = assemblies.Where(a => a.FullName!.ToLowerInvariant().Contains("test")).ToArray();
+        }
 
         [OneTimeSetUp]
         public void GlobalSetup()
         {
             // Previous test run may have been interrupted.
             // Begin by cleaning everything up.
+            Timing.UseLongTimeouts = false;
             fixtureLog = new FixtureLog(configuration.GetLogConfig());
 
             try
@@ -48,6 +57,8 @@ namespace DistTestCore
         [SetUp]
         public void SetUpDistTest()
         {
+            Timing.UseLongTimeouts = ShouldUseLongTimeouts();
+
             if (GlobalTestFailure.HasFailed)
             {
                 Assert.Inconclusive("Skip test: Previous test failed during clean up.");
@@ -56,6 +67,21 @@ namespace DistTestCore
             {
                 CreateNewTestLifecycle();
             }
+        }
+
+        private bool ShouldUseLongTimeouts()
+        {
+            // Don't be fooled! TestContext.CurrentTest.Test allows you easy access to the attributes of the current test.
+            // But this doesn't work for tests making use of [TestCase]. So instead, we use reflection here to figure out
+            // if the attribute is present.
+            var currentTest = TestContext.CurrentContext.Test;
+            var className = currentTest.ClassName;
+            var methodName = currentTest.MethodName;
+
+            var testClasses = testAssemblies.SelectMany(a => a.GetTypes()).Where(c => c.FullName == className).ToArray();
+            var testMethods = testClasses.SelectMany(c => c.GetMethods()).Where(m => m.Name == methodName).ToArray();
+
+            return testMethods.Any(m => m.GetCustomAttribute<UseLongTimeoutsAttribute>() != null);
         }
 
         [TearDown]

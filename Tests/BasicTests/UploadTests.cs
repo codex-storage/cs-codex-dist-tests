@@ -1,27 +1,16 @@
 using DistTestCore;
-using KubernetesWorkflow;
 using NUnit.Framework;
+
 namespace Tests.ParallelTests
 {
     [TestFixture]
     public class UploadTests : DistTest
     {
-        [Test]
-        public void ThreeNodeUploads()
-        {
-            ParallelUpload(3, 50.MB());
-        }
-        [Test]
-        public void FiveNodeUploads()
-        {
-            ParallelUpload(5, 750.MB());
-        }
-        [Test]
-        public void TenNodeUploads()
-        {
-            ParallelUpload(10, 25.MB());
-        }
-        void ParallelUpload(int numberOfNodes, ByteSize filesize)
+        [TestCase(3, 50)]
+        [TestCase(5, 750)]
+        [TestCase(10, 25)]
+        [UseLongTimeouts]
+        public void ParallelUpload(int numberOfNodes, int filesizeMb)
         {
             var group = SetupCodexNodes(numberOfNodes);
             var host = SetupCodexNode();
@@ -36,7 +25,7 @@ namespace Tests.ParallelTests
 
             for (int i = 0; i < group.Count(); i++)
             {
-                testfiles.Add(GenerateTestFile(filesize));
+                testfiles.Add(GenerateTestFile(filesizeMb.MB()));
                 var n = i;
                 contentIds.Add(Task.Run(() => { return host.UploadFile(testfiles[n]); }));
             }

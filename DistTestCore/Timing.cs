@@ -6,15 +6,12 @@ namespace DistTestCore
     [AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
     public class UseLongTimeoutsAttribute : PropertyAttribute
     {
-        public UseLongTimeoutsAttribute()
-            : base(Timing.UseLongTimeoutsKey)
-        {
-        }
     }
 
     public static class Timing
     {
-        public const string UseLongTimeoutsKey = "UseLongTimeouts";
+        public static bool UseLongTimeouts { get; set; }
+
 
         public static TimeSpan HttpCallTimeout()
         {
@@ -48,8 +45,7 @@ namespace DistTestCore
 
         private static ITimeSet GetTimes()
         {
-            var testProperties = TestContext.CurrentContext.Test.Properties;
-            if (testProperties.ContainsKey(UseLongTimeoutsKey)) return new LongTimeSet();
+            if (UseLongTimeouts) return new LongTimeSet();
             return new DefaultTimeSet();
         }
     }
