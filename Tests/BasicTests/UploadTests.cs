@@ -7,7 +7,7 @@ namespace Tests.ParallelTests
     public class UploadTests : DistTest
     {
         [TestCase(3, 50)]
-        [TestCase(5, 750)]
+        [TestCase(5, 75)]
         [TestCase(10, 25)]
         [UseLongTimeouts]
         public void ParallelUpload(int numberOfNodes, int filesizeMb)

@@ -6,9 +6,9 @@ namespace Tests.ParallelTests
     [TestFixture]
     public class DownloadTests : DistTest
     {
-        [TestCase(3, 50)]
-        [TestCase(5, 750)]
-        [TestCase(10, 25)]
+        [TestCase(3, 5000)]
+        [TestCase(5, 1000)]
+        [TestCase(10, 256)]
         [UseLongTimeouts]
         public void ParallelDownload(int numberOfNodes, int filesizeMb)
         {
