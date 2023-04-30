@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using Logging;
+using Newtonsoft.Json;
 using NUnit.Framework;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
@@ -8,12 +9,14 @@ namespace DistTestCore
 {
     public class Http
     {
+        private readonly BaseLog log;
         private readonly string ip;
         private readonly int port;
         private readonly string baseUrl;
 
-        public Http(string ip, int port, string baseUrl)
+        public Http(BaseLog log, string ip, int port, string baseUrl)
         {
+            this.log = log;
             this.ip = ip;
             this.port = port;
             this.baseUrl = baseUrl;
@@ -28,8 +31,11 @@ namespace DistTestCore
             {
                 using var client = GetClient();
                 var url = GetUrl() + route;
+                Log(url, "");
                 var result = Time.Wait(client.GetAsync(url));
-                return Time.Wait(result.Content.ReadAsStringAsync());
+                var str = Time.Wait(result.Content.ReadAsStringAsync());
+                Log(url, str);
+                return str; ;
             });
         }
 
@@ -52,8 +58,11 @@ namespace DistTestCore
                 using var client = GetClient();
                 var url = GetUrl() + route;
                 using var content = JsonContent.Create(body);
+                Log(url, JsonConvert.SerializeObject(body));
                 var result = Time.Wait(client.PostAsync(url, content));
-                return Time.Wait(result.Content.ReadAsStringAsync());
+                var str= Time.Wait(result.Content.ReadAsStringAsync());
+                Log(url, str);
+                return str;
             });
         }
 
@@ -63,12 +72,13 @@ namespace DistTestCore
             {
                 using var client = GetClient();
                 var url = GetUrl() + route;
-
+                Log(url, "~ STREAM ~");
                 var content = new StreamContent(stream);
                 content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
                 var response = Time.Wait(client.PostAsync(url, content));
-
-                return Time.Wait(response.Content.ReadAsStringAsync());
+                var str =Time.Wait(response.Content.ReadAsStringAsync());
+                Log(url, str);
+                return str;
             });
         }
 
@@ -78,7 +88,7 @@ namespace DistTestCore
             {
                 var client = GetClient();
                 var url = GetUrl() + route;
-
+                Log(url, "~ STREAM ~");
                 return Time.Wait(client.GetStreamAsync(url));
             });
         }
@@ -86,6 +96,11 @@ namespace DistTestCore
         private string GetUrl()
         {
             return $"http://{ip}:{port}{baseUrl}";
+        }
+
+        private void Log(string url, string message)
+        {
+            log.Debug($"({url}) = '{message}'", 3);
         }
 
         private static T Retry<T>(Func<T> operation)

@@ -64,7 +64,7 @@ namespace DistTestCore
 
         private OnlineCodexNode CreateOnlineCodexNode(RunningContainer c, ICodexNodeFactory factory)
         {
-            var access = new CodexAccess(c);
+            var access = new CodexAccess(lifecycle.Log, c);
             EnsureOnline(access);
             return factory.CreateOnlineCodexNode(access, this);
         }

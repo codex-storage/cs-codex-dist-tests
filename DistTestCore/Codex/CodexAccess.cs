@@ -1,11 +1,15 @@
 ﻿using KubernetesWorkflow;
+using Logging;
 
 namespace DistTestCore.Codex
 {
     public class CodexAccess
     {
-        public CodexAccess(RunningContainer runningContainer)
+        private readonly BaseLog log;
+
+        public CodexAccess(BaseLog log, RunningContainer runningContainer)
         {
+            this.log = log;
             Container = runningContainer;
         }
 
@@ -40,7 +44,7 @@ namespace DistTestCore.Codex
         {
             var ip = Container.Pod.Cluster.IP;
             var port = Container.ServicePorts[0].Number;
-            return new Http(ip, port, baseUrl: "/api/codex/v1");
+            return new Http(log, ip, port, baseUrl: "/api/codex/v1");
         }
 
         public string ConnectToPeer(string peerId, string peerMultiAddress)
