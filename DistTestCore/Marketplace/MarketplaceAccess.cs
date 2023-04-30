@@ -114,7 +114,7 @@ namespace DistTestCore.Marketplace
 
         private void Log(string msg)
         {
-            log.Log($"{codexAccess.Container.GetName()} {msg}");
+            log.Log($"{codexAccess.Container.Name} {msg}");
         }
     }
 

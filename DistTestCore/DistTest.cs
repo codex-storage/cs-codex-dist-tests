@@ -103,6 +103,20 @@ namespace DistTestCore
             return lifecycle.FileManager.GenerateTestFile(size);
         }
 
+        public IOnlineCodexNode SetupCodexBootstrapNode()
+        {
+            return SetupCodexBootstrapNode(s => { });
+        }
+
+        public IOnlineCodexNode SetupCodexBootstrapNode(Action<ICodexSetup> setup)
+        {
+            return SetupCodexNode(s =>
+            {
+                setup(s);
+                s.WithName("Bootstrap");
+            });
+        }
+
         public IOnlineCodexNode SetupCodexNode()
         {
             return SetupCodexNode(s => { });

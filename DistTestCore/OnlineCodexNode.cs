@@ -41,7 +41,7 @@ namespace DistTestCore
 
         public string GetName()
         {
-            return CodexAccess.Container.GetName();
+            return CodexAccess.Container.Name;
         }
 
         public CodexDebugResponse GetDebugInfo()

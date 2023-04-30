@@ -1,13 +1,13 @@
-﻿using System.Diagnostics;
-using Utils;
+﻿using Utils;
 
 namespace Logging
 {
     public abstract class BaseLog
     {
+        private readonly bool debug;
+        private readonly List<BaseLogStringReplacement> replacements = new List<BaseLogStringReplacement>();
         private bool hasFailed;
         private LogFile? logFile;
-        private readonly bool debug;
 
         protected BaseLog(bool debug)
         {
@@ -27,7 +27,7 @@ namespace Logging
 
         public void Log(string message)
         {
-            LogFile.Write(message);
+            LogFile.Write(ApplyReplacements(message));
         }
 
         public void Debug(string message = "", int skipFrames = 0)
@@ -35,7 +35,8 @@ namespace Logging
             if (debug)
             {
                 var callerName = DebugStack.GetCallerName(skipFrames);
-                Log($"(debug)({callerName}) {message}");
+                // We don't use Log because in the debug output we should not have any replacements.
+                LogFile.Write($"(debug)({callerName}) {message}");
             }
         }
 
@@ -49,6 +50,39 @@ namespace Logging
             if (hasFailed) return;
             hasFailed = true;
             LogFile.ConcatToFilename("_FAILED");
+        }
+
+        public void AddStringReplace(string from, string to)
+        {
+            replacements.Add(new BaseLogStringReplacement(from, to));
+        }
+
+        private string ApplyReplacements(string str)
+        {
+            foreach (var replacement in replacements)
+            {
+                str = replacement.Apply(str);
+            }
+            return str;
+        }
+    }
+
+    public class BaseLogStringReplacement
+    {
+        private readonly string from;
+        private readonly string to;
+
+        public BaseLogStringReplacement(string from, string to)
+        {
+            this.from = from;
+            this.to = to;
+
+            if (string.IsNullOrEmpty(from) || string.IsNullOrEmpty(to) || from == to) throw new ArgumentException();
+        }
+
+        public string Apply(string msg)
+        {
+            return msg.Replace(from, to);
         }
     }
 }

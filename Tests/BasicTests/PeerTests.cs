@@ -10,7 +10,7 @@ namespace Tests.BasicTests
         [Test]
         public void TwoNodes()
         {
-            var primary = SetupCodexNode();
+            var primary = SetupCodexBootstrapNode();
             var secondary = SetupCodexNode(s => s.WithBootstrapNode(primary));
 
             primary.ConnectToPeer(secondary); // This is required for the switchPeers to show up.
@@ -29,7 +29,7 @@ namespace Tests.BasicTests
         [TestCase(10)]
         public void VariableNodes(int number)
         {
-            var bootstrap = SetupCodexNode();
+            var bootstrap = SetupCodexBootstrapNode();
             var nodes = SetupCodexNodes(number, s => s.WithBootstrapNode(bootstrap));
 
             var file = GenerateTestFile(10.MB());
@@ -69,8 +69,8 @@ namespace Tests.BasicTests
             //Log.Debug($"Looking for {b.id} in engine-peers [{enginePeers}]");
             Log.Debug($"{a.id} is looking for {b.id} in switch-peers [{switchPeers}]");
 
-            //Assert.That(a.enginePeers.Any(p => p.peerId == b.id), $"Expected peerId '{b.id}' not found in engine-peers [{enginePeers}]");
-            Assert.That(a.switchPeers.Any(p => p.peerId == b.id), $"Expected peerId '{b.id}' not found in switch-peers [{switchPeers}]");
+            //Assert.That(a.enginePeers.Any(p => p.peerId == b.id), $"{a.id} was looking for '{b.id}' in engine-peers [{enginePeers}] but it was not found.");
+            Assert.That(a.switchPeers.Any(p => p.peerId == b.id), $"{a.id} was looking for '{b.id}' in switch-peers [{switchPeers}] but it was not found.");
         }
     }
 }

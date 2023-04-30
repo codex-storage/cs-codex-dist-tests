@@ -29,7 +29,7 @@ namespace DistTestCore.Metrics
             var metricSet = GetMetricWithTimeout(metricName);
             var metricValue = metricSet.Values[0].Value;
 
-            log.Log($"{node.GetName()} metric '{metricName}' = {metricValue}");
+            log.Log($"{node.Name} metric '{metricName}' = {metricValue}");
 
             Assert.That(metricValue, constraint, message);
         }

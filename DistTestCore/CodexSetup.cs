@@ -6,6 +6,7 @@ namespace DistTestCore
 {
     public interface ICodexSetup
     {
+        ICodexSetup WithName(string name);
         ICodexSetup At(Location location);
         ICodexSetup WithLogLevel(CodexLogLevel level);
         ICodexSetup WithBootstrapNode(IOnlineCodexNode node);
@@ -22,6 +23,12 @@ namespace DistTestCore
         public CodexSetup(int numberOfNodes)
         {
             NumberOfNodes = numberOfNodes;
+        }
+
+        public ICodexSetup WithName(string name)
+        {
+            NameOverride = name;
+            return this;
         }
 
         public ICodexSetup At(Location location)

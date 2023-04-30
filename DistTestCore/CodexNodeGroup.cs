@@ -75,6 +75,10 @@ namespace DistTestCore
             {
                 var debugInfo = access.GetDebugInfo();
                 if (debugInfo == null || string.IsNullOrEmpty(debugInfo.id)) throw new InvalidOperationException("Unable to get debug-info from codex node at startup.");
+
+                var nodePeerId = debugInfo.id;
+                var nodeName = access.Container.Name;
+                lifecycle.Log.AddStringReplace(nodePeerId, $"___{nodeName}___");
             }
             catch (Exception e)
             {

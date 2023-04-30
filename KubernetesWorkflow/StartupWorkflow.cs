@@ -26,7 +26,7 @@ namespace KubernetesWorkflow
 
                 var runningPod = controller.BringOnline(recipes, location);
 
-                return new RunningContainers(startupConfig, runningPod, CreateContainers(runningPod, recipes));
+                return new RunningContainers(startupConfig, runningPod, CreateContainers(runningPod, recipes, startupConfig));
             });
         }
 
@@ -62,10 +62,10 @@ namespace KubernetesWorkflow
             });
         }
 
-        private RunningContainer[] CreateContainers(RunningPod runningPod, ContainerRecipe[] recipes)
+        private RunningContainer[] CreateContainers(RunningPod runningPod, ContainerRecipe[] recipes, StartupConfig startupConfig)
         {
             log.Debug();
-            return recipes.Select(r => new RunningContainer(runningPod, r, runningPod.GetServicePortsForContainerRecipe(r))).ToArray();
+            return recipes.Select(r => new RunningContainer(runningPod, r, runningPod.GetServicePortsForContainerRecipe(r), startupConfig)).ToArray();
         }
 
         private ContainerRecipe[] CreateRecipes(int numberOfContainers, ContainerRecipeFactory recipeFactory, StartupConfig startupConfig)

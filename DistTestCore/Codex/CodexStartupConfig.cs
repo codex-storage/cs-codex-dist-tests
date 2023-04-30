@@ -5,6 +5,7 @@ namespace DistTestCore.Codex
 {
     public class CodexStartupConfig
     {
+        public string? NameOverride { get; set; }
         public Location Location { get; set; }
         public CodexLogLevel? LogLevel { get; set; }
         public ByteSize? StorageQuota { get; set; }
