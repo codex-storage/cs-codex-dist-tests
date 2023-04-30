@@ -13,7 +13,7 @@ namespace Tests.BasicTests
             var primary = SetupCodexBootstrapNode();
             var secondary = SetupCodexNode(s => s.WithBootstrapNode(primary));
 
-            primary.ConnectToPeer(secondary); // This is required for the switchPeers to show up.
+            primary.ConnectToPeer(secondary); // TODO REMOVE THIS: This is required for the switchPeers to show up.
 
             // This is required for the enginePeers to show up.
             //var file = GenerateTestFile(10.MB());
@@ -37,7 +37,16 @@ namespace Tests.BasicTests
             var file2 = nodes.Last().DownloadContent(contentId);
             file.AssertIsEqual(file2);
 
+            // <TODO REMOVE THIS>
             foreach (var node in nodes) bootstrap.ConnectToPeer(node);
+            for (var x = 0; x < number; x++)
+            {
+                for (var y = x + 1; y < number; y++)
+                {
+                    nodes[x].ConnectToPeer(nodes[y]);
+                }
+            }
+            // </TODO REMOVE THIS>
 
             foreach (var node in nodes) AssertKnowEachother(node, bootstrap);
 
