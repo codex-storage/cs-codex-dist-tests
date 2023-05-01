@@ -19,14 +19,14 @@ namespace DistTestCore.Marketplace
     {
         private readonly TestLog log;
         private readonly MarketplaceNetwork marketplaceNetwork;
-        private readonly GethCompanionNodeInfo companionNode;
+        private readonly GethCompanionAccount account;
         private readonly CodexAccess codexAccess;
 
-        public MarketplaceAccess(TestLog log, MarketplaceNetwork marketplaceNetwork, GethCompanionNodeInfo companionNode, CodexAccess codexAccess)
+        public MarketplaceAccess(TestLog log, MarketplaceNetwork marketplaceNetwork, GethCompanionAccount account, CodexAccess codexAccess)
         {
             this.log = log;
             this.marketplaceNetwork = marketplaceNetwork;
-            this.companionNode = companionNode;
+            this.account = account;
             this.codexAccess = codexAccess;
         }
 
@@ -52,9 +52,14 @@ namespace DistTestCore.Marketplace
 
             var response = codexAccess.RequestStorage(request, contentId.Id);
 
-            Log($"Storage requested successfully. PurchaseId: {response.purchaseId}");
+            if (response == "Purchasing not available")
+            {
+                throw new InvalidOperationException(response);
+            }
 
-            return response.purchaseId;
+            Log($"Storage requested successfully. PurchaseId: {response}");
+
+            return response;
         }
 
         public string MakeStorageAvailable(ByteSize size, TestToken minPricePerBytePerSecond, TestToken maxCollateral, TimeSpan maxDuration)
@@ -99,18 +104,17 @@ namespace DistTestCore.Marketplace
         public TestToken GetBalance()
         {
             var interaction = marketplaceNetwork.StartInteraction(log);
-            var account = companionNode.Account;
-            var amount = interaction.GetBalance(marketplaceNetwork.Marketplace.TokenAddress, account);
+            var amount = interaction.GetBalance(marketplaceNetwork.Marketplace.TokenAddress, account.Account);
             var balance = new TestToken(amount);
 
-            Log($"Balance of {account} is {balance}.");
+            Log($"Balance of {account.Account} is {balance}.");
 
             return balance;
         }
 
         private void Log(string msg)
         {
-            log.Log($"{codexAccess.Container.GetName()} {msg}");
+            log.Log($"{codexAccess.Container.Name} {msg}");
         }
     }
 

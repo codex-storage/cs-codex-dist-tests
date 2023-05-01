@@ -1,4 +1,5 @@
 ﻿using DistTestCore;
+using DistTestCore.Codex;
 using NUnit.Framework;
 using Utils;
 
@@ -10,14 +11,14 @@ namespace Tests.DurabilityTests
         [Test]
         public void BootstrapNodeDisappearsTest()
         {
-            var bootstrapNode = SetupCodexNodes(1).BringOnline();
-            var group = SetupCodexNodes(2).WithBootstrapNode(bootstrapNode[0]).BringOnline();
+            var bootstrapNode = SetupCodexNode();
+            var group = SetupCodexNodes(2, s => s.WithBootstrapNode(bootstrapNode));
             var primary = group[0];
             var secondary = group[1];
 
             // There is 1 minute of time for the nodes to connect to each other.
             // (Should be easy, they're in the same pod.)
-            Time.Sleep(TimeSpan.FromMinutes(1));
+            Time.Sleep(TimeSpan.FromMinutes(6));
             bootstrapNode.BringOffline();
 
             var file = GenerateTestFile(10.MB());
@@ -30,10 +31,10 @@ namespace Tests.DurabilityTests
         [Test]
         public void DataRetentionTest()
         {
-            var bootstrapNode = SetupCodexNodes(1).BringOnline()[0];
+            var bootstrapNode = SetupCodexNode(s => s.WithLogLevel(CodexLogLevel.Trace));
 
-            var startGroup = SetupCodexNodes(2).WithBootstrapNode(bootstrapNode).BringOnline();
-            var finishGroup = SetupCodexNodes(10).WithBootstrapNode(bootstrapNode).BringOnline();
+            var startGroup = SetupCodexNodes(2, s => s.WithLogLevel(CodexLogLevel.Trace).WithBootstrapNode(bootstrapNode));
+            var finishGroup = SetupCodexNodes(10, s => s.WithLogLevel(CodexLogLevel.Trace).WithBootstrapNode(bootstrapNode));
 
             var file = GenerateTestFile(10.MB());
 

@@ -16,6 +16,7 @@ namespace DistTestCore
         ICodexNodeLog DownloadLog();
         IMetricsAccess Metrics { get; }
         IMarketplaceAccess Marketplace { get; }
+        ICodexSetup BringOffline();
     }
 
     public class OnlineCodexNode : IOnlineCodexNode
@@ -23,7 +24,6 @@ namespace DistTestCore
         private const string SuccessfullyConnectedMessage = "Successfully connected to peer";
         private const string UploadFailedMessage = "Unable to store block";
         private readonly TestLifecycle lifecycle;
-        private CodexDebugResponse? debugInfo;
 
         public OnlineCodexNode(TestLifecycle lifecycle, CodexAccess codexAccess, CodexNodeGroup group, IMetricsAccess metricsAccess, IMarketplaceAccess marketplaceAccess)
         {
@@ -41,14 +41,12 @@ namespace DistTestCore
 
         public string GetName()
         {
-            return CodexAccess.Container.GetName();
+            return CodexAccess.Container.Name;
         }
 
         public CodexDebugResponse GetDebugInfo()
         {
-            if (debugInfo != null) return debugInfo;
-
-            debugInfo = CodexAccess.GetDebugInfo();
+            var debugInfo = CodexAccess.GetDebugInfo();
             Log($"Got DebugInfo with id: '{debugInfo.id}'.");
             return debugInfo;
         }
@@ -90,6 +88,11 @@ namespace DistTestCore
         public ICodexNodeLog DownloadLog()
         {
             return lifecycle.DownloadLog(this);
+        }
+
+        public ICodexSetup BringOffline()
+        {
+            return Group.BringOffline();
         }
 
         private string GetPeerMultiAddress(OnlineCodexNode peer, CodexDebugResponse peerInfo)

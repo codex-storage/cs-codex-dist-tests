@@ -33,10 +33,10 @@ namespace DistTestCore.Marketplace
             return new MarketplaceAccess(log, marketplaceNetwork, companionNode, access);
         }
 
-        private GethCompanionNodeInfo GetGethCompanionNode(CodexAccess access)
+        private GethCompanionAccount GetGethCompanionNode(CodexAccess access)
         {
-            var node = access.Container.Recipe.Additionals.Single(a => a is GethCompanionNodeInfo);
-            return (GethCompanionNodeInfo)node;
+            var account = access.Container.Recipe.Additionals.Single(a => a is GethCompanionAccount);
+            return (GethCompanionAccount)account;
         }
     }
 }

@@ -21,7 +21,7 @@ namespace DistTestCore.Marketplace
         public string PrivateKey { get; }
         public Port DiscoveryPort { get; }
 
-        public NethereumInteraction StartInteraction(TestLog log)
+        public NethereumInteraction StartInteraction(BaseLog log)
         {
             var ip = RunningContainers.RunningPod.Cluster.IP;
             var port = RunningContainers.Containers[0].ServicePorts[0].Number;

@@ -1,11 +1,15 @@
 ﻿using KubernetesWorkflow;
+using Logging;
 
 namespace DistTestCore.Codex
 {
     public class CodexAccess
     {
-        public CodexAccess(RunningContainer runningContainer)
+        private readonly BaseLog log;
+
+        public CodexAccess(BaseLog log, RunningContainer runningContainer)
         {
+            this.log = log;
             Container = runningContainer;
         }
 
@@ -31,16 +35,16 @@ namespace DistTestCore.Codex
             return Http().HttpPostJson<CodexSalesAvailabilityRequest, CodexSalesAvailabilityResponse>("sales/availability", request);
         }
 
-        public CodexSalesRequestStorageResponse RequestStorage(CodexSalesRequestStorageRequest request, string contentId)
+        public string RequestStorage(CodexSalesRequestStorageRequest request, string contentId)
         {
-            return Http().HttpPostJson<CodexSalesRequestStorageRequest, CodexSalesRequestStorageResponse>($"storage/request/{contentId}", request);
+            return Http().HttpPostJson($"storage/request/{contentId}", request);
         }
 
         private Http Http()
         {
             var ip = Container.Pod.Cluster.IP;
             var port = Container.ServicePorts[0].Number;
-            return new Http(ip, port, baseUrl: "/api/codex/v1");
+            return new Http(log, ip, port, baseUrl: "/api/codex/v1");
         }
 
         public string ConnectToPeer(string peerId, string peerMultiAddress)
@@ -55,7 +59,29 @@ namespace DistTestCore.Codex
         public string[] addrs { get; set; } = new string[0];
         public string repo { get; set; } = string.Empty;
         public string spr { get; set; } = string.Empty;
+        public EnginePeerResponse[] enginePeers { get; set; } = Array.Empty<EnginePeerResponse>();
+        public SwitchPeerResponse[] switchPeers { get; set; } = Array.Empty<SwitchPeerResponse>();
         public CodexDebugVersionResponse codex { get; set; } = new();
+    }
+
+    public class EnginePeerResponse
+    {
+        public string peerId { get; set; } = string.Empty;
+        public EnginePeerContextResponse context { get; set; } = new();
+    }
+
+    public class EnginePeerContextResponse
+    {
+        public int blocks { get; set; } = 0;
+        public int peerWants { get; set; } = 0;
+        public int exchanged { get; set; } = 0;
+        public string lastExchange { get; set; } = string.Empty;
+    }
+
+    public class SwitchPeerResponse
+    {
+        public string peerId { get; set; } = string.Empty;
+        public string key { get; set; } = string.Empty;
     }
 
     public class CodexDebugVersionResponse
@@ -90,10 +116,5 @@ namespace DistTestCore.Codex
         public string? expiry { get; set; }
         public uint? nodes { get; set; }
         public uint? tolerance { get; set;}
-    }
-
-    public class CodexSalesRequestStorageResponse
-    {
-        public string purchaseId { get; set; } = string.Empty;
     }
 }

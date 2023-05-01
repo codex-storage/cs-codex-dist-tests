@@ -30,15 +30,16 @@ namespace DistTestCore.Marketplace
                 return logHandler.Found;
             });
 
-            var extractor = new ContainerInfoExtractor(workflow, container);
+            var extractor = new ContainerInfoExtractor(lifecycle.Log, workflow, container);
             var marketplaceAddress = extractor.ExtractMarketplaceAddress();
+            var abi = extractor.ExtractMarketplaceAbi();
 
             var interaction = bootstrapNode.StartInteraction(lifecycle.Log);
             var tokenAddress = interaction.GetTokenAddress(marketplaceAddress);
 
             LogEnd("Contracts deployed.");
 
-            return new MarketplaceInfo(marketplaceAddress, tokenAddress);
+            return new MarketplaceInfo(marketplaceAddress, abi, tokenAddress);
         }
 
         private void WaitUntil(Func<bool> predicate)
@@ -57,13 +58,15 @@ namespace DistTestCore.Marketplace
 
     public class MarketplaceInfo
     {
-        public MarketplaceInfo(string address, string tokenAddress)
+        public MarketplaceInfo(string address, string abi, string tokenAddress)
         {
             Address = address;
+            Abi = abi;
             TokenAddress = tokenAddress;
         }
 
         public string Address { get; }
+        public string Abi { get; }
         public string TokenAddress { get; }
     }
 

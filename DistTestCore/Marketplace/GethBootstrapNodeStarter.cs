@@ -19,10 +19,10 @@ namespace DistTestCore.Marketplace
             if (containers.Containers.Length != 1) throw new InvalidOperationException("Expected 1 Geth bootstrap node to be created. Test infra failure.");
             var bootstrapContainer = containers.Containers[0];
 
-            var extractor = new ContainerInfoExtractor(workflow, bootstrapContainer);
-            var account = extractor.ExtractAccount();
+            var extractor = new ContainerInfoExtractor(lifecycle.Log, workflow, bootstrapContainer);
+            var account = extractor.ExtractAccount(null);
             var pubKey = extractor.ExtractPubKey();
-            var privateKey = extractor.ExtractBootstrapPrivateKey();
+            var privateKey = extractor.ExtractPrivateKey(null);
             var discoveryPort = bootstrapContainer.Recipe.GetPortByTag(GethContainerRecipe.DiscoveryPortTag);
 
             LogEnd($"Geth bootstrap node started with account '{account}'");
@@ -33,7 +33,7 @@ namespace DistTestCore.Marketplace
         private StartupConfig CreateBootstrapStartupConfig()
         {
             var config = new StartupConfig();
-            config.Add(new GethStartupConfig(true, null!));
+            config.Add(new GethStartupConfig(true, null!, 0));
             return config;
         }
     }

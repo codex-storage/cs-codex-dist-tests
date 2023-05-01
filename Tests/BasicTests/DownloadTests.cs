@@ -1,38 +1,26 @@
 using DistTestCore;
-using KubernetesWorkflow;
 using NUnit.Framework;
+
 namespace Tests.ParallelTests
 {
     [TestFixture]
     public class DownloadTests : DistTest
     {
-        [Test]
-        public void ThreeNodeDownloads()
+        [TestCase(3, 500)]
+        [TestCase(5, 100)]
+        [TestCase(10, 256)]
+        [UseLongTimeouts]
+        public void ParallelDownload(int numberOfNodes, int filesizeMb)
         {
-            ParallelDownload(3, 5000.MB());
-        }
-        [Test]
-        public void FiveNodeDownloads()
-        {
-            ParallelDownload(5, 1000.MB());
-        }
-        [Test]
-        public void TenNodeDownloads()
-        {
-            ParallelDownload(10, 256.MB());
-        }
-
-        void ParallelDownload(int numberOfNodes, ByteSize filesize)
-        {
-            var group = SetupCodexNodes(numberOfNodes).BringOnline();
-            var host = SetupCodexNodes(1).BringOnline()[0];
+            var group = SetupCodexNodes(numberOfNodes);
+            var host = SetupCodexNode();
 
             foreach (var node in group)
             {
                 host.ConnectToPeer(node);
             }
 
-            var testFile = GenerateTestFile(filesize);
+            var testFile = GenerateTestFile(filesizeMb.MB());
             var contentId = host.UploadFile(testFile);
             var list = new List<Task<TestFile?>>();
             

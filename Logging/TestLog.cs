@@ -9,7 +9,8 @@ namespace Logging
         private readonly string methodName;
         private readonly string fullName;
 
-        public TestLog(string folder)
+        public TestLog(string folder, bool debug)
+            : base(debug)
         {
             methodName = GetMethodName();
             fullName = Path.Combine(folder, methodName);

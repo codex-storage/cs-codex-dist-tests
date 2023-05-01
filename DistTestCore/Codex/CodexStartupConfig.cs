@@ -5,11 +5,12 @@ namespace DistTestCore.Codex
 {
     public class CodexStartupConfig
     {
+        public string? NameOverride { get; set; }
         public Location Location { get; set; }
         public CodexLogLevel? LogLevel { get; set; }
         public ByteSize? StorageQuota { get; set; }
         public bool MetricsEnabled { get; set; }
         public MarketplaceInitialConfig? MarketplaceConfig { get; set; }
-        public IOnlineCodexNode? BootstrapNode { get; set; }
+        public string? BootstrapSpr { get; set; }
     }
 }

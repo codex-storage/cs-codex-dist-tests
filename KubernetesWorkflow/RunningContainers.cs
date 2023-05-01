@@ -15,26 +15,35 @@
 
         public string Describe()
         {
-            return string.Join(",", Containers.Select(c => c.GetName()));
+            return string.Join(",", Containers.Select(c => c.Name));
         }
     }
 
     public class RunningContainer
     {
-        public RunningContainer(RunningPod pod, ContainerRecipe recipe, Port[] servicePorts)
+        public RunningContainer(RunningPod pod, ContainerRecipe recipe, Port[] servicePorts, StartupConfig startupConfig)
         {
             Pod = pod;
             Recipe = recipe;
             ServicePorts = servicePorts;
+            Name = GetContainerName(recipe, startupConfig);
         }
 
-        public string GetName()
-        {
-            return $"<{Recipe.Name}>";
-        }
-
+        public string Name { get; }
         public RunningPod Pod { get; }
         public ContainerRecipe Recipe { get; }
         public Port[] ServicePorts { get; }
+
+        private string GetContainerName(ContainerRecipe recipe, StartupConfig startupConfig)
+        {
+            if (!string.IsNullOrEmpty(startupConfig.NameOverride))
+            {
+                return $"<{startupConfig.NameOverride}{recipe.Number}>";
+            }
+            else
+            {
+                return $"<{recipe.Name}>";
+            }
+        }
     }
 }

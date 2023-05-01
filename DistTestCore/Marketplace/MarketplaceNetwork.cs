@@ -14,7 +14,7 @@ namespace DistTestCore.Marketplace
         public GethBootstrapNodeInfo Bootstrap { get; }
         public MarketplaceInfo Marketplace { get; }
 
-        public NethereumInteraction StartInteraction(TestLog log)
+        public NethereumInteraction StartInteraction(BaseLog log)
         {
             return Bootstrap.StartInteraction(log);
         }

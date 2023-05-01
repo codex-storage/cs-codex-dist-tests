@@ -11,7 +11,7 @@ namespace DistTestCore
         public TestLifecycle(TestLog log, Configuration configuration)
         {
             Log = log;
-            workflowCreator = new WorkflowCreator(configuration.GetK8sConfiguration());
+            workflowCreator = new WorkflowCreator(log, configuration.GetK8sConfiguration());
 
             FileManager = new FileManager(Log, configuration);
             CodexStarter = new CodexStarter(this, workflowCreator);

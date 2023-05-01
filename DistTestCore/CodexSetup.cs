@@ -6,6 +6,7 @@ namespace DistTestCore
 {
     public interface ICodexSetup
     {
+        ICodexSetup WithName(string name);
         ICodexSetup At(Location location);
         ICodexSetup WithLogLevel(CodexLogLevel level);
         ICodexSetup WithBootstrapNode(IOnlineCodexNode node);
@@ -13,41 +14,21 @@ namespace DistTestCore
         ICodexSetup EnableMetrics();
         ICodexSetup EnableMarketplace(TestToken initialBalance);
         ICodexSetup EnableMarketplace(TestToken initialBalance, Ether initialEther);
-        ICodexNodeGroup BringOnline();
     }
     
     public class CodexSetup : CodexStartupConfig, ICodexSetup
     {
-        private readonly CodexStarter starter;
-
         public int NumberOfNodes { get; }
 
-        public CodexSetup(CodexStarter starter, int numberOfNodes)
+        public CodexSetup(int numberOfNodes)
         {
-            this.starter = starter;
             NumberOfNodes = numberOfNodes;
         }
 
-        public ICodexNodeGroup BringOnline()
+        public ICodexSetup WithName(string name)
         {
-            var group = starter.BringOnline(this);
-            ConnectToBootstrapNode(group);
-            return group;
-        }
-
-        private void ConnectToBootstrapNode(ICodexNodeGroup group)
-        {
-            if (BootstrapNode == null) return;
-
-            // TODO:
-            // node.ConnectToPeer uses the '/api/codex/vi/connect/' endpoint to make the connection.
-            // This should be replaced by injecting the bootstrap node's SPR into the env-vars of the new node containers. (Easy!)
-            // However, NAT isn't figure out yet. So connecting with SPR doesn't (always?) work.
-            // So for now, ConnectToPeer
-            foreach (var node in group)
-            {
-                node.ConnectToPeer(BootstrapNode);
-            }
+            NameOverride = name;
+            return this;
         }
 
         public ICodexSetup At(Location location)
@@ -58,7 +39,7 @@ namespace DistTestCore
 
         public ICodexSetup WithBootstrapNode(IOnlineCodexNode node)
         {
-            BootstrapNode = node;
+            BootstrapSpr = node.GetDebugInfo().spr;
             return this;
         }
 
@@ -100,7 +81,7 @@ namespace DistTestCore
         private IEnumerable<string> DescribeArgs()
         {
             if (LogLevel != null) yield return $"LogLevel={LogLevel}";
-            if (BootstrapNode != null) yield return $"BootstrapNode={BootstrapNode.GetName()}";
+            if (BootstrapSpr != null) yield return $"BootstrapNode={BootstrapSpr}";
             if (StorageQuota != null) yield return $"StorageQuote={StorageQuota}";
         }
     }

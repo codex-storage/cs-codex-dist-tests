@@ -1,5 +1,6 @@
 ﻿using DistTestCore.Codex;
 using KubernetesWorkflow;
+using Logging;
 using System.Globalization;
 
 namespace DistTestCore.Metrics
@@ -8,11 +9,12 @@ namespace DistTestCore.Metrics
     {
         private readonly Http http;
 
-        public MetricsQuery(RunningContainers runningContainers)
+        public MetricsQuery(BaseLog log, RunningContainers runningContainers)
         {
             RunningContainers = runningContainers;
 
             http = new Http(
+                log,
                 runningContainers.RunningPod.Cluster.IP,
                 runningContainers.Containers[0].ServicePorts[0].Number,
                 "api/v1");

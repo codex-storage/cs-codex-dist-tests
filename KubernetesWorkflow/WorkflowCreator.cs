@@ -1,4 +1,5 @@
-﻿using Utils;
+﻿using Logging;
+using Utils;
 
 namespace KubernetesWorkflow
 {
@@ -9,10 +10,12 @@ namespace KubernetesWorkflow
         private readonly NumberSource containerNumberSource = new NumberSource(0);
         private readonly KnownK8sPods knownPods = new KnownK8sPods();
         private readonly K8sCluster cluster;
+        private readonly BaseLog log;
 
-        public WorkflowCreator(Configuration configuration)
+        public WorkflowCreator(BaseLog log, Configuration configuration)
         {
             cluster = new K8sCluster(configuration);
+            this.log = log;
         }
 
         public StartupWorkflow CreateWorkflow()
@@ -21,7 +24,7 @@ namespace KubernetesWorkflow
                                                                     servicePortNumberSource,
                                                                     containerNumberSource);
 
-            return new StartupWorkflow(workflowNumberSource, cluster, knownPods);
+            return new StartupWorkflow(log, workflowNumberSource, cluster, knownPods);
         }
     }
 }

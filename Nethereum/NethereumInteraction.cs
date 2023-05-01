@@ -11,11 +11,11 @@ namespace NethereumWorkflow
     public class NethereumInteraction
     {
         private readonly List<Task> openTasks = new List<Task>();
-        private readonly TestLog log;
+        private readonly BaseLog log;
         private readonly Web3 web3;
         private readonly string rootAccount;
 
-        internal NethereumInteraction(TestLog log, Web3 web3, string rootAccount)
+        internal NethereumInteraction(BaseLog log, Web3 web3, string rootAccount)
         {
             this.log = log;
             this.web3 = web3;
@@ -24,6 +24,7 @@ namespace NethereumWorkflow
 
         public string GetTokenAddress(string marketplaceAddress)
         {
+            log.Debug(marketplaceAddress);
             var function = new GetTokenFunction();
 
             var handler = web3.Eth.GetContractQueryHandler<GetTokenFunction>();
@@ -32,6 +33,7 @@ namespace NethereumWorkflow
 
         public void TransferWeiTo(string account, decimal amount)
         {
+            log.Debug($"{amount} --> {account}");
             if (amount < 1 || string.IsNullOrEmpty(account)) throw new ArgumentException("Invalid arguments for AddToBalance");
 
             var value = ToHexBig(amount);
@@ -41,6 +43,7 @@ namespace NethereumWorkflow
 
         public void MintTestTokens(string account, decimal amount, string tokenAddress)
         {
+            log.Debug($"({tokenAddress}) {amount} --> {account}");
             if (amount < 1 || string.IsNullOrEmpty(account)) throw new ArgumentException("Invalid arguments for MintTestTokens");
 
             var function = new MintTokensFunction
@@ -55,6 +58,7 @@ namespace NethereumWorkflow
 
         public decimal GetBalance(string tokenAddress, string account)
         {
+            log.Debug($"({tokenAddress}) {account}");
             var function = new GetTokenBalanceFunction
             {
                 Owner = account
@@ -72,6 +76,42 @@ namespace NethereumWorkflow
             Task.WaitAll(tasks);
         }
 
+        public void EnsureSynced(string marketplaceAddress, string marketplaceAbi)
+        {
+            WaitUntilSynced();
+            WaitForContract(marketplaceAddress, marketplaceAbi);
+        }
+
+        private void WaitUntilSynced()
+        {
+            log.Debug();
+            Time.WaitUntil(() =>
+            {
+                var sync = Time.Wait(web3.Eth.Syncing.SendRequestAsync());
+                var number = Time.Wait(web3.Eth.Blocks.GetBlockNumber.SendRequestAsync());
+                var numberOfBlocks = ToDecimal(number);
+                return !sync.IsSyncing && numberOfBlocks > 256;
+
+            }, TimeSpan.FromMinutes(1), TimeSpan.FromSeconds(3));
+        }
+
+        private void WaitForContract(string marketplaceAddress, string marketplaceAbi)
+        {
+            log.Debug();
+            Time.WaitUntil(() =>
+            {
+                try
+                {
+                    var contract = web3.Eth.GetContract(marketplaceAbi, marketplaceAddress);
+                    return contract != null;
+                }
+                catch
+                {
+                    return false;
+                }
+            }, TimeSpan.FromMinutes(1), TimeSpan.FromSeconds(3));
+        }
+
         private HexBigInteger ToHexBig(decimal amount)
         {
             var bigint = ToBig(amount);
@@ -82,6 +122,11 @@ namespace NethereumWorkflow
         private BigInteger ToBig(decimal amount)
         {
             return new BigInteger(amount);
+        }
+
+        private decimal ToDecimal(HexBigInteger hexBigInteger)
+        {
+            return ToDecimal(hexBigInteger.Value);
         }
 
         private decimal ToDecimal(BigInteger bigInteger)
@@ -106,7 +151,7 @@ namespace NethereumWorkflow
     }
 
     [Function("balanceOf", "uint256")]
-    public class GetTokenBalanceFunction :FunctionMessage
+    public class GetTokenBalanceFunction : FunctionMessage
     {
         [Parameter("address", "owner", 1)]
         public string Owner { get; set; }

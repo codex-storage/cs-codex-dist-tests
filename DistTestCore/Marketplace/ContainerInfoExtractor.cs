@@ -1,23 +1,28 @@
 ﻿using KubernetesWorkflow;
+using Logging;
 using Newtonsoft.Json;
-using System.Text;
+using Newtonsoft.Json.Linq;
+using Utils;
 
 namespace DistTestCore.Marketplace
 {
     public class ContainerInfoExtractor
     {
+        private readonly BaseLog log;
         private readonly StartupWorkflow workflow;
         private readonly RunningContainer container;
 
-        public ContainerInfoExtractor(StartupWorkflow workflow, RunningContainer container)
+        public ContainerInfoExtractor(BaseLog log, StartupWorkflow workflow, RunningContainer container)
         {
+            this.log = log;
             this.workflow = workflow;
             this.container = container;
         }
 
-        public string ExtractAccount()
+        public string ExtractAccount(int? orderNumber)
         {
-            var account = Retry(FetchAccount);
+            log.Debug();
+            var account = Retry(() => FetchAccount(orderNumber));
             if (string.IsNullOrEmpty(account)) throw new InvalidOperationException("Unable to fetch account for geth node. Test infra failure.");
 
             return account;
@@ -25,15 +30,17 @@ namespace DistTestCore.Marketplace
 
         public string ExtractPubKey()
         {
+            log.Debug();
             var pubKey = Retry(FetchPubKey);
             if (string.IsNullOrEmpty(pubKey)) throw new InvalidOperationException("Unable to fetch enode from geth node. Test infra failure.");
 
             return pubKey;
         }
 
-        public string ExtractBootstrapPrivateKey()
+        public string ExtractPrivateKey(int? orderNumber)
         {
-            var privKey = Retry(FetchBootstrapPrivateKey);
+            log.Debug();
+            var privKey = Retry(() => FetchPrivateKey(orderNumber));
             if (string.IsNullOrEmpty(privKey)) throw new InvalidOperationException("Unable to fetch private key from geth node. Test infra failure.");
 
             return privKey;
@@ -41,20 +48,31 @@ namespace DistTestCore.Marketplace
 
         public string ExtractMarketplaceAddress()
         {
+            log.Debug();
             var marketplaceAddress = Retry(FetchMarketplaceAddress);
             if (string.IsNullOrEmpty(marketplaceAddress)) throw new InvalidOperationException("Unable to fetch marketplace account from codex-contracts node. Test infra failure.");
 
             return marketplaceAddress;
         }
 
+        public string ExtractMarketplaceAbi()
+        {
+            log.Debug();
+            var marketplaceAbi = Retry(FetchMarketplaceAbi);
+            if (string.IsNullOrEmpty(marketplaceAbi)) throw new InvalidOperationException("Unable to fetch marketplace artifacts from codex-contracts node. Test infra failure.");
+
+            return marketplaceAbi;
+        }
+
         private string Retry(Func<string> fetch)
         {
-            var result = Catch(fetch);
-            if (string.IsNullOrEmpty(result))
+            var result = string.Empty;
+            Time.WaitUntil(() =>
             {
-                Thread.Sleep(TimeSpan.FromSeconds(5));
-                result = fetch();
-            }
+                result = Catch(fetch);
+                return !string.IsNullOrEmpty(result);
+            }, TimeSpan.FromMinutes(1), TimeSpan.FromSeconds(3));
+
             return result;
         }
 
@@ -70,14 +88,14 @@ namespace DistTestCore.Marketplace
             }
         }
 
-        private string FetchAccount()
+        private string FetchAccount(int? orderNumber)
         {
-            return workflow.ExecuteCommand(container, "cat", GethContainerRecipe.AccountFilename);
+            return workflow.ExecuteCommand(container, "cat", GethContainerRecipe.GetAccountFilename(orderNumber));
         }
 
-        private string FetchBootstrapPrivateKey()
+        private string FetchPrivateKey(int? orderNumber)
         {
-            return workflow.ExecuteCommand(container, "cat", GethContainerRecipe.BootstrapPrivateKeyFilename);
+            return workflow.ExecuteCommand(container, "cat", GethContainerRecipe.GetPrivateKeyFilename(orderNumber));
         }
 
         private string FetchMarketplaceAddress()
@@ -85,6 +103,15 @@ namespace DistTestCore.Marketplace
             var json = workflow.ExecuteCommand(container, "cat", CodexContractsContainerRecipe.MarketplaceAddressFilename);
             var marketplace = JsonConvert.DeserializeObject<MarketplaceJson>(json);
             return marketplace!.address;
+        }
+
+        private string FetchMarketplaceAbi()
+        {
+            var json = workflow.ExecuteCommand(container, "cat", CodexContractsContainerRecipe.MarketplaceArtifactFilename);
+
+            var artifact = JObject.Parse(json);
+            var abi = artifact["abi"];
+            return abi!.ToString(Formatting.None);
         }
 
         private string FetchPubKey()
@@ -97,7 +124,8 @@ namespace DistTestCore.Marketplace
 
     public class PubKeyFinder : LogHandler, ILogHandler
     {
-        private const string openTag = "self=\"enode://";
+        private const string openTag = "self=enode://";
+        private const string openTagQuote = "self=\"enode://";
         private string pubKey = string.Empty;
 
         public string GetPubKey()
@@ -109,13 +137,17 @@ namespace DistTestCore.Marketplace
         {
             if (line.Contains(openTag))
             {
-                ExtractPubKey(line);
+                ExtractPubKey(openTag, line);
+            }
+            else if (line.Contains(openTagQuote))
+            {
+                ExtractPubKey(openTagQuote, line);
             }
         }
 
-        private void ExtractPubKey(string line)
+        private void ExtractPubKey(string tag, string line)
         {
-            var openIndex = line.IndexOf(openTag) + openTag.Length;
+            var openIndex = line.IndexOf(tag) + tag.Length;
             var closeIndex = line.IndexOf("@");
 
             pubKey = line.Substring(

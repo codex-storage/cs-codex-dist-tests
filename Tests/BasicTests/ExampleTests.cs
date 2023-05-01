@@ -11,9 +11,7 @@ namespace Tests.BasicTests
         [Test]
         public void CodexLogExample()
         {
-            var primary = SetupCodexNodes(1)
-                            .WithLogLevel(CodexLogLevel.Trace)
-                            .BringOnline()[0];
+            var primary = SetupCodexNode(s => s.WithLogLevel(CodexLogLevel.Trace));
 
             primary.UploadFile(GenerateTestFile(5.MB()));
 
@@ -25,13 +23,8 @@ namespace Tests.BasicTests
         [Test]
         public void TwoMetricsExample()
         {
-            var group = SetupCodexNodes(2)
-                        .EnableMetrics()
-                        .BringOnline();
-
-            var group2 = SetupCodexNodes(2)
-                        .EnableMetrics()
-                        .BringOnline();
+            var group = SetupCodexNodes(2, s => s.EnableMetrics());
+            var group2 = SetupCodexNodes(2, s => s.EnableMetrics());
 
             var primary = group[0];
             var secondary = group[1];
@@ -50,29 +43,30 @@ namespace Tests.BasicTests
         [Test]
         public void MarketplaceExample()
         {
-            var primary = SetupCodexNodes(1)
+            var sellerInitialBalance = 234.TestTokens();
+            var buyerInitialBalance = 1000.TestTokens();
+
+            var seller = SetupCodexNode(s => s
+                            .WithLogLevel(CodexLogLevel.Trace)
                             .WithStorageQuota(11.GB())
-                            .EnableMarketplace(initialBalance: 234.TestTokens())
-                            .BringOnline()[0];
+                            .EnableMarketplace(sellerInitialBalance));
 
-            primary.Marketplace.AssertThatBalance(Is.EqualTo(234.TestTokens()));
-
-            var secondary = SetupCodexNodes(1)
-                            .EnableMarketplace(initialBalance: 1000.TestTokens())
-                            .BringOnline()[0];
-
-            primary.ConnectToPeer(secondary);
-
-            primary.Marketplace.MakeStorageAvailable(
+            seller.Marketplace.AssertThatBalance(Is.EqualTo(sellerInitialBalance));
+            seller.Marketplace.MakeStorageAvailable(
                 size: 10.GB(),
                 minPricePerBytePerSecond: 1.TestTokens(),
                 maxCollateral: 20.TestTokens(),
                 maxDuration: TimeSpan.FromMinutes(3));
 
             var testFile = GenerateTestFile(10.MB());
-            var contentId = secondary.UploadFile(testFile);
 
-            secondary.Marketplace.RequestStorage(contentId,
+            var buyer = SetupCodexNode(s => s
+                .WithLogLevel(CodexLogLevel.Trace)
+                .WithBootstrapNode(seller)
+                .EnableMarketplace(buyerInitialBalance));
+            
+            var contentId = buyer.UploadFile(testFile);
+            buyer.Marketplace.RequestStorage(contentId,
                 pricePerBytePerSecond: 2.TestTokens(),
                 requiredCollateral: 10.TestTokens(),
                 minRequiredNumberOfNodes: 1,
@@ -81,12 +75,12 @@ namespace Tests.BasicTests
 
             Time.Sleep(TimeSpan.FromMinutes(1));
 
-            primary.Marketplace.AssertThatBalance(Is.LessThan(234.TestTokens()), "Collateral was not placed.");
+            seller.Marketplace.AssertThatBalance(Is.LessThan(sellerInitialBalance), "Collateral was not placed.");
 
             Time.Sleep(TimeSpan.FromMinutes(2));
 
-            primary.Marketplace.AssertThatBalance(Is.GreaterThan(234.TestTokens()), "Storer was not paid for storage.");
-            secondary.Marketplace.AssertThatBalance(Is.LessThan(1000.TestTokens()), "Contractor was not charged for storage.");
+            seller.Marketplace.AssertThatBalance(Is.GreaterThan(sellerInitialBalance), "Seller was not paid for storage.");
+            buyer.Marketplace.AssertThatBalance(Is.LessThan(buyerInitialBalance), "Buyer was not charged for storage.");
         }
     }
 }

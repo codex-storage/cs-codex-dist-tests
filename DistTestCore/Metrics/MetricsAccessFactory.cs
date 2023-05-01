@@ -28,7 +28,7 @@ namespace DistTestCore.Metrics
 
         public IMetricsAccess CreateMetricsAccess(RunningContainer codexContainer)
         {
-            var query = new MetricsQuery(prometheusContainer);
+            var query = new MetricsQuery(lifecycle.Log, prometheusContainer);
             return new MetricsAccess(lifecycle.Log, query, codexContainer);
         }
     }
