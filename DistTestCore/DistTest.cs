@@ -69,21 +69,6 @@ namespace DistTestCore
             }
         }
 
-        private bool ShouldUseLongTimeouts()
-        {
-            // Don't be fooled! TestContext.CurrentTest.Test allows you easy access to the attributes of the current test.
-            // But this doesn't work for tests making use of [TestCase]. So instead, we use reflection here to figure out
-            // if the attribute is present.
-            var currentTest = TestContext.CurrentContext.Test;
-            var className = currentTest.ClassName;
-            var methodName = currentTest.MethodName;
-
-            var testClasses = testAssemblies.SelectMany(a => a.GetTypes()).Where(c => c.FullName == className).ToArray();
-            var testMethods = testClasses.SelectMany(c => c.GetMethods()).Where(m => m.Name == methodName).ToArray();
-
-            return testMethods.Any(m => m.GetCustomAttribute<UseLongTimeoutsAttribute>() != null);
-        }
-
         [TearDown]
         public void TearDownDistTest()
         {
@@ -108,7 +93,7 @@ namespace DistTestCore
             return SetupCodexBootstrapNode(s => { });
         }
 
-        public IOnlineCodexNode SetupCodexBootstrapNode(Action<ICodexSetup> setup)
+        public virtual IOnlineCodexNode SetupCodexBootstrapNode(Action<ICodexSetup> setup)
         {
             return SetupCodexNode(s =>
             {
@@ -132,7 +117,7 @@ namespace DistTestCore
             return SetupCodexNodes(numberOfNodes, s => { });
         }
 
-        public ICodexNodeGroup SetupCodexNodes(int numberOfNodes, Action<ICodexSetup> setup)
+        public virtual ICodexNodeGroup SetupCodexNodes(int numberOfNodes, Action<ICodexSetup> setup)
         {
             var codexSetup = new CodexSetup(numberOfNodes);
 
@@ -149,6 +134,21 @@ namespace DistTestCore
         protected BaseLog Log
         {
             get { return lifecycle.Log; }
+        }
+
+        private bool ShouldUseLongTimeouts()
+        {
+            // Don't be fooled! TestContext.CurrentTest.Test allows you easy access to the attributes of the current test.
+            // But this doesn't work for tests making use of [TestCase]. So instead, we use reflection here to figure out
+            // if the attribute is present.
+            var currentTest = TestContext.CurrentContext.Test;
+            var className = currentTest.ClassName;
+            var methodName = currentTest.MethodName;
+
+            var testClasses = testAssemblies.SelectMany(a => a.GetTypes()).Where(c => c.FullName == className).ToArray();
+            var testMethods = testClasses.SelectMany(c => c.GetMethods()).Where(m => m.Name == methodName).ToArray();
+
+            return testMethods.Any(m => m.GetCustomAttribute<UseLongTimeoutsAttribute>() != null);
         }
 
         private void CreateNewTestLifecycle()
