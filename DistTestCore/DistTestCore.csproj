@@ -6,9 +6,6 @@
 	  <ImplicitUsings>enable</ImplicitUsings>
 	  <Nullable>enable</Nullable>
     <IsArm64 Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' == 'Arm64'">true</IsArm64>
-    <!-- <IsArm64 Condition="'$([Microsoft.Build.Utilities.ProcessorArchitecture]::CurrentProcessArchitecture($([System.Runtime.InteropServices.Architecture]::Arm64)))' == 'true'">true</IsArm64> -->
-    <!-- <IsOSX Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture($([System.Runtime.InteropServices.Architecture]::OSX)))' == 'true'">true</IsOSX>
-    <IsLinux Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture($([System.Runtime.InteropServices.Architecture]::Linux)))' == 'true'">true</IsLinux> -->
   </PropertyGroup>
   <PropertyGroup Condition="'$(IsArm64)'=='true'">
     <DefineConstants>Arm64</DefineConstants>
