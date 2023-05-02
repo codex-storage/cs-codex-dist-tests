@@ -1,12 +1,17 @@
-﻿using DistTestCore.Marketplace;
+﻿using System.Runtime.InteropServices;
+using DistTestCore.Marketplace;
 using KubernetesWorkflow;
 
 namespace DistTestCore.Codex
 {
     public class CodexContainerRecipe : ContainerRecipeFactory
     {
-        //public const string DockerImage = "thatbenbierens/nim-codex:sha-9716635";
-        public const string DockerImage = "thatbenbierens/codexlocal:latest";
+        #if Arm64
+            public const string DockerImage = "emizzle/nim-codex-arm64:sha-c7af585";
+        #else
+			//public const string DockerImage = "thatbenbierens/nim-codex:sha-9716635";
+            public const string DockerImage = "thatbenbierens/codexlocal:latest";
+        #endif
         public const string MetricsPortTag = "metrics_port";
 
         protected override string Image => DockerImage;

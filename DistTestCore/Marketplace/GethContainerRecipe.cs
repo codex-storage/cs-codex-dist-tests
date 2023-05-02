@@ -4,7 +4,11 @@ namespace DistTestCore.Marketplace
 {
     public class GethContainerRecipe : ContainerRecipeFactory
     {
-        public const string DockerImage = "thatbenbierens/geth-confenv:latest";
+        #if Arm64
+            public const string DockerImage = "emizzle/geth-confenv:latest";
+        #else
+            public const string DockerImage = "thatbenbierens/geth-confenv:latest";
+        #endif
         public const string HttpPortTag = "http_port";
         public const string DiscoveryPortTag = "disc_port";
         private const string defaultArgs = "--ipcdisable --syncmode full";
