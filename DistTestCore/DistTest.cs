@@ -6,7 +6,6 @@ using KubernetesWorkflow;
 using Logging;
 using NUnit.Framework;
 using System.Reflection;
-using Utils;
 
 namespace DistTestCore
 {
@@ -15,14 +14,16 @@ namespace DistTestCore
     {
         private readonly Configuration configuration = new Configuration();
         private readonly Assembly[] testAssemblies;
-        private FixtureLog fixtureLog = null!;
-        private TestLifecycle lifecycle = null!;
-        private DateTime testStart = DateTime.MinValue;
+        private readonly FixtureLog fixtureLog;
+        private readonly object lifecycleLock = new object();
+        private readonly Dictionary<string, TestLifecycle> lifecycles = new Dictionary<string, TestLifecycle>();
 
         public DistTest()
         {
             var assemblies = AppDomain.CurrentDomain.GetAssemblies();
             testAssemblies = assemblies.Where(a => a.FullName!.ToLowerInvariant().Contains("test")).ToArray();
+
+            fixtureLog = new FixtureLog(configuration.GetLogConfig());
         }
 
         [OneTimeSetUp]
@@ -31,7 +32,6 @@ namespace DistTestCore
             // Previous test run may have been interrupted.
             // Begin by cleaning everything up.
             Timing.UseLongTimeouts = false;
-            fixtureLog = new FixtureLog(configuration.GetLogConfig());
 
             try
             {
@@ -85,7 +85,7 @@ namespace DistTestCore
 
         public TestFile GenerateTestFile(ByteSize size)
         {
-            return lifecycle.FileManager.GenerateTestFile(size);
+            return Get().FileManager.GenerateTestFile(size);
         }
 
         public IOnlineCodexNode SetupCodexBootstrapNode()
@@ -128,12 +128,20 @@ namespace DistTestCore
 
         public ICodexNodeGroup BringOnline(ICodexSetup codexSetup)
         {
-            return lifecycle.CodexStarter.BringOnline((CodexSetup)codexSetup);
+            return Get().CodexStarter.BringOnline((CodexSetup)codexSetup);
         }
 
         protected BaseLog Log
         {
-            get { return lifecycle.Log; }
+            get { return Get().Log; }
+        }
+
+        private TestLifecycle Get()
+        {
+            lock (lifecycleLock)
+            {
+                return lifecycles[GetCurrentTestName()];
+            }
         }
 
         private bool ShouldUseLongTimeouts()
@@ -156,24 +164,27 @@ namespace DistTestCore
             var testName = GetCurrentTestName();
             Stopwatch.Measure(fixtureLog, $"Setup for {testName}", () =>
             {
-                lifecycle = new TestLifecycle(fixtureLog.CreateTestLog(), configuration);
-                testStart = DateTime.UtcNow;
+                lock (lifecycleLock)
+                {
+                    lifecycles.Add(testName, new TestLifecycle(fixtureLog.CreateTestLog(), configuration));
+                }
             });
         }
 
         private void DisposeTestLifecycle()
         {
-            fixtureLog.Log($"{GetCurrentTestName()} = {GetTestResult()} ({GetTestDuration()})");
+            var lifecycle = Get();
+            fixtureLog.Log($"{GetCurrentTestName()} = {GetTestResult()} ({lifecycle.GetTestDuration()})");
             Stopwatch.Measure(fixtureLog, $"Teardown for {GetCurrentTestName()}", () =>
             {
                 lifecycle.Log.EndTest();
-                IncludeLogsAndMetricsOnTestFailure();
+                IncludeLogsAndMetricsOnTestFailure(lifecycle);
                 lifecycle.DeleteAllResources();
                 lifecycle = null!;
             });
         }
 
-        private void IncludeLogsAndMetricsOnTestFailure()
+        private void IncludeLogsAndMetricsOnTestFailure(TestLifecycle lifecycle)
         {
             var result = TestContext.CurrentContext.Result;
             if (result.Outcome.Status == NUnit.Framework.Interfaces.TestStatus.Failed)
@@ -183,8 +194,8 @@ namespace DistTestCore
                 if (IsDownloadingLogsAndMetricsEnabled())
                 {
                     lifecycle.Log.Log("Downloading all CodexNode logs and metrics because of test failure...");
-                    DownloadAllLogs();
-                    DownloadAllMetrics();
+                    DownloadAllLogs(lifecycle);
+                    DownloadAllMetrics(lifecycle);
                 }
                 else
                 {
@@ -193,25 +204,19 @@ namespace DistTestCore
             }
         }
 
-        private string GetTestDuration()
+        private void DownloadAllLogs(TestLifecycle lifecycle)
         {
-            var testDuration = DateTime.UtcNow - testStart;
-            return Time.FormatDuration(testDuration);
-        }
-
-        private void DownloadAllLogs()
-        {
-            OnEachCodexNode(node =>
+            OnEachCodexNode(lifecycle, node =>
             {
                 lifecycle.DownloadLog(node);
             });
         }
 
-        private void DownloadAllMetrics()
+        private void DownloadAllMetrics(TestLifecycle lifecycle)
         {
             var metricsDownloader = new MetricsDownloader(lifecycle.Log);
 
-            OnEachCodexNode(node =>
+            OnEachCodexNode(lifecycle, node =>
             {
                 var m = node.Metrics as MetricsAccess;
                 if (m != null)
@@ -221,7 +226,7 @@ namespace DistTestCore
             });
         }
 
-        private void OnEachCodexNode(Action<OnlineCodexNode> action)
+        private void OnEachCodexNode(TestLifecycle lifecycle, Action<OnlineCodexNode> action)
         {
             var allNodes = lifecycle.CodexStarter.RunningGroups.SelectMany(g => g.Nodes);
             foreach (var node in allNodes)

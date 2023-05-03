@@ -10,11 +10,13 @@ namespace KubernetesWorkflow
         private readonly KnownK8sPods knownPods = new KnownK8sPods();
         private readonly K8sCluster cluster;
         private readonly BaseLog log;
+        private readonly string testNamespace;
 
         public WorkflowCreator(BaseLog log, Configuration configuration)
         {
             cluster = new K8sCluster(configuration);
             this.log = log;
+            testNamespace = ApplicationLifecycle.Instance.GetTestNamespace();
         }
 
         public StartupWorkflow CreateWorkflow()
@@ -23,7 +25,7 @@ namespace KubernetesWorkflow
                                                                     ApplicationLifecycle.Instance.GetServiceNumberSource(),
                                                                     containerNumberSource);
 
-            return new StartupWorkflow(log, workflowNumberSource, cluster, knownPods, ApplicationLifecycle.Instance.GetTestNamespace());
+            return new StartupWorkflow(log, workflowNumberSource, cluster, knownPods, testNamespace);
         }
     }
 }
