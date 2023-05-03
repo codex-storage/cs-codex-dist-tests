@@ -2,16 +2,16 @@
 {
     public class Configuration
     {
-        public Configuration(string k8sNamespace, string? kubeConfigFile, TimeSpan operationTimeout, TimeSpan retryDelay, ConfigurationLocationEntry[] locationMap)
+        public Configuration(string k8sNamespacePrefix, string? kubeConfigFile, TimeSpan operationTimeout, TimeSpan retryDelay, ConfigurationLocationEntry[] locationMap)
         {
-            K8sNamespace = k8sNamespace;
+            K8sNamespacePrefix = k8sNamespacePrefix;
             KubeConfigFile = kubeConfigFile;
             OperationTimeout = operationTimeout;
             RetryDelay = retryDelay;
             LocationMap = locationMap;
         }
 
-        public string K8sNamespace { get; }
+        public string K8sNamespacePrefix { get; }
         public string? KubeConfigFile { get; }
         public TimeSpan OperationTimeout { get; }
         public TimeSpan RetryDelay { get; }

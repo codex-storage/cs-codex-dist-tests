@@ -7,7 +7,7 @@ namespace DistTestCore
         public KubernetesWorkflow.Configuration GetK8sConfiguration()
         {
             return new KubernetesWorkflow.Configuration(
-                k8sNamespace: "codex-test-ns",
+                k8sNamespacePrefix: "ct-",
                 kubeConfigFile: null,
                 operationTimeout: Timing.K8sOperationTimeout(),
                 retryDelay: Timing.K8sServiceDelay(),

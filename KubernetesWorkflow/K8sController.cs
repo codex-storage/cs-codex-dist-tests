@@ -11,15 +11,16 @@ namespace KubernetesWorkflow
         private readonly K8sCluster cluster;
         private readonly KnownK8sPods knownPods;
         private readonly WorkflowNumberSource workflowNumberSource;
+        private readonly string testNamespace;
         private readonly Kubernetes client;
 
-        public K8sController(BaseLog log, K8sCluster cluster, KnownK8sPods knownPods, WorkflowNumberSource workflowNumberSource)
+        public K8sController(BaseLog log, K8sCluster cluster, KnownK8sPods knownPods, WorkflowNumberSource workflowNumberSource, string testNamespace)
         {
             this.log = log;
             this.cluster = cluster;
             this.knownPods = knownPods;
             this.workflowNumberSource = workflowNumberSource;
-
+            this.testNamespace = testNamespace;
             client = new Kubernetes(cluster.GetK8sClientConfig());
         }
 
@@ -52,14 +53,14 @@ namespace KubernetesWorkflow
         public void DownloadPodLog(RunningPod pod, ContainerRecipe recipe, ILogHandler logHandler)
         {
             log.Debug();
-            using var stream = client.ReadNamespacedPodLog(pod.Name, K8sNamespace, recipe.Name);
+            using var stream = client.ReadNamespacedPodLog(pod.Name, K8sTestNamespace, recipe.Name);
             logHandler.Log(stream);
         }
 
         public string ExecuteCommand(RunningPod pod, string containerName, string command, params string[] args)
         {
             log.Debug($"{containerName}: {command} ({string.Join(",", args)})");
-            var runner = new CommandRunner(client, K8sNamespace, pod, containerName, command, args);
+            var runner = new CommandRunner(client, K8sTestNamespace, pod, containerName, command, args);
             runner.Run();
             return runner.GetStdOut();
         }
@@ -67,9 +68,37 @@ namespace KubernetesWorkflow
         public void DeleteAllResources()
         {
             log.Debug();
-            DeleteNamespace();
 
+            var all = client.ListNamespace().Items;
+            var namespaces = all.Select(n => n.Name()).Where(n => n.StartsWith(cluster.Configuration.K8sNamespacePrefix));
+
+            foreach (var ns in namespaces)
+            {
+                DeleteNamespace(ns);
+            }
+            foreach (var ns in namespaces)
+            {
+                WaitUntilNamespaceDeleted(ns);
+            }
+        }
+
+        public void DeleteTestNamespace()
+        {
+            log.Debug();
+            if (IsTestNamespaceOnline())
+            {
+                client.DeleteNamespace(K8sTestNamespace, null, null, gracePeriodSeconds: 0);
+            }
             WaitUntilNamespaceDeleted();
+        }
+
+        public void DeleteNamespace(string ns)
+        {
+            log.Debug();
+            if (IsNamespaceOnline(ns))
+            {
+                client.DeleteNamespace(ns, null, null, gracePeriodSeconds: 0);
+            }
         }
 
         #region Namespace management
@@ -83,30 +112,27 @@ namespace KubernetesWorkflow
                 ApiVersion = "v1",
                 Metadata = new V1ObjectMeta
                 {
-                    Name = K8sNamespace,
-                    Labels = new Dictionary<string, string> { { "name", K8sNamespace } }
+                    Name = K8sTestNamespace,
+                    Labels = new Dictionary<string, string> { { "name", K8sTestNamespace } }
                 }
             };
             client.CreateNamespace(namespaceSpec);
             WaitUntilNamespaceCreated();
         }
 
-        private void DeleteNamespace()
+        private string K8sTestNamespace
         {
-            if (IsTestNamespaceOnline())
-            {
-                client.DeleteNamespace(K8sNamespace, null, null, gracePeriodSeconds: 0);
-            }
-        }
-
-        private string K8sNamespace
-        {
-            get { return cluster.Configuration.K8sNamespace; }
+            get { return cluster.Configuration.K8sNamespacePrefix + testNamespace; }
         }
 
         private bool IsTestNamespaceOnline()
         {
-            return client.ListNamespace().Items.Any(n => n.Metadata.Name == K8sNamespace);
+            return IsNamespaceOnline(K8sTestNamespace);
+        }
+
+        private bool IsNamespaceOnline(string name)
+        {
+            return client.ListNamespace().Items.Any(n => n.Metadata.Name == name);
         }
 
         #endregion
@@ -141,7 +167,7 @@ namespace KubernetesWorkflow
                 }
             };
 
-            client.CreateNamespacedDeployment(deploymentSpec, K8sNamespace);
+            client.CreateNamespacedDeployment(deploymentSpec, K8sTestNamespace);
             WaitUntilDeploymentOnline(deploymentSpec.Metadata.Name);
 
             return deploymentSpec.Metadata.Name;
@@ -149,7 +175,7 @@ namespace KubernetesWorkflow
 
         private void DeleteDeployment(string deploymentName)
         {
-            client.DeleteNamespacedDeployment(deploymentName, K8sNamespace);
+            client.DeleteNamespacedDeployment(deploymentName, K8sTestNamespace);
             WaitUntilDeploymentOffline(deploymentName);
         }
 
@@ -173,7 +199,7 @@ namespace KubernetesWorkflow
             return new V1ObjectMeta
             {
                 Name = "deploy-" + workflowNumberSource.WorkflowNumber,
-                NamespaceProperty = K8sNamespace
+                NamespaceProperty = K8sTestNamespace
             };
         }
 
@@ -257,14 +283,14 @@ namespace KubernetesWorkflow
                 }
             };
 
-            client.CreateNamespacedService(serviceSpec, K8sNamespace);
+            client.CreateNamespacedService(serviceSpec, K8sTestNamespace);
 
             return (serviceSpec.Metadata.Name, result);
         }
 
         private void DeleteService(string serviceName)
         {
-            client.DeleteNamespacedService(serviceName, K8sNamespace);
+            client.DeleteNamespacedService(serviceName, K8sTestNamespace);
         }
 
         private V1ObjectMeta CreateServiceMetadata()
@@ -272,7 +298,7 @@ namespace KubernetesWorkflow
             return new V1ObjectMeta
             {
                 Name = "service-" + workflowNumberSource.WorkflowNumber,
-                NamespaceProperty = K8sNamespace
+                NamespaceProperty = K8sTestNamespace
             };
         }
 
@@ -323,11 +349,16 @@ namespace KubernetesWorkflow
             WaitUntil(() => !IsTestNamespaceOnline());
         }
 
+        private void WaitUntilNamespaceDeleted(string name)
+        {
+            WaitUntil(() => !IsNamespaceOnline(name));
+        }
+
         private void WaitUntilDeploymentOnline(string deploymentName)
         {
             WaitUntil(() =>
             {
-                var deployment = client.ReadNamespacedDeployment(deploymentName, K8sNamespace);
+                var deployment = client.ReadNamespacedDeployment(deploymentName, K8sTestNamespace);
                 return deployment?.Status.AvailableReplicas != null && deployment.Status.AvailableReplicas > 0;
             });
         }
@@ -336,7 +367,7 @@ namespace KubernetesWorkflow
         {
             WaitUntil(() =>
             {
-                var deployments = client.ListNamespacedDeployment(K8sNamespace);
+                var deployments = client.ListNamespacedDeployment(K8sTestNamespace);
                 var deployment = deployments.Items.SingleOrDefault(d => d.Metadata.Name == deploymentName);
                 return deployment == null || deployment.Status.AvailableReplicas == 0;
             });
@@ -346,7 +377,7 @@ namespace KubernetesWorkflow
         {
             WaitUntil(() =>
             {
-                var pods = client.ListNamespacedPod(K8sNamespace).Items;
+                var pods = client.ListNamespacedPod(K8sTestNamespace).Items;
                 var pod = pods.SingleOrDefault(p => p.Metadata.Name == podName);
                 return pod == null;
             });
@@ -369,7 +400,7 @@ namespace KubernetesWorkflow
 
         private (string, string) FetchNewPod()
         {
-            var pods = client.ListNamespacedPod(K8sNamespace).Items;
+            var pods = client.ListNamespacedPod(K8sTestNamespace).Items;
 
             var newPods = pods.Where(p => !knownPods.Contains(p.Name())).ToArray();
             if (newPods.Length != 1) throw new InvalidOperationException("Expected only 1 pod to be created. Test infra failure.");

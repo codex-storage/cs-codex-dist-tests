@@ -153,7 +153,8 @@ namespace DistTestCore
 
         private void CreateNewTestLifecycle()
         {
-            Stopwatch.Measure(fixtureLog, $"Setup for {GetCurrentTestName()}", () =>
+            var testName = GetCurrentTestName();
+            Stopwatch.Measure(fixtureLog, $"Setup for {testName}", () =>
             {
                 lifecycle = new TestLifecycle(fixtureLog.CreateTestLog(), configuration);
                 testStart = DateTime.UtcNow;

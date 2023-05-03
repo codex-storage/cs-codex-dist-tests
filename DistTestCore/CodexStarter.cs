@@ -44,7 +44,7 @@ namespace DistTestCore
         public void DeleteAllResources()
         {
             var workflow = CreateWorkflow();
-            workflow.DeleteAllResources();
+            workflow.DeleteTestResources();
 
             RunningGroups.Clear();
         }

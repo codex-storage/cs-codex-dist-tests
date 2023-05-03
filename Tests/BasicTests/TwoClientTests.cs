@@ -5,6 +5,7 @@ using NUnit.Framework;
 namespace Tests.BasicTests
 {
     [TestFixture]
+    [Parallelizable(ParallelScope.All)]
     public class TwoClientTests : DistTest
     {
         [Test]
