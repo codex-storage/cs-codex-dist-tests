@@ -71,13 +71,13 @@ namespace Tests.BasicTests
                 requiredCollateral: 10.TestTokens(),
                 minRequiredNumberOfNodes: 1,
                 proofProbability: 5,
-                duration: TimeSpan.FromMinutes(2));
+                duration: TimeSpan.FromMinutes(1));
 
-            Time.Sleep(TimeSpan.FromMinutes(1));
+            Time.Sleep(TimeSpan.FromSeconds(10));
 
             seller.Marketplace.AssertThatBalance(Is.LessThan(sellerInitialBalance), "Collateral was not placed.");
 
-            Time.Sleep(TimeSpan.FromMinutes(2));
+            Time.Sleep(TimeSpan.FromMinutes(1));
 
             seller.Marketplace.AssertThatBalance(Is.GreaterThan(sellerInitialBalance), "Seller was not paid for storage.");
             buyer.Marketplace.AssertThatBalance(Is.LessThan(buyerInitialBalance), "Buyer was not charged for storage.");

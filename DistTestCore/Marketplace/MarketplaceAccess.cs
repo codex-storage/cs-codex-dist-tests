@@ -19,10 +19,10 @@ namespace DistTestCore.Marketplace
     {
         private readonly TestLog log;
         private readonly MarketplaceNetwork marketplaceNetwork;
-        private readonly GethCompanionAccount account;
+        private readonly GethAccount account;
         private readonly CodexAccess codexAccess;
 
-        public MarketplaceAccess(TestLog log, MarketplaceNetwork marketplaceNetwork, GethCompanionAccount account, CodexAccess codexAccess)
+        public MarketplaceAccess(TestLog log, MarketplaceNetwork marketplaceNetwork, GethAccount account, CodexAccess codexAccess)
         {
             this.log = log;
             this.marketplaceNetwork = marketplaceNetwork;
