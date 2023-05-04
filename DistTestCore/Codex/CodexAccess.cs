@@ -42,6 +42,24 @@ namespace DistTestCore.Codex
             return Http().HttpPostJson($"storage/request/{contentId}", request);
         }
 
+        public void EnsureOnline()
+        {
+            try
+            {
+                var debugInfo = GetDebugInfo();
+                if (debugInfo == null || string.IsNullOrEmpty(debugInfo.id)) throw new InvalidOperationException("Unable to get debug-info from codex node at startup.");
+
+                var nodePeerId = debugInfo.id;
+                var nodeName = Container.Name;
+                log.AddStringReplace(nodePeerId, $"___{nodeName}___");
+            }
+            catch (Exception e)
+            {
+                log.Error($"Failed to start codex node: {e}. Test infra failure.");
+                throw new InvalidOperationException($"Failed to start codex node. Test infra failure.", e);
+            }
+        }
+
         private Http Http()
         {
             var ip = Container.Pod.Cluster.IP;

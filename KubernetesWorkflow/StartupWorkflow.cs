@@ -75,7 +75,13 @@ namespace KubernetesWorkflow
         private RunningContainer[] CreateContainers(RunningPod runningPod, ContainerRecipe[] recipes, StartupConfig startupConfig)
         {
             log.Debug();
-            return recipes.Select(r => new RunningContainer(runningPod, r, runningPod.GetServicePortsForContainerRecipe(r), startupConfig)).ToArray();
+            return recipes.Select(r =>
+            {
+                var servicePorts = runningPod.GetServicePortsForContainerRecipe(r);
+                log.Debug($"{r} -> service ports: {string.Join(",", servicePorts.Select(p => p.Number))}");
+
+                return new RunningContainer(runningPod, r, servicePorts, startupConfig);
+            }).ToArray();
         }
 
         private ContainerRecipe[] CreateRecipes(int numberOfContainers, ContainerRecipeFactory recipeFactory, StartupConfig startupConfig)
@@ -84,7 +90,7 @@ namespace KubernetesWorkflow
             var result = new List<ContainerRecipe>();
             for (var i = 0; i < numberOfContainers; i++)
             {
-                result.Add(recipeFactory.CreateRecipe(i ,numberSource.GetContainerNumber(), componentFactory, startupConfig));
+                result.Add(recipeFactory.CreateRecipe(i, numberSource.GetContainerNumber(), componentFactory, startupConfig));
             }
 
             return result.ToArray();

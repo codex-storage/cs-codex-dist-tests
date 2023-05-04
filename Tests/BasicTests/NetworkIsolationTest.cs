@@ -11,8 +11,6 @@ namespace Tests.BasicTests
         private IOnlineCodexNode? node = null;
 
         // net isolation: only on real cluster?
-        // parallel upload/download tests?
-        // operation times.
 
         [Test]
         public void SetUpANodeAndWait()
