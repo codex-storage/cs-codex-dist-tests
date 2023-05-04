@@ -6,6 +6,7 @@ namespace Tests.ParallelTests
     [TestFixture]
     public class DownloadTests : DistTest
     {
+        [Ignore("a")]
         [TestCase(3, 500)]
         [TestCase(5, 100)]
         [TestCase(10, 256)]

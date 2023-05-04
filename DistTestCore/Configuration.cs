@@ -21,7 +21,7 @@ namespace DistTestCore
 
         public Logging.LogConfig GetLogConfig()
         {
-            return new Logging.LogConfig("CodexTestLogs", debugEnabled: false);
+            return new Logging.LogConfig("CodexTestLogs", debugEnabled: true);
         }
 
         public string GetFileManagerFolder()

@@ -5,18 +5,25 @@ using NUnit.Framework;
 namespace Tests.BasicTests
 {
     [TestFixture]
-    [Parallelizable(ParallelScope.All)]
     public class TwoClientTests : DistTest
     {
-        [Test]
-        public void TwoClientsOnePodTest()
+        [TestCase(1)]
+        [TestCase(2)]
+        [TestCase(3)]
+        [TestCase(4)]
+        [TestCase(5)]
+        [TestCase(6)]
+        [TestCase(7)]
+        [TestCase(8)]
+        [TestCase(9)]
+        public void TwoClientsOnePodTest(int size)
         {
             var group = SetupCodexNodes(2);
 
             var primary = group[0];
             var secondary = group[1];
 
-            PerformTwoClientTest(primary, secondary);
+            PerformTwoClientTest(primary, secondary, size.MB());
         }
 
         [Test]
@@ -40,9 +47,14 @@ namespace Tests.BasicTests
 
         private void PerformTwoClientTest(IOnlineCodexNode primary, IOnlineCodexNode secondary)
         {
+            PerformTwoClientTest(primary, secondary, 1.MB());
+        }
+
+        private void PerformTwoClientTest(IOnlineCodexNode primary, IOnlineCodexNode secondary, ByteSize size)
+        {
             primary.ConnectToPeer(secondary);
 
-            var testFile = GenerateTestFile(1.MB());
+            var testFile = GenerateTestFile(size);
 
             var contentId = primary.UploadFile(testFile);
 
