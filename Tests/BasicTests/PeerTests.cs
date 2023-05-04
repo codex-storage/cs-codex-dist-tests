@@ -75,8 +75,8 @@ namespace Tests.BasicTests
             //var enginePeers = string.Join(",", a.enginePeers.Select(p => p.peerId));
             var switchPeers = string.Join(",", a.switchPeers.Select(p => p.peerId));
 
-            //Log.Debug($"Looking for {b.id} in engine-peers [{enginePeers}]");
-            Log.Debug($"{a.id} is looking for {b.id} in switch-peers [{switchPeers}]");
+            //Debug($"Looking for {b.id} in engine-peers [{enginePeers}]");
+            Debug($"{a.id} is looking for {b.id} in switch-peers [{switchPeers}]");
 
             //Assert.That(a.enginePeers.Any(p => p.peerId == b.id), $"{a.id} was looking for '{b.id}' in engine-peers [{enginePeers}] but it was not found.");
             Assert.That(a.switchPeers.Any(p => p.peerId == b.id), $"{a.id} was looking for '{b.id}' in switch-peers [{switchPeers}] but it was not found.");
