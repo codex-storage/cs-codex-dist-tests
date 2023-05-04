@@ -4,23 +4,20 @@ using Utils;
 
 namespace Tests.BasicTests
 {
-    [Ignore("not a real test!")]
+    // Warning!
+    // This is a test to check network-isolation in the test-infrastructure.
+    // It requires parallelism(2) or greater to run.
     [TestFixture]
     public class NetworkIsolationTest : DistTest
     {
         private IOnlineCodexNode? node = null;
-
-        // net isolation: only on real cluster?
 
         [Test]
         public void SetUpANodeAndWait()
         {
             node = SetupCodexNode();
 
-            while (node != null)
-            {
-                Time.Sleep(TimeSpan.FromSeconds(5));
-            }
+            Time.WaitUntil(() => node == null, TimeSpan.FromMinutes(5), TimeSpan.FromSeconds(5));
         }
 
         [Test]
@@ -28,22 +25,21 @@ namespace Tests.BasicTests
         {
             var myNode = SetupCodexNode();
 
-            while (node == null)
+            Time.WaitUntil(() => node != null, TimeSpan.FromMinutes(1), TimeSpan.FromSeconds(5));
+
+            try
             {
-                Time.Sleep(TimeSpan.FromSeconds(1));
+                myNode.ConnectToPeer(node!);
+            }
+            catch
+            {
+                // Good! This connection should be prohibited by the network isolation policy.
+                node = null;
+                return;
             }
 
-            myNode.ConnectToPeer(node);
-
-            var testFile = GenerateTestFile(1.MB());
-
-            var contentId = node.UploadFile(testFile);
-
-            var downloadedFile = myNode.DownloadContent(contentId);
-
-            testFile.AssertIsEqual(downloadedFile);
-
-            node = null;
+            Assert.Fail("Connection could be established between two Codex nodes running in different namespaces. " +
+                "This may cause cross-test interference. Network isolation policy should be applied. Test infra failure.");
         }
     }
 }

@@ -22,7 +22,7 @@ namespace KubernetesWorkflow
             client = new K8sClient(cluster.GetK8sClientConfig());
 
             K8sTestNamespace = cluster.Configuration.K8sNamespacePrefix + testNamespace;
-            log.Debug($"'{K8sTestNamespace}'");
+            log.Debug($"Test namespace: '{K8sTestNamespace}'");
         }
 
         public void Dispose()
@@ -121,6 +121,8 @@ namespace KubernetesWorkflow
             };
             client.Run(c => c.CreateNamespace(namespaceSpec));
             WaitUntilNamespaceCreated();
+
+            CreatePolicy();
         }
 
         private bool IsTestNamespaceOnline()
@@ -131,6 +133,67 @@ namespace KubernetesWorkflow
         private bool IsNamespaceOnline(string name)
         {
             return client.Run(c => c.ListNamespace().Items.Any(n => n.Metadata.Name == name));
+        }
+
+        private void CreatePolicy()
+        {
+            client.Run(c =>
+            {
+                var body = new V1NetworkPolicy
+                {
+                    Metadata = new V1ObjectMeta
+                    {
+                        Name = "isolate-policy",
+                        NamespaceProperty = K8sTestNamespace
+                    },
+                    Spec = new V1NetworkPolicySpec
+                    {
+                        PodSelector = new V1LabelSelector
+                        {
+                            MatchLabels = GetSelector()
+                        },
+                        PolicyTypes = new[]
+                        {
+                            "Ingress",
+                            "Egress"
+                        },
+                        Ingress = new List<V1NetworkPolicyIngressRule>
+                        {
+                            new V1NetworkPolicyIngressRule
+                            {
+                                FromProperty = new List<V1NetworkPolicyPeer>
+                                {
+                                    new V1NetworkPolicyPeer
+                                    {
+                                        NamespaceSelector = new V1LabelSelector
+                                        {
+                                            MatchLabels = GetMyNamespaceSelector()
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        Egress = new List<V1NetworkPolicyEgressRule>
+                        {
+                            new V1NetworkPolicyEgressRule
+                            {
+                                To = new List<V1NetworkPolicyPeer>
+                                {
+                                    new V1NetworkPolicyPeer
+                                    {
+                                        NamespaceSelector = new V1LabelSelector
+                                        {
+                                            MatchLabels = GetMyNamespaceSelector()
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                };
+
+                c.CreateNamespacedNetworkPolicy(body, K8sTestNamespace);
+            });
         }
 
         #endregion
@@ -192,12 +255,18 @@ namespace KubernetesWorkflow
             return new Dictionary<string, string> { { "codex-test-node", "dist-test-" + workflowNumberSource.WorkflowNumber } };
         }
 
+        private IDictionary<string, string> GetMyNamespaceSelector()
+        {
+            return new Dictionary<string, string> { { "name", "thatisincorrect" } };
+        }
+
         private V1ObjectMeta CreateDeploymentMetadata()
         {
             return new V1ObjectMeta
             {
                 Name = "deploy-" + workflowNumberSource.WorkflowNumber,
-                NamespaceProperty = K8sTestNamespace
+                NamespaceProperty = K8sTestNamespace,
+                Labels = GetSelector()
             };
         }
 

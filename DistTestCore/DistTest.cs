@@ -128,9 +128,16 @@ namespace DistTestCore
             return Get().CodexStarter.BringOnline((CodexSetup)codexSetup);
         }
 
-        protected BaseLog Log
+        protected void Log(string msg)
         {
-            get { return Get().Log; }
+            TestContext.Progress.WriteLine(msg);
+            Get().Log.Log(msg);
+        }
+
+        protected void Debug(string msg)
+        {
+            TestContext.Progress.WriteLine(msg);
+            Get().Log.Debug(msg);
         }
 
         private TestLifecycle Get()
