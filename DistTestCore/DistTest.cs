@@ -32,13 +32,11 @@ namespace DistTestCore
         {
             // Previous test run may have been interrupted.
             // Begin by cleaning everything up.
-            Timing.UseLongTimeouts = false;
-
             try
             {
                 Stopwatch.Measure(fixtureLog, "Global setup", () =>
                 {
-                    var wc = new WorkflowCreator(fixtureLog, configuration.GetK8sConfiguration());
+                    var wc = new WorkflowCreator(fixtureLog, configuration.GetK8sConfiguration(GetTimeSet()));
                     wc.CreateWorkflow().DeleteAllResources();
                 });                
             }
@@ -58,8 +56,6 @@ namespace DistTestCore
         [SetUp]
         public void SetUpDistTest()
         {
-            Timing.UseLongTimeouts = ShouldUseLongTimeouts();
-
             if (GlobalTestFailure.HasFailed)
             {
                 Assert.Inconclusive("Skip test: Previous test failed during clean up.");
@@ -145,21 +141,6 @@ namespace DistTestCore
             }
         }
 
-        private bool ShouldUseLongTimeouts()
-        {
-            // Don't be fooled! TestContext.CurrentTest.Test allows you easy access to the attributes of the current test.
-            // But this doesn't work for tests making use of [TestCase]. So instead, we use reflection here to figure out
-            // if the attribute is present.
-            var currentTest = TestContext.CurrentContext.Test;
-            var className = currentTest.ClassName;
-            var methodName = currentTest.MethodName;
-
-            var testClasses = testAssemblies.SelectMany(a => a.GetTypes()).Where(c => c.FullName == className).ToArray();
-            var testMethods = testClasses.SelectMany(c => c.GetMethods()).Where(m => m.Name == methodName).ToArray();
-
-            return testMethods.Any(m => m.GetCustomAttribute<UseLongTimeoutsAttribute>() != null);
-        }
-
         private void CreateNewTestLifecycle()
         {
             var testName = GetCurrentTestName();
@@ -167,7 +148,7 @@ namespace DistTestCore
             {
                 lock (lifecycleLock)
                 {
-                    lifecycles.Add(testName, new TestLifecycle(fixtureLog.CreateTestLog(), configuration));
+                    lifecycles.Add(testName, new TestLifecycle(fixtureLog.CreateTestLog(), configuration, GetTimeSet()));
                 }
             });
         }
@@ -183,6 +164,27 @@ namespace DistTestCore
                 lifecycle.DeleteAllResources();
                 lifecycle = null!;
             });
+        }
+
+        private ITimeSet GetTimeSet()
+        {
+            if (ShouldUseLongTimeouts()) return new LongTimeSet();
+            return new DefaultTimeSet();
+        }
+
+        private bool ShouldUseLongTimeouts()
+        {
+            // Don't be fooled! TestContext.CurrentTest.Test allows you easy access to the attributes of the current test.
+            // But this doesn't work for tests making use of [TestCase]. So instead, we use reflection here to figure out
+            // if the attribute is present.
+            var currentTest = TestContext.CurrentContext.Test;
+            var className = currentTest.ClassName;
+            var methodName = currentTest.MethodName;
+
+            var testClasses = testAssemblies.SelectMany(a => a.GetTypes()).Where(c => c.FullName == className).ToArray();
+            var testMethods = testClasses.SelectMany(c => c.GetMethods()).Where(m => m.Name == methodName).ToArray();
+
+            return testMethods.Any(m => m.GetCustomAttribute<UseLongTimeoutsAttribute>() != null);
         }
 
         private void IncludeLogsAndMetricsOnTestFailure(TestLifecycle lifecycle)

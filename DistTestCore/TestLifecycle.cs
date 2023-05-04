@@ -10,10 +10,11 @@ namespace DistTestCore
         private readonly WorkflowCreator workflowCreator;
         private DateTime testStart = DateTime.MinValue;
 
-        public TestLifecycle(TestLog log, Configuration configuration)
+        public TestLifecycle(TestLog log, Configuration configuration, ITimeSet timeSet)
         {
             Log = log;
-            workflowCreator = new WorkflowCreator(log, configuration.GetK8sConfiguration());
+            TimeSet = timeSet;
+            workflowCreator = new WorkflowCreator(log, configuration.GetK8sConfiguration(timeSet));
 
             FileManager = new FileManager(Log, configuration);
             CodexStarter = new CodexStarter(this, workflowCreator);
@@ -23,6 +24,7 @@ namespace DistTestCore
         }
 
         public TestLog Log { get; }
+        public ITimeSet TimeSet { get; }
         public FileManager FileManager { get; }
         public CodexStarter CodexStarter { get; }
         public PrometheusStarter PrometheusStarter { get; }

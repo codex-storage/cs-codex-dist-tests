@@ -6,10 +6,12 @@ namespace DistTestCore.Codex
     public class CodexAccess
     {
         private readonly BaseLog log;
+        private readonly ITimeSet timeSet;
 
-        public CodexAccess(BaseLog log, RunningContainer runningContainer)
+        public CodexAccess(BaseLog log, ITimeSet timeSet, RunningContainer runningContainer)
         {
             this.log = log;
+            this.timeSet = timeSet;
             Container = runningContainer;
         }
 
@@ -44,7 +46,7 @@ namespace DistTestCore.Codex
         {
             var ip = Container.Pod.Cluster.IP;
             var port = Container.ServicePorts[0].Number;
-            return new Http(log, ip, port, baseUrl: "/api/codex/v1");
+            return new Http(log, timeSet, ip, port, baseUrl: "/api/codex/v1");
         }
 
         public string ConnectToPeer(string peerId, string peerMultiAddress)
