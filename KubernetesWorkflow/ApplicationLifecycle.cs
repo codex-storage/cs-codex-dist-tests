@@ -4,6 +4,7 @@ namespace KubernetesWorkflow
 {
     public class ApplicationLifecycle
     {
+        private static object instanceLock = new object();
         private static ApplicationLifecycle? instance;
         private readonly NumberSource servicePortNumberSource = new NumberSource(30001);
         private readonly NumberSource namespaceNumberSource = new NumberSource(0);
@@ -18,8 +19,11 @@ namespace KubernetesWorkflow
             // and persists for the entire application lifecycle.
             get
             {
-                if (instance == null) instance = new ApplicationLifecycle();
-                return instance;
+                lock (instanceLock)
+                {
+                    if (instance == null) instance = new ApplicationLifecycle();
+                    return instance;
+                }
             }
         }
 
