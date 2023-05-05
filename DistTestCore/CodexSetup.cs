@@ -13,7 +13,7 @@ namespace DistTestCore
         /// Sets the log level for codex. The default level is INFO and the
         /// log level is applied only to the supplied topics.
         /// </summary>
-        ICodexSetup WithLogLevel(CodexLogLevel level, IEnumerable<string>? topics);
+        ICodexSetup WithLogLevel(CodexLogLevel level, params string[] topics);
         ICodexSetup WithBootstrapNode(IOnlineCodexNode node);
         ICodexSetup WithStorageQuota(ByteSize storageQuota);
         ICodexSetup EnableMetrics();
@@ -58,10 +58,11 @@ namespace DistTestCore
 
         public ICodexSetup WithLogLevel(CodexLogLevel level)
         {
-            return WithLogLevel(level, null);
+            LogLevel = level;
+            return this;
         }
 
-        public ICodexSetup WithLogLevel(CodexLogLevel level, IEnumerable<string>? topics)
+        public ICodexSetup WithLogLevel(CodexLogLevel level, params string[] topics)
         {
             LogLevel = level;
             LogTopics = topics;

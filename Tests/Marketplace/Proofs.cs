@@ -14,27 +14,28 @@ namespace Tests.BasicTests
             var sellerInitialBalance = 234.TestTokens();
             var buyerInitialBalance = 1000.TestTokens();
 
-            var sellerWithFailures = SetupCodexNode(s => s
-                .WithLogLevel(CodexLogLevel.Trace, new List<string>(){"market", "proving"})
-                .WithStorageQuota(11.GB())
-                .WithSimulateProofFailures(3)
-                .EnableMarketplace(sellerInitialBalance)
-                .WithName("seller with failures"));
-
             var seller = SetupCodexNode(s => s
-                .WithLogLevel(CodexLogLevel.Trace, new List<string>(){"market", "proving"})
+                .WithLogLevel(CodexLogLevel.Trace, "market", "sales", "proving")
                 .WithStorageQuota(11.GB())
                 .EnableMarketplace(sellerInitialBalance)
                 .WithName("seller"));
 
+            var sellerWithFailures = SetupCodexNode(s => s
+                .WithLogLevel(CodexLogLevel.Trace, "market", "sales", "proving")
+                .WithStorageQuota(11.GB())
+                .WithBootstrapNode(seller)
+                .WithSimulateProofFailures(3)
+                .EnableMarketplace(sellerInitialBalance)
+                .WithName("seller with failures"));
+
             var buyer = SetupCodexNode(s => s
-                .WithLogLevel(CodexLogLevel.Trace)
+                .WithLogLevel(CodexLogLevel.Trace, "market", "purchasing")
                 .WithBootstrapNode(seller)
                 .EnableMarketplace(buyerInitialBalance)
                 .WithName("buyer"));
 
             var validator = SetupCodexNode(s => s
-                .WithLogLevel(CodexLogLevel.Trace, new List<string>(){"validator"})
+                .WithLogLevel(CodexLogLevel.Trace, "validator")
                 .WithBootstrapNode(seller)
                 .WithValidator()
                 .WithName("validator"));
