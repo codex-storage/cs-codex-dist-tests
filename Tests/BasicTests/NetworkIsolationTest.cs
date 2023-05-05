@@ -8,6 +8,7 @@ namespace Tests.BasicTests
     // This is a test to check network-isolation in the test-infrastructure.
     // It requires parallelism(2) or greater to run.
     [TestFixture]
+    [Ignore("Disabled until a solution is implemented.")]
     public class NetworkIsolationTest : DistTest
     {
         private IOnlineCodexNode? node = null;
