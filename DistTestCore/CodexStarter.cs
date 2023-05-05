@@ -18,6 +18,7 @@ namespace DistTestCore
             LogSeparator();
             LogStart($"Starting {codexSetup.Describe()}...");
             var gethStartResult = lifecycle.GethStarter.BringOnlineMarketplaceFor(codexSetup);
+            gethStartResult = lifecycle.GethStarter.BringOnlineValidatorFor(codexSetup, gethStartResult);
 
             var startupConfig = CreateStartupConfig(gethStartResult, codexSetup);
             var containers = StartCodexContainers(startupConfig, codexSetup.NumberOfNodes, codexSetup.Location);

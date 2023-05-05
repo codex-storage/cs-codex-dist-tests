@@ -34,7 +34,11 @@ namespace DistTestCore.Codex
 
             if (config.LogLevel != null)
             {
-                AddEnvVar("LOG_LEVEL", config.LogLevel.ToString()!.ToUpperInvariant());
+                var level = config.LogLevel.ToString()!.ToUpperInvariant();
+                if (config.LogTopics != null && config.LogTopics.Count() > 0){
+                    level = $"INFO;{level}: {string.Join(",", config.LogTopics.Where(s => !string.IsNullOrEmpty(s)))}";
+                }
+                AddEnvVar("LOG_LEVEL", level);
             }
             if (config.StorageQuota != null)
             {
@@ -45,8 +49,16 @@ namespace DistTestCore.Codex
                 AddEnvVar("METRICS_ADDR", "0.0.0.0");
                 AddInternalPortAndVar("METRICS_PORT", tag: MetricsPortTag);
             }
+            if (config.SimulateProofFailures != null)
+            {
+                AddEnvVar("SIMULATE_PROOF_FAILURES", config.SimulateProofFailures.ToString()!);
+            }
+            if (config.EnableValidator == true)
+            {
+                AddEnvVar("VALIDATOR", "true");
+            }
 
-            if (config.MarketplaceConfig != null)
+            if (config.MarketplaceConfig != null || config.EnableValidator == true)
             {
                 var gethConfig = startupConfig.Get<GethStartResult>();
                 var companionNode = gethConfig.CompanionNode;
@@ -59,6 +71,13 @@ namespace DistTestCore.Codex
                 AddEnvVar("ETH_PROVIDER", $"ws://{ip}:{port}");
                 AddEnvVar("ETH_ACCOUNT", companionNodeAccount.Account);
                 AddEnvVar("ETH_MARKETPLACE_ADDRESS", gethConfig.MarketplaceNetwork.Marketplace.Address);
+            }
+            if (config.MarketplaceConfig != null) {
+                AddEnvVar("PERSISTENCE", "true");
+            }
+
+            if(!string.IsNullOrEmpty(config.NameOverride)) {
+                AddEnvVar("CODEX_NODENAME", config.NameOverride);
             }
         }
     }
