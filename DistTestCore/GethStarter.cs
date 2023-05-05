@@ -30,6 +30,17 @@ namespace DistTestCore
             return CreateGethStartResult(marketplaceNetwork, companionNode);
         }
 
+        public GethStartResult BringOnlineValidatorFor(CodexSetup codexSetup, GethStartResult previousResult)
+        {
+            // allow marketplace and validator to be enabled on the same Codex node
+            if (previousResult.CompanionNode != null || (codexSetup.EnableValidator ?? false) == false) return previousResult;
+
+            var marketplaceNetwork = marketplaceNetworkCache.Get();
+            var companionNode = StartCompanionNode(codexSetup, marketplaceNetwork);
+
+            return CreateGethStartResult(marketplaceNetwork, companionNode);
+        }
+
         private void TransferInitialBalance(MarketplaceNetwork marketplaceNetwork, MarketplaceInitialConfig marketplaceConfig, GethCompanionNodeInfo companionNode)
         {
             if (marketplaceConfig.InitialTestTokens.Amount == 0) return;

@@ -15,8 +15,16 @@ namespace DistTestCore
         ICodexSetup EnableMarketplace(TestToken initialBalance);
         ICodexSetup EnableMarketplace(TestToken initialBalance, Ether initialEther);
         ICodexSetup EnableMarketplace(TestToken initialBalance, Ether initialEther, bool isValidator);
+		/// <summary>
+        /// Provides an invalid proof every N proofs
+        /// </summary>
+        ICodexSetup WithSimulateProofFailures(uint failEveryNProofs);
+        /// <summary>
+        /// Enables the validation module in the node
+        /// </summary>
+        ICodexSetup WithValidator();
     }
-    
+
     public class CodexSetup : CodexStartupConfig, ICodexSetup
     {
         public int NumberOfNodes { get; }
@@ -70,12 +78,24 @@ namespace DistTestCore
 
         public ICodexSetup EnableMarketplace(TestToken initialBalance, Ether initialEther)
         {
-            return EnableMarketplace(initialBalance, initialEther, false);
+			return EnableMarketplace(initialBalance, initialEther, false);
         }
 
         public ICodexSetup EnableMarketplace(TestToken initialBalance, Ether initialEther, bool isValidator)
         {
             MarketplaceConfig = new MarketplaceInitialConfig(initialEther, initialBalance, isValidator);
+            return this;
+        }
+
+        public ICodexSetup WithSimulateProofFailures(uint failEveryNProofs)
+        {
+            SimulateProofFailures = failEveryNProofs;
+            return this;
+        }
+
+        public ICodexSetup WithValidator()
+        {
+            EnableValidator = true;
             return this;
         }
 
@@ -89,7 +109,9 @@ namespace DistTestCore
         {
             yield return $"LogLevel={LogLevel}";
             if (BootstrapSpr != null) yield return $"BootstrapNode={BootstrapSpr}";
-            if (StorageQuota != null) yield return $"StorageQuote={StorageQuota}";
+            if (StorageQuota != null) yield return $"StorageQuota={StorageQuota}";
+            if (SimulateProofFailures != null) yield return $"SimulateProofFailures={SimulateProofFailures}";
+            if (EnableValidator != null) yield return $"EnableValidator={EnableValidator}";
         }
     }
 }
