@@ -36,13 +36,8 @@ namespace DistTestCore
             var interaction = marketplaceNetwork.StartInteraction(lifecycle.Log);
             var tokenAddress = marketplaceNetwork.Marketplace.TokenAddress;
 
-            foreach (var account in companionNode.Accounts)
-            {
-                interaction.TransferWeiTo(account.Account, marketplaceConfig.InitialEth.Wei);
-                interaction.MintTestTokens(account.Account, marketplaceConfig.InitialTestTokens.Amount, tokenAddress);
-            }
-
-            interaction.WaitForAllTransactions();
+            var accounts = companionNode.Accounts.Select(a => a.Account).ToArray();
+            interaction.MintTestTokens(accounts, marketplaceConfig.InitialTestTokens.Amount, tokenAddress);
         }
 
         private GethStartResult CreateGethStartResult(MarketplaceNetwork marketplaceNetwork, GethCompanionNodeInfo companionNode)
