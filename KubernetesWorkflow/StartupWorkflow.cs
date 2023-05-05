@@ -8,14 +8,16 @@ namespace KubernetesWorkflow
         private readonly WorkflowNumberSource numberSource;
         private readonly K8sCluster cluster;
         private readonly KnownK8sPods knownK8SPods;
+        private readonly string testNamespace;
         private readonly RecipeComponentFactory componentFactory = new RecipeComponentFactory();
 
-        internal StartupWorkflow(BaseLog log, WorkflowNumberSource numberSource, K8sCluster cluster, KnownK8sPods knownK8SPods)
+        internal StartupWorkflow(BaseLog log, WorkflowNumberSource numberSource, K8sCluster cluster, KnownK8sPods knownK8SPods, string testNamespace)
         {
             this.log = log;
             this.numberSource = numberSource;
             this.cluster = cluster;
             this.knownK8SPods = knownK8SPods;
+            this.testNamespace = testNamespace;
         }
 
         public RunningContainers Start(int numberOfContainers, Location location, ContainerRecipeFactory recipeFactory, StartupConfig startupConfig)
@@ -62,10 +64,24 @@ namespace KubernetesWorkflow
             });
         }
 
+        public void DeleteTestResources()
+        {
+            K8s(controller =>
+            {
+                controller.DeleteTestNamespace();
+            });
+        }
+
         private RunningContainer[] CreateContainers(RunningPod runningPod, ContainerRecipe[] recipes, StartupConfig startupConfig)
         {
             log.Debug();
-            return recipes.Select(r => new RunningContainer(runningPod, r, runningPod.GetServicePortsForContainerRecipe(r), startupConfig)).ToArray();
+            return recipes.Select(r =>
+            {
+                var servicePorts = runningPod.GetServicePortsForContainerRecipe(r);
+                log.Debug($"{r} -> service ports: {string.Join(",", servicePorts.Select(p => p.Number))}");
+
+                return new RunningContainer(runningPod, r, servicePorts, startupConfig);
+            }).ToArray();
         }
 
         private ContainerRecipe[] CreateRecipes(int numberOfContainers, ContainerRecipeFactory recipeFactory, StartupConfig startupConfig)
@@ -74,7 +90,7 @@ namespace KubernetesWorkflow
             var result = new List<ContainerRecipe>();
             for (var i = 0; i < numberOfContainers; i++)
             {
-                result.Add(recipeFactory.CreateRecipe(i ,numberSource.GetContainerNumber(), componentFactory, startupConfig));
+                result.Add(recipeFactory.CreateRecipe(i, numberSource.GetContainerNumber(), componentFactory, startupConfig));
             }
 
             return result.ToArray();
@@ -82,14 +98,14 @@ namespace KubernetesWorkflow
 
         private void K8s(Action<K8sController> action)
         {
-            var controller = new K8sController(log, cluster, knownK8SPods, numberSource);
+            var controller = new K8sController(log, cluster, knownK8SPods, numberSource, testNamespace);
             action(controller);
             controller.Dispose();
         }
 
         private T K8s<T>(Func<K8sController, T> action)
         {
-            var controller = new K8sController(log, cluster, knownK8SPods, numberSource);
+            var controller = new K8sController(log, cluster, knownK8SPods, numberSource, testNamespace);
             var result = action(controller);
             controller.Dispose();
             return result;

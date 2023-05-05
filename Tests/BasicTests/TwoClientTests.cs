@@ -39,9 +39,14 @@ namespace Tests.BasicTests
 
         private void PerformTwoClientTest(IOnlineCodexNode primary, IOnlineCodexNode secondary)
         {
+            PerformTwoClientTest(primary, secondary, 1.MB());
+        }
+
+        private void PerformTwoClientTest(IOnlineCodexNode primary, IOnlineCodexNode secondary, ByteSize size)
+        {
             primary.ConnectToPeer(secondary);
 
-            var testFile = GenerateTestFile(1.MB());
+            var testFile = GenerateTestFile(size);
 
             var contentId = primary.UploadFile(testFile);
 

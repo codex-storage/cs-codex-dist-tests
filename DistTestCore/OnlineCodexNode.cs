@@ -92,6 +92,10 @@ namespace DistTestCore
 
         public ICodexSetup BringOffline()
         {
+            if (Group.Count() > 1) throw new InvalidOperationException("Codex-nodes that are part of a group cannot be " +
+                "individually shut down. Use 'BringOffline()' on the group object to stop the group. This method is only " +
+                "available for codex-nodes in groups of 1.");
+
             return Group.BringOffline();
         }
 

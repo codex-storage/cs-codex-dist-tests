@@ -5,7 +5,7 @@ namespace KubernetesWorkflow
 {
     public class CommandRunner
     {
-        private readonly Kubernetes client;
+        private readonly K8sClient client;
         private readonly string k8sNamespace;
         private readonly RunningPod pod;
         private readonly string containerName;
@@ -13,7 +13,7 @@ namespace KubernetesWorkflow
         private readonly string[] arguments;
         private readonly List<string> lines = new List<string>();
 
-        public CommandRunner(Kubernetes client, string k8sNamespace, RunningPod pod, string containerName, string command, string[] arguments)
+        public CommandRunner(K8sClient client, string k8sNamespace, RunningPod pod, string containerName, string command, string[] arguments)
         {
             this.client = client;
             this.k8sNamespace = k8sNamespace;
@@ -27,8 +27,8 @@ namespace KubernetesWorkflow
         {
             var input = new[] { command }.Concat(arguments).ToArray();
 
-            Time.Wait(client.NamespacedPodExecAsync(
-                pod.Name, k8sNamespace, containerName, input, false, Callback, new CancellationToken()));
+            Time.Wait(client.Run(c => c.NamespacedPodExecAsync(
+                pod.Name, k8sNamespace, containerName, input, false, Callback, new CancellationToken())));
         }
 
         public string GetStdOut()

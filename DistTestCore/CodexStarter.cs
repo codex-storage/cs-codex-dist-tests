@@ -45,7 +45,7 @@ namespace DistTestCore
         public void DeleteAllResources()
         {
             var workflow = CreateWorkflow();
-            workflow.DeleteAllResources();
+            workflow.DeleteTestResources();
 
             RunningGroups.Clear();
         }
@@ -75,6 +75,7 @@ namespace DistTestCore
         {
             var group = new CodexNodeGroup(lifecycle, codexSetup, runningContainers, codexNodeFactory);
             RunningGroups.Add(group);
+            group.EnsureOnline();
             return group;
         }
 

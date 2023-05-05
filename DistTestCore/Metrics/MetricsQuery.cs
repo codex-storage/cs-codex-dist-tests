@@ -9,12 +9,13 @@ namespace DistTestCore.Metrics
     {
         private readonly Http http;
 
-        public MetricsQuery(BaseLog log, RunningContainers runningContainers)
+        public MetricsQuery(BaseLog log, ITimeSet timeSet, RunningContainers runningContainers)
         {
             RunningContainers = runningContainers;
 
             http = new Http(
                 log,
+                timeSet,
                 runningContainers.RunningPod.Cluster.IP,
                 runningContainers.Containers[0].ServicePorts[0].Number,
                 "api/v1");

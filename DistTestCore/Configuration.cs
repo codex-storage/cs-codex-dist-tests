@@ -4,13 +4,13 @@ namespace DistTestCore
 {
     public class Configuration
     {
-        public KubernetesWorkflow.Configuration GetK8sConfiguration()
+        public KubernetesWorkflow.Configuration GetK8sConfiguration(ITimeSet timeSet)
         {
             return new KubernetesWorkflow.Configuration(
-                k8sNamespace: "codex-test-ns",
+                k8sNamespacePrefix: "ct-",
                 kubeConfigFile: null,
-                operationTimeout: Timing.K8sOperationTimeout(),
-                retryDelay: Timing.K8sServiceDelay(),
+                operationTimeout: timeSet.K8sOperationTimeout(),
+                retryDelay: timeSet.WaitForK8sServiceDelay(),
                 locationMap: new[]
                 {
                     new ConfigurationLocationEntry(Location.BensOldGamingMachine, "worker01"),

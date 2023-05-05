@@ -10,13 +10,15 @@ namespace DistTestCore
     public class Http
     {
         private readonly BaseLog log;
+        private readonly ITimeSet timeSet;
         private readonly string ip;
         private readonly int port;
         private readonly string baseUrl;
 
-        public Http(BaseLog log, string ip, int port, string baseUrl)
+        public Http(BaseLog log, ITimeSet timeSet, string ip, int port, string baseUrl)
         {
             this.log = log;
+            this.timeSet = timeSet;
             this.ip = ip;
             this.port = port;
             this.baseUrl = baseUrl;
@@ -103,7 +105,7 @@ namespace DistTestCore
             log.Debug($"({url}) = '{message}'", 3);
         }
 
-        private static T Retry<T>(Func<T> operation)
+        private T Retry<T>(Func<T> operation)
         {
             var retryCounter = 0;
 
@@ -115,9 +117,9 @@ namespace DistTestCore
                 }
                 catch (Exception exception)
                 {
-                    Timing.HttpCallRetryDelay();
+                    timeSet.HttpCallRetryDelay();
                     retryCounter++;
-                    if (retryCounter > Timing.HttpCallRetryCount())
+                    if (retryCounter > timeSet.HttpCallRetryCount())
                     {
                         Assert.Fail(exception.ToString());
                         throw;
@@ -140,10 +142,10 @@ namespace DistTestCore
             }
         }
 
-        private static HttpClient GetClient()
+        private HttpClient GetClient()
         {
             var client = new HttpClient();
-            client.Timeout = Timing.HttpCallTimeout();
+            client.Timeout = timeSet.HttpCallTimeout();
             return client;
         }
     }
