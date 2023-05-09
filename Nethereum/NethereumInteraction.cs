@@ -10,16 +10,13 @@ namespace NethereumWorkflow
 {
     public class NethereumInteraction
     {
-        private readonly List<Task> openTasks = new List<Task>();
         private readonly BaseLog log;
         private readonly Web3 web3;
-        private readonly string rootAccount;
 
-        internal NethereumInteraction(BaseLog log, Web3 web3, string rootAccount)
+        internal NethereumInteraction(BaseLog log, Web3 web3)
         {
             this.log = log;
             this.web3 = web3;
-            this.rootAccount = rootAccount;
         }
 
         public string GetTokenAddress(string marketplaceAddress)
@@ -31,29 +28,13 @@ namespace NethereumWorkflow
             return Time.Wait(handler.QueryAsync<string>(marketplaceAddress, function));
         }
 
-        public void TransferWeiTo(string account, decimal amount)
+        public void MintTestTokens(string[] accounts, decimal amount, string tokenAddress)
         {
-            log.Debug($"{amount} --> {account}");
-            if (amount < 1 || string.IsNullOrEmpty(account)) throw new ArgumentException("Invalid arguments for AddToBalance");
+            if (amount < 1 || accounts.Length < 1) throw new ArgumentException("Invalid arguments for MintTestTokens");
 
-            var value = ToHexBig(amount);
-            var transactionId = Time.Wait(web3.Eth.TransactionManager.SendTransactionAsync(rootAccount, account, value));
-            openTasks.Add(web3.Eth.TransactionManager.TransactionReceiptService.PollForReceiptAsync(transactionId));
-        }
+            var tasks = accounts.Select(a => MintTokens(a, amount, tokenAddress));
 
-        public void MintTestTokens(string account, decimal amount, string tokenAddress)
-        {
-            log.Debug($"({tokenAddress}) {amount} --> {account}");
-            if (amount < 1 || string.IsNullOrEmpty(account)) throw new ArgumentException("Invalid arguments for MintTestTokens");
-
-            var function = new MintTokensFunction
-            {
-                Holder = account,
-                Amount = ToBig(amount)
-            };
-
-            var handler = web3.Eth.GetContractTransactionHandler<MintTokensFunction>();
-            openTasks.Add(handler.SendRequestAndWaitForReceiptAsync(tokenAddress, function));
+            Task.WaitAll(tasks.ToArray());
         }
 
         public decimal GetBalance(string tokenAddress, string account)
@@ -68,48 +49,54 @@ namespace NethereumWorkflow
             return ToDecimal(Time.Wait(handler.QueryAsync<BigInteger>(tokenAddress, function)));
         }
 
-        public void WaitForAllTransactions()
+        public bool IsSynced(string marketplaceAddress, string marketplaceAbi)
         {
-            var tasks = openTasks.ToArray();
-            openTasks.Clear();
-
-            Task.WaitAll(tasks);
+            try
+            {
+                return IsBlockNumberOK() && IsContractAvailable(marketplaceAddress, marketplaceAbi);
+            }
+            catch
+            {
+                return false;
+            }
         }
 
-        public void EnsureSynced(string marketplaceAddress, string marketplaceAbi)
+        private Task MintTokens(string account, decimal amount, string tokenAddress)
         {
-            WaitUntilSynced();
-            WaitForContract(marketplaceAddress, marketplaceAbi);
+            log.Debug($"({tokenAddress}) {amount} --> {account}");
+            if (string.IsNullOrEmpty(account)) throw new ArgumentException("Invalid arguments for MintTestTokens");
+
+            var function = new MintTokensFunction
+            {
+                Holder = account,
+                Amount = ToBig(amount)
+            };
+
+            var handler = web3.Eth.GetContractTransactionHandler<MintTokensFunction>();
+            return handler.SendRequestAndWaitForReceiptAsync(tokenAddress, function);
         }
 
-        private void WaitUntilSynced()
+        private bool IsBlockNumberOK()
         {
             log.Debug();
-            Time.WaitUntil(() =>
-            {
-                var sync = Time.Wait(web3.Eth.Syncing.SendRequestAsync());
-                var number = Time.Wait(web3.Eth.Blocks.GetBlockNumber.SendRequestAsync());
-                var numberOfBlocks = ToDecimal(number);
-                return !sync.IsSyncing && numberOfBlocks > 256;
-
-            }, TimeSpan.FromMinutes(1), TimeSpan.FromSeconds(3));
+            var sync = Time.Wait(web3.Eth.Syncing.SendRequestAsync());
+            var number = Time.Wait(web3.Eth.Blocks.GetBlockNumber.SendRequestAsync());
+            var numberOfBlocks = ToDecimal(number);
+            return !sync.IsSyncing && numberOfBlocks > 256;
         }
 
-        private void WaitForContract(string marketplaceAddress, string marketplaceAbi)
+        private bool IsContractAvailable(string marketplaceAddress, string marketplaceAbi)
         {
             log.Debug();
-            Time.WaitUntil(() =>
+            try
             {
-                try
-                {
-                    var contract = web3.Eth.GetContract(marketplaceAbi, marketplaceAddress);
-                    return contract != null;
-                }
-                catch
-                {
-                    return false;
-                }
-            }, TimeSpan.FromMinutes(1), TimeSpan.FromSeconds(3));
+                var contract = web3.Eth.GetContract(marketplaceAbi, marketplaceAddress);
+                return contract != null;
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         private HexBigInteger ToHexBig(decimal amount)

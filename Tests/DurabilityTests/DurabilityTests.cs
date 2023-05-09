@@ -11,12 +11,12 @@ namespace Tests.DurabilityTests
         [Test]
         public void BootstrapNodeDisappearsTest()
         {
-            var bootstrapNode = SetupCodexNode();
+            var bootstrapNode = SetupCodexBootstrapNode();
             var group = SetupCodexNodes(2, s => s.WithBootstrapNode(bootstrapNode));
             var primary = group[0];
             var secondary = group[1];
 
-            // There is 1 minute of time for the nodes to connect to each other.
+            // There is 1 minute of time f or the nodes to connect to each other.
             // (Should be easy, they're in the same pod.)
             Time.Sleep(TimeSpan.FromMinutes(6));
             bootstrapNode.BringOffline();
@@ -31,7 +31,7 @@ namespace Tests.DurabilityTests
         [Test]
         public void DataRetentionTest()
         {
-            var bootstrapNode = SetupCodexNode(s => s.WithLogLevel(CodexLogLevel.Trace));
+            var bootstrapNode = SetupCodexBootstrapNode(s => s.WithLogLevel(CodexLogLevel.Trace));
 
             var startGroup = SetupCodexNodes(2, s => s.WithLogLevel(CodexLogLevel.Trace).WithBootstrapNode(bootstrapNode));
             var finishGroup = SetupCodexNodes(10, s => s.WithLogLevel(CodexLogLevel.Trace).WithBootstrapNode(bootstrapNode));

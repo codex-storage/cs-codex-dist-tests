@@ -24,6 +24,14 @@
         {
             return ExposedPorts.Concat(InternalPorts).Single(p => p.Tag == tag);
         }
+
+        public override string ToString()
+        {
+            return $"(container-recipe: {Name}, image: {Image}, " +
+                $"exposedPorts: {string.Join(",", ExposedPorts.Select(p => p.Number))}, " +
+                $"internalPorts: {string.Join(",", InternalPorts.Select(p => p.Number))}, " +
+                $"envVars: {string.Join(",", EnvVars.Select(v => v.Name + ":" + v.Value))}, ";
+        }
     }
 
     public class Port

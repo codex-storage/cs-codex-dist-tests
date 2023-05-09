@@ -5,6 +5,8 @@ namespace DistTestCore.Marketplace
 {
     public class GethCompanionNodeStarter : BaseStarter
     {
+        private int companionAccountIndex = 0;
+
         public GethCompanionNodeStarter(TestLifecycle lifecycle, WorkflowCreator workflowCreator)
             : base(lifecycle, workflowCreator)
         {
@@ -14,53 +16,43 @@ namespace DistTestCore.Marketplace
         {
             LogStart($"Initializing companion for {codexSetup.NumberOfNodes} Codex nodes.");
 
-            var startupConfig = CreateCompanionNodeStartupConfig(marketplace.Bootstrap, codexSetup.NumberOfNodes);
+            var config = CreateCompanionNodeStartupConfig(marketplace.Bootstrap, codexSetup.NumberOfNodes);
 
             var workflow = workflowCreator.CreateWorkflow();
-            var containers = workflow.Start(1, Location.Unspecified, new GethContainerRecipe(), startupConfig);
-            WaitForAccountCreation(codexSetup.NumberOfNodes);
+            var containers = workflow.Start(1, Location.Unspecified, new GethContainerRecipe(), CreateStartupConfig(config));
             if (containers.Containers.Length != 1) throw new InvalidOperationException("Expected one Geth companion node to be created. Test infra failure.");
             var container = containers.Containers[0];
 
-            var node = CreateCompanionInfo(workflow, container, codexSetup.NumberOfNodes);
+            var node = CreateCompanionInfo(container, marketplace, config);
             EnsureCompanionNodeIsSynced(node, marketplace);
 
             LogEnd($"Initialized one companion node for {codexSetup.NumberOfNodes} Codex nodes. Their accounts: [{string.Join(",", node.Accounts.Select(a => a.Account))}]");
             return node;
         }
 
-        private void WaitForAccountCreation(int numberOfNodes)
+        private GethCompanionNodeInfo CreateCompanionInfo(RunningContainer container, MarketplaceNetwork marketplace, GethStartupConfig config)
         {
-            // We wait proportional to the number of account the node has to create. It takes a few seconds for each one to generate the keys and create the files
-            // we will be trying to read in 'ExtractAccount', later on in the start-up process.
-            Time.Sleep(TimeSpan.FromSeconds(4.5 * numberOfNodes));
-        }
-
-        private GethCompanionNodeInfo CreateCompanionInfo(StartupWorkflow workflow, RunningContainer container, int numberOfAccounts)
-        {
-            var extractor = new ContainerInfoExtractor(lifecycle.Log, workflow, container);
-            var accounts = ExtractAccounts(extractor, numberOfAccounts).ToArray();
+            var accounts = ExtractAccounts(marketplace, config);
             return new GethCompanionNodeInfo(container, accounts);
         }
 
-        private IEnumerable<GethCompanionAccount> ExtractAccounts(ContainerInfoExtractor extractor, int numberOfAccounts)
+        private static GethAccount[] ExtractAccounts(MarketplaceNetwork marketplace, GethStartupConfig config)
         {
-            for (int i = 0; i < numberOfAccounts; i++) yield return ExtractAccount(extractor, i + 1);
-        }
-
-        private GethCompanionAccount ExtractAccount(ContainerInfoExtractor extractor, int orderNumber)
-        {
-            var account = extractor.ExtractAccount(orderNumber);
-            var privKey = extractor.ExtractPrivateKey(orderNumber);
-            return new GethCompanionAccount(account, privKey);
+            return marketplace.Bootstrap.AllAccounts.Accounts
+                .Skip(1 + config.CompanionAccountStartIndex)
+                .Take(config.NumberOfCompanionAccounts)
+                .ToArray();
         }
 
         private void EnsureCompanionNodeIsSynced(GethCompanionNodeInfo node, MarketplaceNetwork marketplace)
         {
             try
             {
-                var interaction = node.StartInteraction(lifecycle.Log, node.Accounts.First());
-                interaction.EnsureSynced(marketplace.Marketplace.Address, marketplace.Marketplace.Abi);
+                Time.WaitUntil(() =>
+                {
+                    var interaction = node.StartInteraction(lifecycle.Log, node.Accounts.First());
+                    return interaction.IsSynced(marketplace.Marketplace.Address, marketplace.Marketplace.Abi);
+                }, TimeSpan.FromMinutes(1), TimeSpan.FromSeconds(3));
             }
             catch (Exception e)
             {
@@ -68,10 +60,17 @@ namespace DistTestCore.Marketplace
             }
         }
 
-        private StartupConfig CreateCompanionNodeStartupConfig(GethBootstrapNodeInfo bootstrapNode, int numberOfAccounts)
+        private GethStartupConfig CreateCompanionNodeStartupConfig(GethBootstrapNodeInfo bootstrapNode, int numberOfAccounts)
+        {
+            var config = new GethStartupConfig(false, bootstrapNode, companionAccountIndex, numberOfAccounts);
+            companionAccountIndex += numberOfAccounts;
+            return config;
+        }
+
+        private StartupConfig CreateStartupConfig(GethStartupConfig gethConfig)
         {
             var config = new StartupConfig();
-            config.Add(new GethStartupConfig(false, bootstrapNode, numberOfAccounts));
+            config.Add(gethConfig);
             return config;
         }
     }

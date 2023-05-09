@@ -14,12 +14,14 @@ namespace DistTestCore.Metrics
     public class MetricsAccess : IMetricsAccess
     {
         private readonly TestLog log;
+        private readonly ITimeSet timeSet;
         private readonly MetricsQuery query;
         private readonly RunningContainer node;
 
-        public MetricsAccess(TestLog log, MetricsQuery query, RunningContainer node)
+        public MetricsAccess(TestLog log, ITimeSet timeSet, MetricsQuery query, RunningContainer node)
         {
             this.log = log;
+            this.timeSet = timeSet;
             this.query = query;
             this.node = node;
         }
@@ -47,7 +49,7 @@ namespace DistTestCore.Metrics
             {
                 var mostRecent = GetMostRecent(metricName);
                 if (mostRecent != null) return mostRecent;
-                if (DateTime.UtcNow - start > Timing.WaitForMetricTimeout())
+                if (DateTime.UtcNow - start > timeSet.WaitForMetricTimeout())
                 {
                     Assert.Fail($"Timeout: Unable to get metric '{metricName}'.");
                     throw new TimeoutException();

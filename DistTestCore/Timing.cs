@@ -8,53 +8,11 @@ namespace DistTestCore
     {
     }
 
-    public static class Timing
-    {
-        public static bool UseLongTimeouts { get; set; }
-
-
-        public static TimeSpan HttpCallTimeout()
-        {
-            return GetTimes().HttpCallTimeout();
-        }
-
-        public static int HttpCallRetryCount()
-        {
-            return GetTimes().HttpCallRetryCount();
-        }
-
-        public static void HttpCallRetryDelay()
-        {
-            Time.Sleep(GetTimes().HttpCallRetryDelay());
-        }
-
-        public static TimeSpan K8sServiceDelay()
-        {
-            return GetTimes().WaitForK8sServiceDelay();
-        }
-
-        public static TimeSpan K8sOperationTimeout()
-        {
-            return GetTimes().K8sOperationTimeout();
-        }
-
-        public static TimeSpan WaitForMetricTimeout()
-        {
-            return GetTimes().WaitForMetricTimeout();
-        }
-
-        private static ITimeSet GetTimes()
-        {
-            if (UseLongTimeouts) return new LongTimeSet();
-            return new DefaultTimeSet();
-        }
-    }
-
     public interface ITimeSet
     {
         TimeSpan HttpCallTimeout();
         int HttpCallRetryCount();
-        TimeSpan HttpCallRetryDelay();
+        void HttpCallRetryDelay();
         TimeSpan WaitForK8sServiceDelay();
         TimeSpan K8sOperationTimeout();
         TimeSpan WaitForMetricTimeout();
@@ -72,9 +30,9 @@ namespace DistTestCore
             return 5;
         }
 
-        public TimeSpan HttpCallRetryDelay()
+        public void HttpCallRetryDelay()
         {
-            return TimeSpan.FromSeconds(3);
+            Time.Sleep(TimeSpan.FromSeconds(3));
         }
 
         public TimeSpan WaitForK8sServiceDelay()
@@ -105,9 +63,9 @@ namespace DistTestCore
             return 2;
         }
 
-        public TimeSpan HttpCallRetryDelay()
+        public void HttpCallRetryDelay()
         {
-            return TimeSpan.FromMinutes(5);
+            Time.Sleep(TimeSpan.FromMinutes(5));
         }
 
         public TimeSpan WaitForK8sServiceDelay()

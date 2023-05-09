@@ -4,7 +4,11 @@ namespace DistTestCore.Marketplace
 {
     public class CodexContractsContainerRecipe : ContainerRecipeFactory
     {
-        public const string DockerImage = "thatbenbierens/codex-contracts-deployment";
+        #if Arm64
+            public const string DockerImage = "emizzle/codex-contracts-deployment:latest";
+        #else
+            public const string DockerImage = "thatbenbierens/codex-contracts-deployment:nomint";
+        #endif
         public const string MarketplaceAddressFilename = "/usr/app/deployments/codexdisttestnetwork/Marketplace.json";
         public const string MarketplaceArtifactFilename = "/usr/app/artifacts/contracts/Marketplace.sol/Marketplace.json";
 

@@ -1,5 +1,6 @@
 ﻿using Logging;
 using NUnit.Framework;
+using Utils;
 
 namespace DistTestCore
 {
@@ -13,13 +14,14 @@ namespace DistTestCore
     public class FileManager : IFileManager
     {
         public const int ChunkSize = 1024 * 1024;
+        private static NumberSource folderNumberSource = new NumberSource(0);
         private readonly Random random = new Random();
         private readonly TestLog log;
         private readonly string folder;
 
         public FileManager(TestLog log, Configuration configuration)
         {
-            folder = configuration.GetFileManagerFolder();
+            folder = Path.Combine(configuration.GetFileManagerFolder(), folderNumberSource.GetNextNumber().ToString("D5"));
 
             EnsureDirectory();
             this.log = log;

@@ -62,29 +62,15 @@ namespace DistTestCore
             return $"group:[{Containers.Describe()}]";
         }
 
-        private OnlineCodexNode CreateOnlineCodexNode(RunningContainer c, ICodexNodeFactory factory)
+        public void EnsureOnline()
         {
-            var access = new CodexAccess(lifecycle.Log, c);
-            EnsureOnline(access);
-            return factory.CreateOnlineCodexNode(access, this);
+            foreach (var node in Nodes) node.CodexAccess.EnsureOnline();
         }
 
-        private void EnsureOnline(CodexAccess access)
+        private OnlineCodexNode CreateOnlineCodexNode(RunningContainer c, ICodexNodeFactory factory)
         {
-            try
-            {
-                var debugInfo = access.GetDebugInfo();
-                if (debugInfo == null || string.IsNullOrEmpty(debugInfo.id)) throw new InvalidOperationException("Unable to get debug-info from codex node at startup.");
-
-                var nodePeerId = debugInfo.id;
-                var nodeName = access.Container.Name;
-                lifecycle.Log.AddStringReplace(nodePeerId, $"___{nodeName}___");
-            }
-            catch (Exception e)
-            {
-                lifecycle.Log.Error($"Failed to start codex node: {e}. Test infra failure.");
-                throw new InvalidOperationException($"Failed to start codex node. Test infra failure.", e);
-            }
+            var access = new CodexAccess(lifecycle.Log, lifecycle.TimeSet, c);
+            return factory.CreateOnlineCodexNode(access, this);
         }
     }
 }

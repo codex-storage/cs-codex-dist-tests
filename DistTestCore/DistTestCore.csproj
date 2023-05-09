@@ -1,10 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net7.0</TargetFramework>
 	  <RootNamespace>DistTestCore</RootNamespace>
 	  <ImplicitUsings>enable</ImplicitUsings>
 	  <Nullable>enable</Nullable>
+    <IsArm64 Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' == 'Arm64'">true</IsArm64>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(IsArm64)'=='true'">
+    <DefineConstants>Arm64</DefineConstants>
   </PropertyGroup>
 
   <ItemGroup>

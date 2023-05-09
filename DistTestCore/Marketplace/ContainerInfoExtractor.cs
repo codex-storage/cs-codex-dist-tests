@@ -19,13 +19,14 @@ namespace DistTestCore.Marketplace
             this.container = container;
         }
 
-        public string ExtractAccount(int? orderNumber)
+        public AllGethAccounts ExtractAccounts()
         {
             log.Debug();
-            var account = Retry(() => FetchAccount(orderNumber));
-            if (string.IsNullOrEmpty(account)) throw new InvalidOperationException("Unable to fetch account for geth node. Test infra failure.");
+            var accountsCsv = Retry(() => FetchAccountsCsv());
+            if (string.IsNullOrEmpty(accountsCsv)) throw new InvalidOperationException("Unable to fetch accounts.csv for geth node. Test infra failure.");
 
-            return account;
+            var lines = accountsCsv.Split('\n');
+            return new AllGethAccounts(lines.Select(ParseLineToAccount).ToArray());
         }
 
         public string ExtractPubKey()
@@ -35,15 +36,6 @@ namespace DistTestCore.Marketplace
             if (string.IsNullOrEmpty(pubKey)) throw new InvalidOperationException("Unable to fetch enode from geth node. Test infra failure.");
 
             return pubKey;
-        }
-
-        public string ExtractPrivateKey(int? orderNumber)
-        {
-            log.Debug();
-            var privKey = Retry(() => FetchPrivateKey(orderNumber));
-            if (string.IsNullOrEmpty(privKey)) throw new InvalidOperationException("Unable to fetch private key from geth node. Test infra failure.");
-
-            return privKey;
         }
 
         public string ExtractMarketplaceAddress()
@@ -88,14 +80,9 @@ namespace DistTestCore.Marketplace
             }
         }
 
-        private string FetchAccount(int? orderNumber)
+        private string FetchAccountsCsv()
         {
-            return workflow.ExecuteCommand(container, "cat", GethContainerRecipe.GetAccountFilename(orderNumber));
-        }
-
-        private string FetchPrivateKey(int? orderNumber)
-        {
-            return workflow.ExecuteCommand(container, "cat", GethContainerRecipe.GetPrivateKeyFilename(orderNumber));
+            return workflow.ExecuteCommand(container, "cat", GethContainerRecipe.AccountsFilename);
         }
 
         private string FetchMarketplaceAddress()
@@ -119,6 +106,15 @@ namespace DistTestCore.Marketplace
             var enodeFinder = new PubKeyFinder();
             workflow.DownloadContainerLog(container, enodeFinder);
             return enodeFinder.GetPubKey();
+        }
+
+        private GethAccount ParseLineToAccount(string l)
+        {
+            var tokens = l.Replace("\r", "").Split(',');
+            if (tokens.Length != 2) throw new InvalidOperationException();
+            var account = tokens[0];
+            var privateKey = tokens[1];
+            return new GethAccount(account, privateKey);
         }
     }
 
