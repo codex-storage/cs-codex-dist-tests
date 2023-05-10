@@ -38,5 +38,74 @@
                 state = predicate();
             }
         }
+
+        public static void Retry(Action action)
+        {
+            Retry(action, TimeSpan.FromMinutes(1));
+        }
+
+        public static T Retry<T>(Func<T> action)
+        {
+            return Retry(action, TimeSpan.FromMinutes(1));
+        }
+
+        public static void Retry(Action action, TimeSpan timeout)
+        {
+            Retry(action, timeout, TimeSpan.FromSeconds(1));
+        }
+
+        public static T Retry<T>(Func<T> action, TimeSpan timeout)
+        {
+            return Retry(action, timeout, TimeSpan.FromSeconds(1));
+        }
+
+        public static void Retry(Action action, TimeSpan timeout, TimeSpan retryTime)
+        {
+            var start = DateTime.UtcNow;
+            var exceptions = new List<Exception>();
+            while (true)
+            {
+                if (DateTime.UtcNow - start > timeout)
+                {
+                    throw new TimeoutException("Retry timed out.", new AggregateException(exceptions));
+                }
+
+                try
+                {
+                    action();
+                    return;
+                }
+                catch (Exception ex)
+                {
+                    exceptions.Add(ex);
+                }
+
+                Sleep(retryTime);
+            }
+        }
+
+        public static T Retry<T>(Func<T> action, TimeSpan timeout, TimeSpan retryTime)
+        {
+            var start = DateTime.UtcNow;
+            var exceptions = new List<Exception>();
+            while (true)
+            {
+                if (DateTime.UtcNow - start > timeout)
+                {
+                    throw new TimeoutException("Retry timed out.", new AggregateException(exceptions));
+                }
+
+                try
+                {
+                    return action();
+                }
+                catch (Exception ex)
+                {
+                    exceptions.Add(ex);
+                }
+
+                Sleep(retryTime);
+            }
+        }
     }
 }

@@ -107,25 +107,7 @@ namespace DistTestCore
 
         private T Retry<T>(Func<T> operation)
         {
-            var retryCounter = 0;
-
-            while (true)
-            {
-                try
-                {
-                    return operation();
-                }
-                catch (Exception exception)
-                {
-                    timeSet.HttpCallRetryDelay();
-                    retryCounter++;
-                    if (retryCounter > timeSet.HttpCallRetryCount())
-                    {
-                        Assert.Fail(exception.ToString());
-                        throw;
-                    }
-                }
-            }
+            return Time.Retry(operation, timeSet.HttpCallRetryTimeout(), timeSet.HttpCallRetryDelay());
         }
 
         private static T TryJsonDeserialize<T>(string json)

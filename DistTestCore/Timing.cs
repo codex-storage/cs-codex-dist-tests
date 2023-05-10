@@ -1,5 +1,4 @@
 ﻿using NUnit.Framework;
-using Utils;
 
 namespace DistTestCore
 {
@@ -11,8 +10,8 @@ namespace DistTestCore
     public interface ITimeSet
     {
         TimeSpan HttpCallTimeout();
-        int HttpCallRetryCount();
-        void HttpCallRetryDelay();
+        TimeSpan HttpCallRetryTimeout();
+        TimeSpan HttpCallRetryDelay();
         TimeSpan WaitForK8sServiceDelay();
         TimeSpan K8sOperationTimeout();
         TimeSpan WaitForMetricTimeout();
@@ -25,14 +24,14 @@ namespace DistTestCore
             return TimeSpan.FromSeconds(10);
         }
 
-        public int HttpCallRetryCount()
+        public TimeSpan HttpCallRetryTimeout()
         {
-            return 5;
+            return TimeSpan.FromSeconds(10);
         }
 
-        public void HttpCallRetryDelay()
+        public TimeSpan HttpCallRetryDelay()
         {
-            Time.Sleep(TimeSpan.FromSeconds(3));
+            return TimeSpan.FromSeconds(3);
         }
 
         public TimeSpan WaitForK8sServiceDelay()
@@ -58,14 +57,14 @@ namespace DistTestCore
             return TimeSpan.FromHours(2);
         }
 
-        public int HttpCallRetryCount()
+        public TimeSpan HttpCallRetryTimeout()
         {
-            return 2;
+            return TimeSpan.FromHours(5);
         }
 
-        public void HttpCallRetryDelay()
+        public TimeSpan HttpCallRetryDelay()
         {
-            Time.Sleep(TimeSpan.FromMinutes(5));
+            return TimeSpan.FromMinutes(5);
         }
 
         public TimeSpan WaitForK8sServiceDelay()

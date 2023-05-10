@@ -128,16 +128,26 @@ namespace DistTestCore
             return Get().CodexStarter.BringOnline((CodexSetup)codexSetup);
         }
 
+        public IEnumerable<IOnlineCodexNode> GetAllOnlineCodexNodes()
+        {
+            return Get().CodexStarter.RunningGroups.SelectMany(g => g.Nodes);
+        }
+
+        protected BaseLog GetTestLog()
+        {
+            return Get().Log;
+        }
+
         protected void Log(string msg)
         {
             TestContext.Progress.WriteLine(msg);
-            Get().Log.Log(msg);
+            GetTestLog().Log(msg);
         }
 
         protected void Debug(string msg)
         {
             TestContext.Progress.WriteLine(msg);
-            Get().Log.Debug(msg);
+            GetTestLog().Debug(msg);
         }
 
         private TestLifecycle Get()
