@@ -1,9 +1,9 @@
-﻿namespace DistTestCore
+﻿using NUnit.Framework;
+
+namespace DistTestCore
 {
     public class AutoBootstrapDistTest : DistTest
     {
-        private IOnlineCodexNode? bootstrapNode;
-
         public override IOnlineCodexNode SetupCodexBootstrapNode(Action<ICodexSetup> setup)
         {
             throw new Exception("AutoBootstrapDistTest creates and attaches a single boostrap node for you. " +
@@ -14,25 +14,16 @@
         {
             var codexSetup = new CodexSetup(numberOfNodes);
             setup(codexSetup);
-            codexSetup.WithBootstrapNode(EnsureBootstapNode());
+            codexSetup.WithBootstrapNode(BootstrapNode);
             return BringOnline(codexSetup);
         }
 
-        protected IOnlineCodexNode BootstrapNode
+        [SetUp]
+        public void SetUpBootstrapNode()
         {
-            get
-            {
-                return EnsureBootstapNode();
-            }
+            BootstrapNode = BringOnline(new CodexSetup(1))[0];
         }
 
-        private IOnlineCodexNode EnsureBootstapNode()
-        {
-            if (bootstrapNode == null)
-            {
-                bootstrapNode = base.SetupCodexBootstrapNode(s => { });
-            }
-            return bootstrapNode;
-        }
+        protected IOnlineCodexNode BootstrapNode { get; private set; } = null!;
     }
 }

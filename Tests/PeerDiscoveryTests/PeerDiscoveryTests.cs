@@ -5,6 +5,7 @@ using Utils;
 
 namespace Tests.PeerDiscoveryTests
 {
+    [TestFixture]
     public class PeerDiscoveryTests : AutoBootstrapDistTest
     {
         [Test]
