@@ -82,6 +82,20 @@ namespace DistTestCore.Codex
         public EnginePeerResponse[] enginePeers { get; set; } = Array.Empty<EnginePeerResponse>();
         public SwitchPeerResponse[] switchPeers { get; set; } = Array.Empty<SwitchPeerResponse>();
         public CodexDebugVersionResponse codex { get; set; } = new();
+        public CodexDebugTableResponse table { get; set; } = new();
+    }
+
+    public class CodexDebugTableResponse
+    {
+        public CodexDebugTableNodeResponse localNode { get; set; } = new();
+        public CodexDebugTableNodeResponse[] nodes { get; set; } = Array.Empty<CodexDebugTableNodeResponse>();
+    }
+
+    public class CodexDebugTableNodeResponse
+    {
+        public string nodeId { get; set; } = string.Empty;
+        public string record { get; set; } = string.Empty;
+        public bool seen { get; set; }
     }
 
     public class EnginePeerResponse

@@ -18,6 +18,14 @@
             return BringOnline(codexSetup);
         }
 
+        protected IOnlineCodexNode BootstrapNode
+        {
+            get
+            {
+                return EnsureBootstapNode();
+            }
+        }
+
         private IOnlineCodexNode EnsureBootstapNode()
         {
             if (bootstrapNode == null)
