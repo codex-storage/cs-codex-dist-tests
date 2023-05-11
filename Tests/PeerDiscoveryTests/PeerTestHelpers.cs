@@ -15,21 +15,18 @@ namespace Tests.PeerDiscoveryTests
 
         public static void AssertFullyConnected(BaseLog? log = null, params IOnlineCodexNode[] nodes)
         {
-            Time.Retry(() =>
+            var entries = nodes.Select(n => new Entry(n)).ToArray();
+
+            var failureMessags = new List<string>();
+            for (var x = 0; x < entries.Length; x++)
             {
-                var entries = nodes.Select(n => new Entry(n)).ToArray();
-
-                var failureMessags = new List<string>();
-                for (var x = 0; x < entries.Length; x++)
+                for (var y = x + 1; y < entries.Length; y++)
                 {
-                    for (var y = x + 1; y < entries.Length; y++)
-                    {
-                        AssertKnowEachother(failureMessags, entries[x], entries[y], log);
-                    }
+                    AssertKnowEachother(failureMessags, entries[x], entries[y], log);
                 }
+            }
 
-                CollectionAssert.IsEmpty(failureMessags);
-            });
+            CollectionAssert.IsEmpty(failureMessags);
         }
 
         private static void AssertKnowEachother(List<string> failureMessags, Entry a, Entry b, BaseLog? log)
@@ -44,7 +41,7 @@ namespace Tests.PeerDiscoveryTests
 
             try
             {
-                var response = a.Node.GetDebugPeer(peerId);
+                var response = GetDebugPeer(a.Node, peerId);
                 if (string.IsNullOrEmpty(response.peerId) || !response.addresses.Any())
                 {
                     failureMessags.Add($"{a.Response.id} did not know peer {peerId}");
@@ -54,29 +51,15 @@ namespace Tests.PeerDiscoveryTests
                     log.Log($"{a.Response.id} knows {peerId}.");
                 }
             }
-            catch (Exception e)
+            catch
             {
-                failureMessags.Add($"{a.Response.id} was unable to get 'debug/peer/{peerId}'. {e}");
+                failureMessags.Add($"{a.Response.id} was unable to get 'debug/peer/{peerId}'.");
             }
+        }
 
-            ////var enginePeers = string.Join(",", a.enginePeers.Select(p => p.peerId));
-            ////var switchPeers = string.Join(",", a.switchPeers.Select(p => p.peerId));
-            //var tableNodes = string.Join(",", a.table.nodes.Select(n => n.nodeId));
-
-            //var success = a.table.nodes.Any(n => n.nodeId == b.table.localNode.nodeId);
-
-            //if (log != null)
-            //{
-            //    var msg = success ? "PASS" : "FAIL";
-            //    log.Log($"{msg} {a.table.localNode.nodeId} is looking for {b.table.localNode.nodeId} in table-nodes [{tableNodes}]");
-            //}
-
-            ////Assert.That(a.enginePeers.Any(p => p.peerId == b.id), $"{a.id} was looking for '{b.id}' in engine-peers [{enginePeers}] but it was not found.");
-            ////Assert.That(a.switchPeers.Any(p => p.peerId == b.id), $"{a.id} was looking for '{b.id}' in switch-peers [{switchPeers}] but it was not found.");
-            //if (!success)
-            //{
-            //    failureMessags.Add($"{a.table.localNode.nodeId} was looking for '{b.table.localNode.nodeId}' in table-nodes [{tableNodes}] but it was not found.");
-            //}
+        private static CodexDebugPeerResponse GetDebugPeer(IOnlineCodexNode node, string peerId)
+        {
+            return Time.Retry(() => node.GetDebugPeer(peerId));
         }
 
         public class Entry
