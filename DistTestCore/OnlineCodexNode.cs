@@ -10,6 +10,7 @@ namespace DistTestCore
     {
         string GetName();
         CodexDebugResponse GetDebugInfo();
+        CodexDebugPeerResponse GetDebugPeer(string peerId);
         ContentId UploadFile(TestFile file);
         TestFile? DownloadContent(ContentId contentId);
         void ConnectToPeer(IOnlineCodexNode node);
@@ -49,6 +50,11 @@ namespace DistTestCore
             var debugInfo = CodexAccess.GetDebugInfo();
             Log($"Got DebugInfo with id: '{debugInfo.id}'.");
             return debugInfo;
+        }
+
+        public CodexDebugPeerResponse GetDebugPeer(string peerId)
+        {
+            return CodexAccess.GetDebugPeer(peerId);
         }
 
         public ContentId UploadFile(TestFile file)

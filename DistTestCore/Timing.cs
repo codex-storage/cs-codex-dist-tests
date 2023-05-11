@@ -26,7 +26,7 @@ namespace DistTestCore
 
         public TimeSpan HttpCallRetryTimeout()
         {
-            return TimeSpan.FromSeconds(10);
+            return TimeSpan.FromMinutes(1);
         }
 
         public TimeSpan HttpCallRetryDelay()

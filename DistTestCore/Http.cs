@@ -14,15 +14,16 @@ namespace DistTestCore
         private readonly string ip;
         private readonly int port;
         private readonly string baseUrl;
+        private readonly TimeSpan? timeoutOverride;
 
-        public Http(BaseLog log, ITimeSet timeSet, string ip, int port, string baseUrl)
+        public Http(BaseLog log, ITimeSet timeSet, string ip, int port, string baseUrl, TimeSpan? timeoutOverride = null)
         {
             this.log = log;
             this.timeSet = timeSet;
             this.ip = ip;
             this.port = port;
             this.baseUrl = baseUrl;
-
+            this.timeoutOverride = timeoutOverride;
             if (!this.baseUrl.StartsWith("/")) this.baseUrl = "/" + this.baseUrl;
             if (!this.baseUrl.EndsWith("/")) this.baseUrl += "/";
         }
@@ -126,8 +127,17 @@ namespace DistTestCore
 
         private HttpClient GetClient()
         {
+            if (timeoutOverride.HasValue)
+            {
+                return GetClient(timeoutOverride.Value);
+            }
+            return GetClient(timeSet.HttpCallTimeout());
+        }
+
+        private HttpClient GetClient(TimeSpan timeout)
+        {
             var client = new HttpClient();
-            client.Timeout = timeSet.HttpCallTimeout();
+            client.Timeout = timeout;
             return client;
         }
     }
