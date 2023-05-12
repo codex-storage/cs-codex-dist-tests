@@ -1,6 +1,5 @@
 ﻿using Logging;
 using Newtonsoft.Json;
-using NUnit.Framework;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using Utils;
@@ -120,7 +119,6 @@ namespace DistTestCore
             catch (Exception exception)
             {
                 var msg = $"Failed to deserialize JSON: '{json}' with exception: {exception}";
-                Assert.Fail(msg);
                 throw new InvalidOperationException(msg, exception);
             }
         }

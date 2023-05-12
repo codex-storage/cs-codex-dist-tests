@@ -24,7 +24,7 @@ namespace DistTestCore.Codex
 
         public CodexDebugPeerResponse GetDebugPeer(string peerId)
         {
-            return Http().HttpGetJson<CodexDebugPeerResponse>($"debug/peer/{peerId}");
+            return Http(TimeSpan.FromSeconds(2)).HttpGetJson<CodexDebugPeerResponse>($"debug/peer/{peerId}");
         }
 
         public string UploadFile(FileStream fileStream)

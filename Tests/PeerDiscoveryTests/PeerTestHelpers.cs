@@ -31,35 +31,57 @@ namespace Tests.PeerDiscoveryTests
 
         private static void AssertKnowEachother(List<string> failureMessags, Entry a, Entry b, BaseLog? log)
         {
-            AssertKnows(failureMessags, a, b, log);
-            AssertKnows(failureMessags, b, a, log);
+            var aKnowsB = Knows(a, b);
+            var bKnowsA = Knows(b, a);
+
+            var message = GetMessage(a, b, aKnowsB, bKnowsA);
+
+            if (log != null) log.Log(message);
+            if (!aKnowsB || !bKnowsA) failureMessags.Add(message);
         }
 
-        private static void AssertKnows(List<string> failureMessags, Entry a, Entry b, BaseLog? log)
+        private static string GetMessage(Entry a, Entry b, bool aKnowsB, bool bKnowsA)
+        {
+            var aName = a.Response.id;
+            var bName = b.Response.id;
+
+            if (aKnowsB && bKnowsA)
+            {
+                return $"{aName} and {bName} know each other.";
+            }
+            if (aKnowsB)
+            {
+                return $"{aName} knows {bName}, but {bName} does not know {aName}";
+            }
+            if (bKnowsA)
+            {
+                return $"{bName} knows {aName}, but {aName} does not know {bName}";
+            }
+            return $"{aName} and {bName} don't know each other.";
+        }
+
+        private static bool Knows(Entry a, Entry b)
         {
             var peerId = b.Response.id;
 
             try
             {
                 var response = GetDebugPeer(a.Node, peerId);
-                if (string.IsNullOrEmpty(response.peerId) || !response.addresses.Any())
+                if (!string.IsNullOrEmpty(response.peerId) && response.addresses.Any())
                 {
-                    failureMessags.Add($"{a.Response.id} did not know peer {peerId}");
-                }
-                else if (log != null)
-                {
-                    log.Log($"{a.Response.id} knows {peerId}.");
+                    return true;
                 }
             }
             catch
             {
-                failureMessags.Add($"{a.Response.id} was unable to get 'debug/peer/{peerId}'.");
             }
+
+            return false;
         }
 
         private static CodexDebugPeerResponse GetDebugPeer(IOnlineCodexNode node, string peerId)
         {
-            return Time.Retry(() => node.GetDebugPeer(peerId));
+            return Time.Retry(() => node.GetDebugPeer(peerId), TimeSpan.FromMinutes(2), TimeSpan.FromSeconds(0.1));
         }
 
         public class Entry
