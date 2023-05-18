@@ -1,5 +1,7 @@
 ﻿using DistTestCore;
+using DistTestCore.Codex;
 using NUnit.Framework;
+using Utils;
 
 namespace Tests.PeerDiscoveryTests
 {
@@ -32,12 +34,22 @@ namespace Tests.PeerDiscoveryTests
         [TestCase(3, 3)]
         [TestCase(3, 5)]
         [TestCase(3, 10)]
+        [TestCase(5, 10)]
+        [TestCase(3, 20)]
+        [TestCase(5, 20)]
         public void StagedVariableNodes(int numberOfNodes, int numberOfStages)
         {
             for (var i = 0; i < numberOfStages; i++)
             {
-                SetupCodexNodes(numberOfNodes);
+                SetupCodexNodes(numberOfNodes, s => s.WithLogLevel(CodexLogLevel.Trace));
 
+                AssertAllNodesConnected();
+            }
+
+            // Retain for a while
+            for (int i = 0; i < 10; i++)
+            {
+                Time.Sleep(TimeSpan.FromSeconds(30));
                 AssertAllNodesConnected();
             }
         }

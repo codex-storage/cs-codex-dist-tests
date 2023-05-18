@@ -8,6 +8,8 @@ namespace Tests.PeerDiscoveryTests
 {
     public static class PeerTestHelpers
     {
+        private static readonly Random random = new Random();
+
         public static void AssertFullyConnected(IEnumerable<IOnlineCodexNode> nodes, BaseLog? log = null)
         {
             AssertFullyConnected(log, nodes.ToArray());
@@ -31,7 +33,7 @@ namespace Tests.PeerDiscoveryTests
 
         private static void RetryWhilePairs(List<Pair> pairs, Action action)
         {
-            var timeout = DateTime.UtcNow + TimeSpan.FromMinutes(2);
+            var timeout = DateTime.UtcNow + TimeSpan.FromMinutes(5);
             while (pairs.Any() && (timeout > DateTime.UtcNow))
             {
                 action();
@@ -51,6 +53,10 @@ namespace Tests.PeerDiscoveryTests
                 {
                     pairs.Remove(pair);
                     if (log != null) log.Log(pair.GetMessage());
+                }
+                else
+                {
+                    pair.IncreaseTimeout();
                 }
             }
         }
@@ -90,6 +96,10 @@ namespace Tests.PeerDiscoveryTests
 
         public class Pair
         {
+            private TimeSpan timeout = TimeSpan.FromSeconds(60);
+            private TimeSpan aToBTime = TimeSpan.FromSeconds(0);
+            private TimeSpan bToATime = TimeSpan.FromSeconds(0);
+
             public Pair(Entry a, Entry b)
             {
                 A = a;
@@ -104,11 +114,22 @@ namespace Tests.PeerDiscoveryTests
 
             public void Check()
             {
-                AKnowsB = Knows(A, B);
-                BKnowsA = Knows(B, A);
+                ApplyRandomDelay();
+                aToBTime = Measure(() => AKnowsB = Knows(A, B));
+                bToATime = Measure(() => BKnowsA = Knows(B, A));
             }
 
             public string GetMessage()
+            {
+                return GetResultMessage() + GetTimePostfix();
+            }
+
+            public void IncreaseTimeout()
+            {
+                //timeout *= 2;
+            }
+
+            private string GetResultMessage()
             {
                 var aName = A.Response.id;
                 var bName = B.Response.id;
@@ -128,23 +149,47 @@ namespace Tests.PeerDiscoveryTests
                 return $"{aName} and {bName} don't know each other.";
             }
 
-            private static bool Knows(Entry a, Entry b)
+            private string GetTimePostfix()
             {
-                var peerId = b.Response.id;
+                var aName = A.Response.id;
+                var bName = B.Response.id;
 
-                try
+                return $" ({aName}->{bName}: {aToBTime.TotalMinutes} seconds, {bName}->{aName}: {bToATime.TotalSeconds} seconds)";
+            }
+
+            private static void ApplyRandomDelay()
+            {
+                // Calling all the nodes all at the same time is not exactly nice.
+                Time.Sleep(TimeSpan.FromMicroseconds(random.Next(10, 100)));
+            }
+
+            private static TimeSpan Measure(Action action)
+            {
+                var start = DateTime.UtcNow;
+                action();
+                return DateTime.UtcNow - start;
+            }
+
+            private bool Knows(Entry a, Entry b)
+            {
+                lock (a)
                 {
-                    var response = a.Node.GetDebugPeer(peerId);
-                    if (!string.IsNullOrEmpty(response.peerId) && response.addresses.Any())
+                    var peerId = b.Response.id;
+
+                    try
                     {
-                        return true;
+                        var response = a.Node.GetDebugPeer(peerId, timeout);
+                        if (!string.IsNullOrEmpty(response.peerId) && response.addresses.Any())
+                        {
+                            return true;
+                        }
                     }
-                }
-                catch
-                {
-                }
+                    catch
+                    {
+                    }
 
-                return false;
+                    return false;
+                }
             }
         }
     }

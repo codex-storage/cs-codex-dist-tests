@@ -24,7 +24,12 @@ namespace DistTestCore.Codex
 
         public CodexDebugPeerResponse GetDebugPeer(string peerId)
         {
-            return Http(TimeSpan.FromSeconds(2)).HttpGetJson<CodexDebugPeerResponse>($"debug/peer/{peerId}");
+            return GetDebugPeer(peerId, TimeSpan.FromSeconds(2));
+        }
+
+        public CodexDebugPeerResponse GetDebugPeer(string peerId, TimeSpan timeout)
+        {
+            return Http(timeout).HttpGetJson<CodexDebugPeerResponse>($"debug/peer/{peerId}");
         }
 
         public string UploadFile(FileStream fileStream)
@@ -62,6 +67,7 @@ namespace DistTestCore.Codex
                 var nodePeerId = debugInfo.id;
                 var nodeName = Container.Name;
                 log.AddStringReplace(nodePeerId, $"___{nodeName}___");
+                log.AddStringReplace(debugInfo.table.localNode.nodeId, $"__{nodeName}__");
             }
             catch (Exception e)
             {
@@ -99,6 +105,7 @@ namespace DistTestCore.Codex
     public class CodexDebugTableNodeResponse
     {
         public string nodeId { get; set; } = string.Empty;
+        public string peerId { get; set; } = string.Empty;
         public string record { get; set; } = string.Empty;
         public bool seen { get; set; }
     }

@@ -21,7 +21,10 @@ namespace DistTestCore
         [SetUp]
         public void SetUpBootstrapNode()
         {
-            BootstrapNode = BringOnline(new CodexSetup(1))[0];
+            BootstrapNode = BringOnline(new CodexSetup(1)
+            {
+                LogLevel = Codex.CodexLogLevel.Trace
+            })[0];
         }
 
         protected IOnlineCodexNode BootstrapNode { get; private set; } = null!;
