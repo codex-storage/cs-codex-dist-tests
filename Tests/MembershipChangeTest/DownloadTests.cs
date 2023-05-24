@@ -7,7 +7,8 @@ namespace Tests.MembershipChangeTests
     public class DownloadMembershipChangeTests : DistTest
     {
         [TestCase(1, 100, 5, 0)]
-
+        [TestCase(1, 100, 0, 5)]
+        [TestCase(1, 100, 5, 5)]
 
         [UseLongTimeouts]
         public void DownloadMembershipChange(int numberOfNodes, int filesize, int numberOfNodesToAdd = 0, int numberOfNodesToRemove = 0)
