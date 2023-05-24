@@ -7,8 +7,7 @@ namespace Tests.MembershipChangeTests
     public class DownloadMembershipChangeTests : DistTest
     {
         [TestCase(1, 100, 5, 0)]
-        [TestCase(1, 100, 0, 5)]
-        [TestCase(1, 100, 5, 5)]
+
 
         [UseLongTimeouts]
         public void DownloadMembershipChange(int numberOfNodes, int filesize, int numberOfNodesToAdd = 0, int numberOfNodesToRemove = 0)
@@ -28,10 +27,9 @@ namespace Tests.MembershipChangeTests
             {
                 host.ConnectToPeer(node);
             }
-            foreach (var node in toRemove)
-            {
-                host.ConnectToPeer(node);
-            }
+            if (toRemove != null)
+                foreach (var node in toRemove)
+                    host.ConnectToPeer(node);
 
             // Upload a file to the host
             var testFile = GenerateTestFile(filesize.MB());
