@@ -57,6 +57,7 @@ namespace Tests.PeerDiscoveryTests
         private void AssertAllNodesConnected()
         {
             PeerConnectionTestHelpers.AssertFullyConnected(GetAllOnlineCodexNodes());
+            PeerDownloadTestHelpers.AssertFullDownloadInterconnectivity(GetAllOnlineCodexNodes());
         }
     }
 }

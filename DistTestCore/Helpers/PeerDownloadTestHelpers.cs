@@ -16,6 +16,7 @@
 
         public void AssertFullDownloadInterconnectivity(IEnumerable<IOnlineCodexNode> nodes, ByteSize testFileSize)
         {
+            test.Debug($"Asserting full download interconnectivity for nodes: '{string.Join(",", nodes.Select(n => n.GetName()))}'...");
             foreach (var node in nodes)
             {
                 var uploader = node;
@@ -26,6 +27,8 @@
                     PerformTest(uploader, downloaders);
                 });
             }
+            
+            test.Debug($"Success! Full download interconnectivity for nodes: {string.Join(",", nodes.Select(n => n.GetName()))}");
         }
 
         private void PerformTest(IOnlineCodexNode uploader, IOnlineCodexNode[] downloaders)

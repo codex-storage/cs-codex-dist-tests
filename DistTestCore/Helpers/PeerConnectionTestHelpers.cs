@@ -21,6 +21,7 @@ namespace DistTestCore.Helpers
 
         public void AssertFullyConnected(params IOnlineCodexNode[] nodes)
         {
+            test.Debug($"Asserting peers are fully-connected for nodes: '{string.Join(",", nodes.Select(n => n.GetName()))}'...");
             var entries = CreateEntries(nodes);
             var pairs = CreatePairs(entries);
 
@@ -33,6 +34,7 @@ namespace DistTestCore.Helpers
             {
                 Assert.Fail(string.Join(Environment.NewLine, pairs.Select(p => p.GetMessage())));
             }
+            test.Debug($"Success! Peers are fully-connected: {string.Join(",", nodes.Select(n => n.GetName()))}");
         }
 
         private static void RetryWhilePairs(List<Pair> pairs, Action action)
