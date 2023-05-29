@@ -24,17 +24,17 @@
 
                 test.ScopedTestFiles(() =>
                 {
-                    PerformTest(uploader, downloaders);
+                    PerformTest(uploader, downloaders, testFileSize);
                 });
             }
             
             test.Debug($"Success! Full download interconnectivity for nodes: {string.Join(",", nodes.Select(n => n.GetName()))}");
         }
 
-        private void PerformTest(IOnlineCodexNode uploader, IOnlineCodexNode[] downloaders)
+        private void PerformTest(IOnlineCodexNode uploader, IOnlineCodexNode[] downloaders, ByteSize testFileSize)
         {
             // 1 test file per downloader.
-            var files = downloaders.Select(d => test.GenerateTestFile(1.MB())).ToArray();
+            var files = downloaders.Select(d => test.GenerateTestFile(testFileSize)).ToArray();
 
             // Upload all the test files to the uploader.
             var contentIds = files.Select(uploader.UploadFile).ToArray();
