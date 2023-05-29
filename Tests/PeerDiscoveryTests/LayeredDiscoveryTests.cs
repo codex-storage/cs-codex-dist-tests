@@ -1,4 +1,5 @@
 ﻿using DistTestCore;
+using DistTestCore.Helpers;
 using NUnit.Framework;
 using Utils;
 
@@ -54,7 +55,7 @@ namespace Tests.PeerDiscoveryTests
 
         private void AssertAllNodesConnected()
         {
-            PeerTestHelpers.AssertFullyConnected(GetAllOnlineCodexNodes(), GetTestLog());
+            PeerConnectionTestHelpers.AssertFullyConnected(GetAllOnlineCodexNodes());
         }
     }
 }

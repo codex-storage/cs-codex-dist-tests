@@ -1,30 +1,34 @@
 ﻿using DistTestCore.Codex;
-using DistTestCore;
 using NUnit.Framework;
-using Logging;
 using Utils;
 
-namespace Tests.PeerDiscoveryTests
+namespace DistTestCore.Helpers
 {
-    public static class PeerTestHelpers
+    public class PeerConnectionTestHelpers
     {
-        private static readonly Random random = new Random();
+        private readonly Random random = new Random();
+        private readonly DistTest test;
 
-        public static void AssertFullyConnected(IEnumerable<IOnlineCodexNode> nodes, BaseLog? log = null)
+        public PeerConnectionTestHelpers(DistTest test)
         {
-            AssertFullyConnected(log, nodes.ToArray());
+            this.test = test;
         }
 
-        public static void AssertFullyConnected(BaseLog? log = null, params IOnlineCodexNode[] nodes)
+        public void AssertFullyConnected(IEnumerable<IOnlineCodexNode> nodes)
+        {
+            AssertFullyConnected(nodes.ToArray());
+        }
+
+        public void AssertFullyConnected(params IOnlineCodexNode[] nodes)
         {
             var entries = CreateEntries(nodes);
             var pairs = CreatePairs(entries);
 
             RetryWhilePairs(pairs, () =>
             {
-                CheckAndRemoveSuccessful(pairs, log);
+                CheckAndRemoveSuccessful(pairs);
             });
-            
+
             if (pairs.Any())
             {
                 Assert.Fail(string.Join(Environment.NewLine, pairs.Select(p => p.GetMessage())));
@@ -34,7 +38,7 @@ namespace Tests.PeerDiscoveryTests
         private static void RetryWhilePairs(List<Pair> pairs, Action action)
         {
             var timeout = DateTime.UtcNow + TimeSpan.FromMinutes(5);
-            while (pairs.Any() && (timeout > DateTime.UtcNow))
+            while (pairs.Any() && timeout > DateTime.UtcNow)
             {
                 action();
 
@@ -42,15 +46,21 @@ namespace Tests.PeerDiscoveryTests
             }
         }
 
-        private static void CheckAndRemoveSuccessful(List<Pair> pairs, BaseLog? log)
+        private void CheckAndRemoveSuccessful(List<Pair> pairs)
         {
-            var checkTasks = pairs.Select(p => Task.Run(p.Check)).ToArray();
+            var checkTasks = pairs.Select(p => Task.Run(() =>
+            {
+                ApplyRandomDelay();
+                p.Check();
+            })).ToArray();
+
             Task.WaitAll(checkTasks);
 
             foreach (var pair in pairs.ToArray())
             {
                 if (pair.Success)
                 {
+                    test.Debug(pair.GetMessage());
                     pairs.Remove(pair);
                 }
             }
@@ -60,7 +70,7 @@ namespace Tests.PeerDiscoveryTests
         {
             var entries = nodes.Select(n => new Entry(n)).ToArray();
             var incorrectDiscoveryEndpoints = entries.SelectMany(e => e.GetInCorrectDiscoveryEndpoints(entries)).ToArray();
-           
+
             if (incorrectDiscoveryEndpoints.Any())
             {
                 Assert.Fail("Some nodes contain peer records with incorrect discovery ip/port information: " +
@@ -86,6 +96,12 @@ namespace Tests.PeerDiscoveryTests
             }
         }
 
+        private void ApplyRandomDelay()
+        {
+            // Calling all the nodes all at the same time is not exactly nice.
+            Time.Sleep(TimeSpan.FromMicroseconds(random.Next(10, 100)));
+        }
+
         public class Entry
         {
             public Entry(IOnlineCodexNode node)
@@ -94,7 +110,7 @@ namespace Tests.PeerDiscoveryTests
                 Response = node.GetDebugInfo();
             }
 
-            public IOnlineCodexNode Node { get ; }
+            public IOnlineCodexNode Node { get; }
             public CodexDebugResponse Response { get; }
 
             public IEnumerable<string> GetInCorrectDiscoveryEndpoints(Entry[] allEntries)
@@ -137,11 +153,10 @@ namespace Tests.PeerDiscoveryTests
             public Entry B { get; }
             public bool AKnowsB { get; private set; }
             public bool BKnowsA { get; private set; }
-            public bool Success {  get { return AKnowsB && BKnowsA; } }
+            public bool Success { get { return AKnowsB && BKnowsA; } }
 
             public void Check()
             {
-                ApplyRandomDelay();
                 aToBTime = Measure(() => AKnowsB = Knows(A, B));
                 bToATime = Measure(() => BKnowsA = Knows(B, A));
             }
@@ -177,12 +192,6 @@ namespace Tests.PeerDiscoveryTests
                 var bName = B.Response.id;
 
                 return $" ({aName}->{bName}: {aToBTime.TotalMinutes} seconds, {bName}->{aName}: {bToATime.TotalSeconds} seconds)";
-            }
-
-            private static void ApplyRandomDelay()
-            {
-                // Calling all the nodes all at the same time is not exactly nice.
-                Time.Sleep(TimeSpan.FromMicroseconds(random.Next(10, 100)));
             }
 
             private static TimeSpan Measure(Action action)

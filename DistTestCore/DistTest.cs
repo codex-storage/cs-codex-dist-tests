@@ -1,4 +1,5 @@
 ﻿using DistTestCore.Codex;
+using DistTestCore.Helpers;
 using DistTestCore.Logs;
 using DistTestCore.Marketplace;
 using DistTestCore.Metrics;
@@ -25,7 +26,13 @@ namespace DistTestCore
             testAssemblies = assemblies.Where(a => a.FullName!.ToLowerInvariant().Contains("test")).ToArray();
 
             fixtureLog = new FixtureLog(configuration.GetLogConfig());
+
+            PeerConnectionTestHelpers = new PeerConnectionTestHelpers(this);
+            PeerDownloadTestHelpers = new PeerDownloadTestHelpers(this);
         }
+
+        public PeerConnectionTestHelpers PeerConnectionTestHelpers { get; }
+        public PeerDownloadTestHelpers PeerDownloadTestHelpers { get; }
 
         [OneTimeSetUp]
         public void GlobalSetup()
@@ -85,6 +92,17 @@ namespace DistTestCore
             return Get().FileManager.GenerateTestFile(size);
         }
 
+        /// <summary>
+        /// Any test files generated in 'action' will be deleted after it returns.
+        /// This helps prevent large tests from filling up discs.
+        /// </summary>
+        public void ScopedTestFiles(Action action)
+        {
+            Get().FileManager.PushFileSet();
+            action();
+            Get().FileManager.PopFileSet();
+        }
+
         public IOnlineCodexNode SetupCodexBootstrapNode()
         {
             return SetupCodexBootstrapNode(s => { });
@@ -133,18 +151,18 @@ namespace DistTestCore
             return Get().CodexStarter.RunningGroups.SelectMany(g => g.Nodes);
         }
 
-        protected BaseLog GetTestLog()
+        public BaseLog GetTestLog()
         {
             return Get().Log;
         }
 
-        protected void Log(string msg)
+        public void Log(string msg)
         {
             TestContext.Progress.WriteLine(msg);
             GetTestLog().Log(msg);
         }
 
-        protected void Debug(string msg)
+        public void Debug(string msg)
         {
             TestContext.Progress.WriteLine(msg);
             GetTestLog().Debug(msg);
