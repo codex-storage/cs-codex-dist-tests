@@ -1,6 +1,6 @@
 # Run tests with Docker in Kubernetes
 
-We may [run tests localy](../LOCALSETUP.MD) using installed Dotnet and inside Kubernetes we may use a [prepared Docker images](https://hub.docker.com/repository/docker/codexstorage/cs-codex-dist-tests).
+We may [run tests localy](../LOCALSETUP.MD) using installed Dotnet and inside Kubernetes we may use a [prepared Docker images](https://hub.docker.com/r/codexstorage/cs-codex-dist-tests/tags).
 
 
 Custom [entrypoint](docker-entrypoint.sh) will do the following
