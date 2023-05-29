@@ -52,18 +52,22 @@ namespace Tests.PeerDiscoveryTests
                 if (pair.Success)
                 {
                     pairs.Remove(pair);
-                    if (log != null) log.Log(pair.GetMessage());
-                }
-                else
-                {
-                    pair.IncreaseTimeout();
                 }
             }
         }
 
         private static Entry[] CreateEntries(IOnlineCodexNode[] nodes)
         {
-            return nodes.Select(n => new Entry(n)).ToArray();
+            var entries = nodes.Select(n => new Entry(n)).ToArray();
+            var incorrectDiscoveryEndpoints = entries.SelectMany(e => e.GetInCorrectDiscoveryEndpoints(entries)).ToArray();
+           
+            if (incorrectDiscoveryEndpoints.Any())
+            {
+                Assert.Fail("Some nodes contain peer records with incorrect discovery ip/port information: " +
+                    string.Join(Environment.NewLine, incorrectDiscoveryEndpoints));
+            }
+
+            return entries;
         }
 
         private static List<Pair> CreatePairs(Entry[] entries)
@@ -92,11 +96,34 @@ namespace Tests.PeerDiscoveryTests
 
             public IOnlineCodexNode Node { get ; }
             public CodexDebugResponse Response { get; }
+
+            public IEnumerable<string> GetInCorrectDiscoveryEndpoints(Entry[] allEntries)
+            {
+                foreach (var peer in Response.table.nodes)
+                {
+                    var expected = GetExpectedDiscoveryEndpoint(allEntries, peer);
+                    if (expected != peer.address)
+                    {
+                        yield return $"Node:{Node.GetName()} has incorrect peer table entry. Was: '{peer.address}', expected: '{expected}'";
+                    }
+                }
+            }
+
+            private static string GetExpectedDiscoveryEndpoint(Entry[] allEntries, CodexDebugTableNodeResponse node)
+            {
+                var peer = allEntries.SingleOrDefault(e => e.Response.table.localNode.peerId == node.peerId);
+                if (peer == null) return $"peerId: {node.peerId} is not known.";
+
+                var n = (OnlineCodexNode)peer.Node;
+                var ip = n.CodexAccess.Container.Pod.Ip;
+                var discPort = n.CodexAccess.Container.Recipe.GetPortByTag(CodexContainerRecipe.DiscoveryPortTag);
+                return $"{ip}:{discPort.Number}";
+            }
         }
 
         public class Pair
         {
-            private TimeSpan timeout = TimeSpan.FromSeconds(60);
+            private readonly TimeSpan timeout = TimeSpan.FromSeconds(60);
             private TimeSpan aToBTime = TimeSpan.FromSeconds(0);
             private TimeSpan bToATime = TimeSpan.FromSeconds(0);
 
@@ -122,11 +149,6 @@ namespace Tests.PeerDiscoveryTests
             public string GetMessage()
             {
                 return GetResultMessage() + GetTimePostfix();
-            }
-
-            public void IncreaseTimeout()
-            {
-                //timeout *= 2;
             }
 
             private string GetResultMessage()

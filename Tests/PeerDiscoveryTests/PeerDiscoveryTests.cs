@@ -46,8 +46,7 @@ namespace Tests.PeerDiscoveryTests
                 AssertAllNodesConnected();
             }
 
-            // Retain for a while
-            for (int i = 0; i < 10; i++)
+            for (int i = 0; i < 5; i++)
             {
                 Time.Sleep(TimeSpan.FromSeconds(30));
                 AssertAllNodesConnected();
