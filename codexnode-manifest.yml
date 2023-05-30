@@ -24,7 +24,7 @@ spec:
     spec:
       containers:
       - name: codex-node1
-        image: thatbenbierens/nim-codex:sha-b204837
+        image: codexstorage/nim-codex:sha-7b88ea0
         ports:
         - containerPort: 8080
           name: api-1
@@ -38,7 +38,7 @@ spec:
         - name: LISTEN_ADDRS
           value: "/ip4/0.0.0.0/tcp/8082"
       - name: codex-node2
-        image: thatbenbierens/nim-codex:sha-b204837
+        image: codexstorage/nim-codex:sha-7b88ea0
         ports:
         - containerPort: 8083
           name: api-2
