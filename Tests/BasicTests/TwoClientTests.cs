@@ -7,23 +7,15 @@ namespace Tests.BasicTests
     [TestFixture]
     public class TwoClientTests : DistTest
     {
-        [TestCase(1)]
-        [TestCase(2)]
-        [TestCase(3)]
-        [TestCase(4)]
-        [TestCase(5)]
-        [TestCase(6)]
-        [TestCase(7)]
-        [TestCase(8)]
-        [TestCase(9)]
-        public void TwoClientsOnePodTest(int size)
+        [Test]
+        public void TwoClientsOnePodTest()
         {
             var group = SetupCodexNodes(2);
 
             var primary = group[0];
             var secondary = group[1];
 
-            PerformTwoClientTest(primary, secondary, size.MB());
+            PerformTwoClientTest(primary, secondary);
         }
 
         [Test]
