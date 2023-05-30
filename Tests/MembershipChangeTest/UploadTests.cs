@@ -28,22 +28,15 @@ namespace Tests.MembershipChangeTests
             {
                 host.ConnectToPeer(node);
             }
-            foreach (var node in toRemove)
-            {
-                host.ConnectToPeer(node);
-            }
+            if (toRemove != null)
+                foreach (var node in toRemove)
+                    host.ConnectToPeer(node);
+
 
             var testfiles = new List<TestFile>();
             var contentIds = new List<Task<ContentId>>();
 
             // Start adding and dropping nodes
-            for (var i = 0; (toAdd != null && i < toAdd.Count()) || (toRemove != null && i < toRemove.Count()); i++)
-            {
-                if (toAdd != null && i < toAdd.Count())
-                    Task.Run(() => { host.ConnectToPeer(toAdd[i]); });
-                if (toRemove != null && i < toRemove.Count())
-                    Task.Run(() => { toRemove[i].BringOffline(); });
-            }
 
             // Start the upload for each node in the main group
             for (int i = 0; i < group.Count(); i++)
@@ -51,6 +44,14 @@ namespace Tests.MembershipChangeTests
                 testfiles.Add(GenerateTestFile(filesize.MB()));
                 var n = i;
                 contentIds.Add(Task.Run(() => { return host.UploadFile(testfiles[n]); }));
+            }
+            for (var i = 0; (toAdd != null && i < toAdd.Count()) || (toRemove != null && i < toRemove.Count()); i++)
+            {
+                Log($"Iteration {i}");
+                if (toAdd != null && i < toAdd.Count())
+                    Task.Run(() => { host.ConnectToPeer(toAdd[i]); });
+                if (toRemove != null && i < toRemove.Count())
+                    Task.Run(() => { toRemove[i].BringOffline(); });
             }
 
             // Wait for the upload to finish
