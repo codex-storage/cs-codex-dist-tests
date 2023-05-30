@@ -148,10 +148,7 @@ namespace KubernetesWorkflow
                     },
                     Spec = new V1NetworkPolicySpec
                     {
-                        PodSelector = new V1LabelSelector
-                        {
-                            MatchLabels = GetSelector()
-                        },
+                        PodSelector = new V1LabelSelector {},
                         PolicyTypes = new[]
                         {
                             "Ingress",
@@ -165,10 +162,7 @@ namespace KubernetesWorkflow
                                 {
                                     new V1NetworkPolicyPeer
                                     {
-                                        NamespaceSelector = new V1LabelSelector
-                                        {
-                                            MatchLabels = GetMyNamespaceSelector()
-                                        }
+                                        PodSelector = new V1LabelSelector {}
                                     }
                                 }
                             }
@@ -181,13 +175,74 @@ namespace KubernetesWorkflow
                                 {
                                     new V1NetworkPolicyPeer
                                     {
+                                        PodSelector = new V1LabelSelector {}
+                                    }
+                                }
+                            },
+                            new V1NetworkPolicyEgressRule
+                            {
+                                To = new List<V1NetworkPolicyPeer>
+                                {
+                                    new V1NetworkPolicyPeer
+                                    {
                                         NamespaceSelector = new V1LabelSelector
                                         {
-                                            MatchLabels = GetMyNamespaceSelector()
+                                            MatchLabels = new Dictionary<string, string> { { "kubernetes.io/metadata.name", "kube-system" } }
                                         }
+                                    },
+                                    new V1NetworkPolicyPeer
+                                    {
+                                        PodSelector = new V1LabelSelector
+                                        {
+                                            MatchLabels = new Dictionary<string, string> { { "k8s-app", "kube-dns" } }
+                                        }
+                                    }
+                                },
+                                Ports = new List<V1NetworkPolicyPort>
+                                {
+                                    new V1NetworkPolicyPort
+                                    {
+                                        Port = new IntstrIntOrString
+                                        {
+                                            Value = "53"
+                                        },
+                                        Protocol = "UDP"
+                                    }
+                                }
+                            },
+                            new V1NetworkPolicyEgressRule
+                            {
+                                To = new List<V1NetworkPolicyPeer>
+                                {
+                                    new V1NetworkPolicyPeer
+                                    {
+                                        IpBlock = new V1IPBlock
+                                        {
+                                          Cidr = "0.0.0.0/0"
+                                        }
+                                    }
+                                },
+                                Ports = new List<V1NetworkPolicyPort>
+                                {
+                                    new V1NetworkPolicyPort
+                                    {
+                                        Port = new IntstrIntOrString
+                                        {
+                                            Value = "80"
+                                        },
+                                        Protocol = "TCP"
+                                    },
+                                    new V1NetworkPolicyPort
+                                    {
+                                        Port = new IntstrIntOrString
+                                        {
+                                            Value = "443"
+                                        },
+                                        Protocol = "TCP"
                                     }
                                 }
                             }
+
                         }
                     }
                 };
@@ -253,11 +308,6 @@ namespace KubernetesWorkflow
         private IDictionary<string, string> GetSelector()
         {
             return new Dictionary<string, string> { { "codex-test-node", "dist-test-" + workflowNumberSource.WorkflowNumber } };
-        }
-
-        private IDictionary<string, string> GetMyNamespaceSelector()
-        {
-            return new Dictionary<string, string> { { "name", "thatisincorrect" } };
         }
 
         private V1ObjectMeta CreateDeploymentMetadata()
@@ -333,7 +383,7 @@ namespace KubernetesWorkflow
 
             if (!ports.Any())
             {
-                // None of these container-recipes wish to expose anything via a serice port.
+                // None of these container-recipes wish to expose anything via a service port.
                 // So, we don't have to create a service.
                 return (string.Empty, result);
             }
