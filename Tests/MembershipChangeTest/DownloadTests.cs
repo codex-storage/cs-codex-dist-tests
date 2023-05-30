@@ -9,7 +9,6 @@ namespace Tests.MembershipChangeTests
         [TestCase(1, 100, 5, 0)]
         [TestCase(1, 100, 0, 5)]
         [TestCase(1, 100, 5, 5)]
-
         [UseLongTimeouts]
         public void DownloadMembershipChange(int numberOfNodes, int filesize, int numberOfNodesToAdd = 0, int numberOfNodesToRemove = 0)
         {
@@ -37,7 +36,7 @@ namespace Tests.MembershipChangeTests
             var contentId = host.UploadFile(testFile);
 
             var list = new List<Task<TestFile?>>();
-            
+                        
             // Start the download for each node
             foreach (var node in group)
             {
@@ -45,8 +44,10 @@ namespace Tests.MembershipChangeTests
             }
 
             // Start adding and dropping nodes during the download
+            // TODO: The log is put here for debug, but without it the members do not run async
             for (var i = 0; (toAdd != null && i < toAdd.Count()) || (toRemove != null && i < toRemove.Count()); i++)
             {
+                Log($"Iteration {i}");
                 if (toAdd != null && i < toAdd.Count())
                     Task.Run(() => { host.ConnectToPeer(toAdd[i]); });
                 if (toRemove != null && i < toRemove.Count())
