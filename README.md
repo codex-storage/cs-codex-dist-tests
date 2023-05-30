@@ -1,6 +1,6 @@
 # Distributed System Tests for Nim-Codex
 
-Nim-Codex: https://github.com/status-im/nim-codex
+Nim-Codex: https://github.com/codex-storage/nim-codex
 
 Tests are built on dotnet v6.0 and Kubernetes v1.25.4, using dotnet-kubernetes SDK: https://github.com/kubernetes-client/csharp
 
