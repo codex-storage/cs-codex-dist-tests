@@ -29,7 +29,20 @@ namespace DistTestCore.Codex
 
         public CodexDebugPeerResponse GetDebugPeer(string peerId, TimeSpan timeout)
         {
-            return Http(timeout).HttpGetJson<CodexDebugPeerResponse>($"debug/peer/{peerId}");
+            var http = Http(timeout);
+            var str = http.HttpGetString($"debug/peer/{peerId}");
+
+            if (str.ToLowerInvariant() == "unable to find peer!")
+            {
+                return new CodexDebugPeerResponse
+                {
+                    IsPeerFound = false
+                };
+            }
+
+            var result = http.TryJsonDeserialize<CodexDebugPeerResponse>(str);
+            result.IsPeerFound = true;
+            return result;
         }
 
         public string UploadFile(FileStream fileStream)
@@ -139,6 +152,8 @@ namespace DistTestCore.Codex
 
     public class CodexDebugPeerResponse
     {
+        public bool IsPeerFound { get; set; }
+
         public string peerId { get; set; } = string.Empty;
         public long seqNo { get; set; }
         public CodexDebugPeerAddressResponse[] addresses { get; set; } = Array.Empty<CodexDebugPeerAddressResponse>();

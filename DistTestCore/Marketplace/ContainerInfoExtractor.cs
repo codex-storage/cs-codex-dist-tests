@@ -95,7 +95,7 @@ namespace DistTestCore.Marketplace
 
         private static string Retry(Func<string> fetch)
         {
-            return Time.Retry(fetch);
+            return Time.Retry(fetch, nameof(ContainerInfoExtractor));
         }
     }
 

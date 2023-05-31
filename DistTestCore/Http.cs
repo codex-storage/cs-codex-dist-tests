@@ -38,7 +38,7 @@ namespace DistTestCore
                 var str = Time.Wait(result.Content.ReadAsStringAsync());
                 Log(url, str);
                 return str; ;
-            });
+            }, $"HTTP-GET:{route}");
         }
 
         public T HttpGetJson<T>(string route)
@@ -62,10 +62,10 @@ namespace DistTestCore
                 using var content = JsonContent.Create(body);
                 Log(url, JsonConvert.SerializeObject(body));
                 var result = Time.Wait(client.PostAsync(url, content));
-                var str= Time.Wait(result.Content.ReadAsStringAsync());
+                var str = Time.Wait(result.Content.ReadAsStringAsync());
                 Log(url, str);
                 return str;
-            });
+            }, $"HTTP-POST-JSON: {route}");
         }
 
         public string HttpPostStream(string route, Stream stream)
@@ -81,7 +81,7 @@ namespace DistTestCore
                 var str =Time.Wait(response.Content.ReadAsStringAsync());
                 Log(url, str);
                 return str;
-            });
+            }, $"HTTP-POST-STREAM: {route}");
         }
 
         public Stream HttpGetStream(string route)
@@ -92,7 +92,20 @@ namespace DistTestCore
                 var url = GetUrl() + route;
                 Log(url, "~ STREAM ~");
                 return Time.Wait(client.GetStreamAsync(url));
-            });
+            }, $"HTTP-GET-STREAM: {route}");
+        }
+
+        public T TryJsonDeserialize<T>(string json)
+        {
+            try
+            {
+                return JsonConvert.DeserializeObject<T>(json)!;
+            }
+            catch (Exception exception)
+            {
+                var msg = $"Failed to deserialize JSON: '{json}' with exception: {exception}";
+                throw new InvalidOperationException(msg, exception);
+            }
         }
 
         private string GetUrl()
@@ -105,22 +118,9 @@ namespace DistTestCore
             log.Debug($"({url}) = '{message}'", 3);
         }
 
-        private T Retry<T>(Func<T> operation)
+        private T Retry<T>(Func<T> operation, string description)
         {
-            return Time.Retry(operation, timeSet.HttpCallRetryTimeout(), timeSet.HttpCallRetryDelay());
-        }
-
-        private static T TryJsonDeserialize<T>(string json)
-        {
-            try
-            {
-                return JsonConvert.DeserializeObject<T>(json)!;
-            }
-            catch (Exception exception)
-            {
-                var msg = $"Failed to deserialize JSON: '{json}' with exception: {exception}";
-                throw new InvalidOperationException(msg, exception);
-            }
+            return Time.Retry(operation, timeSet.HttpCallRetryTimeout(), timeSet.HttpCallRetryDelay(), description);
         }
 
         private HttpClient GetClient()

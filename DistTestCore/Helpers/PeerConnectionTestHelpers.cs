@@ -21,7 +21,7 @@ namespace DistTestCore.Helpers
 
         public void AssertFullyConnected(params IOnlineCodexNode[] nodes)
         {
-            test.Debug($"Asserting peers are fully-connected for nodes: '{string.Join(",", nodes.Select(n => n.GetName()))}'...");
+            test.Log($"Asserting peers are fully-connected for nodes: '{string.Join(",", nodes.Select(n => n.GetName()))}'...");
             var entries = CreateEntries(nodes);
             var pairs = CreatePairs(entries);
 
@@ -32,14 +32,19 @@ namespace DistTestCore.Helpers
 
             if (pairs.Any())
             {
+                test.Log($"Unsuccessful! Peers are not fully-connected: {string.Join(",", nodes.Select(n => n.GetName()))}");
                 Assert.Fail(string.Join(Environment.NewLine, pairs.Select(p => p.GetMessage())));
+                test.Log(string.Join(Environment.NewLine, pairs.Select(p => p.GetMessage())));
             }
-            test.Debug($"Success! Peers are fully-connected: {string.Join(",", nodes.Select(n => n.GetName()))}");
+            else
+            {
+                test.Log($"Success! Peers are fully-connected: {string.Join(",", nodes.Select(n => n.GetName()))}");
+            }
         }
 
         private static void RetryWhilePairs(List<Pair> pairs, Action action)
         {
-            var timeout = DateTime.UtcNow + TimeSpan.FromMinutes(5);
+            var timeout = DateTime.UtcNow + TimeSpan.FromMinutes(10);
             while (pairs.Any() && timeout > DateTime.UtcNow)
             {
                 action();
@@ -62,7 +67,7 @@ namespace DistTestCore.Helpers
             {
                 if (pair.Success)
                 {
-                    test.Debug(pair.GetMessage());
+                    test.Log(pair.GetMessage());
                     pairs.Remove(pair);
                 }
             }
@@ -101,7 +106,7 @@ namespace DistTestCore.Helpers
         private void ApplyRandomDelay()
         {
             // Calling all the nodes all at the same time is not exactly nice.
-            Time.Sleep(TimeSpan.FromMicroseconds(random.Next(10, 100)));
+            Time.Sleep(TimeSpan.FromMicroseconds(random.Next(10, 1000)));
         }
 
         public class Entry
@@ -139,6 +144,13 @@ namespace DistTestCore.Helpers
             }
         }
 
+        public enum PeerConnectionState
+        {
+            Unknown,
+            Connection,
+            NoConnection,
+        }
+
         public class Pair
         {
             private readonly TimeSpan timeout = TimeSpan.FromSeconds(60);
@@ -153,9 +165,9 @@ namespace DistTestCore.Helpers
 
             public Entry A { get; }
             public Entry B { get; }
-            public bool AKnowsB { get; private set; }
-            public bool BKnowsA { get; private set; }
-            public bool Success { get { return AKnowsB && BKnowsA; } }
+            public PeerConnectionState AKnowsB { get; private set; }
+            public PeerConnectionState BKnowsA { get; private set; }
+            public bool Success { get { return AKnowsB == PeerConnectionState.Connection && BKnowsA == PeerConnectionState.Connection; } }
 
             public void Check()
             {
@@ -173,19 +185,12 @@ namespace DistTestCore.Helpers
                 var aName = A.Response.id;
                 var bName = B.Response.id;
 
-                if (AKnowsB && BKnowsA)
+                if (Success)
                 {
                     return $"{aName} and {bName} know each other.";
                 }
-                if (AKnowsB)
-                {
-                    return $"{aName} knows {bName}, but {bName} does not know {aName}";
-                }
-                if (BKnowsA)
-                {
-                    return $"{bName} knows {aName}, but {aName} does not know {bName}";
-                }
-                return $"{aName} and {bName} don't know each other.";
+
+                return $"[{aName}-->{bName}] = {AKnowsB} AND [{aName}<--{bName}] = {BKnowsA}";
             }
 
             private string GetTimePostfix()
@@ -203,7 +208,7 @@ namespace DistTestCore.Helpers
                 return DateTime.UtcNow - start;
             }
 
-            private bool Knows(Entry a, Entry b)
+            private PeerConnectionState Knows(Entry a, Entry b)
             {
                 lock (a)
                 {
@@ -212,16 +217,21 @@ namespace DistTestCore.Helpers
                     try
                     {
                         var response = a.Node.GetDebugPeer(peerId, timeout);
+                        if (!response.IsPeerFound)
+                        {
+                            return PeerConnectionState.NoConnection;
+                        }
                         if (!string.IsNullOrEmpty(response.peerId) && response.addresses.Any())
                         {
-                            return true;
+                            return PeerConnectionState.Connection;
                         }
                     }
                     catch
                     {
                     }
 
-                    return false;
+                    // Didn't get a conclusive answer. Try again later.
+                    return PeerConnectionState.Unknown;
                 }
             }
         }

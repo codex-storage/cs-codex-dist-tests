@@ -39,27 +39,27 @@
             }
         }
 
-        public static void Retry(Action action)
+        public static void Retry(Action action, string description)
         {
-            Retry(action, TimeSpan.FromMinutes(1));
+            Retry(action, TimeSpan.FromMinutes(1), description);
         }
 
-        public static T Retry<T>(Func<T> action)
+        public static T Retry<T>(Func<T> action, string description)
         {
-            return Retry(action, TimeSpan.FromMinutes(1));
+            return Retry(action, TimeSpan.FromMinutes(1), description);
         }
 
-        public static void Retry(Action action, TimeSpan timeout)
+        public static void Retry(Action action, TimeSpan timeout, string description)
         {
-            Retry(action, timeout, TimeSpan.FromSeconds(1));
+            Retry(action, timeout, TimeSpan.FromSeconds(1), description);
         }
 
-        public static T Retry<T>(Func<T> action, TimeSpan timeout)
+        public static T Retry<T>(Func<T> action, TimeSpan timeout, string description)
         {
-            return Retry(action, timeout, TimeSpan.FromSeconds(1));
+            return Retry(action, timeout, TimeSpan.FromSeconds(1), description);
         }
 
-        public static void Retry(Action action, TimeSpan timeout, TimeSpan retryTime)
+        public static void Retry(Action action, TimeSpan timeout, TimeSpan retryTime, string description)
         {
             var start = DateTime.UtcNow;
             var exceptions = new List<Exception>();
@@ -67,7 +67,7 @@
             {
                 if (DateTime.UtcNow - start > timeout)
                 {
-                    throw new TimeoutException("Retry timed out.", new AggregateException(exceptions));
+                    throw new TimeoutException($"Retry '{description}' of {timeout.TotalSeconds} seconds timed out.", new AggregateException(exceptions));
                 }
 
                 try
@@ -84,7 +84,7 @@
             }
         }
 
-        public static T Retry<T>(Func<T> action, TimeSpan timeout, TimeSpan retryTime)
+        public static T Retry<T>(Func<T> action, TimeSpan timeout, TimeSpan retryTime, string description)
         {
             var start = DateTime.UtcNow;
             var exceptions = new List<Exception>();
@@ -92,7 +92,7 @@
             {
                 if (DateTime.UtcNow - start > timeout)
                 {
-                    throw new TimeoutException("Retry timed out.", new AggregateException(exceptions));
+                    throw new TimeoutException($"Retry '{description}' of {timeout.TotalSeconds} seconds timed out.", new AggregateException(exceptions));
                 }
 
                 try
