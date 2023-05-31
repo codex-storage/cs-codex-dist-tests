@@ -1,8 +1,10 @@
 # Distributed System Tests for Nim-Codex
 
-Using a common dotnet unit-test framework and a few other libraries, this project allows you to write tests that use multiple Codex node instances in various configurations to test the distributed system in a controlled, reproducable environment.
 
-Nim-Codex: https://github.com/status-im/nim-codex
+Using a common dotnet unit-test framework and a few other libraries, this project allows you to write tests that use multiple Codex node instances in various configurations to test the distributed system in a controlled, reproducible environment.
+
+
+Nim-Codex: https://github.com/codex-storage/nim-codex
 Dotnet: v6.0
 Kubernetes: v1.25.4
 Dotnet-kubernetes SDK: v10.1.4 https://github.com/kubernetes-client/csharp
