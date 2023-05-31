@@ -1,5 +1,4 @@
 ﻿using DistTestCore;
-using DistTestCore.Codex;
 using NUnit.Framework;
 
 namespace TestsLong.BasicTests
@@ -11,7 +10,6 @@ namespace TestsLong.BasicTests
         public void OneClientLargeFileTest()
         {
             var primary = SetupCodexNode(s => s
-                                .WithLogLevel(CodexLogLevel.Warn)
                                 .WithStorageQuota(20.GB()));
 
             var testFile = GenerateTestFile(10.GB());

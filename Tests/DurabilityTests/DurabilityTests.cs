@@ -31,10 +31,10 @@ namespace Tests.DurabilityTests
         [Test]
         public void DataRetentionTest()
         {
-            var bootstrapNode = SetupCodexBootstrapNode(s => s.WithLogLevel(CodexLogLevel.Trace));
+            var bootstrapNode = SetupCodexBootstrapNode();
 
-            var startGroup = SetupCodexNodes(2, s => s.WithLogLevel(CodexLogLevel.Trace).WithBootstrapNode(bootstrapNode));
-            var finishGroup = SetupCodexNodes(10, s => s.WithLogLevel(CodexLogLevel.Trace).WithBootstrapNode(bootstrapNode));
+            var startGroup = SetupCodexNodes(2, s => s.WithBootstrapNode(bootstrapNode));
+            var finishGroup = SetupCodexNodes(10, s => s.WithBootstrapNode(bootstrapNode));
 
             var file = GenerateTestFile(10.MB());
 

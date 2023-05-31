@@ -134,7 +134,7 @@ namespace DistTestCore
 
         public virtual ICodexNodeGroup SetupCodexNodes(int numberOfNodes, Action<ICodexSetup> setup)
         {
-            var codexSetup = new CodexSetup(numberOfNodes);
+            var codexSetup = CreateCodexSetup(numberOfNodes);
 
             setup(codexSetup);
 
@@ -166,6 +166,11 @@ namespace DistTestCore
         {
             TestContext.Progress.WriteLine(msg);
             GetTestLog().Debug(msg);
+        }
+
+        protected CodexSetup CreateCodexSetup(int numberOfNodes)
+        {
+            return new CodexSetup(numberOfNodes, configuration.GetCodexLogLevel());
         }
 
         private TestLifecycle Get()

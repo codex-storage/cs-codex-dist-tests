@@ -12,7 +12,7 @@ namespace DistTestCore
 
         public override ICodexNodeGroup SetupCodexNodes(int numberOfNodes, Action<ICodexSetup> setup)
         {
-            var codexSetup = new CodexSetup(numberOfNodes);
+            var codexSetup = CreateCodexSetup(numberOfNodes);
             setup(codexSetup);
             codexSetup.WithBootstrapNode(BootstrapNode);
             return BringOnline(codexSetup);
@@ -21,10 +21,7 @@ namespace DistTestCore
         [SetUp]
         public void SetUpBootstrapNode()
         {
-            BootstrapNode = BringOnline(new CodexSetup(1)
-            {
-                LogLevel = Codex.CodexLogLevel.Trace
-            })[0];
+            BootstrapNode = BringOnline(CreateCodexSetup(1))[0];
         }
 
         protected IOnlineCodexNode BootstrapNode { get; private set; } = null!;

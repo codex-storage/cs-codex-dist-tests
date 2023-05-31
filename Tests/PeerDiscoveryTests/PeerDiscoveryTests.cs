@@ -53,7 +53,7 @@ namespace Tests.PeerDiscoveryTests
         {
             for (var i = 0; i < numberOfStages; i++)
             {
-                SetupCodexNodes(numberOfNodes, s => s.WithLogLevel(CodexLogLevel.Trace));
+                SetupCodexNodes(numberOfNodes);
 
                 AssertAllNodesConnected();
             }
