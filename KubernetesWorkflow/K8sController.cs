@@ -165,6 +165,19 @@ namespace KubernetesWorkflow
                                         PodSelector = new V1LabelSelector {}
                                     }
                                 }
+                            },
+                            new V1NetworkPolicyIngressRule
+                            {
+                                FromProperty = new List<V1NetworkPolicyPeer>
+                                {
+                                    new V1NetworkPolicyPeer
+                                    {
+                                        NamespaceSelector = new V1LabelSelector
+                                        {
+                                            MatchLabels = GetRunnerNamespaceSelector()
+                                        }
+                                    }
+                                }
                             }
                         },
                         Egress = new List<V1NetworkPolicyEgressRule>
@@ -308,6 +321,11 @@ namespace KubernetesWorkflow
         private IDictionary<string, string> GetSelector()
         {
             return new Dictionary<string, string> { { "codex-test-node", "dist-test-" + workflowNumberSource.WorkflowNumber } };
+        }
+
+        private IDictionary<string, string> GetRunnerNamespaceSelector()
+        {
+            return new Dictionary<string, string> { { "kubernetes.io/metadata.name", "default" } };
         }
 
         private V1ObjectMeta CreateDeploymentMetadata()
