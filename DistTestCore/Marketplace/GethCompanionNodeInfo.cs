@@ -17,7 +17,7 @@ namespace DistTestCore.Marketplace
         
         public NethereumInteraction StartInteraction(BaseLog log, GethAccount account)
         {
-            var ip = RunningContainer.Pod.Cluster.IP;
+            var ip = RunningContainer.Pod.Cluster.HostAddress;
             var port = RunningContainer.ServicePorts[0].Number;
             var privateKey = account.PrivateKey;
 

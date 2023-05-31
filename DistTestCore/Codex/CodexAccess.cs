@@ -91,7 +91,7 @@ namespace DistTestCore.Codex
 
         private Http Http(TimeSpan? timeoutOverride = null)
         {
-            var ip = Container.Pod.Cluster.IP;
+            var ip = Container.Pod.Cluster.HostAddress;
             var port = Container.ServicePorts[0].Number;
             return new Http(log, timeSet, ip, port, baseUrl: "/api/codex/v1", timeoutOverride);
         }
