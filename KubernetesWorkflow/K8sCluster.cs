@@ -52,7 +52,7 @@ namespace KubernetesWorkflow
             var host = config.Host.Replace("https://", "");
             if (host.Contains(":"))
             {
-                HostAddress = host.Substring(0, host.IndexOf(':'));
+                HostAddress = "http://" + host.Substring(0, host.IndexOf(':'));
             }
             else
             {

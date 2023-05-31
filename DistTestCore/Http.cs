@@ -10,16 +10,16 @@ namespace DistTestCore
     {
         private readonly BaseLog log;
         private readonly ITimeSet timeSet;
-        private readonly string ip;
+        private readonly string host;
         private readonly int port;
         private readonly string baseUrl;
         private readonly TimeSpan? timeoutOverride;
 
-        public Http(BaseLog log, ITimeSet timeSet, string ip, int port, string baseUrl, TimeSpan? timeoutOverride = null)
+        public Http(BaseLog log, ITimeSet timeSet, string host, int port, string baseUrl, TimeSpan? timeoutOverride = null)
         {
             this.log = log;
             this.timeSet = timeSet;
-            this.ip = ip;
+            this.host = host;
             this.port = port;
             this.baseUrl = baseUrl;
             this.timeoutOverride = timeoutOverride;
@@ -110,7 +110,7 @@ namespace DistTestCore
 
         private string GetUrl()
         {
-            return $"http://{ip}:{port}{baseUrl}";
+            return $"{host}:{port}{baseUrl}";
         }
 
         private void Log(string url, string message)
