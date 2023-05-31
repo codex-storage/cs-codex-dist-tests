@@ -19,7 +19,30 @@ namespace DistTestCore.Codex
 
         public CodexDebugResponse GetDebugInfo()
         {
-            return Http().HttpGetJson<CodexDebugResponse>("debug/info");
+            return Http(TimeSpan.FromSeconds(2)).HttpGetJson<CodexDebugResponse>("debug/info");
+        }
+
+        public CodexDebugPeerResponse GetDebugPeer(string peerId)
+        {
+            return GetDebugPeer(peerId, TimeSpan.FromSeconds(2));
+        }
+
+        public CodexDebugPeerResponse GetDebugPeer(string peerId, TimeSpan timeout)
+        {
+            var http = Http(timeout);
+            var str = http.HttpGetString($"debug/peer/{peerId}");
+
+            if (str.ToLowerInvariant() == "unable to find peer!")
+            {
+                return new CodexDebugPeerResponse
+                {
+                    IsPeerFound = false
+                };
+            }
+
+            var result = http.TryJsonDeserialize<CodexDebugPeerResponse>(str);
+            result.IsPeerFound = true;
+            return result;
         }
 
         public string UploadFile(FileStream fileStream)
@@ -42,6 +65,11 @@ namespace DistTestCore.Codex
             return Http().HttpPostJson($"storage/request/{contentId}", request);
         }
 
+        public string ConnectToPeer(string peerId, string peerMultiAddress)
+        {
+            return Http().HttpGetString($"connect/{peerId}?addrs={peerMultiAddress}");
+        }
+
         public void EnsureOnline()
         {
             try
@@ -51,7 +79,8 @@ namespace DistTestCore.Codex
 
                 var nodePeerId = debugInfo.id;
                 var nodeName = Container.Name;
-                log.AddStringReplace(nodePeerId, $"___{nodeName}___");
+                log.AddStringReplace(nodePeerId, nodeName);
+                log.AddStringReplace(debugInfo.table.localNode.nodeId, nodeName);
             }
             catch (Exception e)
             {
@@ -60,16 +89,11 @@ namespace DistTestCore.Codex
             }
         }
 
-        private Http Http()
+        private Http Http(TimeSpan? timeoutOverride = null)
         {
-            var ip = Container.Pod.Cluster.IP;
+            var ip = Container.Pod.Cluster.HostAddress;
             var port = Container.ServicePorts[0].Number;
-            return new Http(log, timeSet, ip, port, baseUrl: "/api/codex/v1");
-        }
-
-        public string ConnectToPeer(string peerId, string peerMultiAddress)
-        {
-            return Http().HttpGetString($"connect/{peerId}?addrs={peerMultiAddress}");
+            return new Http(log, timeSet, ip, port, baseUrl: "/api/codex/v1", timeoutOverride);
         }
     }
 
@@ -82,6 +106,22 @@ namespace DistTestCore.Codex
         public EnginePeerResponse[] enginePeers { get; set; } = Array.Empty<EnginePeerResponse>();
         public SwitchPeerResponse[] switchPeers { get; set; } = Array.Empty<SwitchPeerResponse>();
         public CodexDebugVersionResponse codex { get; set; } = new();
+        public CodexDebugTableResponse table { get; set; } = new();
+    }
+
+    public class CodexDebugTableResponse
+    {
+        public CodexDebugTableNodeResponse localNode { get; set; } = new();
+        public CodexDebugTableNodeResponse[] nodes { get; set; } = Array.Empty<CodexDebugTableNodeResponse>();
+    }
+
+    public class CodexDebugTableNodeResponse
+    {
+        public string nodeId { get; set; } = string.Empty;
+        public string peerId { get; set; } = string.Empty;
+        public string record { get; set; } = string.Empty;
+        public string address { get; set; } = string.Empty;
+        public bool seen { get; set; }
     }
 
     public class EnginePeerResponse
@@ -108,6 +148,20 @@ namespace DistTestCore.Codex
     {
         public string version { get; set; } = string.Empty;
         public string revision { get; set; } = string.Empty;
+    }
+
+    public class CodexDebugPeerResponse
+    {
+        public bool IsPeerFound { get; set; }
+
+        public string peerId { get; set; } = string.Empty;
+        public long seqNo { get; set; }
+        public CodexDebugPeerAddressResponse[] addresses { get; set; } = Array.Empty<CodexDebugPeerAddressResponse>();
+    }
+
+    public class CodexDebugPeerAddressResponse
+    {
+        public string address { get; set; } = string.Empty;
     }
 
     public class CodexSalesAvailabilityRequest

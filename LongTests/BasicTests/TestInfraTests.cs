@@ -1,5 +1,4 @@
 ﻿using DistTestCore;
-using DistTestCore.Codex;
 using NUnit.Framework;
 
 namespace TestsLong.BasicTests
@@ -32,7 +31,6 @@ namespace TestsLong.BasicTests
         public void DownloadConsistencyTest()
         {
             var primary = SetupCodexNode(s => s
-                            .WithLogLevel(CodexLogLevel.Trace)
                             .WithStorageQuota(2.MB()));
 
             var testFile = GenerateTestFile(1.MB());

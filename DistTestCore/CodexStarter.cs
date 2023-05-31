@@ -1,6 +1,7 @@
 ﻿using DistTestCore.Codex;
 using DistTestCore.Marketplace;
 using KubernetesWorkflow;
+using Logging;
 
 namespace DistTestCore
 {
@@ -74,7 +75,7 @@ namespace DistTestCore
         {
             var group = new CodexNodeGroup(lifecycle, codexSetup, runningContainers, codexNodeFactory);
             RunningGroups.Add(group);
-            group.EnsureOnline();
+            Stopwatch.Measure(lifecycle.Log, "EnsureOnline", group.EnsureOnline, debug: true);
             return group;
         }
 

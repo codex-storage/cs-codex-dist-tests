@@ -10,12 +10,12 @@ namespace KubernetesWorkflow
         }
        
         public Configuration Configuration { get; }
-        public string IP { get; private set; } = string.Empty;
+        public string HostAddress { get; private set; } = string.Empty;
 
         public KubernetesClientConfiguration GetK8sClientConfig()
         {
             var config = GetConfig();
-            UpdateIp(config);
+            UpdateHostAddress(config);
             return config;
         }
 
@@ -47,10 +47,17 @@ namespace KubernetesWorkflow
             }
         }
 
-        private void UpdateIp(KubernetesClientConfiguration config)
+        private void UpdateHostAddress(KubernetesClientConfiguration config)
         {
             var host = config.Host.Replace("https://", "");
-            IP = host.Substring(0, host.IndexOf(':'));
+            if (host.Contains(":"))
+            {
+                HostAddress = host.Substring(0, host.IndexOf(':'));
+            }
+            else
+            {
+                HostAddress = config.Host;
+            }
         }
     }
 }

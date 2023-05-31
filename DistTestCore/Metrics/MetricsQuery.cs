@@ -16,7 +16,7 @@ namespace DistTestCore.Metrics
             http = new Http(
                 log,
                 timeSet,
-                runningContainers.RunningPod.Cluster.IP,
+                runningContainers.RunningPod.Cluster.HostAddress,
                 runningContainers.Containers[0].ServicePorts[0].Number,
                 "api/v1");
         }

@@ -10,6 +10,8 @@ namespace DistTestCore
     {
         string GetName();
         CodexDebugResponse GetDebugInfo();
+        CodexDebugPeerResponse GetDebugPeer(string peerId);
+        CodexDebugPeerResponse GetDebugPeer(string peerId, TimeSpan timeout);
         ContentId UploadFile(TestFile file);
         TestFile? DownloadContent(ContentId contentId);
         void ConnectToPeer(IOnlineCodexNode node);
@@ -47,8 +49,19 @@ namespace DistTestCore
         public CodexDebugResponse GetDebugInfo()
         {
             var debugInfo = CodexAccess.GetDebugInfo();
-            Log($"Got DebugInfo with id: '{debugInfo.id}'.");
+            var known = string.Join(",", debugInfo.table.nodes.Select(n => n.peerId));
+            Log($"Got DebugInfo with id: '{debugInfo.id}'. This node knows: {known}");
             return debugInfo;
+        }
+
+        public CodexDebugPeerResponse GetDebugPeer(string peerId)
+        {
+            return CodexAccess.GetDebugPeer(peerId);
+        }
+
+        public CodexDebugPeerResponse GetDebugPeer(string peerId, TimeSpan timeout)
+        {
+            return CodexAccess.GetDebugPeer(peerId, timeout);
         }
 
         public ContentId UploadFile(TestFile file)

@@ -13,6 +13,7 @@ namespace DistTestCore.Codex
             public const string DockerImage = "thatbenbierens/codexlocal:latest";
         #endif
         public const string MetricsPortTag = "metrics_port";
+        public const string DiscoveryPortTag = "discovery-port";
 
         protected override string Image => DockerImage;
 
@@ -22,7 +23,8 @@ namespace DistTestCore.Codex
 
             AddExposedPortAndVar("API_PORT");
             AddEnvVar("DATA_DIR", $"datadir{ContainerNumber}");
-            AddInternalPortAndVar("DISC_PORT");
+            AddInternalPortAndVar("DISC_PORT", DiscoveryPortTag);
+            AddEnvVar("LOG_LEVEL", config.LogLevel.ToString()!.ToUpperInvariant());
 
             var listenPort = AddInternalPort();
             AddEnvVar("LISTEN_ADDRS", $"/ip4/0.0.0.0/tcp/{listenPort.Number}");
@@ -30,11 +32,6 @@ namespace DistTestCore.Codex
             if (!string.IsNullOrEmpty(config.BootstrapSpr))
             {
                 AddEnvVar("BOOTSTRAP_SPR", config.BootstrapSpr);
-            }
-
-            if (config.LogLevel != null)
-            {
-                AddEnvVar("LOG_LEVEL", config.LogLevel.ToString()!.ToUpperInvariant());
             }
             if (config.StorageQuota != null)
             {

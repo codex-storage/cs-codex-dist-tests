@@ -8,7 +8,6 @@ namespace DistTestCore
     {
         ICodexSetup WithName(string name);
         ICodexSetup At(Location location);
-        ICodexSetup WithLogLevel(CodexLogLevel level);
         ICodexSetup WithBootstrapNode(IOnlineCodexNode node);
         ICodexSetup WithStorageQuota(ByteSize storageQuota);
         ICodexSetup EnableMetrics();
@@ -20,7 +19,8 @@ namespace DistTestCore
     {
         public int NumberOfNodes { get; }
 
-        public CodexSetup(int numberOfNodes)
+        public CodexSetup(int numberOfNodes, CodexLogLevel logLevel)
+            : base(logLevel)
         {
             NumberOfNodes = numberOfNodes;
         }
@@ -40,12 +40,6 @@ namespace DistTestCore
         public ICodexSetup WithBootstrapNode(IOnlineCodexNode node)
         {
             BootstrapSpr = node.GetDebugInfo().spr;
-            return this;
-        }
-
-        public ICodexSetup WithLogLevel(CodexLogLevel level)
-        {
-            LogLevel = level;
             return this;
         }
 
@@ -80,7 +74,7 @@ namespace DistTestCore
 
         private IEnumerable<string> DescribeArgs()
         {
-            if (LogLevel != null) yield return $"LogLevel={LogLevel}";
+            yield return $"LogLevel={LogLevel}";
             if (BootstrapSpr != null) yield return $"BootstrapNode={BootstrapSpr}";
             if (StorageQuota != null) yield return $"StorageQuote={StorageQuota}";
         }

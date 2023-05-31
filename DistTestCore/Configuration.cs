@@ -1,4 +1,5 @@
-﻿using KubernetesWorkflow;
+﻿using DistTestCore.Codex;
+using KubernetesWorkflow;
 
 namespace DistTestCore
 {
@@ -27,6 +28,11 @@ namespace DistTestCore
         public string GetFileManagerFolder()
         {
             return "TestDataFiles";
+        }
+
+        public CodexLogLevel GetCodexLogLevel()
+        {
+            return CodexLogLevel.Trace;
         }
     }
 }

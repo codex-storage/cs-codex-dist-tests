@@ -56,30 +56,6 @@ namespace DistTestCore.Marketplace
             return marketplaceAbi;
         }
 
-        private string Retry(Func<string> fetch)
-        {
-            var result = string.Empty;
-            Time.WaitUntil(() =>
-            {
-                result = Catch(fetch);
-                return !string.IsNullOrEmpty(result);
-            }, TimeSpan.FromMinutes(1), TimeSpan.FromSeconds(3));
-
-            return result;
-        }
-
-        private string Catch(Func<string> fetch)
-        {
-            try
-            {
-                return fetch();
-            }
-            catch
-            {
-                return string.Empty;
-            }
-        }
-
         private string FetchAccountsCsv()
         {
             return workflow.ExecuteCommand(container, "cat", GethContainerRecipe.AccountsFilename);
@@ -115,6 +91,11 @@ namespace DistTestCore.Marketplace
             var account = tokens[0];
             var privateKey = tokens[1];
             return new GethAccount(account, privateKey);
+        }
+
+        private static string Retry(Func<string> fetch)
+        {
+            return Time.Retry(fetch, nameof(ContainerInfoExtractor));
         }
     }
 
