@@ -1,4 +1,5 @@
 ﻿using DistTestCore.Codex;
+using DistTestCore.Helpers;
 using NUnit.Framework;
 using NUnit.Framework.Constraints;
 using System.Numerics;
@@ -97,10 +98,7 @@ namespace DistTestCore.Marketplace
 
         public void AssertThatBalance(IResolveConstraint constraint, string message = "")
         {
-            Time.Retry(() =>
-            {
-                Assert.That(GetBalance(), constraint, message);
-            }, nameof(AssertThatBalance));
+            AssertHelpers.RetryAssert(constraint, GetBalance, message);
         }
 
         public TestToken GetBalance()

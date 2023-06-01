@@ -22,6 +22,11 @@
             result += $"{d.Seconds} secs";
             return result;
         }
+        
+        public static void WaitUntil(Func<bool> predicate)
+        {
+            WaitUntil(predicate, TimeSpan.FromMinutes(1), TimeSpan.FromSeconds(1));
+        }
 
         public static void WaitUntil(Func<bool> predicate, TimeSpan timeout, TimeSpan retryTime)
         {
