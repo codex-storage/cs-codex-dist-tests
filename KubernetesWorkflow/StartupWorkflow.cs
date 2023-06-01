@@ -98,7 +98,7 @@ namespace KubernetesWorkflow
         {
             var serviceName = "service-" + numberSource.WorkflowNumber;
             var namespaceName = cluster.Configuration.K8sNamespacePrefix + testNamespace;
-            var port = recipe.ExposedPorts.First().Number;
+            var port = GetInternalPort(recipe);
 
             return new RunningContainerAddress(
                 $"http://{serviceName}.{namespaceName}.svc.cluster.local",
@@ -108,6 +108,12 @@ namespace KubernetesWorkflow
         private static int GetServicePort(Port[] servicePorts)
         {
             if (servicePorts.Any()) return servicePorts.First().Number;
+            return 0;
+        }
+
+        private static int GetInternalPort(ContainerRecipe recipe)
+        {
+            if (recipe.ExposedPorts.Any()) return recipe.ExposedPorts.First().Number;
             return 0;
         }
 
