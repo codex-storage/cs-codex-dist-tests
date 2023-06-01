@@ -107,6 +107,7 @@ namespace DistTestCore.Marketplace
 
         public string GetPubKey()
         {
+            if (string.IsNullOrEmpty(pubKey)) throw new Exception("Not found yet exception.");
             return pubKey;
         }
 

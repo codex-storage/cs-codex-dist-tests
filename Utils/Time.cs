@@ -41,22 +41,22 @@
 
         public static void Retry(Action action, string description)
         {
-            Retry(action, TimeSpan.FromMinutes(2), description);
+            Retry(action, TimeSpan.FromMinutes(1), description);
         }
 
         public static T Retry<T>(Func<T> action, string description)
         {
-            return Retry(action, TimeSpan.FromMinutes(2), description);
+            return Retry(action, TimeSpan.FromMinutes(1), description);
         }
 
         public static void Retry(Action action, TimeSpan timeout, string description)
         {
-            Retry(action, timeout, TimeSpan.FromSeconds(2), description);
+            Retry(action, timeout, TimeSpan.FromSeconds(1), description);
         }
 
         public static T Retry<T>(Func<T> action, TimeSpan timeout, string description)
         {
-            return Retry(action, timeout, TimeSpan.FromSeconds(2), description);
+            return Retry(action, timeout, TimeSpan.FromSeconds(1), description);
         }
 
         public static void Retry(Action action, TimeSpan timeout, TimeSpan retryTime, string description)
