@@ -14,7 +14,7 @@ namespace DistTestCore.Marketplace
 
         public MarketplaceInfo Start(GethBootstrapNodeInfo bootstrapNode)
         {
-            LogStart("Deploying Codex contracts...");
+            LogStart("Deploying Codex Marketplace...");
 
             var workflow = workflowCreator.CreateWorkflow();
             var startupConfig = CreateStartupConfig(bootstrapNode.RunningContainers.Containers[0]);
@@ -29,6 +29,7 @@ namespace DistTestCore.Marketplace
                 workflow.DownloadContainerLog(container, logHandler);
                 return logHandler.Found;
             });
+            Log("Contracts deployed. Extracting addresses...");
 
             var extractor = new ContainerInfoExtractor(lifecycle.Log, workflow, container);
             var marketplaceAddress = extractor.ExtractMarketplaceAddress();
@@ -37,14 +38,14 @@ namespace DistTestCore.Marketplace
             var interaction = bootstrapNode.StartInteraction(lifecycle);
             var tokenAddress = interaction.GetTokenAddress(marketplaceAddress);
 
-            LogEnd("Contracts deployed.");
+            LogEnd("Extract completed. Marketplace deployed.");
 
             return new MarketplaceInfo(marketplaceAddress, abi, tokenAddress);
         }
 
         private void WaitUntil(Func<bool> predicate)
         {
-            Time.WaitUntil(predicate, TimeSpan.FromMinutes(2), TimeSpan.FromSeconds(1));
+            Time.WaitUntil(predicate, TimeSpan.FromMinutes(3), TimeSpan.FromSeconds(2));
         }
 
         private StartupConfig CreateStartupConfig(RunningContainer bootstrapContainer)
