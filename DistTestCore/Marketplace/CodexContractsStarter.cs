@@ -24,7 +24,7 @@ namespace DistTestCore.Marketplace
 
             WaitUntil(() =>
             {
-                var logHandler = new ContractsReadyLogHandler();
+                var logHandler = new ContractsReadyLogHandler(Debug);
                 workflow.DownloadContainerLog(container, logHandler);
                 return logHandler.Found;
             });
@@ -76,12 +76,20 @@ namespace DistTestCore.Marketplace
         private const string RequiredCompiledString = "Solidity files successfully";
         // When script is done, it prints the ready-string.
         private const string ReadyString = "Done! Sleeping indefinitely...";
+        private readonly Action<string> debug;
+
+        public ContractsReadyLogHandler(Action<string> debug)
+        {
+            this.debug = debug;
+            debug($"Looking for '{RequiredCompiledString}' and '{ReadyString}' in container logs...");
+        }
 
         public bool SeenCompileString { get; private set; }
         public bool Found { get; private set; }
 
         protected override void ProcessLine(string line)
         {
+            debug(line);
             if (line.Contains(RequiredCompiledString)) SeenCompileString = true;
 
             if (SeenCompileString && line.Contains(ReadyString)) Found = true;
