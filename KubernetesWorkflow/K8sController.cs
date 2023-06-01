@@ -59,10 +59,15 @@ namespace KubernetesWorkflow
 
         public string ExecuteCommand(RunningPod pod, string containerName, string command, params string[] args)
         {
-            log.Debug($"{containerName}: {command} ({string.Join(",", args)})");
+            var cmdAndArgs = $"{containerName}: {command} ({string.Join(",", args)})";
+            log.Debug(cmdAndArgs);
+
             var runner = new CommandRunner(client, K8sTestNamespace, pod, containerName, command, args);
             runner.Run();
-            return runner.GetStdOut();
+            var result = runner.GetStdOut();
+
+            log.Debug($"{cmdAndArgs} = '{result}'");
+            return result;
         }
 
         public void DeleteAllResources()

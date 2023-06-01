@@ -50,7 +50,7 @@ namespace DistTestCore.Marketplace
             {
                 Time.WaitUntil(() =>
                 {
-                    var interaction = node.StartInteraction(lifecycle.Log, node.Accounts.First());
+                    var interaction = node.StartInteraction(lifecycle, node.Accounts.First());
                     return interaction.IsSynced(marketplace.Marketplace.Address, marketplace.Marketplace.Abi);
                 }, TimeSpan.FromMinutes(1), TimeSpan.FromSeconds(3));
             }
