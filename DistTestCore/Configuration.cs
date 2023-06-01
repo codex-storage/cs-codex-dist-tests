@@ -34,5 +34,25 @@ namespace DistTestCore
         {
             return CodexLogLevel.Trace;
         }
+
+        public TestRunnerLocation GetTestRunnerLocation()
+        {
+            return TestRunnerLocation.ExternalToCluster;
+        }
+
+        public RunningContainerAddress GetAddress(RunningContainer container)
+        {
+            if (GetTestRunnerLocation() == TestRunnerLocation.InternalToCluster)
+            {
+                return container.ClusterInternalAddress;
+            }
+            return container.ClusterExternalAddress;
+        }
+    }
+
+    public enum TestRunnerLocation
+    {
+        ExternalToCluster,
+        InternalToCluster,
     }
 }
