@@ -82,7 +82,7 @@ namespace KubernetesWorkflow
 
                 return new RunningContainer(runningPod, r, servicePorts, startupConfig,
                     GetContainerExternalAddress(runningPod, servicePorts),
-                    GetContainerInternalAddress(servicePorts));
+                    GetContainerInternalAddress(runningPod, r, servicePorts));
 
             }).ToArray();
         }
@@ -94,14 +94,17 @@ namespace KubernetesWorkflow
                 GetServicePort(servicePorts));
         }
 
-        private RunningContainerAddress GetContainerInternalAddress(Port[] servicePorts)
+        private RunningContainerAddress GetContainerInternalAddress(RunningPod pod, ContainerRecipe recipe, Port[] servicePorts)
         {
-            var serviceName = "service-" + numberSource.WorkflowNumber;
-            var namespaceName = cluster.Configuration.K8sNamespacePrefix + testNamespace;
+            var ip = pod.Ip;
+            var port = recipe.ExposedPorts.First().Number;
+            //var serviceName = "service-" + numberSource.WorkflowNumber;
+            //var namespaceName = cluster.Configuration.K8sNamespacePrefix + testNamespace;
 
             return new RunningContainerAddress(
-                $"http://{serviceName}.{namespaceName}.svc.cluster.local",
-                GetServicePort(servicePorts));
+                //$"http://{serviceName}.{namespaceName}.svc.cluster.local",
+                $"http://{ip}",
+                port);
         }
 
         private static int GetServicePort(Port[] servicePorts)
