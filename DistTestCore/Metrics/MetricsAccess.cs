@@ -28,12 +28,15 @@ namespace DistTestCore.Metrics
 
         public void AssertThat(string metricName, IResolveConstraint constraint, string message = "")
         {
-            var metricSet = GetMetricWithTimeout(metricName);
-            var metricValue = metricSet.Values[0].Value;
+            Time.Retry(() =>
+            {
+                var metricSet = GetMetricWithTimeout(metricName);
+                var metricValue = metricSet.Values[0].Value;
 
-            log.Log($"{node.Name} metric '{metricName}' = {metricValue}");
+                log.Log($"{node.Name} metric '{metricName}' = {metricValue}");
 
-            Assert.That(metricValue, constraint, message);
+                Assert.That(metricValue, constraint, message);
+            }, nameof(AssertThat));
         }
 
         public Metrics? GetAllMetrics()
