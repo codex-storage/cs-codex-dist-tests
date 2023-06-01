@@ -22,7 +22,6 @@ namespace KubernetesWorkflow
             client = new K8sClient(cluster.GetK8sClientConfig());
 
             K8sTestNamespace = cluster.Configuration.K8sNamespacePrefix + testNamespace;
-            log.Debug($"Test namespace: '{K8sTestNamespace}'");
         }
 
         public void Dispose()

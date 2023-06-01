@@ -5,7 +5,6 @@ namespace DistTestCore.Marketplace
 {
     public class CodexContractsStarter : BaseStarter
     {
-        private const string readyString = "Done! Sleeping indefinitely...";
 
         public CodexContractsStarter(TestLifecycle lifecycle, WorkflowCreator workflowCreator)
             : base(lifecycle, workflowCreator)
@@ -25,7 +24,7 @@ namespace DistTestCore.Marketplace
 
             WaitUntil(() =>
             {
-                var logHandler = new ContractsReadyLogHandler(readyString);
+                var logHandler = new ContractsReadyLogHandler();
                 workflow.DownloadContainerLog(container, logHandler);
                 return logHandler.Found;
             });
@@ -73,18 +72,19 @@ namespace DistTestCore.Marketplace
 
     public class ContractsReadyLogHandler : LogHandler
     {
-        private readonly string targetString;
+        // Log should contain 'Compiled 15 Solidity files successfully' at some point.
+        private const string RequiredCompiledString = "Solidity files successfully";
+        // When script is done, it prints the ready-string.
+        private const string ReadyString = "Done! Sleeping indefinitely...";
 
-        public ContractsReadyLogHandler(string targetString)
-        {
-            this.targetString = targetString;
-        }
-
+        public bool SeenCompileString { get; private set; }
         public bool Found { get; private set; }
 
         protected override void ProcessLine(string line)
         {
-            if (line.Contains(targetString)) Found = true;
+            if (line.Contains(RequiredCompiledString)) SeenCompileString = true;
+
+            if (SeenCompileString && line.Contains(ReadyString)) Found = true;
         }
     }
 }
