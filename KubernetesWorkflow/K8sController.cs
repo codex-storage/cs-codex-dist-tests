@@ -116,15 +116,29 @@ namespace KubernetesWorkflow
                 cluster.AvailableK8sNodes = GetAvailableK8sNodes();
                 if (cluster.AvailableK8sNodes.Length < 3)
                 {
-                    log.Debug($"Warning: For full location support, at least 3 Kubernetes Nodes are required in the cluster. Nodes found: '{string.Join(",", cluster.AvailableK8sNodes)}'.");
+                    log.Debug($"Warning: For full location support, at least 3 Kubernetes Nodes are required in the cluster. Nodes found: '{string.Join(",", cluster.AvailableK8sNodes.Select(p => $"{p.Key}={p.Value}"))}'.");
                 }
             }
         }
 
-        private string[] GetAvailableK8sNodes()
+        private K8sNodeLabel[] GetAvailableK8sNodes()
         {
             var nodes = client.Run(c => c.ListNode());
-            return nodes.Items.Select(i => i.Metadata.Name).ToArray();
+
+            var optionals = nodes.Items.Select(i => CreateNodeLabel(i));
+            return optionals.Where(n => n != null).Select(n => n!).ToArray();
+        }
+
+        private K8sNodeLabel? CreateNodeLabel(V1Node i)
+        {
+            var keys = i.Metadata.Labels.Keys;
+            var hostnameKey = keys.SingleOrDefault(k => k.ToLowerInvariant().Contains("hostname"));
+            if (hostnameKey != null)
+            {
+                var hostnameValue = i.Metadata.Labels[hostnameKey];
+                return new K8sNodeLabel(hostnameKey, hostnameValue);
+            }
+            return null;
         }
 
         #endregion
@@ -337,11 +351,12 @@ namespace KubernetesWorkflow
 
         private IDictionary<string, string> CreateNodeSelector(Location location)
         {
-            if (location == Location.Unspecified) return new Dictionary<string, string>();
+            var nodeLabel = cluster.GetNodeLabelForLocation(location);
+            if (nodeLabel == null) return new Dictionary<string, string>();
 
             return new Dictionary<string, string>
             {
-                { "codex-test-location", cluster.GetNodeLabelForLocation(location) }
+                { nodeLabel.Key, nodeLabel.Value }
             };
         }
 

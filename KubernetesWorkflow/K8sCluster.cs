@@ -11,7 +11,7 @@ namespace KubernetesWorkflow
        
         public Configuration Configuration { get; }
         public string HostAddress { get; private set; } = string.Empty;
-        public string[] AvailableK8sNodes { get; set; } = new string[0];
+        public K8sNodeLabel[] AvailableK8sNodes { get; set; } = new K8sNodeLabel[0];
 
         public KubernetesClientConfiguration GetK8sClientConfig()
         {
@@ -20,7 +20,7 @@ namespace KubernetesWorkflow
             return config;
         }
 
-        public string GetNodeLabelForLocation(Location location)
+        public K8sNodeLabel? GetNodeLabelForLocation(Location location)
         {
             switch (location)
             {
@@ -31,7 +31,7 @@ namespace KubernetesWorkflow
                 case Location.Three:
                     return K8sNodeIfAvailable(2);
             }
-            return string.Empty;
+            return null;
         }
 
         public TimeSpan K8sOperationTimeout()
@@ -69,10 +69,22 @@ namespace KubernetesWorkflow
             }
         }
 
-        private string K8sNodeIfAvailable(int index)
+        private K8sNodeLabel? K8sNodeIfAvailable(int index)
         {
-            if (AvailableK8sNodes.Length <= index) return string.Empty;
+            if (AvailableK8sNodes.Length <= index) return null;
             return AvailableK8sNodes[index];
         }
+    }
+
+    public class K8sNodeLabel
+    {
+        public K8sNodeLabel(string key, string value)
+        {
+            Key = key;
+            Value = value;
+        }
+
+        public string Key { get; }
+        public string Value { get; }
     }
 }
