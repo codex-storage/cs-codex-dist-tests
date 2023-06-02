@@ -26,7 +26,7 @@ namespace NethereumWorkflow
         private Web3 CreateWeb3()
         {
             var account = new Nethereum.Web3.Accounts.Account(privateKey);
-            return new Web3(account, $"http://{ip}:{port}");
+            return new Web3(account, $"{ip}:{port}");
         }
     }
 }

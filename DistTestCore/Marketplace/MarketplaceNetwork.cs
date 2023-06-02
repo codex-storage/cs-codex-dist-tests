@@ -1,5 +1,4 @@
-﻿using Logging;
-using NethereumWorkflow;
+﻿using NethereumWorkflow;
 
 namespace DistTestCore.Marketplace
 {
@@ -14,9 +13,9 @@ namespace DistTestCore.Marketplace
         public GethBootstrapNodeInfo Bootstrap { get; }
         public MarketplaceInfo Marketplace { get; }
 
-        public NethereumInteraction StartInteraction(BaseLog log)
+        public NethereumInteraction StartInteraction(TestLifecycle lifecycle)
         {
-            return Bootstrap.StartInteraction(log);
+            return Bootstrap.StartInteraction(lifecycle);
         }
     }
 }

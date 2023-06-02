@@ -13,6 +13,7 @@ namespace DistTestCore
         public TestLifecycle(TestLog log, Configuration configuration, ITimeSet timeSet)
         {
             Log = log;
+            Configuration = configuration;
             TimeSet = timeSet;
             workflowCreator = new WorkflowCreator(log, configuration.GetK8sConfiguration(timeSet));
 
@@ -24,6 +25,7 @@ namespace DistTestCore
         }
 
         public TestLog Log { get; }
+        public Configuration Configuration { get; }
         public ITimeSet TimeSet { get; }
         public FileManager FileManager { get; }
         public CodexStarter CodexStarter { get; }

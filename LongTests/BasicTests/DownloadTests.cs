@@ -1,7 +1,7 @@
 using DistTestCore;
 using NUnit.Framework;
 
-namespace Tests.ParallelTests
+namespace TestsLong.BasicTests
 {
     [TestFixture]
     public class DownloadTests : DistTest
@@ -23,7 +23,7 @@ namespace Tests.ParallelTests
             var testFile = GenerateTestFile(filesizeMb.MB());
             var contentId = host.UploadFile(testFile);
             var list = new List<Task<TestFile?>>();
-            
+
             foreach (var node in group)
             {
                 list.Add(Task.Run(() => { return node.DownloadContent(contentId); }));

@@ -1,5 +1,4 @@
-﻿using System.Runtime.InteropServices;
-using DistTestCore.Marketplace;
+﻿using DistTestCore.Marketplace;
 using KubernetesWorkflow;
 
 namespace DistTestCore.Codex
@@ -56,6 +55,7 @@ namespace DistTestCore.Codex
                 AddEnvVar("ETH_PROVIDER", $"ws://{ip}:{port}");
                 AddEnvVar("ETH_ACCOUNT", companionNodeAccount.Account);
                 AddEnvVar("ETH_MARKETPLACE_ADDRESS", gethConfig.MarketplaceNetwork.Marketplace.Address);
+                AddEnvVar("PERSISTENCE", "1");
             }
         }
     }

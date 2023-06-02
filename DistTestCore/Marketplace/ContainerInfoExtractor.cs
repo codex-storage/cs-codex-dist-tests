@@ -79,7 +79,7 @@ namespace DistTestCore.Marketplace
 
         private string FetchPubKey()
         {
-            var enodeFinder = new PubKeyFinder();
+            var enodeFinder = new PubKeyFinder(s => log.Debug(s));
             workflow.DownloadContainerLog(container, enodeFinder);
             return enodeFinder.GetPubKey();
         }
@@ -103,15 +103,24 @@ namespace DistTestCore.Marketplace
     {
         private const string openTag = "self=enode://";
         private const string openTagQuote = "self=\"enode://";
+        private readonly Action<string> debug;
         private string pubKey = string.Empty;
+
+        public PubKeyFinder(Action<string> debug)
+        {
+            this.debug = debug;
+            debug($"Looking for '{openTag}' in container logs...");
+        }
 
         public string GetPubKey()
         {
+            if (string.IsNullOrEmpty(pubKey)) throw new Exception("Not found yet exception.");
             return pubKey;
         }
 
         protected override void ProcessLine(string line)
         {
+            debug(line);
             if (line.Contains(openTag))
             {
                 ExtractPubKey(openTag, line);

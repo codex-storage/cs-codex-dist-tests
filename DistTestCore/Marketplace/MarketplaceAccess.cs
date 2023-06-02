@@ -1,5 +1,5 @@
 ﻿using DistTestCore.Codex;
-using Logging;
+using DistTestCore.Helpers;
 using NUnit.Framework;
 using NUnit.Framework.Constraints;
 using System.Numerics;
@@ -17,14 +17,14 @@ namespace DistTestCore.Marketplace
 
     public class MarketplaceAccess : IMarketplaceAccess
     {
-        private readonly TestLog log;
+        private readonly TestLifecycle lifecycle;
         private readonly MarketplaceNetwork marketplaceNetwork;
         private readonly GethAccount account;
         private readonly CodexAccess codexAccess;
 
-        public MarketplaceAccess(TestLog log, MarketplaceNetwork marketplaceNetwork, GethAccount account, CodexAccess codexAccess)
+        public MarketplaceAccess(TestLifecycle lifecycle, MarketplaceNetwork marketplaceNetwork, GethAccount account, CodexAccess codexAccess)
         {
-            this.log = log;
+            this.lifecycle = lifecycle;
             this.marketplaceNetwork = marketplaceNetwork;
             this.account = account;
             this.codexAccess = codexAccess;
@@ -98,12 +98,12 @@ namespace DistTestCore.Marketplace
 
         public void AssertThatBalance(IResolveConstraint constraint, string message = "")
         {
-            Assert.That(GetBalance(), constraint, message);
+            AssertHelpers.RetryAssert(constraint, GetBalance, message);
         }
 
         public TestToken GetBalance()
         {
-            var interaction = marketplaceNetwork.StartInteraction(log);
+            var interaction = marketplaceNetwork.StartInteraction(lifecycle);
             var amount = interaction.GetBalance(marketplaceNetwork.Marketplace.TokenAddress, account.Account);
             var balance = new TestToken(amount);
 
@@ -114,7 +114,7 @@ namespace DistTestCore.Marketplace
 
         private void Log(string msg)
         {
-            log.Log($"{codexAccess.Container.Name} {msg}");
+            lifecycle.Log.Log($"{codexAccess.Container.Name} {msg}");
         }
     }
 

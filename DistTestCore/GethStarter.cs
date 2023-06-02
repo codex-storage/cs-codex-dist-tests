@@ -33,7 +33,7 @@ namespace DistTestCore
 
         private void TransferInitialBalance(MarketplaceNetwork marketplaceNetwork, MarketplaceInitialConfig marketplaceConfig, GethCompanionNodeInfo companionNode)
         {
-            var interaction = marketplaceNetwork.StartInteraction(lifecycle.Log);
+            var interaction = marketplaceNetwork.StartInteraction(lifecycle);
             var tokenAddress = marketplaceNetwork.Marketplace.TokenAddress;
 
             var accounts = companionNode.Accounts.Select(a => a.Account).ToArray();
@@ -52,7 +52,7 @@ namespace DistTestCore
 
         private IMarketplaceAccessFactory CreateMarketplaceAccessFactory(MarketplaceNetwork marketplaceNetwork)
         {
-            return new GethMarketplaceAccessFactory(lifecycle.Log, marketplaceNetwork);
+            return new GethMarketplaceAccessFactory(lifecycle, marketplaceNetwork);
         }
 
         private GethCompanionNodeInfo StartCompanionNode(CodexSetup codexSetup, MarketplaceNetwork marketplaceNetwork)

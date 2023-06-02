@@ -1,17 +1,14 @@
 ﻿using KubernetesWorkflow;
-using Logging;
 
 namespace DistTestCore.Codex
 {
     public class CodexAccess
     {
-        private readonly BaseLog log;
-        private readonly ITimeSet timeSet;
+        private readonly TestLifecycle lifecycle;
 
-        public CodexAccess(BaseLog log, ITimeSet timeSet, RunningContainer runningContainer)
+        public CodexAccess(TestLifecycle lifecycle, RunningContainer runningContainer)
         {
-            this.log = log;
-            this.timeSet = timeSet;
+            this.lifecycle = lifecycle;
             Container = runningContainer;
         }
 
@@ -79,21 +76,20 @@ namespace DistTestCore.Codex
 
                 var nodePeerId = debugInfo.id;
                 var nodeName = Container.Name;
-                log.AddStringReplace(nodePeerId, nodeName);
-                log.AddStringReplace(debugInfo.table.localNode.nodeId, nodeName);
+                lifecycle.Log.AddStringReplace(nodePeerId, nodeName);
+                lifecycle.Log.AddStringReplace(debugInfo.table.localNode.nodeId, nodeName);
             }
             catch (Exception e)
             {
-                log.Error($"Failed to start codex node: {e}. Test infra failure.");
+                lifecycle.Log.Error($"Failed to start codex node: {e}. Test infra failure.");
                 throw new InvalidOperationException($"Failed to start codex node. Test infra failure.", e);
             }
         }
 
         private Http Http(TimeSpan? timeoutOverride = null)
         {
-            var ip = Container.Pod.Cluster.HostAddress;
-            var port = Container.ServicePorts[0].Number;
-            return new Http(log, timeSet, ip, port, baseUrl: "/api/codex/v1", timeoutOverride);
+            var address = lifecycle.Configuration.GetAddress(Container);
+            return new Http(lifecycle.Log, lifecycle.TimeSet, address, baseUrl: "/api/codex/v1", timeoutOverride);
         }
     }
 
