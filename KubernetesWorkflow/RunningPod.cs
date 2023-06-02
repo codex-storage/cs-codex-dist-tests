@@ -20,6 +20,7 @@
 
         public Port[] GetServicePortsForContainerRecipe(ContainerRecipe containerRecipe)
         {
+            if (servicePortMap.ContainsKey(containerRecipe)) return Array.Empty<Port>();
             return servicePortMap[containerRecipe];
         }
     }
