@@ -6,7 +6,6 @@ namespace KubernetesWorkflow
     {
         private static object instanceLock = new object();
         private static ApplicationLifecycle? instance;
-        private readonly NumberSource servicePortNumberSource = new NumberSource(30001);
         private readonly NumberSource namespaceNumberSource = new NumberSource(0);
 
         private ApplicationLifecycle()
@@ -25,11 +24,6 @@ namespace KubernetesWorkflow
                     return instance;
                 }
             }
-        }
-
-        public NumberSource GetServiceNumberSource()
-        {
-            return servicePortNumberSource;
         }
 
         public string GetTestNamespace()

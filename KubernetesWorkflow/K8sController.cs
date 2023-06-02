@@ -439,7 +439,7 @@ namespace KubernetesWorkflow
         {
             var result = new Dictionary<ContainerRecipe, Port[]>();
 
-            var ports = CreateServicePorts(result, containerRecipes);
+            var ports = CreateServicePorts(containerRecipes);
 
             if (!ports.Any())
             {
@@ -462,7 +462,38 @@ namespace KubernetesWorkflow
 
             client.Run(c => c.CreateNamespacedService(serviceSpec, K8sTestNamespace));
 
+            ReadBackServiceAndMapPorts(serviceSpec, containerRecipes, result);
+
             return (serviceSpec.Metadata.Name, result);
+        }
+
+        private void ReadBackServiceAndMapPorts(V1Service serviceSpec, ContainerRecipe[] containerRecipes, Dictionary<ContainerRecipe, Port[]> result)
+        {
+            // For each container-recipe, we need to figure out which service-ports it was assigned by K8s.
+            var readback = client.Run(c => c.ReadNamespacedService(serviceSpec.Metadata.Name, K8sTestNamespace));
+            foreach (var r in containerRecipes)
+            {
+                if (r.ExposedPorts.Any())
+                {
+                    var firstExposedPort = r.ExposedPorts.First();
+                    var portName = GetNameForPort(r, firstExposedPort);
+
+                    var matchingServicePorts = readback.Spec.Ports.Where(p => p.Name == portName);
+                    if (matchingServicePorts.Any())
+                    {
+                        // These service ports belongs to this recipe.
+                        var optionals = matchingServicePorts.Select(p => MapNodePortIfAble(p, portName));
+                        var ports = optionals.Where(p => p != null).Select(p => p!).ToArray();
+                        result.Add(r, ports);
+                    }
+                }
+            }
+        }
+
+        private Port? MapNodePortIfAble(V1ServicePort p, string tag)
+        {
+            if (p.NodePort == null) return null;
+            return new Port(p.NodePort.Value, tag);
         }
 
         private void DeleteService(string serviceName)
@@ -479,36 +510,30 @@ namespace KubernetesWorkflow
             };
         }
 
-        private List<V1ServicePort> CreateServicePorts(Dictionary<ContainerRecipe, Port[]> servicePorts, ContainerRecipe[] recipes)
+        private List<V1ServicePort> CreateServicePorts(ContainerRecipe[] recipes)
         {
             var result = new List<V1ServicePort>();
             foreach (var recipe in recipes)
             {
-                result.AddRange(CreateServicePorts(servicePorts, recipe));
+                result.AddRange(CreateServicePorts(recipe));
             }
             return result;
         }
 
-        private List<V1ServicePort> CreateServicePorts(Dictionary<ContainerRecipe, Port[]> servicePorts, ContainerRecipe recipe)
+        private List<V1ServicePort> CreateServicePorts(ContainerRecipe recipe)
         {
             var result = new List<V1ServicePort>();
-            var usedPorts = new List<Port>();
             foreach (var port in recipe.ExposedPorts)
             {
-                var servicePort = workflowNumberSource.GetServicePort();
-                usedPorts.Add(new Port(servicePort, ""));
-
                 result.Add(new V1ServicePort
                 {
                     Name = GetNameForPort(recipe, port),
                     Protocol = "TCP",
                     Port = port.Number,
                     TargetPort = GetNameForPort(recipe, port),
-                    NodePort = servicePort
                 });                
             }
 
-            servicePorts.Add(recipe, usedPorts.ToArray());
             return result;
         }
 

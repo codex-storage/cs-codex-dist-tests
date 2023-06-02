@@ -22,7 +22,6 @@ namespace KubernetesWorkflow
         public StartupWorkflow CreateWorkflow()
         {
             var workflowNumberSource = new WorkflowNumberSource(numberSource.GetNextNumber(),
-                                                                    ApplicationLifecycle.Instance.GetServiceNumberSource(),
                                                                     containerNumberSource);
 
             return new StartupWorkflow(log, workflowNumberSource, cluster, knownPods, testNamespace);
