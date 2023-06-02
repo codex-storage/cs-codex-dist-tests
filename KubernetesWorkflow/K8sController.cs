@@ -32,13 +32,14 @@ namespace KubernetesWorkflow
         public RunningPod BringOnline(ContainerRecipe[] containerRecipes, Location location)
         {
             log.Debug();
+            DiscoverK8sNodes();
             EnsureTestNamespace();
 
             var deploymentName = CreateDeployment(containerRecipes, location);
             var (serviceName, servicePortsMap) = CreateService(containerRecipes);
-            var (podName, podIp) = FetchNewPod();
+            var podInfo = FetchNewPod();
 
-            return new RunningPod(cluster, podName, podIp, deploymentName, serviceName, servicePortsMap);
+            return new RunningPod(cluster, podInfo, deploymentName, serviceName, servicePortsMap);
         }
 
         public void Stop(RunningPod pod)
@@ -47,13 +48,13 @@ namespace KubernetesWorkflow
             if (!string.IsNullOrEmpty(pod.ServiceName)) DeleteService(pod.ServiceName);
             DeleteDeployment(pod.DeploymentName);
             WaitUntilDeploymentOffline(pod.DeploymentName);
-            WaitUntilPodOffline(pod.Name);
+            WaitUntilPodOffline(pod.PodInfo.Name);
         }
 
         public void DownloadPodLog(RunningPod pod, ContainerRecipe recipe, ILogHandler logHandler)
         {
             log.Debug();
-            using var stream = client.Run(c => c.ReadNamespacedPodLog(pod.Name, K8sTestNamespace, recipe.Name));
+            using var stream = client.Run(c => c.ReadNamespacedPodLog(pod.PodInfo.Name, K8sTestNamespace, recipe.Name));
             logHandler.Log(stream);
         }
 
@@ -105,6 +106,28 @@ namespace KubernetesWorkflow
                 client.Run(c => c.DeleteNamespace(ns, null, null, gracePeriodSeconds: 0));
             }
         }
+
+        #region Discover K8s Nodes
+
+        private void DiscoverK8sNodes()
+        {
+            if (cluster.AvailableK8sNodes == null || !cluster.AvailableK8sNodes.Any())
+            {
+                cluster.AvailableK8sNodes = GetAvailableK8sNodes();
+                if (cluster.AvailableK8sNodes.Length < 3)
+                {
+                    log.Debug($"Warning: For full location support, at least 3 Kubernetes Nodes are required in the cluster. Nodes found: '{string.Join(",", cluster.AvailableK8sNodes)}'.");
+                }
+            }
+        }
+
+        private string[] GetAvailableK8sNodes()
+        {
+            var nodes = client.Run(c => c.ListNode());
+            return nodes.Items.Select(i => i.Metadata.Name).ToArray();
+        }
+
+        #endregion
 
         #region Namespace management
 
@@ -537,7 +560,7 @@ namespace KubernetesWorkflow
 
         #endregion
 
-        private (string, string) FetchNewPod()
+        private PodInfo FetchNewPod()
         {
             var pods = client.Run(c => c.ListNamespacedPod(K8sTestNamespace)).Items;
 
@@ -547,12 +570,13 @@ namespace KubernetesWorkflow
             var newPod = newPods.Single();
             var name = newPod.Name();
             var ip = newPod.Status.PodIP;
+            var k8sNodeName = newPod.Spec.NodeName;
 
             if (string.IsNullOrEmpty(name)) throw new InvalidOperationException("Invalid pod name received. Test infra failure.");
             if (string.IsNullOrEmpty(ip)) throw new InvalidOperationException("Invalid pod IP received. Test infra failure.");
 
             knownPods.Add(name);
-            return (name, ip);
+            return new PodInfo(name, ip, k8sNodeName);
         }
     }
 }

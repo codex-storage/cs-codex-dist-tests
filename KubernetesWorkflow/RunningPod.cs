@@ -4,19 +4,17 @@
     {
         private readonly Dictionary<ContainerRecipe, Port[]> servicePortMap;
 
-        public RunningPod(K8sCluster cluster, string name, string ip, string deploymentName, string serviceName, Dictionary<ContainerRecipe, Port[]> servicePortMap)
+        public RunningPod(K8sCluster cluster, PodInfo podInfo, string deploymentName, string serviceName, Dictionary<ContainerRecipe, Port[]> servicePortMap)
         {
             Cluster = cluster;
-            Name = name;
-            Ip = ip;
+            PodInfo = podInfo;
             DeploymentName = deploymentName;
             ServiceName = serviceName;
             this.servicePortMap = servicePortMap;
         }
 
         public K8sCluster Cluster { get; }
-        public string Name { get; }
-        public string Ip { get; }
+        public PodInfo PodInfo { get; }
         internal string DeploymentName { get; }
         internal string ServiceName { get; }
 
@@ -24,5 +22,19 @@
         {
             return servicePortMap[containerRecipe];
         }
+    }
+
+    public class PodInfo
+    {
+        public PodInfo(string podName, string podIp, string k8sNodeName)
+        {
+            Name = podName;
+            Ip = podIp;
+            K8SNodeName = k8sNodeName;
+        }
+
+        public string Name { get; }
+        public string Ip { get; }
+        public string K8SNodeName { get; }
     }
 }

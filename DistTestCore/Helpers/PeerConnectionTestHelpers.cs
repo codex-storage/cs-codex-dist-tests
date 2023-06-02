@@ -138,7 +138,7 @@ namespace DistTestCore.Helpers
                 if (peer == null) return $"peerId: {node.peerId} is not known.";
 
                 var n = (OnlineCodexNode)peer.Node;
-                var ip = n.CodexAccess.Container.Pod.Ip;
+                var ip = n.CodexAccess.Container.Pod.PodInfo.Ip;
                 var discPort = n.CodexAccess.Container.Recipe.GetPortByTag(CodexContainerRecipe.DiscoveryPortTag);
                 return $"{ip}:{discPort.Number}";
             }

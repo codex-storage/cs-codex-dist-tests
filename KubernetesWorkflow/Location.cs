@@ -3,7 +3,8 @@
     public enum Location
     {
         Unspecified,
-        BensLaptop,
-        BensOldGamingMachine
+        One,
+        Two,
+        Three,
     }
 }

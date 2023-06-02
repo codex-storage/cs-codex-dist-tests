@@ -124,7 +124,7 @@ namespace DistTestCore
 
             // The peer we want to connect is in a different pod.
             // We must replace the default IP with the pod IP in the multiAddress.
-            return multiAddress.Replace("0.0.0.0", peer.Group.Containers.RunningPod.Ip);
+            return multiAddress.Replace("0.0.0.0", peer.Group.Containers.RunningPod.PodInfo.Ip);
         }
 
         private void DownloadToFile(string contentId, TestFile file)

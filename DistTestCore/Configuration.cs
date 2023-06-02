@@ -28,12 +28,7 @@ namespace DistTestCore
                 k8sNamespacePrefix: "ct-",
                 kubeConfigFile: kubeConfigFile,
                 operationTimeout: timeSet.K8sOperationTimeout(),
-                retryDelay: timeSet.WaitForK8sServiceDelay(),
-                locationMap: new[]
-                {
-                    new ConfigurationLocationEntry(Location.BensOldGamingMachine, "worker01"),
-                    new ConfigurationLocationEntry(Location.BensLaptop, "worker02"),
-                } 
+                retryDelay: timeSet.WaitForK8sServiceDelay()
             );
         }
 
