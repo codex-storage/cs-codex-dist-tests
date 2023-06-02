@@ -16,7 +16,7 @@ namespace KubernetesWorkflow
         {
             cluster = new K8sCluster(configuration);
             this.log = log;
-            testNamespace = ApplicationLifecycle.Instance.GetTestNamespace();
+            testNamespace = Guid.NewGuid().ToString().ToLowerInvariant();
         }
 
         public StartupWorkflow CreateWorkflow()
