@@ -58,7 +58,7 @@ namespace DistTestCore.Marketplace
             var httpPort = AddExposedPort(tag: HttpPortTag);
 
             var bootPubKey = config.BootstrapNode.PubKey;
-            var bootIp = config.BootstrapNode.RunningContainers.Containers[0].Pod.Ip;
+            var bootIp = config.BootstrapNode.RunningContainers.Containers[0].Pod.PodInfo.Ip;
             var bootPort = config.BootstrapNode.DiscoveryPort.Number;
             var bootstrapArg = $"--bootnodes enode://{bootPubKey}@{bootIp}:{bootPort} --nat=extip:{bootIp}";
 

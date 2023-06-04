@@ -44,7 +44,7 @@ namespace DistTestCore
 
             foreach (var node in nodes)
             {
-                var ip = node.Pod.Ip;
+                var ip = node.Pod.PodInfo.Ip;
                 var port = node.Recipe.GetPortByTag(CodexContainerRecipe.MetricsPortTag).Number;
                 config += $"          - '{ip}:{port}'\n";
             }

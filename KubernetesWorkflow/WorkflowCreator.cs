@@ -16,13 +16,12 @@ namespace KubernetesWorkflow
         {
             cluster = new K8sCluster(configuration);
             this.log = log;
-            testNamespace = ApplicationLifecycle.Instance.GetTestNamespace();
+            testNamespace = Guid.NewGuid().ToString().ToLowerInvariant();
         }
 
         public StartupWorkflow CreateWorkflow()
         {
             var workflowNumberSource = new WorkflowNumberSource(numberSource.GetNextNumber(),
-                                                                    ApplicationLifecycle.Instance.GetServiceNumberSource(),
                                                                     containerNumberSource);
 
             return new StartupWorkflow(log, workflowNumberSource, cluster, knownPods, testNamespace);

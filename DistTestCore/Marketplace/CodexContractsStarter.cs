@@ -50,7 +50,7 @@ namespace DistTestCore.Marketplace
         private StartupConfig CreateStartupConfig(RunningContainer bootstrapContainer)
         {
             var startupConfig = new StartupConfig();
-            var contractsConfig = new CodexContractsContainerConfig(bootstrapContainer.Pod.Ip, bootstrapContainer.Recipe.GetPortByTag(GethContainerRecipe.HttpPortTag));
+            var contractsConfig = new CodexContractsContainerConfig(bootstrapContainer.Pod.PodInfo.Ip, bootstrapContainer.Recipe.GetPortByTag(GethContainerRecipe.HttpPortTag));
             startupConfig.Add(contractsConfig);
             return startupConfig;
         }

@@ -28,7 +28,8 @@ namespace DistTestCore
             var codexNodeFactory = new CodexNodeFactory(lifecycle, metricAccessFactory, gethStartResult.MarketplaceAccessFactory);
 
             var group = CreateCodexGroup(codexSetup, containers, codexNodeFactory);
-            LogEnd($"Started {codexSetup.NumberOfNodes} nodes at '{group.Containers.RunningPod.Ip}'. They are: {group.Describe()}");
+            var podInfo = group.Containers.RunningPod.PodInfo;
+            LogEnd($"Started {codexSetup.NumberOfNodes} nodes at location '{podInfo.K8SNodeName}'={podInfo.Ip}. They are: {group.Describe()}");
             LogSeparator();
             return group;
         }

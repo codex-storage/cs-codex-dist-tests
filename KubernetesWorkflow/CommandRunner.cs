@@ -28,7 +28,7 @@ namespace KubernetesWorkflow
             var input = new[] { command }.Concat(arguments).ToArray();
 
             Time.Wait(client.Run(c => c.NamespacedPodExecAsync(
-                pod.Name, k8sNamespace, containerName, input, false, Callback, new CancellationToken())));
+                pod.PodInfo.Name, k8sNamespace, containerName, input, false, Callback, new CancellationToken())));
         }
 
         public string GetStdOut()

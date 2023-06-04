@@ -28,11 +28,10 @@ namespace Tests.BasicTests
         }
 
         [Test]
-        [Ignore("Requires Location map to be configured for k8s cluster.")]
         public void TwoClientsTwoLocationsTest()
         {
-            var primary = SetupCodexNode(s => s.At(Location.BensLaptop));
-            var secondary = SetupCodexNode(s => s.At(Location.BensOldGamingMachine));
+            var primary = SetupCodexNode(s => s.At(Location.One));
+            var secondary = SetupCodexNode(s => s.At(Location.Two));
 
             PerformTwoClientTest(primary, secondary);
         }

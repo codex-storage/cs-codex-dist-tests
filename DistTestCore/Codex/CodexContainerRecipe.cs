@@ -49,7 +49,7 @@ namespace DistTestCore.Codex
                 var companionNodeAccount = companionNode.Accounts[Index];
                 Additional(companionNodeAccount);
 
-                var ip = companionNode.RunningContainer.Pod.Ip;
+                var ip = companionNode.RunningContainer.Pod.PodInfo.Ip;
                 var port = companionNode.RunningContainer.Recipe.GetPortByTag(GethContainerRecipe.HttpPortTag).Number;
 
                 AddEnvVar("ETH_PROVIDER", $"ws://{ip}:{port}");

@@ -119,7 +119,7 @@ namespace DistTestCore.Metrics
 
         private string GetInstanceNameForNode(RunningContainer node)
         {
-            var ip = node.Pod.Ip;
+            var ip = node.Pod.PodInfo.Ip;
             var port = node.Recipe.GetPortByTag(CodexContainerRecipe.MetricsPortTag).Number;
             return $"{ip}:{port}";
         }
