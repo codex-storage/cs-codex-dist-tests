@@ -13,7 +13,7 @@ namespace DistTestCore
         CodexDebugPeerResponse GetDebugPeer(string peerId);
         CodexDebugPeerResponse GetDebugPeer(string peerId, TimeSpan timeout);
         ContentId UploadFile(TestFile file);
-        TestFile? DownloadContent(ContentId contentId);
+        TestFile? DownloadContent(ContentId contentId, string fileLabel = "");
         void ConnectToPeer(IOnlineCodexNode node);
         ICodexNodeLog DownloadLog();
         IMetricsAccess Metrics { get; }
@@ -66,23 +66,24 @@ namespace DistTestCore
 
         public ContentId UploadFile(TestFile file)
         {
-            Log($"Uploading file of size {file.GetFileSize()}...");
+            Log($"Uploading file '{file.Describe()}' of size {file.GetFileSize()}...");
             using var fileStream = File.OpenRead(file.Filename);
             var response = CodexAccess.UploadFile(fileStream);
             if (response.StartsWith(UploadFailedMessage))
             {
                 Assert.Fail("Node failed to store block.");
             }
+            lifecycle.Log.AddStringReplace(response, $"(CID:{file.Describe()})");
             Log($"Uploaded file. Received contentId: '{response}'.");
             return new ContentId(response);
         }
 
-        public TestFile? DownloadContent(ContentId contentId)
+        public TestFile? DownloadContent(ContentId contentId, string fileLabel = "")
         {
             Log($"Downloading for contentId: '{contentId.Id}'...");
-            var file = lifecycle.FileManager.CreateEmptyTestFile();
+            var file = lifecycle.FileManager.CreateEmptyTestFile(fileLabel);
             DownloadToFile(contentId.Id, file);
-            Log($"Downloaded file of size {file.GetFileSize()} to '{file.Filename}'.");
+            Log($"Downloaded file '{file.Describe()}' of size {file.GetFileSize()} to '{file.Filename}'.");
             return file;
         }
 

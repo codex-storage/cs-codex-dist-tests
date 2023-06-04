@@ -5,12 +5,12 @@ namespace DistTestCore.Codex
 {
     public class CodexContainerRecipe : ContainerRecipeFactory
     {
-        #if Arm64
+#if Arm64
             public const string DockerImage = "codexstorage/nim-codex:sha-7b88ea0";
-        #else
-			//public const string DockerImage = "codexstorage/nim-codex:sha-7b88ea0";
-            public const string DockerImage = "codexstorage/nim-codex:sha-7b88ea0";
-        #endif
+#else
+        public const string DockerImage = "thatbenbierens/nim-codex:dhting";
+        //public const string DockerImage = "codexstorage/nim-codex:sha-7b88ea0";
+#endif
         public const string MetricsPortTag = "metrics_port";
         public const string DiscoveryPortTag = "discovery-port";
 

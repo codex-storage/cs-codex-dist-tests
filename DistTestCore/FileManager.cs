@@ -6,8 +6,8 @@ namespace DistTestCore
 {
     public interface IFileManager
     {
-        TestFile CreateEmptyTestFile();
-        TestFile GenerateTestFile(ByteSize size);
+        TestFile CreateEmptyTestFile(string label = "");
+        TestFile GenerateTestFile(ByteSize size, string label = "");
         void DeleteAllTestFiles();
         void PushFileSet();
         void PopFileSet();
@@ -30,19 +30,20 @@ namespace DistTestCore
             this.log = log;
         }
 
-        public TestFile CreateEmptyTestFile()
+        public TestFile CreateEmptyTestFile(string label = "")
         {
-            var result = new TestFile(Path.Combine(folder, Guid.NewGuid().ToString() + "_test.bin"));
+            var path = Path.Combine(folder, Guid.NewGuid().ToString() + "_test.bin");
+            var result = new TestFile(log, path, label);
             File.Create(result.Filename).Close();
             if (fileSetStack.Any()) fileSetStack.Last().Add(result);
             return result;
         }
 
-        public TestFile GenerateTestFile(ByteSize size)
+        public TestFile GenerateTestFile(ByteSize size, string label)
         {
-            var result = CreateEmptyTestFile();
+            var result = CreateEmptyTestFile(label);
             GenerateFileBytes(result, size);
-            log.Log($"Generated {size.SizeInBytes} bytes of content for file '{result.Filename}'.");
+            log.Log($"Generated {size.SizeInBytes} bytes of content for file '{result.Describe()}'.");
             return result;
         }
 
@@ -104,12 +105,17 @@ namespace DistTestCore
 
     public class TestFile
     {
-        public TestFile(string filename)
+        private readonly TestLog log;
+
+        public TestFile(TestLog log, string filename, string label)
         {
+            this.log = log;
             Filename = filename;
+            Label = label;
         }
 
         public string Filename { get; }
+        public string Label { get; }
 
         public long GetFileSize()
         {
@@ -138,10 +144,20 @@ namespace DistTestCore
                 readExpected = streamExpected.Read(bytesExpected, 0, FileManager.ChunkSize);
                 readActual = streamActual.Read(bytesActual, 0, FileManager.ChunkSize);
 
-                if (readExpected == 0 && readActual == 0) return;
+                if (readExpected == 0 && readActual == 0)
+                {
+                    log.Log($"OK: '{Describe()}' is equal to '{actual.Describe()}'.");
+                    return;
+                }
                 Assert.That(readActual, Is.EqualTo(readExpected), "Unable to read buffers of equal length.");
                 CollectionAssert.AreEqual(bytesExpected, bytesActual, "Files are not binary-equal.");
             }
+        }
+
+        public string Describe()
+        {
+            if (!string.IsNullOrEmpty(Label)) return Label;
+            return Filename;
         }
     }
 }

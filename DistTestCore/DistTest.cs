@@ -87,9 +87,9 @@ namespace DistTestCore
             }
         }
 
-        public TestFile GenerateTestFile(ByteSize size)
+        public TestFile GenerateTestFile(ByteSize size, string label = "")
         {
-            return Get().FileManager.GenerateTestFile(size);
+            return Get().FileManager.GenerateTestFile(size, label);
         }
 
         /// <summary>

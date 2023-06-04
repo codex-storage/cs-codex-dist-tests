@@ -33,8 +33,8 @@
 
         private void PerformTest(IOnlineCodexNode uploader, IOnlineCodexNode[] downloaders, ByteSize testFileSize)
         {
-            // 1 test file per downloader.
-            var files = downloaders.Select(d => test.GenerateTestFile(testFileSize)).ToArray();
+            // Generate 1 test file per downloader.
+            var files = downloaders.Select(d => GenerateTestFile(uploader, d, testFileSize)).ToArray();
 
             // Upload all the test files to the uploader.
             var contentIds = files.Select(uploader.UploadFile).ToArray();
@@ -43,10 +43,18 @@
             for (var i = 0; i < downloaders.Length; i++)
             {
                 var expectedFile = files[i];
-                var downloadedFile = downloaders[i].DownloadContent(contentIds[i]);
+                var downloadedFile = downloaders[i].DownloadContent(contentIds[i], $"{expectedFile.Label}DOWNLOADED");
 
                 expectedFile.AssertIsEqual(downloadedFile);
             }
+        }
+
+        private TestFile GenerateTestFile(IOnlineCodexNode uploader, IOnlineCodexNode downloader, ByteSize testFileSize)
+        {
+            var up = uploader.GetName().Replace("<", "").Replace(">", "");
+            var down = downloader.GetName().Replace("<", "").Replace(">", "");
+            var label = $"FROM{up}TO{down}";
+            return test.GenerateTestFile(testFileSize, label);
         }
     }
 }
