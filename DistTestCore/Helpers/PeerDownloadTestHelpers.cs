@@ -1,4 +1,7 @@
-﻿namespace DistTestCore.Helpers
+﻿using Nethereum.Model;
+using NUnit.Framework;
+
+namespace DistTestCore.Helpers
 {
     public class PeerDownloadTestHelpers
     {
@@ -17,6 +20,8 @@
         public void AssertFullDownloadInterconnectivity(IEnumerable<IOnlineCodexNode> nodes, ByteSize testFileSize)
         {
             test.Log($"Asserting full download interconnectivity for nodes: '{string.Join(",", nodes.Select(n => n.GetName()))}'...");
+            var start = DateTime.UtcNow;
+
             foreach (var node in nodes)
             {
                 var uploader = node;
@@ -29,6 +34,19 @@
             }
             
             test.Log($"Success! Full download interconnectivity for nodes: {string.Join(",", nodes.Select(n => n.GetName()))}");
+            var timeTaken = DateTime.UtcNow - start;
+
+            AssertTimePerDownload(timeTaken, nodes.Count());
+        }
+
+        private void AssertTimePerDownload(TimeSpan timeTaken, int numberOfNodes)
+        {
+            var numberOfDownloads = numberOfNodes * (numberOfNodes - 1);
+            var timePerDownload = timeTaken / numberOfDownloads;
+
+            test.Log($"Performed {numberOfDownloads} downloads in {timeTaken.TotalSeconds} seconds, for an average of {timePerDownload.TotalSeconds} seconds per download.");
+
+            Assert.That(timePerDownload.TotalSeconds, Is.LessThan(20.0f), "Seconds-per-Download breached performance threshold.");
         }
 
         private void PerformTest(IOnlineCodexNode uploader, IOnlineCodexNode[] downloaders, ByteSize testFileSize)

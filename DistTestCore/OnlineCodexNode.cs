@@ -73,7 +73,9 @@ namespace DistTestCore
             {
                 Assert.Fail("Node failed to store block.");
             }
-            lifecycle.Log.AddStringReplace(response, $"(CID:{file.Describe()})");
+            var logReplacement = $"(CID:{file.Describe()})";
+            Log($"ContentId '{response}' is {logReplacement}");
+            lifecycle.Log.AddStringReplace(response, logReplacement);
             Log($"Uploaded file. Received contentId: '{response}'.");
             return new ContentId(response);
         }

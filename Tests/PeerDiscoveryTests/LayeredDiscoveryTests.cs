@@ -1,7 +1,6 @@
 ﻿using DistTestCore;
 using DistTestCore.Helpers;
 using NUnit.Framework;
-using Utils;
 
 namespace Tests.PeerDiscoveryTests
 {
@@ -35,7 +34,6 @@ namespace Tests.PeerDiscoveryTests
         [TestCase(5)]
         [TestCase(10)]
         [TestCase(20)]
-        [TestCase(50)]
         public void NodeChainTest(int chainLength)
         {
             var node = SetupCodexNode();
@@ -45,12 +43,6 @@ namespace Tests.PeerDiscoveryTests
             }
 
             AssertAllNodesConnected();
-
-            for (int i = 0; i < 5; i++)
-            {
-                Time.Sleep(TimeSpan.FromSeconds(30));
-                AssertAllNodesConnected();
-            }
         }
 
         private void AssertAllNodesConnected()

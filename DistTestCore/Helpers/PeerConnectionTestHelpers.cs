@@ -16,10 +16,18 @@ namespace DistTestCore.Helpers
 
         public void AssertFullyConnected(IEnumerable<IOnlineCodexNode> nodes)
         {
-            AssertFullyConnected(nodes.ToArray());
+            var n = nodes.ToArray();
+
+            AssertFullyConnected(n);
+
+            for (int i = 0; i < 5; i++)
+            {
+                Time.Sleep(TimeSpan.FromSeconds(30));
+                AssertFullyConnected(n);
+            }
         }
 
-        public void AssertFullyConnected(params IOnlineCodexNode[] nodes)
+        private void AssertFullyConnected(IOnlineCodexNode[] nodes)
         {
             test.Log($"Asserting peers are fully-connected for nodes: '{string.Join(",", nodes.Select(n => n.GetName()))}'...");
             var entries = CreateEntries(nodes);
