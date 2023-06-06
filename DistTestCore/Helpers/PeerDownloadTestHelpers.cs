@@ -1,5 +1,4 @@
-﻿using Nethereum.Model;
-using NUnit.Framework;
+﻿using NUnit.Framework;
 
 namespace DistTestCore.Helpers
 {
@@ -10,11 +9,6 @@ namespace DistTestCore.Helpers
         public PeerDownloadTestHelpers(DistTest test)
         {
             this.test = test;
-        }
-
-        public void AssertFullDownloadInterconnectivity(IEnumerable<IOnlineCodexNode> nodes)
-        {
-            AssertFullDownloadInterconnectivity(nodes, 1.MB());
         }
 
         public void AssertFullDownloadInterconnectivity(IEnumerable<IOnlineCodexNode> nodes, ByteSize testFileSize)
@@ -36,17 +30,21 @@ namespace DistTestCore.Helpers
             test.Log($"Success! Full download interconnectivity for nodes: {string.Join(",", nodes.Select(n => n.GetName()))}");
             var timeTaken = DateTime.UtcNow - start;
 
-            AssertTimePerDownload(timeTaken, nodes.Count());
+            AssertTimePerDownload(timeTaken, nodes.Count(), testFileSize);
         }
 
-        private void AssertTimePerDownload(TimeSpan timeTaken, int numberOfNodes)
+        private void AssertTimePerDownload(TimeSpan timeTaken, int numberOfNodes, ByteSize size)
         {
             var numberOfDownloads = numberOfNodes * (numberOfNodes - 1);
             var timePerDownload = timeTaken / numberOfDownloads;
+            float sizeInMB = size.SizeInBytes / (1024.0f * 1024.0f);
+            var timePerMB = timePerDownload.TotalSeconds / sizeInMB;
 
-            test.Log($"Performed {numberOfDownloads} downloads in {timeTaken.TotalSeconds} seconds, for an average of {timePerDownload.TotalSeconds} seconds per download.");
+            test.Log($"Performed {numberOfDownloads} downloads of {size} in {timeTaken.TotalSeconds} seconds, for an average of {timePerMB} seconds per MB.");
 
-            Assert.That(timePerDownload.TotalSeconds, Is.LessThan(20.0f), "Seconds-per-Download breached performance threshold.");
+            var maxTimePerMB = 2.0f;
+
+            Assert.That(timePerMB, Is.LessThan(maxTimePerMB), "Seconds-per-MB performance threshold breached.");
         }
 
         private void PerformTest(IOnlineCodexNode uploader, IOnlineCodexNode[] downloaders, ByteSize testFileSize)

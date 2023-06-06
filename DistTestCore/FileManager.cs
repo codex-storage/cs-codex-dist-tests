@@ -43,7 +43,7 @@ namespace DistTestCore
         {
             var result = CreateEmptyTestFile(label);
             GenerateFileBytes(result, size);
-            log.Log($"Generated {size.SizeInBytes} bytes of content for file '{result.Describe()}'.");
+            log.Log($"Generated {size} of content for file '{result.Describe()}'.");
             return result;
         }
 

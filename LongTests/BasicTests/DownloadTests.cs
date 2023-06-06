@@ -6,6 +6,25 @@ namespace TestsLong.BasicTests
     [TestFixture]
     public class DownloadTests : DistTest
     {
+        [Test]
+        [Combinatorial]
+        [UseLongTimeouts]
+        public void DownloadCorrectnessTest(
+            [Values(1, 10, 100, 1024)] int sizeInMB,
+            [Values(1, 10, 100, 1024)] int multiplier)
+        {
+            var size = (sizeInMB * multiplier).MB();
+
+            var expectedFile = GenerateTestFile(size);
+
+            var node = SetupCodexNode();
+            var cid = node.UploadFile(expectedFile);
+            var actualFile = node.DownloadContent(cid);
+
+            expectedFile.AssertIsEqual(actualFile);
+        }
+
+
         [TestCase(3, 500)]
         [TestCase(5, 100)]
         [TestCase(10, 256)]

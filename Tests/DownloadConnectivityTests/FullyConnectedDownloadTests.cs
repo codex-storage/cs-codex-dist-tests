@@ -6,14 +6,15 @@ namespace Tests.DownloadConnectivityTests
     [TestFixture]
     public class FullyConnectedDownloadTests : AutoBootstrapDistTest
     {
-        [TestCase(3)]
-        [TestCase(10)]
-        [TestCase(20)]
-        public void FullyConnectedDownloadTest(int numberOfNodes)
+        [Test]
+        [Combinatorial]
+        public void FullyConnectedDownloadTest(
+            [Values(3, 10, 20)] int numberOfNodes,
+            [Values(1, 10, 100)] int sizeMBs)
         {
             for (var i = 0; i < numberOfNodes; i++) SetupCodexNode();
 
-            PeerDownloadTestHelpers.AssertFullDownloadInterconnectivity(GetAllOnlineCodexNodes());
+            PeerDownloadTestHelpers.AssertFullDownloadInterconnectivity(GetAllOnlineCodexNodes(), sizeMBs.MB());
         }
     }
 }
