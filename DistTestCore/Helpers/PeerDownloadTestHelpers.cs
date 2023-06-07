@@ -1,4 +1,5 @@
-﻿using NUnit.Framework;
+﻿using DistTestCore.Codex;
+using NUnit.Framework;
 
 namespace DistTestCore.Helpers
 {
@@ -30,21 +31,19 @@ namespace DistTestCore.Helpers
             test.Log($"Success! Full download interconnectivity for nodes: {string.Join(",", nodes.Select(n => n.GetName()))}");
             var timeTaken = DateTime.UtcNow - start;
 
-            AssertTimePerDownload(timeTaken, nodes.Count(), testFileSize);
+            AssertTimePerMB(timeTaken, nodes.Count(), testFileSize);
         }
 
-        private void AssertTimePerDownload(TimeSpan timeTaken, int numberOfNodes, ByteSize size)
+        private void AssertTimePerMB(TimeSpan timeTaken, int numberOfNodes, ByteSize size)
         {
             var numberOfDownloads = numberOfNodes * (numberOfNodes - 1);
             var timePerDownload = timeTaken / numberOfDownloads;
-            float sizeInMB = size.SizeInBytes / (1024.0f * 1024.0f);
-            var timePerMB = timePerDownload.TotalSeconds / sizeInMB;
+            float sizeInMB = size.ToMB();
+            var timePerMB = timePerDownload / sizeInMB;
 
             test.Log($"Performed {numberOfDownloads} downloads of {size} in {timeTaken.TotalSeconds} seconds, for an average of {timePerMB} seconds per MB.");
 
-            var maxTimePerMB = 2.0f;
-
-            Assert.That(timePerMB, Is.LessThan(maxTimePerMB), "Seconds-per-MB performance threshold breached.");
+            Assert.That(timePerMB, Is.LessThan(CodexContainerRecipe.MaxDownloadTimePerMegabyte), "MaxDownloadTimePerMegabyte performance threshold breached.");
         }
 
         private void PerformTest(IOnlineCodexNode uploader, IOnlineCodexNode[] downloaders, ByteSize testFileSize)

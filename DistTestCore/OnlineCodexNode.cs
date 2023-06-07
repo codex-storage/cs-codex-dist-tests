@@ -2,6 +2,7 @@
 using DistTestCore.Logs;
 using DistTestCore.Marketplace;
 using DistTestCore.Metrics;
+using Logging;
 using NUnit.Framework;
 
 namespace DistTestCore
@@ -66,9 +67,14 @@ namespace DistTestCore
 
         public ContentId UploadFile(TestFile file)
         {
-            Log($"Uploading file '{file.Describe()}' of size {file.GetFileSize()}...");
             using var fileStream = File.OpenRead(file.Filename);
-            var response = CodexAccess.UploadFile(fileStream);
+
+            var logMessage = $"Uploading file '{file.Describe()}' of size {file.GetFileSize()}...";
+            var response = Stopwatch.Measure(lifecycle.Log, logMessage, () =>
+            {
+                return CodexAccess.UploadFile(fileStream);
+            });
+
             if (response.StartsWith(UploadFailedMessage))
             {
                 Assert.Fail("Node failed to store block.");
@@ -82,9 +88,9 @@ namespace DistTestCore
 
         public TestFile? DownloadContent(ContentId contentId, string fileLabel = "")
         {
-            Log($"Downloading for contentId: '{contentId.Id}'...");
+            var logMessage = $"Downloading for contentId: '{contentId.Id}'...";
             var file = lifecycle.FileManager.CreateEmptyTestFile(fileLabel);
-            DownloadToFile(contentId.Id, file);
+            Stopwatch.Measure(lifecycle.Log, logMessage, () => DownloadToFile(contentId.Id, file));
             Log($"Downloaded file '{file.Describe()}' of size {file.GetFileSize()} to '{file.Filename}'.");
             return file;
         }

@@ -12,6 +12,11 @@
 
         public long SizeInBytes { get; }
 
+        public long ToMB()
+        {
+            return SizeInBytes / (1024 * 1024);
+        }
+
         public override bool Equals(object? obj)
         {
             return obj is ByteSize size && SizeInBytes == size.SizeInBytes;

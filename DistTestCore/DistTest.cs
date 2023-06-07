@@ -10,7 +10,6 @@ using System.Reflection;
 
 namespace DistTestCore
 {
-    [SetUpFixture]
     [Parallelizable(ParallelScope.All)]
     public abstract class DistTest
     {
