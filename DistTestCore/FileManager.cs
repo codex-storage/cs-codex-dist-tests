@@ -43,7 +43,7 @@ namespace DistTestCore
         {
             var result = CreateEmptyTestFile(label);
             GenerateFileBytes(result, size);
-            log.Log($"Generated {size} of content for file '{result.Describe()}'.");
+            log.Log($"Generated file '{result.Describe()}'.");
             return result;
         }
 
@@ -117,12 +117,6 @@ namespace DistTestCore
         public string Filename { get; }
         public string Label { get; }
 
-        public long GetFileSize()
-        {
-            var info = new FileInfo(Filename);
-            return info.Length;
-        }
-
         public void AssertIsEqual(TestFile? actual)
         {
             if (actual == null) Assert.Fail("TestFile is null.");
@@ -157,7 +151,13 @@ namespace DistTestCore
         public string Describe()
         {
             if (!string.IsNullOrEmpty(Label)) return Label;
-            return Filename;
+            return $"'{Filename}' ({Formatter.FormatByteSize(GetFileSize())})";
+        }
+
+        private long GetFileSize()
+        {
+            var info = new FileInfo(Filename);
+            return info.Length;
         }
     }
 }

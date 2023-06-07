@@ -69,7 +69,7 @@ namespace DistTestCore
         {
             using var fileStream = File.OpenRead(file.Filename);
 
-            var logMessage = $"Uploading file '{file.Describe()}' of size {file.GetFileSize()}...";
+            var logMessage = $"Uploading file {file.Describe()}...";
             var response = Stopwatch.Measure(lifecycle.Log, logMessage, () =>
             {
                 return CodexAccess.UploadFile(fileStream);
@@ -91,7 +91,7 @@ namespace DistTestCore
             var logMessage = $"Downloading for contentId: '{contentId.Id}'...";
             var file = lifecycle.FileManager.CreateEmptyTestFile(fileLabel);
             Stopwatch.Measure(lifecycle.Log, logMessage, () => DownloadToFile(contentId.Id, file));
-            Log($"Downloaded file '{file.Describe()}' of size {file.GetFileSize()} to '{file.Filename}'.");
+            Log($"Downloaded file {file.Describe()} to '{file.Filename}'.");
             return file;
         }
 

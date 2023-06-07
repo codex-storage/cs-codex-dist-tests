@@ -14,11 +14,12 @@ namespace TestsLong.BasicTests
             [Values(1, 10, 100, 1024)] int sizeInMB,
             [Values(1, 10, 100, 1024)] int multiplier)
         {
-            var size = (sizeInMB * multiplier).MB();
+            long size = (sizeInMB * multiplier);
+            var sizeMB = size.MB();
 
-            var expectedFile = GenerateTestFile(size);
+            var expectedFile = GenerateTestFile(sizeMB);
 
-            var node = SetupCodexNode();
+            var node = SetupCodexNode(s => s.WithStorageQuota((size + 10).MB()));
 
             var uploadStart = DateTime.UtcNow;
             var cid = node.UploadFile(expectedFile);
@@ -30,9 +31,9 @@ namespace TestsLong.BasicTests
             AssertTimeConstraint(uploadStart, downloadStart, downloadFinished, size);
         }
 
-        private void AssertTimeConstraint(DateTime uploadStart, DateTime downloadStart, DateTime downloadFinished, ByteSize size)
+        private void AssertTimeConstraint(DateTime uploadStart, DateTime downloadStart, DateTime downloadFinished, long size)
         {
-            float sizeInMB = size.ToMB();
+            float sizeInMB = size;
             var uploadTimePerMB = (uploadStart - downloadStart) / sizeInMB;
             var downloadTimePerMB = (downloadStart - downloadFinished) / sizeInMB;
 
@@ -41,7 +42,6 @@ namespace TestsLong.BasicTests
 
             Assert.That(downloadTimePerMB, Is.LessThan(CodexContainerRecipe.MaxDownloadTimePerMegabyte),
                 "MaxDownloadTimePerMegabyte performance threshold breached.");
-
         }
     }
 }
