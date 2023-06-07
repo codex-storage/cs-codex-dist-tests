@@ -1,6 +1,5 @@
 ﻿using DistTestCore.Codex;
 using KubernetesWorkflow;
-using Logging;
 using System.Globalization;
 
 namespace DistTestCore.Metrics
@@ -9,15 +8,16 @@ namespace DistTestCore.Metrics
     {
         private readonly Http http;
 
-        public MetricsQuery(BaseLog log, ITimeSet timeSet, RunningContainers runningContainers)
+        public MetricsQuery(TestLifecycle lifecycle, RunningContainers runningContainers)
         {
             RunningContainers = runningContainers;
 
+            var address = lifecycle.Configuration.GetAddress(runningContainers.Containers[0]);
+
             http = new Http(
-                log,
-                timeSet,
-                runningContainers.RunningPod.Cluster.IP,
-                runningContainers.Containers[0].ServicePorts[0].Number,
+                lifecycle.Log,
+                lifecycle.TimeSet,
+                address,
                 "api/v1");
         }
 
@@ -119,7 +119,7 @@ namespace DistTestCore.Metrics
 
         private string GetInstanceNameForNode(RunningContainer node)
         {
-            var ip = node.Pod.Ip;
+            var ip = node.Pod.PodInfo.Ip;
             var port = node.Recipe.GetPortByTag(CodexContainerRecipe.MetricsPortTag).Number;
             return $"{ip}:{port}";
         }

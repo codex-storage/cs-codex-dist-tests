@@ -1,5 +1,4 @@
 ﻿using DistTestCore;
-using DistTestCore.Codex;
 using NUnit.Framework;
 using Utils;
 
@@ -11,7 +10,7 @@ namespace Tests.BasicTests
         [Test]
         public void CodexLogExample()
         {
-            var primary = SetupCodexNode(s => s.WithLogLevel(CodexLogLevel.Trace));
+            var primary = SetupCodexNode();
 
             primary.UploadFile(GenerateTestFile(5.MB()));
 
@@ -47,7 +46,6 @@ namespace Tests.BasicTests
             var buyerInitialBalance = 1000.TestTokens();
 
             var seller = SetupCodexNode(s => s
-                            .WithLogLevel(CodexLogLevel.Trace)
                             .WithStorageQuota(11.GB())
                             .EnableMarketplace(sellerInitialBalance));
 
@@ -61,7 +59,6 @@ namespace Tests.BasicTests
             var testFile = GenerateTestFile(10.MB());
 
             var buyer = SetupCodexNode(s => s
-                .WithLogLevel(CodexLogLevel.Trace)
                 .WithBootstrapNode(seller)
                 .EnableMarketplace(buyerInitialBalance));
             

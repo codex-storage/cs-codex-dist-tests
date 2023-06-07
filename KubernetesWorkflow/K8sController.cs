@@ -22,7 +22,6 @@ namespace KubernetesWorkflow
             client = new K8sClient(cluster.GetK8sClientConfig());
 
             K8sTestNamespace = cluster.Configuration.K8sNamespacePrefix + testNamespace;
-            log.Debug($"Test namespace: '{K8sTestNamespace}'");
         }
 
         public void Dispose()
@@ -33,13 +32,14 @@ namespace KubernetesWorkflow
         public RunningPod BringOnline(ContainerRecipe[] containerRecipes, Location location)
         {
             log.Debug();
+            DiscoverK8sNodes();
             EnsureTestNamespace();
 
             var deploymentName = CreateDeployment(containerRecipes, location);
             var (serviceName, servicePortsMap) = CreateService(containerRecipes);
-            var (podName, podIp) = FetchNewPod();
+            var podInfo = FetchNewPod();
 
-            return new RunningPod(cluster, podName, podIp, deploymentName, serviceName, servicePortsMap);
+            return new RunningPod(cluster, podInfo, deploymentName, serviceName, servicePortsMap);
         }
 
         public void Stop(RunningPod pod)
@@ -48,22 +48,27 @@ namespace KubernetesWorkflow
             if (!string.IsNullOrEmpty(pod.ServiceName)) DeleteService(pod.ServiceName);
             DeleteDeployment(pod.DeploymentName);
             WaitUntilDeploymentOffline(pod.DeploymentName);
-            WaitUntilPodOffline(pod.Name);
+            WaitUntilPodOffline(pod.PodInfo.Name);
         }
 
         public void DownloadPodLog(RunningPod pod, ContainerRecipe recipe, ILogHandler logHandler)
         {
             log.Debug();
-            using var stream = client.Run(c => c.ReadNamespacedPodLog(pod.Name, K8sTestNamespace, recipe.Name));
+            using var stream = client.Run(c => c.ReadNamespacedPodLog(pod.PodInfo.Name, K8sTestNamespace, recipe.Name));
             logHandler.Log(stream);
         }
 
         public string ExecuteCommand(RunningPod pod, string containerName, string command, params string[] args)
         {
-            log.Debug($"{containerName}: {command} ({string.Join(",", args)})");
+            var cmdAndArgs = $"{containerName}: {command} ({string.Join(",", args)})";
+            log.Debug(cmdAndArgs);
+
             var runner = new CommandRunner(client, K8sTestNamespace, pod, containerName, command, args);
             runner.Run();
-            return runner.GetStdOut();
+            var result = runner.GetStdOut();
+
+            log.Debug($"{cmdAndArgs} = '{result}'");
+            return result;
         }
 
         public void DeleteAllResources()
@@ -101,6 +106,42 @@ namespace KubernetesWorkflow
                 client.Run(c => c.DeleteNamespace(ns, null, null, gracePeriodSeconds: 0));
             }
         }
+
+        #region Discover K8s Nodes
+
+        private void DiscoverK8sNodes()
+        {
+            if (cluster.AvailableK8sNodes == null || !cluster.AvailableK8sNodes.Any())
+            {
+                cluster.AvailableK8sNodes = GetAvailableK8sNodes();
+                if (cluster.AvailableK8sNodes.Length < 3)
+                {
+                    log.Debug($"Warning: For full location support, at least 3 Kubernetes Nodes are required in the cluster. Nodes found: '{string.Join(",", cluster.AvailableK8sNodes.Select(p => $"{p.Key}={p.Value}"))}'.");
+                }
+            }
+        }
+
+        private K8sNodeLabel[] GetAvailableK8sNodes()
+        {
+            var nodes = client.Run(c => c.ListNode());
+
+            var optionals = nodes.Items.Select(i => CreateNodeLabel(i));
+            return optionals.Where(n => n != null).Select(n => n!).ToArray();
+        }
+
+        private K8sNodeLabel? CreateNodeLabel(V1Node i)
+        {
+            var keys = i.Metadata.Labels.Keys;
+            var hostnameKey = keys.SingleOrDefault(k => k.ToLowerInvariant().Contains("hostname"));
+            if (hostnameKey != null)
+            {
+                var hostnameValue = i.Metadata.Labels[hostnameKey];
+                return new K8sNodeLabel(hostnameKey, hostnameValue);
+            }
+            return null;
+        }
+
+        #endregion
 
         #region Namespace management
 
@@ -148,10 +189,7 @@ namespace KubernetesWorkflow
                     },
                     Spec = new V1NetworkPolicySpec
                     {
-                        PodSelector = new V1LabelSelector
-                        {
-                            MatchLabels = GetSelector()
-                        },
+                        PodSelector = new V1LabelSelector {},
                         PolicyTypes = new[]
                         {
                             "Ingress",
@@ -165,9 +203,19 @@ namespace KubernetesWorkflow
                                 {
                                     new V1NetworkPolicyPeer
                                     {
+                                        PodSelector = new V1LabelSelector {}
+                                    }
+                                }
+                            },
+                            new V1NetworkPolicyIngressRule
+                            {
+                                FromProperty = new List<V1NetworkPolicyPeer>
+                                {
+                                    new V1NetworkPolicyPeer
+                                    {
                                         NamespaceSelector = new V1LabelSelector
                                         {
-                                            MatchLabels = GetMyNamespaceSelector()
+                                            MatchLabels = GetRunnerNamespaceSelector()
                                         }
                                     }
                                 }
@@ -181,13 +229,74 @@ namespace KubernetesWorkflow
                                 {
                                     new V1NetworkPolicyPeer
                                     {
+                                        PodSelector = new V1LabelSelector {}
+                                    }
+                                }
+                            },
+                            new V1NetworkPolicyEgressRule
+                            {
+                                To = new List<V1NetworkPolicyPeer>
+                                {
+                                    new V1NetworkPolicyPeer
+                                    {
                                         NamespaceSelector = new V1LabelSelector
                                         {
-                                            MatchLabels = GetMyNamespaceSelector()
+                                            MatchLabels = new Dictionary<string, string> { { "kubernetes.io/metadata.name", "kube-system" } }
                                         }
+                                    },
+                                    new V1NetworkPolicyPeer
+                                    {
+                                        PodSelector = new V1LabelSelector
+                                        {
+                                            MatchLabels = new Dictionary<string, string> { { "k8s-app", "kube-dns" } }
+                                        }
+                                    }
+                                },
+                                Ports = new List<V1NetworkPolicyPort>
+                                {
+                                    new V1NetworkPolicyPort
+                                    {
+                                        Port = new IntstrIntOrString
+                                        {
+                                            Value = "53"
+                                        },
+                                        Protocol = "UDP"
+                                    }
+                                }
+                            },
+                            new V1NetworkPolicyEgressRule
+                            {
+                                To = new List<V1NetworkPolicyPeer>
+                                {
+                                    new V1NetworkPolicyPeer
+                                    {
+                                        IpBlock = new V1IPBlock
+                                        {
+                                          Cidr = "0.0.0.0/0"
+                                        }
+                                    }
+                                },
+                                Ports = new List<V1NetworkPolicyPort>
+                                {
+                                    new V1NetworkPolicyPort
+                                    {
+                                        Port = new IntstrIntOrString
+                                        {
+                                            Value = "80"
+                                        },
+                                        Protocol = "TCP"
+                                    },
+                                    new V1NetworkPolicyPort
+                                    {
+                                        Port = new IntstrIntOrString
+                                        {
+                                            Value = "443"
+                                        },
+                                        Protocol = "TCP"
                                     }
                                 }
                             }
+
                         }
                     }
                 };
@@ -242,11 +351,12 @@ namespace KubernetesWorkflow
 
         private IDictionary<string, string> CreateNodeSelector(Location location)
         {
-            if (location == Location.Unspecified) return new Dictionary<string, string>();
+            var nodeLabel = cluster.GetNodeLabelForLocation(location);
+            if (nodeLabel == null) return new Dictionary<string, string>();
 
             return new Dictionary<string, string>
             {
-                { "codex-test-location", cluster.GetNodeLabelForLocation(location) }
+                { nodeLabel.Key, nodeLabel.Value }
             };
         }
 
@@ -255,9 +365,9 @@ namespace KubernetesWorkflow
             return new Dictionary<string, string> { { "codex-test-node", "dist-test-" + workflowNumberSource.WorkflowNumber } };
         }
 
-        private IDictionary<string, string> GetMyNamespaceSelector()
+        private IDictionary<string, string> GetRunnerNamespaceSelector()
         {
-            return new Dictionary<string, string> { { "name", "thatisincorrect" } };
+            return new Dictionary<string, string> { { "kubernetes.io/metadata.name", "default" } };
         }
 
         private V1ObjectMeta CreateDeploymentMetadata()
@@ -329,11 +439,11 @@ namespace KubernetesWorkflow
         {
             var result = new Dictionary<ContainerRecipe, Port[]>();
 
-            var ports = CreateServicePorts(result, containerRecipes);
+            var ports = CreateServicePorts(containerRecipes);
 
             if (!ports.Any())
             {
-                // None of these container-recipes wish to expose anything via a serice port.
+                // None of these container-recipes wish to expose anything via a service port.
                 // So, we don't have to create a service.
                 return (string.Empty, result);
             }
@@ -352,7 +462,38 @@ namespace KubernetesWorkflow
 
             client.Run(c => c.CreateNamespacedService(serviceSpec, K8sTestNamespace));
 
+            ReadBackServiceAndMapPorts(serviceSpec, containerRecipes, result);
+
             return (serviceSpec.Metadata.Name, result);
+        }
+
+        private void ReadBackServiceAndMapPorts(V1Service serviceSpec, ContainerRecipe[] containerRecipes, Dictionary<ContainerRecipe, Port[]> result)
+        {
+            // For each container-recipe, we need to figure out which service-ports it was assigned by K8s.
+            var readback = client.Run(c => c.ReadNamespacedService(serviceSpec.Metadata.Name, K8sTestNamespace));
+            foreach (var r in containerRecipes)
+            {
+                if (r.ExposedPorts.Any())
+                {
+                    var firstExposedPort = r.ExposedPorts.First();
+                    var portName = GetNameForPort(r, firstExposedPort);
+
+                    var matchingServicePorts = readback.Spec.Ports.Where(p => p.Name == portName);
+                    if (matchingServicePorts.Any())
+                    {
+                        // These service ports belongs to this recipe.
+                        var optionals = matchingServicePorts.Select(p => MapNodePortIfAble(p, portName));
+                        var ports = optionals.Where(p => p != null).Select(p => p!).ToArray();
+                        result.Add(r, ports);
+                    }
+                }
+            }
+        }
+
+        private Port? MapNodePortIfAble(V1ServicePort p, string tag)
+        {
+            if (p.NodePort == null) return null;
+            return new Port(p.NodePort.Value, tag);
         }
 
         private void DeleteService(string serviceName)
@@ -369,36 +510,30 @@ namespace KubernetesWorkflow
             };
         }
 
-        private List<V1ServicePort> CreateServicePorts(Dictionary<ContainerRecipe, Port[]> servicePorts, ContainerRecipe[] recipes)
+        private List<V1ServicePort> CreateServicePorts(ContainerRecipe[] recipes)
         {
             var result = new List<V1ServicePort>();
             foreach (var recipe in recipes)
             {
-                result.AddRange(CreateServicePorts(servicePorts, recipe));
+                result.AddRange(CreateServicePorts(recipe));
             }
             return result;
         }
 
-        private List<V1ServicePort> CreateServicePorts(Dictionary<ContainerRecipe, Port[]> servicePorts, ContainerRecipe recipe)
+        private List<V1ServicePort> CreateServicePorts(ContainerRecipe recipe)
         {
             var result = new List<V1ServicePort>();
-            var usedPorts = new List<Port>();
             foreach (var port in recipe.ExposedPorts)
             {
-                var servicePort = workflowNumberSource.GetServicePort();
-                usedPorts.Add(new Port(servicePort, ""));
-
                 result.Add(new V1ServicePort
                 {
                     Name = GetNameForPort(recipe, port),
                     Protocol = "TCP",
                     Port = port.Number,
                     TargetPort = GetNameForPort(recipe, port),
-                    NodePort = servicePort
                 });                
             }
 
-            servicePorts.Add(recipe, usedPorts.ToArray());
             return result;
         }
 
@@ -465,7 +600,7 @@ namespace KubernetesWorkflow
 
         #endregion
 
-        private (string, string) FetchNewPod()
+        private PodInfo FetchNewPod()
         {
             var pods = client.Run(c => c.ListNamespacedPod(K8sTestNamespace)).Items;
 
@@ -475,12 +610,13 @@ namespace KubernetesWorkflow
             var newPod = newPods.Single();
             var name = newPod.Name();
             var ip = newPod.Status.PodIP;
+            var k8sNodeName = newPod.Spec.NodeName;
 
             if (string.IsNullOrEmpty(name)) throw new InvalidOperationException("Invalid pod name received. Test infra failure.");
             if (string.IsNullOrEmpty(ip)) throw new InvalidOperationException("Invalid pod IP received. Test infra failure.");
 
             knownPods.Add(name);
-            return (name, ip);
+            return new PodInfo(name, ip, k8sNodeName);
         }
     }
 }

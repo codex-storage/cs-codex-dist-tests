@@ -9,6 +9,8 @@ namespace DistTestCore
         TestFile CreateEmptyTestFile();
         TestFile GenerateTestFile(ByteSize size);
         void DeleteAllTestFiles();
+        void PushFileSet();
+        void PopFileSet();
     }
 
     public class FileManager : IFileManager
@@ -18,6 +20,7 @@ namespace DistTestCore
         private readonly Random random = new Random();
         private readonly TestLog log;
         private readonly string folder;
+        private readonly List<List<TestFile>> fileSetStack = new List<List<TestFile>>();
 
         public FileManager(TestLog log, Configuration configuration)
         {
@@ -31,6 +34,7 @@ namespace DistTestCore
         {
             var result = new TestFile(Path.Combine(folder, Guid.NewGuid().ToString() + "_test.bin"));
             File.Create(result.Filename).Close();
+            if (fileSetStack.Any()) fileSetStack.Last().Add(result);
             return result;
         }
 
@@ -45,6 +49,27 @@ namespace DistTestCore
         public void DeleteAllTestFiles()
         {
             DeleteDirectory();
+        }
+
+        public void PushFileSet()
+        {
+            fileSetStack.Add(new List<TestFile>());
+        }
+
+        public void PopFileSet()
+        {
+            if (!fileSetStack.Any()) return;
+            var pop = fileSetStack.Last();
+            fileSetStack.Remove(pop);
+
+            foreach (var file in pop)
+            {
+                try
+                {
+                    File.Delete(file.Filename);
+                }
+                catch { }
+            }
         }
 
         private void GenerateFileBytes(TestFile result, ByteSize size)

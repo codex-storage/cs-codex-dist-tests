@@ -1,0 +1,73 @@
+name: Dist Tests
+
+
+on:
+  # push:
+  #   branches:
+  #     - master
+  #   tags:
+  #     - 'v*.*.*'
+  #   paths-ignore:
+  #     - '**/*.md'
+  #     - '.gitignore'
+  #     - 'docker/**'
+  #     - '!docker/job.yaml'
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: Branch
+        required: false
+        type: string
+      source:
+        description: Repository with tests
+        required: false
+        type: string
+      nameprefix:
+        description: Runner job/pod name prefix
+        required: false
+        type: string
+      namespace:
+        description: Kubernetes namespace for runner
+        required: false
+        type: string
+
+
+env:
+  BRANCH: ${{ github.ref_name }}
+  SOURCE: ${{ format('{0}/{1}', github.server_url, github.repository) }}
+  NAMEPREFIX: cs-codex-dist-tests
+  NAMESPACE: cs-codex-dist-tests
+  JOB_MANIFEST: docker/job.yaml
+  KUBE_CONFIG: ${{ secrets.KUBE_CONFIG }}
+  KUBE_VERSION: v1.26.1
+
+
+jobs:
+  run_tests:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Variables
+        run: |
+          [[ -n "${{ inputs.branch }}" ]] && echo "BRANCH=${{ inputs.branch }}" >>"$GITHUB_ENV" || echo "BRANCH=${{ env.BRANCH }}" >>"$GITHUB_ENV"
+          [[ -n "${{ inputs.source }}" ]] && echo "SOURCE=${{ inputs.source }}" >>"$GITHUB_ENV" || echo "SOURCE=${{ env.SOURCE }}" >>"$GITHUB_ENV"
+          [[ -n "${{ inputs.nameprefix }}" ]] && echo "NAMEPREFIX=${{ inputs.nameprefix }}" >>"$GITHUB_ENV" || echo "NAMEPREFIX=${{ env.NAMEPREFIX }}" >>"$GITHUB_ENV"
+          [[ -n "${{ inputs.namespace }}" ]] && echo "NAMESPACE=${{ inputs.namespace }}" >>"$GITHUB_ENV" || echo "NAMESPACE=${{ env.NAMESPACE }}" >>"$GITHUB_ENV"
+
+      - name: Kubectl - Install ${{ env.KUBE_VERSION }}
+        uses: azure/setup-kubectl@v3
+        with:
+          version: ${{ env.KUBE_VERSION }}
+
+      - name: Kubectl - Kubeconfig
+        run: |
+          mkdir -p "${HOME}"/.kube
+          echo "${{ env.KUBE_CONFIG }}" | base64 -d > "${HOME}"/.kube/config
+
+      - name: Kubectl - Create Job
+        run: |
+          export RUNID=$(date +%Y%m%d-%H%M%S)
+          envsubst < ${{ env.JOB_MANIFEST }} | kubectl apply -f -

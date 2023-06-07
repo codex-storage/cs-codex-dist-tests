@@ -5,7 +5,6 @@ namespace DistTestCore.Marketplace
 {
     public class CodexContractsStarter : BaseStarter
     {
-        private const string readyString = "Done! Sleeping indefinitely...";
 
         public CodexContractsStarter(TestLifecycle lifecycle, WorkflowCreator workflowCreator)
             : base(lifecycle, workflowCreator)
@@ -14,7 +13,7 @@ namespace DistTestCore.Marketplace
 
         public MarketplaceInfo Start(GethBootstrapNodeInfo bootstrapNode)
         {
-            LogStart("Deploying Codex contracts...");
+            LogStart("Deploying Codex Marketplace...");
 
             var workflow = workflowCreator.CreateWorkflow();
             var startupConfig = CreateStartupConfig(bootstrapNode.RunningContainers.Containers[0]);
@@ -25,32 +24,33 @@ namespace DistTestCore.Marketplace
 
             WaitUntil(() =>
             {
-                var logHandler = new ContractsReadyLogHandler(readyString);
+                var logHandler = new ContractsReadyLogHandler(Debug);
                 workflow.DownloadContainerLog(container, logHandler);
                 return logHandler.Found;
             });
+            Log("Contracts deployed. Extracting addresses...");
 
             var extractor = new ContainerInfoExtractor(lifecycle.Log, workflow, container);
             var marketplaceAddress = extractor.ExtractMarketplaceAddress();
             var abi = extractor.ExtractMarketplaceAbi();
 
-            var interaction = bootstrapNode.StartInteraction(lifecycle.Log);
+            var interaction = bootstrapNode.StartInteraction(lifecycle);
             var tokenAddress = interaction.GetTokenAddress(marketplaceAddress);
 
-            LogEnd("Contracts deployed.");
+            LogEnd("Extract completed. Marketplace deployed.");
 
             return new MarketplaceInfo(marketplaceAddress, abi, tokenAddress);
         }
 
         private void WaitUntil(Func<bool> predicate)
         {
-            Time.WaitUntil(predicate, TimeSpan.FromMinutes(2), TimeSpan.FromSeconds(1));
+            Time.WaitUntil(predicate, TimeSpan.FromMinutes(3), TimeSpan.FromSeconds(2));
         }
 
         private StartupConfig CreateStartupConfig(RunningContainer bootstrapContainer)
         {
             var startupConfig = new StartupConfig();
-            var contractsConfig = new CodexContractsContainerConfig(bootstrapContainer.Pod.Ip, bootstrapContainer.Recipe.GetPortByTag(GethContainerRecipe.HttpPortTag));
+            var contractsConfig = new CodexContractsContainerConfig(bootstrapContainer.Pod.PodInfo.Ip, bootstrapContainer.Recipe.GetPortByTag(GethContainerRecipe.HttpPortTag));
             startupConfig.Add(contractsConfig);
             return startupConfig;
         }
@@ -72,18 +72,27 @@ namespace DistTestCore.Marketplace
 
     public class ContractsReadyLogHandler : LogHandler
     {
-        private readonly string targetString;
+        // Log should contain 'Compiled 15 Solidity files successfully' at some point.
+        private const string RequiredCompiledString = "Solidity files successfully";
+        // When script is done, it prints the ready-string.
+        private const string ReadyString = "Done! Sleeping indefinitely...";
+        private readonly Action<string> debug;
 
-        public ContractsReadyLogHandler(string targetString)
+        public ContractsReadyLogHandler(Action<string> debug)
         {
-            this.targetString = targetString;
+            this.debug = debug;
+            debug($"Looking for '{RequiredCompiledString}' and '{ReadyString}' in container logs...");
         }
 
+        public bool SeenCompileString { get; private set; }
         public bool Found { get; private set; }
 
         protected override void ProcessLine(string line)
         {
-            if (line.Contains(targetString)) Found = true;
+            debug(line);
+            if (line.Contains(RequiredCompiledString)) SeenCompileString = true;
+
+            if (SeenCompileString && line.Contains(ReadyString)) Found = true;
         }
     }
 }

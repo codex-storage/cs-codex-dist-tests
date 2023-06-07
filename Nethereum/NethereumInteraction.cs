@@ -131,7 +131,7 @@ namespace NethereumWorkflow
     public class MintTokensFunction : FunctionMessage
     {
         [Parameter("address", "holder", 1)]
-        public string Holder { get; set; }
+        public string Holder { get; set; } = string.Empty;
 
         [Parameter("uint256", "amount", 2)]
         public BigInteger Amount { get; set; }
@@ -141,6 +141,6 @@ namespace NethereumWorkflow
     public class GetTokenBalanceFunction : FunctionMessage
     {
         [Parameter("address", "owner", 1)]
-        public string Owner { get; set; }
+        public string Owner { get; set; } = string.Empty;
     }
 }

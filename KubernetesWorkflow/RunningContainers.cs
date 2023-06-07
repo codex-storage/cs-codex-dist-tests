@@ -21,18 +21,22 @@
 
     public class RunningContainer
     {
-        public RunningContainer(RunningPod pod, ContainerRecipe recipe, Port[] servicePorts, StartupConfig startupConfig)
+        public RunningContainer(RunningPod pod, ContainerRecipe recipe, Port[] servicePorts, StartupConfig startupConfig, RunningContainerAddress clusterExternalAddress, RunningContainerAddress clusterInternalAddress)
         {
             Pod = pod;
             Recipe = recipe;
             ServicePorts = servicePorts;
             Name = GetContainerName(recipe, startupConfig);
+            ClusterExternalAddress = clusterExternalAddress;
+            ClusterInternalAddress = clusterInternalAddress;
         }
 
         public string Name { get; }
         public RunningPod Pod { get; }
         public ContainerRecipe Recipe { get; }
         public Port[] ServicePorts { get; }
+        public RunningContainerAddress ClusterExternalAddress { get; }
+        public RunningContainerAddress ClusterInternalAddress { get; }
 
         private string GetContainerName(ContainerRecipe recipe, StartupConfig startupConfig)
         {
@@ -45,5 +49,17 @@
                 return $"<{recipe.Name}>";
             }
         }
+    }
+
+    public class RunningContainerAddress
+    {
+        public RunningContainerAddress(string host, int port)
+        {
+            Host = host;
+            Port = port;
+        }
+
+        public string Host { get; }
+        public int Port { get; }
     }
 }

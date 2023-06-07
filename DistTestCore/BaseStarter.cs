@@ -32,6 +32,11 @@ namespace DistTestCore
             lifecycle.Log.Log($"{GetClassName()} {msg}");
         }
 
+        protected void Debug(string msg)
+        {
+            lifecycle.Log.Debug($"{GetClassName()} {msg}", 1);
+        }
+
         private string GetClassName()
         {
             return $"({GetType().Name})";

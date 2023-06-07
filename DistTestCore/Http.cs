@@ -1,6 +1,6 @@
-﻿using Logging;
+﻿using KubernetesWorkflow;
+using Logging;
 using Newtonsoft.Json;
-using NUnit.Framework;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using Utils;
@@ -11,18 +11,17 @@ namespace DistTestCore
     {
         private readonly BaseLog log;
         private readonly ITimeSet timeSet;
-        private readonly string ip;
-        private readonly int port;
+        private readonly RunningContainerAddress address;
         private readonly string baseUrl;
+        private readonly TimeSpan? timeoutOverride;
 
-        public Http(BaseLog log, ITimeSet timeSet, string ip, int port, string baseUrl)
+        public Http(BaseLog log, ITimeSet timeSet, RunningContainerAddress address, string baseUrl, TimeSpan? timeoutOverride = null)
         {
             this.log = log;
             this.timeSet = timeSet;
-            this.ip = ip;
-            this.port = port;
+            this.address = address;
             this.baseUrl = baseUrl;
-
+            this.timeoutOverride = timeoutOverride;
             if (!this.baseUrl.StartsWith("/")) this.baseUrl = "/" + this.baseUrl;
             if (!this.baseUrl.EndsWith("/")) this.baseUrl += "/";
         }
@@ -38,7 +37,7 @@ namespace DistTestCore
                 var str = Time.Wait(result.Content.ReadAsStringAsync());
                 Log(url, str);
                 return str; ;
-            });
+            }, $"HTTP-GET:{route}");
         }
 
         public T HttpGetJson<T>(string route)
@@ -62,10 +61,10 @@ namespace DistTestCore
                 using var content = JsonContent.Create(body);
                 Log(url, JsonConvert.SerializeObject(body));
                 var result = Time.Wait(client.PostAsync(url, content));
-                var str= Time.Wait(result.Content.ReadAsStringAsync());
+                var str = Time.Wait(result.Content.ReadAsStringAsync());
                 Log(url, str);
                 return str;
-            });
+            }, $"HTTP-POST-JSON: {route}");
         }
 
         public string HttpPostStream(string route, Stream stream)
@@ -81,7 +80,7 @@ namespace DistTestCore
                 var str =Time.Wait(response.Content.ReadAsStringAsync());
                 Log(url, str);
                 return str;
-            });
+            }, $"HTTP-POST-STREAM: {route}");
         }
 
         public Stream HttpGetStream(string route)
@@ -92,43 +91,10 @@ namespace DistTestCore
                 var url = GetUrl() + route;
                 Log(url, "~ STREAM ~");
                 return Time.Wait(client.GetStreamAsync(url));
-            });
+            }, $"HTTP-GET-STREAM: {route}");
         }
 
-        private string GetUrl()
-        {
-            return $"http://{ip}:{port}{baseUrl}";
-        }
-
-        private void Log(string url, string message)
-        {
-            log.Debug($"({url}) = '{message}'", 3);
-        }
-
-        private T Retry<T>(Func<T> operation)
-        {
-            var retryCounter = 0;
-
-            while (true)
-            {
-                try
-                {
-                    return operation();
-                }
-                catch (Exception exception)
-                {
-                    timeSet.HttpCallRetryDelay();
-                    retryCounter++;
-                    if (retryCounter > timeSet.HttpCallRetryCount())
-                    {
-                        Assert.Fail(exception.ToString());
-                        throw;
-                    }
-                }
-            }
-        }
-
-        private static T TryJsonDeserialize<T>(string json)
+        public T TryJsonDeserialize<T>(string json)
         {
             try
             {
@@ -137,15 +103,38 @@ namespace DistTestCore
             catch (Exception exception)
             {
                 var msg = $"Failed to deserialize JSON: '{json}' with exception: {exception}";
-                Assert.Fail(msg);
                 throw new InvalidOperationException(msg, exception);
             }
         }
 
+        private string GetUrl()
+        {
+            return $"{address.Host}:{address.Port}{baseUrl}";
+        }
+
+        private void Log(string url, string message)
+        {
+            log.Debug($"({url}) = '{message}'", 3);
+        }
+
+        private T Retry<T>(Func<T> operation, string description)
+        {
+            return Time.Retry(operation, timeSet.HttpCallRetryTimeout(), timeSet.HttpCallRetryDelay(), description);
+        }
+
         private HttpClient GetClient()
         {
+            if (timeoutOverride.HasValue)
+            {
+                return GetClient(timeoutOverride.Value);
+            }
+            return GetClient(timeSet.HttpCallTimeout());
+        }
+
+        private HttpClient GetClient(TimeSpan timeout)
+        {
             var client = new HttpClient();
-            client.Timeout = timeSet.HttpCallTimeout();
+            client.Timeout = timeout;
             return client;
         }
     }

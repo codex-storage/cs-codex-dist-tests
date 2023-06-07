@@ -1,17 +1,14 @@
 ﻿using KubernetesWorkflow;
-using Logging;
 
 namespace DistTestCore.Codex
 {
     public class CodexAccess
     {
-        private readonly BaseLog log;
-        private readonly ITimeSet timeSet;
+        private readonly TestLifecycle lifecycle;
 
-        public CodexAccess(BaseLog log, ITimeSet timeSet, RunningContainer runningContainer)
+        public CodexAccess(TestLifecycle lifecycle, RunningContainer runningContainer)
         {
-            this.log = log;
-            this.timeSet = timeSet;
+            this.lifecycle = lifecycle;
             Container = runningContainer;
         }
 
@@ -19,7 +16,30 @@ namespace DistTestCore.Codex
 
         public CodexDebugResponse GetDebugInfo()
         {
-            return Http().HttpGetJson<CodexDebugResponse>("debug/info");
+            return Http(TimeSpan.FromSeconds(2)).HttpGetJson<CodexDebugResponse>("debug/info");
+        }
+
+        public CodexDebugPeerResponse GetDebugPeer(string peerId)
+        {
+            return GetDebugPeer(peerId, TimeSpan.FromSeconds(2));
+        }
+
+        public CodexDebugPeerResponse GetDebugPeer(string peerId, TimeSpan timeout)
+        {
+            var http = Http(timeout);
+            var str = http.HttpGetString($"debug/peer/{peerId}");
+
+            if (str.ToLowerInvariant() == "unable to find peer!")
+            {
+                return new CodexDebugPeerResponse
+                {
+                    IsPeerFound = false
+                };
+            }
+
+            var result = http.TryJsonDeserialize<CodexDebugPeerResponse>(str);
+            result.IsPeerFound = true;
+            return result;
         }
 
         public string UploadFile(FileStream fileStream)
@@ -42,6 +62,11 @@ namespace DistTestCore.Codex
             return Http().HttpPostJson($"storage/request/{contentId}", request);
         }
 
+        public string ConnectToPeer(string peerId, string peerMultiAddress)
+        {
+            return Http().HttpGetString($"connect/{peerId}?addrs={peerMultiAddress}");
+        }
+
         public void EnsureOnline()
         {
             try
@@ -51,25 +76,20 @@ namespace DistTestCore.Codex
 
                 var nodePeerId = debugInfo.id;
                 var nodeName = Container.Name;
-                log.AddStringReplace(nodePeerId, $"___{nodeName}___");
+                lifecycle.Log.AddStringReplace(nodePeerId, nodeName);
+                lifecycle.Log.AddStringReplace(debugInfo.table.localNode.nodeId, nodeName);
             }
             catch (Exception e)
             {
-                log.Error($"Failed to start codex node: {e}. Test infra failure.");
+                lifecycle.Log.Error($"Failed to start codex node: {e}. Test infra failure.");
                 throw new InvalidOperationException($"Failed to start codex node. Test infra failure.", e);
             }
         }
 
-        private Http Http()
+        private Http Http(TimeSpan? timeoutOverride = null)
         {
-            var ip = Container.Pod.Cluster.IP;
-            var port = Container.ServicePorts[0].Number;
-            return new Http(log, timeSet, ip, port, baseUrl: "/api/codex/v1");
-        }
-
-        public string ConnectToPeer(string peerId, string peerMultiAddress)
-        {
-            return Http().HttpGetString($"connect/{peerId}?addrs={peerMultiAddress}");
+            var address = lifecycle.Configuration.GetAddress(Container);
+            return new Http(lifecycle.Log, lifecycle.TimeSet, address, baseUrl: "/api/codex/v1", timeoutOverride);
         }
     }
 
@@ -82,6 +102,22 @@ namespace DistTestCore.Codex
         public EnginePeerResponse[] enginePeers { get; set; } = Array.Empty<EnginePeerResponse>();
         public SwitchPeerResponse[] switchPeers { get; set; } = Array.Empty<SwitchPeerResponse>();
         public CodexDebugVersionResponse codex { get; set; } = new();
+        public CodexDebugTableResponse table { get; set; } = new();
+    }
+
+    public class CodexDebugTableResponse
+    {
+        public CodexDebugTableNodeResponse localNode { get; set; } = new();
+        public CodexDebugTableNodeResponse[] nodes { get; set; } = Array.Empty<CodexDebugTableNodeResponse>();
+    }
+
+    public class CodexDebugTableNodeResponse
+    {
+        public string nodeId { get; set; } = string.Empty;
+        public string peerId { get; set; } = string.Empty;
+        public string record { get; set; } = string.Empty;
+        public string address { get; set; } = string.Empty;
+        public bool seen { get; set; }
     }
 
     public class EnginePeerResponse
@@ -108,6 +144,20 @@ namespace DistTestCore.Codex
     {
         public string version { get; set; } = string.Empty;
         public string revision { get; set; } = string.Empty;
+    }
+
+    public class CodexDebugPeerResponse
+    {
+        public bool IsPeerFound { get; set; }
+
+        public string peerId { get; set; } = string.Empty;
+        public long seqNo { get; set; }
+        public CodexDebugPeerAddressResponse[] addresses { get; set; } = Array.Empty<CodexDebugPeerAddressResponse>();
+    }
+
+    public class CodexDebugPeerAddressResponse
+    {
+        public string address { get; set; } = string.Empty;
     }
 
     public class CodexSalesAvailabilityRequest

@@ -1,7 +1,7 @@
 using DistTestCore;
 using NUnit.Framework;
 
-namespace Tests.ParallelTests
+namespace TestsLong.BasicTests
 {
     [TestFixture]
     public class UploadTests : DistTest

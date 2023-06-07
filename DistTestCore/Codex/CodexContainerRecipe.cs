@@ -1,5 +1,4 @@
-﻿using System.Runtime.InteropServices;
-using DistTestCore.Marketplace;
+﻿using DistTestCore.Marketplace;
 using KubernetesWorkflow;
 
 namespace DistTestCore.Codex
@@ -7,12 +6,13 @@ namespace DistTestCore.Codex
     public class CodexContainerRecipe : ContainerRecipeFactory
     {
         #if Arm64
-            public const string DockerImage = "emizzle/nim-codex-arm64:sha-c7af585";
+            public const string DockerImage = "codexstorage/nim-codex:sha-7b88ea0";
         #else
-			//public const string DockerImage = "thatbenbierens/nim-codex:sha-9716635";
-            public const string DockerImage = "thatbenbierens/codexlocal:latest";
+			//public const string DockerImage = "codexstorage/nim-codex:sha-7b88ea0";
+            public const string DockerImage = "codexstorage/nim-codex:sha-7b88ea0";
         #endif
         public const string MetricsPortTag = "metrics_port";
+        public const string DiscoveryPortTag = "discovery-port";
 
         protected override string Image => DockerImage;
 
@@ -22,7 +22,8 @@ namespace DistTestCore.Codex
 
             AddExposedPortAndVar("API_PORT");
             AddEnvVar("DATA_DIR", $"datadir{ContainerNumber}");
-            AddInternalPortAndVar("DISC_PORT");
+            AddInternalPortAndVar("DISC_PORT", DiscoveryPortTag);
+            AddEnvVar("LOG_LEVEL", config.LogLevel.ToString()!.ToUpperInvariant());
 
             var listenPort = AddInternalPort();
             AddEnvVar("LISTEN_ADDRS", $"/ip4/0.0.0.0/tcp/{listenPort.Number}");
@@ -30,11 +31,6 @@ namespace DistTestCore.Codex
             if (!string.IsNullOrEmpty(config.BootstrapSpr))
             {
                 AddEnvVar("BOOTSTRAP_SPR", config.BootstrapSpr);
-            }
-
-            if (config.LogLevel != null)
-            {
-                AddEnvVar("LOG_LEVEL", config.LogLevel.ToString()!.ToUpperInvariant());
             }
             if (config.StorageQuota != null)
             {
@@ -53,12 +49,13 @@ namespace DistTestCore.Codex
                 var companionNodeAccount = companionNode.Accounts[Index];
                 Additional(companionNodeAccount);
 
-                var ip = companionNode.RunningContainer.Pod.Ip;
+                var ip = companionNode.RunningContainer.Pod.PodInfo.Ip;
                 var port = companionNode.RunningContainer.Recipe.GetPortByTag(GethContainerRecipe.HttpPortTag).Number;
 
                 AddEnvVar("ETH_PROVIDER", $"ws://{ip}:{port}");
                 AddEnvVar("ETH_ACCOUNT", companionNodeAccount.Account);
                 AddEnvVar("ETH_MARKETPLACE_ADDRESS", gethConfig.MarketplaceNetwork.Marketplace.Address);
+                AddEnvVar("PERSISTENCE", "1");
             }
         }
     }

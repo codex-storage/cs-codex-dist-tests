@@ -7,7 +7,7 @@ namespace DistTestCore.Marketplace
         #if Arm64
             public const string DockerImage = "emizzle/codex-contracts-deployment:latest";
         #else
-            public const string DockerImage = "thatbenbierens/codex-contracts-deployment:nomint";
+            public const string DockerImage = "thatbenbierens/codex-contracts-deployment:nomint2";
         #endif
         public const string MarketplaceAddressFilename = "/usr/app/deployments/codexdisttestnetwork/Marketplace.json";
         public const string MarketplaceArtifactFilename = "/usr/app/artifacts/contracts/Marketplace.sol/Marketplace.json";

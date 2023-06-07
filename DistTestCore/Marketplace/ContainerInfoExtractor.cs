@@ -56,30 +56,6 @@ namespace DistTestCore.Marketplace
             return marketplaceAbi;
         }
 
-        private string Retry(Func<string> fetch)
-        {
-            var result = string.Empty;
-            Time.WaitUntil(() =>
-            {
-                result = Catch(fetch);
-                return !string.IsNullOrEmpty(result);
-            }, TimeSpan.FromMinutes(1), TimeSpan.FromSeconds(3));
-
-            return result;
-        }
-
-        private string Catch(Func<string> fetch)
-        {
-            try
-            {
-                return fetch();
-            }
-            catch
-            {
-                return string.Empty;
-            }
-        }
-
         private string FetchAccountsCsv()
         {
             return workflow.ExecuteCommand(container, "cat", GethContainerRecipe.AccountsFilename);
@@ -103,7 +79,7 @@ namespace DistTestCore.Marketplace
 
         private string FetchPubKey()
         {
-            var enodeFinder = new PubKeyFinder();
+            var enodeFinder = new PubKeyFinder(s => log.Debug(s));
             workflow.DownloadContainerLog(container, enodeFinder);
             return enodeFinder.GetPubKey();
         }
@@ -116,21 +92,35 @@ namespace DistTestCore.Marketplace
             var privateKey = tokens[1];
             return new GethAccount(account, privateKey);
         }
+
+        private static string Retry(Func<string> fetch)
+        {
+            return Time.Retry(fetch, nameof(ContainerInfoExtractor));
+        }
     }
 
     public class PubKeyFinder : LogHandler, ILogHandler
     {
         private const string openTag = "self=enode://";
         private const string openTagQuote = "self=\"enode://";
+        private readonly Action<string> debug;
         private string pubKey = string.Empty;
+
+        public PubKeyFinder(Action<string> debug)
+        {
+            this.debug = debug;
+            debug($"Looking for '{openTag}' in container logs...");
+        }
 
         public string GetPubKey()
         {
+            if (string.IsNullOrEmpty(pubKey)) throw new Exception("Not found yet exception.");
             return pubKey;
         }
 
         protected override void ProcessLine(string line)
         {
+            debug(line);
             if (line.Contains(openTag))
             {
                 ExtractPubKey(openTag, line);

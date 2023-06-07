@@ -1,6 +1,7 @@
 ﻿using DistTestCore.Codex;
 using DistTestCore.Marketplace;
 using KubernetesWorkflow;
+using Logging;
 
 namespace DistTestCore
 {
@@ -27,7 +28,8 @@ namespace DistTestCore
             var codexNodeFactory = new CodexNodeFactory(lifecycle, metricAccessFactory, gethStartResult.MarketplaceAccessFactory);
 
             var group = CreateCodexGroup(codexSetup, containers, codexNodeFactory);
-            LogEnd($"Started {codexSetup.NumberOfNodes} nodes at '{group.Containers.RunningPod.Ip}'. They are: {group.Describe()}");
+            var podInfo = group.Containers.RunningPod.PodInfo;
+            LogEnd($"Started {codexSetup.NumberOfNodes} nodes at location '{podInfo.K8SNodeName}'={podInfo.Ip}. They are: {group.Describe()}");
             LogSeparator();
             return group;
         }
@@ -74,7 +76,7 @@ namespace DistTestCore
         {
             var group = new CodexNodeGroup(lifecycle, codexSetup, runningContainers, codexNodeFactory);
             RunningGroups.Add(group);
-            group.EnsureOnline();
+            Stopwatch.Measure(lifecycle.Log, "EnsureOnline", group.EnsureOnline, debug: true);
             return group;
         }
 

@@ -1,4 +1,5 @@
-﻿using KubernetesWorkflow;
+﻿using DistTestCore.Helpers;
+using KubernetesWorkflow;
 using Logging;
 using NUnit.Framework;
 using NUnit.Framework.Constraints;
@@ -28,12 +29,14 @@ namespace DistTestCore.Metrics
 
         public void AssertThat(string metricName, IResolveConstraint constraint, string message = "")
         {
-            var metricSet = GetMetricWithTimeout(metricName);
-            var metricValue = metricSet.Values[0].Value;
+            AssertHelpers.RetryAssert(constraint, () =>
+            {
+                var metricSet = GetMetricWithTimeout(metricName);
+                var metricValue = metricSet.Values[0].Value;
 
-            log.Log($"{node.Name} metric '{metricName}' = {metricValue}");
-
-            Assert.That(metricValue, constraint, message);
+                log.Log($"{node.Name} metric '{metricName}' = {metricValue}");
+                return metricValue;
+            }, message);
         }
 
         public Metrics? GetAllMetrics()

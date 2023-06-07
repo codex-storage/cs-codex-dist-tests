@@ -54,6 +54,7 @@ namespace Logging
 
         public void AddStringReplace(string from, string to)
         {
+            if (string.IsNullOrWhiteSpace(from)) return;
             replacements.Add(new BaseLogStringReplacement(from, to));
         }
 

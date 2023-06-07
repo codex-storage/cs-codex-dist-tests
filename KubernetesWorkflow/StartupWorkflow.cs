@@ -80,8 +80,41 @@ namespace KubernetesWorkflow
                 var servicePorts = runningPod.GetServicePortsForContainerRecipe(r);
                 log.Debug($"{r} -> service ports: {string.Join(",", servicePorts.Select(p => p.Number))}");
 
-                return new RunningContainer(runningPod, r, servicePorts, startupConfig);
+                return new RunningContainer(runningPod, r, servicePorts, startupConfig,
+                    GetContainerExternalAddress(runningPod, servicePorts),
+                    GetContainerInternalAddress(r));
+
             }).ToArray();
+        }
+
+        private RunningContainerAddress GetContainerExternalAddress(RunningPod pod, Port[] servicePorts)
+        {
+            return new RunningContainerAddress(
+                pod.Cluster.HostAddress,
+                GetServicePort(servicePorts));
+        }
+
+        private RunningContainerAddress GetContainerInternalAddress(ContainerRecipe recipe)
+        {
+            var serviceName = "service-" + numberSource.WorkflowNumber;
+            var namespaceName = cluster.Configuration.K8sNamespacePrefix + testNamespace;
+            var port = GetInternalPort(recipe);
+
+            return new RunningContainerAddress(
+                $"http://{serviceName}.{namespaceName}.svc.cluster.local",
+                port);
+        }
+
+        private static int GetServicePort(Port[] servicePorts)
+        {
+            if (servicePorts.Any()) return servicePorts.First().Number;
+            return 0;
+        }
+
+        private static int GetInternalPort(ContainerRecipe recipe)
+        {
+            if (recipe.ExposedPorts.Any()) return recipe.ExposedPorts.First().Number;
+            return 0;
         }
 
         private ContainerRecipe[] CreateRecipes(int numberOfContainers, ContainerRecipeFactory recipeFactory, StartupConfig startupConfig)
