@@ -1,20 +1,47 @@
 ﻿using DistTestCore;
 using DistTestCore.Codex;
 using NUnit.Framework;
+using NUnit.Framework.Interfaces;
 
 namespace TestsLong.BasicTests
 {
     [TestFixture]
     public class LargeFileTests : DistTest
     {
-        [Test]
-        [Combinatorial]
-        [UseLongTimeouts]
-        public void DownloadCorrectnessTest(
-            [Values(1, 10, 100, 1024)] int sizeInMB,
-            [Values(1, 10, 100, 1024)] int multiplier)
+        #region Abort test run after first failure
+
+        private bool stop;
+
+        [SetUp]
+        public void SetUp()
         {
-            long size = (sizeInMB * multiplier);
+            if (stop)
+            {
+                Assert.Inconclusive("Previous test failed");
+            }
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            if (TestContext.CurrentContext.Result.Outcome.Status == TestStatus.Failed)
+            {
+                stop = true;
+            }
+        }
+
+        #endregion
+
+        [TestCase(      1 *     1)] // 1 MB
+        [TestCase(      1 *    10)]
+        [TestCase(      1 *   100)]
+        [TestCase(      1 *  1024)] // 1 GB
+        [TestCase(   1024 *    10)]
+        [TestCase(   1024 *   100)]
+        [TestCase(   1024 *  1024)] // 1 TB :O
+        [UseLongTimeouts]
+        public void DownloadCorrectnessTest(long size)
+        {
             var sizeMB = size.MB();
 
             var expectedFile = GenerateTestFile(sizeMB);

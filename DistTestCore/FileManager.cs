@@ -15,7 +15,7 @@ namespace DistTestCore
 
     public class FileManager : IFileManager
     {
-        public const int ChunkSize = 1024 * 1024;
+        public const int ChunkSize = 1024 * 1024 * 100;
         private static NumberSource folderNumberSource = new NumberSource(0);
         private readonly Random random = new Random();
         private readonly TestLog log;
@@ -41,9 +41,9 @@ namespace DistTestCore
 
         public TestFile GenerateTestFile(ByteSize size, string label)
         {
-            var result = CreateEmptyTestFile(label);
-            GenerateFileBytes(result, size);
-            log.Log($"Generated file '{result.Describe()}'.");
+            var sw = Stopwatch.Begin(log);
+            var result = GenerateFile(size, label);
+            sw.End($"Generated file '{result.Describe()}'.");
             return result;
         }
 
@@ -73,14 +73,50 @@ namespace DistTestCore
             }
         }
 
+        private TestFile GenerateFile(ByteSize size, string label)
+        {
+            var result = CreateEmptyTestFile(label);
+            CheckSpaceAvailable(result, size);
+
+            GenerateFileBytes(result, size);
+            return result;
+        }
+
+        private void CheckSpaceAvailable(TestFile testFile, ByteSize size)
+        {
+            var file = new FileInfo(testFile.Filename);
+            var drive = new DriveInfo(file.Directory!.Root.FullName);
+
+            var spaceAvailable = drive.TotalFreeSpace;
+
+            if (spaceAvailable < size.SizeInBytes)
+            {
+                var msg = $"Inconclusive: Not enough disk space to perform test. " +
+                    $"{Formatter.FormatByteSize(size.SizeInBytes)} required. " +
+                    $"{Formatter.FormatByteSize(spaceAvailable)} available.";
+
+                log.Log(msg);
+                Assert.Inconclusive(msg);
+            }
+        }
+
         private void GenerateFileBytes(TestFile result, ByteSize size)
         {
             long bytesLeft = size.SizeInBytes;
+            int chunkSize = ChunkSize;
             while (bytesLeft > 0)
             {
-                var length = Math.Min(bytesLeft, ChunkSize);
-                AppendRandomBytesToFile(result, length);
-                bytesLeft -= length;
+                try
+                {
+                    var length = Math.Min(bytesLeft, chunkSize);
+                    AppendRandomBytesToFile(result, length);
+                    bytesLeft -= length;
+                }
+                catch
+                {
+                    chunkSize = chunkSize / 2;
+                    if (chunkSize < 1024) throw;
+                }
             }
         }
 
