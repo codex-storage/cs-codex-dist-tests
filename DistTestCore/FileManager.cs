@@ -169,8 +169,9 @@ namespace DistTestCore
 
         public string Describe()
         {
-            if (!string.IsNullOrEmpty(Label)) return Label;
-            return $"'{Filename}' ({Formatter.FormatByteSize(GetFileSize())})";
+            var sizePostfix = $" ({Formatter.FormatByteSize(GetFileSize())})";
+            if (!string.IsNullOrEmpty(Label)) return Label + sizePostfix;
+            return $"'{Filename}'{sizePostfix}";
         }
 
         private void AssertEqual(TestFile? actual)
@@ -178,10 +179,7 @@ namespace DistTestCore
             if (actual == null) Assert.Fail("TestFile is null.");
             if (actual == this || actual!.Filename == Filename) Assert.Fail("TestFile is compared to itself.");
 
-            Stopwatch.Measure(log, "sizes", () =>
-            {
-                Assert.That(actual.GetFileSize(), Is.EqualTo(GetFileSize()), "Files are not of equal length.");
-            });
+            Assert.That(actual.GetFileSize(), Is.EqualTo(GetFileSize()), "Files are not of equal length.");
 
             using var streamExpected = new FileStream(Filename, FileMode.Open, FileAccess.Read);
             using var streamActual = new FileStream(actual.Filename, FileMode.Open, FileAccess.Read);
