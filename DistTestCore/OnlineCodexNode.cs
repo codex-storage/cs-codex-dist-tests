@@ -2,6 +2,7 @@
 using DistTestCore.Logs;
 using DistTestCore.Marketplace;
 using DistTestCore.Metrics;
+using Logging;
 using NUnit.Framework;
 
 namespace DistTestCore
@@ -13,7 +14,7 @@ namespace DistTestCore
         CodexDebugPeerResponse GetDebugPeer(string peerId);
         CodexDebugPeerResponse GetDebugPeer(string peerId, TimeSpan timeout);
         ContentId UploadFile(TestFile file);
-        TestFile? DownloadContent(ContentId contentId);
+        TestFile? DownloadContent(ContentId contentId, string fileLabel = "");
         void ConnectToPeer(IOnlineCodexNode node);
         ICodexNodeLog DownloadLog();
         IMetricsAccess Metrics { get; }
@@ -66,23 +67,31 @@ namespace DistTestCore
 
         public ContentId UploadFile(TestFile file)
         {
-            Log($"Uploading file of size {file.GetFileSize()}...");
             using var fileStream = File.OpenRead(file.Filename);
-            var response = CodexAccess.UploadFile(fileStream);
+
+            var logMessage = $"Uploading file {file.Describe()}...";
+            var response = Stopwatch.Measure(lifecycle.Log, logMessage, () =>
+            {
+                return CodexAccess.UploadFile(fileStream);
+            });
+
             if (response.StartsWith(UploadFailedMessage))
             {
                 Assert.Fail("Node failed to store block.");
             }
+            var logReplacement = $"(CID:{file.Describe()})";
+            Log($"ContentId '{response}' is {logReplacement}");
+            lifecycle.Log.AddStringReplace(response, logReplacement);
             Log($"Uploaded file. Received contentId: '{response}'.");
             return new ContentId(response);
         }
 
-        public TestFile? DownloadContent(ContentId contentId)
+        public TestFile? DownloadContent(ContentId contentId, string fileLabel = "")
         {
-            Log($"Downloading for contentId: '{contentId.Id}'...");
-            var file = lifecycle.FileManager.CreateEmptyTestFile();
-            DownloadToFile(contentId.Id, file);
-            Log($"Downloaded file of size {file.GetFileSize()} to '{file.Filename}'.");
+            var logMessage = $"Downloading for contentId: '{contentId.Id}'...";
+            var file = lifecycle.FileManager.CreateEmptyTestFile(fileLabel);
+            Stopwatch.Measure(lifecycle.Log, logMessage, () => DownloadToFile(contentId.Id, file));
+            Log($"Downloaded file {file.Describe()} to '{file.Filename}'.");
             return file;
         }
 

@@ -1,13 +1,14 @@
 ﻿using Logging;
 using NUnit.Framework;
+using System.Runtime.InteropServices;
 using Utils;
 
 namespace DistTestCore
 {
     public interface IFileManager
     {
-        TestFile CreateEmptyTestFile();
-        TestFile GenerateTestFile(ByteSize size);
+        TestFile CreateEmptyTestFile(string label = "");
+        TestFile GenerateTestFile(ByteSize size, string label = "");
         void DeleteAllTestFiles();
         void PushFileSet();
         void PopFileSet();
@@ -15,7 +16,7 @@ namespace DistTestCore
 
     public class FileManager : IFileManager
     {
-        public const int ChunkSize = 1024 * 1024;
+        public const int ChunkSize = 1024 * 1024 * 100;
         private static NumberSource folderNumberSource = new NumberSource(0);
         private readonly Random random = new Random();
         private readonly TestLog log;
@@ -30,19 +31,20 @@ namespace DistTestCore
             this.log = log;
         }
 
-        public TestFile CreateEmptyTestFile()
+        public TestFile CreateEmptyTestFile(string label = "")
         {
-            var result = new TestFile(Path.Combine(folder, Guid.NewGuid().ToString() + "_test.bin"));
+            var path = Path.Combine(folder, Guid.NewGuid().ToString() + "_test.bin");
+            var result = new TestFile(log, path, label);
             File.Create(result.Filename).Close();
             if (fileSetStack.Any()) fileSetStack.Last().Add(result);
             return result;
         }
 
-        public TestFile GenerateTestFile(ByteSize size)
+        public TestFile GenerateTestFile(ByteSize size, string label)
         {
-            var result = CreateEmptyTestFile();
-            GenerateFileBytes(result, size);
-            log.Log($"Generated {size.SizeInBytes} bytes of content for file '{result.Filename}'.");
+            var sw = Stopwatch.Begin(log);
+            var result = GenerateFile(size, label);
+            sw.End($"Generated file '{result.Describe()}'.");
             return result;
         }
 
@@ -72,14 +74,50 @@ namespace DistTestCore
             }
         }
 
+        private TestFile GenerateFile(ByteSize size, string label)
+        {
+            var result = CreateEmptyTestFile(label);
+            CheckSpaceAvailable(result, size);
+
+            GenerateFileBytes(result, size);
+            return result;
+        }
+
+        private void CheckSpaceAvailable(TestFile testFile, ByteSize size)
+        {
+            var file = new FileInfo(testFile.Filename);
+            var drive = new DriveInfo(file.Directory!.Root.FullName);
+
+            var spaceAvailable = drive.TotalFreeSpace;
+
+            if (spaceAvailable < size.SizeInBytes)
+            {
+                var msg = $"Inconclusive: Not enough disk space to perform test. " +
+                    $"{Formatter.FormatByteSize(size.SizeInBytes)} required. " +
+                    $"{Formatter.FormatByteSize(spaceAvailable)} available.";
+
+                log.Log(msg);
+                Assert.Inconclusive(msg);
+            }
+        }
+
         private void GenerateFileBytes(TestFile result, ByteSize size)
         {
             long bytesLeft = size.SizeInBytes;
+            int chunkSize = ChunkSize;
             while (bytesLeft > 0)
             {
-                var length = Math.Min(bytesLeft, ChunkSize);
-                AppendRandomBytesToFile(result, length);
-                bytesLeft -= length;
+                try
+                {
+                    var length = Math.Min(bytesLeft, chunkSize);
+                    AppendRandomBytesToFile(result, length);
+                    bytesLeft -= length;
+                }
+                catch
+                {
+                    chunkSize = chunkSize / 2;
+                    if (chunkSize < 1024) throw;
+                }
             }
         }
 
@@ -104,20 +142,39 @@ namespace DistTestCore
 
     public class TestFile
     {
-        public TestFile(string filename)
+        private readonly TestLog log;
+
+        public TestFile(TestLog log, string filename, string label)
         {
+            this.log = log;
             Filename = filename;
+            Label = label;
         }
 
         public string Filename { get; }
-
-        public long GetFileSize()
-        {
-            var info = new FileInfo(Filename);
-            return info.Length;
-        }
+        public string Label { get; }
 
         public void AssertIsEqual(TestFile? actual)
+        {
+            var sw = Stopwatch.Begin(log);
+            try
+            {
+                AssertEqual(actual);
+            }
+            finally
+            {
+                sw.End($"{nameof(TestFile)}.{nameof(AssertIsEqual)}");
+            }
+        }
+
+        public string Describe()
+        {
+            var sizePostfix = $" ({Formatter.FormatByteSize(GetFileSize())})";
+            if (!string.IsNullOrEmpty(Label)) return Label + sizePostfix;
+            return $"'{Filename}'{sizePostfix}";
+        }
+
+        private void AssertEqual(TestFile? actual)
         {
             if (actual == null) Assert.Fail("TestFile is null.");
             if (actual == this || actual!.Filename == Filename) Assert.Fail("TestFile is compared to itself.");
@@ -138,10 +195,25 @@ namespace DistTestCore
                 readExpected = streamExpected.Read(bytesExpected, 0, FileManager.ChunkSize);
                 readActual = streamActual.Read(bytesActual, 0, FileManager.ChunkSize);
 
-                if (readExpected == 0 && readActual == 0) return;
+                if (readExpected == 0 && readActual == 0)
+                {
+                    log.Log($"OK: '{Describe()}' is equal to '{actual.Describe()}'.");
+                    return;
+                }
+
                 Assert.That(readActual, Is.EqualTo(readExpected), "Unable to read buffers of equal length.");
-                CollectionAssert.AreEqual(bytesExpected, bytesActual, "Files are not binary-equal.");
+
+                for (var i = 0; i < readActual; i++)
+                {
+                    if (bytesExpected[i] != bytesActual[i]) Assert.Fail("File contents not equal.");
+                }
             }
+        }
+
+        private long GetFileSize()
+        {
+            var info = new FileInfo(Filename);
+            return info.Length;
         }
     }
 }

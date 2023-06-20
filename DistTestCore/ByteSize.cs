@@ -1,13 +1,22 @@
-﻿namespace DistTestCore
+﻿using Utils;
+
+namespace DistTestCore
 {
     public class ByteSize
     {
+
         public ByteSize(long sizeInBytes)
         {
+            if (sizeInBytes < 0) throw new ArgumentException("Cannot create ByteSize object with size less than 0. Was: " + sizeInBytes);
             SizeInBytes = sizeInBytes;
         }
 
         public long SizeInBytes { get; }
+
+        public long ToMB()
+        {
+            return SizeInBytes / (1024 * 1024);
+        }
 
         public override bool Equals(object? obj)
         {
@@ -21,7 +30,7 @@
 
         public override string ToString()
         {
-            return $"{SizeInBytes} bytes";
+            return Formatter.FormatByteSize(SizeInBytes);
         }
     }
 
