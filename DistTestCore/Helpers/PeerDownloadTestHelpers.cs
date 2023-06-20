@@ -41,7 +41,7 @@ namespace DistTestCore.Helpers
             float sizeInMB = size.ToMB();
             var timePerMB = timePerDownload / sizeInMB;
 
-            test.Log($"Performed {numberOfDownloads} downloads of {size} in {timeTaken.TotalSeconds} seconds, for an average of {timePerMB} seconds per MB.");
+            test.Log($"Performed {numberOfDownloads} downloads of {size} in {timeTaken.TotalSeconds} seconds, for an average of {timePerMB.TotalSeconds} seconds per MB.");
 
             Assert.That(timePerMB, Is.LessThan(CodexContainerRecipe.MaxDownloadTimePerMegabyte), "MaxDownloadTimePerMegabyte performance threshold breached.");
         }
