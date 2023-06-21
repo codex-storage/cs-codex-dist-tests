@@ -12,7 +12,15 @@ namespace ContinuousTests
 
         public void Run()
         {
-            var config = configLoader.Load();
+            var config = //configLoader.Load();
+                new Configuration
+                {
+                    CodexUrls =new[] { "http://localhost:8080", "http://localhost:8081" },
+                    LogPath = "logs",
+                    KeepPassedTestLogs = false,
+                    SleepSecondsPerAllTests = 1,
+                    SleepSecondsPerSingleTest = 1,
+                };
             StartupChecks(config);
 
             while (true)

@@ -38,6 +38,7 @@ namespace ContinuousTests
         private CodexNode[] CreateRandomNodes(int number, BaseLog testLog)
         {
             var urls = SelectRandomUrls(number);
+            testLog.Log("Selected nodes: " + string.Join(",", urls));
             return codexNodeFactory.Create(urls, testLog, test.TimeSet);
         }
 

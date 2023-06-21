@@ -16,7 +16,7 @@ namespace ContinuousTests.Tests
 
             var dl = DownloadContent(Nodes[1], cid!);
 
-            dl.AssertIsEqual(file);
+            file.AssertIsEqual(dl);
         }
     }
 }
