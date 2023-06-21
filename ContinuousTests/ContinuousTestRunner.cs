@@ -13,31 +13,41 @@ namespace ContinuousTests
         public void Run()
         {
             var config = configLoader.Load();
-            var log = new TestLog(config.LogPath, true);
-
-            log.Log("Starting continuous test run...");
-            log.Log("Checking configuration...");
-            PreflightCheck(config);
-            log.Log("Contacting Codex nodes...");
-            CheckCodexNodes(log, config);
-            log.Log("All OK.");
-            log.Log("");
+            StartupChecks(config);
 
             while (true)
             {
-                var run = new TestRun(config, log, testFactory);
+                var log = new FixtureLog(new LogConfig(config.LogPath, false), "StartupChecks");
+                var allTestsRun = new AllTestsRun(config, log, testFactory);
 
+                var result = ContinuousTestResult.Passed;
                 try
                 {
-                    run.Run();
+                    result = allTestsRun.RunAll();
                 }
                 catch (Exception ex)
                 {
                     log.Error($"Exception during test run: " + ex);
                 }
 
+                if (result == ContinuousTestResult.Failed)
+                {
+                    log.MarkAsFailed();
+                }
+
                 Thread.Sleep(config.SleepSecondsPerTest * 1000);
             }
+        }
+
+        private void StartupChecks(Configuration config)
+        {
+            var log = new FixtureLog(new LogConfig(config.LogPath, false), "ContinuousTestsRun");
+            log.Log("Starting continuous test run...");
+            log.Log("Checking configuration...");
+            PreflightCheck(config);
+            log.Log("Contacting Codex nodes...");
+            CheckCodexNodes(log, config);
+            log.Log("All OK.");
         }
 
         private void PreflightCheck(Configuration config)
@@ -105,5 +115,11 @@ namespace ContinuousTests
             }
             return true;
         }
+    }
+
+    public enum ContinuousTestResult
+    {
+        Passed,
+        Failed
     }
 }

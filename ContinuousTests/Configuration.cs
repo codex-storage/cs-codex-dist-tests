@@ -16,6 +16,10 @@ namespace ContinuousTests
         public Configuration Load()
         {
             var config = Read();
+            //config.LogPath = "logs";
+            //config.SleepSecondsPerTest = 10;
+            //config.CodexUrls = new string[] { "http://localhost:8080", "http://localhost:8081" };
+
             Validate(config);
             return config;
         }

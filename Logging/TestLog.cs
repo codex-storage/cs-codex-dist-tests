@@ -9,10 +9,10 @@ namespace Logging
         private readonly string methodName;
         private readonly string fullName;
 
-        public TestLog(string folder, bool debug)
+        public TestLog(string folder, bool debug, string name = "")
             : base(debug)
         {
-            methodName = GetMethodName();
+            methodName = GetMethodName(name);
             fullName = Path.Combine(folder, methodName);
 
             Log($"*** Begin: {methodName}");
@@ -39,13 +39,15 @@ namespace Logging
                 MarkAsFailed();
             }
         }
+
         protected override LogFile CreateLogFile()
         {
             return new LogFile(fullName, "log");
         }
 
-        private string GetMethodName()
+        private string GetMethodName(string name)
         {
+            if (!string.IsNullOrEmpty(name)) return name;
             var test = TestContext.CurrentContext.Test;
             var args = FormatArguments(test);
             return $"{test.MethodName}{args}";
