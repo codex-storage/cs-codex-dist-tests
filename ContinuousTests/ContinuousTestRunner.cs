@@ -34,6 +34,10 @@ namespace ContinuousTests
                 {
                     log.MarkAsFailed();
                 }
+                if (!config.KeepPassedTestLogs && result == ContinuousTestResult.Passed)
+                {
+                    log.DeleteFolder();
+                }
 
                 Thread.Sleep(config.SleepSecondsPerSingleTest * 1000);
             }

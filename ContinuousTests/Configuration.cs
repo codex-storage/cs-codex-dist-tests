@@ -8,6 +8,7 @@ namespace ContinuousTests
         public string[] CodexUrls { get; set; } = Array.Empty<string>();
         public int SleepSecondsPerSingleTest { get; set; }
         public int SleepSecondsPerAllTests { get; set; }
+        public bool KeepPassedTestLogs { get; set; }
     }
 
     public class ConfigLoader
@@ -39,6 +40,7 @@ namespace ContinuousTests
             var codexUrls = Environment.GetEnvironmentVariable("CODEXURLS");
             var sleepPerSingle = Environment.GetEnvironmentVariable("SLEEPSECONDSPERSINGLETEST");
             var sleepPerAll = Environment.GetEnvironmentVariable("SLEEPSECONDSPERALLTESTS");
+            var keep = Environment.GetEnvironmentVariable("KEEPPASSEDTESTLOGS");
 
             if (!string.IsNullOrEmpty(logPath) &&
                 !string.IsNullOrEmpty(codexUrls) &&
@@ -57,7 +59,8 @@ namespace ContinuousTests
                             LogPath = logPath,
                             CodexUrls = urls,
                             SleepSecondsPerSingleTest = secondsSingle,
-                            SleepSecondsPerAllTests = secondsAll
+                            SleepSecondsPerAllTests = secondsAll,
+                            KeepPassedTestLogs = keep == "1"
                         };
                     }
                 }
@@ -65,11 +68,12 @@ namespace ContinuousTests
 
             var nl = Environment.NewLine;
             throw new Exception($"Unable to load configuration from '{filename}', and " +
-                $"unable to load configuration from environment variables. " + nl +
-                $"'LOGPATH' = Path where log files will be saved." + nl +
-                $"'CODEXURLS' = Semi-colon separated URLs to codex APIs. e.g. 'https://hostaddr_one:port;https://hostaddr_two:port'" + nl +
-                $"'SLEEPSECONDSPERSINGLETEST' = Seconds to sleep after each individual test." + nl +
-                $"'SLEEPSECONDSPERALLTESTS' = Seconds to sleep after all tests, before starting again." + nl +
+                "unable to load configuration from environment variables. " + nl +
+                "'LOGPATH' = Path where log files will be saved." + nl +
+                "'CODEXURLS' = Semi-colon separated URLs to codex APIs. e.g. 'https://hostaddr_one:port;https://hostaddr_two:port'" + nl +
+                "'SLEEPSECONDSPERSINGLETEST' = Seconds to sleep after each individual test." + nl +
+                "'SLEEPSECONDSPERALLTESTS' = Seconds to sleep after all tests, before starting again." + nl +
+                "'KEEPPASSEDTESTLOGS' = (Optional, default: 0) Set to '1' to keep log files of tests that passed." + nl +
                 nl);
         }
 

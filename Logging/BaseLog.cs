@@ -58,6 +58,11 @@ namespace Logging
             replacements.Add(new BaseLogStringReplacement(from, to));
         }
 
+        public void Delete()
+        {
+            File.Delete(LogFile.FullFilename);
+        }
+
         private string ApplyReplacements(string str)
         {
             foreach (var replacement in replacements)

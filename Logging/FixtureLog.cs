@@ -23,6 +23,11 @@ namespace Logging
             return new TestLog(fullName, config.DebugEnabled, name);
         }
 
+        public void DeleteFolder()
+        {
+            Directory.Delete(fullName, true);
+        }
+
         protected override LogFile CreateLogFile()
         {
             return new LogFile(fullName, "log");
