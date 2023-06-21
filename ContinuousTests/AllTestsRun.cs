@@ -41,7 +41,7 @@ namespace ContinuousTests
                     result = ContinuousTestResult.Failed;
                 }
                 
-                Thread.Sleep(config.SleepSecondsPerTest * 1000);
+                Thread.Sleep(config.SleepSecondsPerSingleTest * 1000);
             }
             return result;
         }

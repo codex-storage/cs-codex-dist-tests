@@ -6,7 +6,8 @@ namespace ContinuousTests
     {
         public string LogPath { get; set; } = string.Empty;
         public string[] CodexUrls { get; set; } = Array.Empty<string>();
-        public int SleepSecondsPerTest { get; set; }
+        public int SleepSecondsPerSingleTest { get; set; }
+        public int SleepSecondsPerAllTests { get; set; }
     }
 
     public class ConfigLoader
@@ -16,9 +17,6 @@ namespace ContinuousTests
         public Configuration Load()
         {
             var config = Read();
-            //config.LogPath = "logs";
-            //config.SleepSecondsPerTest = 10;
-            //config.CodexUrls = new string[] { "http://localhost:8080", "http://localhost:8081" };
 
             Validate(config);
             return config;
@@ -39,33 +37,53 @@ namespace ContinuousTests
 
             var logPath = Environment.GetEnvironmentVariable("LOGPATH");
             var codexUrls = Environment.GetEnvironmentVariable("CODEXURLS");
-            var sleep = Environment.GetEnvironmentVariable("SLEEPSECONDSPERTEST");
+            var sleepPerSingle = Environment.GetEnvironmentVariable("SLEEPSECONDSPERSINGLETEST");
+            var sleepPerAll = Environment.GetEnvironmentVariable("SLEEPSECONDSPERALLTESTS");
 
-            if (!string.IsNullOrEmpty(logPath) && !string.IsNullOrEmpty(codexUrls) && !string.IsNullOrEmpty(sleep))
+            if (!string.IsNullOrEmpty(logPath) &&
+                !string.IsNullOrEmpty(codexUrls) &&
+                !string.IsNullOrEmpty(sleepPerSingle) &&
+                !string.IsNullOrEmpty(sleepPerAll))
             {
                 var urls = codexUrls.Split(';', StringSplitOptions.RemoveEmptyEntries);
-                int ms;
-                if (int.TryParse(sleep, out ms))
+                int secondsSingle;
+                int secondsAll;
+                if (int.TryParse(sleepPerSingle, out secondsSingle) && int.TryParse(sleepPerAll, out secondsAll))
                 {
                     if (urls.Length > 0)
                     {
-                        return new Configuration { LogPath = logPath, CodexUrls = urls, SleepSecondsPerTest = ms };
+                        return new Configuration
+                        { 
+                            LogPath = logPath,
+                            CodexUrls = urls,
+                            SleepSecondsPerSingleTest = secondsSingle,
+                            SleepSecondsPerAllTests = secondsAll
+                        };
                     }
                 }
             }
 
+            var nl = Environment.NewLine;
             throw new Exception($"Unable to load configuration from '{filename}', and " +
-                $"unable to load configuration from environment variables 'LOGPATH' and 'CODEXURLS', and 'SLEEPSECONDSPERTEST'. " +
-                $"(semi-colon-separated URLs) " +
-                $"Create the configuration file or set the environment veriables.");
+                $"unable to load configuration from environment variables. " + nl +
+                $"'LOGPATH' = Path where log files will be saved." + nl +
+                $"'CODEXURLS' = Semi-colon separated URLs to codex APIs. e.g. 'https://hostaddr_one:port;https://hostaddr_two:port'" + nl +
+                $"'SLEEPSECONDSPERSINGLETEST' = Seconds to sleep after each individual test." + nl +
+                $"'SLEEPSECONDSPERALLTESTS' = Seconds to sleep after all tests, before starting again." + nl +
+                nl);
         }
 
         private void Validate(Configuration configuration)
         {
-            if (configuration.SleepSecondsPerTest < 10)
+            if (configuration.SleepSecondsPerSingleTest < 1)
             {
-                Console.WriteLine("Warning: configuration.SleepMsPerTest was less than 10 seconds. Using 10 seconds instead!");
-                configuration.SleepSecondsPerTest = 10;
+                Console.WriteLine("Warning: configuration.SleepSecondsPerSingleTest was less than 1 seconds. Using 1 seconds instead!");
+                configuration.SleepSecondsPerSingleTest = 1;
+            }
+            if (configuration.SleepSecondsPerAllTests < 1)
+            {
+                Console.WriteLine("Warning: configuration.SleepSecondsPerAllTests was less than 10 seconds. Using 10 seconds instead!");
+                configuration.SleepSecondsPerAllTests = 10;
             }
 
             if (string.IsNullOrEmpty(configuration.LogPath))

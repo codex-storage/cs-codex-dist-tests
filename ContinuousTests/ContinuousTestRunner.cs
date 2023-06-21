@@ -17,7 +17,7 @@ namespace ContinuousTests
 
             while (true)
             {
-                var log = new FixtureLog(new LogConfig(config.LogPath, false), "StartupChecks");
+                var log = new FixtureLog(new LogConfig(config.LogPath, false), "ContinuousTestsRun");
                 var allTestsRun = new AllTestsRun(config, log, testFactory);
 
                 var result = ContinuousTestResult.Passed;
@@ -35,13 +35,13 @@ namespace ContinuousTests
                     log.MarkAsFailed();
                 }
 
-                Thread.Sleep(config.SleepSecondsPerTest * 1000);
+                Thread.Sleep(config.SleepSecondsPerSingleTest * 1000);
             }
         }
 
         private void StartupChecks(Configuration config)
         {
-            var log = new FixtureLog(new LogConfig(config.LogPath, false), "ContinuousTestsRun");
+            var log = new FixtureLog(new LogConfig(config.LogPath, false), "StartupChecks");
             log.Log("Starting continuous test run...");
             log.Log("Checking configuration...");
             PreflightCheck(config);
