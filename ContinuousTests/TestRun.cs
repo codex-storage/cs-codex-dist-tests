@@ -7,29 +7,30 @@ namespace ContinuousTests
     public class TestRun
     {
         private readonly Random random = new Random();
+        private readonly CodexNodeFactory codexNodeFactory = new CodexNodeFactory();
         private readonly Configuration config;
         private readonly BaseLog log;
-        private readonly TestFinder testFinder;
-        private readonly CodexNode[] nodes;
+        private readonly TestFactory testFinder;
         private readonly FileManager fileManager;
+        private ITimeSet timeSet;
 
-        public TestRun(Configuration config, BaseLog log, TestFinder testFinder, CodexNode[] nodes)
+        public TestRun(Configuration config, BaseLog log, TestFactory testFinder)
         {
             this.config = config;
             this.log = log;
             this.testFinder = testFinder;
-            this.nodes = nodes;
             fileManager = new FileManager(log, new DistTestCore.Configuration());
+            timeSet = new DefaultTimeSet();
         }
 
         public void Run()
         {
-            var remainingTests = testFinder.GetTests().ToList();
+            var remainingTests = testFinder.CreateTests().ToList();
             while (remainingTests.Any())
             {
                 var test = PickOneRandom(remainingTests);
-                var selectedNodes = SelectRandomNodes(test.RequiredNumberOfNodes);
-                AssignEssentials(test, selectedNodes);
+                var nodes = CreateRandomNodes(test.RequiredNumberOfNodes);
+                AssignEssentials(test, nodes);
                 fileManager.PushFileSet();
 
                 log.Log($"Start '{test.Name}'");
@@ -49,31 +50,32 @@ namespace ContinuousTests
             }
         }
 
-        private void AssignEssentials(IContinuousTest test, CodexNode[] nodes)
+        private void AssignEssentials(ContinuousTest test, CodexNode[] nodes)
         {
-            var t = (ContinuousTest)test;
-            t.Nodes = nodes;
-            t.Log = log;
-            t.FileManager = fileManager;
+            test.Initialize(nodes, log, fileManager);
         }
 
-        private void ClearEssentials(IContinuousTest test)
+        private void ClearEssentials(ContinuousTest test)
         {
-            var t = (ContinuousTest)test;
-            t.Nodes = null!;
-            t.Log = null!;
-            t.FileManager = null!;
+            // Looks a little strange, but prevents finished test from interacting further.
+            test.Initialize(null!, null!, null!);
         }
 
-        private CodexNode[] SelectRandomNodes(int number)
+        private string[] SelectRandomUrls(int number)
         {
-            var remainingNodes = nodes.ToList();
-            var result = new CodexNode[number];
+            var urls = config.CodexUrls.ToList();
+            var result = new string[number];
             for (var i = 0; i < number; i++)
             {
-                result[i] = PickOneRandom(remainingNodes);
+                result[i] = PickOneRandom(urls);
             }
             return result;
+        }
+
+        private CodexNode[] CreateRandomNodes(int number)
+        {
+            var urls = SelectRandomUrls(number);
+            return codexNodeFactory.Create(urls, log, timeSet);
         }
 
         private T PickOneRandom<T>(List<T> remainingItems)

@@ -40,7 +40,7 @@ namespace ContinuousTests
             if (!string.IsNullOrEmpty(logPath) && !string.IsNullOrEmpty(codexUrls) && !string.IsNullOrEmpty(sleep))
             {
                 var urls = codexUrls.Split(';', StringSplitOptions.RemoveEmptyEntries);
-                var ms = 0;
+                int ms;
                 if (int.TryParse(sleep, out ms))
                 {
                     if (urls.Length > 0)

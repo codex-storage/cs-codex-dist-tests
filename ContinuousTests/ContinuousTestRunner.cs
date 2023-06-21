@@ -1,14 +1,14 @@
 ﻿using DistTestCore;
 using DistTestCore.Codex;
 using Logging;
-using Utils;
 
 namespace ContinuousTests
 {
     public class ContinuousTestRunner
     {
         private readonly ConfigLoader configLoader = new ConfigLoader();
-        private readonly TestFinder testFinder = new TestFinder();
+        private readonly TestFactory testFactory = new TestFactory();
+        private readonly CodexNodeFactory codexNodeFactory = new CodexNodeFactory();
 
         public void Run()
         {
@@ -19,13 +19,13 @@ namespace ContinuousTests
             log.Log("Checking configuration...");
             PreflightCheck(config);
             log.Log("Contacting Codex nodes...");
-            var nodes = CreateCodexNodes(log, new LongTimeSet(), config);
-            log.Log("OK");
+            CheckCodexNodes(log, config);
+            log.Log("All OK.");
             log.Log("");
 
             while (true)
             {
-                var run = new TestRun(config, log, testFinder, nodes);
+                var run = new TestRun(config, log, testFactory);
 
                 try
                 {
@@ -42,7 +42,7 @@ namespace ContinuousTests
 
         private void PreflightCheck(Configuration config)
         {
-            var tests = testFinder.GetTests();
+            var tests = testFactory.CreateTests();
             if (!tests.Any())
             {
                 throw new Exception("Unable to find any tests.");
@@ -57,20 +57,20 @@ namespace ContinuousTests
                 }
             }
 
+            if (!Directory.Exists(config.LogPath))
+            {
+                Directory.CreateDirectory(config.LogPath);
+            }
+
             if (errors.Any())
             {
                 throw new Exception("Prerun check failed: " + string.Join(", ", errors));
             }
         }
 
-        private CodexNode[] CreateCodexNodes(BaseLog log, ITimeSet timeSet, Configuration config)
+        private void CheckCodexNodes(BaseLog log, Configuration config)
         {
-            var nodes = config.CodexUrls.Select(url =>
-            {
-                var address = new Address(url, 1234);
-                return new CodexNode(log, timeSet, address);
-            }).ToArray();
-
+            var nodes = codexNodeFactory.Create(config.CodexUrls, log, new DefaultTimeSet());
             var pass = true;
             foreach (var n in nodes)
             {
@@ -90,8 +90,6 @@ namespace ContinuousTests
             {
                 throw new Exception("Not all codex nodes responded.");
             }
-
-            return nodes;
         }
 
         private bool EnsureOnline(CodexNode n)
