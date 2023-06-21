@@ -1,5 +1,6 @@
 ﻿using DistTestCore.Codex;
 using KubernetesWorkflow;
+using Utils;
 
 namespace DistTestCore
 {
@@ -52,7 +53,7 @@ namespace DistTestCore
             return runnerLocation;
         }
 
-        public RunningContainerAddress GetAddress(RunningContainer container)
+        public Address GetAddress(RunningContainer container)
         {
             if (GetTestRunnerLocation() == TestRunnerLocation.InternalToCluster)
             {

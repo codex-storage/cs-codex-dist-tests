@@ -1,4 +1,5 @@
 ﻿using Logging;
+using Utils;
 
 namespace KubernetesWorkflow
 {
@@ -87,20 +88,20 @@ namespace KubernetesWorkflow
             }).ToArray();
         }
 
-        private RunningContainerAddress GetContainerExternalAddress(RunningPod pod, Port[] servicePorts)
+        private Address GetContainerExternalAddress(RunningPod pod, Port[] servicePorts)
         {
-            return new RunningContainerAddress(
+            return new Address(
                 pod.Cluster.HostAddress,
                 GetServicePort(servicePorts));
         }
 
-        private RunningContainerAddress GetContainerInternalAddress(ContainerRecipe recipe)
+        private Address GetContainerInternalAddress(ContainerRecipe recipe)
         {
             var serviceName = "service-" + numberSource.WorkflowNumber;
             var namespaceName = cluster.Configuration.K8sNamespacePrefix + testNamespace;
             var port = GetInternalPort(recipe);
 
-            return new RunningContainerAddress(
+            return new Address(
                 $"http://{serviceName}.{namespaceName}.svc.cluster.local",
                 port);
         }
