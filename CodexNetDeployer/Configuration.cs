@@ -1,4 +1,5 @@
 ﻿using DistTestCore;
+using DistTestCore.Codex;
 
 namespace CodexNetDeployer
 {
@@ -12,7 +13,7 @@ namespace CodexNetDeployer
             string kubeNamespace,
             int? numberOfCodexNodes,
             int? storageQuota,
-            string codexLogLevel,
+            CodexLogLevel codexLogLevel,
             TestRunnerLocation runnerLocation)
         {
             CodexImage = codexImage;
@@ -33,7 +34,7 @@ namespace CodexNetDeployer
         public string KubeNamespace { get; }
         public int? NumberOfCodexNodes { get; }
         public int? StorageQuota { get; }
-        public string CodexLogLevel { get; }
+        public CodexLogLevel CodexLogLevel { get; }
         public TestRunnerLocation RunnerLocation { get; }
 
         public void PrintConfig()

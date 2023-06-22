@@ -2,6 +2,7 @@
 using DistTestCore;
 using DistTestCore.Codex;
 using DistTestCore.Marketplace;
+using Utils;
 using Configuration = CodexNetDeployer.Configuration;
 
 public class Program
@@ -33,7 +34,7 @@ public class Program
             kubeNamespace: argOrVar.Get(ArgOrVar.KubeNamespace),
             numberOfCodexNodes: argOrVar.GetInt(ArgOrVar.NumberOfCodexNodes),
             storageQuota: argOrVar.GetInt(ArgOrVar.StorageQuota),
-            codexLogLevel: argOrVar.Get(ArgOrVar.LogLevel),
+            codexLogLevel: ParseEnum.Parse<CodexLogLevel>(argOrVar.Get(ArgOrVar.LogLevel, nameof(CodexLogLevel.Debug))),
             runnerLocation: location
         );
 

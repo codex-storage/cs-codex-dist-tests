@@ -1,6 +1,4 @@
 ﻿using DistTestCore;
-using DistTestCore.Codex;
-using Utils;
 
 namespace CodexNetDeployer
 {
@@ -15,6 +13,25 @@ namespace CodexNetDeployer
 
         public void Deploy()
         {
+            Log("Initializing...");
+            var starter = CreateStarter();
+
+            Log("Preparing configuration...");
+            var setup = new CodexSetup(config.NumberOfCodexNodes!.Value, config.CodexLogLevel);
+
+            Log("Creating resources...");
+            var group = (CodexNodeGroup) starter.BringOnline(setup);
+
+            var containers = group.Containers;
+            foreach (var container in containers.Containers)
+            {
+                var pod = container.Pod.PodInfo;
+                Log($"Container '{container.Name}' online. Pod: '{pod.Name}@{pod.Ip}' on '{pod.K8SNodeName}'.");
+            }
+        }
+
+        private CodexStarter CreateStarter()
+        {
             var log = new NullLog();
             var lifecycleConfig = new DistTestCore.Configuration
             (
@@ -22,7 +39,7 @@ namespace CodexNetDeployer
                 logPath: "null",
                 logDebug: false,
                 dataFilesPath: "notUsed",
-                codexLogLevel: ParseEnum.Parse<CodexLogLevel>(config.CodexLogLevel),
+                codexLogLevel: config.CodexLogLevel,
                 runnerLocation: config.RunnerLocation
             );
 
@@ -35,7 +52,12 @@ namespace CodexNetDeployer
 
             var lifecycle = new TestLifecycle(log, lifecycleConfig, timeset);
             var workflowCreator = new KubernetesWorkflow.WorkflowCreator(log, kubeConfig);
-            var starter = new CodexStarter(lifecycle, workflowCreator);
+            return new CodexStarter(lifecycle, workflowCreator);
+        }
+
+        private void Log(string msg)
+        {
+            Console.WriteLine(msg);
         }
     }
 }
