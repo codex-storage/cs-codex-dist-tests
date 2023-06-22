@@ -13,7 +13,8 @@ public class Program
         {
             @"--kube-config=C:\Users\Ben\.kube\codex-tests-ams3-dev-kubeconfig.yaml",
             "--kube-namespace=testing-deployer",
-            "--nodes=3",
+            "--nodes=5",
+            "--validators=3",
             "--storage-quota=1024"
         };
 
@@ -41,6 +42,7 @@ public class Program
             kubeConfigFile: argOrVar.Get(ArgOrVar.KubeConfigFile),
             kubeNamespace: argOrVar.Get(ArgOrVar.KubeNamespace),
             numberOfCodexNodes: argOrVar.GetInt(ArgOrVar.NumberOfCodexNodes),
+            numberOfValidators: argOrVar.GetInt(ArgOrVar.NumberOfValidatorNodes),
             storageQuota: argOrVar.GetInt(ArgOrVar.StorageQuota),
             codexLogLevel: ParseEnum.Parse<CodexLogLevel>(argOrVar.Get(ArgOrVar.LogLevel, nameof(CodexLogLevel.Debug))),
             runnerLocation: location

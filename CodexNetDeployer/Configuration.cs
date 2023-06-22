@@ -12,6 +12,7 @@ namespace CodexNetDeployer
             string kubeConfigFile,
             string kubeNamespace,
             int? numberOfCodexNodes,
+            int? numberOfValidators,
             int? storageQuota,
             CodexLogLevel codexLogLevel,
             TestRunnerLocation runnerLocation)
@@ -22,6 +23,7 @@ namespace CodexNetDeployer
             KubeConfigFile = kubeConfigFile;
             KubeNamespace = kubeNamespace;
             NumberOfCodexNodes = numberOfCodexNodes;
+            NumberOfValidators = numberOfValidators;
             StorageQuota = storageQuota;
             CodexLogLevel = codexLogLevel;
             RunnerLocation = runnerLocation;
@@ -33,6 +35,7 @@ namespace CodexNetDeployer
         public string KubeConfigFile { get; }
         public string KubeNamespace { get; }
         public int? NumberOfCodexNodes { get; }
+        public int? NumberOfValidators { get; }
         public int? StorageQuota { get; }
         public CodexLogLevel CodexLogLevel { get; }
         public TestRunnerLocation RunnerLocation { get; }
@@ -49,6 +52,11 @@ namespace CodexNetDeployer
             ForEachProperty(
                 onString: (n, v) => StringIsSet(n, v, errors),
                 onInt: (n, v) => IntIsOverZero(n, v, errors));
+
+            if (NumberOfValidators > NumberOfCodexNodes)
+            {
+                errors.Add($"{nameof(NumberOfValidators)} ({NumberOfValidators}) may not be greater than {nameof(NumberOfCodexNodes)} ({NumberOfCodexNodes}).");
+            }
 
             return errors;
         }

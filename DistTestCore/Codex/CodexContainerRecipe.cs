@@ -60,6 +60,11 @@ namespace DistTestCore.Codex
                 AddEnvVar("ETH_ACCOUNT", companionNodeAccount.Account);
                 AddEnvVar("ETH_MARKETPLACE_ADDRESS", gethConfig.MarketplaceNetwork.Marketplace.Address);
                 AddEnvVar("PERSISTENCE", "1");
+
+                if (config.MarketplaceConfig.IsValidator)
+                {
+                    AddEnvVar("VALIDATOR", "1");
+                }
             }
         }
 

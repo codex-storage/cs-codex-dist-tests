@@ -39,16 +39,16 @@ namespace CodexNetDeployer
 
             // Each node must have its own IP, so it needs it own pod. Start them 1 at a time.
             var bootstrapSpr = ""; // The first one will be used to bootstrap the others.
+            int validatorsLeft = config.NumberOfValidators!.Value;
             for (var i = 0; i < config.NumberOfCodexNodes; i++)
             {
                 Console.Write($" - {i} = ");
                 var workflow = workflowCreator.CreateWorkflow();
                 var workflowStartup = new StartupConfig();
                 var codexStart = new CodexStartupConfig(config.CodexLogLevel);
-                workflowStartup.Add(codexStart);
                 if (!string.IsNullOrEmpty(bootstrapSpr)) codexStart.BootstrapSpr = bootstrapSpr;
                 codexStart.StorageQuota = config.StorageQuota.Value.MB();
-                var marketplaceConfig = new MarketplaceInitialConfig(100000.Eth(), 0.TestTokens());
+                var marketplaceConfig = new MarketplaceInitialConfig(100000.Eth(), 0.TestTokens(), validatorsLeft > 0);
                 marketplaceConfig.AccountIndexOverride = i;
                 codexStart.MarketplaceConfig = marketplaceConfig;
                 workflowStartup.Add(gethResults);
@@ -66,6 +66,7 @@ namespace CodexNetDeployer
                     Console.Write($"Online ({pod.Name} at {pod.Ip} on '{pod.K8SNodeName}'" + Environment.NewLine);
 
                     if (string.IsNullOrEmpty(bootstrapSpr)) bootstrapSpr = debugInfo.spr;
+                    validatorsLeft--;
                 }
                 else
                 {

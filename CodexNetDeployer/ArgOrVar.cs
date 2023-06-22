@@ -8,6 +8,7 @@
         public static readonly ArgVar KubeConfigFile = new ArgVar("kube-config", "KUBECONFIG", "Path to Kubeconfig file.");
         public static readonly ArgVar KubeNamespace = new ArgVar("kube-namespace", "KUBENAMESPACE", "Kubernetes namespace to be used for deployment.");
         public static readonly ArgVar NumberOfCodexNodes = new ArgVar("nodes", "NODES", "Number of Codex nodes to be created.");
+        public static readonly ArgVar NumberOfValidatorNodes = new ArgVar("validators", "VALIDATORS", "Number of Codex nodes that will be validating.");
         public static readonly ArgVar StorageQuota = new ArgVar("storage-quota", "STORAGEQUOTA", "Storage quota in megabytes used by each Codex node.");
         public static readonly ArgVar LogLevel = new ArgVar("log-level", "LOGLEVEL", "Log level used by each Codex node. [Trace, Debug*, Info, Warn, Error]");
 
