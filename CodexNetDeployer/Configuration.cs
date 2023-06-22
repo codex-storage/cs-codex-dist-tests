@@ -1,4 +1,6 @@
-﻿namespace CodexNetDeployer
+﻿using DistTestCore;
+
+namespace CodexNetDeployer
 {
     public class Configuration
     {
@@ -9,7 +11,9 @@
             string kubeConfigFile,
             string kubeNamespace,
             int? numberOfCodexNodes,
-            int? storageQuota)
+            int? storageQuota,
+            string codexLogLevel,
+            TestRunnerLocation runnerLocation)
         {
             CodexImage = codexImage;
             GethImage = gethImage;
@@ -18,6 +22,8 @@
             KubeNamespace = kubeNamespace;
             NumberOfCodexNodes = numberOfCodexNodes;
             StorageQuota = storageQuota;
+            CodexLogLevel = codexLogLevel;
+            RunnerLocation = runnerLocation;
         }
 
         public string CodexImage { get; }
@@ -27,6 +33,8 @@
         public string KubeNamespace { get; }
         public int? NumberOfCodexNodes { get; }
         public int? StorageQuota { get; }
+        public string CodexLogLevel { get; }
+        public TestRunnerLocation RunnerLocation { get; }
 
         public void PrintConfig()
         {

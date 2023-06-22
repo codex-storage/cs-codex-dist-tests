@@ -19,8 +19,18 @@ namespace DistTestCore
             logPath = GetEnvVarOrDefault("LOGPATH", "CodexTestLogs");
             logDebug = GetEnvVarOrDefault("LOGDEBUG", "false").ToLowerInvariant() == "true";
             dataFilesPath = GetEnvVarOrDefault("DATAFILEPATH", "TestDataFiles");
-            codexLogLevel = ParseEnum<CodexLogLevel>(GetEnvVarOrDefault("LOGLEVEL", nameof(CodexLogLevel.Trace)));
-            runnerLocation = ParseEnum<TestRunnerLocation>(GetEnvVarOrDefault("RUNNERLOCATION", nameof(TestRunnerLocation.ExternalToCluster)));
+            codexLogLevel = ParseEnum.Parse<CodexLogLevel>(GetEnvVarOrDefault("LOGLEVEL", nameof(CodexLogLevel.Trace)));
+            runnerLocation = ParseEnum.Parse<TestRunnerLocation>(GetEnvVarOrDefault("RUNNERLOCATION", nameof(TestRunnerLocation.ExternalToCluster)));
+        }
+
+        public Configuration(string? kubeConfigFile, string logPath, bool logDebug, string dataFilesPath, CodexLogLevel codexLogLevel, TestRunnerLocation runnerLocation)
+        {
+            this.kubeConfigFile = kubeConfigFile;
+            this.logPath = logPath;
+            this.logDebug = logDebug;
+            this.dataFilesPath = dataFilesPath;
+            this.codexLogLevel = codexLogLevel;
+            this.runnerLocation = runnerLocation;
         }
 
         public KubernetesWorkflow.Configuration GetK8sConfiguration(ITimeSet timeSet)
@@ -74,11 +84,6 @@ namespace DistTestCore
             var v = Environment.GetEnvironmentVariable(varName);
             if (v == null) return defaultValue;
             return v;
-        }
-
-        private static T ParseEnum<T>(string value)
-        {
-            return (T)Enum.Parse(typeof(T), value, true);
         }
     }
 

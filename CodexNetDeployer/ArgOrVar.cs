@@ -9,6 +9,7 @@
         public static readonly ArgVar KubeNamespace = new ArgVar("kube-namespace", "KUBENAMESPACE", "Kubernetes namespace to be used for deployment.");
         public static readonly ArgVar NumberOfCodexNodes = new ArgVar("nodes", "NODES", "Number of Codex nodes to be created.");
         public static readonly ArgVar StorageQuota = new ArgVar("storage-quota", "STORAGEQUOTA", "Storage quota in megabytes used by each Codex node.");
+        public static readonly ArgVar LogLevel = new ArgVar("log-level", "LOGLEVEL", "Log level used by each Codex node. [Trace, Debug*, Info, Warn, Error]");
 
         private readonly string[] args;
 
@@ -53,11 +54,13 @@
                 "The deployer will set up the required supporting services, deploy the Codex on-chain contracts, start and bootstrap the Codex instances. " +
                 "All Kubernetes objects will be created in the namespace provided, allowing you to easily find, modify, and delete them afterwards." + nl);
 
+            Console.WriteLine("CodexNetDeployer assumes you are running this tool from *outside* the Kubernetes cluster you want to deploy to. " +
+                "If you are running this from a container inside the cluster, add the argument '--internal'." + nl);
 
             Console.Write("\t[ CLI argument ] or [ Environment variable ]");
             Console.CursorLeft = 70;
             Console.Write("(Description)" + nl);
-            var fields = GetType().GetFields();// System.Reflection.BindingFlags.Public & System.Reflection.BindingFlags.Static);
+            var fields = GetType().GetFields();
             foreach (var field in fields)
             {
                 var value = (ArgVar)field.GetValue(null)!;

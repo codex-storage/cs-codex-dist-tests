@@ -1,6 +1,8 @@
 ﻿using CodexNetDeployer;
+using DistTestCore;
 using DistTestCore.Codex;
 using DistTestCore.Marketplace;
+using Configuration = CodexNetDeployer.Configuration;
 
 public class Program
 {
@@ -17,6 +19,12 @@ public class Program
             return;
         }
 
+        var location = TestRunnerLocation.ExternalToCluster;
+        if (args.Any(a => a == "--internal"))
+        {
+            location = TestRunnerLocation.InternalToCluster;
+        }
+
         var config = new Configuration(
             codexImage: argOrVar.Get(ArgOrVar.CodexImage, CodexContainerRecipe.DockerImage),
             gethImage: argOrVar.Get(ArgOrVar.GethImage, GethContainerRecipe.DockerImage),
@@ -24,7 +32,9 @@ public class Program
             kubeConfigFile: argOrVar.Get(ArgOrVar.KubeConfigFile),
             kubeNamespace: argOrVar.Get(ArgOrVar.KubeNamespace),
             numberOfCodexNodes: argOrVar.GetInt(ArgOrVar.NumberOfCodexNodes),
-            storageQuota: argOrVar.GetInt(ArgOrVar.StorageQuota)
+            storageQuota: argOrVar.GetInt(ArgOrVar.StorageQuota),
+            codexLogLevel: argOrVar.Get(ArgOrVar.LogLevel),
+            runnerLocation: location
         );
 
         Console.WriteLine("Using:");
@@ -41,6 +51,9 @@ public class Program
             return;
         }
 
+        var deployer = new Deployer(config);
+        deployer.Deploy();
 
+        Console.WriteLine("Done!");
     }
 }
