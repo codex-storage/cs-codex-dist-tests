@@ -10,5 +10,6 @@
 
         public Ether InitialEth { get; }
         public TestToken InitialTestTokens { get; }
+        public int? AccountIndexOverride { get; set; }
     }
 }

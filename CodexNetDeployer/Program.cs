@@ -9,6 +9,14 @@ public class Program
 {
     public static void Main(string[] args)
     {
+        args = new[]
+        {
+            @"--kube-config=C:\Users\Ben\.kube\codex-tests-ams3-dev-kubeconfig.yaml",
+            "--kube-namespace=testing-deployer",
+            "--nodes=3",
+            "--storage-quota=1024"
+        };
+
         var nl = Environment.NewLine;
         Console.WriteLine("CodexNetDeployer" + nl + nl);
 

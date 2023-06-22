@@ -17,7 +17,7 @@ namespace DistTestCore
         {
             kubeConfigFile = GetNullableEnvVarOrDefault("KUBECONFIG", null);
             logPath = GetEnvVarOrDefault("LOGPATH", "CodexTestLogs");
-            logDebug = GetEnvVarOrDefault("LOGDEBUG", "false").ToLowerInvariant() == "true";
+            logDebug = GetEnvVarOrDefault("LOGDEBUG", "true").ToLowerInvariant() == "true";
             dataFilesPath = GetEnvVarOrDefault("DATAFILEPATH", "TestDataFiles");
             codexLogLevel = ParseEnum.Parse<CodexLogLevel>(GetEnvVarOrDefault("LOGLEVEL", nameof(CodexLogLevel.Trace)));
             runnerLocation = ParseEnum.Parse<TestRunnerLocation>(GetEnvVarOrDefault("RUNNERLOCATION", nameof(TestRunnerLocation.ExternalToCluster)));
