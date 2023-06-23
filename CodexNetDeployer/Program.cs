@@ -2,6 +2,7 @@
 using DistTestCore;
 using DistTestCore.Codex;
 using DistTestCore.Marketplace;
+using Newtonsoft.Json;
 using Utils;
 using Configuration = CodexNetDeployer.Configuration;
 
@@ -64,7 +65,11 @@ public class Program
         }
 
         var deployer = new Deployer(config);
-        deployer.Deploy();
+        var deployment = deployer.Deploy();
+
+        Console.WriteLine("Writing codex-deployment.json...");
+
+        File.WriteAllText("codex-deployment.json", JsonConvert.SerializeObject(deployment, Formatting.Indented));
 
         Console.WriteLine("Done!");
     }

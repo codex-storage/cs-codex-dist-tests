@@ -1,8 +1,6 @@
 ﻿using DistTestCore;
 using DistTestCore.Codex;
-using DistTestCore.Marketplace;
 using KubernetesWorkflow;
-using System.ComponentModel;
 
 namespace CodexNetDeployer
 {
@@ -19,7 +17,7 @@ namespace CodexNetDeployer
             timeset = new DefaultTimeSet();
         }
 
-        public void Deploy()
+        public CodexDeployment Deploy()
         {
             Log("Initializing...");
             var (workflowCreator, lifecycle) = CreateFacilities();
@@ -34,47 +32,20 @@ namespace CodexNetDeployer
             var gethResults = gethStarter.BringOnlineMarketplaceFor(setup);
 
             Log("Geth started. Codex contracts deployed.");
+            Log("Warning: It can take up to 45 minutes for the Geth node to finish unlocking all if its 1000 preconfigured accounts.");
 
             Log("Starting Codex nodes...");
 
             // Each node must have its own IP, so it needs it own pod. Start them 1 at a time.
-            var bootstrapSpr = ""; // The first one will be used to bootstrap the others.
-            int validatorsLeft = config.NumberOfValidators!.Value;
+            var codexStarter = new CodexNodeStarter(config, workflowCreator, lifecycle, log, timeset, gethResults, config.NumberOfValidators!.Value);
+            var codexContainers = new List<RunningContainer>();
             for (var i = 0; i < config.NumberOfCodexNodes; i++)
             {
-                Console.Write($" - {i} = ");
-                var workflow = workflowCreator.CreateWorkflow();
-                var workflowStartup = new StartupConfig();
-                var codexStart = new CodexStartupConfig(config.CodexLogLevel);
-                workflowStartup.Add(gethResults);
-                workflowStartup.Add(codexStart);
-
-                if (!string.IsNullOrEmpty(bootstrapSpr)) codexStart.BootstrapSpr = bootstrapSpr;
-                codexStart.StorageQuota = config.StorageQuota.Value.MB();
-                var marketplaceConfig = new MarketplaceInitialConfig(100000.Eth(), 0.TestTokens(), validatorsLeft > 0);
-                marketplaceConfig.AccountIndexOverride = i;
-                codexStart.MarketplaceConfig = marketplaceConfig;
-
-                var containers = workflow.Start(1, Location.Unspecified, new CodexContainerRecipe(), workflowStartup);
-
-                var container = containers.Containers.First();
-                var address = lifecycle.Configuration.GetAddress(container);
-                var codexNode = new CodexNode(log, timeset, address);
-                var debugInfo = codexNode.GetDebugInfo();
-
-                if (!string.IsNullOrWhiteSpace(debugInfo.spr))
-                {
-                    var pod = container.Pod.PodInfo;
-                    Console.Write($"Online ({pod.Name} at {pod.Ip} on '{pod.K8SNodeName}')" + Environment.NewLine);
-
-                    if (string.IsNullOrEmpty(bootstrapSpr)) bootstrapSpr = debugInfo.spr;
-                    validatorsLeft--;
-                }
-                else
-                {
-                    Console.Write("Unknown failure." + Environment.NewLine);
-                }
+                var container = codexStarter.Start(i);
+                if (container != null) codexContainers.Add(container);
             }
+
+            return new CodexDeployment(gethResults, codexContainers.ToArray());
         }
 
         private (WorkflowCreator, TestLifecycle) CreateFacilities()
