@@ -55,8 +55,8 @@
                 "The deployer will set up the required supporting services, deploy the Codex on-chain contracts, start and bootstrap the Codex instances. " +
                 "All Kubernetes objects will be created in the namespace provided, allowing you to easily find, modify, and delete them afterwards." + nl);
 
-            Console.WriteLine("CodexNetDeployer assumes you are running this tool from *outside* the Kubernetes cluster you want to deploy to. " +
-                "If you are running this from a container inside the cluster, add the argument '--internal'." + nl);
+            Console.WriteLine("CodexNetDeployer assumes you are running this tool from *inside* the Kubernetes cluster you want to deploy to. " +
+                "If you are not running this from a container inside the cluster, add the argument '--external'." + nl);
 
             Console.Write("\t[ CLI argument ] or [ Environment variable ]");
             Console.CursorLeft = 70;

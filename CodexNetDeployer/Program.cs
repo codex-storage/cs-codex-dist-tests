@@ -15,7 +15,8 @@ public class Program
             "--kube-namespace=testing-deployer",
             "--nodes=5",
             "--validators=3",
-            "--storage-quota=1024"
+            "--storage-quota=1024",
+            "--external"
         };
 
         var nl = Environment.NewLine;
@@ -29,10 +30,10 @@ public class Program
             return;
         }
 
-        var location = TestRunnerLocation.ExternalToCluster;
-        if (args.Any(a => a == "--internal"))
+        var location = TestRunnerLocation.InternalToCluster;
+        if (args.Any(a => a == "--external"))
         {
-            location = TestRunnerLocation.InternalToCluster;
+            location = TestRunnerLocation.ExternalToCluster;
         }
 
         var config = new Configuration(

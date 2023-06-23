@@ -46,12 +46,14 @@ namespace CodexNetDeployer
                 var workflow = workflowCreator.CreateWorkflow();
                 var workflowStartup = new StartupConfig();
                 var codexStart = new CodexStartupConfig(config.CodexLogLevel);
+                workflowStartup.Add(gethResults);
+                workflowStartup.Add(codexStart);
+
                 if (!string.IsNullOrEmpty(bootstrapSpr)) codexStart.BootstrapSpr = bootstrapSpr;
                 codexStart.StorageQuota = config.StorageQuota.Value.MB();
                 var marketplaceConfig = new MarketplaceInitialConfig(100000.Eth(), 0.TestTokens(), validatorsLeft > 0);
                 marketplaceConfig.AccountIndexOverride = i;
                 codexStart.MarketplaceConfig = marketplaceConfig;
-                workflowStartup.Add(gethResults);
 
                 var containers = workflow.Start(1, Location.Unspecified, new CodexContainerRecipe(), workflowStartup);
 
@@ -63,7 +65,7 @@ namespace CodexNetDeployer
                 if (!string.IsNullOrWhiteSpace(debugInfo.spr))
                 {
                     var pod = container.Pod.PodInfo;
-                    Console.Write($"Online ({pod.Name} at {pod.Ip} on '{pod.K8SNodeName}'" + Environment.NewLine);
+                    Console.Write($"Online ({pod.Name} at {pod.Ip} on '{pod.K8SNodeName}')" + Environment.NewLine);
 
                     if (string.IsNullOrEmpty(bootstrapSpr)) bootstrapSpr = debugInfo.spr;
                     validatorsLeft--;
