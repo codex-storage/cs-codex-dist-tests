@@ -4,7 +4,13 @@ using Logging;
 
 namespace ContinuousTests
 {
-    public class ContinuousTestRunner
+    public interface ITestResultHandler
+    {
+        void TestPassed(ContinuousTest test);
+        void TestFailed(ContinuousTest test);
+    }
+
+    public class ContinuousTestRunner : ITestResultHandler
     {
         private readonly ConfigLoader configLoader = new ConfigLoader();
         private readonly TestFactory testFactory = new TestFactory();
@@ -18,12 +24,11 @@ namespace ContinuousTests
             while (true)
             {
                 var log = new FixtureLog(new LogConfig(config.LogPath, false), "ContinuousTestsRun");
-                var allTestsRun = new AllTestsRun(config, log, testFactory);
+                var allTestsRun = new AllTestsRun(config, log, testFactory, this);
 
-                var result = ContinuousTestResult.Passed;
                 try
                 {
-                    result = allTestsRun.RunAll();
+                    allTestsRun.RunAll();
                 }
                 catch (Exception ex)
                 {
@@ -119,11 +124,15 @@ namespace ContinuousTests
             }
             return true;
         }
-    }
 
-    public enum ContinuousTestResult
-    {
-        Passed,
-        Failed
+        public void TestPassed(ContinuousTest test)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void TestFailed(ContinuousTest test)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

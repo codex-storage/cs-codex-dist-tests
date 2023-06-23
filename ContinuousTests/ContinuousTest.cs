@@ -11,6 +11,11 @@ namespace ContinuousTests
 
     public abstract class ContinuousTest
     {
+        protected const int Zero = 0;
+        protected const int HourOne = 3600;
+        protected const int DayOne = HourOne * 24;
+        protected const int DayThree = DayOne * 3;
+
         private const string UploadFailedMessage = "Unable to store block";
 
         public void Initialize(CodexNode[] nodes, BaseLog log, FileManager fileManager)

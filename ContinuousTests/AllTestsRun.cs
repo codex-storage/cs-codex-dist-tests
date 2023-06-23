@@ -18,11 +18,13 @@ namespace ContinuousTests
 
         public ContinuousTestResult RunAll()
         {
-            var remainingTests = testFinder.CreateTests().ToList();
+            var tests = testFinder.CreateTests().ToList();
+            var handles = tests.Select(t => new TestHandle(t)).ToArray();
+
             var result = ContinuousTestResult.Passed;
-            while (remainingTests.Any())
+            while (tests.Any())
             {
-                var test = remainingTests.PickOneRandom();
+                var test = tests.PickOneRandom();
                 var testLog = log.CreateTestLog(test.Name);
                 var singleTestRun = new SingleTestRun(config, test, testLog);
 
