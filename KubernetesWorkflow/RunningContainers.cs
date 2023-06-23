@@ -23,12 +23,12 @@ namespace KubernetesWorkflow
 
     public class RunningContainer
     {
-        public RunningContainer(RunningPod pod, ContainerRecipe recipe, Port[] servicePorts, StartupConfig startupConfig, Address clusterExternalAddress, Address clusterInternalAddress)
+        public RunningContainer(RunningPod pod, ContainerRecipe recipe, Port[] servicePorts, string name, Address clusterExternalAddress, Address clusterInternalAddress)
         {
             Pod = pod;
             Recipe = recipe;
             ServicePorts = servicePorts;
-            Name = GetContainerName(recipe, startupConfig);
+            Name = name;
             ClusterExternalAddress = clusterExternalAddress;
             ClusterInternalAddress = clusterInternalAddress;
         }
@@ -39,17 +39,5 @@ namespace KubernetesWorkflow
         public Port[] ServicePorts { get; }
         public Address ClusterExternalAddress { get; }
         public Address ClusterInternalAddress { get; }
-
-        private string GetContainerName(ContainerRecipe recipe, StartupConfig startupConfig)
-        {
-            if (!string.IsNullOrEmpty(startupConfig.NameOverride))
-            {
-                return $"<{startupConfig.NameOverride}{recipe.Number}>";
-            }
-            else
-            {
-                return $"<{recipe.Name}>";
-            }
-        }
     }
 }

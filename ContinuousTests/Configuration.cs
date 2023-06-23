@@ -94,7 +94,7 @@ namespace ContinuousTests
                 throw new Exception($"Unvalid logpath set: '{configuration.LogPath}'");
             }
 
-            if (configuration.CodexDeployment != null && configuration.CodexDeployment.CodexContainers.Any())
+            if (configuration.CodexDeployment == null || !configuration.CodexDeployment.CodexContainers.Any())
             {
                 throw new Exception("No Codex deployment found.");
             }
