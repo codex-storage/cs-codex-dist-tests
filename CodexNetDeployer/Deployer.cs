@@ -45,7 +45,7 @@ namespace CodexNetDeployer
                 if (container != null) codexContainers.Add(container);
             }
 
-            return new CodexDeployment(gethResults, codexContainers.ToArray());
+            return new CodexDeployment(gethResults, codexContainers.ToArray(), CreateMetadata());
         }
 
         private (WorkflowCreator, TestLifecycle) CreateFacilities()
@@ -70,6 +70,19 @@ namespace CodexNetDeployer
             var lifecycle = new TestLifecycle(log, lifecycleConfig, timeset, workflowCreator);
 
             return (workflowCreator, lifecycle);
+        }
+
+        private DeploymentMetadata CreateMetadata()
+        {
+            return new DeploymentMetadata(
+                codexImage: config.CodexImage,
+                gethImage: config.GethImage,
+                contractsImage: config.ContractsImage,
+                kubeNamespace: config.KubeNamespace,
+                numberOfCodexNodes: config.NumberOfCodexNodes!.Value,
+                numberOfValidators: config.NumberOfValidators!.Value,
+                storageQuotaMB: config.StorageQuota!.Value,
+                codexLogLevel: config.CodexLogLevel);
         }
 
         private void Log(string msg)
