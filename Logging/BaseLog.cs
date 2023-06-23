@@ -25,12 +25,12 @@ namespace Logging
             }
         }
 
-        public void Log(string message)
+        public virtual void Log(string message)
         {
             LogFile.Write(ApplyReplacements(message));
         }
 
-        public void Debug(string message = "", int skipFrames = 0)
+        public virtual void Debug(string message = "", int skipFrames = 0)
         {
             if (debug)
             {
@@ -40,25 +40,25 @@ namespace Logging
             }
         }
 
-        public void Error(string message)
+        public virtual void Error(string message)
         {
             Log($"[ERROR] {message}");
         }
 
-        public void MarkAsFailed()
+        public virtual void MarkAsFailed()
         {
             if (hasFailed) return;
             hasFailed = true;
             LogFile.ConcatToFilename("_FAILED");
         }
 
-        public void AddStringReplace(string from, string to)
+        public virtual void AddStringReplace(string from, string to)
         {
             if (string.IsNullOrWhiteSpace(from)) return;
             replacements.Add(new BaseLogStringReplacement(from, to));
         }
 
-        public void Delete()
+        public virtual void Delete()
         {
             File.Delete(LogFile.FullFilename);
         }
