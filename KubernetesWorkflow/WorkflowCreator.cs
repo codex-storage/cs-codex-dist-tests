@@ -13,10 +13,15 @@ namespace KubernetesWorkflow
         private readonly string testNamespace;
 
         public WorkflowCreator(BaseLog log, Configuration configuration)
+            : this(log, configuration, Guid.NewGuid().ToString().ToLowerInvariant())
+        {
+        }
+
+        public WorkflowCreator(BaseLog log, Configuration configuration, string testNamespacePostfix)
         {
             cluster = new K8sCluster(configuration);
             this.log = log;
-            testNamespace = Guid.NewGuid().ToString().ToLowerInvariant();
+            testNamespace = testNamespacePostfix;
         }
 
         public StartupWorkflow CreateWorkflow()
