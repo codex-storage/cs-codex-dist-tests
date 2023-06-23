@@ -2,6 +2,7 @@
 using DistTestCore;
 using Logging;
 using Utils;
+using KubernetesWorkflow;
 
 namespace ContinuousTests
 {
@@ -37,18 +38,18 @@ namespace ContinuousTests
 
         private CodexNode[] CreateRandomNodes(int number, BaseLog testLog)
         {
-            var urls = SelectRandomUrls(number);
-            testLog.Log("Selected nodes: " + string.Join(",", urls));
-            return codexNodeFactory.Create(urls, testLog, test.TimeSet);
+            var containers = SelectRandomContainers(number);
+            testLog.Log("Selected nodes: " + string.Join(",", containers.Select(c => c.Name)));
+            return codexNodeFactory.Create(containers, testLog, test.TimeSet);
         }
 
-        private string[] SelectRandomUrls(int number)
+        private RunningContainer[] SelectRandomContainers(int number)
         {
-            var urls = config.CodexUrls.ToList();
-            var result = new string[number];
+            var containers = config.CodexDeployment.CodexContainers.ToList();
+            var result = new RunningContainer[number];
             for (var i = 0; i < number; i++)
             {
-                result[i] = urls.PickOneRandom();
+                result[i] = containers.PickOneRandom();
             }
             return result;
         }

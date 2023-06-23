@@ -1,11 +1,12 @@
-﻿using Newtonsoft.Json;
+﻿using DistTestCore.Codex;
+using Newtonsoft.Json;
 
 namespace ContinuousTests
 {
     public class Configuration
     {
         public string LogPath { get; set; } = string.Empty;
-        public string[] CodexUrls { get; set; } = Array.Empty<string>();
+        public CodexDeployment CodexDeployment { get; set; } = null!;
         public int SleepSecondsPerSingleTest { get; set; }
         public int SleepSecondsPerAllTests { get; set; }
         public bool KeepPassedTestLogs { get; set; }
@@ -37,32 +38,30 @@ namespace ContinuousTests
             }
 
             var logPath = Environment.GetEnvironmentVariable("LOGPATH");
-            var codexUrls = Environment.GetEnvironmentVariable("CODEXURLS");
+            var codexDeploymentJson = Environment.GetEnvironmentVariable("CODEXDEPLOYMENT");
             var sleepPerSingle = Environment.GetEnvironmentVariable("SLEEPSECONDSPERSINGLETEST");
             var sleepPerAll = Environment.GetEnvironmentVariable("SLEEPSECONDSPERALLTESTS");
             var keep = Environment.GetEnvironmentVariable("KEEPPASSEDTESTLOGS");
 
             if (!string.IsNullOrEmpty(logPath) &&
-                !string.IsNullOrEmpty(codexUrls) &&
+                !string.IsNullOrEmpty(codexDeploymentJson) &&
                 !string.IsNullOrEmpty(sleepPerSingle) &&
                 !string.IsNullOrEmpty(sleepPerAll))
             {
-                var urls = codexUrls.Split(';', StringSplitOptions.RemoveEmptyEntries);
-                int secondsSingle;
-                int secondsAll;
-                if (int.TryParse(sleepPerSingle, out secondsSingle) && int.TryParse(sleepPerAll, out secondsAll))
+                try 
                 {
-                    if (urls.Length > 0)
-                    {
-                        return new Configuration
-                        { 
-                            LogPath = logPath,
-                            CodexUrls = urls,
-                            SleepSecondsPerSingleTest = secondsSingle,
-                            SleepSecondsPerAllTests = secondsAll,
-                            KeepPassedTestLogs = keep == "1"
-                        };
-                    }
+                    return new Configuration
+                    { 
+                        LogPath = logPath,
+                        CodexDeployment = ParseCodexDeploymentJson(codexDeploymentJson),
+                        SleepSecondsPerSingleTest = Convert.ToInt32(sleepPerSingle),
+                        SleepSecondsPerAllTests = Convert.ToInt32(sleepPerAll),
+                        KeepPassedTestLogs = keep == "1"
+                    };
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Exception: " + ex);
                 }
             }
 
@@ -70,7 +69,7 @@ namespace ContinuousTests
             throw new Exception($"Unable to load configuration from '{filename}', and " +
                 "unable to load configuration from environment variables. " + nl +
                 "'LOGPATH' = Path where log files will be saved." + nl +
-                "'CODEXURLS' = Semi-colon separated URLs to codex APIs. e.g. 'https://hostaddr_one:port;https://hostaddr_two:port'" + nl +
+                "'CODEXDEPLOYMENT' = Path to codex-deployment JSON file." + nl +
                 "'SLEEPSECONDSPERSINGLETEST' = Seconds to sleep after each individual test." + nl +
                 "'SLEEPSECONDSPERALLTESTS' = Seconds to sleep after all tests, before starting again." + nl +
                 "'KEEPPASSEDTESTLOGS' = (Optional, default: 0) Set to '1' to keep log files of tests that passed." + nl +
@@ -95,10 +94,17 @@ namespace ContinuousTests
                 throw new Exception($"Unvalid logpath set: '{configuration.LogPath}'");
             }
 
-            if (!configuration.CodexUrls.Any())
+            if (configuration.CodexDeployment != null && configuration.CodexDeployment.CodexContainers.Any())
             {
-                throw new Exception("No Codex URLs found.");
+                throw new Exception("No Codex deployment found.");
             }
+        }
+
+        private CodexDeployment ParseCodexDeploymentJson(string filename)
+        {
+            var d = JsonConvert.DeserializeObject<CodexDeployment>(File.ReadAllText(filename))!;
+            if (d == null) throw new Exception("Unable to parse " + filename);
+            return d;
         }
     }
 }

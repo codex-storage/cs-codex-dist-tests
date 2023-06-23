@@ -12,15 +12,7 @@ namespace ContinuousTests
 
         public void Run()
         {
-            var config = //configLoader.Load();
-                new Configuration
-                {
-                    CodexUrls =new[] { "http://localhost:8080", "http://localhost:8081" },
-                    LogPath = "logs",
-                    KeepPassedTestLogs = false,
-                    SleepSecondsPerAllTests = 1,
-                    SleepSecondsPerSingleTest = 1,
-                };
+            var config = configLoader.Load();
             StartupChecks(config);
 
             while (true)
@@ -73,9 +65,9 @@ namespace ContinuousTests
             var errors = new List<string>();
             foreach (var test in tests)
             {
-                if (test.RequiredNumberOfNodes > config.CodexUrls.Length)
+                if (test.RequiredNumberOfNodes > config.CodexDeployment.CodexContainers.Length)
                 {
-                    errors.Add($"Test '{test.Name}' requires {test.RequiredNumberOfNodes} nodes. Configuration only has {config.CodexUrls.Length}");
+                    errors.Add($"Test '{test.Name}' requires {test.RequiredNumberOfNodes} nodes. Deployment only has {config.CodexDeployment.CodexContainers.Length}");
                 }
             }
 
@@ -92,7 +84,7 @@ namespace ContinuousTests
 
         private void CheckCodexNodes(BaseLog log, Configuration config)
         {
-            var nodes = codexNodeFactory.Create(config.CodexUrls, log, new DefaultTimeSet());
+            var nodes = codexNodeFactory.Create(config.CodexDeployment.CodexContainers, log, new DefaultTimeSet());
             var pass = true;
             foreach (var n in nodes)
             {
