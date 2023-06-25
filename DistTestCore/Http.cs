@@ -1,5 +1,4 @@
-﻿using KubernetesWorkflow;
-using Logging;
+﻿using Logging;
 using Newtonsoft.Json;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
@@ -11,11 +10,11 @@ namespace DistTestCore
     {
         private readonly BaseLog log;
         private readonly ITimeSet timeSet;
-        private readonly RunningContainerAddress address;
+        private readonly Address address;
         private readonly string baseUrl;
         private readonly TimeSpan? timeoutOverride;
 
-        public Http(BaseLog log, ITimeSet timeSet, RunningContainerAddress address, string baseUrl, TimeSpan? timeoutOverride = null)
+        public Http(BaseLog log, ITimeSet timeSet, Address address, string baseUrl, TimeSpan? timeoutOverride = null)
         {
             this.log = log;
             this.timeSet = timeSet;

@@ -19,11 +19,11 @@ namespace DistTestCore
         public const int ChunkSize = 1024 * 1024 * 100;
         private static NumberSource folderNumberSource = new NumberSource(0);
         private readonly Random random = new Random();
-        private readonly TestLog log;
+        private readonly BaseLog log;
         private readonly string folder;
         private readonly List<List<TestFile>> fileSetStack = new List<List<TestFile>>();
 
-        public FileManager(TestLog log, Configuration configuration)
+        public FileManager(BaseLog log, Configuration configuration)
         {
             folder = Path.Combine(configuration.GetFileManagerFolder(), folderNumberSource.GetNextNumber().ToString("D5"));
 
@@ -142,9 +142,9 @@ namespace DistTestCore
 
     public class TestFile
     {
-        private readonly TestLog log;
+        private readonly BaseLog log;
 
-        public TestFile(TestLog log, string filename, string label)
+        public TestFile(BaseLog log, string filename, string label)
         {
             this.log = log;
             Filename = filename;

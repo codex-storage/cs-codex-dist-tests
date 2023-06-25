@@ -50,7 +50,7 @@ namespace DistTestCore.Codex
             {
                 var gethConfig = startupConfig.Get<GethStartResult>();
                 var companionNode = gethConfig.CompanionNode;
-                var companionNodeAccount = companionNode.Accounts[Index];
+                var companionNodeAccount = companionNode.Accounts[GetAccountIndex(config.MarketplaceConfig)];
                 Additional(companionNodeAccount);
 
                 var ip = companionNode.RunningContainer.Pod.PodInfo.Ip;
@@ -60,7 +60,18 @@ namespace DistTestCore.Codex
                 AddEnvVar("ETH_ACCOUNT", companionNodeAccount.Account);
                 AddEnvVar("ETH_MARKETPLACE_ADDRESS", gethConfig.MarketplaceNetwork.Marketplace.Address);
                 AddEnvVar("PERSISTENCE", "1");
+
+                if (config.MarketplaceConfig.IsValidator)
+                {
+                    AddEnvVar("VALIDATOR", "1");
+                }
             }
+        }
+
+        private int GetAccountIndex(MarketplaceInitialConfig marketplaceConfig)
+        {
+            if (marketplaceConfig.AccountIndexOverride != null) return marketplaceConfig.AccountIndexOverride.Value;
+            return Index;
         }
     }
 }

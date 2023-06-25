@@ -1,4 +1,6 @@
-﻿namespace DistTestCore.Marketplace
+﻿using Newtonsoft.Json;
+
+namespace DistTestCore.Marketplace
 {
     public class GethStartResult
     {
@@ -9,6 +11,7 @@
             CompanionNode = companionNode;
         }
 
+        [JsonIgnore]
         public IMarketplaceAccessFactory MarketplaceAccessFactory { get; }
         public MarketplaceNetwork MarketplaceNetwork { get; }
         public GethCompanionNodeInfo CompanionNode { get; }

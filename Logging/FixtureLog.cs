@@ -8,19 +8,24 @@ namespace Logging
         private readonly string fullName;
         private readonly LogConfig config;
 
-        public FixtureLog(LogConfig config)
+        public FixtureLog(LogConfig config, string name = "")
             : base(config.DebugEnabled)
         {
             start = DateTime.UtcNow;
             var folder = DetermineFolder(config);
-            var fixtureName = GetFixtureName();
+            var fixtureName = GetFixtureName(name);
             fullName = Path.Combine(folder, fixtureName);
             this.config = config;
         }
 
-        public TestLog CreateTestLog()
+        public TestLog CreateTestLog(string name = "")
         {
-            return new TestLog(fullName, config.DebugEnabled);
+            return new TestLog(fullName, config.DebugEnabled, name);
+        }
+
+        public void DeleteFolder()
+        {
+            Directory.Delete(fullName, true);
         }
 
         protected override LogFile CreateLogFile()
@@ -36,10 +41,12 @@ namespace Logging
                Pad(start.Day));
         }
 
-        private string GetFixtureName()
+        private string GetFixtureName(string name)
         {
             var test = TestContext.CurrentContext.Test;
             var className = test.ClassName!.Substring(test.ClassName.LastIndexOf('.') + 1);
+            if (!string.IsNullOrEmpty(name)) className = name;
+
             return $"{Pad(start.Hour)}-{Pad(start.Minute)}-{Pad(start.Second)}Z_{className.Replace('.', '-')}";
         }
 
