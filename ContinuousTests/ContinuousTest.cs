@@ -31,6 +31,8 @@ namespace ContinuousTests
         public virtual ITimeSet TimeSet { get { return new DefaultTimeSet(); } }
 
         public abstract int RequiredNumberOfNodes { get; }
+        public abstract TimeSpan RunTestEvery { get; }
+        public abstract TestFailMode TestFailMode { get; }
 
         public string Name
         {
@@ -39,8 +41,6 @@ namespace ContinuousTests
                 return GetType().Name;
             }
         }
-
-        public abstract void Run();
 
         public ContentId? UploadFile(CodexNode node, TestFile file)
         {
@@ -83,5 +83,11 @@ namespace ContinuousTests
                 throw;
             }
         }
+    }
+
+    public enum TestFailMode
+    {
+        StopAfterFirstFailure,
+        AlwaysRunAllMoments
     }
 }

@@ -6,9 +6,8 @@ namespace ContinuousTests
     public class Configuration
     {
         public string LogPath { get; set; } = string.Empty;
+        public string DataPath { get; set; } = string.Empty;
         public CodexDeployment CodexDeployment { get; set; } = null!;
-        public int SleepSecondsPerSingleTest { get; set; }
-        public int SleepSecondsPerAllTests { get; set; }
         public bool KeepPassedTestLogs { get; set; }
     }
 
@@ -37,11 +36,11 @@ namespace ContinuousTests
                 catch { }
             }
 
-            var logPath = Environment.GetEnvironmentVariable("LOGPATH");
-            var codexDeploymentJson = Environment.GetEnvironmentVariable("CODEXDEPLOYMENT");
-            var sleepPerSingle = Environment.GetEnvironmentVariable("SLEEPSECONDSPERSINGLETEST");
-            var sleepPerAll = Environment.GetEnvironmentVariable("SLEEPSECONDSPERALLTESTS");
-            var keep = Environment.GetEnvironmentVariable("KEEPPASSEDTESTLOGS");
+            var logPath = "logs";// Environment.GetEnvironmentVariable("LOGPATH");
+            var codexDeploymentJson = "C:\\Users\\Ben\\Desktop\\codex-deployment.json"; //Environment.GetEnvironmentVariable("CODEXDEPLOYMENT");
+            var sleepPerSingle = "10";// Environment.GetEnvironmentVariable("SLEEPSECONDSPERSINGLETEST");
+            var sleepPerAll = "10";// Environment.GetEnvironmentVariable("SLEEPSECONDSPERALLTESTS");
+            var keep = ""; // Environment.GetEnvironmentVariable("KEEPPASSEDTESTLOGS");
 
             if (!string.IsNullOrEmpty(logPath) &&
                 !string.IsNullOrEmpty(codexDeploymentJson) &&
@@ -54,8 +53,8 @@ namespace ContinuousTests
                     { 
                         LogPath = logPath,
                         CodexDeployment = ParseCodexDeploymentJson(codexDeploymentJson),
-                        SleepSecondsPerSingleTest = Convert.ToInt32(sleepPerSingle),
-                        SleepSecondsPerAllTests = Convert.ToInt32(sleepPerAll),
+                        //SleepSecondsPerSingleTest = Convert.ToInt32(sleepPerSingle),
+                        //SleepSecondsPerAllTests = Convert.ToInt32(sleepPerAll),
                         KeepPassedTestLogs = keep == "1"
                     };
                 }
@@ -78,16 +77,16 @@ namespace ContinuousTests
 
         private void Validate(Configuration configuration)
         {
-            if (configuration.SleepSecondsPerSingleTest < 1)
-            {
-                Console.WriteLine("Warning: configuration.SleepSecondsPerSingleTest was less than 1 seconds. Using 1 seconds instead!");
-                configuration.SleepSecondsPerSingleTest = 1;
-            }
-            if (configuration.SleepSecondsPerAllTests < 1)
-            {
-                Console.WriteLine("Warning: configuration.SleepSecondsPerAllTests was less than 10 seconds. Using 10 seconds instead!");
-                configuration.SleepSecondsPerAllTests = 10;
-            }
+            //if (configuration.SleepSecondsPerSingleTest < 1)
+            //{
+            //    Console.WriteLine("Warning: configuration.SleepSecondsPerSingleTest was less than 1 seconds. Using 1 seconds instead!");
+            //    configuration.SleepSecondsPerSingleTest = 1;
+            //}
+            //if (configuration.SleepSecondsPerAllTests < 1)
+            //{
+            //    Console.WriteLine("Warning: configuration.SleepSecondsPerAllTests was less than 10 seconds. Using 10 seconds instead!");
+            //    configuration.SleepSecondsPerAllTests = 10;
+            //}
 
             if (string.IsNullOrEmpty(configuration.LogPath))
             {

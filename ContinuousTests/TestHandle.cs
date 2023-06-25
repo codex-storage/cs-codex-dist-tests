@@ -12,11 +12,22 @@ namespace ContinuousTests
 
             ReflectTestMoments();
 
-            if (!moments.Any()) throw new Exception("Test has no moments.");
-            if (moments.Count != moments.Select(m => m.Moment).Distinct().Count()) throw new Exception("Test has duplicate moments");
+            var testName = test.GetType().Name;
+            if (!moments.Any()) throw new Exception($"Test '{testName}' has no moments.");
+            if (moments.Count != moments.Select(m => m.Moment).Distinct().Count()) throw new Exception($"Test '{testName}' has duplicate moments");
         }
 
         public ContinuousTest Test { get; }
+
+        public int GetEarliestMoment()
+        {
+            return moments.Min(m => m.Moment);
+        }
+
+        public int GetLastMoment()
+        {
+            return moments.Max(m => m.Moment);
+        }
 
         public int? GetNextMoment(int currentMoment)
         {
@@ -25,17 +36,16 @@ namespace ContinuousTests
             return remainingMoments.Min(m => m.Moment);
         }
 
-        public int GetLastMoment()
-        {
-            return moments.Max(m => m.Moment);
-        }
-
-        public void InvokeMoment(int currentMoment)
+        public void InvokeMoment(int currentMoment, Action<string> beforeInvoke)
         {
             var moment = moments.SingleOrDefault(m => m.Moment == currentMoment);
             if (moment == null) return;
 
-            moment.Method.Invoke(Test, Array.Empty<object>());
+            lock (MomentLock.Lock)
+            {
+                beforeInvoke(moment.Method.Name);
+                moment.Method.Invoke(Test, Array.Empty<object>());
+            }
         }
 
         private void ReflectTestMoments()
@@ -65,5 +75,10 @@ namespace ContinuousTests
 
         public MethodInfo Method { get; }
         public int Moment { get; }
+    }
+
+    public static class MomentLock
+    {
+        public static readonly object Lock = new();
     }
 }

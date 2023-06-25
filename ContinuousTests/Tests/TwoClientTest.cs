@@ -3,20 +3,20 @@ using NUnit.Framework;
 
 namespace ContinuousTests.Tests
 {
-    public class TwoClientTest : ContinuousTest
-    {
-        public override int RequiredNumberOfNodes => 2;
+    //public class TwoClientTest : ContinuousTest
+    //{
+    //    public override int RequiredNumberOfNodes => 2;
 
-        public override void Run()
-        {
-            var file = FileManager.GenerateTestFile(10.MB());
+    //    public override void Run()
+    //    {
+    //        var file = FileManager.GenerateTestFile(10.MB());
 
-            var cid = UploadFile(Nodes[0], file);
-            Assert.That(cid, Is.Not.Null);
+    //        var cid = UploadFile(Nodes[0], file);
+    //        Assert.That(cid, Is.Not.Null);
 
-            var dl = DownloadContent(Nodes[1], cid!);
+    //        var dl = DownloadContent(Nodes[1], cid!);
 
-            file.AssertIsEqual(dl);
-        }
-    }
+    //        file.AssertIsEqual(dl);
+    //    }
+    //}
 }

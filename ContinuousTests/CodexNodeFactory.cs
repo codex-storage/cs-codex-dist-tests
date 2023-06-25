@@ -11,7 +11,7 @@ namespace ContinuousTests
         {
             return containers.Select(container =>
             {
-                var address = container.ClusterInternalAddress;
+                var address = container.ClusterExternalAddress;
                 return new CodexNode(log, timeSet, address);
             }).ToArray();
         }

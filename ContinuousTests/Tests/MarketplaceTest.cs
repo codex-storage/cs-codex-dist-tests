@@ -5,10 +5,8 @@ namespace ContinuousTests.Tests
     public class MarketplaceTest : ContinuousTest
     {
         public override int RequiredNumberOfNodes => 1;
-
-        public override void Run()
-        {
-        }
+        public override TimeSpan RunTestEvery => TimeSpan.FromDays(1);
+        public override TestFailMode TestFailMode => TestFailMode.AlwaysRunAllMoments;
 
         [TestMoment(t: Zero)]
         public void NodePostsStorageRequest()
