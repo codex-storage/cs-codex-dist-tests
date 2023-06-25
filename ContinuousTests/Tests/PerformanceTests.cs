@@ -4,77 +4,83 @@ using NUnit.Framework;
 
 namespace ContinuousTests.Tests
 {
-    //public class UploadPerformanceTest : PerformanceTest
-    //{
-    //    public override int RequiredNumberOfNodes => 1;
+    public class UploadPerformanceTest : PerformanceTest
+    {
+        public override int RequiredNumberOfNodes => 1;
 
-    //    public override void Run()
-    //    {
-    //        UploadTest(100, Nodes[0]);
-    //    }
-    //}
+        [TestMoment(t: Zero)]
+        public void UploadTest()
+        {
+            UploadTest(100, Nodes[0]);
+        }
+    }
 
-    //public class DownloadLocalPerformanceTest : PerformanceTest
-    //{
-    //    public override int RequiredNumberOfNodes => 1;
+    public class DownloadLocalPerformanceTest : PerformanceTest
+    {
+        public override int RequiredNumberOfNodes => 1;
 
-    //    public override void Run()
-    //    {
-    //        DownloadTest(100, Nodes[0], Nodes[0]);
-    //    }
-    //}
+        [TestMoment(t: Zero)]
+        public void DownloadTest()
+        {
+            DownloadTest(100, Nodes[0], Nodes[0]);
+        }
+    }
 
-    //public class DownloadRemotePerformanceTest : PerformanceTest
-    //{
-    //    public override int RequiredNumberOfNodes => 2;
+    public class DownloadRemotePerformanceTest : PerformanceTest
+    {
+        public override int RequiredNumberOfNodes => 2;
 
-    //    public override void Run()
-    //    {
-    //        DownloadTest(100, Nodes[0], Nodes[1]);
-    //    }
-    //}
+        [TestMoment(t: Zero)]
+        public void DownloadTest()
+        {
+            DownloadTest(100, Nodes[0], Nodes[1]);
+        }
+    }
 
-    //public abstract class PerformanceTest : ContinuousTest
-    //{
-    //    public void UploadTest(int megabytes, CodexNode uploadNode)
-    //    {
-    //        var file = FileManager.GenerateTestFile(megabytes.MB());
+    public abstract class PerformanceTest : ContinuousTest
+    {
+        public override TimeSpan RunTestEvery => TimeSpan.FromHours(1);
+        public override TestFailMode TestFailMode => TestFailMode.AlwaysRunAllMoments;
 
-    //        var time = Measure(() =>
-    //        {
-    //            UploadFile(uploadNode, file);
-    //        });
+        public void UploadTest(int megabytes, CodexNode uploadNode)
+        {
+            var file = FileManager.GenerateTestFile(megabytes.MB());
 
-    //        var timePerMB = time / megabytes;
+            var time = Measure(() =>
+            {
+                UploadFile(uploadNode, file);
+            });
 
-    //        Assert.That(timePerMB, Is.LessThan(CodexContainerRecipe.MaxUploadTimePerMegabyte), "MaxUploadTimePerMegabyte performance threshold breached.");
-    //    }
+            var timePerMB = time / megabytes;
 
-    //    public void DownloadTest(int megabytes, CodexNode uploadNode, CodexNode downloadNode)
-    //    {
-    //        var file = FileManager.GenerateTestFile(megabytes.MB());
+            Assert.That(timePerMB, Is.LessThan(CodexContainerRecipe.MaxUploadTimePerMegabyte), "MaxUploadTimePerMegabyte performance threshold breached.");
+        }
 
-    //        var cid = UploadFile(uploadNode, file);
-    //        Assert.That(cid, Is.Not.Null);
+        public void DownloadTest(int megabytes, CodexNode uploadNode, CodexNode downloadNode)
+        {
+            var file = FileManager.GenerateTestFile(megabytes.MB());
 
-    //        TestFile? result = null;
-    //        var time = Measure(() =>
-    //        {
-    //            result = DownloadContent(downloadNode, cid!);
-    //        });
+            var cid = UploadFile(uploadNode, file);
+            Assert.That(cid, Is.Not.Null);
 
-    //        file.AssertIsEqual(result);
+            TestFile? result = null;
+            var time = Measure(() =>
+            {
+                result = DownloadContent(downloadNode, cid!);
+            });
 
-    //        var timePerMB = time / megabytes;
+            file.AssertIsEqual(result);
 
-    //        Assert.That(timePerMB, Is.LessThan(CodexContainerRecipe.MaxDownloadTimePerMegabyte), "MaxDownloadTimePerMegabyte performance threshold breached.");
-    //    }
+            var timePerMB = time / megabytes;
 
-    //    private static TimeSpan Measure(Action action)
-    //    {
-    //        var start = DateTime.UtcNow;
-    //        action();
-    //        return DateTime.UtcNow - start;
-    //    }
-    //}
+            Assert.That(timePerMB, Is.LessThan(CodexContainerRecipe.MaxDownloadTimePerMegabyte), "MaxDownloadTimePerMegabyte performance threshold breached.");
+        }
+
+        private static TimeSpan Measure(Action action)
+        {
+            var start = DateTime.UtcNow;
+            action();
+            return DateTime.UtcNow - start;
+        }
+    }
 }
