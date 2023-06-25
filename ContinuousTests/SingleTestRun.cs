@@ -16,6 +16,7 @@ namespace ContinuousTests
         private readonly CodexNode[] nodes;
         private readonly FileManager fileManager;
         private readonly FixtureLog fixtureLog;
+        private readonly string testName;
         private readonly string dataFolder;
 
         public SingleTestRun(Configuration config, BaseLog overviewLog, TestHandle handle)
@@ -24,7 +25,7 @@ namespace ContinuousTests
             this.overviewLog = overviewLog;
             this.handle = handle;
 
-            var testName = handle.Test.GetType().Name;
+            testName = handle.Test.GetType().Name;
             fixtureLog = new FixtureLog(new LogConfig(config.LogPath, false), testName);
 
             nodes = CreateRandomNodes(handle.Test.RequiredNumberOfNodes);
@@ -122,7 +123,7 @@ namespace ContinuousTests
         private void OverviewLog(string msg)
         {
             Log(msg);
-            overviewLog.Log(msg);
+            overviewLog.Log(testName + ": " +  msg);
         }
 
         private CodexNode[] CreateRandomNodes(int number)
