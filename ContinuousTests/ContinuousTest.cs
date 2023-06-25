@@ -12,7 +12,9 @@ namespace ContinuousTests
     public abstract class ContinuousTest
     {
         protected const int Zero = 0;
-        protected const int HourOne = 3600;
+        protected const int MinuteOne = 60;
+        protected const int MinuteFive = MinuteOne * 5;
+        protected const int HourOne = MinuteOne * 60;
         protected const int DayOne = HourOne * 24;
         protected const int DayThree = DayOne * 3;
 

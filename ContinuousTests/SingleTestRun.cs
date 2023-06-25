@@ -15,6 +15,7 @@ namespace ContinuousTests
         private readonly CodexNode[] nodes;
         private readonly FileManager fileManager;
         private readonly FixtureLog fixtureLog;
+        private readonly string dataFolder;
 
         public SingleTestRun(Configuration config, TestHandle handle)
         {
@@ -25,6 +26,7 @@ namespace ContinuousTests
             fixtureLog = new FixtureLog(new LogConfig(config.LogPath, false), testName);
 
             nodes = CreateRandomNodes(handle.Test.RequiredNumberOfNodes);
+            dataFolder = config.DataPath + "-" + Guid.NewGuid();
             fileManager = new FileManager(fixtureLog, CreateFileManagerConfiguration());
         }
 
@@ -44,16 +46,16 @@ namespace ContinuousTests
                     fixtureLog.MarkAsFailed();
                 }
                 fileManager.DeleteAllTestFiles();
+                Directory.Delete(dataFolder, true);
             });
         }
 
         private void RunTest()
         {
             var earliestMoment = handle.GetEarliestMoment();
-            var lastMoment = handle.GetLastMoment();
 
             var t = earliestMoment;
-            while (t <= lastMoment)
+            while (true)
             {
                 RunMoment(t);
 
@@ -72,11 +74,15 @@ namespace ContinuousTests
                 }
                 else
                 {
-                    Log(" > Completed last test moment. Test ended.");
+                    if (exceptions.Any())
+                    {
+                        Log(" > Completed last test moment. Test failed.");
+                        throw exceptions.First();
+                    }
+                    Log(" > Completed last test moment. Test passed.");
+                    return;
                 }
             }
-
-            if (exceptions.Any()) throw exceptions.First();
         }
 
         private void RunMoment(int t)
@@ -130,7 +136,7 @@ namespace ContinuousTests
 
         private DistTestCore.Configuration CreateFileManagerConfiguration()
         {
-            return new DistTestCore.Configuration(null, string.Empty, false, config.DataPath + Guid.NewGuid(),
+            return new DistTestCore.Configuration(null, string.Empty, false, dataFolder,
                 CodexLogLevel.Error, TestRunnerLocation.ExternalToCluster);
         }
     }

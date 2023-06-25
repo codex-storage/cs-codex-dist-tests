@@ -25,7 +25,7 @@
                 t.Begin();
             }
           
-            Thread.Sleep(TimeSpan.MaxValue);
+            while (true) Thread.Sleep((2 ^ 31) - 1);
         }
     }
 }

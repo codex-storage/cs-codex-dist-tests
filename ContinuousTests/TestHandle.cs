@@ -31,7 +31,7 @@ namespace ContinuousTests
 
         public int? GetNextMoment(int currentMoment)
         {
-            var remainingMoments = moments.Where(m => m.Moment >= currentMoment).ToArray();
+            var remainingMoments = moments.Where(m => m.Moment > currentMoment).ToArray();
             if (!remainingMoments.Any()) return null;
             return remainingMoments.Min(m => m.Moment);
         }
@@ -71,6 +71,8 @@ namespace ContinuousTests
         {
             Method = method;
             Moment = moment;
+
+            if (moment < 0) throw new Exception("Moment must be zero or greater.");
         }
 
         public MethodInfo Method { get; }
