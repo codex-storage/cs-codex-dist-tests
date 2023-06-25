@@ -11,15 +11,17 @@ namespace ContinuousTests
         private readonly CodexNodeFactory codexNodeFactory = new CodexNodeFactory();
         private readonly List<Exception> exceptions = new List<Exception>();
         private readonly Configuration config;
+        private readonly BaseLog overviewLog;
         private readonly TestHandle handle;
         private readonly CodexNode[] nodes;
         private readonly FileManager fileManager;
         private readonly FixtureLog fixtureLog;
         private readonly string dataFolder;
 
-        public SingleTestRun(Configuration config, TestHandle handle)
+        public SingleTestRun(Configuration config, BaseLog overviewLog, TestHandle handle)
         {
             this.config = config;
+            this.overviewLog = overviewLog;
             this.handle = handle;
 
             var testName = handle.Test.GetType().Name;
@@ -76,10 +78,11 @@ namespace ContinuousTests
                 {
                     if (exceptions.Any())
                     {
-                        Log(" > Completed last test moment. Test failed.");
-                        throw exceptions.First();
+                        var ex = exceptions.First();
+                        OverviewLog(" > Test failed: " + ex);
+                        throw ex;
                     }
-                    Log(" > Completed last test moment. Test passed.");
+                    OverviewLog(" > Test passed.");
                     return;
                 }
             }
@@ -114,6 +117,12 @@ namespace ContinuousTests
         private void Log(string msg)
         {
             fixtureLog.Log(msg);
+        }
+
+        private void OverviewLog(string msg)
+        {
+            Log(msg);
+            overviewLog.Log(msg);
         }
 
         private CodexNode[] CreateRandomNodes(int number)

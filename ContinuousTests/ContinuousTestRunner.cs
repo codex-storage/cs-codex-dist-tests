@@ -1,4 +1,6 @@
-﻿namespace ContinuousTests
+﻿using Logging;
+
+namespace ContinuousTests
 {
     public class ContinuousTestRunner
     {
@@ -17,8 +19,9 @@
         {
             startupChecker.Check();
 
+            var overviewLog = new FixtureLog(new LogConfig(config.LogPath, false), "Overview");
             var allTests = testFactory.CreateTests();
-            var testStarters = allTests.Select(t => new TestStarter(config, t.GetType(), t.RunTestEvery)).ToArray();
+            var testStarters = allTests.Select(t => new TestStarter(config, overviewLog, t.GetType(), t.RunTestEvery)).ToArray();
 
             foreach (var t in testStarters)
             {
