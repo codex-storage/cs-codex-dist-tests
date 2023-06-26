@@ -6,7 +6,7 @@ public class Program
     {
         Console.WriteLine("Codex Continous-Test-Runner.");
         Console.WriteLine("Running...");
-        var runner = new ContinuousTestRunner();
+        var runner = new ContinuousTestRunner(args);
         runner.Run();
     }
 }

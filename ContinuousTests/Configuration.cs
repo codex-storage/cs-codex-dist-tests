@@ -1,93 +1,42 @@
-﻿using DistTestCore.Codex;
+﻿using ArgsUniform;
+using DistTestCore.Codex;
 using Newtonsoft.Json;
 
 namespace ContinuousTests
 {
     public class Configuration
     {
-        public string LogPath { get; set; } = string.Empty;
-        public string DataPath { get; set; } = string.Empty;
+        [Uniform("log-path", "l", "LOGPATH", true, "Path where log files will be written.")]
+        public string LogPath { get; set; } = "logs";
+
+        [Uniform("data-path", "d", "DATAPATH", true, "Path where temporary data files will be written.")]
+        public string DataPath { get; set; } = "data";
+
+        [Uniform("codex-deployment", "c", "CODEXDEPLOYMENT", true, "Path to codex-deployment JSON file.")]
+        public string CodexDeploymentJson { get; set; } = string.Empty;
+
+        [Uniform("keep", "k", "KEEP", false, "Set to '1' to retain logs of successful tests.")]
+        public bool KeepPassedTestLogs { get; set; } = false;
+
+        [Uniform("kube-config", "kc", "KUBECONFIG", true, "Path to Kubeconfig file.")]
+        public string KubeConfigFile { get; set; } = string.Empty;
+
         public CodexDeployment CodexDeployment { get; set; } = null!;
-        public bool KeepPassedTestLogs { get; set; }
     }
 
     public class ConfigLoader
     {
-        private const string filename = "config.json";
-
-        public Configuration Load()
+        public Configuration Load(string[] args)
         {
-            var config = Read();
+            var uniformArgs = new ArgsUniform<Configuration>(args);
 
-            Validate(config);
-            return config;
+            var result = uniformArgs.Parse();
+            
+            result.CodexDeployment = ParseCodexDeploymentJson(result.CodexDeploymentJson);
+
+            return result;
         }
-
-        private Configuration Read()
-        {
-            if (File.Exists(filename))
-            {
-                var lines = File.ReadAllText(filename);
-                try
-                {
-                    var result = JsonConvert.DeserializeObject<Configuration>(lines);
-                    if (result != null) return result;
-                }
-                catch { }
-            }
-
-            var logPath = Environment.GetEnvironmentVariable("LOGPATH");
-            var dataPath = Environment.GetEnvironmentVariable("DATAPATH");
-            var codexDeploymentJson = Environment.GetEnvironmentVariable("CODEXDEPLOYMENT");
-            var keep = Environment.GetEnvironmentVariable("KEEPPASSEDTESTLOGS");
-
-            if (!string.IsNullOrEmpty(logPath) &&
-                !string.IsNullOrEmpty(dataPath) &&
-                !string.IsNullOrEmpty(codexDeploymentJson))
-            {
-                try 
-                {
-                    return new Configuration
-                    { 
-                        LogPath = logPath,
-                        DataPath = dataPath,
-                        CodexDeployment = ParseCodexDeploymentJson(codexDeploymentJson),
-                        KeepPassedTestLogs = keep == "1"
-                    };
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine("Exception: " + ex);
-                }
-            }
-
-            var nl = Environment.NewLine;
-            throw new Exception($"Unable to load configuration from '{filename}', and " +
-                "unable to load configuration from environment variables. " + nl +
-                "'LOGPATH' = Path where log files will be saved." + nl +
-                "'DATAPATH' = Path where temporary data files will be saved." + nl +
-                "'CODEXDEPLOYMENT' = Path to codex-deployment JSON file." + nl +
-                nl);
-        }
-
-        private void Validate(Configuration configuration)
-        {
-            if (string.IsNullOrEmpty(configuration.LogPath))
-            {
-                throw new Exception($"Invalid LogPath set: '{configuration.LogPath}'");
-            }
-
-            if (string.IsNullOrEmpty(configuration.DataPath))
-            {
-                throw new Exception($"Invalid DataPath set: '{configuration.DataPath}'");
-            }
-
-            if (configuration.CodexDeployment == null || !configuration.CodexDeployment.CodexContainers.Any())
-            {
-                throw new Exception("No Codex deployment found.");
-            }
-        }
-
+        
         private CodexDeployment ParseCodexDeploymentJson(string filename)
         {
             var d = JsonConvert.DeserializeObject<CodexDeployment>(File.ReadAllText(filename))!;
