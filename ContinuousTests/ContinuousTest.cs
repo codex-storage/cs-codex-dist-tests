@@ -15,21 +15,24 @@ namespace ContinuousTests
         protected const int MinuteOne = 60;
         protected const int MinuteFive = MinuteOne * 5;
         protected const int HourOne = MinuteOne * 60;
+        protected const int HourThree = HourOne * 3;
         protected const int DayOne = HourOne * 24;
         protected const int DayThree = DayOne * 3;
 
         private const string UploadFailedMessage = "Unable to store block";
 
-        public void Initialize(CodexNode[] nodes, BaseLog log, FileManager fileManager)
+        public void Initialize(CodexNode[] nodes, BaseLog log, FileManager fileManager, Configuration configuration)
         {
             Nodes = nodes;
             Log = log;
             FileManager = fileManager;
+            Configuration = configuration;
         }
 
         public CodexNode[] Nodes { get; private set; } = null!;
         public BaseLog Log { get; private set; } = null!;
         public IFileManager FileManager { get; private set; } = null!;
+        public Configuration Configuration { get; private set; } = null!;
         public virtual ITimeSet TimeSet { get { return new DefaultTimeSet(); } }
 
         public abstract int RequiredNumberOfNodes { get; }

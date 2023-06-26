@@ -18,6 +18,9 @@ namespace ContinuousTests
         [Uniform("keep", "k", "KEEP", false, "Set to '1' to retain logs of successful tests.")]
         public bool KeepPassedTestLogs { get; set; } = false;
 
+        [Uniform("kube-config", "kc", "KUBECONFIG", true, "Path to Kubeconfig file.")]
+        public string KubeConfigFile { get; set; } = string.Empty;
+
         public CodexDeployment CodexDeployment { get; set; } = null!;
     }
 

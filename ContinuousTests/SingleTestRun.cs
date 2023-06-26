@@ -111,12 +111,12 @@ namespace ContinuousTests
         private void InitializeTest(string name)
         {
             Log($" > Running TestMoment '{name}'");
-            handle.Test.Initialize(nodes, fixtureLog, fileManager);
+            handle.Test.Initialize(nodes, fixtureLog, fileManager, config);
         }
 
         private void DecommissionTest()
         {
-            handle.Test.Initialize(null!, null!, null!);
+            handle.Test.Initialize(null!, null!, null!, null!);
         }
 
         private void Log(string msg)
