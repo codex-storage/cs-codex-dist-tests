@@ -36,9 +36,9 @@ namespace ContinuousTests
                 catch { }
             }
 
-            var logPath = Environment.GetEnvironmentVariable("LOGPATH");
-            var dataPath = Environment.GetEnvironmentVariable("DATAPATH");
-            var codexDeploymentJson = Environment.GetEnvironmentVariable("CODEXDEPLOYMENT");
+            var logPath = "logs";// Environment.GetEnvironmentVariable("LOGPATH");
+            var dataPath = "data";// Environment.GetEnvironmentVariable("DATAPATH");
+            var codexDeploymentJson = "C:\\Users\\Ben\\Desktop\\codex-deployment.json"; // Environment.GetEnvironmentVariable("CODEXDEPLOYMENT");
             var keep = Environment.GetEnvironmentVariable("KEEPPASSEDTESTLOGS");
 
             if (!string.IsNullOrEmpty(logPath) &&

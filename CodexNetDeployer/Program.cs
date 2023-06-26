@@ -1,9 +1,7 @@
-﻿using CodexNetDeployer;
+﻿using ArgsUniform;
+using CodexNetDeployer;
 using DistTestCore;
-using DistTestCore.Codex;
-using DistTestCore.Marketplace;
 using Newtonsoft.Json;
-using Utils;
 using Configuration = CodexNetDeployer.Configuration;
 
 public class Program
@@ -11,38 +9,21 @@ public class Program
     public static void Main(string[] args)
     {
         var nl = Environment.NewLine;
-        Console.WriteLine("CodexNetDeployer" + nl + nl);
-
-        var argOrVar = new ArgOrVar(args);
+        Console.WriteLine("CodexNetDeployer" + nl);
 
         if (args.Any(a => a == "-h" || a == "--help" || a == "-?"))
         {
-            argOrVar.PrintHelp();
+            PrintHelp();
             return;
         }
 
-        var location = TestRunnerLocation.InternalToCluster;
+        var uniformArgs = new ArgsUniform<Configuration>(new Configuration.Defaults(), args);
+        var config = uniformArgs.Parse(true);
+        
         if (args.Any(a => a == "--external"))
         {
-            location = TestRunnerLocation.ExternalToCluster;
+            config.RunnerLocation = TestRunnerLocation.ExternalToCluster;
         }
-
-        var config = new Configuration(
-            codexImage: argOrVar.Get(ArgOrVar.CodexImage, CodexContainerRecipe.DockerImage),
-            gethImage: argOrVar.Get(ArgOrVar.GethImage, GethContainerRecipe.DockerImage),
-            contractsImage: argOrVar.Get(ArgOrVar.ContractsImage, CodexContractsContainerRecipe.DockerImage),
-            kubeConfigFile: argOrVar.Get(ArgOrVar.KubeConfigFile),
-            kubeNamespace: argOrVar.Get(ArgOrVar.KubeNamespace),
-            numberOfCodexNodes: argOrVar.GetInt(ArgOrVar.NumberOfCodexNodes),
-            numberOfValidators: argOrVar.GetInt(ArgOrVar.NumberOfValidatorNodes),
-            storageQuota: argOrVar.GetInt(ArgOrVar.StorageQuota),
-            codexLogLevel: ParseEnum.Parse<CodexLogLevel>(argOrVar.Get(ArgOrVar.LogLevel, nameof(CodexLogLevel.Debug))),
-            runnerLocation: location
-        );
-
-        Console.WriteLine("Using:");
-        config.PrintConfig();
-        Console.WriteLine(nl);
 
         var errors = config.Validate();
         if (errors.Any())
@@ -50,7 +31,7 @@ public class Program
             Console.WriteLine($"Configuration errors: ({errors.Count})");
             foreach ( var error in errors ) Console.WriteLine("\t" + error);
             Console.WriteLine(nl);
-            argOrVar.PrintHelp();
+            PrintHelp();
             return;
         }
 
@@ -62,5 +43,19 @@ public class Program
         File.WriteAllText("codex-deployment.json", JsonConvert.SerializeObject(deployment, Formatting.Indented));
 
         Console.WriteLine("Done!");
+    }
+
+    private static void PrintHelp()
+    {
+        var nl = Environment.NewLine;
+        Console.WriteLine("CodexNetDeployer allows you to easily deploy multiple Codex nodes in a Kubernetes cluster. " +
+            "The deployer will set up the required supporting services, deploy the Codex on-chain contracts, start and bootstrap the Codex instances. " +
+            "All Kubernetes objects will be created in the namespace provided, allowing you to easily find, modify, and delete them afterwards." + nl);
+
+        Console.WriteLine("CodexNetDeployer assumes you are running this tool from *inside* the Kubernetes cluster you want to deploy to. " +
+            "If you are not running this from a container inside the cluster, add the argument '--external'." + nl);
+
+        var uniformArgs = new ArgsUniform<Configuration>();
+        uniformArgs.PrintHelp();
     }
 }

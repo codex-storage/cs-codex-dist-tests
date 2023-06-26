@@ -52,7 +52,7 @@ namespace CodexNetDeployer
         {
             var lifecycleConfig = new DistTestCore.Configuration
             (
-                kubeConfigFile: config.KubeConfigFile,
+                kubeConfigFile: null, //config.KubeConfigFile,
                 logPath: "null",
                 logDebug: false,
                 dataFilesPath: "notUsed",
@@ -62,7 +62,7 @@ namespace CodexNetDeployer
 
             var kubeConfig = new KubernetesWorkflow.Configuration(
                 k8sNamespacePrefix: config.KubeNamespace,
-                kubeConfigFile: config.KubeConfigFile,
+                kubeConfigFile: null, //config.KubeConfigFile,
                 operationTimeout: timeset.K8sOperationTimeout(),
                 retryDelay: timeset.WaitForK8sServiceDelay());
 
