@@ -11,7 +11,7 @@ namespace ContinuousTests.Tests
     {
         public override int RequiredNumberOfNodes => 1;
         public override TimeSpan RunTestEvery => TimeSpan.FromDays(4);
-        public override TestFailMode TestFailMode => TestFailMode.AlwaysRunAllMoments;
+        public override TestFailMode TestFailMode => TestFailMode.StopAfterFirstFailure;
 
         public const int EthereumAccountIndex = 200; // TODO: Check against all other account indices of all other tests.
 
