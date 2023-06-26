@@ -13,7 +13,7 @@ namespace ArgsUniform
         private const int descStart = 80;
 
         public ArgsUniform(params string[] args)
-            : this(null!, args)
+            : this(new IEnv.Env(), args)
         {
         }
 
@@ -46,13 +46,16 @@ namespace ArgsUniform
                 {
                     if (!UniformAssign(result, attr, uniformProperty) && attr.Required)
                     {
-                        missingRequired.Add(uniformProperty);
+                        {
+                            missingRequired.Add(uniformProperty);
+                        }
                     }
                 }
             }
 
             if (missingRequired.Any())
             {
+                PrintResults(result, uniformProperties);
                 Print("");
                 foreach (var missing in missingRequired)
                 {
@@ -68,15 +71,20 @@ namespace ArgsUniform
 
             if (printResult)
             {
-                Print("");
-                foreach (var p in uniformProperties)
-                {
-                    Print($"\t{p.Name} = {p.GetValue(result)}");
-                }
-                Print("");
+                PrintResults(result, uniformProperties);
             }
 
             return result;
+        }
+
+        private void PrintResults(T result, PropertyInfo[] uniformProperties)
+        {
+            Print("");
+            foreach (var p in uniformProperties)
+            {
+                Print($"\t{p.Name} = {p.GetValue(result)}");
+            }
+            Print("");
         }
 
         public void PrintHelp()
@@ -110,6 +118,12 @@ namespace ArgsUniform
             Console.Write(desc + Environment.NewLine);
         }
 
+        private object GetDefaultValue(Type t)
+        {
+            if (t.IsValueType) return Activator.CreateInstance(t)!;
+            return null!;
+        }
+
         private bool UniformAssign(T result, UniformAttribute attr, PropertyInfo uniformProperty)
         {
             if (AssignFromArgsIfAble(result, attr, uniformProperty)) return true;
@@ -120,16 +134,19 @@ namespace ArgsUniform
 
         private bool AssignFromDefaultsIfAble(T result, PropertyInfo uniformProperty)
         {
-            if (defaultsProvider == null) return true;
+            var currentValue = uniformProperty.GetValue(result);
+            var isEmptryString = (currentValue as string) == string.Empty;
+            if (currentValue != GetDefaultValue(uniformProperty.PropertyType) && !isEmptryString) return true;
+
+            if (defaultsProvider == null) return false;
 
             var defaultProperty = defaultsProvider.GetType().GetProperties().SingleOrDefault(p => p.Name == uniformProperty.Name);
-            if (defaultProperty == null) return true;
+            if (defaultProperty == null) return false;
 
             var value = defaultProperty.GetValue(defaultsProvider);
             if (value != null)
             {
-                Assign(result, uniformProperty, value);
-                return true;
+                return Assign(result, uniformProperty, value);
             }
             return false;
         }
@@ -139,8 +156,7 @@ namespace ArgsUniform
             var e = env.GetEnvVarOrDefault(attr.EnvVar, string.Empty);
             if (!string.IsNullOrEmpty(e))
             {
-                Assign(result, uniformProperty, e);
-                return true;
+                return Assign(result, uniformProperty, e);
             }
             return false;
         }
@@ -150,14 +166,12 @@ namespace ArgsUniform
             var fromArg = GetFromArgs(attr.Arg);
             if (fromArg != null)
             {
-                Assign(result, uniformProperty, fromArg);
-                return true;
+                return Assign(result, uniformProperty, fromArg);
             }
             var fromShort = GetFromArgs(attr.ArgShort);
             if (fromShort != null)
             {
-                Assign(result, uniformProperty, fromShort);
-                return true;
+                return Assign(result, uniformProperty, fromShort);
             }
             return false;
         }

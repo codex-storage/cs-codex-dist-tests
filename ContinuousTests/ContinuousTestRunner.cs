@@ -9,9 +9,9 @@ namespace ContinuousTests
         private readonly Configuration config;
         private readonly StartupChecker startupChecker;
 
-        public ContinuousTestRunner()
+        public ContinuousTestRunner(string[] args)
         {
-            config = configLoader.Load();
+            config = configLoader.Load(args);
             startupChecker = new StartupChecker(config);
         }
 
