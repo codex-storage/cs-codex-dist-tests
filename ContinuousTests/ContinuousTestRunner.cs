@@ -26,6 +26,7 @@ namespace ContinuousTests
             foreach (var t in testStarters)
             {
                 t.Begin();
+                Thread.Sleep(TimeSpan.FromMinutes(5));
             }
           
             while (true) Thread.Sleep((2 ^ 31) - 1);
