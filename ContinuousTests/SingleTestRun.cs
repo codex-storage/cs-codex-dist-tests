@@ -3,6 +3,7 @@ using DistTestCore;
 using Logging;
 using Utils;
 using KubernetesWorkflow;
+using NUnit.Framework.Internal;
 
 namespace ContinuousTests
 {
@@ -91,14 +92,17 @@ namespace ContinuousTests
 
         private void RunMoment(int t)
         {
-            try
+            using (var context = new TestExecutionContext.IsolatedContext())
             {
-                handle.InvokeMoment(t, InitializeTest);
-            }
-            catch (Exception ex)
-            {
-                Log($" > TestMoment yielded exception: " + ex);
-                exceptions.Add(ex);
+                try
+                {
+                    handle.InvokeMoment(t, InitializeTest);
+                }
+                catch (Exception ex)
+                {
+                    Log($" > TestMoment yielded exception: " + ex);
+                    exceptions.Add(ex);
+                }
             }
 
             DecommissionTest();
