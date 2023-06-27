@@ -8,16 +8,16 @@ namespace CodexNetDeployer
     public class Configuration
     {
         [Uniform("codex-image", "ci", "CODEXIMAGE", true, "Docker image of Codex.")]
-        public string CodexImage { get; set; } = string.Empty;
+        public string CodexImage { get; set; } = CodexContainerRecipe.DockerImage;
 
         [Uniform("geth-image", "gi", "GETHIMAGE", true, "Docker image of Geth.")]
-        public string GethImage { get; set; } = string.Empty;
+        public string GethImage { get; set; } = GethContainerRecipe.DockerImage;
 
         [Uniform("contracts-image", "oi", "CONTRACTSIMAGE", true, "Docker image of Codex Contracts.")]
-        public string ContractsImage { get; set; } = string.Empty;
+        public string ContractsImage { get; set; } = CodexContractsContainerRecipe.DockerImage;
 
-        [Uniform("kube-config", "kc", "KUBECONFIG", true, "Path to Kubeconfig file.")]
-        public string KubeConfigFile { get; set; } = string.Empty;
+        [Uniform("kube-config", "kc", "KUBECONFIG", false, "Path to Kubeconfig file. Use 'null' (default) to use local cluster.")]
+        public string KubeConfigFile { get; set; } = "null";
 
         [Uniform("kube-namespace", "kn", "KUBENAMESPACE", true, "Kubernetes namespace to be used for deployment.")]
         public string KubeNamespace { get; set; } = string.Empty;
@@ -32,17 +32,9 @@ namespace CodexNetDeployer
         public int? StorageQuota { get; set; }
 
         [Uniform("log-level", "l", "LOGLEVEL", true, "Log level used by each Codex node. [Trace, Debug*, Info, Warn, Error]")]
-        public CodexLogLevel CodexLogLevel { get; set; }
+        public CodexLogLevel CodexLogLevel { get; set; } = CodexLogLevel.Debug;
 
         public TestRunnerLocation RunnerLocation { get; set; } = TestRunnerLocation.InternalToCluster;
-
-        public class Defaults
-        {
-            public string CodexImage { get; set; } = CodexContainerRecipe.DockerImage;
-            public string GethImage { get; set; } = GethContainerRecipe.DockerImage;
-            public string ContractsImage { get; set; } = CodexContractsContainerRecipe.DockerImage;
-            public CodexLogLevel CodexLogLevel { get; set; } = CodexLogLevel.Debug;
-        }
 
         public List<string> Validate()
         {
@@ -74,7 +66,7 @@ namespace CodexNetDeployer
         {
             if (value == null || value.Value < 1)
             {
-                errors.Add($"{variable} is must be set and must be greater than 0.");
+                errors.Add($"{variable} must be set and must be greater than 0.");
             }
         }
 
@@ -82,7 +74,7 @@ namespace CodexNetDeployer
         {
             if (string.IsNullOrWhiteSpace(value))
             {
-                errors.Add($"{variable} is must be set.");
+                errors.Add($"{variable} must be set.");
             }
         }
     }
