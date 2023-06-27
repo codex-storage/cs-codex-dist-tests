@@ -4,6 +4,7 @@ using Logging;
 using Utils;
 using KubernetesWorkflow;
 using NUnit.Framework.Internal;
+using System.Reflection;
 
 namespace ContinuousTests
 {
@@ -41,20 +42,33 @@ namespace ContinuousTests
                 try
                 {
                     RunTest();
-
-                    if (!config.KeepPassedTestLogs) fixtureLog.Delete();
+                    fileManager.DeleteAllTestFiles();
+                    Directory.Delete(dataFolder, true);
                 }
                 catch (Exception ex)
                 {
-                    fixtureLog.Error("Test run failed with exception: " + ex);
-                    fixtureLog.MarkAsFailed();
+                    overviewLog.Error("Test infra failure: SingleTestRun failed with " + ex);
+                    Environment.Exit(-1);
                 }
-                fileManager.DeleteAllTestFiles();
-                Directory.Delete(dataFolder, true);
             });
         }
 
         private void RunTest()
+        {
+            try
+            {
+                RunTestMoments();
+
+                if (!config.KeepPassedTestLogs) fixtureLog.Delete();
+            }
+            catch (Exception ex)
+            {
+                fixtureLog.Error("Test run failed with exception: " + ex);
+                fixtureLog.MarkAsFailed();
+            }
+        }
+
+        private void RunTestMoments()
         {
             var earliestMoment = handle.GetEarliestMoment();
 
@@ -66,7 +80,7 @@ namespace ContinuousTests
                 if (handle.Test.TestFailMode == TestFailMode.StopAfterFirstFailure && exceptions.Any())
                 {
                     Log("Exception detected. TestFailMode = StopAfterFirstFailure. Stopping...");
-                    throw exceptions.Single();
+                    ThrowFailTest();
                 }
 
                 var nextMoment = handle.GetNextMoment(t);
@@ -80,14 +94,34 @@ namespace ContinuousTests
                 {
                     if (exceptions.Any())
                     {
-                        var ex = exceptions.First();
-                        OverviewLog(" > Test failed: " + ex);
-                        throw ex;
+                        ThrowFailTest();
                     }
                     OverviewLog(" > Test passed.");
                     return;
                 }
             }
+        }
+
+        private void ThrowFailTest()
+        {
+            var ex = UnpackException(exceptions.First());
+            Log(ex.ToString());
+            OverviewLog(" > Test failed: " + ex.Message);
+            throw ex;
+        }
+
+        private Exception UnpackException(Exception exception)
+        {
+            if (exception is AggregateException a)
+            {
+                return UnpackException(a.InnerExceptions.First());
+            }
+            if (exception is TargetInvocationException t)
+            {
+                return UnpackException(t.InnerException!);
+            }
+
+            return exception;
         }
 
         private void RunMoment(int t)
@@ -100,7 +134,6 @@ namespace ContinuousTests
                 }
                 catch (Exception ex)
                 {
-                    Log($" > TestMoment yielded exception: " + ex);
                     exceptions.Add(ex);
                 }
             }
