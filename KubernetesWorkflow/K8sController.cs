@@ -39,7 +39,7 @@ namespace KubernetesWorkflow
             var (serviceName, servicePortsMap) = CreateService(containerRecipes);
             var podInfo = FetchNewPod();
 
-            return new RunningPod(cluster, podInfo, deploymentName, serviceName, servicePortsMap);
+            return new RunningPod(cluster, podInfo, deploymentName, serviceName, servicePortsMap.ToArray());
         }
 
         public void Stop(RunningPod pod)
@@ -436,9 +436,9 @@ namespace KubernetesWorkflow
 
         #region Service management
 
-        private (string, Dictionary<ContainerRecipe, Port[]>) CreateService(ContainerRecipe[] containerRecipes)
+        private (string, List<ContainerRecipePortMapEntry>) CreateService(ContainerRecipe[] containerRecipes)
         {
-            var result = new Dictionary<ContainerRecipe, Port[]>();
+            var result = new List<ContainerRecipePortMapEntry>();
 
             var ports = CreateServicePorts(containerRecipes);
 
@@ -468,7 +468,7 @@ namespace KubernetesWorkflow
             return (serviceSpec.Metadata.Name, result);
         }
 
-        private void ReadBackServiceAndMapPorts(V1Service serviceSpec, ContainerRecipe[] containerRecipes, Dictionary<ContainerRecipe, Port[]> result)
+        private void ReadBackServiceAndMapPorts(V1Service serviceSpec, ContainerRecipe[] containerRecipes, List<ContainerRecipePortMapEntry> result)
         {
             // For each container-recipe, we need to figure out which service-ports it was assigned by K8s.
             var readback = client.Run(c => c.ReadNamespacedService(serviceSpec.Metadata.Name, K8sTestNamespace));
@@ -485,7 +485,8 @@ namespace KubernetesWorkflow
                         // These service ports belongs to this recipe.
                         var optionals = matchingServicePorts.Select(p => MapNodePortIfAble(p, portName));
                         var ports = optionals.Where(p => p != null).Select(p => p!).ToArray();
-                        result.Add(r, ports);
+
+                        result.Add(new ContainerRecipePortMapEntry(r.Number, ports));
                     }
                 }
             }

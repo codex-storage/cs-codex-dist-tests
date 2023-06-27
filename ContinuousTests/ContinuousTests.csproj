@@ -12,7 +12,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\ArgsUniform\ArgsUniform.csproj" />
     <ProjectReference Include="..\DistTestCore\DistTestCore.csproj" />
+    <ProjectReference Include="..\KubernetesWorkflow\KubernetesWorkflow.csproj" />
     <ProjectReference Include="..\Logging\Logging.csproj" />
   </ItemGroup>
 

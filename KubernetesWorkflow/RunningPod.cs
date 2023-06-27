@@ -2,35 +2,50 @@
 {
     public class RunningPod
     {
-        private readonly Dictionary<ContainerRecipe, Port[]> servicePortMap;
-
-        public RunningPod(K8sCluster cluster, PodInfo podInfo, string deploymentName, string serviceName, Dictionary<ContainerRecipe, Port[]> servicePortMap)
+        public RunningPod(K8sCluster cluster, PodInfo podInfo, string deploymentName, string serviceName,  ContainerRecipePortMapEntry[] portMapEntries)
         {
             Cluster = cluster;
             PodInfo = podInfo;
             DeploymentName = deploymentName;
             ServiceName = serviceName;
-            this.servicePortMap = servicePortMap;
+            PortMapEntries = portMapEntries;
         }
 
         public K8sCluster Cluster { get; }
         public PodInfo PodInfo { get; }
+        public ContainerRecipePortMapEntry[] PortMapEntries { get; }
         internal string DeploymentName { get; }
         internal string ServiceName { get; }
 
         public Port[] GetServicePortsForContainerRecipe(ContainerRecipe containerRecipe)
         {
-            if (!servicePortMap.ContainsKey(containerRecipe)) return Array.Empty<Port>();
-            return servicePortMap[containerRecipe];
+            if (PortMapEntries.Any(p => p.ContainerNumber == containerRecipe.Number))
+            {
+                return PortMapEntries.Single(p => p.ContainerNumber == containerRecipe.Number).Ports;
+            }
+
+            return Array.Empty<Port>();
         }
+    }
+
+    public class ContainerRecipePortMapEntry
+    {
+        public ContainerRecipePortMapEntry(int containerNumber, Port[] ports)
+        {
+            ContainerNumber = containerNumber;
+            Ports = ports;
+        }
+
+        public int ContainerNumber { get; }
+        public Port[] Ports { get; }
     }
 
     public class PodInfo
     {
-        public PodInfo(string podName, string podIp, string k8sNodeName)
+        public PodInfo(string name, string ip, string k8sNodeName)
         {
-            Name = podName;
-            Ip = podIp;
+            Name = name;
+            Ip = ip;
             K8SNodeName = k8sNodeName;
         }
 

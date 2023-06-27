@@ -81,11 +81,26 @@ namespace KubernetesWorkflow
                 var servicePorts = runningPod.GetServicePortsForContainerRecipe(r);
                 log.Debug($"{r} -> service ports: {string.Join(",", servicePorts.Select(p => p.Number))}");
 
-                return new RunningContainer(runningPod, r, servicePorts, startupConfig,
+                var name = GetContainerName(r, startupConfig);
+
+                return new RunningContainer(runningPod, r, servicePorts, name,
                     GetContainerExternalAddress(runningPod, servicePorts),
                     GetContainerInternalAddress(r));
 
             }).ToArray();
+        }
+
+        private string GetContainerName(ContainerRecipe recipe, StartupConfig startupConfig)
+        {
+            if (startupConfig == null) return "";
+            if (!string.IsNullOrEmpty(startupConfig.NameOverride))
+            {
+                return $"<{startupConfig.NameOverride}{recipe.Number}>";
+            }
+            else
+            {
+                return $"<{recipe.Name}>";
+            }
         }
 
         private Address GetContainerExternalAddress(RunningPod pod, Port[] servicePorts)

@@ -1,6 +1,4 @@
-﻿using DistTestCore;
-using DistTestCore.Codex;
-using Logging;
+﻿using Logging;
 
 namespace ContinuousTests
 {
@@ -8,130 +6,33 @@ namespace ContinuousTests
     {
         private readonly ConfigLoader configLoader = new ConfigLoader();
         private readonly TestFactory testFactory = new TestFactory();
-        private readonly CodexNodeFactory codexNodeFactory = new CodexNodeFactory();
+        private readonly Configuration config;
+        private readonly StartupChecker startupChecker;
+
+        public ContinuousTestRunner(string[] args)
+        {
+            config = configLoader.Load(args);
+            startupChecker = new StartupChecker(config);
+        }
 
         public void Run()
         {
-            var config = //configLoader.Load();
-                new Configuration
-                {
-                    CodexUrls =new[] { "http://localhost:8080", "http://localhost:8081" },
-                    LogPath = "logs",
-                    KeepPassedTestLogs = false,
-                    SleepSecondsPerAllTests = 1,
-                    SleepSecondsPerSingleTest = 1,
-                };
-            StartupChecks(config);
+            startupChecker.Check();
 
-            while (true)
+            var overviewLog = new FixtureLog(new LogConfig(config.LogPath, false), "Overview");
+            overviewLog.Log("Continuous tests starting...");
+            var allTests = testFactory.CreateTests();
+            var testLoop = allTests.Select(t => new TestLoop(config, overviewLog, t.GetType(), t.RunTestEvery)).ToArray();
+
+            foreach (var t in testLoop)
             {
-                var log = new FixtureLog(new LogConfig(config.LogPath, false), "ContinuousTestsRun");
-                var allTestsRun = new AllTestsRun(config, log, testFactory);
-
-                var result = ContinuousTestResult.Passed;
-                try
-                {
-                    result = allTestsRun.RunAll();
-                }
-                catch (Exception ex)
-                {
-                    log.Error($"Exception during test run: " + ex);
-                }
-
-                if (result == ContinuousTestResult.Failed)
-                {
-                    log.MarkAsFailed();
-                }
-                if (!config.KeepPassedTestLogs && result == ContinuousTestResult.Passed)
-                {
-                    log.DeleteFolder();
-                }
-
-                Thread.Sleep(config.SleepSecondsPerSingleTest * 1000);
+                overviewLog.Log("Launching test-loop for " + t.Name);
+                t.Begin();
+                Thread.Sleep(TimeSpan.FromMinutes(5));
             }
+
+            overviewLog.Log("All test-loops launched.");
+            while (true) Thread.Sleep((2 ^ 31) - 1);
         }
-
-        private void StartupChecks(Configuration config)
-        {
-            var log = new FixtureLog(new LogConfig(config.LogPath, false), "StartupChecks");
-            log.Log("Starting continuous test run...");
-            log.Log("Checking configuration...");
-            PreflightCheck(config);
-            log.Log("Contacting Codex nodes...");
-            CheckCodexNodes(log, config);
-            log.Log("All OK.");
-        }
-
-        private void PreflightCheck(Configuration config)
-        {
-            var tests = testFactory.CreateTests();
-            if (!tests.Any())
-            {
-                throw new Exception("Unable to find any tests.");
-            }
-
-            var errors = new List<string>();
-            foreach (var test in tests)
-            {
-                if (test.RequiredNumberOfNodes > config.CodexUrls.Length)
-                {
-                    errors.Add($"Test '{test.Name}' requires {test.RequiredNumberOfNodes} nodes. Configuration only has {config.CodexUrls.Length}");
-                }
-            }
-
-            if (!Directory.Exists(config.LogPath))
-            {
-                Directory.CreateDirectory(config.LogPath);
-            }
-
-            if (errors.Any())
-            {
-                throw new Exception("Prerun check failed: " + string.Join(", ", errors));
-            }
-        }
-
-        private void CheckCodexNodes(BaseLog log, Configuration config)
-        {
-            var nodes = codexNodeFactory.Create(config.CodexUrls, log, new DefaultTimeSet());
-            var pass = true;
-            foreach (var n in nodes)
-            {
-                log.Log($"Checking '{n.Address.Host}'...");
-
-                if (EnsureOnline(n))
-                {
-                    log.Log("OK");
-                }
-                else
-                {
-                    log.Error($"No response from '{n.Address.Host}'.");
-                    pass = false;
-                }
-            }
-            if (!pass)
-            {
-                throw new Exception("Not all codex nodes responded.");
-            }
-        }
-
-        private bool EnsureOnline(CodexNode n)
-        {
-            try
-            {
-                var info = n.GetDebugInfo();
-                if (info == null || string.IsNullOrEmpty(info.id)) return false;
-            }
-            catch
-            {
-                return false;
-            }
-            return true;
-        }
-    }
-
-    public enum ContinuousTestResult
-    {
-        Passed,
-        Failed
     }
 }

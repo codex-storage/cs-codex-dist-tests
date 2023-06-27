@@ -1,49 +1,40 @@
-﻿using DistTestCore;
+﻿using ArgsUniform;
+using DistTestCore;
 using DistTestCore.Codex;
+using DistTestCore.Marketplace;
 
 namespace CodexNetDeployer
 {
     public class Configuration
     {
-        public Configuration(
-            string codexImage,
-            string gethImage,
-            string contractsImage,
-            string kubeConfigFile,
-            string kubeNamespace,
-            int? numberOfCodexNodes,
-            int? numberOfValidators,
-            int? storageQuota,
-            CodexLogLevel codexLogLevel,
-            TestRunnerLocation runnerLocation)
-        {
-            CodexImage = codexImage;
-            GethImage = gethImage;
-            ContractsImage = contractsImage;
-            KubeConfigFile = kubeConfigFile;
-            KubeNamespace = kubeNamespace;
-            NumberOfCodexNodes = numberOfCodexNodes;
-            NumberOfValidators = numberOfValidators;
-            StorageQuota = storageQuota;
-            CodexLogLevel = codexLogLevel;
-            RunnerLocation = runnerLocation;
-        }
+        [Uniform("codex-image", "ci", "CODEXIMAGE", true, "Docker image of Codex.")]
+        public string CodexImage { get; set; } = CodexContainerRecipe.DockerImage;
 
-        public string CodexImage { get; }
-        public string GethImage { get; }
-        public string ContractsImage { get; }
-        public string KubeConfigFile { get; }
-        public string KubeNamespace { get; }
-        public int? NumberOfCodexNodes { get; }
-        public int? NumberOfValidators { get; }
-        public int? StorageQuota { get; }
-        public CodexLogLevel CodexLogLevel { get; }
-        public TestRunnerLocation RunnerLocation { get; }
+        [Uniform("geth-image", "gi", "GETHIMAGE", true, "Docker image of Geth.")]
+        public string GethImage { get; set; } = GethContainerRecipe.DockerImage;
 
-        public void PrintConfig()
-        {
-            ForEachProperty(onString: Print, onInt: Print);
-        }
+        [Uniform("contracts-image", "oi", "CONTRACTSIMAGE", true, "Docker image of Codex Contracts.")]
+        public string ContractsImage { get; set; } = CodexContractsContainerRecipe.DockerImage;
+
+        [Uniform("kube-config", "kc", "KUBECONFIG", false, "Path to Kubeconfig file. Use 'null' (default) to use local cluster.")]
+        public string KubeConfigFile { get; set; } = "null";
+
+        [Uniform("kube-namespace", "kn", "KUBENAMESPACE", true, "Kubernetes namespace to be used for deployment.")]
+        public string KubeNamespace { get; set; } = string.Empty;
+
+        [Uniform("nodes", "n", "NODES", true, "Number of Codex nodes to be created.")]
+        public int? NumberOfCodexNodes { get; set; }
+
+        [Uniform("validators", "v", "VALIDATORS", true, "Number of Codex nodes that will be validating.")]
+        public int? NumberOfValidators { get; set; }
+
+        [Uniform("storage-quota", "s", "STORAGEQUOTA", true, "Storage quota in megabytes used by each Codex node.")]
+        public int? StorageQuota { get; set; }
+
+        [Uniform("log-level", "l", "LOGLEVEL", true, "Log level used by each Codex node. [Trace, Debug*, Info, Warn, Error]")]
+        public CodexLogLevel CodexLogLevel { get; set; } = CodexLogLevel.Debug;
+
+        public TestRunnerLocation RunnerLocation { get; set; } = TestRunnerLocation.InternalToCluster;
 
         public List<string> Validate()
         {
@@ -75,7 +66,7 @@ namespace CodexNetDeployer
         {
             if (value == null || value.Value < 1)
             {
-                errors.Add($"{variable} is must be set and must be greater than 0.");
+                errors.Add($"{variable} must be set and must be greater than 0.");
             }
         }
 
@@ -83,19 +74,8 @@ namespace CodexNetDeployer
         {
             if (string.IsNullOrWhiteSpace(value))
             {
-                errors.Add($"{variable} is must be set.");
+                errors.Add($"{variable} must be set.");
             }
-        }
-
-        private static void Print(string variable, string value)
-        {
-            Console.WriteLine($"\t{variable}: '{value}'");
-        }
-
-        private static void Print(string variable, int? value)
-        {
-            if (value != null) Print(variable, value.ToString()!);
-            else Print(variable, "<NONE>");
         }
     }
 }

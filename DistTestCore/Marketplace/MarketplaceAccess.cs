@@ -10,7 +10,7 @@ namespace DistTestCore.Marketplace
     public interface IMarketplaceAccess
     {
         string MakeStorageAvailable(ByteSize size, TestToken minPricePerBytePerSecond, TestToken maxCollateral, TimeSpan maxDuration);
-        string RequestStorage(ContentId contentId, TestToken pricePerBytePerSecond, TestToken requiredCollateral, uint minRequiredNumberOfNodes, int proofProbability, TimeSpan duration);
+        string RequestStorage(ContentId contentId, TestToken pricePerSlotPerSecond, TestToken requiredCollateral, uint minRequiredNumberOfNodes, int proofProbability, TimeSpan duration);
         void AssertThatBalance(IResolveConstraint constraint, string message = "");
         TestToken GetBalance();
     }
@@ -30,13 +30,13 @@ namespace DistTestCore.Marketplace
             this.codexAccess = codexAccess;
         }
 
-        public string RequestStorage(ContentId contentId, TestToken pricePerBytePerSecond, TestToken requiredCollateral, uint minRequiredNumberOfNodes, int proofProbability, TimeSpan duration)
+        public string RequestStorage(ContentId contentId, TestToken pricePerSlotPerSecond, TestToken requiredCollateral, uint minRequiredNumberOfNodes, int proofProbability, TimeSpan duration)
         {
             var request = new CodexSalesRequestStorageRequest
             {
                 duration = ToHexBigInt(duration.TotalSeconds),
                 proofProbability = ToHexBigInt(proofProbability),
-                reward = ToHexBigInt(pricePerBytePerSecond),
+                reward = ToHexBigInt(pricePerSlotPerSecond),
                 collateral = ToHexBigInt(requiredCollateral),
                 expiry = null,
                 nodes = minRequiredNumberOfNodes,
@@ -44,7 +44,7 @@ namespace DistTestCore.Marketplace
             };
 
             Log($"Requesting storage for: {contentId.Id}... (" +
-                $"pricePerBytePerSecond: {pricePerBytePerSecond}, " +
+                $"pricePerSlotPerSecond: {pricePerSlotPerSecond}, " +
                 $"requiredCollateral: {requiredCollateral}, " +
                 $"minRequiredNumberOfNodes: {minRequiredNumberOfNodes}, " +
                 $"proofProbability: {proofProbability}, " +

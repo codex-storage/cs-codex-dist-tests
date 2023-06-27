@@ -1,6 +1,4 @@
-﻿using Logging;
-
-namespace CodexNetDeployer
+﻿namespace Logging
 {
     public class NullLog : TestLog
     {
@@ -15,12 +13,10 @@ namespace CodexNetDeployer
 
         public override void Log(string message)
         {
-            //Console.WriteLine(message);
         }
 
         public override void Debug(string message = "", int skipFrames = 0)
         {
-            //Console.WriteLine(message);
         }
 
         public override void Error(string message)

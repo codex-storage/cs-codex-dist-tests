@@ -6,14 +6,24 @@ namespace ContinuousTests.Tests
     public class TwoClientTest : ContinuousTest
     {
         public override int RequiredNumberOfNodes => 2;
+        public override TimeSpan RunTestEvery => TimeSpan.FromHours(1);
+        public override TestFailMode TestFailMode => TestFailMode.StopAfterFirstFailure;
 
-        public override void Run()
+        private ContentId? cid;
+        private TestFile file = null!;
+
+        [TestMoment(t: Zero)]
+        public void UploadTestFile()
         {
-            var file = FileManager.GenerateTestFile(10.MB());
+            file = FileManager.GenerateTestFile(10.MB());
 
-            var cid = UploadFile(Nodes[0], file);
+            cid = UploadFile(Nodes[0], file);
             Assert.That(cid, Is.Not.Null);
+        }
 
+        [TestMoment(t: MinuteFive)]
+        public void DownloadTestFile()
+        {
             var dl = DownloadContent(Nodes[1], cid!);
 
             file.AssertIsEqual(dl);

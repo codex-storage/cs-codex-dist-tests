@@ -8,7 +8,8 @@ namespace ContinuousTests.Tests
     {
         public override int RequiredNumberOfNodes => 1;
 
-        public override void Run()
+        [TestMoment(t: Zero)]
+        public void UploadTest()
         {
             UploadTest(100, Nodes[0]);
         }
@@ -18,7 +19,8 @@ namespace ContinuousTests.Tests
     {
         public override int RequiredNumberOfNodes => 1;
 
-        public override void Run()
+        [TestMoment(t: Zero)]
+        public void DownloadTest()
         {
             DownloadTest(100, Nodes[0], Nodes[0]);
         }
@@ -28,7 +30,8 @@ namespace ContinuousTests.Tests
     {
         public override int RequiredNumberOfNodes => 2;
 
-        public override void Run()
+        [TestMoment(t: Zero)]
+        public void DownloadTest()
         {
             DownloadTest(100, Nodes[0], Nodes[1]);
         }
@@ -36,6 +39,9 @@ namespace ContinuousTests.Tests
 
     public abstract class PerformanceTest : ContinuousTest
     {
+        public override TimeSpan RunTestEvery => TimeSpan.FromHours(1);
+        public override TestFailMode TestFailMode => TestFailMode.AlwaysRunAllMoments;
+
         public void UploadTest(int megabytes, CodexNode uploadNode)
         {
             var file = FileManager.GenerateTestFile(megabytes.MB());
