@@ -41,16 +41,16 @@ namespace DistTestCore
             FileManager.DeleteAllTestFiles();
         }
 
-        public ICodexNodeLog DownloadLog(OnlineCodexNode node)
+        public IDownloadedLog DownloadLog(RunningContainer container)
         {
             var subFile = Log.CreateSubfile();
-            var description = node.GetName();
-            var handler = new LogDownloadHandler(node, description, subFile);
+            var description = container.Name;
+            var handler = new LogDownloadHandler(container, description, subFile);
 
             Log.Log($"Downloading logs for {description} to file '{subFile.FullFilename}'");
-            CodexStarter.DownloadLog(node.CodexAccess.Container, handler);
+            CodexStarter.DownloadLog(container, handler);
 
-            return new CodexNodeLog(subFile, node);
+            return new DownloadedLog(subFile, description);
         }
 
         public string GetTestDuration()

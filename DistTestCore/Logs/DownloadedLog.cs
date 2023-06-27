@@ -3,17 +3,17 @@ using NUnit.Framework;
 
 namespace DistTestCore.Logs
 {
-    public interface ICodexNodeLog
+    public interface IDownloadedLog
     {
         void AssertLogContains(string expectedString);
     }
 
-    public class CodexNodeLog : ICodexNodeLog
+    public class DownloadedLog : IDownloadedLog
     {
         private readonly LogFile logFile;
-        private readonly OnlineCodexNode owner;
+        private readonly string owner;
 
-        public CodexNodeLog(LogFile logFile, OnlineCodexNode owner)
+        public DownloadedLog(LogFile logFile, string owner)
         {
             this.logFile = logFile;
             this.owner = owner;
@@ -31,7 +31,7 @@ namespace DistTestCore.Logs
                 line = streamReader.ReadLine();
             }
 
-            Assert.Fail($"{owner.GetName()} Unable to find string '{expectedString}' in CodexNode log file {logFile.FullFilename}");
+            Assert.Fail($"{owner} Unable to find string '{expectedString}' in CodexNode log file {logFile.FullFilename}");
         }
     }
 }
