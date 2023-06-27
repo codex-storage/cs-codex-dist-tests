@@ -13,6 +13,7 @@ namespace DistTestCore
         ICodexSetup EnableMetrics();
         ICodexSetup EnableMarketplace(TestToken initialBalance);
         ICodexSetup EnableMarketplace(TestToken initialBalance, Ether initialEther);
+        ICodexSetup EnableMarketplace(TestToken initialBalance, Ether initialEther, bool isValidator);
     }
     
     public class CodexSetup : CodexStartupConfig, ICodexSetup
@@ -62,7 +63,12 @@ namespace DistTestCore
 
         public ICodexSetup EnableMarketplace(TestToken initialBalance, Ether initialEther)
         {
-            MarketplaceConfig = new MarketplaceInitialConfig(initialEther, initialBalance);
+            return EnableMarketplace(initialBalance, initialEther, false);
+        }
+
+        public ICodexSetup EnableMarketplace(TestToken initialBalance, Ether initialEther, bool isValidator)
+        {
+            MarketplaceConfig = new MarketplaceInitialConfig(initialEther, initialBalance, isValidator);
             return this;
         }
 

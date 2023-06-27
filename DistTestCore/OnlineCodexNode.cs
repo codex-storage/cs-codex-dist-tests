@@ -2,6 +2,7 @@
 using DistTestCore.Logs;
 using DistTestCore.Marketplace;
 using DistTestCore.Metrics;
+using Logging;
 using NUnit.Framework;
 
 namespace DistTestCore
@@ -13,7 +14,7 @@ namespace DistTestCore
         CodexDebugPeerResponse GetDebugPeer(string peerId);
         CodexDebugPeerResponse GetDebugPeer(string peerId, TimeSpan timeout);
         ContentId UploadFile(TestFile file);
-        TestFile? DownloadContent(ContentId contentId);
+        TestFile? DownloadContent(ContentId contentId, string fileLabel = "");
         void ConnectToPeer(IOnlineCodexNode node);
         ICodexNodeLog DownloadLog();
         IMetricsAccess Metrics { get; }
@@ -48,7 +49,7 @@ namespace DistTestCore
 
         public CodexDebugResponse GetDebugInfo()
         {
-            var debugInfo = CodexAccess.GetDebugInfo();
+            var debugInfo = CodexAccess.Node.GetDebugInfo();
             var known = string.Join(",", debugInfo.table.nodes.Select(n => n.peerId));
             Log($"Got DebugInfo with id: '{debugInfo.id}'. This node knows: {known}");
             return debugInfo;
@@ -56,33 +57,41 @@ namespace DistTestCore
 
         public CodexDebugPeerResponse GetDebugPeer(string peerId)
         {
-            return CodexAccess.GetDebugPeer(peerId);
+            return CodexAccess.Node.GetDebugPeer(peerId);
         }
 
         public CodexDebugPeerResponse GetDebugPeer(string peerId, TimeSpan timeout)
         {
-            return CodexAccess.GetDebugPeer(peerId, timeout);
+            return CodexAccess.Node.GetDebugPeer(peerId, timeout);
         }
 
         public ContentId UploadFile(TestFile file)
         {
-            Log($"Uploading file of size {file.GetFileSize()}...");
             using var fileStream = File.OpenRead(file.Filename);
-            var response = CodexAccess.UploadFile(fileStream);
+
+            var logMessage = $"Uploading file {file.Describe()}...";
+            var response = Stopwatch.Measure(lifecycle.Log, logMessage, () =>
+            {
+                return CodexAccess.Node.UploadFile(fileStream);
+            });
+
             if (response.StartsWith(UploadFailedMessage))
             {
                 Assert.Fail("Node failed to store block.");
             }
+            var logReplacement = $"(CID:{file.Describe()})";
+            Log($"ContentId '{response}' is {logReplacement}");
+            lifecycle.Log.AddStringReplace(response, logReplacement);
             Log($"Uploaded file. Received contentId: '{response}'.");
             return new ContentId(response);
         }
 
-        public TestFile? DownloadContent(ContentId contentId)
+        public TestFile? DownloadContent(ContentId contentId, string fileLabel = "")
         {
-            Log($"Downloading for contentId: '{contentId.Id}'...");
-            var file = lifecycle.FileManager.CreateEmptyTestFile();
-            DownloadToFile(contentId.Id, file);
-            Log($"Downloaded file of size {file.GetFileSize()} to '{file.Filename}'.");
+            var logMessage = $"Downloading for contentId: '{contentId.Id}'...";
+            var file = lifecycle.FileManager.CreateEmptyTestFile(fileLabel);
+            Stopwatch.Measure(lifecycle.Log, logMessage, () => DownloadToFile(contentId.Id, file));
+            Log($"Downloaded file {file.Describe()} to '{file.Filename}'.");
             return file;
         }
 
@@ -92,7 +101,7 @@ namespace DistTestCore
 
             Log($"Connecting to peer {peer.GetName()}...");
             var peerInfo = node.GetDebugInfo();
-            var response = CodexAccess.ConnectToPeer(peerInfo.id, GetPeerMultiAddress(peer, peerInfo));
+            var response = CodexAccess.Node.ConnectToPeer(peerInfo.id, GetPeerMultiAddress(peer, peerInfo));
 
             Assert.That(response, Is.EqualTo(SuccessfullyConnectedMessage), "Unable to connect codex nodes.");
             Log($"Successfully connected to peer {peer.GetName()}.");
@@ -132,7 +141,7 @@ namespace DistTestCore
             using var fileStream = File.OpenWrite(file.Filename);
             try
             {
-                using var downloadStream = CodexAccess.DownloadFile(contentId);
+                using var downloadStream = CodexAccess.Node.DownloadFile(contentId);
                 downloadStream.CopyTo(fileStream);
             }
             catch

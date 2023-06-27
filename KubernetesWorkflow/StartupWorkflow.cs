@@ -1,4 +1,5 @@
 ﻿using Logging;
+using Utils;
 
 namespace KubernetesWorkflow
 {
@@ -80,27 +81,42 @@ namespace KubernetesWorkflow
                 var servicePorts = runningPod.GetServicePortsForContainerRecipe(r);
                 log.Debug($"{r} -> service ports: {string.Join(",", servicePorts.Select(p => p.Number))}");
 
-                return new RunningContainer(runningPod, r, servicePorts, startupConfig,
+                var name = GetContainerName(r, startupConfig);
+
+                return new RunningContainer(runningPod, r, servicePorts, name,
                     GetContainerExternalAddress(runningPod, servicePorts),
                     GetContainerInternalAddress(r));
 
             }).ToArray();
         }
 
-        private RunningContainerAddress GetContainerExternalAddress(RunningPod pod, Port[] servicePorts)
+        private string GetContainerName(ContainerRecipe recipe, StartupConfig startupConfig)
         {
-            return new RunningContainerAddress(
+            if (startupConfig == null) return "";
+            if (!string.IsNullOrEmpty(startupConfig.NameOverride))
+            {
+                return $"<{startupConfig.NameOverride}{recipe.Number}>";
+            }
+            else
+            {
+                return $"<{recipe.Name}>";
+            }
+        }
+
+        private Address GetContainerExternalAddress(RunningPod pod, Port[] servicePorts)
+        {
+            return new Address(
                 pod.Cluster.HostAddress,
                 GetServicePort(servicePorts));
         }
 
-        private RunningContainerAddress GetContainerInternalAddress(ContainerRecipe recipe)
+        private Address GetContainerInternalAddress(ContainerRecipe recipe)
         {
             var serviceName = "service-" + numberSource.WorkflowNumber;
             var namespaceName = cluster.Configuration.K8sNamespacePrefix + testNamespace;
             var port = GetInternalPort(recipe);
 
-            return new RunningContainerAddress(
+            return new Address(
                 $"http://{serviceName}.{namespaceName}.svc.cluster.local",
                 port);
         }

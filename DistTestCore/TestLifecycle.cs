@@ -7,15 +7,18 @@ namespace DistTestCore
 {
     public class TestLifecycle
     {
-        private readonly WorkflowCreator workflowCreator;
         private DateTime testStart = DateTime.MinValue;
 
         public TestLifecycle(TestLog log, Configuration configuration, ITimeSet timeSet)
+            : this(log, configuration, timeSet, new WorkflowCreator(log, configuration.GetK8sConfiguration(timeSet)))
+        {
+        }
+
+        public TestLifecycle(TestLog log, Configuration configuration, ITimeSet timeSet, WorkflowCreator workflowCreator)
         {
             Log = log;
             Configuration = configuration;
             TimeSet = timeSet;
-            workflowCreator = new WorkflowCreator(log, configuration.GetK8sConfiguration(timeSet));
 
             FileManager = new FileManager(Log, configuration);
             CodexStarter = new CodexStarter(this, workflowCreator);

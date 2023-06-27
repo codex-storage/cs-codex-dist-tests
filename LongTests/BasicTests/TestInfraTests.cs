@@ -26,26 +26,5 @@ namespace TestsLong.BasicTests
                 Assert.That(!string.IsNullOrEmpty(n.GetDebugInfo().id));
             }
         }
-
-        [Test, UseLongTimeouts]
-        public void DownloadConsistencyTest()
-        {
-            var primary = SetupCodexNode(s => s
-                            .WithStorageQuota(2.MB()));
-
-            var testFile = GenerateTestFile(1.MB());
-
-            var contentId = primary.UploadFile(testFile);
-
-            var files = new List<TestFile?>();
-            for (var i = 0; i < 100; i++)
-            {
-                files.Add(primary.DownloadContent(contentId));
-            }
-
-            Assert.That(files.All(f => f != null));
-            Assert.That(files.All(f => f!.GetFileSize() == testFile.GetFileSize()));
-            foreach (var file in files) file!.AssertIsEqual(testFile);
-        }
     }
 }

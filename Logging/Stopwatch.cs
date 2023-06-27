@@ -23,6 +23,14 @@ namespace Logging
             sw.End();
         }
 
+        public static T Measure<T>(BaseLog log, string name, Func<T> action, bool debug = false)
+        {
+            var sw = Begin(log, name, debug);
+            var result = action();
+            sw.End();
+            return result;
+        }
+
         public static Stopwatch Begin(BaseLog log)
         {
             return Begin(log, "");

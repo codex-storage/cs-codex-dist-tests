@@ -1,4 +1,7 @@
-﻿namespace DistTestCore.Helpers
+﻿using DistTestCore.Codex;
+using NUnit.Framework;
+
+namespace DistTestCore.Helpers
 {
     public class PeerDownloadTestHelpers
     {
@@ -9,14 +12,11 @@
             this.test = test;
         }
 
-        public void AssertFullDownloadInterconnectivity(IEnumerable<IOnlineCodexNode> nodes)
-        {
-            AssertFullDownloadInterconnectivity(nodes, 1.MB());
-        }
-
         public void AssertFullDownloadInterconnectivity(IEnumerable<IOnlineCodexNode> nodes, ByteSize testFileSize)
         {
             test.Log($"Asserting full download interconnectivity for nodes: '{string.Join(",", nodes.Select(n => n.GetName()))}'...");
+            var start = DateTime.UtcNow;
+
             foreach (var node in nodes)
             {
                 var uploader = node;
@@ -29,12 +29,27 @@
             }
             
             test.Log($"Success! Full download interconnectivity for nodes: {string.Join(",", nodes.Select(n => n.GetName()))}");
+            var timeTaken = DateTime.UtcNow - start;
+
+            AssertTimePerMB(timeTaken, nodes.Count(), testFileSize);
+        }
+
+        private void AssertTimePerMB(TimeSpan timeTaken, int numberOfNodes, ByteSize size)
+        {
+            var numberOfDownloads = numberOfNodes * (numberOfNodes - 1);
+            var timePerDownload = timeTaken / numberOfDownloads;
+            float sizeInMB = size.ToMB();
+            var timePerMB = timePerDownload / sizeInMB;
+
+            test.Log($"Performed {numberOfDownloads} downloads of {size} in {timeTaken.TotalSeconds} seconds, for an average of {timePerMB.TotalSeconds} seconds per MB.");
+
+            Assert.That(timePerMB, Is.LessThan(CodexContainerRecipe.MaxDownloadTimePerMegabyte), "MaxDownloadTimePerMegabyte performance threshold breached.");
         }
 
         private void PerformTest(IOnlineCodexNode uploader, IOnlineCodexNode[] downloaders, ByteSize testFileSize)
         {
-            // 1 test file per downloader.
-            var files = downloaders.Select(d => test.GenerateTestFile(testFileSize)).ToArray();
+            // Generate 1 test file per downloader.
+            var files = downloaders.Select(d => GenerateTestFile(uploader, d, testFileSize)).ToArray();
 
             // Upload all the test files to the uploader.
             var contentIds = files.Select(uploader.UploadFile).ToArray();
@@ -43,10 +58,18 @@
             for (var i = 0; i < downloaders.Length; i++)
             {
                 var expectedFile = files[i];
-                var downloadedFile = downloaders[i].DownloadContent(contentIds[i]);
+                var downloadedFile = downloaders[i].DownloadContent(contentIds[i], $"{expectedFile.Label}DOWNLOADED");
 
                 expectedFile.AssertIsEqual(downloadedFile);
             }
+        }
+
+        private TestFile GenerateTestFile(IOnlineCodexNode uploader, IOnlineCodexNode downloader, ByteSize testFileSize)
+        {
+            var up = uploader.GetName().Replace("<", "").Replace(">", "");
+            var down = downloader.GetName().Replace("<", "").Replace(">", "");
+            var label = $"FROM{up}TO{down}";
+            return test.GenerateTestFile(testFileSize, label);
         }
     }
 }

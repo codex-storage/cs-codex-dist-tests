@@ -1,24 +1,74 @@
 ﻿using DistTestCore;
+using DistTestCore.Codex;
 using NUnit.Framework;
+using NUnit.Framework.Interfaces;
 
 namespace TestsLong.BasicTests
 {
     [TestFixture]
     public class LargeFileTests : DistTest
     {
-        [Test, UseLongTimeouts]
-        public void OneClientLargeFileTest()
+        #region Abort test run after first failure
+
+        private bool stop;
+
+        [SetUp]
+        public void SetUp()
         {
-            var primary = SetupCodexNode(s => s
-                                .WithStorageQuota(20.GB()));
+            if (stop)
+            {
+                Assert.Inconclusive("Previous test failed");
+            }
+        }
 
-            var testFile = GenerateTestFile(10.GB());
+        [TearDown]
+        public void TearDown()
+        {
+            if (TestContext.CurrentContext.Result.Outcome.Status == TestStatus.Failed)
+            {
+                stop = true;
+            }
+        }
 
-            var contentId = primary.UploadFile(testFile);
+        #endregion
 
-            var downloadedFile = primary.DownloadContent(contentId);
+        [TestCase(      1 *     1)] // 1 MB
+        [TestCase(      1 *    10)]
+        [TestCase(      1 *   100)]
+        [TestCase(      1 *  1024)] // 1 GB
+        [TestCase(   1024 *    10)]
+        [TestCase(   1024 *   100)]
+        [TestCase(   1024 *  1024)] // 1 TB :O
+        [UseLongTimeouts]
+        public void DownloadCorrectnessTest(long size)
+        {
+            var sizeMB = size.MB();
 
-            testFile.AssertIsEqual(downloadedFile);
+            var expectedFile = GenerateTestFile(sizeMB);
+
+            var node = SetupCodexNode(s => s.WithStorageQuota((size + 10).MB()));
+
+            var uploadStart = DateTime.UtcNow;
+            var cid = node.UploadFile(expectedFile);
+            var downloadStart = DateTime.UtcNow;
+            var actualFile = node.DownloadContent(cid);
+            var downloadFinished = DateTime.UtcNow;
+
+            expectedFile.AssertIsEqual(actualFile);
+            AssertTimeConstraint(uploadStart, downloadStart, downloadFinished, size);
+        }
+
+        private void AssertTimeConstraint(DateTime uploadStart, DateTime downloadStart, DateTime downloadFinished, long size)
+        {
+            float sizeInMB = size;
+            var uploadTimePerMB = (uploadStart - downloadStart) / sizeInMB;
+            var downloadTimePerMB = (downloadStart - downloadFinished) / sizeInMB;
+
+            Assert.That(uploadTimePerMB, Is.LessThan(CodexContainerRecipe.MaxUploadTimePerMegabyte),
+                "MaxUploadTimePerMegabyte performance threshold breached.");
+
+            Assert.That(downloadTimePerMB, Is.LessThan(CodexContainerRecipe.MaxDownloadTimePerMegabyte),
+                "MaxDownloadTimePerMegabyte performance threshold breached.");
         }
     }
 }

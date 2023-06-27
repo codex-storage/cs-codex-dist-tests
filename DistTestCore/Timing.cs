@@ -31,7 +31,7 @@ namespace DistTestCore
 
         public TimeSpan HttpCallRetryDelay()
         {
-            return TimeSpan.FromSeconds(3);
+            return TimeSpan.FromSeconds(1);
         }
 
         public TimeSpan WaitForK8sServiceDelay()
@@ -64,7 +64,7 @@ namespace DistTestCore
 
         public TimeSpan HttpCallRetryDelay()
         {
-            return TimeSpan.FromMinutes(5);
+            return TimeSpan.FromSeconds(2);
         }
 
         public TimeSpan WaitForK8sServiceDelay()
