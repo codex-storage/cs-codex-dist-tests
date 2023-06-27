@@ -65,6 +65,11 @@ namespace DistTestCore.Codex
             return Http().HttpPostJson($"storage/request/{contentId}", request);
         }
 
+        public CodexStoragePurchase GetPurchaseStatus(string purchaseId)
+        {
+            return Http().HttpGetJson<CodexStoragePurchase>($"storage/purchases/{purchaseId}");
+        }
+
         public string ConnectToPeer(string peerId, string peerMultiAddress)
         {
             return Http().HttpGetString($"connect/{peerId}?addrs={peerMultiAddress}");
@@ -169,5 +174,11 @@ namespace DistTestCore.Codex
         public string? expiry { get; set; }
         public uint? nodes { get; set; }
         public uint? tolerance { get; set; }
+    }
+
+    public class CodexStoragePurchase
+    {
+        public string state { get; set; } = string.Empty;
+        public string error { get; set; } = string.Empty;
     }
 }

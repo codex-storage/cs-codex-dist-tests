@@ -51,9 +51,11 @@ namespace CodexNetDeployer
 
         private (WorkflowCreator, TestLifecycle) CreateFacilities()
         {
+            var kubeConfig = GetKubeConfig(config.KubeConfigFile);
+
             var lifecycleConfig = new DistTestCore.Configuration
             (
-                kubeConfigFile: config.KubeConfigFile,
+                kubeConfigFile: kubeConfig,
                 logPath: "null",
                 logDebug: false,
                 dataFilesPath: "notUsed",
@@ -61,16 +63,22 @@ namespace CodexNetDeployer
                 runnerLocation: config.RunnerLocation
             );
 
-            var kubeConfig = new KubernetesWorkflow.Configuration(
+            var kubeFlowConfig = new KubernetesWorkflow.Configuration(
                 k8sNamespacePrefix: config.KubeNamespace,
-                kubeConfigFile: config.KubeConfigFile,
+                kubeConfigFile: kubeConfig,
                 operationTimeout: timeset.K8sOperationTimeout(),
                 retryDelay: timeset.WaitForK8sServiceDelay());
 
-            var workflowCreator = new WorkflowCreator(log, kubeConfig, testNamespacePostfix: string.Empty);
+            var workflowCreator = new WorkflowCreator(log, kubeFlowConfig, testNamespacePostfix: string.Empty);
             var lifecycle = new TestLifecycle(log, lifecycleConfig, timeset, workflowCreator);
 
             return (workflowCreator, lifecycle);
+        }
+
+        private string? GetKubeConfig(string kubeConfigFile)
+        {
+            if (string.IsNullOrEmpty(kubeConfigFile) || kubeConfigFile.ToLowerInvariant() == "null") return null;
+            return kubeConfigFile;
         }
 
         private DeploymentMetadata CreateMetadata()

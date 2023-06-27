@@ -17,7 +17,7 @@ public class Program
             return;
         }
 
-        var uniformArgs = new ArgsUniform<Configuration>(new Configuration.Defaults(), args);
+        var uniformArgs = new ArgsUniform<Configuration>(args);
         var config = uniformArgs.Parse(true);
         
         if (args.Any(a => a == "--external"))

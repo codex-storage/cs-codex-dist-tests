@@ -64,7 +64,7 @@ namespace Tests.BasicTests
             
             var contentId = buyer.UploadFile(testFile);
             buyer.Marketplace.RequestStorage(contentId,
-                pricePerBytePerSecond: 2.TestTokens(),
+                pricePerSlotPerSecond: 2.TestTokens(),
                 requiredCollateral: 10.TestTokens(),
                 minRequiredNumberOfNodes: 1,
                 proofProbability: 5,

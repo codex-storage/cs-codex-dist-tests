@@ -250,7 +250,7 @@ namespace DistTestCore
         {
             OnEachCodexNode(lifecycle, node =>
             {
-                lifecycle.DownloadLog(node);
+                lifecycle.DownloadLog(node.CodexAccess.Container);
             });
         }
 
