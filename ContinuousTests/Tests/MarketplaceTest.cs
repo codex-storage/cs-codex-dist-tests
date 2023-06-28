@@ -11,7 +11,7 @@ namespace ContinuousTests.Tests
     public class MarketplaceTest : ContinuousTest
     {
         public override int RequiredNumberOfNodes => 1;
-        public override TimeSpan RunTestEvery => TimeSpan.FromDays(4);
+        public override TimeSpan RunTestEvery => TimeSpan.FromMinutes(15);
         public override TestFailMode TestFailMode => TestFailMode.StopAfterFirstFailure;
 
         public const int EthereumAccountIndex = 200; // TODO: Check against all other account indices of all other tests.
@@ -28,10 +28,9 @@ namespace ContinuousTests.Tests
         [TestMoment(t: Zero)]
         public void NodePostsStorageRequest()
         {
-            var contractDuration = TimeSpan.FromDays(3) + TimeSpan.FromHours(1);
+            var contractDuration = TimeSpan.FromMinutes(11); //TimeSpan.FromDays(3) + TimeSpan.FromHours(1);
             decimal totalDurationSeconds = Convert.ToDecimal(contractDuration.TotalSeconds);
-            var expectedTotalCost = numberOfSlots * pricePerSlotPerSecond.Amount * (totalDurationSeconds + 1);
-            Log.Log("expected total cost: " + expectedTotalCost);
+            var expectedTotalCost = numberOfSlots * pricePerSlotPerSecond.Amount * (totalDurationSeconds + 1) * 1000000;
 
             file = FileManager.GenerateTestFile(fileSize);
 
@@ -44,7 +43,7 @@ namespace ContinuousTests.Tests
                 Assert.That(!string.IsNullOrEmpty(debugInfo.spr));
 
                 var startupConfig = new StartupConfig();
-                var codexStartConfig = new CodexStartupConfig(CodexLogLevel.Debug);
+                var codexStartConfig = new CodexStartupConfig(CodexLogLevel.Trace);
                 codexStartConfig.MarketplaceConfig = new MarketplaceInitialConfig(0.Eth(), 0.TestTokens(), false);
                 codexStartConfig.MarketplaceConfig.AccountIndexOverride = EthereumAccountIndex;
                 codexStartConfig.BootstrapSpr = debugInfo.spr;
@@ -52,7 +51,7 @@ namespace ContinuousTests.Tests
                 startupConfig.Add(Configuration.CodexDeployment.GethStartResult);
                 var rc = flow.Start(1, Location.Unspecified, new CodexContainerRecipe(), startupConfig);
 
-                var account = Configuration.CodexDeployment.GethStartResult.MarketplaceNetwork.Bootstrap.AllAccounts.Accounts[EthereumAccountIndex];
+                var account = Configuration.CodexDeployment.GethStartResult.CompanionNode.Accounts[EthereumAccountIndex];
                 var tokenAddress = Configuration.CodexDeployment.GethStartResult.MarketplaceNetwork.Marketplace.TokenAddress;
 
                 var interaction = Configuration.CodexDeployment.GethStartResult.MarketplaceNetwork.Bootstrap.StartInteraction(lifecycle);
@@ -61,14 +60,12 @@ namespace ContinuousTests.Tests
                 var container = rc.Containers[0];
                 var marketplaceNetwork = Configuration.CodexDeployment.GethStartResult.MarketplaceNetwork;
                 var codexAccess = new CodexAccess(lifecycle, container);
+                var myNodeInfo = codexAccess.Node.GetDebugInfo();
+
                 var marketAccess = new MarketplaceAccess(lifecycle, marketplaceNetwork, account, codexAccess);
 
                 cid = UploadFile(codexAccess.Node, file);
                 Assert.That(cid, Is.Not.Null);
-
-                var balance = marketAccess.GetBalance();
-                Log.Log("Account: " + account.Account);
-                Log.Log("Balance: " + balance);
 
                 purchaseId = marketAccess.RequestStorage(
                     contentId: cid!,
@@ -78,8 +75,33 @@ namespace ContinuousTests.Tests
                     proofProbability: 10,
                     duration: contractDuration);
 
-                Log.Log($"PurchaseId: '{purchaseId}'");
+                Log($"PurchaseId: '{purchaseId}'");
                 Assert.That(!string.IsNullOrEmpty(purchaseId));
+
+                var lastState = "";
+                var waitStart = DateTime.UtcNow;
+                var filesizeInMb = fileSize.SizeInBytes / 1024;
+                var maxWaitTime = TimeSpan.FromSeconds(filesizeInMb * 10.0);
+                while (lastState != "started")
+                {
+                    var purchaseStatus = codexAccess.Node.GetPurchaseStatus(purchaseId);
+                    if (purchaseStatus != null && purchaseStatus.state != lastState) 
+                    {
+                        lastState = purchaseStatus.state;
+                    }
+
+                    Thread.Sleep(2000);
+
+                    if (lastState == "errored")
+                    {
+                        Assert.Fail("Contract start failed: " + JsonConvert.SerializeObject(purchaseStatus));
+                    }
+
+                    if (DateTime.UtcNow - waitStart > maxWaitTime)
+                    {
+                        Assert.Fail($"Contract was not picked up within {maxWaitTime.TotalSeconds} seconds timeout: " + JsonConvert.SerializeObject(purchaseStatus));
+                    }
+                }
             }
             finally
             {
@@ -87,7 +109,7 @@ namespace ContinuousTests.Tests
             }
         }
 
-        [TestMoment(t: DayThree)]
+        [TestMoment(t: MinuteFive * 2)]
         public void StoredDataIsAvailableAfterThreeDays()
         {
             var (workflowCreator, lifecycle) = CreateFacilities();
@@ -135,7 +157,7 @@ namespace ContinuousTests.Tests
                 operationTimeout: TimeSet.K8sOperationTimeout(),
             retryDelay: TimeSet.WaitForK8sServiceDelay());
 
-            var workflowCreator = new WorkflowCreator(Log, kubeFlowConfig, testNamespacePostfix: string.Empty);
+            var workflowCreator = new WorkflowCreator(base.Log, kubeFlowConfig, testNamespacePostfix: string.Empty);
             var lifecycle = new TestLifecycle(new NullLog(), lifecycleConfig, TimeSet, workflowCreator);
 
             return (workflowCreator, lifecycle);
@@ -145,6 +167,11 @@ namespace ContinuousTests.Tests
         {
             if (string.IsNullOrEmpty(kubeConfigFile) || kubeConfigFile.ToLowerInvariant() == "null") return null;
             return kubeConfigFile;
+        }
+
+        private new void Log(string msg)
+        {
+            base.Log.Log(msg);
         }
     }
 }

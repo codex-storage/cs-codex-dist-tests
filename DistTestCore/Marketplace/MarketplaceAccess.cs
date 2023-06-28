@@ -34,10 +34,10 @@ namespace DistTestCore.Marketplace
         {
             var request = new CodexSalesRequestStorageRequest
             {
-                duration = ToHexBigInt(duration.TotalSeconds),
-                proofProbability = ToHexBigInt(proofProbability),
-                reward = ToHexBigInt(pricePerSlotPerSecond),
-                collateral = ToHexBigInt(requiredCollateral),
+                duration = ToDecInt(duration.TotalSeconds),
+                proofProbability = ToDecInt(proofProbability),
+                reward = ToDecInt(pricePerSlotPerSecond),
+                collateral = ToDecInt(requiredCollateral),
                 expiry = null,
                 nodes = minRequiredNumberOfNodes,
                 tolerance = null,
@@ -66,10 +66,10 @@ namespace DistTestCore.Marketplace
         {
             var request = new CodexSalesAvailabilityRequest
             {
-                size = ToHexBigInt(size.SizeInBytes),
-                duration = ToHexBigInt(maxDuration.TotalSeconds),
-                maxCollateral = ToHexBigInt(maxCollateral),
-                minPrice = ToHexBigInt(minPricePerBytePerSecond)
+                size = ToDecInt(size.SizeInBytes),
+                duration = ToDecInt(maxDuration.TotalSeconds),
+                maxCollateral = ToDecInt(maxCollateral),
+                minPrice = ToDecInt(minPricePerBytePerSecond)
             };
 
             Log($"Making storage available... (" +
@@ -85,15 +85,16 @@ namespace DistTestCore.Marketplace
             return response.id;
         }
 
-        private string ToHexBigInt(double d)
+        private string ToDecInt(double d)
         {
-            return "0x" + string.Format("{0:X}", Convert.ToInt64(d));
+            var i = new BigInteger(d);
+            return i.ToString("D");
         }
 
-        public string ToHexBigInt(TestToken t)
+        public string ToDecInt(TestToken t)
         {
-            var bigInt = new BigInteger(t.Amount);
-            return "0x" + bigInt.ToString("X");
+            var i = new BigInteger(t.Amount);
+            return i.ToString("D");
         }
 
         public void AssertThatBalance(IResolveConstraint constraint, string message = "")
