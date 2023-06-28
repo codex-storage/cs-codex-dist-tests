@@ -10,6 +10,7 @@ namespace ContinuousTests
 {
     public class NodeRunner
     {
+        private readonly K8sFactory k8SFactory = new K8sFactory();
         private readonly CodexNode[] nodes;
         private readonly Configuration config;
         private readonly ITimeSet timeSet;
@@ -80,33 +81,7 @@ namespace ContinuousTests
 
         private (WorkflowCreator, TestLifecycle) CreateFacilities()
         {
-            var kubeConfig = GetKubeConfig(config.KubeConfigFile);
-            var lifecycleConfig = new DistTestCore.Configuration
-            (
-                kubeConfigFile: kubeConfig,
-                logPath: "null",
-                logDebug: false,
-                dataFilesPath: config.LogPath,
-                codexLogLevel: CodexLogLevel.Debug,
-                runnerLocation: TestRunnerLocation.ExternalToCluster
-            );
-
-            var kubeFlowConfig = new KubernetesWorkflow.Configuration(
-                k8sNamespacePrefix: customNamespace,
-                kubeConfigFile: kubeConfig,
-                operationTimeout: timeSet.K8sOperationTimeout(),
-            retryDelay: timeSet.WaitForK8sServiceDelay());
-
-            var workflowCreator = new WorkflowCreator(log, kubeFlowConfig, testNamespacePostfix: string.Empty);
-            var lifecycle = new TestLifecycle(new NullLog(), lifecycleConfig, timeSet, workflowCreator);
-
-            return (workflowCreator, lifecycle);
-        }
-
-        private static string? GetKubeConfig(string kubeConfigFile)
-        {
-            if (string.IsNullOrEmpty(kubeConfigFile) || kubeConfigFile.ToLowerInvariant() == "null") return null;
-            return kubeConfigFile;
+            return k8SFactory.CreateFacilities(config, customNamespace, timeSet, log);
         }
     }
 }

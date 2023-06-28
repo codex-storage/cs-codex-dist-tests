@@ -6,9 +6,9 @@
         {
         }
 
-        protected override LogFile CreateLogFile()
+        protected override string GetFullName()
         {
-            return null!;
+            return "NULL";
         }
 
         public override void Log(string message)

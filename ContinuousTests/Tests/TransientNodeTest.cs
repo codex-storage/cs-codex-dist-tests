@@ -29,7 +29,7 @@ namespace ContinuousTests.Tests
                 cid = UploadFile(codexAccess.Node, file)!;
                 Assert.That(cid, Is.Not.Null);
 
-                var resultFile = DownloadContent(IntermediateNode, cid);
+                var resultFile = DownloadFile(IntermediateNode, cid);
                 file.AssertIsEqual(resultFile);
             });
         }
@@ -39,7 +39,7 @@ namespace ContinuousTests.Tests
         {
             NodeRunner.RunNode(DownloadBootstapNode, (codexAccess, marketplaceAccess) =>
             {
-                var resultFile = DownloadContent(codexAccess.Node, cid);
+                var resultFile = DownloadFile(codexAccess.Node, cid);
                 file.AssertIsEqual(resultFile);
             });
         }

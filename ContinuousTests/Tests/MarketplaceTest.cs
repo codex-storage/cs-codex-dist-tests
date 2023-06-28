@@ -2,6 +2,7 @@
 using DistTestCore.Codex;
 using Newtonsoft.Json;
 using NUnit.Framework;
+using Utils;
 
 namespace ContinuousTests.Tests
 {
@@ -54,7 +55,7 @@ namespace ContinuousTests.Tests
         {
             NodeRunner.RunNode((codexAccess, marketplaceAccess) =>
             {
-                var result = DownloadContent(codexAccess.Node, cid!);
+                var result = DownloadFile(codexAccess.Node, cid!);
 
                 file.AssertIsEqual(result);
             });
@@ -67,6 +68,7 @@ namespace ContinuousTests.Tests
             var filesizeInMb = fileSize.SizeInBytes / 1024;
             var maxWaitTime = TimeSpan.FromSeconds(filesizeInMb * 10.0);
 
+            Log.Log(nameof(WaitForContractToStart) + " for " + Time.FormatDuration(maxWaitTime));
             while (lastState != "started")
             {
                 var purchaseStatus = codexAccess.Node.GetPurchaseStatus(purchaseId);
@@ -87,6 +89,7 @@ namespace ContinuousTests.Tests
                     Assert.Fail($"Contract was not picked up within {maxWaitTime.TotalSeconds} seconds timeout: " + JsonConvert.SerializeObject(purchaseStatus));
                 }
             }
+            Log.Log("Contract started.");
         }
     }
 }

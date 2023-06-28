@@ -77,7 +77,7 @@ namespace ContinuousTests
             return new ContentId(response);
         }
 
-        public TestFile DownloadContent(CodexNode node, ContentId contentId, string fileLabel = "")
+        public TestFile DownloadFile(CodexNode node, ContentId contentId, string fileLabel = "")
         {
             var logMessage = $"Downloading for contentId: '{contentId.Id}'...";
             var file = FileManager.CreateEmptyTestFile(fileLabel);

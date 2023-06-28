@@ -66,7 +66,7 @@ namespace ContinuousTests.Tests
             TestFile? result = null;
             var time = Measure(() =>
             {
-                result = DownloadContent(downloadNode, cid!);
+                result = DownloadFile(downloadNode, cid!);
             });
 
             file.AssertIsEqual(result);

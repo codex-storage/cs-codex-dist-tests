@@ -5,9 +5,9 @@ namespace DistTestCore.Metrics
 {
     public class MetricsDownloader
     {
-        private readonly TestLog log;
+        private readonly BaseLog log;
 
-        public MetricsDownloader(TestLog log)
+        public MetricsDownloader(BaseLog log)
         {
             this.log = log;
         }

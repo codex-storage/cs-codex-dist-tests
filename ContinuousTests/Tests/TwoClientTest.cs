@@ -24,7 +24,7 @@ namespace ContinuousTests.Tests
         [TestMoment(t: MinuteFive)]
         public void DownloadTestFile()
         {
-            var dl = DownloadContent(Nodes[1], cid!);
+            var dl = DownloadFile(Nodes[1], cid!);
 
             file.AssertIsEqual(dl);
         }
