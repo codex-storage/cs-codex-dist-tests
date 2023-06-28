@@ -13,9 +13,8 @@ namespace ContinuousTests.Tests
         public override int RequiredNumberOfNodes => 1;
         public override TimeSpan RunTestEvery => TimeSpan.FromMinutes(15);
         public override TestFailMode TestFailMode => TestFailMode.StopAfterFirstFailure;
-
-        public const int EthereumAccountIndex = 200; // TODO: Check against all other account indices of all other tests.
-        public const string MarketplaceTestNamespace = "codex-continuous-marketplace"; // prevent clashes too
+        public override int EthereumAccountIndex => 200;
+        public override string CustomK8sNamespace => "codex-continuous-marketplace";
 
         private readonly uint numberOfSlots = 3;
         private readonly ByteSize fileSize = 10.MB();

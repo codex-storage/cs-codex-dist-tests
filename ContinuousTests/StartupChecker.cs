@@ -1,6 +1,7 @@
 ﻿using DistTestCore.Codex;
 using DistTestCore;
 using Logging;
+using NUnit.Framework.Internal;
 
 namespace ContinuousTests
 {
@@ -40,20 +41,12 @@ namespace ContinuousTests
                 handle.GetLastMoment();
             }
 
-            var errors = new List<string>();
-            foreach (var test in tests)
-            {
-                if (test.RequiredNumberOfNodes > config.CodexDeployment.CodexContainers.Length)
-                {
-                    errors.Add($"Test '{test.Name}' requires {test.RequiredNumberOfNodes} nodes. Deployment only has {config.CodexDeployment.CodexContainers.Length}");
-                }
-            }
-
             if (!Directory.Exists(config.LogPath))
             {
                 Directory.CreateDirectory(config.LogPath);
             }
 
+            var errors = CheckTests(tests);
             if (errors.Any())
             {
                 throw new Exception("Prerun check failed: " + string.Join(", ", errors));
@@ -98,5 +91,69 @@ namespace ContinuousTests
             return true;
         }
 
+        private List<string> CheckTests(ContinuousTest[] tests)
+        {
+            var errors = new List<string>();
+            CheckRequiredNumberOfNodes(tests, errors);
+            CheckCustomNamespaceClashes(tests, errors);
+            CheckEthereumIndexClashes(tests, errors);
+            return errors;
+        }
+
+        private void CheckEthereumIndexClashes(ContinuousTest[] tests, List<string> errors)
+        {
+            var offLimits = config.CodexDeployment.CodexContainers.Length;
+            foreach (var test in tests)
+            {
+                if (test.EthereumAccountIndex != -1)
+                {
+                    if (test.EthereumAccountIndex <= offLimits)
+                    {
+                        errors.Add($"Test '{test.Name}' has selected 'EthereumAccountIndex' = {test.EthereumAccountIndex}. All accounts up to and including {offLimits} are being used by the targetted Codex net. Select a different 'EthereumAccountIndex'.");
+                    }
+                }
+            }
+
+            DuplicatesCheck(tests, errors,
+                considerCondition: t => t.EthereumAccountIndex != -1,
+                getValue: t => t.EthereumAccountIndex,
+                propertyName: nameof(ContinuousTest.EthereumAccountIndex));
+        }
+
+        private void CheckCustomNamespaceClashes(ContinuousTest[] tests, List<string> errors)
+        {
+            DuplicatesCheck(tests, errors,
+                considerCondition: t => !string.IsNullOrEmpty(t.CustomK8sNamespace),
+                getValue: t => t.CustomK8sNamespace,
+                propertyName: nameof(ContinuousTest.CustomK8sNamespace));
+        }
+
+        private void DuplicatesCheck(ContinuousTest[] tests, List<string> errors, Func<ContinuousTest, bool> considerCondition, Func<ContinuousTest, object> getValue, string propertyName)
+        {
+            foreach (var test in tests)
+            {
+                if (considerCondition(test))
+                {
+                    var duplicates = tests.Where(t => t != test && getValue(t) == getValue(test)).ToList();
+                    if (duplicates.Any())
+                    {
+                        duplicates.Add(test);
+                        errors.Add($"Tests '{string.Join(",", duplicates.Select(d => d.Name))}' have the same '{propertyName}'. These must be unique.");
+                        return;
+                    }
+                }
+            }
+        }
+
+        private void CheckRequiredNumberOfNodes(ContinuousTest[] tests, List<string> errors)
+        {
+            foreach (var test in tests)
+            {
+                if (test.RequiredNumberOfNodes > config.CodexDeployment.CodexContainers.Length)
+                {
+                    errors.Add($"Test '{test.Name}' requires {test.RequiredNumberOfNodes} nodes. Deployment only has {config.CodexDeployment.CodexContainers.Length}");
+                }
+            }
+        }
     }
 }

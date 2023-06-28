@@ -38,6 +38,8 @@ namespace ContinuousTests
         public abstract int RequiredNumberOfNodes { get; }
         public abstract TimeSpan RunTestEvery { get; }
         public abstract TestFailMode TestFailMode { get; }
+        public virtual int EthereumAccountIndex { get { return -1; } }
+        public virtual string CustomK8sNamespace { get { return string.Empty; } }
 
         public string Name
         {
