@@ -1,6 +1,7 @@
 ﻿using DistTestCore;
 using DistTestCore.Codex;
 using Logging;
+using Utils;
 
 namespace ContinuousTests
 {
@@ -27,6 +28,15 @@ namespace ContinuousTests
             Log = log;
             FileManager = fileManager;
             Configuration = configuration;
+
+            if (nodes != null)
+            {
+                NodeRunner = new NodeRunner(Nodes.ToList().PickOneRandom(), configuration, TimeSet, Log, CustomK8sNamespace, EthereumAccountIndex);
+            }
+            else
+            {
+                NodeRunner = null!;
+            }
         }
 
         public CodexNode[] Nodes { get; private set; } = null!;
@@ -34,6 +44,7 @@ namespace ContinuousTests
         public IFileManager FileManager { get; private set; } = null!;
         public Configuration Configuration { get; private set; } = null!;
         public virtual ITimeSet TimeSet { get { return new DefaultTimeSet(); } }
+        public NodeRunner NodeRunner { get; private set; } = null!;
 
         public abstract int RequiredNumberOfNodes { get; }
         public abstract TimeSpan RunTestEvery { get; }
