@@ -21,12 +21,13 @@ namespace ContinuousTests
 
         private const string UploadFailedMessage = "Unable to store block";
 
-        public void Initialize(CodexNode[] nodes, BaseLog log, FileManager fileManager, Configuration configuration)
+        public void Initialize(CodexNode[] nodes, BaseLog log, FileManager fileManager, Configuration configuration, CancellationToken cancelToken)
         {
             Nodes = nodes;
             Log = log;
             FileManager = fileManager;
             Configuration = configuration;
+            CancelToken = cancelToken;
 
             if (nodes != null)
             {
@@ -43,6 +44,7 @@ namespace ContinuousTests
         public IFileManager FileManager { get; private set; } = null!;
         public Configuration Configuration { get; private set; } = null!;
         public virtual ITimeSet TimeSet { get { return new DefaultTimeSet(); } }
+        public CancellationToken CancelToken { get; private set; } = null;
         public NodeRunner NodeRunner { get; private set; } = null!;
 
         public abstract int RequiredNumberOfNodes { get; }

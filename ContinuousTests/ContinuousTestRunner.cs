@@ -10,34 +10,41 @@ namespace ContinuousTests
         private readonly TestFactory testFactory = new TestFactory();
         private readonly Configuration config;
         private readonly StartupChecker startupChecker;
+        private readonly CancellationToken cancelToken;
 
-        public ContinuousTestRunner(string[] args)
+        public ContinuousTestRunner(string[] args, CancellationToken cancelToken)
         {
             config = configLoader.Load(args);
             startupChecker = new StartupChecker(config);
+            this.cancelToken = cancelToken;
         }
 
         public void Run()
         {
             startupChecker.Check();
 
+            var taskFactory = new TaskFactory();
             var overviewLog = new FixtureLog(new LogConfig(config.LogPath, false), "Overview");
             overviewLog.Log("Continuous tests starting...");
             var allTests = testFactory.CreateTests();
 
             ClearAllCustomNamespaces(allTests, overviewLog);
 
-            var testLoop = allTests.Select(t => new TestLoop(config, overviewLog, t.GetType(), t.RunTestEvery)).ToArray();
+            var testLoops = allTests.Select(t => new TestLoop(taskFactory, config, overviewLog, t.GetType(), t.RunTestEvery, cancelToken)).ToArray();
 
-            foreach (var t in testLoop)
+            foreach (var testLoop in testLoops)
             {
-                overviewLog.Log("Launching test-loop for " + t.Name);
-                t.Begin();
+                cancelToken.ThrowIfCancellationRequested();
+
+                overviewLog.Log("Launching test-loop for " + testLoop.Name);
+                testLoop.Begin();
                 Thread.Sleep(TimeSpan.FromSeconds(15));
             }
 
             overviewLog.Log("All test-loops launched.");
-            while (true) Thread.Sleep((2 ^ 31) - 1);
+            cancelToken.WaitHandle.WaitOne();
+            overviewLog.Log("Cancelling all test-loops...");
+            taskFactory.WaitAll();
         }
 
         private void ClearAllCustomNamespaces(ContinuousTest[] allTests, FixtureLog log)

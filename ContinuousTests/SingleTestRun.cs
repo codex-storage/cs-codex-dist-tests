@@ -12,21 +12,24 @@ namespace ContinuousTests
     {
         private readonly CodexNodeFactory codexNodeFactory = new CodexNodeFactory();
         private readonly List<Exception> exceptions = new List<Exception>();
+        private readonly TaskFactory taskFactory;
         private readonly Configuration config;
         private readonly BaseLog overviewLog;
         private readonly TestHandle handle;
+        private readonly CancellationToken cancelToken;
         private readonly CodexNode[] nodes;
         private readonly FileManager fileManager;
         private readonly FixtureLog fixtureLog;
         private readonly string testName;
         private readonly string dataFolder;
 
-        public SingleTestRun(Configuration config, BaseLog overviewLog, TestHandle handle)
+        public SingleTestRun(TaskFactory taskFactory, Configuration config, BaseLog overviewLog, TestHandle handle, CancellationToken cancelToken)
         {
+            this.taskFactory = taskFactory;
             this.config = config;
             this.overviewLog = overviewLog;
             this.handle = handle;
-
+            this.cancelToken = cancelToken;
             testName = handle.Test.GetType().Name;
             fixtureLog = new FixtureLog(new LogConfig(config.LogPath, false), testName);
 
@@ -37,7 +40,7 @@ namespace ContinuousTests
 
         public void Run()
         {
-            Task.Run(() =>
+            taskFactory.Run(() =>
             {
                 try
                 {
@@ -75,6 +78,8 @@ namespace ContinuousTests
             var t = earliestMoment;
             while (true)
             {
+                cancelToken.ThrowIfCancellationRequested();
+
                 RunMoment(t);
 
                 if (handle.Test.TestFailMode == TestFailMode.StopAfterFirstFailure && exceptions.Any())
@@ -86,9 +91,10 @@ namespace ContinuousTests
                 var nextMoment = handle.GetNextMoment(t);
                 if (nextMoment != null)
                 {
-                    Log($" > Next TestMoment in {nextMoment.Value} seconds...");
-                    t += nextMoment.Value;
-                    Thread.Sleep(nextMoment.Value * 1000);
+                    var delta = TimeSpan.FromSeconds(nextMoment.Value - t);
+                    Log($" > Next TestMoment in {Time.FormatDuration(delta)} seconds...");
+                    cancelToken.WaitHandle.WaitOne(delta);
+                    t = nextMoment.Value;
                 }
                 else
                 {
@@ -144,12 +150,12 @@ namespace ContinuousTests
         private void InitializeTest(string name)
         {
             Log($" > Running TestMoment '{name}'");
-            handle.Test.Initialize(nodes, fixtureLog, fileManager, config);
+            handle.Test.Initialize(nodes, fixtureLog, fileManager, config, cancelToken);
         }
 
         private void DecommissionTest()
         {
-            handle.Test.Initialize(null!, null!, null!, null!);
+            handle.Test.Initialize(null!, null!, null!, null!, cancelToken);
         }
 
         private void Log(string msg)
