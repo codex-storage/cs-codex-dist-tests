@@ -4,21 +4,22 @@ using DistTestCore;
 using KubernetesWorkflow;
 using NUnit.Framework;
 using Logging;
+using Utils;
 
 namespace ContinuousTests
 {
     public class NodeRunner
     {
-        private readonly CodexNode bootstrapNode;
+        private readonly CodexNode[] nodes;
         private readonly Configuration config;
         private readonly ITimeSet timeSet;
         private readonly BaseLog log;
         private readonly string customNamespace;
         private readonly int ethereumAccountIndex;
 
-        public NodeRunner(CodexNode bootstrapNode, Configuration config, ITimeSet timeSet, BaseLog log, string customNamespace, int ethereumAccountIndex)
+        public NodeRunner(CodexNode[] nodes, Configuration config, ITimeSet timeSet, BaseLog log, string customNamespace, int ethereumAccountIndex)
         {
-            this.bootstrapNode = bootstrapNode;
+            this.nodes = nodes;
             this.config = config;
             this.timeSet = timeSet;
             this.log = log;
@@ -28,10 +29,15 @@ namespace ContinuousTests
 
         public void RunNode(Action<CodexAccess, MarketplaceAccess> operation)
         {
-            RunNode(operation, 0.TestTokens());
+            RunNode(nodes.ToList().PickOneRandom(), operation, 0.TestTokens());
         }
 
-        public void RunNode(Action<CodexAccess, MarketplaceAccess> operation, TestToken mintTestTokens)
+        public void RunNode(CodexNode bootstrapNode, Action<CodexAccess, MarketplaceAccess> operation)
+        {
+            RunNode(bootstrapNode, operation, 0.TestTokens());
+        }
+
+        public void RunNode(CodexNode bootstrapNode, Action<CodexAccess, MarketplaceAccess> operation, TestToken mintTestTokens)
         {
             var (workflowCreator, lifecycle) = CreateFacilities();
             var flow = workflowCreator.CreateWorkflow();

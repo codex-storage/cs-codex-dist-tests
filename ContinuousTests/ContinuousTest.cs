@@ -1,7 +1,6 @@
 ﻿using DistTestCore;
 using DistTestCore.Codex;
 using Logging;
-using Utils;
 
 namespace ContinuousTests
 {
@@ -31,7 +30,7 @@ namespace ContinuousTests
 
             if (nodes != null)
             {
-                NodeRunner = new NodeRunner(Nodes.ToList().PickOneRandom(), configuration, TimeSet, Log, CustomK8sNamespace, EthereumAccountIndex);
+                NodeRunner = new NodeRunner(Nodes, configuration, TimeSet, Log, CustomK8sNamespace, EthereumAccountIndex);
             }
             else
             {
