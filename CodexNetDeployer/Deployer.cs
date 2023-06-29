@@ -38,7 +38,7 @@ namespace CodexNetDeployer
             Log("Starting Codex nodes...");
 
             // Each node must have its own IP, so it needs it own pod. Start them 1 at a time.
-            var codexStarter = new CodexNodeStarter(config, workflowCreator, lifecycle, log, timeset, gethResults, config.NumberOfValidators!.Value);
+            var codexStarter = new CodexNodeStarter(config, workflowCreator, lifecycle, gethResults, config.NumberOfValidators!.Value);
             var codexContainers = new List<RunningContainer>();
             for (var i = 0; i < config.NumberOfCodexNodes; i++)
             {
@@ -91,7 +91,11 @@ namespace CodexNetDeployer
                 numberOfCodexNodes: config.NumberOfCodexNodes!.Value,
                 numberOfValidators: config.NumberOfValidators!.Value,
                 storageQuotaMB: config.StorageQuota!.Value,
-                codexLogLevel: config.CodexLogLevel);
+                codexLogLevel: config.CodexLogLevel,
+                initialTestTokens: config.InitialTestTokens,
+                minPrice: config.MinPrice,
+                maxCollateral: config.MaxCollateral,
+                maxDuration: config.MaxDuration);
         }
 
         private void Log(string msg)
