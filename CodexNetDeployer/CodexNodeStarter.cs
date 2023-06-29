@@ -52,7 +52,7 @@ namespace CodexNetDeployer
                     Console.Write("Tokens minted\t");
 
                     var response = marketAccess.MakeStorageAvailable(
-                        totalSpace: (config.StorageQuota!.Value - 1).MB(),
+                        totalSpace: config.StorageSell!.Value.MB(),
                         minPriceForTotalSpace: config.MinPrice.TestTokens(),
                         maxCollateral: config.MaxCollateral.TestTokens(),
                         maxDuration: TimeSpan.FromSeconds(config.MaxDuration));

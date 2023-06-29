@@ -28,8 +28,11 @@ namespace CodexNetDeployer
         [Uniform("validators", "v", "VALIDATORS", true, "Number of Codex nodes that will be validating.")]
         public int? NumberOfValidators { get; set; }
 
-        [Uniform("storage-quota", "s", "STORAGEQUOTA", true, "Storage quota in megabytes used by each Codex node.")]
+        [Uniform("storage-quota", "sq", "STORAGEQUOTA", true, "Storage quota in megabytes used by each Codex node.")]
         public int? StorageQuota { get; set; }
+
+        [Uniform("storage-sell", "ss", "STORAGESELL", true, "Number of megabytes of storage quota to make available for selling.")]
+        public int? StorageSell { get; set; }
 
         [Uniform("log-level", "l", "LOGLEVEL", true, "Log level used by each Codex node. [Trace, Debug*, Info, Warn, Error]")]
         public CodexLogLevel CodexLogLevel { get; set; } = CodexLogLevel.Debug;
@@ -59,6 +62,10 @@ namespace CodexNetDeployer
             if (NumberOfValidators > NumberOfCodexNodes)
             {
                 errors.Add($"{nameof(NumberOfValidators)} ({NumberOfValidators}) may not be greater than {nameof(NumberOfCodexNodes)} ({NumberOfCodexNodes}).");
+            }
+            if (StorageSell.HasValue && StorageQuota.HasValue && StorageSell.Value >= StorageQuota.Value)
+            {
+                errors.Add("StorageSell cannot be greater than or equal to StorageQuota.");
             }
 
             return errors;
