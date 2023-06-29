@@ -34,17 +34,18 @@ namespace ContinuousTests
 
             foreach (var testLoop in testLoops)
             {
-                cancelToken.ThrowIfCancellationRequested();
+                if (cancelToken.IsCancellationRequested) break;
 
                 overviewLog.Log("Launching test-loop for " + testLoop.Name);
                 testLoop.Begin();
                 Thread.Sleep(TimeSpan.FromSeconds(15));
             }
 
-            overviewLog.Log("All test-loops launched.");
+            overviewLog.Log("Finished launching test-loops.");
             cancelToken.WaitHandle.WaitOne();
             overviewLog.Log("Cancelling all test-loops...");
             taskFactory.WaitAll();
+            overviewLog.Log("All tasks cancelled.");
         }
 
         private void ClearAllCustomNamespaces(ContinuousTest[] allTests, FixtureLog log)

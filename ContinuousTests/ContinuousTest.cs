@@ -44,7 +44,7 @@ namespace ContinuousTests
         public IFileManager FileManager { get; private set; } = null!;
         public Configuration Configuration { get; private set; } = null!;
         public virtual ITimeSet TimeSet { get { return new DefaultTimeSet(); } }
-        public CancellationToken CancelToken { get; private set; } = null;
+        public CancellationToken CancelToken { get; private set; } = new CancellationToken();
         public NodeRunner NodeRunner { get; private set; } = null!;
 
         public abstract int RequiredNumberOfNodes { get; }
