@@ -10,6 +10,7 @@ namespace ContinuousTests
         private readonly Type testType;
         private readonly TimeSpan runsEvery;
         private readonly CancellationToken cancelToken;
+        private readonly EventWaitHandle runFinishedHandle = new EventWaitHandle(true, EventResetMode.ManualReset);
 
         public TestLoop(TaskFactory taskFactory, Configuration config, BaseLog overviewLog, Type testType, TimeSpan runsEvery, CancellationToken cancelToken)
         {
@@ -32,7 +33,10 @@ namespace ContinuousTests
                 {
                     while (true)
                     {
+                        WaitHandle.WaitAny(new[] { runFinishedHandle, cancelToken.WaitHandle });
+
                         cancelToken.ThrowIfCancellationRequested();
+
                         StartTest();
 
                         cancelToken.WaitHandle.WaitOne(runsEvery);
@@ -55,7 +59,9 @@ namespace ContinuousTests
             var test = (ContinuousTest)Activator.CreateInstance(testType)!;
             var handle = new TestHandle(test);
             var run = new SingleTestRun(taskFactory, config, overviewLog, handle, cancelToken);
-            run.Run();
+
+            runFinishedHandle.Reset();
+            run.Run(runFinishedHandle);
         }
     }
 }

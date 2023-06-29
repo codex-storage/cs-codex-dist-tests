@@ -31,14 +31,14 @@ namespace ContinuousTests
             this.handle = handle;
             this.cancelToken = cancelToken;
             testName = handle.Test.GetType().Name;
-            fixtureLog = new FixtureLog(new LogConfig(config.LogPath, false), testName);
+            fixtureLog = new FixtureLog(new LogConfig(config.LogPath, true), testName);
 
             nodes = CreateRandomNodes(handle.Test.RequiredNumberOfNodes);
             dataFolder = config.DataPath + "-" + Guid.NewGuid();
             fileManager = new FileManager(fixtureLog, CreateFileManagerConfiguration());
         }
 
-        public void Run()
+        public void Run(EventWaitHandle runFinishedHandle)
         {
             taskFactory.Run(() =>
             {
@@ -47,6 +47,7 @@ namespace ContinuousTests
                     RunTest();
                     fileManager.DeleteAllTestFiles();
                     Directory.Delete(dataFolder, true);
+                    runFinishedHandle.Set();
                 }
                 catch (Exception ex)
                 {

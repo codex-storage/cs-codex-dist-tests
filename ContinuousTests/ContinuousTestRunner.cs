@@ -38,7 +38,7 @@ namespace ContinuousTests
 
                 overviewLog.Log("Launching test-loop for " + testLoop.Name);
                 testLoop.Begin();
-                Thread.Sleep(TimeSpan.FromSeconds(15));
+                Thread.Sleep(TimeSpan.FromSeconds(5));
             }
 
             overviewLog.Log("Finished launching test-loops.");
