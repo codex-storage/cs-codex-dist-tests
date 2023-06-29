@@ -1,4 +1,5 @@
-﻿using Logging;
+﻿using KubernetesWorkflow;
+using Logging;
 using Utils;
 
 namespace DistTestCore.Codex
@@ -8,13 +9,15 @@ namespace DistTestCore.Codex
         private readonly BaseLog log;
         private readonly ITimeSet timeSet;
 
-        public CodexNode(BaseLog log, ITimeSet timeSet, Address address)
+        public CodexNode(BaseLog log, RunningContainer container, ITimeSet timeSet, Address address)
         {
             this.log = log;
+            Container = container;
             this.timeSet = timeSet;
             Address = address;
         }
 
+        public RunningContainer Container { get; }
         public Address Address { get; }
 
         public CodexDebugResponse GetDebugInfo()

@@ -71,7 +71,15 @@ namespace ContinuousTests
                 var codexAccess = new CodexAccess(lifecycle, container);
                 var marketAccess = new MarketplaceAccess(lifecycle, marketplaceNetwork, account, codexAccess);
 
-                operation(codexAccess, marketAccess);
+                try
+                {
+                    operation(codexAccess, marketAccess);
+                }
+                catch
+                {
+                    lifecycle.DownloadLog(container);
+                    throw;
+                }
             }
             finally
             {

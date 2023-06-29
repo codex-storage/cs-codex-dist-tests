@@ -7,6 +7,8 @@ namespace CodexNetDeployer
 {
     public class Configuration
     {
+        public const int SecondsIn1Day = 24 * 60 * 60;
+
         [Uniform("codex-image", "ci", "CODEXIMAGE", true, "Docker image of Codex.")]
         public string CodexImage { get; set; } = CodexContainerRecipe.DockerImage;
 
@@ -48,6 +50,9 @@ namespace CodexNetDeployer
 
         [Uniform("max-duration", "md", "MAXDURATION", true, "Maximum duration in seconds for contracts which will be accepted.")]
         public int MaxDuration { get; set; }
+
+        [Uniform("block-ttl", "bt", "BLOCKTTL", false, "Block timeout in seconds. Default is 24 hours.")]
+        public int BlockTTL { get; set; } = SecondsIn1Day;
 
         public TestRunnerLocation RunnerLocation { get; set; } = TestRunnerLocation.InternalToCluster;
 

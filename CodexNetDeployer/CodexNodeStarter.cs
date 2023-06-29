@@ -87,6 +87,10 @@ namespace CodexNetDeployer
             var marketplaceConfig = new MarketplaceInitialConfig(100000.Eth(), 0.TestTokens(), validatorsLeft > 0);
             marketplaceConfig.AccountIndexOverride = i;
             codexStart.MarketplaceConfig = marketplaceConfig;
+            if (config.BlockTTL != Configuration.SecondsIn1Day)
+            {
+                codexStart.BlockTTL = config.BlockTTL;
+            }
 
             return codexStart;
         }
