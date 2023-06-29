@@ -7,22 +7,22 @@ namespace ContinuousTests
 {
     public class K8sFactory
     {
-        public (WorkflowCreator, TestLifecycle) CreateFacilities(Configuration config, string customNamespace, ITimeSet timeSet, BaseLog log)
+        public (WorkflowCreator, TestLifecycle) CreateFacilities(string kubeConfigFile, string logPath, string dataFilePath, string customNamespace, ITimeSet timeSet, BaseLog log)
         {
-            var kubeConfig = GetKubeConfig(config.KubeConfigFile);
+            var kubeConfig = GetKubeConfig(kubeConfigFile);
             var lifecycleConfig = new DistTestCore.Configuration
             (
                 kubeConfigFile: kubeConfig,
-                logPath: "null",
+                logPath: logPath,
                 logDebug: false,
-                dataFilesPath: config.LogPath,
+                dataFilesPath: dataFilePath,
                 codexLogLevel: CodexLogLevel.Debug,
                 runnerLocation: TestRunnerLocation.ExternalToCluster
             );
 
             var kubeFlowConfig = new KubernetesWorkflow.Configuration(
                 k8sNamespacePrefix: customNamespace,
-            kubeConfigFile: kubeConfig,
+                kubeConfigFile: kubeConfig,
                 operationTimeout: timeSet.K8sOperationTimeout(),
             retryDelay: timeSet.WaitForK8sServiceDelay());
 

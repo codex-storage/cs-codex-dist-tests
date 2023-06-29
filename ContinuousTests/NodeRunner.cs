@@ -81,7 +81,7 @@ namespace ContinuousTests
 
         private (WorkflowCreator, TestLifecycle) CreateFacilities()
         {
-            return k8SFactory.CreateFacilities(config, customNamespace, timeSet, log);
+            return k8SFactory.CreateFacilities(config.KubeConfigFile, config.LogPath, config.DataPath, customNamespace, timeSet, log);
         }
     }
 }
