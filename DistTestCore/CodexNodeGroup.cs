@@ -64,12 +64,19 @@ namespace DistTestCore
 
         public void EnsureOnline()
         {
-            foreach (var node in Nodes) node.CodexAccess.EnsureOnline();
+            foreach (var node in Nodes)
+            {
+                var debugInfo = node.CodexAccess.GetDebugInfo();
+                var nodePeerId = debugInfo.id;
+                var nodeName = node.CodexAccess.Container.Name;
+                lifecycle.Log.AddStringReplace(nodePeerId, nodeName);
+                lifecycle.Log.AddStringReplace(debugInfo.table.localNode.nodeId, nodeName);
+            }
         }
 
         private OnlineCodexNode CreateOnlineCodexNode(RunningContainer c, ICodexNodeFactory factory)
         {
-            var access = new CodexAccess(lifecycle, c);
+            var access = new CodexAccess(lifecycle.Log, c, lifecycle.TimeSet, lifecycle.Configuration.GetAddress(c));
             return factory.CreateOnlineCodexNode(access, this);
         }
     }

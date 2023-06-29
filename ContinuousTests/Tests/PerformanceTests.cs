@@ -42,7 +42,7 @@ namespace ContinuousTests.Tests
         public override TimeSpan RunTestEvery => TimeSpan.FromHours(1);
         public override TestFailMode TestFailMode => TestFailMode.AlwaysRunAllMoments;
 
-        public void UploadTest(int megabytes, CodexNode uploadNode)
+        public void UploadTest(int megabytes, CodexAccess uploadNode)
         {
             var file = FileManager.GenerateTestFile(megabytes.MB());
 
@@ -56,7 +56,7 @@ namespace ContinuousTests.Tests
             Assert.That(timePerMB, Is.LessThan(CodexContainerRecipe.MaxUploadTimePerMegabyte), "MaxUploadTimePerMegabyte performance threshold breached.");
         }
 
-        public void DownloadTest(int megabytes, CodexNode uploadNode, CodexNode downloadNode)
+        public void DownloadTest(int megabytes, CodexAccess uploadNode, CodexAccess downloadNode)
         {
             var file = FileManager.GenerateTestFile(megabytes.MB());
 

@@ -50,7 +50,7 @@ namespace DistTestCore.Marketplace
                 $"proofProbability: {proofProbability}, " +
                 $"duration: {Time.FormatDuration(duration)})");
 
-            var response = codexAccess.Node.RequestStorage(request, contentId.Id);
+            var response = codexAccess.RequestStorage(request, contentId.Id);
 
             if (response == "Purchasing not available")
             {
@@ -78,7 +78,7 @@ namespace DistTestCore.Marketplace
                 $"maxCollateral: {maxCollateral}, " +
                 $"maxDuration: {Time.FormatDuration(maxDuration)})");
 
-            var response = codexAccess.Node.SalesAvailability(request);
+            var response = codexAccess.SalesAvailability(request);
 
             Log($"Storage successfully made available. Id: {response.id}");
 

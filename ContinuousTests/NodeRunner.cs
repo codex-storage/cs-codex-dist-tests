@@ -11,14 +11,14 @@ namespace ContinuousTests
     public class NodeRunner
     {
         private readonly K8sFactory k8SFactory = new K8sFactory();
-        private readonly CodexNode[] nodes;
+        private readonly CodexAccess[] nodes;
         private readonly Configuration config;
         private readonly ITimeSet timeSet;
         private readonly BaseLog log;
         private readonly string customNamespace;
         private readonly int ethereumAccountIndex;
 
-        public NodeRunner(CodexNode[] nodes, Configuration config, ITimeSet timeSet, BaseLog log, string customNamespace, int ethereumAccountIndex)
+        public NodeRunner(CodexAccess[] nodes, Configuration config, ITimeSet timeSet, BaseLog log, string customNamespace, int ethereumAccountIndex)
         {
             this.nodes = nodes;
             this.config = config;
@@ -33,12 +33,12 @@ namespace ContinuousTests
             RunNode(nodes.ToList().PickOneRandom(), operation, 0.TestTokens());
         }
 
-        public void RunNode(CodexNode bootstrapNode, Action<CodexAccess, MarketplaceAccess> operation)
+        public void RunNode(CodexAccess bootstrapNode, Action<CodexAccess, MarketplaceAccess> operation)
         {
             RunNode(bootstrapNode, operation, 0.TestTokens());
         }
 
-        public void RunNode(CodexNode bootstrapNode, Action<CodexAccess, MarketplaceAccess> operation, TestToken mintTestTokens)
+        public void RunNode(CodexAccess bootstrapNode, Action<CodexAccess, MarketplaceAccess> operation, TestToken mintTestTokens)
         {
             var (workflowCreator, lifecycle) = CreateFacilities();
             var flow = workflowCreator.CreateWorkflow();
@@ -68,7 +68,8 @@ namespace ContinuousTests
                 }
 
                 var container = rc.Containers[0];
-                var codexAccess = new CodexAccess(lifecycle, container);
+                var address = lifecycle.Configuration.GetAddress(container);
+                var codexAccess = new CodexAccess(log, container, lifecycle.TimeSet, address);
                 var marketAccess = new MarketplaceAccess(lifecycle, marketplaceNetwork, account, codexAccess);
 
                 try

@@ -8,7 +8,7 @@ namespace ContinuousTests
     public class StartupChecker
     {
         private readonly TestFactory testFactory = new TestFactory();
-        private readonly CodexNodeFactory codexNodeFactory = new CodexNodeFactory();
+        private readonly CodexAccessFactory codexNodeFactory = new CodexAccessFactory();
         private readonly Configuration config;
 
         public StartupChecker(Configuration config)
@@ -77,7 +77,7 @@ namespace ContinuousTests
             }
         }
 
-        private bool EnsureOnline(CodexNode n)
+        private bool EnsureOnline(CodexAccess n)
         {
             try
             {

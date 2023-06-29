@@ -21,7 +21,7 @@ namespace ContinuousTests
 
         private const string UploadFailedMessage = "Unable to store block";
 
-        public void Initialize(CodexNode[] nodes, BaseLog log, FileManager fileManager, Configuration configuration, CancellationToken cancelToken)
+        public void Initialize(CodexAccess[] nodes, BaseLog log, FileManager fileManager, Configuration configuration, CancellationToken cancelToken)
         {
             Nodes = nodes;
             Log = log;
@@ -39,7 +39,7 @@ namespace ContinuousTests
             }
         }
 
-        public CodexNode[] Nodes { get; private set; } = null!;
+        public CodexAccess[] Nodes { get; private set; } = null!;
         public BaseLog Log { get; private set; } = null!;
         public IFileManager FileManager { get; private set; } = null!;
         public Configuration Configuration { get; private set; } = null!;
@@ -61,7 +61,7 @@ namespace ContinuousTests
             }
         }
 
-        public ContentId? UploadFile(CodexNode node, TestFile file)
+        public ContentId? UploadFile(CodexAccess node, TestFile file)
         {
             using var fileStream = File.OpenRead(file.Filename);
 
@@ -79,7 +79,7 @@ namespace ContinuousTests
             return new ContentId(response);
         }
 
-        public TestFile DownloadFile(CodexNode node, ContentId contentId, string fileLabel = "")
+        public TestFile DownloadFile(CodexAccess node, ContentId contentId, string fileLabel = "")
         {
             var logMessage = $"Downloading for contentId: '{contentId.Id}'...";
             var file = FileManager.CreateEmptyTestFile(fileLabel);
@@ -88,7 +88,7 @@ namespace ContinuousTests
             return file;
         }
 
-        private void DownloadToFile(CodexNode node, string contentId, TestFile file)
+        private void DownloadToFile(CodexAccess node, string contentId, TestFile file)
         {
             using var fileStream = File.OpenWrite(file.Filename);
             try

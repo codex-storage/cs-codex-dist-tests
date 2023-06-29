@@ -15,9 +15,9 @@ namespace ContinuousTests.Tests
         private TestFile file = null!;
         private ContentId cid = null!;
 
-        private CodexNode UploadBootstapNode { get { return Nodes[0]; } }
-        private CodexNode DownloadBootstapNode { get { return Nodes[1]; } }
-        private CodexNode IntermediateNode { get { return Nodes[2]; } }
+        private CodexAccess UploadBootstapNode { get { return Nodes[0]; } }
+        private CodexAccess DownloadBootstapNode { get { return Nodes[1]; } }
+        private CodexAccess IntermediateNode { get { return Nodes[2]; } }
 
         [TestMoment(t: 0)]
         public void UploadWithTransientNode()
@@ -26,7 +26,7 @@ namespace ContinuousTests.Tests
 
             NodeRunner.RunNode(UploadBootstapNode, (codexAccess, marketplaceAccess) =>
             {
-                cid = UploadFile(codexAccess.Node, file)!;
+                cid = UploadFile(codexAccess, file)!;
                 Assert.That(cid, Is.Not.Null);
 
                 var resultFile = DownloadFile(IntermediateNode, cid);
@@ -39,7 +39,7 @@ namespace ContinuousTests.Tests
         {
             NodeRunner.RunNode(DownloadBootstapNode, (codexAccess, marketplaceAccess) =>
             {
-                var resultFile = DownloadFile(codexAccess.Node, cid);
+                var resultFile = DownloadFile(codexAccess, cid);
                 file.AssertIsEqual(resultFile);
             });
         }

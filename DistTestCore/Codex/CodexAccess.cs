@@ -1,40 +1,86 @@
 ﻿using KubernetesWorkflow;
+using Logging;
+using Utils;
 
 namespace DistTestCore.Codex
 {
     public class CodexAccess
     {
-        private readonly TestLifecycle lifecycle;
+        private readonly BaseLog log;
+        private readonly ITimeSet timeSet;
 
-        public CodexAccess(TestLifecycle lifecycle, RunningContainer runningContainer)
+        public CodexAccess(BaseLog log, RunningContainer container, ITimeSet timeSet, Address address)
         {
-            this.lifecycle = lifecycle;
-            Container = runningContainer;
-
-            var address = lifecycle.Configuration.GetAddress(Container);
-            Node = new CodexNode(lifecycle.Log, lifecycle.TimeSet, address);
+            this.log = log;
+            Container = container;
+            this.timeSet = timeSet;
+            Address = address;
         }
 
         public RunningContainer Container { get; }
-        public CodexNode Node { get; }
+        public Address Address { get; }
 
-        public void EnsureOnline()
+        public CodexDebugResponse GetDebugInfo()
         {
-            try
-            {
-                var debugInfo = Node.GetDebugInfo();
-                if (debugInfo == null || string.IsNullOrEmpty(debugInfo.id)) throw new InvalidOperationException("Unable to get debug-info from codex node at startup.");
+            return Http(TimeSpan.FromSeconds(2)).HttpGetJson<CodexDebugResponse>("debug/info");
+        }
 
-                var nodePeerId = debugInfo.id;
-                var nodeName = Container.Name;
-                lifecycle.Log.AddStringReplace(nodePeerId, nodeName);
-                lifecycle.Log.AddStringReplace(debugInfo.table.localNode.nodeId, nodeName);
-            }
-            catch (Exception e)
+        public CodexDebugPeerResponse GetDebugPeer(string peerId)
+        {
+            return GetDebugPeer(peerId, TimeSpan.FromSeconds(2));
+        }
+
+        public CodexDebugPeerResponse GetDebugPeer(string peerId, TimeSpan timeout)
+        {
+            var http = Http(timeout);
+            var str = http.HttpGetString($"debug/peer/{peerId}");
+
+            if (str.ToLowerInvariant() == "unable to find peer!")
             {
-                lifecycle.Log.Error($"Failed to start codex node: {e}. Test infra failure.");
-                throw new InvalidOperationException($"Failed to start codex node. Test infra failure.", e);
+                return new CodexDebugPeerResponse
+                {
+                    IsPeerFound = false
+                };
             }
+
+            var result = http.TryJsonDeserialize<CodexDebugPeerResponse>(str);
+            result.IsPeerFound = true;
+            return result;
+        }
+
+        public string UploadFile(FileStream fileStream)
+        {
+            return Http().HttpPostStream("upload", fileStream);
+        }
+
+        public Stream DownloadFile(string contentId)
+        {
+            return Http().HttpGetStream("download/" + contentId);
+        }
+
+        public CodexSalesAvailabilityResponse SalesAvailability(CodexSalesAvailabilityRequest request)
+        {
+            return Http().HttpPostJson<CodexSalesAvailabilityRequest, CodexSalesAvailabilityResponse>("sales/availability", request);
+        }
+
+        public string RequestStorage(CodexSalesRequestStorageRequest request, string contentId)
+        {
+            return Http().HttpPostJson($"storage/request/{contentId}", request);
+        }
+
+        public CodexStoragePurchase GetPurchaseStatus(string purchaseId)
+        {
+            return Http().HttpGetJson<CodexStoragePurchase>($"storage/purchases/{purchaseId}");
+        }
+
+        public string ConnectToPeer(string peerId, string peerMultiAddress)
+        {
+            return Http().HttpGetString($"connect/{peerId}?addrs={peerMultiAddress}");
+        }
+
+        private Http Http(TimeSpan? timeoutOverride = null)
+        {
+            return new Http(log, timeSet, Address, baseUrl: "/api/codex/v1", timeoutOverride);
         }
     }
 }

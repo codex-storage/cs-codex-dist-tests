@@ -5,14 +5,14 @@ using Logging;
 
 namespace ContinuousTests
 {
-    public class CodexNodeFactory
+    public class CodexAccessFactory
     {
-        public CodexNode[] Create(RunningContainer[] containers, BaseLog log, ITimeSet timeSet)
+        public CodexAccess[] Create(RunningContainer[] containers, BaseLog log, ITimeSet timeSet)
         {
             return containers.Select(container =>
             {
                 var address = container.ClusterExternalAddress;
-                return new CodexNode(log, timeSet, address);
+                return new CodexAccess(log, container, timeSet, address);
             }).ToArray();
         }
     }

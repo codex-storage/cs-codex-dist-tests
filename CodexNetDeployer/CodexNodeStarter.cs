@@ -34,15 +34,14 @@ namespace CodexNetDeployer
             var containers = workflow.Start(1, Location.Unspecified, new CodexContainerRecipe(), workflowStartup);
 
             var container = containers.Containers.First();
-            var codexAccess = new CodexAccess(lifecycle, container);
-
+            var codexAccess = new CodexAccess(lifecycle.Log, container, lifecycle.TimeSet, lifecycle.Configuration.GetAddress(container));
             var account = gethResult.MarketplaceNetwork.Bootstrap.AllAccounts.Accounts[i];
             var tokenAddress = gethResult.MarketplaceNetwork.Marketplace.TokenAddress;
             var marketAccess = new MarketplaceAccess(lifecycle, gethResult.MarketplaceNetwork, account, codexAccess);
 
             try
             {
-                var debugInfo = codexAccess.Node.GetDebugInfo();
+                var debugInfo = codexAccess.GetDebugInfo();
                 if (!string.IsNullOrWhiteSpace(debugInfo.spr))
                 {
                     Console.Write("Online\t");

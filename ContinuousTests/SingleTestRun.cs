@@ -10,14 +10,14 @@ namespace ContinuousTests
 {
     public class SingleTestRun
     {
-        private readonly CodexNodeFactory codexNodeFactory = new CodexNodeFactory();
+        private readonly CodexAccessFactory codexNodeFactory = new CodexAccessFactory();
         private readonly List<Exception> exceptions = new List<Exception>();
         private readonly TaskFactory taskFactory;
         private readonly Configuration config;
         private readonly BaseLog overviewLog;
         private readonly TestHandle handle;
         private readonly CancellationToken cancelToken;
-        private readonly CodexNode[] nodes;
+        private readonly CodexAccess[] nodes;
         private readonly FileManager fileManager;
         private readonly FixtureLog fixtureLog;
         private readonly string testName;
@@ -171,7 +171,7 @@ namespace ContinuousTests
             overviewLog.Log( testName + ": " +  msg);
         }
 
-        private CodexNode[] CreateRandomNodes(int number)
+        private CodexAccess[] CreateRandomNodes(int number)
         {
             var containers = SelectRandomContainers(number);
             fixtureLog.Log("Selected nodes: " + string.Join(",", containers.Select(c => c.Name)));
