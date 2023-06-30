@@ -12,13 +12,7 @@ public class Program
         var nl = Environment.NewLine;
         Console.WriteLine("CodexNetDownloader" + nl);
 
-        if (args.Any(a => a == "-h" || a == "--help" || a == "-?"))
-        {
-            PrintHelp();
-            return;
-        }
-
-        var uniformArgs = new ArgsUniform<CodexNetDownloader.Configuration>(args);
+        var uniformArgs = new ArgsUniform<CodexNetDownloader.Configuration>(PrintHelp, args);
         var config = uniformArgs.Parse(true);
 
         if (args.Any(a => a == "--external"))
@@ -31,7 +25,7 @@ public class Program
         if (!Directory.Exists(config.OutputPath)) Directory.CreateDirectory(config.OutputPath);
 
         var k8sFactory = new K8sFactory();
-        var (_, lifecycle) = k8sFactory.CreateFacilities(config.KubeConfigFile, config.OutputPath, "dataPath", config.CodexDeployment.Metadata.KubeNamespace, new DefaultTimeSet(), new NullLog());
+        var (_, lifecycle) = k8sFactory.CreateFacilities(config.KubeConfigFile, config.OutputPath, "dataPath", config.CodexDeployment.Metadata.KubeNamespace, new DefaultTimeSet(), new NullLog(), config.RunnerLocation);
 
         foreach (var container in config.CodexDeployment.CodexContainers)
         {
@@ -55,8 +49,5 @@ public class Program
 
         Console.WriteLine("CodexNetDownloader assumes you are running this tool from *inside* the Kubernetes cluster. " +
             "If you are not running this from a container inside the cluster, add the argument '--external'." + nl);
-
-        var uniformArgs = new ArgsUniform<CodexNetDownloader.Configuration>();
-        uniformArgs.PrintHelp();
     }
 }

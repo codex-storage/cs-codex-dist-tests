@@ -4,6 +4,7 @@ namespace ArgsUniform
 {
     public class ArgsUniform<T>
     {
+        private readonly Action printAppInfo;
         private readonly object? defaultsProvider;
         private readonly IEnv.IEnv env;
         private readonly string[] args;
@@ -12,23 +13,24 @@ namespace ArgsUniform
         private const int envStart = 48;
         private const int descStart = 80;
 
-        public ArgsUniform(params string[] args)
-            : this(new IEnv.Env(), args)
+        public ArgsUniform(Action printAppInfo, params string[] args)
+            : this(printAppInfo, new IEnv.Env(), args)
         {
         }
 
-        public ArgsUniform(object defaultsProvider, params string[] args)
-            : this(defaultsProvider, new IEnv.Env(), args)
+        public ArgsUniform(Action printAppInfo, object defaultsProvider, params string[] args)
+            : this(printAppInfo, defaultsProvider, new IEnv.Env(), args)
         {
         }
 
-        public ArgsUniform(IEnv.IEnv env, params string[] args)
-            : this(null!, env, args)
+        public ArgsUniform(Action printAppInfo, IEnv.IEnv env, params string[] args)
+            : this(printAppInfo, null!, env, args)
         {
         }
 
-        public ArgsUniform(object defaultsProvider, IEnv.IEnv env, params string[] args)
+        public ArgsUniform(Action printAppInfo, object defaultsProvider, IEnv.IEnv env, params string[] args)
         {
+            this.printAppInfo = printAppInfo;
             this.defaultsProvider = defaultsProvider;
             this.env = env;
             this.args = args;
@@ -36,6 +38,13 @@ namespace ArgsUniform
 
         public T Parse(bool printResult = false)
         {
+            if (args.Any(a => a == "-h" || a == "--help" || a == "-?"))
+            {
+                printAppInfo();
+                PrintHelp();
+                throw new Exception();
+            }
+
             var result = Activator.CreateInstance<T>();
             var uniformProperties = typeof(T).GetProperties().Where(m => m.GetCustomAttributes(typeof(UniformAttribute), false).Length == 1).ToArray();
             var missingRequired = new List<PropertyInfo>();

@@ -21,18 +21,27 @@ namespace ContinuousTests
         [Uniform("kube-config", "kc", "KUBECONFIG", true, "Path to Kubeconfig file. Use 'null' (default) to use local cluster.")]
         public string KubeConfigFile { get; set; } = "null";
 
+        [Uniform("stop", "s", "STOPONFAIL", false, "If true, runner will stop on first test failure and download all cluster container logs. False by default.")]
+        public bool StopOnFailure { get; set; } = false;
+
         public CodexDeployment CodexDeployment { get; set; } = null!;
+
+        public TestRunnerLocation RunnerLocation { get; set; } = TestRunnerLocation.InternalToCluster;
     }
 
     public class ConfigLoader
     {
         public Configuration Load(string[] args)
         {
-            var uniformArgs = new ArgsUniform<Configuration>(args);
+            var uniformArgs = new ArgsUniform<Configuration>(PrintHelp, args);
 
             var result = uniformArgs.Parse(true);
             
             result.CodexDeployment = ParseCodexDeploymentJson(result.CodexDeploymentJson);
+            if (args.Any(a => a == "--external"))
+            {
+                result.RunnerLocation = TestRunnerLocation.ExternalToCluster;
+            }
 
             return result;
         }
@@ -42,6 +51,15 @@ namespace ContinuousTests
             var d = JsonConvert.DeserializeObject<CodexDeployment>(File.ReadAllText(filename))!;
             if (d == null) throw new Exception("Unable to parse " + filename);
             return d;
+        }
+
+        private static void PrintHelp()
+        {
+            var nl = Environment.NewLine;
+            Console.WriteLine("CodexNetDownloader lets you download all container logs given a codex-deployment.json file." + nl);
+
+            Console.WriteLine("CodexNetDownloader assumes you are running this tool from *inside* the Kubernetes cluster. " +
+                "If you are not running this from a container inside the cluster, add the argument '--external'." + nl);
         }
     }
 }

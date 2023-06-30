@@ -58,7 +58,7 @@ namespace ContinuousTests
             if (string.IsNullOrEmpty(test.CustomK8sNamespace)) return;
 
             log.Log($"Clearing namespace '{test.CustomK8sNamespace}'...");
-            var (workflowCreator, _) = k8SFactory.CreateFacilities(config.KubeConfigFile, config.LogPath, config.DataPath, test.CustomK8sNamespace, new DefaultTimeSet(), log);
+            var (workflowCreator, _) = k8SFactory.CreateFacilities(config.KubeConfigFile, config.LogPath, config.DataPath, test.CustomK8sNamespace, new DefaultTimeSet(), log, config.RunnerLocation);
             workflowCreator.CreateWorkflow().DeleteTestResources();
         }
     }

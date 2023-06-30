@@ -7,18 +7,27 @@ public class Program
         Console.WriteLine("Codex Continous-Test-Runner.");
         Console.WriteLine("Running...");
 
-        var cts = new CancellationTokenSource();
-        var runner = new ContinuousTestRunner(args, cts.Token);
+        var runner = new ContinuousTestRunner(args, Cancellation.Cts.Token);
 
         Console.CancelKeyPress += (sender, e) =>
         {
             Console.WriteLine("Stopping...");
             e.Cancel = true;
 
-            cts.Cancel();
+            Cancellation.Cts.Cancel();
         };
         
         runner.Run();
         Console.WriteLine("Done.");
+    }
+
+    public static class Cancellation
+    {
+        static Cancellation()
+        {
+            Cts = new CancellationTokenSource();
+        }
+
+        public static CancellationTokenSource Cts { get; } 
     }
 }

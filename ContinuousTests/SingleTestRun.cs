@@ -5,6 +5,7 @@ using Utils;
 using KubernetesWorkflow;
 using NUnit.Framework.Internal;
 using System.Reflection;
+using static Program;
 
 namespace ContinuousTests
 {
@@ -69,6 +70,14 @@ namespace ContinuousTests
             {
                 fixtureLog.Error("Test run failed with exception: " + ex);
                 fixtureLog.MarkAsFailed();
+
+                if (config.StopOnFailure)
+                {
+                    OverviewLog("Configured to stop on first failure. Downloading cluster logs...");
+                    DownloadClusterLogs();
+                    OverviewLog("Log download finished. Cancelling test runner...");
+                    Cancellation.Cts.Cancel();
+                }
             }
         }
 
@@ -115,6 +124,17 @@ namespace ContinuousTests
             Log(ex.ToString());
             OverviewLog(" > Test failed: " + ex.Message);
             throw ex;
+        }
+
+        private void DownloadClusterLogs()
+        {
+            var k8sFactory = new K8sFactory();
+            var (_, lifecycle) = k8sFactory.CreateFacilities(config.KubeConfigFile, config.LogPath, "dataPath", config.CodexDeployment.Metadata.KubeNamespace, new DefaultTimeSet(), new NullLog(), config.RunnerLocation);
+
+            foreach (var container in config.CodexDeployment.CodexContainers)
+            {
+                lifecycle.DownloadLog(container);
+            }
         }
 
         private Exception UnpackException(Exception exception)
@@ -192,7 +212,7 @@ namespace ContinuousTests
         private DistTestCore.Configuration CreateFileManagerConfiguration()
         {
             return new DistTestCore.Configuration(null, string.Empty, false, dataFolder,
-                CodexLogLevel.Error, TestRunnerLocation.ExternalToCluster);
+                CodexLogLevel.Error, config.RunnerLocation);
         }
     }
 }
