@@ -203,6 +203,7 @@ namespace ArgsUniform
                 {
                     if (uniformProperty.PropertyType == typeof(int?)) return AssignOptionalInt(result, uniformProperty, value);
                     if (uniformProperty.PropertyType.IsEnum) return AssignEnum(result, uniformProperty, value);
+                    if (uniformProperty.PropertyType == typeof(bool)) return AssignBool(result, uniformProperty, value);
                     
                     throw new NotSupportedException();
                 }
@@ -228,6 +229,15 @@ namespace ArgsUniform
                 return true;
             }
             return false;
+        }
+
+        private static bool AssignBool(T result, PropertyInfo uniformProperty, object value)
+        {
+            if (value != null)
+            {
+                uniformProperty.SetValue(result, true);
+            }
+            return true;
         }
 
         private string? GetFromArgs(string key)
