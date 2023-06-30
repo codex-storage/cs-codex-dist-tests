@@ -7,11 +7,12 @@ namespace ContinuousTests
 {
     public class CodexAccessFactory
     {
-        public CodexAccess[] Create(RunningContainer[] containers, BaseLog log, ITimeSet timeSet)
+        public CodexAccess[] Create(Configuration config, RunningContainer[] containers, BaseLog log, ITimeSet timeSet)
         {
             return containers.Select(container =>
             {
                 var address = container.ClusterExternalAddress;
+                if (config.RunnerLocation == TestRunnerLocation.InternalToCluster) address = container.ClusterInternalAddress;
                 return new CodexAccess(log, container, timeSet, address);
             }).ToArray();
         }

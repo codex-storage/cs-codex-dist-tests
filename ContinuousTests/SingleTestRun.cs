@@ -195,7 +195,7 @@ namespace ContinuousTests
         {
             var containers = SelectRandomContainers(number);
             fixtureLog.Log("Selected nodes: " + string.Join(",", containers.Select(c => c.Name)));
-            return codexNodeFactory.Create(containers, fixtureLog, handle.Test.TimeSet);
+            return codexNodeFactory.Create(config, containers, fixtureLog, handle.Test.TimeSet);
         }
 
         private RunningContainer[] SelectRandomContainers(int number)

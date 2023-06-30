@@ -55,7 +55,7 @@ namespace ContinuousTests
 
         private void CheckCodexNodes(BaseLog log, Configuration config)
         {
-            var nodes = codexNodeFactory.Create(config.CodexDeployment.CodexContainers, log, new DefaultTimeSet());
+            var nodes = codexNodeFactory.Create(config, config.CodexDeployment.CodexContainers, log, new DefaultTimeSet());
             var pass = true;
             foreach (var n in nodes)
             {
