@@ -28,17 +28,17 @@ namespace ContinuousTests
             this.ethereumAccountIndex = ethereumAccountIndex;
         }
 
-        public void RunNode(Action<CodexAccess, MarketplaceAccess> operation)
+        public void RunNode(Action<CodexAccess, MarketplaceAccess, TestLifecycle> operation)
         {
             RunNode(nodes.ToList().PickOneRandom(), operation, 0.TestTokens());
         }
 
-        public void RunNode(CodexAccess bootstrapNode, Action<CodexAccess, MarketplaceAccess> operation)
+        public void RunNode(CodexAccess bootstrapNode, Action<CodexAccess, MarketplaceAccess, TestLifecycle> operation)
         {
             RunNode(bootstrapNode, operation, 0.TestTokens());
         }
 
-        public void RunNode(CodexAccess bootstrapNode, Action<CodexAccess, MarketplaceAccess> operation, TestToken mintTestTokens)
+        public void RunNode(CodexAccess bootstrapNode, Action<CodexAccess, MarketplaceAccess, TestLifecycle> operation, TestToken mintTestTokens)
         {
             var (workflowCreator, lifecycle) = CreateFacilities();
             var flow = workflowCreator.CreateWorkflow();
@@ -49,6 +49,7 @@ namespace ContinuousTests
                 Assert.That(!string.IsNullOrEmpty(debugInfo.spr));
 
                 var startupConfig = new StartupConfig();
+                startupConfig.NameOverride = "TransientNode";
                 var codexStartConfig = new CodexStartupConfig(CodexLogLevel.Trace);
                 codexStartConfig.MarketplaceConfig = new MarketplaceInitialConfig(0.Eth(), 0.TestTokens(), false);
                 codexStartConfig.MarketplaceConfig.AccountIndexOverride = ethereumAccountIndex;
@@ -74,7 +75,7 @@ namespace ContinuousTests
 
                 try
                 {
-                    operation(codexAccess, marketAccess);
+                    operation(codexAccess, marketAccess, lifecycle);
                 }
                 catch
                 {

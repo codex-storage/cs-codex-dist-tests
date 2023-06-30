@@ -168,7 +168,7 @@ namespace ContinuousTests
         {
             Log(msg);
             var containerNames = $"({string.Join(",", nodes.Select(n => n.Container.Name))})";
-            overviewLog.Log( testName + ": " +  msg);
+            overviewLog.Log($"{containerNames} {testName}: {msg}");
         }
 
         private CodexAccess[] CreateRandomNodes(int number)

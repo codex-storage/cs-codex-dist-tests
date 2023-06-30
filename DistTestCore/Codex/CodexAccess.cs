@@ -80,7 +80,7 @@ namespace DistTestCore.Codex
 
         private Http Http(TimeSpan? timeoutOverride = null)
         {
-            return new Http(log, timeSet, Address, baseUrl: "/api/codex/v1", timeoutOverride);
+            return new Http(log, timeSet, Address, baseUrl: "/api/codex/v1", Container.Name, timeoutOverride);
         }
     }
 }
