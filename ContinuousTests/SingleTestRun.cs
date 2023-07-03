@@ -62,6 +62,7 @@ namespace ContinuousTests
         {
             try
             {
+                OverviewLog(" > Starting test. " + FuturesInfo());
                 RunTestMoments();
 
                 if (!config.KeepPassedTestLogs) fixtureLog.Delete();
@@ -112,7 +113,7 @@ namespace ContinuousTests
                     {
                         ThrowFailTest();
                     }
-                    OverviewLog(" > Test passed.");
+                    OverviewLog(" > Test passed. " + FuturesInfo());
                     return;
                 }
             }
@@ -122,8 +123,17 @@ namespace ContinuousTests
         {
             var ex = UnpackException(exceptions.First());
             Log(ex.ToString());
-            OverviewLog(" > Test failed: " + ex.Message);
+            OverviewLog($" > Test failed {FuturesInfo()}: " + ex.Message);
             throw ex;
+        }
+
+        private string FuturesInfo()
+        {
+            var containers = config.CodexDeployment.CodexContainers;
+            var nodes = codexNodeFactory.Create(config, containers, fixtureLog, handle.Test.TimeSet);
+            var f = nodes.Select(n => n.GetDebugFutures().ToString());
+            var msg = $"(Futures: [{string.Join(", ", f)}])";
+            return msg;
         }
 
         private void DownloadClusterLogs()

@@ -16,6 +16,11 @@ namespace DistTestCore.Codex
         public CodexDebugTableResponse table { get; set; } = new();
     }
 
+    public class CodexDebugFutures
+    {
+        public int futures { get; set; }
+    }
+
     public class CodexDebugTableResponse
     {
         public CodexDebugTableNodeResponse localNode { get; set; } = new();

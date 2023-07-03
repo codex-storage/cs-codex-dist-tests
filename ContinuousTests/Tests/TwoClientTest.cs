@@ -6,7 +6,7 @@ namespace ContinuousTests.Tests
     public class TwoClientTest : ContinuousTest
     {
         public override int RequiredNumberOfNodes => 2;
-        public override TimeSpan RunTestEvery => TimeSpan.FromHours(1);
+        public override TimeSpan RunTestEvery => TimeSpan.FromSeconds(30);
         public override TestFailMode TestFailMode => TestFailMode.StopAfterFirstFailure;
 
         private ContentId? cid;
@@ -21,7 +21,7 @@ namespace ContinuousTests.Tests
             Assert.That(cid, Is.Not.Null);
         }
 
-        [TestMoment(t: MinuteFive)]
+        [TestMoment(t: 10)]
         public void DownloadTestFile()
         {
             var dl = DownloadFile(Nodes[1], cid!);

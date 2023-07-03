@@ -48,6 +48,11 @@ namespace DistTestCore.Codex
             return result;
         }
 
+        public int GetDebugFutures()
+        {
+            return Http().HttpGetJson<CodexDebugFutures>("debug/futures").futures;
+        }
+
         public string UploadFile(FileStream fileStream)
         {
             return Http().HttpPostStream("upload", fileStream);
