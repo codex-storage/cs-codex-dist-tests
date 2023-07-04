@@ -34,6 +34,18 @@ namespace CodexNetDeployer
         [Uniform("log-level", "l", "LOGLEVEL", true, "Log level used by each Codex node. [Trace, Debug*, Info, Warn, Error]")]
         public CodexLogLevel CodexLogLevel { get; set; } = CodexLogLevel.Debug;
 
+        [Uniform("test-tokens", "tt", "TESTTOKENS", true, "Initial amount of test-tokens minted for each Codex node.")]
+        public int InitialTestTokens { get; set; } = int.MaxValue;
+
+        [Uniform("min-price", "mp", "MINPRICE", true, "Minimum price for the storage space for which contracts will be accepted.")]
+        public int MinPrice { get; set; }
+
+        [Uniform("max-collateral", "mc", "MAXCOLLATERAL", true, "Maximum collateral that will be placed for the total storage space.")]
+        public int MaxCollateral { get; set; }
+
+        [Uniform("max-duration", "md", "MAXDURATION", true, "Maximum duration in seconds for contracts which will be accepted.")]
+        public int MaxDuration { get; set; }
+
         public TestRunnerLocation RunnerLocation { get; set; } = TestRunnerLocation.InternalToCluster;
 
         public List<string> Validate()
@@ -59,6 +71,7 @@ namespace CodexNetDeployer
             {
                 if (p.PropertyType == typeof(string)) onString(p.Name, (string)p.GetValue(this)!);
                 if (p.PropertyType == typeof(int?)) onInt(p.Name, (int?)p.GetValue(this)!);
+                if (p.PropertyType == typeof(int)) onInt(p.Name, (int)p.GetValue(this)!);
             }
         }
 

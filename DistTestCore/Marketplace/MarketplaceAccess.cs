@@ -62,19 +62,19 @@ namespace DistTestCore.Marketplace
             return response;
         }
 
-        public string MakeStorageAvailable(ByteSize size, TestToken minPricePerBytePerSecond, TestToken maxCollateral, TimeSpan maxDuration)
+        public string MakeStorageAvailable(ByteSize totalSpace, TestToken minPriceForTotalSpace, TestToken maxCollateral, TimeSpan maxDuration)
         {
             var request = new CodexSalesAvailabilityRequest
             {
-                size = ToHexBigInt(size.SizeInBytes),
+                size = ToHexBigInt(totalSpace.SizeInBytes),
                 duration = ToHexBigInt(maxDuration.TotalSeconds),
                 maxCollateral = ToHexBigInt(maxCollateral),
-                minPrice = ToHexBigInt(minPricePerBytePerSecond)
+                minPrice = ToHexBigInt(minPriceForTotalSpace)
             };
 
             Log($"Making storage available... (" +
-                $"size: {size}, " +
-                $"minPricePerBytePerSecond: {minPricePerBytePerSecond}, " +
+                $"size: {totalSpace}, " +
+                $"minPricePerBytePerSecond: {minPriceForTotalSpace}, " +
                 $"maxCollateral: {maxCollateral}, " +
                 $"maxDuration: {Time.FormatDuration(maxDuration)})");
 
