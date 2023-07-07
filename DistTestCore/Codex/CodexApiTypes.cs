@@ -76,6 +76,11 @@ namespace DistTestCore.Codex
         public string address { get; set; } = string.Empty;
     }
 
+    public class CodexDebugThresholdBreaches
+    {
+        public string[] breaches { get; set; } = Array.Empty<string>();
+    }
+
     public class CodexSalesAvailabilityRequest
     {
         public string size { get; set; } = string.Empty;

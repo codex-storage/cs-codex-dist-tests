@@ -1,7 +1,6 @@
 ﻿using DistTestCore.Codex;
 using DistTestCore;
 using Logging;
-using NUnit.Framework.Internal;
 
 namespace ContinuousTests
 {
@@ -10,10 +9,12 @@ namespace ContinuousTests
         private readonly TestFactory testFactory = new TestFactory();
         private readonly CodexAccessFactory codexNodeFactory = new CodexAccessFactory();
         private readonly Configuration config;
+        private readonly CancellationToken cancelToken;
 
-        public StartupChecker(Configuration config)
+        public StartupChecker(Configuration config, CancellationToken cancelToken)
         {
             this.config = config;
+            this.cancelToken = cancelToken;
         }
 
         public void Check()
@@ -36,6 +37,8 @@ namespace ContinuousTests
             }
             foreach (var test in tests)
             {
+                cancelToken.ThrowIfCancellationRequested();
+
                 var handle = new TestHandle(test);
                 handle.GetEarliestMoment();
                 handle.GetLastMoment();
@@ -59,6 +62,8 @@ namespace ContinuousTests
             var pass = true;
             foreach (var n in nodes)
             {
+                cancelToken.ThrowIfCancellationRequested();
+
                 log.Log($"Checking '{n.Address.Host}'...");
 
                 if (EnsureOnline(n))

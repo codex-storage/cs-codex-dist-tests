@@ -15,7 +15,7 @@ namespace ContinuousTests
         public ContinuousTestRunner(string[] args, CancellationToken cancelToken)
         {
             config = configLoader.Load(args);
-            startupChecker = new StartupChecker(config);
+            startupChecker = new StartupChecker(config, cancelToken);
             this.cancelToken = cancelToken;
         }
 

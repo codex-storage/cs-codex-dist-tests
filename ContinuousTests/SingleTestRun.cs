@@ -62,7 +62,6 @@ namespace ContinuousTests
         {
             try
             {
-                OverviewLog(" > Starting test. " + FuturesInfo());
                 RunTestMoments();
 
                 if (!config.KeepPassedTestLogs) fixtureLog.Delete();
