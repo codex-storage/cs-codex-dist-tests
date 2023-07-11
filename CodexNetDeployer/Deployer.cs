@@ -101,10 +101,6 @@ namespace CodexNetDeployer
         private DeploymentMetadata CreateMetadata()
         {
             return new DeploymentMetadata(
-                codexImage: config.CodexImage,
-                gethImage: config.GethImage,
-                contractsImage: config.ContractsImage,
-                prometheusImage: config.MetricsImage,
                 kubeNamespace: config.KubeNamespace,
                 numberOfCodexNodes: config.NumberOfCodexNodes!.Value,
                 numberOfValidators: config.NumberOfValidators!.Value,

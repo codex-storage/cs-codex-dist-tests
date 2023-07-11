@@ -1,26 +1,12 @@
 ﻿using ArgsUniform;
 using DistTestCore;
 using DistTestCore.Codex;
-using DistTestCore.Marketplace;
-using DistTestCore.Metrics;
 
 namespace CodexNetDeployer
 {
     public class Configuration
     {
         public const int SecondsIn1Day = 24 * 60 * 60;
-
-        [Uniform("codex-image", "ci", "CODEXIMAGE", true, "Docker image of Codex.")]
-        public string CodexImage { get; set; } = CodexContainerRecipe.DockerImage;
-
-        [Uniform("geth-image", "gi", "GETHIMAGE", true, "Docker image of Geth.")]
-        public string GethImage { get; set; } = GethContainerRecipe.DockerImage;
-
-        [Uniform("contracts-image", "oi", "CONTRACTSIMAGE", true, "Docker image of Codex Contracts.")]
-        public string ContractsImage { get; set; } = CodexContractsContainerRecipe.DockerImage;
-
-        [Uniform("metrics-image", "mi", "METRICSIMAGE", true, "Docker image of Prometheus.")]
-        public string MetricsImage { get; set; } = PrometheusContainerRecipe.DockerImage;
 
         [Uniform("kube-config", "kc", "KUBECONFIG", false, "Path to Kubeconfig file. Use 'null' (default) to use local cluster.")]
         public string KubeConfigFile { get; set; } = "null";
@@ -55,12 +41,12 @@ namespace CodexNetDeployer
         [Uniform("max-duration", "md", "MAXDURATION", true, "Maximum duration in seconds for contracts which will be accepted.")]
         public int MaxDuration { get; set; }
 
-        [Uniform("record-metrics", "rm", "RECORDMETRICS", false, "If true, metrics will be collected for all Codex nodes.")]
-        public bool RecordMetrics { get; set; } = false;
-       
         [Uniform("block-ttl", "bt", "BLOCKTTL", false, "Block timeout in seconds. Default is 24 hours.")]
         public int BlockTTL { get; set; } = SecondsIn1Day;
 
+        [Uniform("record-metrics", "rm", "RECORDMETRICS", false, "If true, metrics will be collected for all Codex nodes.")]
+        public bool RecordMetrics { get; set; } = false;
+       
         public TestRunnerLocation RunnerLocation { get; set; } = TestRunnerLocation.InternalToCluster;
 
         public List<string> Validate()
