@@ -2,6 +2,7 @@
 using DistTestCore;
 using DistTestCore.Codex;
 using DistTestCore.Marketplace;
+using DistTestCore.Metrics;
 
 namespace CodexNetDeployer
 {
@@ -17,6 +18,9 @@ namespace CodexNetDeployer
 
         [Uniform("contracts-image", "oi", "CONTRACTSIMAGE", true, "Docker image of Codex Contracts.")]
         public string ContractsImage { get; set; } = CodexContractsContainerRecipe.DockerImage;
+
+        [Uniform("metrics-image", "mi", "METRICSIMAGE", true, "Docker image of Prometheus.")]
+        public string MetricsImage { get; set; } = PrometheusContainerRecipe.DockerImage;
 
         [Uniform("kube-config", "kc", "KUBECONFIG", false, "Path to Kubeconfig file. Use 'null' (default) to use local cluster.")]
         public string KubeConfigFile { get; set; } = "null";

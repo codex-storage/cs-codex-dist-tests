@@ -52,12 +52,9 @@ namespace CodexNetDeployer
                 if (container != null) codexContainers.Add(container);
             }
 
-            if (setup.MetricsEnabled)
-            {
-                StartMetricsService(lifecycle, setup, codexContainers);
-            }
+            var prometheusContainer = StartMetricsService(lifecycle, setup, codexContainers);
 
-            return new CodexDeployment(gethResults, codexContainers.ToArray(), CreateMetadata());
+            return new CodexDeployment(gethResults, codexContainers.ToArray(), prometheusContainer, CreateMetadata());
         }
 
         private (WorkflowCreator, TestLifecycle) CreateFacilities()
@@ -86,11 +83,13 @@ namespace CodexNetDeployer
             return (workflowCreator, lifecycle);
         }
 
-        private void StartMetricsService(TestLifecycle lifecycle, CodexSetup setup, List<RunningContainer> codexContainers)
+        private RunningContainer? StartMetricsService(TestLifecycle lifecycle, CodexSetup setup, List<RunningContainer> codexContainers)
         {
+            if (!setup.MetricsEnabled) return null;
+
             Log("Starting metrics service...");
             var runningContainers = new RunningContainers(null!, null!, codexContainers.ToArray());
-            lifecycle.PrometheusStarter.CollectMetricsFor(setup, runningContainers);
+            return lifecycle.PrometheusStarter.CollectMetricsFor(runningContainers).Containers.Single();
         }
 
         private string? GetKubeConfig(string kubeConfigFile)
@@ -105,6 +104,7 @@ namespace CodexNetDeployer
                 codexImage: config.CodexImage,
                 gethImage: config.GethImage,
                 contractsImage: config.ContractsImage,
+                prometheusImage: config.MetricsImage,
                 kubeNamespace: config.KubeNamespace,
                 numberOfCodexNodes: config.NumberOfCodexNodes!.Value,
                 numberOfValidators: config.NumberOfValidators!.Value,

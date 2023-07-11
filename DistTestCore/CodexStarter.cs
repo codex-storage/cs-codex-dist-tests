@@ -1,5 +1,6 @@
 ﻿using DistTestCore.Codex;
 using DistTestCore.Marketplace;
+using DistTestCore.Metrics;
 using KubernetesWorkflow;
 using Logging;
 
@@ -23,7 +24,7 @@ namespace DistTestCore
             var startupConfig = CreateStartupConfig(gethStartResult, codexSetup);
             var containers = StartCodexContainers(startupConfig, codexSetup.NumberOfNodes, codexSetup.Location);
 
-            var metricAccessFactory = lifecycle.PrometheusStarter.CollectMetricsFor(codexSetup, containers);
+            var metricAccessFactory = CollectMetrics(codexSetup, containers);
             
             var codexNodeFactory = new CodexNodeFactory(lifecycle, metricAccessFactory, gethStartResult.MarketplaceAccessFactory);
 
@@ -55,6 +56,14 @@ namespace DistTestCore
         {
             var workflow = CreateWorkflow();
             workflow.DownloadContainerLog(container, logHandler);
+        }
+
+        private IMetricsAccessFactory CollectMetrics(CodexSetup codexSetup, RunningContainers containers)
+        {
+            if (!codexSetup.MetricsEnabled) return new MetricsUnavailableAccessFactory();
+
+            var runningContainers = lifecycle.PrometheusStarter.CollectMetricsFor(containers);
+            return new CodexNodeMetricsAccessFactory(lifecycle, runningContainers);
         }
 
         private StartupConfig CreateStartupConfig(GethStartResult gethStartResult, CodexSetup codexSetup)
