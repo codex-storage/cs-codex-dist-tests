@@ -12,14 +12,16 @@ namespace DistTestCore
         private readonly ITimeSet timeSet;
         private readonly Address address;
         private readonly string baseUrl;
+        private readonly string? logAlias;
         private readonly TimeSpan? timeoutOverride;
 
-        public Http(BaseLog log, ITimeSet timeSet, Address address, string baseUrl, TimeSpan? timeoutOverride = null)
+        public Http(BaseLog log, ITimeSet timeSet, Address address, string baseUrl, string? logAlias = null, TimeSpan? timeoutOverride = null)
         {
             this.log = log;
             this.timeSet = timeSet;
             this.address = address;
             this.baseUrl = baseUrl;
+            this.logAlias = logAlias;
             this.timeoutOverride = timeoutOverride;
             if (!this.baseUrl.StartsWith("/")) this.baseUrl = "/" + this.baseUrl;
             if (!this.baseUrl.EndsWith("/")) this.baseUrl += "/";
@@ -113,7 +115,14 @@ namespace DistTestCore
 
         private void Log(string url, string message)
         {
-            log.Debug($"({url}) = '{message}'", 3);
+            if (logAlias != null)
+            {
+                log.Debug($"({logAlias})({url}) = '{message}'", 3);
+            }
+            else
+            {
+                log.Debug($"({url}) = '{message}'", 3);
+            }
         }
 
         private T Retry<T>(Func<T> operation, string description)

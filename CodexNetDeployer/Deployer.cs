@@ -36,6 +36,11 @@ namespace CodexNetDeployer
             Log("Geth started. Codex contracts deployed.");
             Log("Warning: It can take up to 45 minutes for the Geth node to finish unlocking all if its 1000 preconfigured accounts.");
 
+            // It takes a second for the geth node to unlock a single account. Let's assume 3.
+            // We can't start the codex nodes until their accounts are definitely unlocked. So
+            // We wait:
+            Thread.Sleep(TimeSpan.FromSeconds(3.0 * config.NumberOfCodexNodes!.Value));
+
             Log("Starting Codex nodes...");
 
             // Each node must have its own IP, so it needs it own pod. Start them 1 at a time.

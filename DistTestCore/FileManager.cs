@@ -1,6 +1,5 @@
 ﻿using Logging;
 using NUnit.Framework;
-using System.Runtime.InteropServices;
 using Utils;
 
 namespace DistTestCore

@@ -11,13 +11,7 @@ public class Program
         var nl = Environment.NewLine;
         Console.WriteLine("CodexNetDeployer" + nl);
 
-        if (args.Any(a => a == "-h" || a == "--help" || a == "-?"))
-        {
-            PrintHelp();
-            return;
-        }
-
-        var uniformArgs = new ArgsUniform<Configuration>(args);
+        var uniformArgs = new ArgsUniform<Configuration>(PrintHelp, args);
         var config = uniformArgs.Parse(true);
         
         if (args.Any(a => a == "--external"))
@@ -61,8 +55,5 @@ public class Program
 
         Console.WriteLine("CodexNetDeployer assumes you are running this tool from *inside* the Kubernetes cluster you want to deploy to. " +
             "If you are not running this from a container inside the cluster, add the argument '--external'." + nl);
-
-        var uniformArgs = new ArgsUniform<Configuration>();
-        uniformArgs.PrintHelp();
     }
 }

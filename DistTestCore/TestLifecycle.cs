@@ -9,12 +9,12 @@ namespace DistTestCore
     {
         private DateTime testStart = DateTime.MinValue;
 
-        public TestLifecycle(TestLog log, Configuration configuration, ITimeSet timeSet)
+        public TestLifecycle(BaseLog log, Configuration configuration, ITimeSet timeSet)
             : this(log, configuration, timeSet, new WorkflowCreator(log, configuration.GetK8sConfiguration(timeSet)))
         {
         }
 
-        public TestLifecycle(TestLog log, Configuration configuration, ITimeSet timeSet, WorkflowCreator workflowCreator)
+        public TestLifecycle(BaseLog log, Configuration configuration, ITimeSet timeSet, WorkflowCreator workflowCreator)
         {
             Log = log;
             Configuration = configuration;
@@ -27,7 +27,7 @@ namespace DistTestCore
             testStart = DateTime.UtcNow;
         }
 
-        public TestLog Log { get; }
+        public BaseLog Log { get; }
         public Configuration Configuration { get; }
         public ITimeSet TimeSet { get; }
         public FileManager FileManager { get; }

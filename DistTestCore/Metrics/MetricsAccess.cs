@@ -14,12 +14,12 @@ namespace DistTestCore.Metrics
 
     public class MetricsAccess : IMetricsAccess
     {
-        private readonly TestLog log;
+        private readonly BaseLog log;
         private readonly ITimeSet timeSet;
         private readonly MetricsQuery query;
         private readonly RunningContainer node;
 
-        public MetricsAccess(TestLog log, ITimeSet timeSet, MetricsQuery query, RunningContainer node)
+        public MetricsAccess(BaseLog log, ITimeSet timeSet, MetricsQuery query, RunningContainer node)
         {
             this.log = log;
             this.timeSet = timeSet;
