@@ -27,6 +27,7 @@ namespace CodexNetDeployer
             // We trick the Geth companion node into unlocking all of its accounts, by saying we want to start 999 codex nodes.
             var setup = new CodexSetup(999, config.CodexLogLevel);
             setup.WithStorageQuota(config.StorageQuota!.Value.MB()).EnableMarketplace(0.TestTokens());
+            setup.MetricsEnabled = config.RecordMetrics;
 
             Log("Creating Geth instance and deploying contracts...");
             var gethStarter = new GethStarter(lifecycle, workflowCreator);
@@ -44,6 +45,11 @@ namespace CodexNetDeployer
             {
                 var container = codexStarter.Start(i);
                 if (container != null) codexContainers.Add(container);
+            }
+
+            if (setup.MetricsEnabled)
+            {
+                StartMetricsService(lifecycle, setup, codexContainers);
             }
 
             return new CodexDeployment(gethResults, codexContainers.ToArray(), CreateMetadata());
@@ -73,6 +79,13 @@ namespace CodexNetDeployer
             var lifecycle = new TestLifecycle(log, lifecycleConfig, timeset, workflowCreator);
 
             return (workflowCreator, lifecycle);
+        }
+
+        private void StartMetricsService(TestLifecycle lifecycle, CodexSetup setup, List<RunningContainer> codexContainers)
+        {
+            Log("Starting metrics service...");
+            var runningContainers = new RunningContainers(null!, null!, codexContainers.ToArray());
+            lifecycle.PrometheusStarter.CollectMetricsFor(setup, runningContainers);
         }
 
         private string? GetKubeConfig(string kubeConfigFile)

@@ -46,6 +46,9 @@ namespace CodexNetDeployer
         [Uniform("max-duration", "md", "MAXDURATION", true, "Maximum duration in seconds for contracts which will be accepted.")]
         public int MaxDuration { get; set; }
 
+        [Uniform("record-metrics", "rm", "RECORDMETRICS", false, "If true, metrics will be collected for all Codex nodes.")]
+        public bool RecordMetrics { get; set; } = false;
+
         public TestRunnerLocation RunnerLocation { get; set; } = TestRunnerLocation.InternalToCluster;
 
         public List<string> Validate()

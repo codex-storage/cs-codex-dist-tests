@@ -20,7 +20,7 @@ namespace CodexNetDeployer
             this.workflowCreator = workflowCreator;
             this.lifecycle = lifecycle;
             this.gethResult = gethResult;
-            this.validatorsLeft = numberOfValidators;
+            validatorsLeft = numberOfValidators;
         }
 
         public RunningContainer? Start(int i)
