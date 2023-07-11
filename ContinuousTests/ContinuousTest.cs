@@ -71,10 +71,9 @@ namespace ContinuousTests
                 return node.UploadFile(fileStream);
             });
 
-            if (response.StartsWith(UploadFailedMessage))
-            {
-                return null;
-            }
+            if (string.IsNullOrEmpty(response)) return null;
+            if (response.StartsWith(UploadFailedMessage)) return null;
+            
             Log.Log($"Uploaded file. Received contentId: '{response}'.");
             return new ContentId(response);
         }

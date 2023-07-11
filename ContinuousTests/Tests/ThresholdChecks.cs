@@ -10,6 +10,8 @@ namespace ContinuousTests.Tests
         public override TimeSpan RunTestEvery => TimeSpan.FromSeconds(30);
         public override TestFailMode TestFailMode => TestFailMode.StopAfterFirstFailure;
 
+        private static readonly List<string> previousBreaches = new List<string>();
+
         [TestMoment(t: 0)]
         public void CheckAllThresholds()
         {
@@ -22,7 +24,22 @@ namespace ContinuousTests.Tests
             var breaches = n.GetDebugThresholdBreaches();
             if (breaches.breaches.Any())
             {
-                Assert.Fail(string.Join(",", breaches.breaches.Select(b => FormatBreach(n, b))));
+                var newBreaches = new List<string>();
+                foreach (var b in breaches.breaches)
+                {
+                    if (!previousBreaches.Contains(b))
+                    {
+                        newBreaches.Add(b);
+                        previousBreaches.Add(b);
+                    }
+                }
+
+                if (newBreaches.Any())
+                {
+                    Assert.Fail(string.Join(",", newBreaches.Select(b => FormatBreach(n, b))));
+
+                    Program.Cancellation.Cts.Cancel();
+                }
             }
         }
 
