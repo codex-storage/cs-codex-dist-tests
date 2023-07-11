@@ -91,6 +91,10 @@
    - name: cs-codex-dist-tests
      image: codexstorage/cs-codex-dist-tests:sha-671ee4e
      env:
+     - name: RUNNERLOCATION
+       value: InternalToCluster
+     - name: KUBECONFIG
+       value: /opt/kubeconfig.yaml
      - name: CONFIG
        value: "/opt/Configuration.cs"
      - name: CONFIG_SHOW
