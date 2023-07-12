@@ -34,10 +34,10 @@ namespace DistTestCore.Marketplace
         {
             var request = new CodexSalesRequestStorageRequest
             {
-                duration = ToHexBigInt(duration.TotalSeconds),
-                proofProbability = ToHexBigInt(proofProbability),
-                reward = ToHexBigInt(pricePerSlotPerSecond),
-                collateral = ToHexBigInt(requiredCollateral),
+                duration = ToDecInt(duration.TotalSeconds),
+                proofProbability = ToDecInt(proofProbability),
+                reward = ToDecInt(pricePerSlotPerSecond),
+                collateral = ToDecInt(requiredCollateral),
                 expiry = null,
                 nodes = minRequiredNumberOfNodes,
                 tolerance = null,
@@ -62,19 +62,19 @@ namespace DistTestCore.Marketplace
             return response;
         }
 
-        public string MakeStorageAvailable(ByteSize totalSpace, TestToken minPriceForTotalSpace, TestToken maxCollateral, TimeSpan maxDuration)
+        public string MakeStorageAvailable(ByteSize size, TestToken minPricePerBytePerSecond, TestToken maxCollateral, TimeSpan maxDuration)
         {
             var request = new CodexSalesAvailabilityRequest
             {
-                size = ToHexBigInt(totalSpace.SizeInBytes),
-                duration = ToHexBigInt(maxDuration.TotalSeconds),
-                maxCollateral = ToHexBigInt(maxCollateral),
-                minPrice = ToHexBigInt(minPriceForTotalSpace)
+                size = ToDecInt(size.SizeInBytes),
+                duration = ToDecInt(maxDuration.TotalSeconds),
+                maxCollateral = ToDecInt(maxCollateral),
+                minPrice = ToDecInt(minPricePerBytePerSecond)
             };
 
             Log($"Making storage available... (" +
-                $"size: {totalSpace}, " +
-                $"minPricePerBytePerSecond: {minPriceForTotalSpace}, " +
+                $"size: {size}, " +
+                $"minPricePerBytePerSecond: {minPricePerBytePerSecond}, " +
                 $"maxCollateral: {maxCollateral}, " +
                 $"maxDuration: {Time.FormatDuration(maxDuration)})");
 
@@ -85,15 +85,16 @@ namespace DistTestCore.Marketplace
             return response.id;
         }
 
-        private string ToHexBigInt(double d)
+        private string ToDecInt(double d)
         {
-            return "0x" + string.Format("{0:X}", Convert.ToInt64(d));
+            var i = new BigInteger(d);
+            return i.ToString("D");
         }
 
-        public string ToHexBigInt(TestToken t)
+        public string ToDecInt(TestToken t)
         {
-            var bigInt = new BigInteger(t.Amount);
-            return "0x" + bigInt.ToString("X");
+            var i = new BigInteger(t.Amount);
+            return i.ToString("D");
         }
 
         public void AssertThatBalance(IResolveConstraint constraint, string message = "")
