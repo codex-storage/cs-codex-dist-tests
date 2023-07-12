@@ -1,15 +1,16 @@
 ﻿using DistTestCore.Marketplace;
 using KubernetesWorkflow;
+using System.Net.Sockets;
 
 namespace DistTestCore.Codex
 {
     public class CodexContainerRecipe : ContainerRecipeFactory
     {
 #if Arm64
-            public const string DockerImage = "codexstorage/nim-codex:sha-7b88ea0";
+        public const string DockerImage = "codexstorage/nim-codex:sha-f053135";
 #else
-        public const string DockerImage = "thatbenbierens/nim-codex:dhting";
-        //public const string DockerImage = "codexstorage/nim-codex:sha-7b88ea0";
+        //public const string DockerImage = "thatbenbierens/nim-codex:dhting";
+        public const string DockerImage = "codexstorage/nim-codex:sha-f053135";
 #endif
         public const string MetricsPortTag = "metrics_port";
         public const string DiscoveryPortTag = "discovery-port";
@@ -24,21 +25,26 @@ namespace DistTestCore.Codex
         {
             var config = startupConfig.Get<CodexStartupConfig>();
 
-            AddExposedPortAndVar("API_PORT");
-            AddEnvVar("DATA_DIR", $"datadir{ContainerNumber}");
-            AddInternalPortAndVar("DISC_PORT", DiscoveryPortTag);
-            AddEnvVar("LOG_LEVEL", config.LogLevel.ToString()!.ToUpperInvariant());
+            AddExposedPortAndVar("CODEX_API_PORT");
+            AddEnvVar("CODEX_API_BINDADDR", "0.0.0.0");
+
+            AddEnvVar("CODEX_DATA_DIR", $"datadir{ContainerNumber}");
+            AddInternalPortAndVar("CODEX_DISC_PORT", DiscoveryPortTag);
+            AddEnvVar("CODEX_LOG_LEVEL", config.LogLevel.ToString()!.ToUpperInvariant());
+
+            // This makes the node announce itself to its local (pod) IP address.
+            AddEnvVar("CODEX_NAT_ADDR", "$(hostname --ip-address)");
 
             var listenPort = AddInternalPort();
-            AddEnvVar("LISTEN_ADDRS", $"/ip4/0.0.0.0/tcp/{listenPort.Number}");
+            AddEnvVar("CODEX_LISTEN_ADDRS", $"/ip4/0.0.0.0/tcp/{listenPort.Number}");
 
             if (!string.IsNullOrEmpty(config.BootstrapSpr))
             {
-                AddEnvVar("BOOTSTRAP_SPR", config.BootstrapSpr);
+                AddEnvVar("CODEX_BOOTSTRAP_NODE", config.BootstrapSpr);
             }
             if (config.StorageQuota != null)
             {
-                AddEnvVar("STORAGE_QUOTA", config.StorageQuota.SizeInBytes.ToString()!);
+                AddEnvVar("CODEX_STORAGE_QUOTA", config.StorageQuota.SizeInBytes.ToString()!);
             }
             if (config.BlockTTL != null)
             {
@@ -46,8 +52,9 @@ namespace DistTestCore.Codex
             }
             if (config.MetricsEnabled)
             {
-                AddEnvVar("METRICS_ADDR", "0.0.0.0");
-                AddInternalPortAndVar("METRICS_PORT", tag: MetricsPortTag);
+                AddEnvVar("CODEX_METRICS", "true");
+                AddEnvVar("CODEX_METRICS_ADDRESS", "0.0.0.0");
+                AddInternalPortAndVar("CODEX_METRICS_PORT", tag: MetricsPortTag);
             }
 
             if (config.MarketplaceConfig != null)
@@ -60,14 +67,14 @@ namespace DistTestCore.Codex
                 var ip = companionNode.RunningContainer.Pod.PodInfo.Ip;
                 var port = companionNode.RunningContainer.Recipe.GetPortByTag(GethContainerRecipe.HttpPortTag).Number;
 
-                AddEnvVar("ETH_PROVIDER", $"ws://{ip}:{port}");
-                AddEnvVar("ETH_ACCOUNT", companionNodeAccount.Account);
-                AddEnvVar("ETH_MARKETPLACE_ADDRESS", gethConfig.MarketplaceNetwork.Marketplace.Address);
-                AddEnvVar("PERSISTENCE", "1");
+                AddEnvVar("CODEX_ETH_PROVIDER", $"ws://{ip}:{port}");
+                AddEnvVar("CODEX_ETH_ACCOUNT", companionNodeAccount.Account);
+                AddEnvVar("CODEX_MARKETPLACE_ADDRESS", gethConfig.MarketplaceNetwork.Marketplace.Address);
+                AddEnvVar("CODEX_PERSISTENCE", "true");
 
                 if (config.MarketplaceConfig.IsValidator)
                 {
-                    AddEnvVar("VALIDATOR", "1");
+                    AddEnvVar("CODEX_VALIDATOR", "true");
                 }
             }
         }
