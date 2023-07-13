@@ -33,7 +33,7 @@ namespace DistTestCore.Codex
             AddEnvVar("CODEX_LOG_LEVEL", config.LogLevel.ToString()!.ToUpperInvariant());
 
             // This makes the node announce itself to its local (pod) IP address.
-            AddEnvVar("CODEX_NAT_ADDR", "$(hostname --ip-address)");
+            AddEnvVar("NAT_IP_AUTO", "true");
 
             var listenPort = AddInternalPort();
             AddEnvVar("CODEX_LISTEN_ADDRS", $"/ip4/0.0.0.0/tcp/{listenPort.Number}");
