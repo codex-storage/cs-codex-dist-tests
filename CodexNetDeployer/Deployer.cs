@@ -27,6 +27,7 @@ namespace CodexNetDeployer
             // We trick the Geth companion node into unlocking all of its accounts, by saying we want to start 999 codex nodes.
             var setup = new CodexSetup(999, config.CodexLogLevel);
             setup.WithStorageQuota(config.StorageQuota!.Value.MB()).EnableMarketplace(0.TestTokens());
+            setup.MetricsEnabled = config.RecordMetrics;
 
             Log("Creating Geth instance and deploying contracts...");
             var gethStarter = new GethStarter(lifecycle, workflowCreator);
@@ -51,7 +52,9 @@ namespace CodexNetDeployer
                 if (container != null) codexContainers.Add(container);
             }
 
-            return new CodexDeployment(gethResults, codexContainers.ToArray(), CreateMetadata());
+            var prometheusContainer = StartMetricsService(lifecycle, setup, codexContainers);
+
+            return new CodexDeployment(gethResults, codexContainers.ToArray(), prometheusContainer, CreateMetadata());
         }
 
         private (WorkflowCreator, TestLifecycle) CreateFacilities()
@@ -80,6 +83,15 @@ namespace CodexNetDeployer
             return (workflowCreator, lifecycle);
         }
 
+        private RunningContainer? StartMetricsService(TestLifecycle lifecycle, CodexSetup setup, List<RunningContainer> codexContainers)
+        {
+            if (!setup.MetricsEnabled) return null;
+
+            Log("Starting metrics service...");
+            var runningContainers = new RunningContainers(null!, null!, codexContainers.ToArray());
+            return lifecycle.PrometheusStarter.CollectMetricsFor(runningContainers).Containers.Single();
+        }
+
         private string? GetKubeConfig(string kubeConfigFile)
         {
             if (string.IsNullOrEmpty(kubeConfigFile) || kubeConfigFile.ToLowerInvariant() == "null") return null;
@@ -89,9 +101,6 @@ namespace CodexNetDeployer
         private DeploymentMetadata CreateMetadata()
         {
             return new DeploymentMetadata(
-                codexImage: config.CodexImage,
-                gethImage: config.GethImage,
-                contractsImage: config.ContractsImage,
                 kubeNamespace: config.KubeNamespace,
                 numberOfCodexNodes: config.NumberOfCodexNodes!.Value,
                 numberOfValidators: config.NumberOfValidators!.Value,

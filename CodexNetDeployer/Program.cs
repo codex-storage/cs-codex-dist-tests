@@ -29,6 +29,13 @@ public class Program
             return;
         }
 
+        if (!args.Any(a => a == "-y"))
+        {
+            Console.WriteLine("Does the above config look good? [y/n]");
+            if (Console.ReadLine()!.ToLowerInvariant() != "y") return;
+            Console.WriteLine("I think so too.");
+        }
+
         var deployer = new Deployer(config);
         var deployment = deployer.Deploy();
 

@@ -64,9 +64,9 @@ namespace ContinuousTests
             {
                 cancelToken.ThrowIfCancellationRequested();
 
-                log.Log($"Checking '{n.Address.Host}'...");
+                log.Log($"Checking {n.Container.Name} @ '{n.Address.Host}:{n.Address.Port}'...");
 
-                if (EnsureOnline(n))
+                if (EnsureOnline(log, n))
                 {
                     log.Log("OK");
                 }
@@ -82,12 +82,14 @@ namespace ContinuousTests
             }
         }
 
-        private bool EnsureOnline(CodexAccess n)
+        private bool EnsureOnline(BaseLog log, CodexAccess n)
         {
             try
             {
                 var info = n.GetDebugInfo();
                 if (info == null || string.IsNullOrEmpty(info.id)) return false;
+
+                log.Log($"Codex version: '{info.codex.version}' revision: '{info.codex.revision}'");
             }
             catch
             {

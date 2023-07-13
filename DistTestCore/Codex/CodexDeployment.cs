@@ -5,26 +5,25 @@ namespace DistTestCore.Codex
 {
     public class CodexDeployment
     {
-        public CodexDeployment(GethStartResult gethStartResult, RunningContainer[] codexContainers, DeploymentMetadata metadata)
+        public CodexDeployment(GethStartResult gethStartResult, RunningContainer[] codexContainers, RunningContainer? prometheusContainer, DeploymentMetadata metadata)
         {
             GethStartResult = gethStartResult;
             CodexContainers = codexContainers;
+            PrometheusContainer = prometheusContainer;
             Metadata = metadata;
         }
 
         public GethStartResult GethStartResult { get; }
         public RunningContainer[] CodexContainers { get; }
+        public RunningContainer? PrometheusContainer { get; }
         public DeploymentMetadata Metadata { get; }
     }
 
     public class DeploymentMetadata
     {
-        public DeploymentMetadata(string codexImage, string gethImage, string contractsImage, string kubeNamespace, int numberOfCodexNodes, int numberOfValidators, int storageQuotaMB, CodexLogLevel codexLogLevel, int initialTestTokens, int minPrice, int maxCollateral, int maxDuration)
+        public DeploymentMetadata(string kubeNamespace, int numberOfCodexNodes, int numberOfValidators, int storageQuotaMB, CodexLogLevel codexLogLevel, int initialTestTokens, int minPrice, int maxCollateral, int maxDuration)
         {
             DeployDateTimeUtc = DateTime.UtcNow;
-            CodexImage = codexImage;
-            GethImage = gethImage;
-            ContractsImage = contractsImage;
             KubeNamespace = kubeNamespace;
             NumberOfCodexNodes = numberOfCodexNodes;
             NumberOfValidators = numberOfValidators;
@@ -36,10 +35,7 @@ namespace DistTestCore.Codex
             MaxDuration = maxDuration;
         }
 
-        public string CodexImage { get; }
         public DateTime DeployDateTimeUtc { get; }
-        public string GethImage { get; }
-        public string ContractsImage { get; }
         public string KubeNamespace { get; }
         public int NumberOfCodexNodes { get; }
         public int NumberOfValidators { get; }
