@@ -1,11 +1,9 @@
 ﻿using NUnit.Framework;
-using Utils;
 
 namespace Logging
 {
     public class TestLog : BaseLog
     {
-        private readonly NumberSource subfileNumberSource = new NumberSource(0);
         private readonly string methodName;
         private readonly string fullName;
 
@@ -18,12 +16,7 @@ namespace Logging
             Log($"*** Begin: {methodName}");
         }
 
-        public LogFile CreateSubfile(string ext = "log")
-        {
-            return new LogFile($"{fullName}_{GetSubfileNumber()}", ext);
-        }
-
-        public void EndTest()
+        public override void EndTest()
         {
             var result = TestContext.CurrentContext.Result;
 
@@ -40,9 +33,9 @@ namespace Logging
             }
         }
 
-        protected override LogFile CreateLogFile()
+        protected override string GetFullName()
         {
-            return new LogFile(fullName, "log");
+            return fullName;
         }
 
         private string GetMethodName(string name)
@@ -51,11 +44,6 @@ namespace Logging
             var test = TestContext.CurrentContext.Test;
             var args = FormatArguments(test);
             return $"{test.MethodName}{args}";
-        }
-
-        private string GetSubfileNumber()
-        {
-            return subfileNumberSource.GetNextNumber().ToString().PadLeft(6, '0');
         }
 
         private static string FormatArguments(TestContext.TestAdapter test)

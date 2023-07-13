@@ -50,7 +50,7 @@ namespace DistTestCore.Marketplace
                 $"proofProbability: {proofProbability}, " +
                 $"duration: {Time.FormatDuration(duration)})");
 
-            var response = codexAccess.Node.RequestStorage(request, contentId.Id);
+            var response = codexAccess.RequestStorage(request, contentId.Id);
 
             if (response == "Purchasing not available")
             {
@@ -62,23 +62,23 @@ namespace DistTestCore.Marketplace
             return response;
         }
 
-        public string MakeStorageAvailable(ByteSize size, TestToken minPricePerBytePerSecond, TestToken maxCollateral, TimeSpan maxDuration)
+        public string MakeStorageAvailable(ByteSize totalSpace, TestToken minPriceForTotalSpace, TestToken maxCollateral, TimeSpan maxDuration)
         {
             var request = new CodexSalesAvailabilityRequest
             {
-                size = ToDecInt(size.SizeInBytes),
+                size = ToDecInt(totalSpace.SizeInBytes),
                 duration = ToDecInt(maxDuration.TotalSeconds),
                 maxCollateral = ToDecInt(maxCollateral),
-                minPrice = ToDecInt(minPricePerBytePerSecond)
+                minPrice = ToDecInt(minPriceForTotalSpace)
             };
 
             Log($"Making storage available... (" +
-                $"size: {size}, " +
-                $"minPricePerBytePerSecond: {minPricePerBytePerSecond}, " +
+                $"size: {totalSpace}, " +
+                $"minPriceForTotalSpace: {minPriceForTotalSpace}, " +
                 $"maxCollateral: {maxCollateral}, " +
                 $"maxDuration: {Time.FormatDuration(maxDuration)})");
 
-            var response = codexAccess.Node.SalesAvailability(request);
+            var response = codexAccess.SalesAvailability(request);
 
             Log($"Storage successfully made available. Id: {response.id}");
 

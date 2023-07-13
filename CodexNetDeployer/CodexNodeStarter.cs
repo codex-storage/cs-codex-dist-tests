@@ -34,38 +34,46 @@ namespace CodexNetDeployer
             var containers = workflow.Start(1, Location.Unspecified, new CodexContainerRecipe(), workflowStartup);
 
             var container = containers.Containers.First();
-            var codexAccess = new CodexAccess(lifecycle, container);
-
+            var codexAccess = new CodexAccess(lifecycle.Log, container, lifecycle.TimeSet, lifecycle.Configuration.GetAddress(container));
             var account = gethResult.MarketplaceNetwork.Bootstrap.AllAccounts.Accounts[i];
             var tokenAddress = gethResult.MarketplaceNetwork.Marketplace.TokenAddress;
             var marketAccess = new MarketplaceAccess(lifecycle, gethResult.MarketplaceNetwork, account, codexAccess);
 
-            var debugInfo = codexAccess.Node.GetDebugInfo();
-            if (!string.IsNullOrWhiteSpace(debugInfo.spr))
+            try
             {
-                Console.Write("Online\t");
-
-                var interaction = gethResult.MarketplaceNetwork.Bootstrap.StartInteraction(lifecycle);
-                interaction.MintTestTokens(new[] { account.Account }, config.InitialTestTokens, tokenAddress);
-                Console.Write("Tokens minted\t");
-
-                var response = marketAccess.MakeStorageAvailable(
-                    totalSpace: (config.StorageQuota!.Value - 1).MB(),
-                    minPriceForTotalSpace: config.MinPrice.TestTokens(),
-                    maxCollateral: config.MaxCollateral.TestTokens(),
-                    maxDuration: TimeSpan.FromSeconds(config.MaxDuration));
-
-                if (!string.IsNullOrEmpty(response))
+                var debugInfo = codexAccess.GetDebugInfo();
+                if (!string.IsNullOrWhiteSpace(debugInfo.spr))
                 {
-                    Console.Write("Storage available\tOK" + Environment.NewLine);
+                    Console.Write("Online\t");
 
-                    if (string.IsNullOrEmpty(bootstrapSpr)) bootstrapSpr = debugInfo.spr;
-                    validatorsLeft--;
-                    return container;
+                    var interaction = gethResult.MarketplaceNetwork.Bootstrap.StartInteraction(lifecycle);
+                    interaction.MintTestTokens(new[] { account.Account }, config.InitialTestTokens, tokenAddress);
+                    Console.Write("Tokens minted\t");
+
+                    var response = marketAccess.MakeStorageAvailable(
+                        totalSpace: config.StorageSell!.Value.MB(),
+                        minPriceForTotalSpace: config.MinPrice.TestTokens(),
+                        maxCollateral: config.MaxCollateral.TestTokens(),
+                        maxDuration: TimeSpan.FromSeconds(config.MaxDuration));
+
+                    if (!string.IsNullOrEmpty(response))
+                    {
+                        Console.Write("Storage available\tOK" + Environment.NewLine);
+
+                        if (string.IsNullOrEmpty(bootstrapSpr)) bootstrapSpr = debugInfo.spr;
+                        validatorsLeft--;
+                        return container;
+                    }
                 }
             }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Exception:" + ex.ToString());
+            }
 
-            Console.Write("Unknown failure." + Environment.NewLine);
+            Console.Write("Unknown failure. Downloading container log." + Environment.NewLine);
+            lifecycle.DownloadLog(container);
+
             return null;
         }
 
@@ -78,6 +86,10 @@ namespace CodexNetDeployer
             var marketplaceConfig = new MarketplaceInitialConfig(100000.Eth(), 0.TestTokens(), validatorsLeft > 0);
             marketplaceConfig.AccountIndexOverride = i;
             codexStart.MarketplaceConfig = marketplaceConfig;
+            if (config.BlockTTL != Configuration.SecondsIn1Day)
+            {
+                codexStart.BlockTTL = config.BlockTTL;
+            }
 
             return codexStart;
         }

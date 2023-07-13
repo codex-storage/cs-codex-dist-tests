@@ -21,9 +21,14 @@
             // env var: "AAA=BBB"
             var args = "--ccc=ddd";
 
-            var uniform = new ArgsUniform<Args>(new DefaultsProvider(), args);
+            var uniform = new ArgsUniform<Args>(PrintHelp, new DefaultsProvider(), args);
 
             var aaa = uniform.Parse();
+        }
+
+        private static void PrintHelp()
+        {
+            Console.WriteLine("Help text!");
         }
     }
 }

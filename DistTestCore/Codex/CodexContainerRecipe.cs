@@ -46,6 +46,10 @@ namespace DistTestCore.Codex
             {
                 AddEnvVar("CODEX_STORAGE_QUOTA", config.StorageQuota.SizeInBytes.ToString()!);
             }
+            if (config.BlockTTL != null)
+            {
+                AddEnvVar("BLOCK_TTL", config.BlockTTL.ToString()!);
+            }
             if (config.MetricsEnabled)
             {
                 AddEnvVar("CODEX_METRICS", "true");

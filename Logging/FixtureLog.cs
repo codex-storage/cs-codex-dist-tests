@@ -28,9 +28,9 @@ namespace Logging
             Directory.Delete(fullName, true);
         }
 
-        protected override LogFile CreateLogFile()
+        protected override string GetFullName()
         {
-            return new LogFile(fullName, "log");
+            return fullName;
         }
 
         private string DetermineFolder(LogConfig config)
