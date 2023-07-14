@@ -22,12 +22,12 @@ namespace DistTestCore.Codex
 
         public CodexDebugResponse GetDebugInfo()
         {
-            return Http(TimeSpan.FromSeconds(2)).HttpGetJson<CodexDebugResponse>("debug/info");
+            return Http(TimeSpan.FromSeconds(60)).HttpGetJson<CodexDebugResponse>("debug/info");
         }
 
         public CodexDebugPeerResponse GetDebugPeer(string peerId)
         {
-            return GetDebugPeer(peerId, TimeSpan.FromSeconds(2));
+            return GetDebugPeer(peerId, TimeSpan.FromSeconds(10));
         }
 
         public CodexDebugPeerResponse GetDebugPeer(string peerId, TimeSpan timeout)

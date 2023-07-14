@@ -127,16 +127,18 @@ namespace DistTestCore
 
         private T Retry<T>(Func<T> operation, string description)
         {
-            return Time.Retry(operation, timeSet.HttpCallRetryTimeout(), timeSet.HttpCallRetryDelay(), description);
+            return Time.Retry(operation, GetTimeout(), timeSet.HttpCallRetryDelay(), description);
         }
 
         private HttpClient GetClient()
         {
-            if (timeoutOverride.HasValue)
-            {
-                return GetClient(timeoutOverride.Value);
-            }
-            return GetClient(timeSet.HttpCallTimeout());
+            return GetClient(GetTimeout());
+        }
+
+        private TimeSpan GetTimeout()
+        {
+            if (timeoutOverride.HasValue) return timeoutOverride.Value;
+            return timeSet.HttpCallTimeout();
         }
 
         private HttpClient GetClient(TimeSpan timeout)

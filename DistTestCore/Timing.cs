@@ -41,7 +41,7 @@ namespace DistTestCore
 
         public TimeSpan K8sOperationTimeout()
         {
-            return TimeSpan.FromMinutes(5);
+            return TimeSpan.FromMinutes(1);
         }
 
         public TimeSpan WaitForMetricTimeout()

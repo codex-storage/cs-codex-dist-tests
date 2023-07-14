@@ -1,7 +1,6 @@
 ﻿using DistTestCore;
 using DistTestCore.Helpers;
 using NUnit.Framework;
-using Utils;
 
 namespace Tests.PeerDiscoveryTests
 {
