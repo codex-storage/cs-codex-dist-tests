@@ -56,7 +56,7 @@ namespace DistTestCore.Codex
             }
             if (config.BlockTTL != null)
             {
-                AddEnvVar("BLOCK_TTL", config.BlockTTL.ToString()!);
+                AddEnvVar("CODEX_BLOCK_TTL", config.BlockTTL.ToString()!);
             }
             if (config.MetricsEnabled)
             {

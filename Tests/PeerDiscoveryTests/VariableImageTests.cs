@@ -13,6 +13,7 @@ namespace Tests.PeerDiscoveryTests
         [TestCase("nim-codex:sha-3f2b417")]
         [TestCase("nim-codex:sha-00f6554")]
         [TestCase("nim-codex:sha-f053135")]
+        [TestCase("nim-codex:sha-711e5e0")]
         public void ThreeNodes(string dockerImage)
         {
             var img = "codexstorage/" + dockerImage;
