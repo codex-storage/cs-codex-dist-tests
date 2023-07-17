@@ -1,16 +1,18 @@
-﻿using DistTestCore;
+﻿using DistTestCore.Helpers;
+using DistTestCore;
 using NUnit.Framework;
 
-namespace Tests.DownloadConnectivityTests
+namespace TestsLong.DownloadConnectivityTests
 {
     [TestFixture]
-    public class FullyConnectedDownloadTests : AutoBootstrapDistTest
+    public class LongFullyConnectedDownloadTests : AutoBootstrapDistTest
     {
         [Test]
+        [UseLongTimeouts]
         [Combinatorial]
         public void FullyConnectedDownloadTest(
-            [Values(1, 3, 5)] int numberOfNodes,
-            [Values(1, 10)] int sizeMBs)
+            [Values(10, 15, 20)] int numberOfNodes,
+            [Values(10, 100)] int sizeMBs)
         {
             for (var i = 0; i < numberOfNodes; i++) SetupCodexNode();
 
