@@ -1,6 +1,9 @@
 ﻿using ArgsUniform;
 using CodexNetDeployer;
 using DistTestCore;
+using DistTestCore.Codex;
+using DistTestCore.Marketplace;
+using DistTestCore.Metrics;
 using Newtonsoft.Json;
 using Configuration = CodexNetDeployer.Configuration;
 
@@ -28,6 +31,12 @@ public class Program
             PrintHelp();
             return;
         }
+
+        Console.WriteLine("Using images:" + nl +
+            $"\tCodex image: '{CodexContainerRecipe.DockerImage}'" + nl +
+            $"\tCodex Contracts image: '{CodexContractsContainerRecipe.DockerImage}'" + nl +
+            $"\tPrometheus image: '{PrometheusContainerRecipe.DockerImage}'" + nl +
+            $"\tGeth image: '{GethContainerRecipe.DockerImage}'" + nl);
 
         if (!args.Any(a => a == "-y"))
         {
