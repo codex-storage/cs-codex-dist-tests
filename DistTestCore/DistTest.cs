@@ -36,6 +36,11 @@ namespace DistTestCore
         [OneTimeSetUp]
         public void GlobalSetup()
         {
+            fixtureLog.Log($"Codex Distributed Tests are starting...");
+            fixtureLog.Log($"Codex image: '{CodexContainerRecipe.DockerImage}'");
+            fixtureLog.Log($"Prometheus image: '{PrometheusContainerRecipe.DockerImage}'");
+            fixtureLog.Log($"Geth image: '{GethContainerRecipe.DockerImage}'");
+
             // Previous test run may have been interrupted.
             // Begin by cleaning everything up.
             try
@@ -54,9 +59,6 @@ namespace DistTestCore
             }
 
             fixtureLog.Log("Global setup cleanup successful");
-            fixtureLog.Log($"Codex image: '{CodexContainerRecipe.DockerImage}'");
-            fixtureLog.Log($"Prometheus image: '{PrometheusContainerRecipe.DockerImage}'");
-            fixtureLog.Log($"Geth image: '{GethContainerRecipe.DockerImage}'");
         }
 
         [SetUp]
