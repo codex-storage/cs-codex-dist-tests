@@ -43,13 +43,18 @@ namespace Logging
             if (!string.IsNullOrEmpty(name)) return name;
             var test = TestContext.CurrentContext.Test;
             var args = FormatArguments(test);
-            return $"{test.MethodName}{args}";
+            return ReplaceInvalidCharacters($"{test.MethodName}{args}");
         }
 
         private static string FormatArguments(TestContext.TestAdapter test)
         {
             if (test.Arguments == null || !test.Arguments.Any()) return "";
             return $"[{string.Join(',', test.Arguments)}]";
+        }
+
+        private static string ReplaceInvalidCharacters(string name)
+        {
+            return name.Replace(":", "_");
         }
     }
 }

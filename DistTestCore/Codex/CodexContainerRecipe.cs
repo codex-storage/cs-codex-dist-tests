@@ -1,6 +1,5 @@
 ﻿using DistTestCore.Marketplace;
 using KubernetesWorkflow;
-using System.Net.Sockets;
 
 namespace DistTestCore.Codex
 {
@@ -9,8 +8,8 @@ namespace DistTestCore.Codex
 #if Arm64
         public const string DockerImage = "codexstorage/nim-codex:sha-6dd7e55";
 #else
-        //public const string DockerImage = "thatbenbierens/nim-codex:dhting";
-        public const string DockerImage = "codexstorage/nim-codex:sha-6dd7e55";
+        public const string DockerImage = "thatbenbierens/nim-codex:loopingyeah";
+        //public const string DockerImage = "codexstorage/nim-codex:sha-6dd7e55";
 #endif
         public const string MetricsPortTag = "metrics_port";
         public const string DiscoveryPortTag = "discovery-port";
@@ -19,7 +18,16 @@ namespace DistTestCore.Codex
         public static readonly TimeSpan MaxUploadTimePerMegabyte = TimeSpan.FromSeconds(2.0);
         public static readonly TimeSpan MaxDownloadTimePerMegabyte = TimeSpan.FromSeconds(2.0);
 
-        protected override string Image => DockerImage;
+        public static string DockerImageOverride = string.Empty;
+
+        protected override string Image
+        {
+            get
+            {
+                if (!string.IsNullOrEmpty(DockerImageOverride)) return DockerImageOverride;
+                return DockerImage;
+            }
+        }
 
         protected override void Initialize(StartupConfig startupConfig)
         {
@@ -48,7 +56,7 @@ namespace DistTestCore.Codex
             }
             if (config.BlockTTL != null)
             {
-                AddEnvVar("BLOCK_TTL", config.BlockTTL.ToString()!);
+                AddEnvVar("CODEX_BLOCK_TTL", config.BlockTTL.ToString()!);
             }
             if (config.MetricsEnabled)
             {

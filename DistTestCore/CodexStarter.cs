@@ -30,7 +30,7 @@ namespace DistTestCore
 
             var group = CreateCodexGroup(codexSetup, containers, codexNodeFactory);
             var podInfo = group.Containers.RunningPod.PodInfo;
-            LogEnd($"Started {codexSetup.NumberOfNodes} nodes at location '{podInfo.K8SNodeName}'={podInfo.Ip}. They are: {group.Describe()}");
+            LogEnd($"Started {codexSetup.NumberOfNodes} nodes of image '{containers.Containers.First().Recipe.Image}' at location '{podInfo.K8SNodeName}'={podInfo.Ip}. They are: {group.Describe()}");
             LogSeparator();
             return group;
         }
