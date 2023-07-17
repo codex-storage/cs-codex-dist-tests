@@ -1,13 +1,11 @@
 services:
-  codex-node1:
-    # image: codexstorage/nim-codex:sha-82b0399
+  dist-test-run:
     build:
       context: ..
       dockerfile: docker/Dockerfile
     environment:
+      - CODEXDOCKERIMAGE=thatbenbierens/nim-codex:dhting
       - BRANCH="feature/docker-image-testruns"
-      - KUBECONFIG=kubeconfigplease
-      - LOGPATH="/"
-      - RUNNERLOCATION="ExternalToCluster"
-    ports:
-      - 8080:8080/tcp # REST API
+      - KUBECONFIG=/opt/kubeconfig
+      - LOGPATH=/opt/logs
+      - RUNNERLOCATION=ExternalToCluster
