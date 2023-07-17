@@ -167,7 +167,6 @@ namespace DistTestCore.Helpers
 
         public class Pair
         {
-            private readonly TimeSpan timeout = TimeSpan.FromSeconds(60);
             private TimeSpan aToBTime = TimeSpan.FromSeconds(0);
             private TimeSpan bToATime = TimeSpan.FromSeconds(0);
 
@@ -235,7 +234,7 @@ namespace DistTestCore.Helpers
 
                     try
                     {
-                        var response = a.Node.GetDebugPeer(peerId, timeout);
+                        var response = a.Node.GetDebugPeer(peerId);
                         if (!response.IsPeerFound)
                         {
                             return PeerConnectionState.NoConnection;

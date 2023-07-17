@@ -22,17 +22,12 @@ namespace DistTestCore.Codex
 
         public CodexDebugResponse GetDebugInfo()
         {
-            return Http(TimeSpan.FromSeconds(60)).HttpGetJson<CodexDebugResponse>("debug/info");
+            return Http().HttpGetJson<CodexDebugResponse>("debug/info");
         }
 
         public CodexDebugPeerResponse GetDebugPeer(string peerId)
         {
-            return GetDebugPeer(peerId, TimeSpan.FromSeconds(10));
-        }
-
-        public CodexDebugPeerResponse GetDebugPeer(string peerId, TimeSpan timeout)
-        {
-            var http = Http(timeout);
+            var http = Http();
             var str = http.HttpGetString($"debug/peer/{peerId}");
 
             if (str.ToLowerInvariant() == "unable to find peer!")
@@ -88,9 +83,9 @@ namespace DistTestCore.Codex
             return Http().HttpGetString($"connect/{peerId}?addrs={peerMultiAddress}");
         }
 
-        private Http Http(TimeSpan? timeoutOverride = null)
+        private Http Http()
         {
-            return new Http(log, timeSet, Address, baseUrl: "/api/codex/v1", Container.Name, timeoutOverride);
+            return new Http(log, timeSet, Address, baseUrl: "/api/codex/v1", Container.Name);
         }
     }
 }

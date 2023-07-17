@@ -12,7 +12,6 @@ namespace DistTestCore
         string GetName();
         CodexDebugResponse GetDebugInfo();
         CodexDebugPeerResponse GetDebugPeer(string peerId);
-        CodexDebugPeerResponse GetDebugPeer(string peerId, TimeSpan timeout);
         ContentId UploadFile(TestFile file);
         TestFile? DownloadContent(ContentId contentId, string fileLabel = "");
         void ConnectToPeer(IOnlineCodexNode node);
@@ -58,11 +57,6 @@ namespace DistTestCore
         public CodexDebugPeerResponse GetDebugPeer(string peerId)
         {
             return CodexAccess.GetDebugPeer(peerId);
-        }
-
-        public CodexDebugPeerResponse GetDebugPeer(string peerId, TimeSpan timeout)
-        {
-            return CodexAccess.GetDebugPeer(peerId, timeout);
         }
 
         public ContentId UploadFile(TestFile file)
