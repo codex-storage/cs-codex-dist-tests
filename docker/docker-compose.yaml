@@ -5,7 +5,9 @@ services:
       context: ..
       dockerfile: docker/Dockerfile
     environment:
-      - CODEX_LOG_LEVEL=${CODEX_LOG_LEVEL:-TRACE}
-      - CODEX_METRICS=${CODEX_METRICS:-false}
+      - BRANCH="feature/docker-image-testruns"
+      - KUBECONFIG=kubeconfigplease
+      - LOGPATH="/"
+      - RUNNERLOCATION="ExternalToCluster"
     ports:
       - 8080:8080/tcp # REST API

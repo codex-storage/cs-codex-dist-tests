@@ -27,7 +27,7 @@
             return recipe;
         }
 
-        protected abstract string Image { get; }
+        public abstract string Image { get; }
         protected int ContainerNumber { get; private set; } = 0;
         protected int Index { get; private set; } = 0;
         protected abstract void Initialize(StartupConfig config);
