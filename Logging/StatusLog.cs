@@ -11,7 +11,7 @@ namespace Logging
 
         public StatusLog(LogConfig config, DateTime start, string codexId, string name = "")
         {
-            fullName = NameUtils.GetFixtureFullName(config, start, name);
+            fullName = NameUtils.GetFixtureFullName(config, start, name) + "_STATUS.log";
             fixtureName = NameUtils.GetRawFixtureName();
             this.codexId = codexId;
         }
