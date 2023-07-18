@@ -32,7 +32,7 @@ namespace ContinuousTests
             this.handle = handle;
             this.cancelToken = cancelToken;
             testName = handle.Test.GetType().Name;
-            fixtureLog = new FixtureLog(new LogConfig(config.LogPath, true), testName);
+            fixtureLog = new FixtureLog(new LogConfig(config.LogPath, true), DateTime.UtcNow, testName);
 
             nodes = CreateRandomNodes(handle.Test.RequiredNumberOfNodes);
             dataFolder = config.DataPath + "-" + Guid.NewGuid();

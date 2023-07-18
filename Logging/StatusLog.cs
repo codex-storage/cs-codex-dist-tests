@@ -16,23 +16,13 @@ namespace Logging
             this.codexId = codexId;
         }
 
-        public void TestPassed()
-        {
-            Write("successful");
-        }
-
-        public void TestFailed()
-        {
-            Write("failed");
-        }
-
-        private void Write(string status)
+        public void ConcludeTest(string resultStatus)
         {
             Write(new StatusLogJson
             {
                 time = DateTime.UtcNow.ToString("u"),
                 runid = GetRunId(),
-                status = status,
+                status = resultStatus,
                 testid = GetTestId(),
                 codexid = codexId,
                 fixturename = fixtureName,

@@ -16,6 +16,7 @@ namespace DistTestCore
         private readonly Configuration configuration = new Configuration();
         private readonly Assembly[] testAssemblies;
         private readonly FixtureLog fixtureLog;
+        private readonly StatusLog statusLog;
         private readonly object lifecycleLock = new object();
         private readonly Dictionary<string, TestLifecycle> lifecycles = new Dictionary<string, TestLifecycle>();
 
@@ -24,7 +25,10 @@ namespace DistTestCore
             var assemblies = AppDomain.CurrentDomain.GetAssemblies();
             testAssemblies = assemblies.Where(a => a.FullName!.ToLowerInvariant().Contains("test")).ToArray();
 
-            fixtureLog = new FixtureLog(configuration.GetLogConfig());
+            var logConfig = configuration.GetLogConfig();
+            var startTime = DateTime.UtcNow;
+            fixtureLog = new FixtureLog(logConfig, startTime);
+            statusLog = new StatusLog(logConfig, startTime, CodexContainerRecipe.DockerImage);
 
             PeerConnectionTestHelpers = new PeerConnectionTestHelpers(this);
             PeerDownloadTestHelpers = new PeerDownloadTestHelpers(this);
@@ -196,6 +200,7 @@ namespace DistTestCore
         {
             var lifecycle = Get();
             fixtureLog.Log($"{GetCurrentTestName()} = {GetTestResult()} ({lifecycle.GetTestDuration()})");
+            statusLog.ConcludeTest(GetTestResult());
             Stopwatch.Measure(fixtureLog, $"Teardown for {GetCurrentTestName()}", () =>
             {
                 lifecycle.Log.EndTest();
