@@ -6,7 +6,7 @@ namespace DistTestCore
     {
         public override IOnlineCodexNode SetupCodexBootstrapNode(Action<ICodexSetup> setup)
         {
-            throw new Exception("AutoBootstrapDistTest creates and attaches a single boostrap node for you. " +
+            throw new Exception("AutoBootstrapDistTest creates and attaches a single bootstrap node for you. " +
                 "If you want to control the bootstrap node from your test, please use DistTest instead.");
         }
 
@@ -21,7 +21,8 @@ namespace DistTestCore
         [SetUp]
         public void SetUpBootstrapNode()
         {
-            BootstrapNode = BringOnline(CreateCodexSetup(1))[0];
+            var setup = CreateCodexSetup(1).WithName("BOOTSTRAP");
+            BootstrapNode = BringOnline(setup)[0];
         }
 
         protected IOnlineCodexNode BootstrapNode { get; private set; } = null!;

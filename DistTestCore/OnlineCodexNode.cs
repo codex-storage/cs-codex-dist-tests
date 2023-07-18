@@ -12,11 +12,10 @@ namespace DistTestCore
         string GetName();
         CodexDebugResponse GetDebugInfo();
         CodexDebugPeerResponse GetDebugPeer(string peerId);
-        CodexDebugPeerResponse GetDebugPeer(string peerId, TimeSpan timeout);
         ContentId UploadFile(TestFile file);
         TestFile? DownloadContent(ContentId contentId, string fileLabel = "");
         void ConnectToPeer(IOnlineCodexNode node);
-        ICodexNodeLog DownloadLog();
+        IDownloadedLog DownloadLog();
         IMetricsAccess Metrics { get; }
         IMarketplaceAccess Marketplace { get; }
         ICodexSetup BringOffline();
@@ -49,7 +48,7 @@ namespace DistTestCore
 
         public CodexDebugResponse GetDebugInfo()
         {
-            var debugInfo = CodexAccess.Node.GetDebugInfo();
+            var debugInfo = CodexAccess.GetDebugInfo();
             var known = string.Join(",", debugInfo.table.nodes.Select(n => n.peerId));
             Log($"Got DebugInfo with id: '{debugInfo.id}'. This node knows: {known}");
             return debugInfo;
@@ -57,12 +56,7 @@ namespace DistTestCore
 
         public CodexDebugPeerResponse GetDebugPeer(string peerId)
         {
-            return CodexAccess.Node.GetDebugPeer(peerId);
-        }
-
-        public CodexDebugPeerResponse GetDebugPeer(string peerId, TimeSpan timeout)
-        {
-            return CodexAccess.Node.GetDebugPeer(peerId, timeout);
+            return CodexAccess.GetDebugPeer(peerId);
         }
 
         public ContentId UploadFile(TestFile file)
@@ -72,13 +66,12 @@ namespace DistTestCore
             var logMessage = $"Uploading file {file.Describe()}...";
             var response = Stopwatch.Measure(lifecycle.Log, logMessage, () =>
             {
-                return CodexAccess.Node.UploadFile(fileStream);
+                return CodexAccess.UploadFile(fileStream);
             });
 
-            if (response.StartsWith(UploadFailedMessage))
-            {
-                Assert.Fail("Node failed to store block.");
-            }
+            if (string.IsNullOrEmpty(response)) Assert.Fail("Received empty response.");
+            if (response.StartsWith(UploadFailedMessage)) Assert.Fail("Node failed to store block.");
+
             var logReplacement = $"(CID:{file.Describe()})";
             Log($"ContentId '{response}' is {logReplacement}");
             lifecycle.Log.AddStringReplace(response, logReplacement);
@@ -101,15 +94,15 @@ namespace DistTestCore
 
             Log($"Connecting to peer {peer.GetName()}...");
             var peerInfo = node.GetDebugInfo();
-            var response = CodexAccess.Node.ConnectToPeer(peerInfo.id, GetPeerMultiAddress(peer, peerInfo));
+            var response = CodexAccess.ConnectToPeer(peerInfo.id, GetPeerMultiAddress(peer, peerInfo));
 
             Assert.That(response, Is.EqualTo(SuccessfullyConnectedMessage), "Unable to connect codex nodes.");
             Log($"Successfully connected to peer {peer.GetName()}.");
         }
 
-        public ICodexNodeLog DownloadLog()
+        public IDownloadedLog DownloadLog()
         {
-            return lifecycle.DownloadLog(this);
+            return lifecycle.DownloadLog(CodexAccess.Container);
         }
 
         public ICodexSetup BringOffline()
@@ -141,7 +134,7 @@ namespace DistTestCore
             using var fileStream = File.OpenWrite(file.Filename);
             try
             {
-                using var downloadStream = CodexAccess.Node.DownloadFile(contentId);
+                using var downloadStream = CodexAccess.DownloadFile(contentId);
                 downloadStream.CopyTo(fileStream);
             }
             catch

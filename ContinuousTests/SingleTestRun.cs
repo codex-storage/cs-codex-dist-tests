@@ -4,90 +4,160 @@ using Logging;
 using Utils;
 using KubernetesWorkflow;
 using NUnit.Framework.Internal;
+using System.Reflection;
+using static Program;
 
 namespace ContinuousTests
 {
     public class SingleTestRun
     {
-        private readonly CodexNodeFactory codexNodeFactory = new CodexNodeFactory();
+        private readonly CodexAccessFactory codexNodeFactory = new CodexAccessFactory();
         private readonly List<Exception> exceptions = new List<Exception>();
+        private readonly TaskFactory taskFactory;
         private readonly Configuration config;
         private readonly BaseLog overviewLog;
         private readonly TestHandle handle;
-        private readonly CodexNode[] nodes;
+        private readonly CancellationToken cancelToken;
+        private readonly CodexAccess[] nodes;
         private readonly FileManager fileManager;
         private readonly FixtureLog fixtureLog;
         private readonly string testName;
         private readonly string dataFolder;
 
-        public SingleTestRun(Configuration config, BaseLog overviewLog, TestHandle handle)
+        public SingleTestRun(TaskFactory taskFactory, Configuration config, BaseLog overviewLog, TestHandle handle, CancellationToken cancelToken)
         {
+            this.taskFactory = taskFactory;
             this.config = config;
             this.overviewLog = overviewLog;
             this.handle = handle;
-
+            this.cancelToken = cancelToken;
             testName = handle.Test.GetType().Name;
-            fixtureLog = new FixtureLog(new LogConfig(config.LogPath, false), testName);
+            fixtureLog = new FixtureLog(new LogConfig(config.LogPath, true), testName);
 
             nodes = CreateRandomNodes(handle.Test.RequiredNumberOfNodes);
             dataFolder = config.DataPath + "-" + Guid.NewGuid();
             fileManager = new FileManager(fixtureLog, CreateFileManagerConfiguration());
         }
 
-        public void Run()
+        public void Run(EventWaitHandle runFinishedHandle)
         {
-            Task.Run(() =>
+            taskFactory.Run(() =>
             {
                 try
                 {
                     RunTest();
-
-                    if (!config.KeepPassedTestLogs) fixtureLog.Delete();
+                    fileManager.DeleteAllTestFiles();
+                    Directory.Delete(dataFolder, true);
+                    runFinishedHandle.Set();
                 }
                 catch (Exception ex)
                 {
-                    fixtureLog.Error("Test run failed with exception: " + ex);
-                    fixtureLog.MarkAsFailed();
+                    overviewLog.Error("Test infra failure: SingleTestRun failed with " + ex);
+                    Environment.Exit(-1);
                 }
-                fileManager.DeleteAllTestFiles();
-                Directory.Delete(dataFolder, true);
             });
         }
 
         private void RunTest()
+        {
+            try
+            {
+                RunTestMoments();
+
+                if (!config.KeepPassedTestLogs) fixtureLog.Delete();
+            }
+            catch (Exception ex)
+            {
+                fixtureLog.Error("Test run failed with exception: " + ex);
+                fixtureLog.MarkAsFailed();
+
+                if (config.StopOnFailure)
+                {
+                    OverviewLog("Configured to stop on first failure. Downloading cluster logs...");
+                    DownloadClusterLogs();
+                    OverviewLog("Log download finished. Cancelling test runner...");
+                    Cancellation.Cts.Cancel();
+                }
+            }
+        }
+
+        private void RunTestMoments()
         {
             var earliestMoment = handle.GetEarliestMoment();
 
             var t = earliestMoment;
             while (true)
             {
+                cancelToken.ThrowIfCancellationRequested();
+
                 RunMoment(t);
 
                 if (handle.Test.TestFailMode == TestFailMode.StopAfterFirstFailure && exceptions.Any())
                 {
                     Log("Exception detected. TestFailMode = StopAfterFirstFailure. Stopping...");
-                    throw exceptions.Single();
+                    ThrowFailTest();
                 }
 
                 var nextMoment = handle.GetNextMoment(t);
                 if (nextMoment != null)
                 {
-                    Log($" > Next TestMoment in {nextMoment.Value} seconds...");
-                    t += nextMoment.Value;
-                    Thread.Sleep(nextMoment.Value * 1000);
+                    var delta = TimeSpan.FromSeconds(nextMoment.Value - t);
+                    Log($" > Next TestMoment in {Time.FormatDuration(delta)} seconds...");
+                    cancelToken.WaitHandle.WaitOne(delta);
+                    t = nextMoment.Value;
                 }
                 else
                 {
                     if (exceptions.Any())
                     {
-                        var ex = exceptions.First();
-                        OverviewLog(" > Test failed: " + ex);
-                        throw ex;
+                        ThrowFailTest();
                     }
-                    OverviewLog(" > Test passed.");
+                    OverviewLog(" > Test passed. " + FuturesInfo());
                     return;
                 }
             }
+        }
+
+        private void ThrowFailTest()
+        {
+            var ex = UnpackException(exceptions.First());
+            Log(ex.ToString());
+            OverviewLog($" > Test failed {FuturesInfo()}: " + ex.Message);
+            throw ex;
+        }
+
+        private string FuturesInfo()
+        {
+            var containers = config.CodexDeployment.CodexContainers;
+            var nodes = codexNodeFactory.Create(config, containers, fixtureLog, handle.Test.TimeSet);
+            var f = nodes.Select(n => n.GetDebugFutures().ToString());
+            var msg = $"(Futures: [{string.Join(", ", f)}])";
+            return msg;
+        }
+
+        private void DownloadClusterLogs()
+        {
+            var k8sFactory = new K8sFactory();
+            var (_, lifecycle) = k8sFactory.CreateFacilities(config.KubeConfigFile, config.LogPath, "dataPath", config.CodexDeployment.Metadata.KubeNamespace, new DefaultTimeSet(), new NullLog(), config.RunnerLocation);
+
+            foreach (var container in config.CodexDeployment.CodexContainers)
+            {
+                lifecycle.DownloadLog(container);
+            }
+        }
+
+        private Exception UnpackException(Exception exception)
+        {
+            if (exception is AggregateException a)
+            {
+                return UnpackException(a.InnerExceptions.First());
+            }
+            if (exception is TargetInvocationException t)
+            {
+                return UnpackException(t.InnerException!);
+            }
+
+            return exception;
         }
 
         private void RunMoment(int t)
@@ -100,7 +170,6 @@ namespace ContinuousTests
                 }
                 catch (Exception ex)
                 {
-                    Log($" > TestMoment yielded exception: " + ex);
                     exceptions.Add(ex);
                 }
             }
@@ -111,12 +180,12 @@ namespace ContinuousTests
         private void InitializeTest(string name)
         {
             Log($" > Running TestMoment '{name}'");
-            handle.Test.Initialize(nodes, fixtureLog, fileManager, config);
+            handle.Test.Initialize(nodes, fixtureLog, fileManager, config, cancelToken);
         }
 
         private void DecommissionTest()
         {
-            handle.Test.Initialize(null!, null!, null!, null!);
+            handle.Test.Initialize(null!, null!, null!, null!, cancelToken);
         }
 
         private void Log(string msg)
@@ -127,14 +196,15 @@ namespace ContinuousTests
         private void OverviewLog(string msg)
         {
             Log(msg);
-            overviewLog.Log(testName + ": " +  msg);
+            var containerNames = $"({string.Join(",", nodes.Select(n => n.Container.Name))})";
+            overviewLog.Log($"{containerNames} {testName}: {msg}");
         }
 
-        private CodexNode[] CreateRandomNodes(int number)
+        private CodexAccess[] CreateRandomNodes(int number)
         {
             var containers = SelectRandomContainers(number);
             fixtureLog.Log("Selected nodes: " + string.Join(",", containers.Select(c => c.Name)));
-            return codexNodeFactory.Create(containers, fixtureLog, handle.Test.TimeSet);
+            return codexNodeFactory.Create(config, containers, fixtureLog, handle.Test.TimeSet);
         }
 
         private RunningContainer[] SelectRandomContainers(int number)
@@ -151,7 +221,7 @@ namespace ContinuousTests
         private DistTestCore.Configuration CreateFileManagerConfiguration()
         {
             return new DistTestCore.Configuration(null, string.Empty, false, dataFolder,
-                CodexLogLevel.Error, TestRunnerLocation.ExternalToCluster);
+                CodexLogLevel.Error, config.RunnerLocation);
         }
     }
 }

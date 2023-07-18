@@ -10,7 +10,7 @@ namespace DistTestCore.Marketplace
     public interface IMarketplaceAccess
     {
         string MakeStorageAvailable(ByteSize size, TestToken minPricePerBytePerSecond, TestToken maxCollateral, TimeSpan maxDuration);
-        string RequestStorage(ContentId contentId, TestToken pricePerBytePerSecond, TestToken requiredCollateral, uint minRequiredNumberOfNodes, int proofProbability, TimeSpan duration);
+        string RequestStorage(ContentId contentId, TestToken pricePerSlotPerSecond, TestToken requiredCollateral, uint minRequiredNumberOfNodes, int proofProbability, TimeSpan duration);
         void AssertThatBalance(IResolveConstraint constraint, string message = "");
         TestToken GetBalance();
     }
@@ -30,27 +30,27 @@ namespace DistTestCore.Marketplace
             this.codexAccess = codexAccess;
         }
 
-        public string RequestStorage(ContentId contentId, TestToken pricePerBytePerSecond, TestToken requiredCollateral, uint minRequiredNumberOfNodes, int proofProbability, TimeSpan duration)
+        public string RequestStorage(ContentId contentId, TestToken pricePerSlotPerSecond, TestToken requiredCollateral, uint minRequiredNumberOfNodes, int proofProbability, TimeSpan duration)
         {
             var request = new CodexSalesRequestStorageRequest
             {
-                duration = ToHexBigInt(duration.TotalSeconds),
-                proofProbability = ToHexBigInt(proofProbability),
-                reward = ToHexBigInt(pricePerBytePerSecond),
-                collateral = ToHexBigInt(requiredCollateral),
+                duration = ToDecInt(duration.TotalSeconds),
+                proofProbability = ToDecInt(proofProbability),
+                reward = ToDecInt(pricePerSlotPerSecond),
+                collateral = ToDecInt(requiredCollateral),
                 expiry = null,
                 nodes = minRequiredNumberOfNodes,
                 tolerance = null,
             };
 
             Log($"Requesting storage for: {contentId.Id}... (" +
-                $"pricePerBytePerSecond: {pricePerBytePerSecond}, " +
+                $"pricePerSlotPerSecond: {pricePerSlotPerSecond}, " +
                 $"requiredCollateral: {requiredCollateral}, " +
                 $"minRequiredNumberOfNodes: {minRequiredNumberOfNodes}, " +
                 $"proofProbability: {proofProbability}, " +
                 $"duration: {Time.FormatDuration(duration)})");
 
-            var response = codexAccess.Node.RequestStorage(request, contentId.Id);
+            var response = codexAccess.RequestStorage(request, contentId.Id);
 
             if (response == "Purchasing not available")
             {
@@ -62,38 +62,39 @@ namespace DistTestCore.Marketplace
             return response;
         }
 
-        public string MakeStorageAvailable(ByteSize size, TestToken minPricePerBytePerSecond, TestToken maxCollateral, TimeSpan maxDuration)
+        public string MakeStorageAvailable(ByteSize totalSpace, TestToken minPriceForTotalSpace, TestToken maxCollateral, TimeSpan maxDuration)
         {
             var request = new CodexSalesAvailabilityRequest
             {
-                size = ToHexBigInt(size.SizeInBytes),
-                duration = ToHexBigInt(maxDuration.TotalSeconds),
-                maxCollateral = ToHexBigInt(maxCollateral),
-                minPrice = ToHexBigInt(minPricePerBytePerSecond)
+                size = ToDecInt(totalSpace.SizeInBytes),
+                duration = ToDecInt(maxDuration.TotalSeconds),
+                maxCollateral = ToDecInt(maxCollateral),
+                minPrice = ToDecInt(minPriceForTotalSpace)
             };
 
             Log($"Making storage available... (" +
-                $"size: {size}, " +
-                $"minPricePerBytePerSecond: {minPricePerBytePerSecond}, " +
+                $"size: {totalSpace}, " +
+                $"minPriceForTotalSpace: {minPriceForTotalSpace}, " +
                 $"maxCollateral: {maxCollateral}, " +
                 $"maxDuration: {Time.FormatDuration(maxDuration)})");
 
-            var response = codexAccess.Node.SalesAvailability(request);
+            var response = codexAccess.SalesAvailability(request);
 
             Log($"Storage successfully made available. Id: {response.id}");
 
             return response.id;
         }
 
-        private string ToHexBigInt(double d)
+        private string ToDecInt(double d)
         {
-            return "0x" + string.Format("{0:X}", Convert.ToInt64(d));
+            var i = new BigInteger(d);
+            return i.ToString("D");
         }
 
-        public string ToHexBigInt(TestToken t)
+        public string ToDecInt(TestToken t)
         {
-            var bigInt = new BigInteger(t.Amount);
-            return "0x" + bigInt.ToString("X");
+            var i = new BigInteger(t.Amount);
+            return i.ToString("D");
         }
 
         public void AssertThatBalance(IResolveConstraint constraint, string message = "")

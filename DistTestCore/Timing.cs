@@ -10,7 +10,7 @@ namespace DistTestCore
     public interface ITimeSet
     {
         TimeSpan HttpCallTimeout();
-        TimeSpan HttpCallRetryTimeout();
+        TimeSpan HttpCallRetryTime();
         TimeSpan HttpCallRetryDelay();
         TimeSpan WaitForK8sServiceDelay();
         TimeSpan K8sOperationTimeout();
@@ -24,7 +24,7 @@ namespace DistTestCore
             return TimeSpan.FromSeconds(10);
         }
 
-        public TimeSpan HttpCallRetryTimeout()
+        public TimeSpan HttpCallRetryTime()
         {
             return TimeSpan.FromMinutes(1);
         }
@@ -41,7 +41,7 @@ namespace DistTestCore
 
         public TimeSpan K8sOperationTimeout()
         {
-            return TimeSpan.FromMinutes(5);
+            return TimeSpan.FromMinutes(1);
         }
 
         public TimeSpan WaitForMetricTimeout()
@@ -57,7 +57,7 @@ namespace DistTestCore
             return TimeSpan.FromHours(2);
         }
 
-        public TimeSpan HttpCallRetryTimeout()
+        public TimeSpan HttpCallRetryTime()
         {
             return TimeSpan.FromHours(5);
         }

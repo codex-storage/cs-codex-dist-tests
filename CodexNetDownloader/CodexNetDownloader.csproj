@@ -8,14 +8,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\ArgsUniform\ArgsUniform.csproj" />
+    <ProjectReference Include="..\ContinuousTests\ContinuousTests.csproj" />
     <ProjectReference Include="..\DistTestCore\DistTestCore.csproj" />
-    <ProjectReference Include="..\KubernetesWorkflow\KubernetesWorkflow.csproj" />
-    <ProjectReference Include="..\Logging\Logging.csproj" />
   </ItemGroup>
 
 </Project>

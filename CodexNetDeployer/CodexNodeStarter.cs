@@ -2,7 +2,6 @@
 using DistTestCore.Codex;
 using DistTestCore.Marketplace;
 using KubernetesWorkflow;
-using Logging;
 
 namespace CodexNetDeployer
 {
@@ -11,21 +10,17 @@ namespace CodexNetDeployer
         private readonly Configuration config;
         private readonly WorkflowCreator workflowCreator;
         private readonly TestLifecycle lifecycle;
-        private readonly BaseLog log;
-        private readonly ITimeSet timeSet;
         private readonly GethStartResult gethResult;
         private string bootstrapSpr = "";
         private int validatorsLeft;
 
-        public CodexNodeStarter(Configuration config, WorkflowCreator workflowCreator, TestLifecycle lifecycle, BaseLog log, ITimeSet timeSet, GethStartResult gethResult, int numberOfValidators)
+        public CodexNodeStarter(Configuration config, WorkflowCreator workflowCreator, TestLifecycle lifecycle, GethStartResult gethResult, int numberOfValidators)
         {
             this.config = config;
             this.workflowCreator = workflowCreator;
             this.lifecycle = lifecycle;
-            this.log = log;
-            this.timeSet = timeSet;
             this.gethResult = gethResult;
-            this.validatorsLeft = numberOfValidators;
+            validatorsLeft = numberOfValidators;
         }
 
         public RunningContainer? Start(int i)
@@ -39,24 +34,47 @@ namespace CodexNetDeployer
             var containers = workflow.Start(1, Location.Unspecified, new CodexContainerRecipe(), workflowStartup);
 
             var container = containers.Containers.First();
-            var address = lifecycle.Configuration.GetAddress(container);
-            var codexNode = new CodexNode(log, timeSet, address);
-            var debugInfo = codexNode.GetDebugInfo();
+            var codexAccess = new CodexAccess(lifecycle.Log, container, lifecycle.TimeSet, lifecycle.Configuration.GetAddress(container));
+            var account = gethResult.MarketplaceNetwork.Bootstrap.AllAccounts.Accounts[i];
+            var tokenAddress = gethResult.MarketplaceNetwork.Marketplace.TokenAddress;
+            var marketAccess = new MarketplaceAccess(lifecycle, gethResult.MarketplaceNetwork, account, codexAccess);
 
-            if (!string.IsNullOrWhiteSpace(debugInfo.spr))
+            try
             {
-                var pod = container.Pod.PodInfo;
-                Console.Write($"Online ({pod.Name} at {pod.Ip} on '{pod.K8SNodeName}')" + Environment.NewLine);
+                var debugInfo = codexAccess.GetDebugInfo();
+                if (!string.IsNullOrWhiteSpace(debugInfo.spr))
+                {
+                    Console.Write("Online\t");
 
-                if (string.IsNullOrEmpty(bootstrapSpr)) bootstrapSpr = debugInfo.spr;
-                validatorsLeft--;
-                return container;
+                    var interaction = gethResult.MarketplaceNetwork.Bootstrap.StartInteraction(lifecycle);
+                    interaction.MintTestTokens(new[] { account.Account }, config.InitialTestTokens, tokenAddress);
+                    Console.Write("Tokens minted\t");
+
+                    var response = marketAccess.MakeStorageAvailable(
+                        totalSpace: config.StorageSell!.Value.MB(),
+                        minPriceForTotalSpace: config.MinPrice.TestTokens(),
+                        maxCollateral: config.MaxCollateral.TestTokens(),
+                        maxDuration: TimeSpan.FromSeconds(config.MaxDuration));
+
+                    if (!string.IsNullOrEmpty(response))
+                    {
+                        Console.Write("Storage available\tOK" + Environment.NewLine);
+
+                        if (string.IsNullOrEmpty(bootstrapSpr)) bootstrapSpr = debugInfo.spr;
+                        validatorsLeft--;
+                        return container;
+                    }
+                }
             }
-            else
+            catch (Exception ex)
             {
-                Console.Write("Unknown failure." + Environment.NewLine);
-                return null;
+                Console.WriteLine("Exception:" + ex.ToString());
             }
+
+            Console.Write("Unknown failure. Downloading container log." + Environment.NewLine);
+            lifecycle.DownloadLog(container);
+
+            return null;
         }
 
         private CodexStartupConfig CreateCodexStartupConfig(string bootstrapSpr, int i, int validatorsLeft)
@@ -68,6 +86,12 @@ namespace CodexNetDeployer
             var marketplaceConfig = new MarketplaceInitialConfig(100000.Eth(), 0.TestTokens(), validatorsLeft > 0);
             marketplaceConfig.AccountIndexOverride = i;
             codexStart.MarketplaceConfig = marketplaceConfig;
+            codexStart.MetricsEnabled = config.RecordMetrics;
+
+            if (config.BlockTTL != Configuration.SecondsIn1Day)
+            {
+                codexStart.BlockTTL = config.BlockTTL;
+            }
 
             return codexStart;
         }

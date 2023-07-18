@@ -78,31 +78,7 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Docker - Build and export to Docker
-        uses: docker/build-push-action@v4
-        with:
-          context: .
-          file: ${{ env.DOCKER_FILE }}
-          platforms: ${{ env.PLATFORM }}
-          load: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-
-      - name: Docker - Minify image
-        uses: kitabisa/docker-slim-action@v1
-        id: slim
-        env:
-          DSLIM_HTTP_PROBE: false
-        with:
-          target: ${{ steps.meta.outputs.tags }}
-          overwrite: true
-
-      - name: Docker - Show slim report
-        run: echo "${REPORT}" | jq -r
-        env:
-          REPORT: ${{ steps.slim.outputs.report }}
-
-      - name: Docker - Push to Docker registry
+      - name: Docker - Build and Push
         uses: docker/build-push-action@v4
         with:
           context: .
@@ -145,4 +121,3 @@ jobs:
           inputs: ${{ env.TAGS }}
           images: ${{ needs.build.outputs.tags-linux-amd64 }},${{ needs.build.outputs.tags-linux-arm64 }}
           push: true
-

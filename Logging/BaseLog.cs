@@ -4,6 +4,7 @@ namespace Logging
 {
     public abstract class BaseLog
     {
+        private readonly NumberSource subfileNumberSource = new NumberSource(0);
         private readonly bool debug;
         private readonly List<BaseLogStringReplacement> replacements = new List<BaseLogStringReplacement>();
         private bool hasFailed;
@@ -14,15 +15,19 @@ namespace Logging
             this.debug = debug;
         }
 
-        protected abstract LogFile CreateLogFile();
+        protected abstract string GetFullName();
 
-        protected LogFile LogFile 
+        public LogFile LogFile 
         {
             get
             {
-                if (logFile == null) logFile = CreateLogFile();
+                if (logFile == null) logFile = new LogFile(GetFullName(), "log");
                 return logFile;
             }
+        }
+
+        public virtual void EndTest()
+        {
         }
 
         public virtual void Log(string message)
@@ -63,6 +68,11 @@ namespace Logging
             File.Delete(LogFile.FullFilename);
         }
 
+        public LogFile CreateSubfile(string ext = "log")
+        {
+            return new LogFile($"{GetFullName()}_{GetSubfileNumber()}", ext);
+        }
+
         private string ApplyReplacements(string str)
         {
             foreach (var replacement in replacements)
@@ -70,6 +80,11 @@ namespace Logging
                 str = replacement.Apply(str);
             }
             return str;
+        }
+
+        private string GetSubfileNumber()
+        {
+            return subfileNumberSource.GetNextNumber().ToString().PadLeft(6, '0');
         }
     }
 

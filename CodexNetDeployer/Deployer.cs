@@ -27,6 +27,7 @@ namespace CodexNetDeployer
             // We trick the Geth companion node into unlocking all of its accounts, by saying we want to start 999 codex nodes.
             var setup = new CodexSetup(999, config.CodexLogLevel);
             setup.WithStorageQuota(config.StorageQuota!.Value.MB()).EnableMarketplace(0.TestTokens());
+            setup.MetricsEnabled = config.RecordMetrics;
 
             Log("Creating Geth instance and deploying contracts...");
             var gethStarter = new GethStarter(lifecycle, workflowCreator);
@@ -35,10 +36,15 @@ namespace CodexNetDeployer
             Log("Geth started. Codex contracts deployed.");
             Log("Warning: It can take up to 45 minutes for the Geth node to finish unlocking all if its 1000 preconfigured accounts.");
 
+            // It takes a second for the geth node to unlock a single account. Let's assume 3.
+            // We can't start the codex nodes until their accounts are definitely unlocked. So
+            // We wait:
+            Thread.Sleep(TimeSpan.FromSeconds(3.0 * config.NumberOfCodexNodes!.Value));
+
             Log("Starting Codex nodes...");
 
             // Each node must have its own IP, so it needs it own pod. Start them 1 at a time.
-            var codexStarter = new CodexNodeStarter(config, workflowCreator, lifecycle, log, timeset, gethResults, config.NumberOfValidators!.Value);
+            var codexStarter = new CodexNodeStarter(config, workflowCreator, lifecycle, gethResults, config.NumberOfValidators!.Value);
             var codexContainers = new List<RunningContainer>();
             for (var i = 0; i < config.NumberOfCodexNodes; i++)
             {
@@ -46,14 +52,18 @@ namespace CodexNetDeployer
                 if (container != null) codexContainers.Add(container);
             }
 
-            return new CodexDeployment(gethResults, codexContainers.ToArray(), CreateMetadata());
+            var prometheusContainer = StartMetricsService(lifecycle, setup, codexContainers);
+
+            return new CodexDeployment(gethResults, codexContainers.ToArray(), prometheusContainer, CreateMetadata());
         }
 
         private (WorkflowCreator, TestLifecycle) CreateFacilities()
         {
+            var kubeConfig = GetKubeConfig(config.KubeConfigFile);
+
             var lifecycleConfig = new DistTestCore.Configuration
             (
-                kubeConfigFile: config.KubeConfigFile,
+                kubeConfigFile: kubeConfig,
                 logPath: "null",
                 logDebug: false,
                 dataFilesPath: "notUsed",
@@ -61,29 +71,45 @@ namespace CodexNetDeployer
                 runnerLocation: config.RunnerLocation
             );
 
-            var kubeConfig = new KubernetesWorkflow.Configuration(
+            var kubeFlowConfig = new KubernetesWorkflow.Configuration(
                 k8sNamespacePrefix: config.KubeNamespace,
-                kubeConfigFile: config.KubeConfigFile,
+                kubeConfigFile: kubeConfig,
                 operationTimeout: timeset.K8sOperationTimeout(),
                 retryDelay: timeset.WaitForK8sServiceDelay());
 
-            var workflowCreator = new WorkflowCreator(log, kubeConfig, testNamespacePostfix: string.Empty);
+            var workflowCreator = new WorkflowCreator(log, kubeFlowConfig, testNamespacePostfix: string.Empty);
             var lifecycle = new TestLifecycle(log, lifecycleConfig, timeset, workflowCreator);
 
             return (workflowCreator, lifecycle);
         }
 
+        private RunningContainer? StartMetricsService(TestLifecycle lifecycle, CodexSetup setup, List<RunningContainer> codexContainers)
+        {
+            if (!setup.MetricsEnabled) return null;
+
+            Log("Starting metrics service...");
+            var runningContainers = new RunningContainers(null!, null!, codexContainers.ToArray());
+            return lifecycle.PrometheusStarter.CollectMetricsFor(runningContainers).Containers.Single();
+        }
+
+        private string? GetKubeConfig(string kubeConfigFile)
+        {
+            if (string.IsNullOrEmpty(kubeConfigFile) || kubeConfigFile.ToLowerInvariant() == "null") return null;
+            return kubeConfigFile;
+        }
+
         private DeploymentMetadata CreateMetadata()
         {
             return new DeploymentMetadata(
-                codexImage: config.CodexImage,
-                gethImage: config.GethImage,
-                contractsImage: config.ContractsImage,
                 kubeNamespace: config.KubeNamespace,
                 numberOfCodexNodes: config.NumberOfCodexNodes!.Value,
                 numberOfValidators: config.NumberOfValidators!.Value,
                 storageQuotaMB: config.StorageQuota!.Value,
-                codexLogLevel: config.CodexLogLevel);
+                codexLogLevel: config.CodexLogLevel,
+                initialTestTokens: config.InitialTestTokens,
+                minPrice: config.MinPrice,
+                maxCollateral: config.MaxCollateral,
+                maxDuration: config.MaxDuration);
         }
 
         private void Log(string msg)

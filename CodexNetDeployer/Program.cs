@@ -1,6 +1,9 @@
 ﻿using ArgsUniform;
 using CodexNetDeployer;
 using DistTestCore;
+using DistTestCore.Codex;
+using DistTestCore.Marketplace;
+using DistTestCore.Metrics;
 using Newtonsoft.Json;
 using Configuration = CodexNetDeployer.Configuration;
 
@@ -11,13 +14,7 @@ public class Program
         var nl = Environment.NewLine;
         Console.WriteLine("CodexNetDeployer" + nl);
 
-        if (args.Any(a => a == "-h" || a == "--help" || a == "-?"))
-        {
-            PrintHelp();
-            return;
-        }
-
-        var uniformArgs = new ArgsUniform<Configuration>(new Configuration.Defaults(), args);
+        var uniformArgs = new ArgsUniform<Configuration>(PrintHelp, args);
         var config = uniformArgs.Parse(true);
         
         if (args.Any(a => a == "--external"))
@@ -33,6 +30,19 @@ public class Program
             Console.WriteLine(nl);
             PrintHelp();
             return;
+        }
+
+        Console.WriteLine("Using images:" + nl +
+            $"\tCodex image: '{CodexContainerRecipe.DockerImage}'" + nl +
+            $"\tCodex Contracts image: '{CodexContractsContainerRecipe.DockerImage}'" + nl +
+            $"\tPrometheus image: '{PrometheusContainerRecipe.DockerImage}'" + nl +
+            $"\tGeth image: '{GethContainerRecipe.DockerImage}'" + nl);
+
+        if (!args.Any(a => a == "-y"))
+        {
+            Console.WriteLine("Does the above config look good? [y/n]");
+            if (Console.ReadLine()!.ToLowerInvariant() != "y") return;
+            Console.WriteLine("I think so too.");
         }
 
         var deployer = new Deployer(config);
@@ -54,8 +64,5 @@ public class Program
 
         Console.WriteLine("CodexNetDeployer assumes you are running this tool from *inside* the Kubernetes cluster you want to deploy to. " +
             "If you are not running this from a container inside the cluster, add the argument '--external'." + nl);
-
-        var uniformArgs = new ArgsUniform<Configuration>();
-        uniformArgs.PrintHelp();
     }
 }

@@ -17,5 +17,6 @@ namespace DistTestCore.Codex
         public bool MetricsEnabled { get; set; }
         public MarketplaceInitialConfig? MarketplaceConfig { get; set; }
         public string? BootstrapSpr { get; set; }
+        public int? BlockTTL { get; set; }
     }
 }

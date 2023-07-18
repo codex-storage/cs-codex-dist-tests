@@ -52,12 +52,12 @@ namespace DistTestCore.Helpers
 
         private static void RetryWhilePairs(List<Pair> pairs, Action action)
         {
-            var timeout = DateTime.UtcNow + TimeSpan.FromMinutes(10);
+            var timeout = DateTime.UtcNow + TimeSpan.FromSeconds(30);
             while (pairs.Any() && timeout > DateTime.UtcNow)
             {
                 action();
 
-                if (pairs.Any()) Time.Sleep(TimeSpan.FromSeconds(5));
+                if (pairs.Any()) Time.Sleep(TimeSpan.FromSeconds(2));
             }
         }
 
@@ -140,6 +140,12 @@ namespace DistTestCore.Helpers
                 }
             }
 
+            public override string ToString()
+            {
+                if (Response == null || string.IsNullOrEmpty(Response.id)) return "UNKNOWN";
+                return Response.id;
+            }
+
             private static string GetExpectedDiscoveryEndpoint(Entry[] allEntries, CodexDebugTableNodeResponse node)
             {
                 var peer = allEntries.SingleOrDefault(e => e.Response.table.localNode.peerId == node.peerId);
@@ -161,7 +167,6 @@ namespace DistTestCore.Helpers
 
         public class Pair
         {
-            private readonly TimeSpan timeout = TimeSpan.FromSeconds(60);
             private TimeSpan aToBTime = TimeSpan.FromSeconds(0);
             private TimeSpan bToATime = TimeSpan.FromSeconds(0);
 
@@ -188,10 +193,15 @@ namespace DistTestCore.Helpers
                 return GetResultMessage() + GetTimePostfix();
             }
 
+            public override string ToString()
+            {
+                return $"[{GetMessage()}]";
+            }
+
             private string GetResultMessage()
             {
-                var aName = A.Response.id;
-                var bName = B.Response.id;
+                var aName = A.ToString();
+                var bName = B.ToString();
 
                 if (Success)
                 {
@@ -203,8 +213,8 @@ namespace DistTestCore.Helpers
 
             private string GetTimePostfix()
             {
-                var aName = A.Response.id;
-                var bName = B.Response.id;
+                var aName = A.ToString();
+                var bName = B.ToString();
 
                 return $" ({aName}->{bName}: {aToBTime.TotalMinutes} seconds, {bName}->{aName}: {bToATime.TotalSeconds} seconds)";
             }
@@ -224,7 +234,7 @@ namespace DistTestCore.Helpers
 
                     try
                     {
-                        var response = a.Node.GetDebugPeer(peerId, timeout);
+                        var response = a.Node.GetDebugPeer(peerId);
                         if (!response.IsPeerFound)
                         {
                             return PeerConnectionState.NoConnection;

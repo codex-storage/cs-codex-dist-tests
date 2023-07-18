@@ -5,21 +5,21 @@ namespace DistTestCore.Logs
 {
     public class LogDownloadHandler : LogHandler, ILogHandler
     {
-        private readonly OnlineCodexNode node;
+        private readonly RunningContainer container;
         private readonly LogFile log;
 
-        public LogDownloadHandler(OnlineCodexNode node, string description, LogFile log)
+        public LogDownloadHandler(RunningContainer container, string description, LogFile log)
         {
-            this.node = node;
+            this.container = container;
             this.log = log;
 
             log.Write($"{description} -->> {log.FullFilename}");
             log.WriteRaw(description);
         }
 
-        public CodexNodeLog CreateCodexNodeLog()
+        public DownloadedLog DownloadLog()
         {
-            return new CodexNodeLog(log, node);
+            return new DownloadedLog(log, container.Name);
         }
 
         protected override void ProcessLine(string line)

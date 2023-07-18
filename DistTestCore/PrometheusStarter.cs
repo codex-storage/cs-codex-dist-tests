@@ -12,10 +12,8 @@ namespace DistTestCore
         {
         }
 
-        public IMetricsAccessFactory CollectMetricsFor(CodexSetup codexSetup, RunningContainers containers)
+        public RunningContainers CollectMetricsFor(RunningContainers containers)
         {
-            if (!codexSetup.MetricsEnabled) return new MetricsUnavailableAccessFactory();
-
             LogStart($"Starting metrics server for {containers.Describe()}");
             var startupConfig = new StartupConfig();
             startupConfig.Add(new PrometheusStartupConfig(GeneratePrometheusConfig(containers.Containers)));
@@ -26,7 +24,7 @@ namespace DistTestCore
 
             LogEnd("Metrics server started.");
 
-            return new CodexNodeMetricsAccessFactory(lifecycle, runningContainers);
+            return runningContainers;
         }
 
         private string GeneratePrometheusConfig(RunningContainer[] nodes)

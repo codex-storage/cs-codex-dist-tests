@@ -21,23 +21,37 @@ namespace ContinuousTests
 
         private const string UploadFailedMessage = "Unable to store block";
 
-        public void Initialize(CodexNode[] nodes, BaseLog log, FileManager fileManager, Configuration configuration)
+        public void Initialize(CodexAccess[] nodes, BaseLog log, FileManager fileManager, Configuration configuration, CancellationToken cancelToken)
         {
             Nodes = nodes;
             Log = log;
             FileManager = fileManager;
             Configuration = configuration;
+            CancelToken = cancelToken;
+
+            if (nodes != null)
+            {
+                NodeRunner = new NodeRunner(Nodes, configuration, TimeSet, Log, CustomK8sNamespace, EthereumAccountIndex);
+            }
+            else
+            {
+                NodeRunner = null!;
+            }
         }
 
-        public CodexNode[] Nodes { get; private set; } = null!;
+        public CodexAccess[] Nodes { get; private set; } = null!;
         public BaseLog Log { get; private set; } = null!;
         public IFileManager FileManager { get; private set; } = null!;
         public Configuration Configuration { get; private set; } = null!;
         public virtual ITimeSet TimeSet { get { return new DefaultTimeSet(); } }
+        public CancellationToken CancelToken { get; private set; } = new CancellationToken();
+        public NodeRunner NodeRunner { get; private set; } = null!;
 
         public abstract int RequiredNumberOfNodes { get; }
         public abstract TimeSpan RunTestEvery { get; }
         public abstract TestFailMode TestFailMode { get; }
+        public virtual int EthereumAccountIndex { get { return -1; } }
+        public virtual string CustomK8sNamespace { get { return string.Empty; } }
 
         public string Name
         {
@@ -47,7 +61,7 @@ namespace ContinuousTests
             }
         }
 
-        public ContentId? UploadFile(CodexNode node, TestFile file)
+        public ContentId? UploadFile(CodexAccess node, TestFile file)
         {
             using var fileStream = File.OpenRead(file.Filename);
 
@@ -57,15 +71,14 @@ namespace ContinuousTests
                 return node.UploadFile(fileStream);
             });
 
-            if (response.StartsWith(UploadFailedMessage))
-            {
-                return null;
-            }
+            if (string.IsNullOrEmpty(response)) return null;
+            if (response.StartsWith(UploadFailedMessage)) return null;
+            
             Log.Log($"Uploaded file. Received contentId: '{response}'.");
             return new ContentId(response);
         }
 
-        public TestFile DownloadContent(CodexNode node, ContentId contentId, string fileLabel = "")
+        public TestFile DownloadFile(CodexAccess node, ContentId contentId, string fileLabel = "")
         {
             var logMessage = $"Downloading for contentId: '{contentId.Id}'...";
             var file = FileManager.CreateEmptyTestFile(fileLabel);
@@ -74,7 +87,7 @@ namespace ContinuousTests
             return file;
         }
 
-        private void DownloadToFile(CodexNode node, string contentId, TestFile file)
+        private void DownloadToFile(CodexAccess node, string contentId, TestFile file)
         {
             using var fileStream = File.OpenWrite(file.Filename);
             try
