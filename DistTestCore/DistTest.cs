@@ -187,6 +187,7 @@ namespace DistTestCore
         private void CreateNewTestLifecycle()
         {
             var testName = GetCurrentTestName();
+            fixtureLog.WriteLogTag();
             Stopwatch.Measure(fixtureLog, $"Setup for {testName}", () =>
             {
                 lock (lifecycleLock)

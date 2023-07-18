@@ -25,6 +25,8 @@ namespace DistTestCore
             PrometheusStarter = new PrometheusStarter(this, workflowCreator);
             GethStarter = new GethStarter(this, workflowCreator);
             testStart = DateTime.UtcNow;
+
+            Log.WriteLogTag();
         }
 
         public BaseLog Log { get; }

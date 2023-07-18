@@ -6,6 +6,7 @@ namespace DistTestCore.Helpers
 {
     public class PeerConnectionTestHelpers
     {
+        private static string Nl = Environment.NewLine;
         private readonly Random random = new Random();
         private readonly DistTest test;
 
@@ -40,9 +41,11 @@ namespace DistTestCore.Helpers
 
             if (pairs.Any())
             {
-                test.Log($"Unsuccessful! Peers are not fully-connected: {string.Join(",", nodes.Select(n => n.GetName()))}");
-                Assert.Fail(string.Join(Environment.NewLine, pairs.Select(p => p.GetMessage())));
-                test.Log(string.Join(Environment.NewLine, pairs.Select(p => p.GetMessage())));
+                var pairDetails = string.Join(Nl, pairs.SelectMany(p => p.GetResultMessages()));
+
+                test.Log($"Connections failed:{Nl}{pairDetails}");
+
+                Assert.Fail(string.Join(Nl, pairs.SelectMany(p => p.GetResultMessages())));
             }
             else
             {
@@ -52,18 +55,19 @@ namespace DistTestCore.Helpers
 
         private static void RetryWhilePairs(List<Pair> pairs, Action action)
         {
-            var timeout = DateTime.UtcNow + TimeSpan.FromSeconds(30);
-            while (pairs.Any() && timeout > DateTime.UtcNow)
+            var timeout = DateTime.UtcNow + TimeSpan.FromMinutes(5);
+            while (pairs.Any(p => p.Inconclusive) && timeout > DateTime.UtcNow)
             {
                 action();
 
-                if (pairs.Any()) Time.Sleep(TimeSpan.FromSeconds(2));
+                Time.Sleep(TimeSpan.FromSeconds(2));
             }
         }
 
         private void CheckAndRemoveSuccessful(List<Pair> pairs)
         {
-            var checkTasks = pairs.Select(p => Task.Run(() =>
+            // For large sets, don't try and do all of them at once.
+            var checkTasks = pairs.Take(20).Select(p => Task.Run(() =>
             {
                 ApplyRandomDelay();
                 p.Check();
@@ -71,14 +75,16 @@ namespace DistTestCore.Helpers
 
             Task.WaitAll(checkTasks);
 
+            var pairDetails = new List<string>();
             foreach (var pair in pairs.ToArray())
             {
                 if (pair.Success)
                 {
-                    test.Log(pair.GetMessage());
+                    pairDetails.AddRange(pair.GetResultMessages());
                     pairs.Remove(pair);
                 }
             }
+            test.Log($"Connections successful:{Nl}{string.Join(Nl, pairDetails)}");
         }
 
         private static Entry[] CreateEntries(IOnlineCodexNode[] nodes)
@@ -89,7 +95,7 @@ namespace DistTestCore.Helpers
             if (incorrectDiscoveryEndpoints.Any())
             {
                 Assert.Fail("Some nodes contain peer records with incorrect discovery ip/port information: " +
-                    string.Join(Environment.NewLine, incorrectDiscoveryEndpoints));
+                    string.Join(Nl, incorrectDiscoveryEndpoints));
             }
 
             return entries;
@@ -181,6 +187,7 @@ namespace DistTestCore.Helpers
             public PeerConnectionState AKnowsB { get; private set; }
             public PeerConnectionState BKnowsA { get; private set; }
             public bool Success { get { return AKnowsB == PeerConnectionState.Connection && BKnowsA == PeerConnectionState.Connection; } }
+            public bool Inconclusive { get { return AKnowsB == PeerConnectionState.Unknown || BKnowsA == PeerConnectionState.Unknown; } }
 
             public void Check()
             {
@@ -188,35 +195,21 @@ namespace DistTestCore.Helpers
                 bToATime = Measure(() => BKnowsA = Knows(B, A));
             }
 
-            public string GetMessage()
-            {
-                return GetResultMessage() + GetTimePostfix();
-            }
-
             public override string ToString()
             {
-                return $"[{GetMessage()}]";
+                return $"[{string.Join(",", GetResultMessages())}]";
             }
 
-            private string GetResultMessage()
+            public string[] GetResultMessages()
             {
                 var aName = A.ToString();
                 var bName = B.ToString();
 
-                if (Success)
+                return new[]
                 {
-                    return $"{aName} and {bName} know each other.";
-                }
-
-                return $"[{aName}-->{bName}] = {AKnowsB} AND [{aName}<--{bName}] = {BKnowsA}";
-            }
-
-            private string GetTimePostfix()
-            {
-                var aName = A.ToString();
-                var bName = B.ToString();
-
-                return $" ({aName}->{bName}: {aToBTime.TotalMinutes} seconds, {bName}->{aName}: {bToATime.TotalSeconds} seconds)";
+                    $"[{aName} --> {bName}] = {AKnowsB} ({aToBTime.TotalSeconds} seconds)",
+                    $"[{aName} <-- {bName}] = {BKnowsA} ({bToATime.TotalSeconds} seconds)"
+                };
             }
 
             private static TimeSpan Measure(Action action)
@@ -230,6 +223,7 @@ namespace DistTestCore.Helpers
             {
                 lock (a)
                 {
+                    Thread.Sleep(10);
                     var peerId = b.Response.id;
 
                     try

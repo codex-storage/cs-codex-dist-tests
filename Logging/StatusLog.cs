@@ -20,7 +20,7 @@ namespace Logging
         {
             Write(new StatusLogJson
             {
-                time = DateTime.UtcNow.ToString("o"),
+                @timestamp = DateTime.UtcNow.ToString("o"),
                 runid = NameUtils.GetRunId(),
                 status = resultStatus,
                 testid = NameUtils.GetTestId(),
@@ -49,7 +49,7 @@ namespace Logging
 
     public class StatusLogJson
     {
-        public string time { get; set; } = string.Empty;
+        public string @timestamp { get; set; } = string.Empty;
         public string runid { get; set; } = string.Empty;
         public string status { get; set; } = string.Empty;
         public string testid { get; set; } = string.Empty; 

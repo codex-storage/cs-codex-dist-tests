@@ -21,11 +21,7 @@ namespace Logging
         {
             get
             {
-                if (logFile == null)
-                {
-                    logFile = new LogFile(GetFullName(), "log");
-                    WriteLogTag();
-                }
+                if (logFile == null) logFile = new LogFile(GetFullName(), "log");
                 return logFile;
             }
         }
@@ -77,7 +73,7 @@ namespace Logging
             return new LogFile($"{GetFullName()}_{GetSubfileNumber()}", ext);
         }
 
-        private void WriteLogTag()
+        public void WriteLogTag()
         {
             var runId = NameUtils.GetRunId();
             var category = NameUtils.GetCategoryName();
