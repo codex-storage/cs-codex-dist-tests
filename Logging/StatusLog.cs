@@ -20,11 +20,12 @@ namespace Logging
         {
             Write(new StatusLogJson
             {
-                time = DateTime.UtcNow.ToString("u"),
+                time = DateTime.UtcNow.ToString("o"),
                 runid = NameUtils.GetRunId(),
                 status = resultStatus,
                 testid = NameUtils.GetTestId(),
                 codexid = codexId,
+                category = NameUtils.GetCategoryName(),
                 fixturename = fixtureName,
                 testname = NameUtils.GetTestMethodName()
             });
@@ -53,6 +54,7 @@ namespace Logging
         public string status { get; set; } = string.Empty;
         public string testid { get; set; } = string.Empty; 
         public string codexid { get; set; } = string.Empty;
+        public string category { get; set; } = string.Empty;
         public string fixturename { get; set; } = string.Empty;
         public string testname { get; set; } = string.Empty;
     }
