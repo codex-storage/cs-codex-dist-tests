@@ -26,6 +26,29 @@ namespace Logging
             return className.Replace('.', '-');
         }
 
+        public static string GetCategoryName()
+        {
+            var test = TestContext.CurrentContext.Test;
+            return test.ClassName!.Substring(0, test.ClassName.LastIndexOf('.'));
+        }
+
+        public static string GetTestId()
+        {
+            return GetEnvVar("TESTID");
+        }
+
+        public static string GetRunId()
+        {
+            return GetEnvVar("RUNID");
+        }
+
+        private static string GetEnvVar(string name)
+        {
+            var v = Environment.GetEnvironmentVariable(name);
+            if (string.IsNullOrEmpty(v)) return $"EnvVar'{name}'NotSet";
+            return v;
+        }
+
         private static string FormatArguments(TestContext.TestAdapter test)
         {
             if (test.Arguments == null || !test.Arguments.Any()) return "";

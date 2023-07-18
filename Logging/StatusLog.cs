@@ -21,35 +21,13 @@ namespace Logging
             Write(new StatusLogJson
             {
                 time = DateTime.UtcNow.ToString("u"),
-                runid = GetRunId(),
+                runid = NameUtils.GetRunId(),
                 status = resultStatus,
-                testid = GetTestId(),
+                testid = NameUtils.GetTestId(),
                 codexid = codexId,
                 fixturename = fixtureName,
-                testname = GetTestName()
+                testname = NameUtils.GetTestMethodName()
             });
-        }
-
-        private string GetTestName()
-        {
-            return NameUtils.GetTestMethodName();
-        }
-
-        private string GetTestId()
-        {
-            return GetEnvVar("TESTID");
-        }
-
-        private string GetRunId()
-        {
-            return GetEnvVar("RUNID");
-        }
-
-        private string GetEnvVar(string name)
-        {
-            var v = Environment.GetEnvironmentVariable(name);
-            if (string.IsNullOrEmpty(v)) return $"'{name}' not set!";
-            return v;
         }
 
         private void Write(StatusLogJson json)
