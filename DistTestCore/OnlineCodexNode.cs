@@ -72,9 +72,6 @@ namespace DistTestCore
             if (string.IsNullOrEmpty(response)) Assert.Fail("Received empty response.");
             if (response.StartsWith(UploadFailedMessage)) Assert.Fail("Node failed to store block.");
 
-            var logReplacement = $"(CID:{file.Describe()})";
-            Log($"ContentId '{response}' is {logReplacement}");
-            lifecycle.Log.AddStringReplace(response, logReplacement);
             Log($"Uploaded file. Received contentId: '{response}'.");
             return new ContentId(response);
         }

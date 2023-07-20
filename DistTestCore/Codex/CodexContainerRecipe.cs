@@ -9,7 +9,7 @@ namespace DistTestCore.Codex
         public const string DockerImage = "codexstorage/nim-codex:sha-7227a4a";
 #else
         //public const string DockerImage = "thatbenbierens/nim-codex:loopingyeah";
-        public const string DockerImage = "codexstorage/nim-codex:sha-7227a4a";
+        public const string DockerImage = "codexstorage/nim-codex:sha-6708202";
 #endif
         public const string MetricsPortTag = "metrics_port";
         public const string DiscoveryPortTag = "discovery-port";
