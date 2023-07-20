@@ -15,6 +15,9 @@ namespace CodexNetDownloader
         [Uniform("kube-config", "kc", "KUBECONFIG", true, "Path to Kubeconfig file. Use 'null' (default) to use local cluster.")]
         public string KubeConfigFile { get; set; } = "null";
 
+        [Uniform("continuous", "c", "CONTINUOUS", false, "If true, will continuously download and append log files.")]
+        public bool Continuous { get; set; } = false;
+
         public CodexDeployment CodexDeployment { get; set; } = null!;
 
         public TestRunnerLocation RunnerLocation { get; set; } = TestRunnerLocation.InternalToCluster;

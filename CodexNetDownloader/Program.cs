@@ -1,4 +1,5 @@
 ﻿using ArgsUniform;
+using CodexNetDownloader;
 using ContinuousTests;
 using DistTestCore;
 using DistTestCore.Codex;
@@ -27,12 +28,20 @@ public class Program
         var k8sFactory = new K8sFactory();
         var (_, lifecycle) = k8sFactory.CreateFacilities(config.KubeConfigFile, config.OutputPath, "dataPath", config.CodexDeployment.Metadata.KubeNamespace, new DefaultTimeSet(), new NullLog(), config.RunnerLocation);
 
-        foreach (var container in config.CodexDeployment.CodexContainers)
+        if (config.Continuous)
         {
-            lifecycle.DownloadLog(container);
+            var dl = new ContinuousLogDownloader(lifecycle, config);
+            dl.Run();
         }
+        else
+        {
+            foreach (var container in config.CodexDeployment.CodexContainers)
+            {
+                lifecycle.DownloadLog(container);
+            }
 
-        Console.WriteLine("Done!");
+            Console.WriteLine("Done!");
+        }
     }
 
     private static CodexDeployment ParseCodexDeploymentJson(string filename)
