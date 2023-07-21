@@ -28,6 +28,10 @@ spec:
           value: ${BRANCH}
         - name: SOURCE
           value: ${SOURCE}
+        - name: RUNID
+          value: ${RUNID}
+        - name: TESTID
+          value: ${TESTID}
         volumeMounts:
         - name: kubeconfig
           mountPath: /opt/kubeconfig.yaml

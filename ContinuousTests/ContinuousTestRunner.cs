@@ -24,7 +24,7 @@ namespace ContinuousTests
             startupChecker.Check();
 
             var taskFactory = new TaskFactory();
-            var overviewLog = new FixtureLog(new LogConfig(config.LogPath, false), "Overview");
+            var overviewLog = new FixtureLog(new LogConfig(config.LogPath, false), DateTime.UtcNow, "Overview");
             overviewLog.Log("Continuous tests starting...");
             var allTests = testFactory.CreateTests();
 

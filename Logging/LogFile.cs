@@ -49,7 +49,7 @@
 
         private static string GetTimestamp()
         {
-            return $"[{DateTime.UtcNow.ToString("u")}]";
+            return $"[{DateTime.UtcNow.ToString("o")}]";
         }
 
         private void EnsurePathExists(string filename)

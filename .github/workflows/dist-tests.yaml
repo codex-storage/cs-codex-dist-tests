@@ -15,19 +15,19 @@ on:
   workflow_dispatch:
     inputs:
       branch:
-        description: Branch
+        description: Branch (master)
         required: false
         type: string
       source:
-        description: Repository with tests
+        description: Repository with tests (current)
         required: false
         type: string
       nameprefix:
-        description: Runner job/pod name prefix
+        description: Runner prefix (cs-codex-dist-tests)
         required: false
         type: string
       namespace:
-        description: Kubernetes namespace for runner
+        description: Runner namespace (cs-codex-dist-tests)
         required: false
         type: string
 
@@ -56,6 +56,8 @@ jobs:
           [[ -n "${{ inputs.source }}" ]] && echo "SOURCE=${{ inputs.source }}" >>"$GITHUB_ENV" || echo "SOURCE=${{ env.SOURCE }}" >>"$GITHUB_ENV"
           [[ -n "${{ inputs.nameprefix }}" ]] && echo "NAMEPREFIX=${{ inputs.nameprefix }}" >>"$GITHUB_ENV" || echo "NAMEPREFIX=${{ env.NAMEPREFIX }}" >>"$GITHUB_ENV"
           [[ -n "${{ inputs.namespace }}" ]] && echo "NAMESPACE=${{ inputs.namespace }}" >>"$GITHUB_ENV" || echo "NAMESPACE=${{ env.NAMESPACE }}" >>"$GITHUB_ENV"
+          echo "RUNID=$(date +%Y%m%d-%H%M%S)" >> $GITHUB_ENV
+          echo "TESTID=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
 
       - name: Kubectl - Install ${{ env.KUBE_VERSION }}
         uses: azure/setup-kubectl@v3
@@ -69,5 +71,4 @@ jobs:
 
       - name: Kubectl - Create Job
         run: |
-          export RUNID=$(date +%Y%m%d-%H%M%S)
           envsubst < ${{ env.JOB_MANIFEST }} | kubectl apply -f -
