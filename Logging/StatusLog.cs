@@ -16,7 +16,7 @@ namespace Logging
             this.codexId = codexId;
         }
 
-        public void ConcludeTest(string resultStatus)
+        public void ConcludeTest(string resultStatus, string testDuration)
         {
             Write(new StatusLogJson
             {
@@ -27,7 +27,8 @@ namespace Logging
                 codexid = codexId,
                 category = NameUtils.GetCategoryName(),
                 fixturename = fixtureName,
-                testname = NameUtils.GetTestMethodName()
+                testname = NameUtils.GetTestMethodName(),
+                testduration = testDuration
             });
         }
 
@@ -57,5 +58,6 @@ namespace Logging
         public string category { get; set; } = string.Empty;
         public string fixturename { get; set; } = string.Empty;
         public string testname { get; set; } = string.Empty;
+        public string testduration { get; set;} = string.Empty;
     }
 }

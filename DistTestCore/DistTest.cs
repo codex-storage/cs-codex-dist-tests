@@ -200,8 +200,10 @@ namespace DistTestCore
         private void DisposeTestLifecycle()
         {
             var lifecycle = Get();
-            fixtureLog.Log($"{GetCurrentTestName()} = {GetTestResult()} ({lifecycle.GetTestDuration()})");
-            statusLog.ConcludeTest(GetTestResult());
+            var testResult = GetTestResult();
+            var testDuration = lifecycle.GetTestDuration();
+            fixtureLog.Log($"{GetCurrentTestName()} = {testResult} ({testDuration})");
+            statusLog.ConcludeTest(testResult, testDuration);
             Stopwatch.Measure(fixtureLog, $"Teardown for {GetCurrentTestName()}", () =>
             {
                 lifecycle.Log.EndTest();
