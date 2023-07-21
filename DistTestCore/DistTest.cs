@@ -28,7 +28,7 @@ namespace DistTestCore
             var logConfig = configuration.GetLogConfig();
             var startTime = DateTime.UtcNow;
             fixtureLog = new FixtureLog(logConfig, startTime);
-            statusLog = new StatusLog(logConfig, startTime, CodexContainerRecipe.DefaultDockerImage);
+            statusLog = new StatusLog(logConfig, startTime, new CodexContainerRecipe().Image);
 
             PeerConnectionTestHelpers = new PeerConnectionTestHelpers(this);
             PeerDownloadTestHelpers = new PeerDownloadTestHelpers(this);
