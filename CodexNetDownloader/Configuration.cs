@@ -10,13 +10,13 @@ namespace CodexNetDownloader
         public string OutputPath { get; set; } = "output";
 
         [Uniform("codex-deployment", "c", "CODEXDEPLOYMENT", true, "Path to codex-deployment JSON file.")]
-        public string CodexDeploymentJson { get; set; } = string.Empty; // @"d:\Projects\cs-codex-dist-tests\CodexNetDownloader\codex-deployment.json";
+        public string CodexDeploymentJson { get; set; } = string.Empty;
 
         [Uniform("kube-config", "kc", "KUBECONFIG", true, "Path to Kubeconfig file. Use 'null' (default) to use local cluster.")]
-        public string KubeConfigFile { get; set; } = string.Empty;// @"c:\Users\Ben\.kube\codex-tests-ams3-dev-kubeconfig.yaml";
+        public string KubeConfigFile { get; set; } = "null";
 
         public CodexDeployment CodexDeployment { get; set; } = null!;
 
-        public TestRunnerLocation RunnerLocation { get; set; } = TestRunnerLocation.ExternalToCluster;
+        public TestRunnerLocation RunnerLocation { get; set; } = TestRunnerLocation.InternalToCluster;
     }
 }
