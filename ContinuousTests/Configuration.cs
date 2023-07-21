@@ -25,6 +25,9 @@ namespace ContinuousTests
         [Uniform("stop", "s", "STOPONFAIL", false, "If true, runner will stop on first test failure and download all cluster container logs. False by default.")]
         public bool StopOnFailure { get; set; } = false;
 
+        [Uniform("dl-logs", "dl", "DLLOGS", false, "If true, runner will periodically download and save/append container logs to the log path.")]
+        public bool DownloadContainerLogs { get; set; } = false;
+
         public CodexDeployment CodexDeployment { get; set; } = null!;
 
         public TestRunnerLocation RunnerLocation { get; set; } = TestRunnerLocation.InternalToCluster;

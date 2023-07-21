@@ -9,4 +9,5 @@ dotnet run \
     --min-price=1024 \
     --max-collateral=1024 \
     --max-duration=3600000 \
-    --block-ttl=120
+    --block-ttl=120 \
+	-y
