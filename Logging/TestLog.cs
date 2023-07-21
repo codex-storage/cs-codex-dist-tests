@@ -10,7 +10,7 @@ namespace Logging
         public TestLog(string folder, bool debug, string name = "")
             : base(debug)
         {
-            methodName = GetMethodName(name);
+            methodName = NameUtils.GetTestMethodName(name);
             fullName = Path.Combine(folder, methodName);
 
             Log($"*** Begin: {methodName}");
@@ -36,25 +36,6 @@ namespace Logging
         protected override string GetFullName()
         {
             return fullName;
-        }
-
-        private string GetMethodName(string name)
-        {
-            if (!string.IsNullOrEmpty(name)) return name;
-            var test = TestContext.CurrentContext.Test;
-            var args = FormatArguments(test);
-            return ReplaceInvalidCharacters($"{test.MethodName}{args}");
-        }
-
-        private static string FormatArguments(TestContext.TestAdapter test)
-        {
-            if (test.Arguments == null || !test.Arguments.Any()) return "";
-            return $"[{string.Join(',', test.Arguments)}]";
-        }
-
-        private static string ReplaceInvalidCharacters(string name)
-        {
-            return name.Replace(":", "_");
         }
     }
 }

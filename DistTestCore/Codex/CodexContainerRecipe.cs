@@ -5,6 +5,8 @@ namespace DistTestCore.Codex
 {
     public class CodexContainerRecipe : ContainerRecipeFactory
     {
+        private const string DefaultDockerImage = "codexstorage/nim-codex:sha-14c5270";
+
         public const string MetricsPortTag = "metrics_port";
         public const string DiscoveryPortTag = "discovery-port";
 
@@ -87,7 +89,7 @@ namespace DistTestCore.Codex
         {
             var image = Environment.GetEnvironmentVariable("CODEXDOCKERIMAGE");
             if (!string.IsNullOrEmpty(image)) return image;
-            return "codexstorage/nim-codex:sha-0265cad";
+            return DefaultDockerImage;
         }
     }
 }

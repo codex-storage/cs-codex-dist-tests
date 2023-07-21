@@ -12,7 +12,6 @@ namespace DistTestCore
         string GetName();
         CodexDebugResponse GetDebugInfo();
         CodexDebugPeerResponse GetDebugPeer(string peerId);
-        CodexDebugPeerResponse GetDebugPeer(string peerId, TimeSpan timeout);
         ContentId UploadFile(TestFile file);
         TestFile? DownloadContent(ContentId contentId, string fileLabel = "");
         void ConnectToPeer(IOnlineCodexNode node);
@@ -60,11 +59,6 @@ namespace DistTestCore
             return CodexAccess.GetDebugPeer(peerId);
         }
 
-        public CodexDebugPeerResponse GetDebugPeer(string peerId, TimeSpan timeout)
-        {
-            return CodexAccess.GetDebugPeer(peerId, timeout);
-        }
-
         public ContentId UploadFile(TestFile file)
         {
             using var fileStream = File.OpenRead(file.Filename);
@@ -78,9 +72,6 @@ namespace DistTestCore
             if (string.IsNullOrEmpty(response)) Assert.Fail("Received empty response.");
             if (response.StartsWith(UploadFailedMessage)) Assert.Fail("Node failed to store block.");
 
-            var logReplacement = $"(CID:{file.Describe()})";
-            Log($"ContentId '{response}' is {logReplacement}");
-            lifecycle.Log.AddStringReplace(response, logReplacement);
             Log($"Uploaded file. Received contentId: '{response}'.");
             return new ContentId(response);
         }

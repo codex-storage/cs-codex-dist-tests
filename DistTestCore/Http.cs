@@ -13,16 +13,14 @@ namespace DistTestCore
         private readonly Address address;
         private readonly string baseUrl;
         private readonly string? logAlias;
-        private readonly TimeSpan? timeoutOverride;
 
-        public Http(BaseLog log, ITimeSet timeSet, Address address, string baseUrl, string? logAlias = null, TimeSpan? timeoutOverride = null)
+        public Http(BaseLog log, ITimeSet timeSet, Address address, string baseUrl, string? logAlias = null)
         {
             this.log = log;
             this.timeSet = timeSet;
             this.address = address;
             this.baseUrl = baseUrl;
             this.logAlias = logAlias;
-            this.timeoutOverride = timeoutOverride;
             if (!this.baseUrl.StartsWith("/")) this.baseUrl = "/" + this.baseUrl;
             if (!this.baseUrl.EndsWith("/")) this.baseUrl += "/";
         }
@@ -127,24 +125,13 @@ namespace DistTestCore
 
         private T Retry<T>(Func<T> operation, string description)
         {
-            return Time.Retry(operation, GetTimeout(), timeSet.HttpCallRetryDelay(), description);
+            return Time.Retry(operation, timeSet.HttpCallRetryTime(), timeSet.HttpCallRetryDelay(), description);
         }
 
         private HttpClient GetClient()
         {
-            return GetClient(GetTimeout());
-        }
-
-        private TimeSpan GetTimeout()
-        {
-            if (timeoutOverride.HasValue) return timeoutOverride.Value;
-            return timeSet.HttpCallTimeout();
-        }
-
-        private HttpClient GetClient(TimeSpan timeout)
-        {
             var client = new HttpClient();
-            client.Timeout = timeout;
+            client.Timeout = timeSet.HttpCallTimeout();
             return client;
         }
     }

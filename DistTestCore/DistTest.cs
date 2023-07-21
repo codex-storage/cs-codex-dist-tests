@@ -16,6 +16,7 @@ namespace DistTestCore
         private readonly Configuration configuration = new Configuration();
         private readonly Assembly[] testAssemblies;
         private readonly FixtureLog fixtureLog;
+        private readonly StatusLog statusLog;
         private readonly object lifecycleLock = new object();
         private readonly Dictionary<string, TestLifecycle> lifecycles = new Dictionary<string, TestLifecycle>();
 
@@ -24,7 +25,10 @@ namespace DistTestCore
             var assemblies = AppDomain.CurrentDomain.GetAssemblies();
             testAssemblies = assemblies.Where(a => a.FullName!.ToLowerInvariant().Contains("test")).ToArray();
 
-            fixtureLog = new FixtureLog(configuration.GetLogConfig());
+            var logConfig = configuration.GetLogConfig();
+            var startTime = DateTime.UtcNow;
+            fixtureLog = new FixtureLog(logConfig, startTime);
+            statusLog = new StatusLog(logConfig, startTime, CodexContainerRecipe.DefaultDockerImage);
 
             PeerConnectionTestHelpers = new PeerConnectionTestHelpers(this);
             PeerDownloadTestHelpers = new PeerDownloadTestHelpers(this);
@@ -186,6 +190,7 @@ namespace DistTestCore
         private void CreateNewTestLifecycle()
         {
             var testName = GetCurrentTestName();
+            fixtureLog.WriteLogTag();
             Stopwatch.Measure(fixtureLog, $"Setup for {testName}", () =>
             {
                 lock (lifecycleLock)
@@ -198,7 +203,10 @@ namespace DistTestCore
         private void DisposeTestLifecycle()
         {
             var lifecycle = Get();
-            fixtureLog.Log($"{GetCurrentTestName()} = {GetTestResult()} ({lifecycle.GetTestDuration()})");
+            var testResult = GetTestResult();
+            var testDuration = lifecycle.GetTestDuration();
+            fixtureLog.Log($"{GetCurrentTestName()} = {testResult} ({testDuration})");
+            statusLog.ConcludeTest(testResult, testDuration);
             Stopwatch.Measure(fixtureLog, $"Teardown for {GetCurrentTestName()}", () =>
             {
                 lifecycle.Log.EndTest();

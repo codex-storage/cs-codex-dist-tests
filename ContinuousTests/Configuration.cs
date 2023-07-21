@@ -25,6 +25,9 @@ namespace ContinuousTests
         [Uniform("stop", "s", "STOPONFAIL", false, "If true, runner will stop on first test failure and download all cluster container logs. False by default.")]
         public bool StopOnFailure { get; set; } = false;
 
+        [Uniform("dl-logs", "dl", "DLLOGS", false, "If true, runner will periodically download and save/append container logs to the log path.")]
+        public bool DownloadContainerLogs { get; set; } = false;
+
         public CodexDeployment CodexDeployment { get; set; } = null!;
 
         public TestRunnerLocation RunnerLocation { get; set; } = TestRunnerLocation.InternalToCluster;
@@ -57,9 +60,11 @@ namespace ContinuousTests
         private static void PrintHelp()
         {
             var nl = Environment.NewLine;
-            Console.WriteLine("CodexNetDownloader lets you download all container logs given a codex-deployment.json file." + nl);
+            Console.WriteLine("ContinuousTests will run a set of tests against a codex deployment given a codex-deployment.json file." + nl +
+                "The tests will run in an endless loop unless otherwise specified, using the test-specific timing values." + nl);
 
-            Console.WriteLine("CodexNetDownloader assumes you are running this tool from *inside* the Kubernetes cluster. " +
+
+            Console.WriteLine("ContinuousTests assumes you are running this tool from *inside* the Kubernetes cluster. " +
                 "If you are not running this from a container inside the cluster, add the argument '--external'." + nl);
         }
     }

@@ -24,11 +24,13 @@ namespace ContinuousTests
             startupChecker.Check();
 
             var taskFactory = new TaskFactory();
-            var overviewLog = new FixtureLog(new LogConfig(config.LogPath, false), "Overview");
+            var overviewLog = new FixtureLog(new LogConfig(config.LogPath, false), DateTime.UtcNow, "Overview");
             overviewLog.Log("Continuous tests starting...");
             var allTests = testFactory.CreateTests();
 
             ClearAllCustomNamespaces(allTests, overviewLog);
+
+            StartLogDownloader(taskFactory);
 
             var testLoops = allTests.Select(t => new TestLoop(taskFactory, config, overviewLog, t.GetType(), t.RunTestEvery, cancelToken)).ToArray();
 
@@ -60,6 +62,19 @@ namespace ContinuousTests
             log.Log($"Clearing namespace '{test.CustomK8sNamespace}'...");
             var (workflowCreator, _) = k8SFactory.CreateFacilities(config.KubeConfigFile, config.LogPath, config.DataPath, test.CustomK8sNamespace, new DefaultTimeSet(), log, config.RunnerLocation);
             workflowCreator.CreateWorkflow().DeleteTestResources();
+        }
+
+        private void StartLogDownloader(TaskFactory taskFactory)
+        {
+            if (!config.DownloadContainerLogs) return;
+
+            var path = Path.Combine(config.LogPath, "containers");
+            if (!Directory.Exists(path)) Directory.CreateDirectory(path);
+
+            var (_, lifecycle) = k8SFactory.CreateFacilities(config.KubeConfigFile, config.LogPath, config.DataPath, config.CodexDeployment.Metadata.KubeNamespace, new DefaultTimeSet(), new NullLog(), config.RunnerLocation);
+            var downloader = new ContinuousLogDownloader(lifecycle, config.CodexDeployment, path, cancelToken);
+
+            taskFactory.Run(downloader.Run);
         }
     }
 }
