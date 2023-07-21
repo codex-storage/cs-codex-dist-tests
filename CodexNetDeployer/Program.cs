@@ -4,7 +4,6 @@ using DistTestCore;
 using DistTestCore.Codex;
 using DistTestCore.Marketplace;
 using DistTestCore.Metrics;
-using Logging;
 using Newtonsoft.Json;
 using Configuration = CodexNetDeployer.Configuration;
 
