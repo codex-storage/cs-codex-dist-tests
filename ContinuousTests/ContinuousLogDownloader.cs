@@ -27,6 +27,12 @@ namespace ContinuousTests
 
                 cancelToken.WaitHandle.WaitOne(TimeSpan.FromSeconds(15));
             }
+
+            // After testing has stopped, we wait a little bit and fetch the logs one more time.
+            // If our latest fetch was not recent, interesting test-related log activity might
+            // not have been captured yet.
+            Thread.Sleep(TimeSpan.FromSeconds(10));
+            UpdateLogs();
         }
 
         private void UpdateLogs()
