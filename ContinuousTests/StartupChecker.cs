@@ -19,7 +19,7 @@ namespace ContinuousTests
 
         public void Check()
         {
-            var log = new FixtureLog(new LogConfig(config.LogPath, false), "StartupChecks");
+            var log = new FixtureLog(new LogConfig(config.LogPath, false), DateTime.UtcNow, "StartupChecks");
             log.Log("Starting continuous test run...");
             log.Log("Checking configuration...");
             PreflightCheck(config);

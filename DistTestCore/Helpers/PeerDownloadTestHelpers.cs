@@ -1,74 +1,63 @@
-﻿using DistTestCore.Codex;
-using NUnit.Framework;
+﻿using static DistTestCore.Helpers.FullConnectivityHelper;
 
 namespace DistTestCore.Helpers
 {
-    public class PeerDownloadTestHelpers
+    public class PeerDownloadTestHelpers : IFullConnectivityImplementation
     {
+        private readonly FullConnectivityHelper helper;
         private readonly DistTest test;
+        private ByteSize testFileSize;
 
         public PeerDownloadTestHelpers(DistTest test)
         {
+            helper = new FullConnectivityHelper(test, this);
+            testFileSize = 1.MB();
             this.test = test;
         }
 
         public void AssertFullDownloadInterconnectivity(IEnumerable<IOnlineCodexNode> nodes, ByteSize testFileSize)
         {
-            test.Log($"Asserting full download interconnectivity for nodes: '{string.Join(",", nodes.Select(n => n.GetName()))}'...");
-            var start = DateTime.UtcNow;
-
-            foreach (var node in nodes)
-            {
-                var uploader = node;
-                var downloaders = nodes.Where(n => n != uploader).ToArray();
-
-                test.ScopedTestFiles(() =>
-                {
-                    PerformTest(uploader, downloaders, testFileSize);
-                });
-            }
-            
-            test.Log($"Success! Full download interconnectivity for nodes: {string.Join(",", nodes.Select(n => n.GetName()))}");
-            var timeTaken = DateTime.UtcNow - start;
-
-            AssertTimePerMB(timeTaken, nodes.Count(), testFileSize);
+            this.testFileSize = testFileSize;
+            helper.AssertFullyConnected(nodes);
         }
 
-        private void AssertTimePerMB(TimeSpan timeTaken, int numberOfNodes, ByteSize size)
+        public string Description()
         {
-            var numberOfDownloads = numberOfNodes * (numberOfNodes - 1);
-            var timePerDownload = timeTaken / numberOfDownloads;
-            float sizeInMB = size.ToMB();
-            var timePerMB = timePerDownload / sizeInMB;
-
-            test.Log($"Performed {numberOfDownloads} downloads of {size} in {timeTaken.TotalSeconds} seconds, for an average of {timePerMB.TotalSeconds} seconds per MB.");
-
-            Assert.That(timePerMB, Is.LessThan(CodexContainerRecipe.MaxDownloadTimePerMegabyte), "MaxDownloadTimePerMegabyte performance threshold breached.");
+            return "Download Connectivity";
         }
 
-        private void PerformTest(IOnlineCodexNode uploader, IOnlineCodexNode[] downloaders, ByteSize testFileSize)
+        public string ValidateEntry(Entry entry, Entry[] allEntries)
         {
-            // Generate 1 test file per downloader.
-            var files = downloaders.Select(d => GenerateTestFile(uploader, d, testFileSize)).ToArray();
+            return string.Empty;
+        }
 
-            // Upload all the test files to the uploader.
-            var contentIds = files.Select(uploader.UploadFile).ToArray();
+        public PeerConnectionState Check(Entry from, Entry to)
+        {
+            var expectedFile = GenerateTestFile(from.Node, to.Node);
 
-            // Each downloader should retrieve its own test file.
-            for (var i = 0; i < downloaders.Length; i++)
+            var contentId = from.Node.UploadFile(expectedFile);
+
+            try
             {
-                var expectedFile = files[i];
-                var downloadedFile = downloaders[i].DownloadContent(contentIds[i], $"{expectedFile.Label}DOWNLOADED");
-
+                var downloadedFile = to.Node.DownloadContent(contentId, expectedFile.Label + "_downloaded");
                 expectedFile.AssertIsEqual(downloadedFile);
+                return PeerConnectionState.Connection;
             }
+            catch
+            {
+                // Should an exception occur during the download or file-content assertion,
+                // We consider that as no-connection for the purpose of this test.
+                return PeerConnectionState.NoConnection;
+            }
+
+            // Should an exception occur during upload, then this try is inconclusive and we try again next loop.
         }
 
-        private TestFile GenerateTestFile(IOnlineCodexNode uploader, IOnlineCodexNode downloader, ByteSize testFileSize)
+        private TestFile GenerateTestFile(IOnlineCodexNode uploader, IOnlineCodexNode downloader)
         {
             var up = uploader.GetName().Replace("<", "").Replace(">", "");
             var down = downloader.GetName().Replace("<", "").Replace(">", "");
-            var label = $"FROM{up}TO{down}";
+            var label = $"~from:{up}-to:{down}~";
             return test.GenerateTestFile(testFileSize, label);
         }
     }
