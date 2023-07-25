@@ -8,6 +8,12 @@ namespace DistTestCore
     {
         ICodexSetup WithName(string name);
         ICodexSetup At(Location location);
+        ICodexSetup WithLogLevel(CodexLogLevel level);
+        /// <summary>
+        /// Sets the log level for codex. The default level is INFO and the
+        /// log level is applied only to the supplied topics.
+        /// </summary>
+        ICodexSetup WithLogLevel(CodexLogLevel level, params string[] topics);
         ICodexSetup WithBootstrapNode(IOnlineCodexNode node);
         ICodexSetup WithStorageQuota(ByteSize storageQuota);
         ICodexSetup WithBlockTTL(TimeSpan duration);
@@ -50,6 +56,19 @@ namespace DistTestCore
         public ICodexSetup WithBootstrapNode(IOnlineCodexNode node)
         {
             BootstrapSpr = node.GetDebugInfo().spr;
+            return this;
+        }
+
+        public ICodexSetup WithLogLevel(CodexLogLevel level)
+        {
+            LogLevel = level;
+            return this;
+        }
+
+        public ICodexSetup WithLogLevel(CodexLogLevel level, params string[] topics)
+        {
+            LogLevel = level;
+            LogTopics = topics;
             return this;
         }
 
