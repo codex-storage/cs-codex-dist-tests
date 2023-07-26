@@ -1,5 +1,7 @@
 using DistTestCore;
 using NUnit.Framework;
+using k8s;
+using k8s.Models;
 
 namespace TestsLong.BasicTests
 {
@@ -23,7 +25,8 @@ namespace TestsLong.BasicTests
             var testFile = GenerateTestFile(filesizeMb.MB());
             var contentId = host.UploadFile(testFile);
             var list = new List<Task<TestFile?>>();
-
+            //sleep for 1 minute
+            Thread.Sleep(1200000);
             foreach (var node in group)
             {
                 list.Add(Task.Run(() => { return node.DownloadContent(contentId); }));
