@@ -14,11 +14,7 @@ namespace DistTestCore.Marketplace
 
         public GethContainerRecipe()
         {
-#if Arm64
-            Image = "emizzle/geth-confenv:latest";
-#else
-            Image = "thatbenbierens/geth-confenv:onethousand";
-#endif
+            Image = "codexstorage/dist-tests-geth:sha-b788a2d";
         }
 
         protected override void Initialize(StartupConfig startupConfig)

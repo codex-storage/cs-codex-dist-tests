@@ -8,7 +8,7 @@ namespace DistTestCore.Metrics
 
         public PrometheusContainerRecipe()
         {
-            Image = "thatbenbierens/prometheus-envconf:latest";
+            Image = "codexstorage/dist-tests-prometheus:sha-f97d7fd";
         }
 
         protected override void Initialize(StartupConfig startupConfig)

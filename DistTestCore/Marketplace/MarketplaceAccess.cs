@@ -12,6 +12,7 @@ namespace DistTestCore.Marketplace
         string MakeStorageAvailable(ByteSize size, TestToken minPricePerBytePerSecond, TestToken maxCollateral, TimeSpan maxDuration);
         string RequestStorage(ContentId contentId, TestToken pricePerSlotPerSecond, TestToken requiredCollateral, uint minRequiredNumberOfNodes, int proofProbability, TimeSpan duration);
         void AssertThatBalance(IResolveConstraint constraint, string message = "");
+        CodexStoragePurchase GetPurchaseStatus(string purchaseId);
         TestToken GetBalance();
     }
 
@@ -102,6 +103,11 @@ namespace DistTestCore.Marketplace
             AssertHelpers.RetryAssert(constraint, GetBalance, message);
         }
 
+        public CodexStoragePurchase GetPurchaseStatus(string purchaseId)
+        {
+            return codexAccess.GetPurchaseStatus(purchaseId);
+        }
+
         public TestToken GetBalance()
         {
             var interaction = marketplaceNetwork.StartInteraction(lifecycle);
@@ -136,6 +142,12 @@ namespace DistTestCore.Marketplace
         public void AssertThatBalance(IResolveConstraint constraint, string message = "")
         {
             Unavailable();
+        }
+
+        public CodexStoragePurchase GetPurchaseStatus(string purchaseId)
+        {
+            Unavailable();
+            return new CodexStoragePurchase();
         }
 
         public TestToken GetBalance()
