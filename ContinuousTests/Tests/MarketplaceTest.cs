@@ -60,40 +60,5 @@
 //                file.AssertIsEqual(result);
 //            });
 //        }
-
-//        private void WaitForContractToStart(CodexAccess codexAccess, string purchaseId)
-//        {
-//            var lastState = "";
-//            var waitStart = DateTime.UtcNow;
-//            var filesizeInMb = fileSize.SizeInBytes / (1024 * 1024);
-//            var maxWaitTime = TimeSpan.FromSeconds(filesizeInMb * 10.0);
-
-//            Log.Log($"{nameof(WaitForContractToStart)} for {Time.FormatDuration(maxWaitTime)}");
-//            while (lastState != "started")
-//            {
-//                CancelToken.ThrowIfCancellationRequested();
-
-//                var purchaseStatus = codexAccess.Node.GetPurchaseStatus(purchaseId);
-//                var statusJson = JsonConvert.SerializeObject(purchaseStatus);
-//                if (purchaseStatus != null && purchaseStatus.state != lastState)
-//                {
-//                    lastState = purchaseStatus.state;
-//                    Log.Log("Purchase status: " + statusJson);
-//                }
-
-//                Thread.Sleep(2000);
-
-//                if (lastState == "errored")
-//                {
-//                    Assert.Fail("Contract start failed: " + statusJson);
-//                }
-
-//                if (DateTime.UtcNow - waitStart > maxWaitTime)
-//                {
-//                    Assert.Fail($"Contract was not picked up within {maxWaitTime.TotalSeconds} seconds timeout: {statusJson}");
-//                }
-//            }
-//            Log.Log("Contract started.");
-//        }
 //    }
 //}

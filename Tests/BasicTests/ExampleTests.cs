@@ -47,6 +47,7 @@ namespace Tests.BasicTests
         {
             var sellerInitialBalance = 234.TestTokens();
             var buyerInitialBalance = 1000.TestTokens();
+            var fileSize = 10.MB();
 
             var seller = SetupCodexNode(s => s
                             .WithStorageQuota(11.GB())
@@ -59,7 +60,7 @@ namespace Tests.BasicTests
                 maxCollateral: 20.TestTokens(),
                 maxDuration: TimeSpan.FromMinutes(3));
 
-            var testFile = GenerateTestFile(10.MB());
+            var testFile = GenerateTestFile(fileSize);
 
             var buyer = SetupCodexNode(s => s
                 .WithBootstrapNode(seller)
@@ -68,55 +69,21 @@ namespace Tests.BasicTests
             buyer.Marketplace.AssertThatBalance(Is.EqualTo(buyerInitialBalance));
             
             var contentId = buyer.UploadFile(testFile);
-            var purchaseId = buyer.Marketplace.RequestStorage(contentId,
+            var purchaseContract = buyer.Marketplace.RequestStorage(contentId,
                 pricePerSlotPerSecond: 2.TestTokens(),
                 requiredCollateral: 10.TestTokens(),
                 minRequiredNumberOfNodes: 1,
                 proofProbability: 5,
                 duration: TimeSpan.FromMinutes(1));
 
-
-            WaitForContractToStart(buyer.Marketplace, 10.MB(), purchaseId);
+            purchaseContract.WaitForStorageContractStarted(fileSize);
 
             seller.Marketplace.AssertThatBalance(Is.LessThan(sellerInitialBalance), "Collateral was not placed.");
 
-            Time.Sleep(TimeSpan.FromMinutes(2));
+            purchaseContract.WaitForStorageContractFinished();
 
             seller.Marketplace.AssertThatBalance(Is.GreaterThan(sellerInitialBalance), "Seller was not paid for storage.");
             buyer.Marketplace.AssertThatBalance(Is.LessThan(buyerInitialBalance), "Buyer was not charged for storage.");
-        }
-
-        private void WaitForContractToStart(IMarketplaceAccess access, ByteSize fileSize, string purchaseId)
-        {
-            var lastState = "";
-            var waitStart = DateTime.UtcNow;
-            var filesizeInMb = fileSize.SizeInBytes / (1024 * 1024);
-            var maxWaitTime = TimeSpan.FromSeconds(filesizeInMb * 10.0);
-
-            Log($"{nameof(WaitForContractToStart)} for {Time.FormatDuration(maxWaitTime)}");
-            while (lastState != "started")
-            {
-                var purchaseStatus = access.GetPurchaseStatus(purchaseId);
-                var statusJson = JsonConvert.SerializeObject(purchaseStatus);
-                if (purchaseStatus != null && purchaseStatus.state != lastState)
-                {
-                    lastState = purchaseStatus.state;
-                    Log("Purchase status: " + statusJson);
-                }
-
-                Thread.Sleep(2000);
-
-                if (lastState == "errored")
-                {
-                    Assert.Fail("Contract start failed: " + statusJson);
-                }
-
-                if (DateTime.UtcNow - waitStart > maxWaitTime)
-                {
-                    Assert.Fail($"Contract was not picked up within {maxWaitTime.TotalSeconds} seconds timeout: {statusJson}");
-                }
-            }
-            Log("Contract started.");
         }
     }
 }
