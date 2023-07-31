@@ -1,5 +1,6 @@
 ﻿using KubernetesWorkflow;
 using Logging;
+using Newtonsoft.Json;
 using Utils;
 
 namespace DistTestCore.Codex
@@ -60,6 +61,16 @@ namespace DistTestCore.Codex
     {
         public string version { get; set; } = string.Empty;
         public string revision { get; set; } = string.Empty;
+
+        public bool IsValid()
+        {
+            return !string.IsNullOrEmpty(version) && !string.IsNullOrEmpty(revision);
+        }
+
+        public override string ToString()
+        {
+            return JsonConvert.SerializeObject(this);
+        }
     }
 
     public class CodexDebugPeerResponse

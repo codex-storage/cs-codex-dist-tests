@@ -1,4 +1,5 @@
-﻿using DistTestCore.Logs;
+﻿using DistTestCore.Codex;
+using DistTestCore.Logs;
 using KubernetesWorkflow;
 using Logging;
 using Utils;
@@ -7,7 +8,7 @@ namespace DistTestCore
 {
     public class TestLifecycle
     {
-        private DateTime testStart = DateTime.MinValue;
+        private readonly DateTime testStart;
 
         public TestLifecycle(BaseLog log, Configuration configuration, ITimeSet timeSet)
             : this(log, configuration, timeSet, new WorkflowCreator(log, configuration.GetK8sConfiguration(timeSet)))
@@ -25,6 +26,7 @@ namespace DistTestCore
             PrometheusStarter = new PrometheusStarter(this, workflowCreator);
             GethStarter = new GethStarter(this, workflowCreator);
             testStart = DateTime.UtcNow;
+            CodexVersion = null;
 
             Log.WriteLogTag();
         }
@@ -36,6 +38,7 @@ namespace DistTestCore
         public CodexStarter CodexStarter { get; }
         public PrometheusStarter PrometheusStarter { get; }
         public GethStarter GethStarter { get; }
+        public CodexDebugVersionResponse? CodexVersion { get; private set; }
 
         public void DeleteAllResources()
         {
@@ -59,6 +62,11 @@ namespace DistTestCore
         {
             var testDuration = DateTime.UtcNow - testStart;
             return Time.FormatDuration(testDuration);
+        }
+
+        public void SetCodexVersion(CodexDebugVersionResponse version)
+        {
+            if (CodexVersion == null) CodexVersion = version;
         }
     }
 }
