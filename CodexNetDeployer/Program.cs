@@ -33,10 +33,10 @@ public class Program
         }
 
         Console.WriteLine("Using images:" + nl +
-            $"\tCodex image: '{CodexContainerRecipe.DockerImage}'" + nl +
-            $"\tCodex Contracts image: '{CodexContractsContainerRecipe.DockerImage}'" + nl +
-            $"\tPrometheus image: '{PrometheusContainerRecipe.DockerImage}'" + nl +
-            $"\tGeth image: '{GethContainerRecipe.DockerImage}'" + nl);
+            $"\tCodex image: '{new CodexContainerRecipe().Image}'" + nl +
+            $"\tCodexContracts image: '{new CodexContractsContainerRecipe().Image}'" + nl +
+            $"\tPrometheus image: '{new PrometheusContainerRecipe().Image}'" + nl +
+            $"\tGeth image: '{new GethContainerRecipe().Image}'" + nl);
 
         if (!args.Any(a => a == "-y"))
         {

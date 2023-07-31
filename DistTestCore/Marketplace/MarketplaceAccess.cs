@@ -1,5 +1,7 @@
 ﻿using DistTestCore.Codex;
 using DistTestCore.Helpers;
+using Logging;
+using Newtonsoft.Json;
 using NUnit.Framework;
 using NUnit.Framework.Constraints;
 using System.Numerics;
@@ -10,7 +12,7 @@ namespace DistTestCore.Marketplace
     public interface IMarketplaceAccess
     {
         string MakeStorageAvailable(ByteSize size, TestToken minPricePerBytePerSecond, TestToken maxCollateral, TimeSpan maxDuration);
-        string RequestStorage(ContentId contentId, TestToken pricePerSlotPerSecond, TestToken requiredCollateral, uint minRequiredNumberOfNodes, int proofProbability, TimeSpan duration);
+        StoragePurchaseContract RequestStorage(ContentId contentId, TestToken pricePerSlotPerSecond, TestToken requiredCollateral, uint minRequiredNumberOfNodes, int proofProbability, TimeSpan duration);
         void AssertThatBalance(IResolveConstraint constraint, string message = "");
         TestToken GetBalance();
     }
@@ -30,7 +32,7 @@ namespace DistTestCore.Marketplace
             this.codexAccess = codexAccess;
         }
 
-        public string RequestStorage(ContentId contentId, TestToken pricePerSlotPerSecond, TestToken requiredCollateral, uint minRequiredNumberOfNodes, int proofProbability, TimeSpan duration)
+        public StoragePurchaseContract RequestStorage(ContentId contentId, TestToken pricePerSlotPerSecond, TestToken requiredCollateral, uint minRequiredNumberOfNodes, int proofProbability, TimeSpan duration)
         {
             var request = new CodexSalesRequestStorageRequest
             {
@@ -57,9 +59,9 @@ namespace DistTestCore.Marketplace
                 throw new InvalidOperationException(response);
             }
 
-            Log($"Storage requested successfully. PurchaseId: {response}");
+            Log($"Storage requested successfully. PurchaseId: '{response}'.");
 
-            return response;
+            return new StoragePurchaseContract(lifecycle.Log, codexAccess, response, duration);
         }
 
         public string MakeStorageAvailable(ByteSize totalSpace, TestToken minPriceForTotalSpace, TestToken maxCollateral, TimeSpan maxDuration)
@@ -121,10 +123,10 @@ namespace DistTestCore.Marketplace
 
     public class MarketplaceUnavailable : IMarketplaceAccess
     {
-        public string RequestStorage(ContentId contentId, TestToken pricePerBytePerSecond, TestToken requiredCollateral, uint minRequiredNumberOfNodes, int proofProbability, TimeSpan duration)
+        public StoragePurchaseContract RequestStorage(ContentId contentId, TestToken pricePerBytePerSecond, TestToken requiredCollateral, uint minRequiredNumberOfNodes, int proofProbability, TimeSpan duration)
         {
             Unavailable();
-            return string.Empty;
+            return null!;
         }
 
         public string MakeStorageAvailable(ByteSize size, TestToken minPricePerBytePerSecond, TestToken maxCollateral, TimeSpan duration)
@@ -148,6 +150,94 @@ namespace DistTestCore.Marketplace
         {
             Assert.Fail("Incorrect test setup: Marketplace was not enabled for this group of Codex nodes. Add 'EnableMarketplace(...)' after 'SetupCodexNodes()' to enable it.");
             throw new InvalidOperationException();
+        }
+    }
+
+    public class StoragePurchaseContract
+    {
+        private readonly BaseLog log;
+        private readonly CodexAccess codexAccess;
+        private DateTime? contractStartUtc;
+
+        public StoragePurchaseContract(BaseLog log, CodexAccess codexAccess, string purchaseId, TimeSpan contractDuration)
+        {
+            this.log = log;
+            this.codexAccess = codexAccess;
+            PurchaseId = purchaseId;
+            ContractDuration = contractDuration;
+        }
+
+        public string PurchaseId { get; }
+        public TimeSpan ContractDuration { get; }
+
+        public void WaitForStorageContractStarted()
+        {
+            WaitForStorageContractStarted(TimeSpan.FromSeconds(30));
+        }
+
+        public void WaitForStorageContractFinished()
+        {
+            if (!contractStartUtc.HasValue)
+            {
+                WaitForStorageContractStarted();
+            }
+            var gracePeriod = TimeSpan.FromSeconds(10);
+            var currentContractTime = DateTime.UtcNow - contractStartUtc!.Value;
+            var timeout = (ContractDuration - currentContractTime) + gracePeriod;
+            WaitForStorageContractState(timeout, "finished");
+        }
+
+        /// <summary>
+        /// Wait for contract to start. Max timeout depends on contract filesize. Allows more time for larger files.
+        /// </summary>
+        public void WaitForStorageContractStarted(ByteSize contractFileSize)
+        {
+            var filesizeInMb = contractFileSize.SizeInBytes / (1024 * 1024);
+            var maxWaitTime = TimeSpan.FromSeconds(filesizeInMb * 10.0);
+
+            WaitForStorageContractStarted(maxWaitTime);
+        }
+
+        public void WaitForStorageContractStarted(TimeSpan timeout)
+        {
+            WaitForStorageContractState(timeout, "started");
+            contractStartUtc = DateTime.UtcNow;
+        }
+
+        private void WaitForStorageContractState(TimeSpan timeout, string desiredState)
+        {
+            var lastState = "";
+            var waitStart = DateTime.UtcNow;
+            
+            log.Log($"Waiting for {Time.FormatDuration(timeout)} for contract '{PurchaseId}' to reach state '{desiredState}'.");
+            while (lastState != desiredState)
+            {
+                var purchaseStatus = codexAccess.GetPurchaseStatus(PurchaseId);
+                var statusJson = JsonConvert.SerializeObject(purchaseStatus);
+                if (purchaseStatus != null && purchaseStatus.state != lastState)
+                {
+                    lastState = purchaseStatus.state;
+                    log.Debug("Purchase status: " + statusJson);
+                }
+
+                Thread.Sleep(1000);
+
+                if (lastState == "errored")
+                {
+                    Assert.Fail("Contract errored: " + statusJson);
+                }
+
+                if (DateTime.UtcNow - waitStart > timeout)
+                {
+                    Assert.Fail($"Contract did not reach '{desiredState}' within timeout. {statusJson}");
+                }
+            }
+            log.Log($"Contract '{desiredState}'.");
+        }
+
+        public CodexStoragePurchase GetPurchaseStatus(string purchaseId)
+        {
+            return codexAccess.GetPurchaseStatus(purchaseId);
         }
     }
 }

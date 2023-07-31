@@ -4,19 +4,18 @@ namespace DistTestCore.Marketplace
 {
     public class GethContainerRecipe : ContainerRecipeFactory
     {
-        #if Arm64
-            public const string DockerImage = "emizzle/geth-confenv:latest";
-        #else
-            public const string DockerImage = "thatbenbierens/geth-confenv:onethousand";
-        #endif
+        private const string defaultArgs = "--ipcdisable --syncmode full";
 
         public const string HttpPortTag = "http_port";
         public const string DiscoveryPortTag = "disc_port";
-        private const string defaultArgs = "--ipcdisable --syncmode full";
-
         public const string AccountsFilename = "accounts.csv";
 
-        protected override string Image => DockerImage;
+        public override string Image { get; }
+
+        public GethContainerRecipe()
+        {
+            Image = "codexstorage/dist-tests-geth:sha-b788a2d";
+        }
 
         protected override void Initialize(StartupConfig startupConfig)
         {

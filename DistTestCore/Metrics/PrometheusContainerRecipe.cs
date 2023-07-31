@@ -4,9 +4,12 @@ namespace DistTestCore.Metrics
 {
     public class PrometheusContainerRecipe : ContainerRecipeFactory
     {
-        public const string DockerImage = "thatbenbierens/prometheus-envconf:latest";
+        public override string Image { get; }
 
-        protected override string Image => DockerImage;
+        public PrometheusContainerRecipe()
+        {
+            Image = "codexstorage/dist-tests-prometheus:sha-f97d7fd";
+        }
 
         protected override void Initialize(StartupConfig startupConfig)
         {

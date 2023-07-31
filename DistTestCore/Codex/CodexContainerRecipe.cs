@@ -5,12 +5,8 @@ namespace DistTestCore.Codex
 {
     public class CodexContainerRecipe : ContainerRecipeFactory
     {
-#if Arm64
-        public const string DockerImage = "codexstorage/nim-codex:sha-7227a4a";
-#else
-        //public const string DockerImage = "thatbenbierens/nim-codex:loopingyeah";
-        public const string DockerImage = "codexstorage/nim-codex:sha-14c5270";
-#endif
+        private const string DefaultDockerImage = "codexstorage/nim-codex:sha-3e80de3";
+
         public const string MetricsPortTag = "metrics_port";
         public const string DiscoveryPortTag = "discovery-port";
 
@@ -18,15 +14,11 @@ namespace DistTestCore.Codex
         public static readonly TimeSpan MaxUploadTimePerMegabyte = TimeSpan.FromSeconds(2.0);
         public static readonly TimeSpan MaxDownloadTimePerMegabyte = TimeSpan.FromSeconds(2.0);
 
-        public static string DockerImageOverride = string.Empty;
+        public override string Image { get; }
 
-        protected override string Image
+        public CodexContainerRecipe()
         {
-            get
-            {
-                if (!string.IsNullOrEmpty(DockerImageOverride)) return DockerImageOverride;
-                return DockerImage;
-            }
+            Image = GetDockerImage();
         }
 
         protected override void Initialize(StartupConfig startupConfig)
@@ -91,6 +83,13 @@ namespace DistTestCore.Codex
         {
             if (marketplaceConfig.AccountIndexOverride != null) return marketplaceConfig.AccountIndexOverride.Value;
             return Index;
+        }
+
+        private string GetDockerImage()
+        {
+            var image = Environment.GetEnvironmentVariable("CODEXDOCKERIMAGE");
+            if (!string.IsNullOrEmpty(image)) return image;
+            return DefaultDockerImage;
         }
     }
 }

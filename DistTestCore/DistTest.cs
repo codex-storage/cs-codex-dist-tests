@@ -28,7 +28,7 @@ namespace DistTestCore
             var logConfig = configuration.GetLogConfig();
             var startTime = DateTime.UtcNow;
             fixtureLog = new FixtureLog(logConfig, startTime);
-            statusLog = new StatusLog(logConfig, startTime, CodexContainerRecipe.DockerImage);
+            statusLog = new StatusLog(logConfig, startTime, new CodexContainerRecipe().Image);
 
             PeerConnectionTestHelpers = new PeerConnectionTestHelpers(this);
             PeerDownloadTestHelpers = new PeerDownloadTestHelpers(this);
@@ -40,6 +40,12 @@ namespace DistTestCore
         [OneTimeSetUp]
         public void GlobalSetup()
         {
+            fixtureLog.Log($"Codex Distributed Tests are starting...");
+            fixtureLog.Log($"Codex image: '{new CodexContainerRecipe().Image}'");
+            fixtureLog.Log($"CodexContracts image: '{new CodexContractsContainerRecipe().Image}'");
+            fixtureLog.Log($"Prometheus image: '{new PrometheusContainerRecipe().Image}'");
+            fixtureLog.Log($"Geth image: '{new GethContainerRecipe().Image}'");
+
             // Previous test run may have been interrupted.
             // Begin by cleaning everything up.
             try
@@ -58,9 +64,6 @@ namespace DistTestCore
             }
 
             fixtureLog.Log("Global setup cleanup successful");
-            fixtureLog.Log($"Codex image: '{CodexContainerRecipe.DockerImage}'");
-            fixtureLog.Log($"Prometheus image: '{PrometheusContainerRecipe.DockerImage}'");
-            fixtureLog.Log($"Geth image: '{GethContainerRecipe.DockerImage}'");
         }
 
         [SetUp]

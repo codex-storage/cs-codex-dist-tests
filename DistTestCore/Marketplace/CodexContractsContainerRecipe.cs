@@ -4,15 +4,15 @@ namespace DistTestCore.Marketplace
 {
     public class CodexContractsContainerRecipe : ContainerRecipeFactory
     {
-        #if Arm64
-            public const string DockerImage = "emizzle/codex-contracts-deployment:latest";
-        #else
-            public const string DockerImage = "thatbenbierens/codex-contracts-deployment:nomint2";
-        #endif
-        public const string MarketplaceAddressFilename = "/usr/app/deployments/codexdisttestnetwork/Marketplace.json";
-        public const string MarketplaceArtifactFilename = "/usr/app/artifacts/contracts/Marketplace.sol/Marketplace.json";
+        public const string MarketplaceAddressFilename = "/hardhat/deployments/codexdisttestnetwork/Marketplace.json";
+        public const string MarketplaceArtifactFilename = "/hardhat/artifacts/contracts/Marketplace.sol/Marketplace.json";
 
-        protected override string Image => DockerImage;
+        public override string Image { get; }
+
+        public CodexContractsContainerRecipe()
+        {
+            Image = "codexstorage/dist-tests-codex-contracts-eth:sha-b4e4897";
+        }
 
         protected override void Initialize(StartupConfig startupConfig)
         {
