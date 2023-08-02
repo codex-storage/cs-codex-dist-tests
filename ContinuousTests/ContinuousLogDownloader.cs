@@ -7,14 +7,16 @@ namespace ContinuousTests
     public class ContinuousLogDownloader
     {
         private readonly TestLifecycle lifecycle;
-        private readonly CodexDeployment deployment;
+        private readonly RunningContainer[] containers;
+        //private readonly CodexDeployment deployment;
         private readonly string outputPath;
         private readonly CancellationToken cancelToken;
 
-        public ContinuousLogDownloader(TestLifecycle lifecycle, CodexDeployment deployment, string outputPath, CancellationToken cancelToken)
+        public ContinuousLogDownloader(TestLifecycle lifecycle, RunningContainer[] containers, string outputPath, CancellationToken cancelToken)
         {
             this.lifecycle = lifecycle;
-            this.deployment = deployment;
+            this.containers = containers;
+            //this.deployment = deployment;
             this.outputPath = outputPath;
             this.cancelToken = cancelToken;
         }
@@ -37,7 +39,7 @@ namespace ContinuousTests
 
         private void UpdateLogs()
         {
-            foreach (var container in deployment.CodexContainers)
+            foreach (var container in containers)
             {
                 UpdateLog(container);
             }

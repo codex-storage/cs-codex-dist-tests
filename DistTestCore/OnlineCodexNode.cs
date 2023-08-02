@@ -4,6 +4,7 @@ using DistTestCore.Marketplace;
 using DistTestCore.Metrics;
 using Logging;
 using NUnit.Framework;
+using Utils;
 
 namespace DistTestCore
 {
@@ -66,7 +67,8 @@ namespace DistTestCore
         {
             using var fileStream = File.OpenRead(file.Filename);
 
-            var logMessage = $"Uploading file {file.Describe()}...";
+            var logMessage = $"{CodexAccess.Container.Name} Uploading file {file.Describe()}...";
+            Log(logMessage);
             var response = Stopwatch.Measure(lifecycle.Log, logMessage, () =>
             {
                 return CodexAccess.UploadFile(fileStream);
@@ -81,7 +83,8 @@ namespace DistTestCore
 
         public TestFile? DownloadContent(ContentId contentId, string fileLabel = "")
         {
-            var logMessage = $"Downloading for contentId: '{contentId.Id}'...";
+            var logMessage = $"{CodexAccess.Container.Name} Downloading for contentId: '{contentId.Id}'...";
+            Log(logMessage);
             var file = lifecycle.FileManager.CreateEmptyTestFile(fileLabel);
             Stopwatch.Measure(lifecycle.Log, logMessage, () => DownloadToFile(contentId.Id, file));
             Log($"Downloaded file {file.Describe()} to '{file.Filename}'.");
@@ -116,7 +119,7 @@ namespace DistTestCore
 
         public void EnsureOnlineGetVersionResponse()
         {
-            var debugInfo = CodexAccess.GetDebugInfo();
+            var debugInfo = Time.Retry(CodexAccess.GetDebugInfo, "ensure online");
             var nodePeerId = debugInfo.id;
             var nodeName = CodexAccess.Container.Name;
 

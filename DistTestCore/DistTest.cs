@@ -179,7 +179,7 @@ namespace DistTestCore
             return new CodexSetup(numberOfNodes, configuration.GetCodexLogLevel());
         }
 
-        private TestLifecycle Get()
+        public TestLifecycle Get()
         {
             lock (lifecycleLock)
             {

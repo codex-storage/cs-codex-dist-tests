@@ -72,7 +72,7 @@ namespace ContinuousTests
             if (!Directory.Exists(path)) Directory.CreateDirectory(path);
 
             var (_, lifecycle) = k8SFactory.CreateFacilities(config.KubeConfigFile, config.LogPath, config.DataPath, config.CodexDeployment.Metadata.KubeNamespace, new DefaultTimeSet(), new NullLog(), config.RunnerLocation);
-            var downloader = new ContinuousLogDownloader(lifecycle, config.CodexDeployment, path, cancelToken);
+            var downloader = new ContinuousLogDownloader(lifecycle, config.CodexDeployment.CodexContainers, path, cancelToken);
 
             taskFactory.Run(downloader.Run);
         }
