@@ -20,6 +20,7 @@ namespace DistTestCore
             Setup = setup;
             Containers = containers;
             Nodes = containers.Containers.Select(c => CreateOnlineCodexNode(c, codexNodeFactory)).ToArray();
+            Version = new CodexDebugVersionResponse();
         }
 
         public IOnlineCodexNode this[int index]
@@ -46,6 +47,7 @@ namespace DistTestCore
         public CodexSetup Setup { get; private set; }
         public RunningContainers Containers { get; private set; }
         public OnlineCodexNode[] Nodes { get; private set; }
+        public CodexDebugVersionResponse Version { get; private set; }
 
         public IEnumerator<IOnlineCodexNode> GetEnumerator()
         {
@@ -64,14 +66,17 @@ namespace DistTestCore
 
         public void EnsureOnline()
         {
-            foreach (var node in Nodes)
+            foreach (var node in Nodes) node.EnsureOnlineGetVersionResponse();
+            var versionResponses = Nodes.Select(n => n.Version);
+
+            var first = versionResponses.First();
+            if (!versionResponses.All(v => v.version == first.version && v.revision == first.revision))
             {
-                var debugInfo = node.CodexAccess.GetDebugInfo();
-                var nodePeerId = debugInfo.id;
-                var nodeName = node.CodexAccess.Container.Name;
-                lifecycle.Log.AddStringReplace(nodePeerId, nodeName);
-                lifecycle.Log.AddStringReplace(debugInfo.table.localNode.nodeId, nodeName);
+                throw new Exception("Inconsistent version information received from one or more Codex nodes: " +
+                    string.Join(",", versionResponses.Select(v => v.ToString())));
             }
+
+            Version = first;
         }
 
         private OnlineCodexNode CreateOnlineCodexNode(RunningContainer c, ICodexNodeFactory factory)

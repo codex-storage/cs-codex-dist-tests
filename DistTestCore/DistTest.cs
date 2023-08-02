@@ -28,7 +28,7 @@ namespace DistTestCore
             var logConfig = configuration.GetLogConfig();
             var startTime = DateTime.UtcNow;
             fixtureLog = new FixtureLog(logConfig, startTime);
-            statusLog = new StatusLog(logConfig, startTime, new CodexContainerRecipe().Image);
+            statusLog = new StatusLog(logConfig, startTime);
 
             PeerConnectionTestHelpers = new PeerConnectionTestHelpers(this);
             PeerDownloadTestHelpers = new PeerDownloadTestHelpers(this);
@@ -206,7 +206,7 @@ namespace DistTestCore
             var testResult = GetTestResult();
             var testDuration = lifecycle.GetTestDuration();
             fixtureLog.Log($"{GetCurrentTestName()} = {testResult} ({testDuration})");
-            statusLog.ConcludeTest(testResult, testDuration);
+            statusLog.ConcludeTest(testResult, testDuration, GetCodexId(lifecycle));
             Stopwatch.Measure(fixtureLog, $"Teardown for {GetCurrentTestName()}", () =>
             {
                 lifecycle.Log.EndTest();
@@ -214,6 +214,14 @@ namespace DistTestCore
                 lifecycle.DeleteAllResources();
                 lifecycle = null!;
             });
+        }
+
+        private static string GetCodexId(TestLifecycle lifecycle)
+        {
+            var v = lifecycle.CodexVersion;
+            if (v == null) return new CodexContainerRecipe().Image;
+            if (v.version != "untagged build") return v.version;
+            return v.revision;
         }
 
         private ITimeSet GetTimeSet()

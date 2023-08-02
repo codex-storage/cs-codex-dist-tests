@@ -18,6 +18,7 @@ namespace DistTestCore
         IDownloadedLog DownloadLog();
         IMetricsAccess Metrics { get; }
         IMarketplaceAccess Marketplace { get; }
+        CodexDebugVersionResponse Version { get; }
         ICodexSetup BringOffline();
     }
 
@@ -34,12 +35,14 @@ namespace DistTestCore
             Group = group;
             Metrics = metricsAccess;
             Marketplace = marketplaceAccess;
+            Version = new CodexDebugVersionResponse();
         }
 
         public CodexAccess CodexAccess { get; }
         public CodexNodeGroup Group { get; }
         public IMetricsAccess Metrics { get; }
         public IMarketplaceAccess Marketplace { get; }
+        public CodexDebugVersionResponse Version { get; private set; }
 
         public string GetName()
         {
@@ -109,6 +112,22 @@ namespace DistTestCore
                 "available for codex-nodes in groups of 1.");
 
             return Group.BringOffline();
+        }
+
+        public void EnsureOnlineGetVersionResponse()
+        {
+            var debugInfo = CodexAccess.GetDebugInfo();
+            var nodePeerId = debugInfo.id;
+            var nodeName = CodexAccess.Container.Name;
+
+            if (!debugInfo.codex.IsValid())
+            {
+                throw new Exception($"Invalid version information received from Codex node {GetName()}: {debugInfo.codex}");
+            }
+
+            lifecycle.Log.AddStringReplace(nodePeerId, nodeName);
+            lifecycle.Log.AddStringReplace(debugInfo.table.localNode.nodeId, nodeName);
+            Version = debugInfo.codex;
         }
 
         private string GetPeerMultiAddress(OnlineCodexNode peer, CodexDebugResponse peerInfo)

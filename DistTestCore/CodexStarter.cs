@@ -22,6 +22,7 @@ namespace DistTestCore
             var gethStartResult = lifecycle.GethStarter.BringOnlineMarketplaceFor(codexSetup);
 
             var startupConfig = CreateStartupConfig(gethStartResult, codexSetup);
+
             var containers = StartCodexContainers(startupConfig, codexSetup.NumberOfNodes, codexSetup.Location);
 
             var metricAccessFactory = CollectMetrics(codexSetup, containers);
@@ -29,9 +30,16 @@ namespace DistTestCore
             var codexNodeFactory = new CodexNodeFactory(lifecycle, metricAccessFactory, gethStartResult.MarketplaceAccessFactory);
 
             var group = CreateCodexGroup(codexSetup, containers, codexNodeFactory);
+            lifecycle.SetCodexVersion(group.Version);
+
             var podInfo = group.Containers.RunningPod.PodInfo;
-            LogEnd($"Started {codexSetup.NumberOfNodes} nodes of image '{containers.Containers.First().Recipe.Image}' at location '{podInfo.K8SNodeName}'={podInfo.Ip}. They are: {group.Describe()}");
+            LogEnd($"Started {codexSetup.NumberOfNodes} nodes " +
+                $"of image '{containers.Containers.First().Recipe.Image}' " +
+                $"and version '{group.Version}' " +
+                $"at location '{podInfo.K8SNodeName}'={podInfo.Ip}. " +
+                $"They are: {group.Describe()}");
             LogSeparator();
+
             return group;
         }
 

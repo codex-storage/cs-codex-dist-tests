@@ -7,16 +7,14 @@ namespace Logging
         private readonly object fileLock = new object();
         private readonly string fullName;
         private readonly string fixtureName;
-        private readonly string codexId;
 
-        public StatusLog(LogConfig config, DateTime start, string codexId, string name = "")
+        public StatusLog(LogConfig config, DateTime start, string name = "")
         {
             fullName = NameUtils.GetFixtureFullName(config, start, name) + "_STATUS.log";
             fixtureName = NameUtils.GetRawFixtureName();
-            this.codexId = codexId;
         }
 
-        public void ConcludeTest(string resultStatus, string testDuration)
+        public void ConcludeTest(string resultStatus, string testDuration, string codexId)
         {
             Write(new StatusLogJson
             {
