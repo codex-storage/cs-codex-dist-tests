@@ -93,8 +93,24 @@ namespace DistTestCore
         {
             var group = new CodexNodeGroup(lifecycle, codexSetup, runningContainers, codexNodeFactory);
             RunningGroups.Add(group);
-            Stopwatch.Measure(lifecycle.Log, "EnsureOnline", group.EnsureOnline, debug: true);
+
+            try
+            {
+                Stopwatch.Measure(lifecycle.Log, "EnsureOnline", group.EnsureOnline, debug: true);
+            }
+            catch
+            {
+                CodexNodesNotOnline(runningContainers);
+                throw;
+            }
+
             return group;
+        }
+
+        private void CodexNodesNotOnline(RunningContainers runningContainers)
+        {
+            Log("Codex nodes failed to start");
+            foreach (var container in runningContainers.Containers) lifecycle.DownloadLog(container);
         }
 
         private StartupWorkflow CreateWorkflow()
