@@ -362,7 +362,13 @@ namespace KubernetesWorkflow
 
         private IDictionary<string, string> GetSelector()
         {
-            return new Dictionary<string, string> { { "codex-test-node", "dist-test-" + workflowNumberSource.WorkflowNumber } };
+            return new Dictionary<string, string> 
+            { 
+                { "codex-test-node", "dist-test-" + workflowNumberSource.WorkflowNumber }
+                // tests-type=dist-tests
+                // app=codex
+                // runid=20230721-085043
+            };
         }
 
         private IDictionary<string, string> GetRunnerNamespaceSelector()
