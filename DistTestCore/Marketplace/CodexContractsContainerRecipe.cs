@@ -11,7 +11,7 @@ namespace DistTestCore.Marketplace
 
         public CodexContractsContainerRecipe()
         {
-            Image = "codexstorage/dist-tests-codex-contracts-eth:sha-b4e4897";
+            Image = "codexstorage/dist-tests-codex-contracts-eth:sha-9a83699";
         }
 
         protected override void Initialize(StartupConfig startupConfig)
