@@ -91,8 +91,13 @@ namespace DistTestCore.Marketplace
         {
             debug(line);
             if (line.Contains(RequiredCompiledString)) SeenCompileString = true;
+            if (line.Contains(ReadyString))
+            {
+                if (!SeenCompileString) throw new Exception("CodexContracts deployment failed. " +
+                    "Solidity files not compiled before process exited.");
 
-            if (SeenCompileString && line.Contains(ReadyString)) Found = true;
+                Found = true;
+            }
         }
     }
 }
