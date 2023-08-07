@@ -52,7 +52,7 @@ namespace DistTestCore
             {
                 Stopwatch.Measure(fixtureLog, "Global setup", () =>
                 {
-                    var wc = new WorkflowCreator(fixtureLog, configuration.GetK8sConfiguration(GetTimeSet()));
+                    var wc = new WorkflowCreator(fixtureLog, configuration.GetK8sConfiguration(GetTimeSet()), "dist-tests");
                     wc.CreateWorkflow().DeleteAllResources();
                 });                
             }

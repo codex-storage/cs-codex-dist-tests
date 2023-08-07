@@ -77,7 +77,10 @@ namespace CodexNetDeployer
                 operationTimeout: timeset.K8sOperationTimeout(),
                 retryDelay: timeset.WaitForK8sServiceDelay());
 
-            var workflowCreator = new WorkflowCreator(log, kubeFlowConfig, testNamespacePostfix: string.Empty);
+            var workflowCreator = new WorkflowCreator(log, kubeFlowConfig,
+                testNamespacePostfix: string.Empty,
+                testsType: config.TestsTypePodLabel);
+
             var lifecycle = new TestLifecycle(log, lifecycleConfig, timeset, workflowCreator);
 
             return (workflowCreator, lifecycle);

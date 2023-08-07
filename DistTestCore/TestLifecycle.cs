@@ -11,7 +11,7 @@ namespace DistTestCore
         private readonly DateTime testStart;
 
         public TestLifecycle(BaseLog log, Configuration configuration, ITimeSet timeSet)
-            : this(log, configuration, timeSet, new WorkflowCreator(log, configuration.GetK8sConfiguration(timeSet)))
+            : this(log, configuration, timeSet, new WorkflowCreator(log, configuration.GetK8sConfiguration(timeSet), "dist-tests"))
         {
         }
 

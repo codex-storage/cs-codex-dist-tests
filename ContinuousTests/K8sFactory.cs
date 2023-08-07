@@ -26,7 +26,10 @@ namespace ContinuousTests
                 operationTimeout: timeSet.K8sOperationTimeout(),
             retryDelay: timeSet.WaitForK8sServiceDelay());
 
-            var workflowCreator = new WorkflowCreator(log, kubeFlowConfig, testNamespacePostfix: string.Empty);
+            var workflowCreator = new WorkflowCreator(log, kubeFlowConfig,
+                testNamespacePostfix: string.Empty,
+                testsType: "continuous");
+
             var lifecycle = new TestLifecycle(log, lifecycleConfig, timeSet, workflowCreator);
 
             return (workflowCreator, lifecycle);

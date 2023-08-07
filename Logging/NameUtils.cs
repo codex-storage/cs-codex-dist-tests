@@ -45,7 +45,7 @@ namespace Logging
         private static string GetEnvVar(string name)
         {
             var v = Environment.GetEnvironmentVariable(name);
-            if (string.IsNullOrEmpty(v)) return $"EnvVar'{name}'NotSet";
+            if (string.IsNullOrEmpty(v)) return $"EnvVar-{name}-NotSet";
             return v;
         }
 

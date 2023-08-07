@@ -10,17 +10,19 @@ namespace KubernetesWorkflow
         private readonly KnownK8sPods knownPods = new KnownK8sPods();
         private readonly K8sCluster cluster;
         private readonly BaseLog log;
+        private readonly string testsType;
         private readonly string testNamespace;
 
-        public WorkflowCreator(BaseLog log, Configuration configuration)
-            : this(log, configuration, Guid.NewGuid().ToString().ToLowerInvariant())
+        public WorkflowCreator(BaseLog log, Configuration configuration, string testsType)
+            : this(log, configuration, testsType, Guid.NewGuid().ToString().ToLowerInvariant())
         {
         }
 
-        public WorkflowCreator(BaseLog log, Configuration configuration, string testNamespacePostfix)
+        public WorkflowCreator(BaseLog log, Configuration configuration, string testsType, string testNamespacePostfix)
         {
             cluster = new K8sCluster(configuration);
             this.log = log;
+            this.testsType = testsType;
             testNamespace = testNamespacePostfix;
         }
 
@@ -29,7 +31,7 @@ namespace KubernetesWorkflow
             var workflowNumberSource = new WorkflowNumberSource(numberSource.GetNextNumber(),
                                                                     containerNumberSource);
 
-            return new StartupWorkflow(log, workflowNumberSource, cluster, knownPods, testNamespace);
+            return new StartupWorkflow(log, workflowNumberSource, cluster, knownPods, testNamespace, testsType);
         }
     }
 }
