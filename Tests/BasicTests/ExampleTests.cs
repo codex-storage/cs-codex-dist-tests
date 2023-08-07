@@ -1,9 +1,5 @@
 ﻿using DistTestCore;
-using DistTestCore.Codex;
-using DistTestCore.Marketplace;
-using Newtonsoft.Json;
 using NUnit.Framework;
-using Utils;
 
 namespace Tests.BasicTests
 {

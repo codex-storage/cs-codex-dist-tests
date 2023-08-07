@@ -12,11 +12,11 @@ namespace DistTestCore
         {
         }
 
-        public RunningContainers CollectMetricsFor(RunningContainers containers)
+        public RunningContainers CollectMetricsFor(RunningContainers[] containers)
         {
             LogStart($"Starting metrics server for {containers.Describe()}");
             var startupConfig = new StartupConfig();
-            startupConfig.Add(new PrometheusStartupConfig(GeneratePrometheusConfig(containers.Containers)));
+            startupConfig.Add(new PrometheusStartupConfig(GeneratePrometheusConfig(containers.Containers())));
 
             var workflow = workflowCreator.CreateWorkflow();
             var runningContainers = workflow.Start(1, Location.Unspecified, new PrometheusContainerRecipe(), startupConfig);
