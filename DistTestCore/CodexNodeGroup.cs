@@ -14,12 +14,12 @@ namespace DistTestCore
     {
         private readonly TestLifecycle lifecycle;
 
-        public CodexNodeGroup(TestLifecycle lifecycle, CodexSetup setup, RunningContainers containers, ICodexNodeFactory codexNodeFactory)
+        public CodexNodeGroup(TestLifecycle lifecycle, CodexSetup setup, RunningContainers[] containers, ICodexNodeFactory codexNodeFactory)
         {
             this.lifecycle = lifecycle;
             Setup = setup;
             Containers = containers;
-            Nodes = containers.Containers.Select(c => CreateOnlineCodexNode(c, codexNodeFactory)).ToArray();
+            Nodes = containers.Containers().Select(c => CreateOnlineCodexNode(c, codexNodeFactory)).ToArray();
             Version = new CodexDebugVersionResponse();
         }
 
@@ -45,7 +45,7 @@ namespace DistTestCore
         }
 
         public CodexSetup Setup { get; private set; }
-        public RunningContainers Containers { get; private set; }
+        public RunningContainers[] Containers { get; private set; }
         public OnlineCodexNode[] Nodes { get; private set; }
         public CodexDebugVersionResponse Version { get; private set; }
 

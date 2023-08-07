@@ -138,14 +138,9 @@ namespace DistTestCore
             var multiAddress = peerInfo.addrs.First();
             // Todo: Is there a case where First address in list is not the way?
 
-            if (Group == peer.Group)
-            {
-                return multiAddress;
-            }
-
             // The peer we want to connect is in a different pod.
             // We must replace the default IP with the pod IP in the multiAddress.
-            return multiAddress.Replace("0.0.0.0", peer.Group.Containers.RunningPod.PodInfo.Ip);
+            return multiAddress.Replace("0.0.0.0", peer.CodexAccess.Container.Pod.PodInfo.Ip);
         }
 
         private void DownloadToFile(string contentId, TestFile file)

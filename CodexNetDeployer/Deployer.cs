@@ -88,7 +88,7 @@ namespace CodexNetDeployer
             if (!setup.MetricsEnabled) return null;
 
             Log("Starting metrics service...");
-            var runningContainers = new RunningContainers(null!, null!, codexContainers.ToArray());
+            var runningContainers = new[] { new RunningContainers(null!, null!, codexContainers.ToArray()) };
             return lifecycle.PrometheusStarter.CollectMetricsFor(runningContainers).Containers.Single();
         }
 
