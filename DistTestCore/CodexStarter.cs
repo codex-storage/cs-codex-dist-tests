@@ -32,12 +32,12 @@ namespace DistTestCore
             var group = CreateCodexGroup(codexSetup, containers, codexNodeFactory);
             lifecycle.SetCodexVersion(group.Version);
 
-            var podInfo = group.Containers.RunningPod.PodInfo;
+            var nl = Environment.NewLine;
+            var podInfos = string.Join(nl, containers.Containers().Select(c => $"Container: '{c.Name}' runs at '{c.Pod.PodInfo.K8SNodeName}'={c.Pod.PodInfo.Ip}"));
             LogEnd($"Started {codexSetup.NumberOfNodes} nodes " +
-                $"of image '{containers.Containers.First().Recipe.Image}' " +
-                $"and version '{group.Version}' " +
-                $"at location '{podInfo.K8SNodeName}'={podInfo.Ip}. " +
-                $"They are: {group.Describe()}");
+                $"of image '{containers.Containers().First().Recipe.Image}' " +
+                $"and version '{group.Version}'{nl}" +
+                podInfos);
             LogSeparator();
 
             return group;
@@ -47,7 +47,7 @@ namespace DistTestCore
         {
             LogStart($"Stopping {group.Describe()}...");
             var workflow = CreateWorkflow();
-            workflow.Stop(group.Containers);
+            foreach (var c in group.Containers) workflow.Stop(c);
             RunningGroups.Remove(group);
             LogEnd("Stopped.");
         }
@@ -66,7 +66,7 @@ namespace DistTestCore
             workflow.DownloadContainerLog(container, logHandler);
         }
 
-        private IMetricsAccessFactory CollectMetrics(CodexSetup codexSetup, RunningContainers containers)
+        private IMetricsAccessFactory CollectMetrics(CodexSetup codexSetup, RunningContainers[] containers)
         {
             if (!codexSetup.MetricsEnabled) return new MetricsUnavailableAccessFactory();
 
@@ -83,13 +83,19 @@ namespace DistTestCore
             return startupConfig;
         }
 
-        private RunningContainers StartCodexContainers(StartupConfig startupConfig, int numberOfNodes, Location location)
+        private RunningContainers[] StartCodexContainers(StartupConfig startupConfig, int numberOfNodes, Location location)
         {
-            var workflow = CreateWorkflow();
-            return workflow.Start(numberOfNodes, location, new CodexContainerRecipe(), startupConfig);
+            var result = new List<RunningContainers>();
+            var recipe = new CodexContainerRecipe();
+            for (var i = 0; i < numberOfNodes; i++)
+            {
+                var workflow = CreateWorkflow();
+                result.Add(workflow.Start(1, location, recipe, startupConfig));
+            }
+            return result.ToArray();
         }
 
-        private CodexNodeGroup CreateCodexGroup(CodexSetup codexSetup, RunningContainers runningContainers, CodexNodeFactory codexNodeFactory)
+        private CodexNodeGroup CreateCodexGroup(CodexSetup codexSetup, RunningContainers[] runningContainers, CodexNodeFactory codexNodeFactory)
         {
             var group = new CodexNodeGroup(lifecycle, codexSetup, runningContainers, codexNodeFactory);
             RunningGroups.Add(group);
@@ -107,10 +113,10 @@ namespace DistTestCore
             return group;
         }
 
-        private void CodexNodesNotOnline(RunningContainers runningContainers)
+        private void CodexNodesNotOnline(RunningContainers[] runningContainers)
         {
             Log("Codex nodes failed to start");
-            foreach (var container in runningContainers.Containers) lifecycle.DownloadLog(container);
+            foreach (var container in runningContainers.Containers()) lifecycle.DownloadLog(container);
         }
 
         private StartupWorkflow CreateWorkflow()

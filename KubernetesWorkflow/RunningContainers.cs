@@ -40,4 +40,17 @@ namespace KubernetesWorkflow
         public Address ClusterExternalAddress { get; }
         public Address ClusterInternalAddress { get; }
     }
+
+    public static class RunningContainersExtensions
+    {
+        public static RunningContainer[] Containers(this RunningContainers[] runningContainers)
+        {
+            return runningContainers.SelectMany(c => c.Containers).ToArray();
+        }
+
+        public static string Describe(this RunningContainers[] runningContainers)
+        {
+            return string.Join(",", runningContainers.Select(c => c.Describe()));
+        }
+    }
 }
