@@ -16,7 +16,7 @@ namespace Tests.BasicTests
             {
                 nodes.Add((OnlineCodexNode)SetupCodexNode(o => o
                     .EnableMarketplace(100000.TestTokens(), 0.Eth(), isValidator: i < 2)
-                    .WithStorageQuota(2.GB())
+                    .WithStorageQuota(3.GB())
                 ));
             }
 
