@@ -38,6 +38,11 @@ namespace DistTestCore
     {
         private const long Kilo = 1024;
 
+        public static ByteSize Bytes(this long i)
+        {
+            return new ByteSize(i);
+        }
+
         public static ByteSize KB(this long i)
         {
             return new ByteSize(i * Kilo);
@@ -56,6 +61,11 @@ namespace DistTestCore
         public static ByteSize TB(this long i)
         {
             return (i * Kilo).GB();
+        }
+
+        public static ByteSize Bytes(this int i)
+        {
+            return new ByteSize(i);
         }
 
         public static ByteSize KB(this int i)

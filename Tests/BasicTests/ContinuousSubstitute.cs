@@ -61,17 +61,21 @@ namespace Tests.BasicTests
             }
         }
 
+        private ByteSize fileSize = 10.MB();
+
         private void PerformTest(IOnlineCodexNode primary, IOnlineCodexNode secondary)
         {
             ScopedTestFiles(() =>
             {
-                var testFile = GenerateTestFile(1000.MB());
+                var testFile = GenerateTestFile(fileSize);
 
                 var contentId = primary.UploadFile(testFile);
 
                 var downloadedFile = secondary.DownloadContent(contentId);
 
                 testFile.AssertIsEqual(downloadedFile);
+
+                fileSize = (fileSize.SizeInBytes * 2).Bytes();
             });
         }
     }
