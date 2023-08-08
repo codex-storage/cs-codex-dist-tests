@@ -76,7 +76,7 @@ namespace DistTestCore
                 var content = new StreamContent(stream);
                 content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
                 var response = Time.Wait(client.PostAsync(url, content));
-                var str =Time.Wait(response.Content.ReadAsStringAsync());
+                var str = Time.Wait(response.Content.ReadAsStringAsync());
                 Log(url, str);
                 return str;
             }, $"HTTP-POST-STREAM: {route}");

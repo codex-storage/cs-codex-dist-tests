@@ -9,6 +9,7 @@ namespace Tests.BasicTests
     public class ContinuousSubstitute : AutoBootstrapDistTest
     {
         [Test]
+        [UseLongTimeouts]
         public void ContinuousTestSubstitute()
         {
             var nodes = new List<OnlineCodexNode>();
@@ -51,7 +52,7 @@ namespace Tests.BasicTests
                     Log("Run Test");
                     PerformTest(primary, secondary);
 
-                    Thread.Sleep(TimeSpan.FromSeconds(30));
+                    Thread.Sleep(TimeSpan.FromSeconds(5));
                 }
             }
             finally
@@ -61,7 +62,7 @@ namespace Tests.BasicTests
             }
         }
 
-        private ByteSize fileSize = 10.MB();
+        private ByteSize fileSize = 80.MB();
 
         private void PerformTest(IOnlineCodexNode primary, IOnlineCodexNode secondary)
         {
@@ -74,8 +75,6 @@ namespace Tests.BasicTests
                 var downloadedFile = secondary.DownloadContent(contentId);
 
                 testFile.AssertIsEqual(downloadedFile);
-
-                fileSize = (fileSize.SizeInBytes * 2).Bytes();
             });
         }
     }
