@@ -5,8 +5,8 @@ namespace DistTestCore.Marketplace
     public class CodexContractsContainerRecipe : ContainerRecipeFactory
     {
         public const string DockerImage = "codexstorage/dist-tests-codex-contracts-eth:sha-b4e4897";
-        public const string MarketplaceAddressFilename = "/usr/app/deployments/codexdisttestnetwork/Marketplace.json";
-        public const string MarketplaceArtifactFilename = "/usr/app/artifacts/contracts/Marketplace.sol/Marketplace.json";
+        public const string MarketplaceAddressFilename = "/hardhat/deployments/codexdisttestnetwork/Marketplace.json";
+        public const string MarketplaceArtifactFilename = "/hardhat/artifacts/contracts/Marketplace.sol/Marketplace.json";
 
         public override string AppName => "codex-contracts";
         public override string Image => "codexstorage/dist-tests-codex-contracts-eth:sha-d6fbfdc";

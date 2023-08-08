@@ -10,6 +10,16 @@ namespace DistTestCore.Codex
             LogLevel = logLevel;
         }
 
+        public string LogLevelWithTopics()
+        {
+            var level = LogLevel.ToString()!.ToUpperInvariant();
+            if (LogTopics != null && LogTopics.Count() > 0)
+            {
+                level = $"INFO;{level}: {string.Join(",", LogTopics.Where(s => !string.IsNullOrEmpty(s)))}";
+            }
+            return level;
+        }
+
         public string? NameOverride { get; set; }
         public Location Location { get; set; }
         public CodexLogLevel LogLevel { get; set; }

@@ -28,7 +28,7 @@ namespace DistTestCore
         /// <summary>
         /// Enables the validation module in the node
         /// </summary>
-        ICodexSetup WithValidator();
+        // ICodexSetup WithValidator();
     }
 
     public class CodexSetup : CodexStartupConfig, ICodexSetup
@@ -112,11 +112,11 @@ namespace DistTestCore
             return this;
         }
 
-        public ICodexSetup WithValidator()
-        {
-            EnableValidator = true;
-            return this;
-        }
+        // public ICodexSetup WithValidator()
+        // {
+        //     EnableValidator = true;
+        //     return this;
+        // }
 
         public string Describe()
         {
@@ -126,11 +126,11 @@ namespace DistTestCore
 
         private IEnumerable<string> DescribeArgs()
         {
-            yield return $"LogLevel={LogLevel}";
+            yield return $"LogLevel={LogLevelWithTopics()}";
             if (BootstrapSpr != null) yield return $"BootstrapNode={BootstrapSpr}";
             if (StorageQuota != null) yield return $"StorageQuota={StorageQuota}";
             if (SimulateProofFailures != null) yield return $"SimulateProofFailures={SimulateProofFailures}";
-            if (EnableValidator != null) yield return $"EnableValidator={EnableValidator}";
+            if (MarketplaceConfig != null) yield return $"IsValidator={MarketplaceConfig.IsValidator}";
         }
     }
 }

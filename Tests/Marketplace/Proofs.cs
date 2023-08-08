@@ -29,7 +29,7 @@ namespace Tests.BasicTests
                 .WithName("seller with failures"));
 
             var buyer = SetupCodexNode(s => s
-                .WithLogLevel(CodexLogLevel.Trace, "market", "purchasing")
+                .WithLogLevel(CodexLogLevel.Trace, "market", "purchasing", "node", "restapi")
                 .WithBootstrapNode(seller)
                 .EnableMarketplace(buyerInitialBalance)
                 .WithName("buyer"));
@@ -37,7 +37,8 @@ namespace Tests.BasicTests
             var validator = SetupCodexNode(s => s
                 .WithLogLevel(CodexLogLevel.Trace, "validator")
                 .WithBootstrapNode(seller)
-                .WithValidator()
+                // .WithValidator()
+                .EnableMarketplace(0.TestTokens(), 2.Eth(), true)
                 .WithName("validator"));
 
             seller.Marketplace.AssertThatBalance(Is.EqualTo(sellerInitialBalance));

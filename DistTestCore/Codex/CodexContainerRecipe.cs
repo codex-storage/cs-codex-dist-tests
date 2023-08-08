@@ -5,7 +5,7 @@ namespace DistTestCore.Codex
 {
     public class CodexContainerRecipe : ContainerRecipeFactory
     {
-        public const string DockerImage = "codexstorage/nim-codex:sha-1d161d3";
+        public const string DockerImage = "codexstorage/nim-codex:sha-dd67b74";
         public const string MetricsPortTag = "metrics_port";
         public const string DiscoveryPortTag = "discovery-port";
 
@@ -30,12 +30,7 @@ namespace DistTestCore.Codex
 
             AddEnvVar("CODEX_DATA_DIR", $"datadir{ContainerNumber}");
             AddInternalPortAndVar("CODEX_DISC_PORT", DiscoveryPortTag);
-
-            var level = config.LogLevel.ToString()!.ToUpperInvariant();
-            if (config.LogTopics != null && config.LogTopics.Count() > 0){
-                level = $"INFO;{level}: {string.Join(",", config.LogTopics.Where(s => !string.IsNullOrEmpty(s)))}";
-            }
-            AddEnvVar("CODEX_LOG_LEVEL", level);
+            AddEnvVar("CODEX_LOG_LEVEL", config.LogLevelWithTopics());
 
             // This makes the node announce itself to its local (pod) IP address.
             AddEnvVar("NAT_IP_AUTO", "true");
@@ -66,11 +61,11 @@ namespace DistTestCore.Codex
             {
                 AddEnvVar("CODEX_SIMULATE_PROOF_FAILURES", config.SimulateProofFailures.ToString()!);
             }
-			if (config.EnableValidator == true)
-            {
-                AddEnvVar("CODEX_VALIDATOR", "true");
-            }
-            if (config.MarketplaceConfig != null || config.EnableValidator == true)
+			// if (config.EnableValidator == true)
+            // {
+            //     AddEnvVar("CODEX_VALIDATOR", "true");
+            // }
+            if (config.MarketplaceConfig != null)
             {
                 var gethConfig = startupConfig.Get<GethStartResult>();
                 var companionNode = gethConfig.CompanionNode;
@@ -85,14 +80,14 @@ namespace DistTestCore.Codex
                 AddEnvVar("CODEX_MARKETPLACE_ADDRESS", gethConfig.MarketplaceNetwork.Marketplace.Address);
                 AddEnvVar("CODEX_PERSISTENCE", "true");
 
-                //if (config.MarketplaceConfig.IsValidator)
-                //{
-                //    AddEnvVar("CODEX_VALIDATOR", "true");
-                //}
+                if (config.MarketplaceConfig.IsValidator)
+                {
+                   AddEnvVar("CODEX_VALIDATOR", "true");
+                }
             }
-			if (config.MarketplaceConfig != null) {
-                AddEnvVar("CODEX_PERSISTENCE", "true");
-            }
+			// if (config.MarketplaceConfig != null) {
+            //     AddEnvVar("CODEX_PERSISTENCE", "true");
+            // }
 
             if(!string.IsNullOrEmpty(config.NameOverride)) {
                 AddEnvVar("CODEX_NODENAME", config.NameOverride);
