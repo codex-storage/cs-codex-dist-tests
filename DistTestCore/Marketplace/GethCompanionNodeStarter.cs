@@ -7,8 +7,8 @@ namespace DistTestCore.Marketplace
     {
         private int companionAccountIndex = 0;
 
-        public GethCompanionNodeStarter(TestLifecycle lifecycle, WorkflowCreator workflowCreator)
-            : base(lifecycle, workflowCreator)
+        public GethCompanionNodeStarter(TestLifecycle lifecycle)
+            : base(lifecycle)
         {
         }
 
@@ -18,7 +18,7 @@ namespace DistTestCore.Marketplace
 
             var config = CreateCompanionNodeStartupConfig(marketplace.Bootstrap, codexSetup.NumberOfNodes);
 
-            var workflow = workflowCreator.CreateWorkflow();
+            var workflow = lifecycle.WorkflowCreator.CreateWorkflow();
             var containers = workflow.Start(1, Location.Unspecified, new GethContainerRecipe(), CreateStartupConfig(config));
             if (containers.Containers.Length != 1) throw new InvalidOperationException("Expected one Geth companion node to be created. Test infra failure.");
             var container = containers.Containers[0];

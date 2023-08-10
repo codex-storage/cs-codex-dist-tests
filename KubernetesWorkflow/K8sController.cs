@@ -11,14 +11,16 @@ namespace KubernetesWorkflow
         private readonly K8sCluster cluster;
         private readonly KnownK8sPods knownPods;
         private readonly WorkflowNumberSource workflowNumberSource;
+        private readonly PodLabels podLabels;
         private readonly K8sClient client;
 
-        public K8sController(BaseLog log, K8sCluster cluster, KnownK8sPods knownPods, WorkflowNumberSource workflowNumberSource, string testNamespace)
+        public K8sController(BaseLog log, K8sCluster cluster, KnownK8sPods knownPods, WorkflowNumberSource workflowNumberSource, string testNamespace, PodLabels podLabels)
         {
             this.log = log;
             this.cluster = cluster;
             this.knownPods = knownPods;
             this.workflowNumberSource = workflowNumberSource;
+            this.podLabels = podLabels;
             client = new K8sClient(cluster.GetK8sClientConfig());
 
             K8sTestNamespace = cluster.Configuration.K8sNamespacePrefix + testNamespace;
@@ -362,7 +364,7 @@ namespace KubernetesWorkflow
 
         private IDictionary<string, string> GetSelector()
         {
-            return new Dictionary<string, string> { { "codex-test-node", "dist-test-" + workflowNumberSource.WorkflowNumber } };
+            return podLabels.GetLabels();
         }
 
         private IDictionary<string, string> GetRunnerNamespaceSelector()

@@ -14,6 +14,7 @@ namespace DistTestCore.Codex
         public static readonly TimeSpan MaxUploadTimePerMegabyte = TimeSpan.FromSeconds(2.0);
         public static readonly TimeSpan MaxDownloadTimePerMegabyte = TimeSpan.FromSeconds(2.0);
 
+        public override string AppName => "codex";
         public override string Image { get; }
 
         public CodexContainerRecipe()

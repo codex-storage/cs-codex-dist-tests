@@ -7,8 +7,8 @@ namespace DistTestCore
 {
     public class PrometheusStarter : BaseStarter
     {
-        public PrometheusStarter(TestLifecycle lifecycle, WorkflowCreator workflowCreator)
-            : base(lifecycle, workflowCreator)
+        public PrometheusStarter(TestLifecycle lifecycle)
+            : base(lifecycle)
         {
         }
 
@@ -18,7 +18,7 @@ namespace DistTestCore
             var startupConfig = new StartupConfig();
             startupConfig.Add(new PrometheusStartupConfig(GeneratePrometheusConfig(containers.Containers())));
 
-            var workflow = workflowCreator.CreateWorkflow();
+            var workflow = lifecycle.WorkflowCreator.CreateWorkflow();
             var runningContainers = workflow.Start(1, Location.Unspecified, new PrometheusContainerRecipe(), startupConfig);
             if (runningContainers.Containers.Length != 1) throw new InvalidOperationException("Expected only 1 Prometheus container to be created.");
 

@@ -1,18 +1,15 @@
-﻿using KubernetesWorkflow;
-using Logging;
+﻿using Logging;
 
 namespace DistTestCore
 {
     public class BaseStarter
     {
         protected readonly TestLifecycle lifecycle;
-        protected readonly WorkflowCreator workflowCreator;
         private Stopwatch? stopwatch;
 
-        public BaseStarter(TestLifecycle lifecycle, WorkflowCreator workflowCreator)
+        public BaseStarter(TestLifecycle lifecycle)
         {
             this.lifecycle = lifecycle;
-            this.workflowCreator = workflowCreator;
         }
 
         protected void LogStart(string msg)
