@@ -10,6 +10,7 @@ namespace DistTestCore
         ICodexSetup At(Location location);
         ICodexSetup WithBootstrapNode(IOnlineCodexNode node);
         ICodexSetup WithStorageQuota(ByteSize storageQuota);
+        ICodexSetup WithBlockTTL(TimeSpan duration);
         ICodexSetup EnableMetrics();
         ICodexSetup EnableMarketplace(TestToken initialBalance);
         ICodexSetup EnableMarketplace(TestToken initialBalance, Ether initialEther);
@@ -47,6 +48,12 @@ namespace DistTestCore
         public ICodexSetup WithStorageQuota(ByteSize storageQuota)
         {
             StorageQuota = storageQuota;
+            return this;
+        }
+
+        public ICodexSetup WithBlockTTL(TimeSpan duration)
+        {
+            BlockTTL = Convert.ToInt32(duration.TotalSeconds);
             return this;
         }
 
