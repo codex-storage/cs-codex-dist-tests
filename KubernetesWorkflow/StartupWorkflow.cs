@@ -27,7 +27,6 @@ namespace KubernetesWorkflow
         public RunningContainers Start(int numberOfContainers, Location location, ContainerRecipeFactory recipeFactory, StartupConfig startupConfig)
         {
             var podLabels = new PodLabels();
-            podLabels.Add("codex-test-node", "dist-test-" + numberSource.WorkflowNumber);
             podLabels.Add("runid", NameUtils.GetRunId());
             podLabels.Add("tests-type", testsType);
             podLabels.Add("app", recipeFactory.AppName);

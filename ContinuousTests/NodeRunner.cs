@@ -40,8 +40,8 @@ namespace ContinuousTests
 
         public void RunNode(CodexAccess bootstrapNode, Action<CodexAccess, MarketplaceAccess, TestLifecycle> operation, TestToken mintTestTokens)
         {
-            var (workflowCreator, lifecycle) = CreateFacilities();
-            var flow = workflowCreator.CreateWorkflow();
+            var lifecycle = CreateTestLifecycle();
+            var flow = lifecycle.WorkflowCreator.CreateWorkflow();
 
             try
             {
@@ -89,9 +89,9 @@ namespace ContinuousTests
             }
         }
 
-        private (WorkflowCreator, TestLifecycle) CreateFacilities()
+        private TestLifecycle CreateTestLifecycle()
         {
-            return k8SFactory.CreateFacilities(config.KubeConfigFile, config.LogPath, config.DataPath, customNamespace, timeSet, log, config.RunnerLocation);
+            return k8SFactory.CreateTestLifecycle(config.KubeConfigFile, config.LogPath, config.DataPath, customNamespace, timeSet, log, config.RunnerLocation);
         }
     }
 }

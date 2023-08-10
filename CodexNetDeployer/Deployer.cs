@@ -21,7 +21,7 @@ namespace CodexNetDeployer
         public CodexDeployment Deploy()
         {
             Log("Initializing...");
-            var (workflowCreator, lifecycle) = CreateFacilities();
+            var lifecycle = CreateTestLifecycle();
 
             Log("Preparing configuration...");
             // We trick the Geth companion node into unlocking all of its accounts, by saying we want to start 999 codex nodes.
@@ -30,7 +30,7 @@ namespace CodexNetDeployer
             setup.MetricsEnabled = config.RecordMetrics;
 
             Log("Creating Geth instance and deploying contracts...");
-            var gethStarter = new GethStarter(lifecycle, workflowCreator);
+            var gethStarter = new GethStarter(lifecycle);
             var gethResults = gethStarter.BringOnlineMarketplaceFor(setup);
 
             Log("Geth started. Codex contracts deployed.");
@@ -44,7 +44,7 @@ namespace CodexNetDeployer
             Log("Starting Codex nodes...");
 
             // Each node must have its own IP, so it needs it own pod. Start them 1 at a time.
-            var codexStarter = new CodexNodeStarter(config, workflowCreator, lifecycle, gethResults, config.NumberOfValidators!.Value);
+            var codexStarter = new CodexNodeStarter(config, lifecycle, gethResults, config.NumberOfValidators!.Value);
             var codexContainers = new List<RunningContainer>();
             for (var i = 0; i < config.NumberOfCodexNodes; i++)
             {
@@ -57,7 +57,7 @@ namespace CodexNetDeployer
             return new CodexDeployment(gethResults, codexContainers.ToArray(), prometheusContainer, CreateMetadata());
         }
 
-        private (WorkflowCreator, TestLifecycle) CreateFacilities()
+        private TestLifecycle CreateTestLifecycle()
         {
             var kubeConfig = GetKubeConfig(config.KubeConfigFile);
 
@@ -68,22 +68,11 @@ namespace CodexNetDeployer
                 logDebug: false,
                 dataFilesPath: "notUsed",
                 codexLogLevel: config.CodexLogLevel,
-                runnerLocation: config.RunnerLocation
+                runnerLocation: config.RunnerLocation,
+                k8sNamespacePrefix: config.KubeNamespace
             );
 
-            var kubeFlowConfig = new KubernetesWorkflow.Configuration(
-                k8sNamespacePrefix: config.KubeNamespace,
-                kubeConfigFile: kubeConfig,
-                operationTimeout: timeset.K8sOperationTimeout(),
-                retryDelay: timeset.WaitForK8sServiceDelay());
-
-            var workflowCreator = new WorkflowCreator(log, kubeFlowConfig,
-                testNamespacePostfix: string.Empty,
-                testsType: config.TestsTypePodLabel);
-
-            var lifecycle = new TestLifecycle(log, lifecycleConfig, timeset, workflowCreator);
-
-            return (workflowCreator, lifecycle);
+            return new TestLifecycle(log, lifecycleConfig, timeset);
         }
 
         private RunningContainer? StartMetricsService(TestLifecycle lifecycle, CodexSetup setup, List<RunningContainer> codexContainers)

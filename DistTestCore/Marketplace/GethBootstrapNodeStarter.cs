@@ -4,8 +4,8 @@ namespace DistTestCore.Marketplace
 {
     public class GethBootstrapNodeStarter : BaseStarter
     {
-        public GethBootstrapNodeStarter(TestLifecycle lifecycle, WorkflowCreator workflowCreator)
-            : base(lifecycle, workflowCreator)
+        public GethBootstrapNodeStarter(TestLifecycle lifecycle)
+            : base(lifecycle)
         {
         }
 
@@ -14,7 +14,7 @@ namespace DistTestCore.Marketplace
             LogStart("Starting Geth bootstrap node...");
             var startupConfig = CreateBootstrapStartupConfig();
             
-            var workflow = workflowCreator.CreateWorkflow();
+            var workflow = lifecycle.WorkflowCreator.CreateWorkflow();
             var containers = workflow.Start(1, Location.Unspecified, new GethContainerRecipe(), startupConfig);
             if (containers.Containers.Length != 1) throw new InvalidOperationException("Expected 1 Geth bootstrap node to be created. Test infra failure.");
             var bootstrapContainer = containers.Containers[0];
