@@ -8,16 +8,14 @@ namespace CodexNetDeployer
     public class CodexNodeStarter
     {
         private readonly Configuration config;
-        private readonly WorkflowCreator workflowCreator;
         private readonly TestLifecycle lifecycle;
         private readonly GethStartResult gethResult;
         private string bootstrapSpr = "";
         private int validatorsLeft;
 
-        public CodexNodeStarter(Configuration config, WorkflowCreator workflowCreator, TestLifecycle lifecycle, GethStartResult gethResult, int numberOfValidators)
+        public CodexNodeStarter(Configuration config, TestLifecycle lifecycle, GethStartResult gethResult, int numberOfValidators)
         {
             this.config = config;
-            this.workflowCreator = workflowCreator;
             this.lifecycle = lifecycle;
             this.gethResult = gethResult;
             validatorsLeft = numberOfValidators;
@@ -26,7 +24,7 @@ namespace CodexNetDeployer
         public RunningContainer? Start(int i)
         {
             Console.Write($" - {i} = ");
-            var workflow = workflowCreator.CreateWorkflow();
+            var workflow = lifecycle.WorkflowCreator.CreateWorkflow();
             var workflowStartup = new StartupConfig();
             workflowStartup.Add(gethResult);
             workflowStartup.Add(CreateCodexStartupConfig(bootstrapSpr, i, validatorsLeft));

@@ -8,8 +8,8 @@ namespace DistTestCore
 {
     public class CodexStarter : BaseStarter
     {
-        public CodexStarter(TestLifecycle lifecycle, WorkflowCreator workflowCreator)
-            : base(lifecycle, workflowCreator)
+        public CodexStarter(TestLifecycle lifecycle)
+            : base(lifecycle)
         {
         }
 
@@ -121,7 +121,7 @@ namespace DistTestCore
 
         private StartupWorkflow CreateWorkflow()
         {
-            return workflowCreator.CreateWorkflow();
+            return lifecycle.WorkflowCreator.CreateWorkflow();
         }
 
         private void LogSeparator()

@@ -1,5 +1,4 @@
 ﻿using DistTestCore.Marketplace;
-using KubernetesWorkflow;
 
 namespace DistTestCore
 {
@@ -8,13 +7,13 @@ namespace DistTestCore
         private readonly MarketplaceNetworkCache marketplaceNetworkCache;
         private readonly GethCompanionNodeStarter companionNodeStarter;
 
-        public GethStarter(TestLifecycle lifecycle, WorkflowCreator workflowCreator)
-            : base(lifecycle, workflowCreator)
+        public GethStarter(TestLifecycle lifecycle)
+            : base(lifecycle)
         {
             marketplaceNetworkCache = new MarketplaceNetworkCache(
-                new GethBootstrapNodeStarter(lifecycle, workflowCreator),
-                new CodexContractsStarter(lifecycle, workflowCreator));
-            companionNodeStarter = new GethCompanionNodeStarter(lifecycle, workflowCreator);
+                new GethBootstrapNodeStarter(lifecycle),
+                new CodexContractsStarter(lifecycle));
+            companionNodeStarter = new GethCompanionNodeStarter(lifecycle);
         }
 
         public GethStartResult BringOnlineMarketplaceFor(CodexSetup codexSetup)

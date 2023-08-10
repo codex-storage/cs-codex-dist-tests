@@ -25,7 +25,7 @@ public class Program
         if (!Directory.Exists(config.OutputPath)) Directory.CreateDirectory(config.OutputPath);
 
         var k8sFactory = new K8sFactory();
-        var (_, lifecycle) = k8sFactory.CreateFacilities(config.KubeConfigFile, config.OutputPath, "dataPath", config.CodexDeployment.Metadata.KubeNamespace, new DefaultTimeSet(), new NullLog(), config.RunnerLocation);
+        var lifecycle = k8sFactory.CreateTestLifecycle(config.KubeConfigFile, config.OutputPath, "dataPath", config.CodexDeployment.Metadata.KubeNamespace, new DefaultTimeSet(), new NullLog(), config.RunnerLocation);
 
         foreach (var container in config.CodexDeployment.CodexContainers)
         {

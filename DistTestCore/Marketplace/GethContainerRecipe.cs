@@ -10,12 +10,8 @@ namespace DistTestCore.Marketplace
         public const string DiscoveryPortTag = "disc_port";
         public const string AccountsFilename = "accounts.csv";
 
-        public override string Image { get; }
-
-        public GethContainerRecipe()
-        {
-            Image = "codexstorage/dist-tests-geth:sha-b788a2d";
-        }
+        public override string AppName => "geth";
+        public override string Image => "codexstorage/dist-tests-geth:sha-b788a2d";
 
         protected override void Initialize(StartupConfig startupConfig)
         {

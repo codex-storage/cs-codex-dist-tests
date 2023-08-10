@@ -138,7 +138,7 @@ namespace ContinuousTests
         private void DownloadClusterLogs()
         {
             var k8sFactory = new K8sFactory();
-            var (_, lifecycle) = k8sFactory.CreateFacilities(config.KubeConfigFile, config.LogPath, "dataPath", config.CodexDeployment.Metadata.KubeNamespace, new DefaultTimeSet(), new NullLog(), config.RunnerLocation);
+            var lifecycle = k8sFactory.CreateTestLifecycle(config.KubeConfigFile, config.LogPath, "dataPath", config.CodexDeployment.Metadata.KubeNamespace, new DefaultTimeSet(), new NullLog(), config.RunnerLocation);
 
             foreach (var container in config.CodexDeployment.CodexContainers)
             {
@@ -221,7 +221,7 @@ namespace ContinuousTests
         private DistTestCore.Configuration CreateFileManagerConfiguration()
         {
             return new DistTestCore.Configuration(null, string.Empty, false, dataFolder,
-                CodexLogLevel.Error, config.RunnerLocation);
+                CodexLogLevel.Error, config.RunnerLocation, string.Empty);
         }
     }
 }

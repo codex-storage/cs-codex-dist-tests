@@ -1,5 +1,7 @@
 ﻿using DistTestCore.Codex;
 using DistTestCore.Logs;
+using DistTestCore.Marketplace;
+using DistTestCore.Metrics;
 using KubernetesWorkflow;
 using Logging;
 using Utils;
@@ -10,21 +12,19 @@ namespace DistTestCore
     {
         private readonly DateTime testStart;
 
-        public TestLifecycle(BaseLog log, Configuration configuration, ITimeSet timeSet)
-            : this(log, configuration, timeSet, new WorkflowCreator(log, configuration.GetK8sConfiguration(timeSet)))
-        {
-        }
-
-        public TestLifecycle(BaseLog log, Configuration configuration, ITimeSet timeSet, WorkflowCreator workflowCreator)
+        public TestLifecycle(BaseLog log, Configuration configuration, ITimeSet timeSet, string testsType, string testNamespace)
         {
             Log = log;
             Configuration = configuration;
             TimeSet = timeSet;
 
+            var podLabels = new PodLabels(testsType, GetApplicationIds());
+            WorkflowCreator = new WorkflowCreator(log, configuration.GetK8sConfiguration(timeSet), podLabels, testNamespace);
+
             FileManager = new FileManager(Log, configuration);
-            CodexStarter = new CodexStarter(this, workflowCreator);
-            PrometheusStarter = new PrometheusStarter(this, workflowCreator);
-            GethStarter = new GethStarter(this, workflowCreator);
+            CodexStarter = new CodexStarter(this);
+            PrometheusStarter = new PrometheusStarter(this);
+            GethStarter = new GethStarter(this);
             testStart = DateTime.UtcNow;
             CodexVersion = null;
 
@@ -34,6 +34,7 @@ namespace DistTestCore
         public BaseLog Log { get; }
         public Configuration Configuration { get; }
         public ITimeSet TimeSet { get; }
+        public WorkflowCreator WorkflowCreator { get; }
         public FileManager FileManager { get; }
         public CodexStarter CodexStarter { get; }
         public PrometheusStarter PrometheusStarter { get; }
@@ -67,6 +68,24 @@ namespace DistTestCore
         public void SetCodexVersion(CodexDebugVersionResponse version)
         {
             if (CodexVersion == null) CodexVersion = version;
+        }
+
+        public ApplicationIds GetApplicationIds()
+        {
+            return new ApplicationIds(
+                codexId: GetCodexId(),
+                gethId: new GethContainerRecipe().Image,
+                prometheusId: new PrometheusContainerRecipe().Image,
+                codexContractsId: new CodexContractsContainerRecipe().Image
+            );
+        }
+
+        private string GetCodexId()
+        {
+            var v = CodexVersion;
+            if (v == null) return new CodexContainerRecipe().Image;
+            if (v.version != "untagged build") return v.version;
+            return v.revision;
         }
     }
 }

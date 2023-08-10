@@ -6,8 +6,8 @@ namespace DistTestCore.Marketplace
     public class CodexContractsStarter : BaseStarter
     {
 
-        public CodexContractsStarter(TestLifecycle lifecycle, WorkflowCreator workflowCreator)
-            : base(lifecycle, workflowCreator)
+        public CodexContractsStarter(TestLifecycle lifecycle)
+            : base(lifecycle)
         {
         }
 
@@ -15,7 +15,7 @@ namespace DistTestCore.Marketplace
         {
             LogStart("Deploying Codex Marketplace...");
 
-            var workflow = workflowCreator.CreateWorkflow();
+            var workflow = lifecycle.WorkflowCreator.CreateWorkflow();
             var startupConfig = CreateStartupConfig(bootstrapNode.RunningContainers.Containers[0]);
 
             var containers = workflow.Start(1, Location.Unspecified, new CodexContractsContainerRecipe(), startupConfig);

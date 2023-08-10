@@ -7,12 +7,8 @@ namespace DistTestCore.Marketplace
         public const string MarketplaceAddressFilename = "/hardhat/deployments/codexdisttestnetwork/Marketplace.json";
         public const string MarketplaceArtifactFilename = "/hardhat/artifacts/contracts/Marketplace.sol/Marketplace.json";
 
-        public override string Image { get; }
-
-        public CodexContractsContainerRecipe()
-        {
-            Image = "codexstorage/dist-tests-codex-contracts-eth:sha-d6fbfdc";
-        }
+        public override string AppName => "codex-contracts";
+        public override string Image => "codexstorage/dist-tests-codex-contracts-eth:sha-d6fbfdc";
 
         protected override void Initialize(StartupConfig startupConfig)
         {

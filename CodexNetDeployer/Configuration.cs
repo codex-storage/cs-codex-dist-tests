@@ -46,6 +46,10 @@ namespace CodexNetDeployer
 
         [Uniform("record-metrics", "rm", "RECORDMETRICS", false, "If true, metrics will be collected for all Codex nodes.")]
         public bool RecordMetrics { get; set; } = false;
+
+        [Uniform("teststype-podlabel", "ttpl", "TESTSTYPE-PODLABEL", false, "Each kubernetes pod will be created with a label 'teststype' with value 'continuous'. " +
+            "set this option to override the label value.")]
+        public string TestsTypePodLabel { get; set; } = "continuous";
        
         public TestRunnerLocation RunnerLocation { get; set; } = TestRunnerLocation.InternalToCluster;
 

@@ -12,6 +12,7 @@ namespace DistTestCore
         private readonly string dataFilesPath;
         private readonly CodexLogLevel codexLogLevel;
         private readonly TestRunnerLocation runnerLocation;
+        private readonly string k8sNamespacePrefix;
 
         public Configuration()
         {
@@ -21,9 +22,10 @@ namespace DistTestCore
             dataFilesPath = GetEnvVarOrDefault("DATAFILEPATH", "TestDataFiles");
             codexLogLevel = ParseEnum.Parse<CodexLogLevel>(GetEnvVarOrDefault("LOGLEVEL", nameof(CodexLogLevel.Trace)));
             runnerLocation = ParseEnum.Parse<TestRunnerLocation>(GetEnvVarOrDefault("RUNNERLOCATION", nameof(TestRunnerLocation.ExternalToCluster)));
+            k8sNamespacePrefix = "ct-";
         }
 
-        public Configuration(string? kubeConfigFile, string logPath, bool logDebug, string dataFilesPath, CodexLogLevel codexLogLevel, TestRunnerLocation runnerLocation)
+        public Configuration(string? kubeConfigFile, string logPath, bool logDebug, string dataFilesPath, CodexLogLevel codexLogLevel, TestRunnerLocation runnerLocation, string k8sNamespacePrefix)
         {
             this.kubeConfigFile = kubeConfigFile;
             this.logPath = logPath;
@@ -31,12 +33,13 @@ namespace DistTestCore
             this.dataFilesPath = dataFilesPath;
             this.codexLogLevel = codexLogLevel;
             this.runnerLocation = runnerLocation;
+            this.k8sNamespacePrefix = k8sNamespacePrefix;
         }
 
         public KubernetesWorkflow.Configuration GetK8sConfiguration(ITimeSet timeSet)
         {
             return new KubernetesWorkflow.Configuration(
-                k8sNamespacePrefix: "ct-",
+                k8sNamespacePrefix: k8sNamespacePrefix,
                 kubeConfigFile: kubeConfigFile,
                 operationTimeout: timeSet.K8sOperationTimeout(),
                 retryDelay: timeSet.WaitForK8sServiceDelay()
