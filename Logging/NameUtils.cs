@@ -22,7 +22,7 @@ namespace Logging
         public static string GetRawFixtureName()
         {
             var test = TestContext.CurrentContext.Test;
-            if (test.ClassName!.Contains("AdhocContext")) return "-";
+            if (test.ClassName!.Contains("AdhocContext")) return "none";
             var className = test.ClassName!.Substring(test.ClassName.LastIndexOf('.') + 1);
             return className.Replace('.', '-');
         }
@@ -30,7 +30,7 @@ namespace Logging
         public static string GetCategoryName()
         {
             var test = TestContext.CurrentContext.Test;
-            if (test.ClassName!.Contains("AdhocContext")) return "-";
+            if (test.ClassName!.Contains("AdhocContext")) return "none";
             return test.ClassName!.Substring(0, test.ClassName.LastIndexOf('.'));
         }
 
