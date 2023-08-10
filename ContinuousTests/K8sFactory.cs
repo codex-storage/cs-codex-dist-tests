@@ -20,7 +20,7 @@ namespace ContinuousTests
                 k8sNamespacePrefix: customNamespace
             );
 
-            return new TestLifecycle(log, lifecycleConfig, timeSet, "continuous-tests");
+            return new TestLifecycle(log, lifecycleConfig, timeSet, "continuous-tests", string.Empty);
         }
 
         private static string? GetKubeConfig(string kubeConfigFile)

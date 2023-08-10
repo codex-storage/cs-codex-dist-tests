@@ -1,5 +1,7 @@
 ﻿using DistTestCore.Codex;
 using DistTestCore.Logs;
+using DistTestCore.Marketplace;
+using DistTestCore.Metrics;
 using KubernetesWorkflow;
 using Logging;
 using Utils;
@@ -10,14 +12,14 @@ namespace DistTestCore
     {
         private readonly DateTime testStart;
 
-        public TestLifecycle(BaseLog log, Configuration configuration, ITimeSet timeSet, string testsType)
+        public TestLifecycle(BaseLog log, Configuration configuration, ITimeSet timeSet, string testsType, string testNamespace)
         {
             Log = log;
             Configuration = configuration;
             TimeSet = timeSet;
 
-            var podLabels = new PodLabels(testsType, GetCodexId());
-            WorkflowCreator = new WorkflowCreator(log, configuration.GetK8sConfiguration(timeSet), podLabels);
+            var podLabels = new PodLabels(testsType, GetApplicationIds());
+            WorkflowCreator = new WorkflowCreator(log, configuration.GetK8sConfiguration(timeSet), podLabels, testNamespace);
 
             FileManager = new FileManager(Log, configuration);
             CodexStarter = new CodexStarter(this);
@@ -68,7 +70,17 @@ namespace DistTestCore
             if (CodexVersion == null) CodexVersion = version;
         }
 
-        public string GetCodexId()
+        public ApplicationIds GetApplicationIds()
+        {
+            return new ApplicationIds(
+                codexId: GetCodexId(),
+                gethId: new GethContainerRecipe().Image,
+                prometheusId: new PrometheusContainerRecipe().Image,
+                codexContractsId: new CodexContractsContainerRecipe().Image
+            );
+        }
+
+        private string GetCodexId()
         {
             var v = CodexVersion;
             if (v == null) return new CodexContainerRecipe().Image;

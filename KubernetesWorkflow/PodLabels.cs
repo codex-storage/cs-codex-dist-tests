@@ -11,15 +11,20 @@ namespace KubernetesWorkflow
             labels = source.labels.ToDictionary(p => p.Key, p => p.Value);
         }
 
-        public PodLabels(string testsType, string codexId)
+        public PodLabels(string testsType, ApplicationIds applicationIds)
         {
             Add("tests-type", testsType);
             Add("runid", NameUtils.GetRunId());
             Add("testid", NameUtils.GetTestId());
             Add("category", NameUtils.GetCategoryName());
-            Add("codexid", codexId);
             Add("fixturename", NameUtils.GetRawFixtureName());
             Add("testname", NameUtils.GetTestMethodName());
+
+            if (applicationIds == null) return;
+            Add("codexid", applicationIds.CodexId);
+            Add("gethid", applicationIds.GethId);
+            Add("prometheusid", applicationIds.PrometheusId);
+            Add("codexcontractsid", applicationIds.CodexContractsId);
         }
 
         public PodLabels GetLabelsForAppName(string appName)

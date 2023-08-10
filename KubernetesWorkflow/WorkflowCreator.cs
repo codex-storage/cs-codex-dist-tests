@@ -13,12 +13,12 @@ namespace KubernetesWorkflow
         private readonly PodLabels podLabels;
         private readonly string testNamespace;
 
-        public WorkflowCreator(BaseLog log, Configuration configuration, PodLabels podLabels)
+        public WorkflowCreator(BaseLog log, Configuration configuration, PodLabels podLabels, string testNamespace)
         {
             cluster = new K8sCluster(configuration);
             this.log = log;
             this.podLabels = podLabels;
-            testNamespace = Guid.NewGuid().ToString().ToLowerInvariant();
+            this.testNamespace = testNamespace.ToLowerInvariant();
         }
 
         public StartupWorkflow CreateWorkflow()

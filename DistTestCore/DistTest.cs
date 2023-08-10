@@ -53,7 +53,7 @@ namespace DistTestCore
             {
                 Stopwatch.Measure(fixtureLog, "Global setup", () =>
                 {
-                    var wc = new WorkflowCreator(fixtureLog, configuration.GetK8sConfiguration(GetTimeSet()), new PodLabels(TestsType, "null"));
+                    var wc = new WorkflowCreator(fixtureLog, configuration.GetK8sConfiguration(GetTimeSet()), new PodLabels(TestsType, null!), string.Empty);
                     wc.CreateWorkflow().DeleteAllResources();
                 });                
             }
@@ -196,7 +196,9 @@ namespace DistTestCore
             {
                 lock (lifecycleLock)
                 {
-                    lifecycles.Add(testName, new TestLifecycle(fixtureLog.CreateTestLog(), configuration, GetTimeSet(), TestsType));
+                    var testNamespace = Guid.NewGuid().ToString();
+                    var lifecycle = new TestLifecycle(fixtureLog.CreateTestLog(), configuration, GetTimeSet(), TestsType, testNamespace);
+                    lifecycles.Add(testName, lifecycle);
                 }
             });
         }
@@ -207,7 +209,7 @@ namespace DistTestCore
             var testResult = GetTestResult();
             var testDuration = lifecycle.GetTestDuration();
             fixtureLog.Log($"{GetCurrentTestName()} = {testResult} ({testDuration})");
-            statusLog.ConcludeTest(testResult, testDuration, lifecycle.GetCodexId());
+            statusLog.ConcludeTest(testResult, testDuration, lifecycle.GetApplicationIds());
             Stopwatch.Measure(fixtureLog, $"Teardown for {GetCurrentTestName()}", () =>
             {
                 lifecycle.Log.EndTest();
