@@ -25,7 +25,7 @@ namespace KubernetesWorkflow
 
         public RunningContainers Start(int numberOfContainers, Location location, ContainerRecipeFactory recipeFactory, StartupConfig startupConfig)
         {
-            podLabels.AddAppName(recipeFactory.AppName);
+            var pl = podLabels.GetLabelsForAppName(recipeFactory.AppName);
 
             return K8s(controller =>
             {
@@ -34,7 +34,7 @@ namespace KubernetesWorkflow
                 var runningPod = controller.BringOnline(recipes, location);
 
                 return new RunningContainers(startupConfig, runningPod, CreateContainers(runningPod, recipes, startupConfig));
-            });
+            }, pl);
         }
 
         public void Stop(RunningContainers runningContainers)
@@ -159,6 +159,14 @@ namespace KubernetesWorkflow
         private T K8s<T>(Func<K8sController, T> action)
         {
             var controller = new K8sController(log, cluster, knownK8SPods, numberSource, testNamespace, podLabels);
+            var result = action(controller);
+            controller.Dispose();
+            return result;
+        }
+
+        private T K8s<T>(Func<K8sController, T> action, PodLabels labels)
+        {
+            var controller = new K8sController(log, cluster, knownK8SPods, numberSource, testNamespace, labels);
             var result = action(controller);
             controller.Dispose();
             return result;

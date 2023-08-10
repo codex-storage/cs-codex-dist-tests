@@ -6,6 +6,11 @@ namespace KubernetesWorkflow
     {
         private readonly Dictionary<string, string> labels = new Dictionary<string, string>();
 
+        private PodLabels(PodLabels source)
+        {
+            labels = source.labels.ToDictionary(p => p.Key, p => p.Value);
+        }
+
         public PodLabels(string testsType, string codexId)
         {
             Add("tests-type", testsType);
@@ -17,14 +22,21 @@ namespace KubernetesWorkflow
             Add("testname", NameUtils.GetTestMethodName());
         }
 
-        public void AddAppName(string appName)
+        public PodLabels GetLabelsForAppName(string appName)
         {
-            Add("app", appName);
+            var pl = new PodLabels(this);
+            pl.Add("app", appName);
+            return pl;
         }
 
         private void Add(string key, string value)
         {
-            labels.Add(key, value.ToLowerInvariant());
+            labels.Add(key, 
+                value.ToLowerInvariant()
+                .Replace(":","-")
+                .Replace("/", "-")
+                .Replace("\\", "-")
+            );
         }
 
         internal Dictionary<string, string> GetLabels()
