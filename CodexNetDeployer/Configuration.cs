@@ -49,7 +49,7 @@ namespace CodexNetDeployer
 
         [Uniform("teststype-podlabel", "ttpl", "TESTSTYPE-PODLABEL", false, "Each kubernetes pod will be created with a label 'teststype' with value 'continuous'. " +
             "set this option to override the label value.")]
-        public string TestsTypePodLabel { get; set; } = "continuous";
+        public string TestsTypePodLabel { get; set; } = "continuous-tests";
        
         public TestRunnerLocation RunnerLocation { get; set; } = TestRunnerLocation.InternalToCluster;
 
