@@ -29,6 +29,7 @@ namespace Logging
         public static string GetCategoryName()
         {
             var test = TestContext.CurrentContext.Test;
+            if (test.ClassName!.Contains("AdhocContext")) return "-";
             return test.ClassName!.Substring(0, test.ClassName.LastIndexOf('.'));
         }
 
