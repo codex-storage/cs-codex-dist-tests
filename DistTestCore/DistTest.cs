@@ -13,6 +13,7 @@ namespace DistTestCore
     [Parallelizable(ParallelScope.All)]
     public abstract class DistTest
     {
+        private const string TestsType = "dist-tests";
         private readonly Configuration configuration = new Configuration();
         private readonly Assembly[] testAssemblies;
         private readonly FixtureLog fixtureLog;
@@ -52,7 +53,7 @@ namespace DistTestCore
             {
                 Stopwatch.Measure(fixtureLog, "Global setup", () =>
                 {
-                    var wc = new WorkflowCreator(fixtureLog, configuration.GetK8sConfiguration(GetTimeSet()), "dist-tests");
+                    var wc = new WorkflowCreator(fixtureLog, configuration.GetK8sConfiguration(GetTimeSet()), new PodLabels(TestsType, "null"));
                     wc.CreateWorkflow().DeleteAllResources();
                 });                
             }
@@ -195,7 +196,7 @@ namespace DistTestCore
             {
                 lock (lifecycleLock)
                 {
-                    lifecycles.Add(testName, new TestLifecycle(fixtureLog.CreateTestLog(), configuration, GetTimeSet()));
+                    lifecycles.Add(testName, new TestLifecycle(fixtureLog.CreateTestLog(), configuration, GetTimeSet(), TestsType));
                 }
             });
         }
@@ -206,7 +207,7 @@ namespace DistTestCore
             var testResult = GetTestResult();
             var testDuration = lifecycle.GetTestDuration();
             fixtureLog.Log($"{GetCurrentTestName()} = {testResult} ({testDuration})");
-            statusLog.ConcludeTest(testResult, testDuration, GetCodexId(lifecycle));
+            statusLog.ConcludeTest(testResult, testDuration, lifecycle.GetCodexId());
             Stopwatch.Measure(fixtureLog, $"Teardown for {GetCurrentTestName()}", () =>
             {
                 lifecycle.Log.EndTest();
@@ -214,14 +215,6 @@ namespace DistTestCore
                 lifecycle.DeleteAllResources();
                 lifecycle = null!;
             });
-        }
-
-        private static string GetCodexId(TestLifecycle lifecycle)
-        {
-            var v = lifecycle.CodexVersion;
-            if (v == null) return new CodexContainerRecipe().Image;
-            if (v.version != "untagged build") return v.version;
-            return v.revision;
         }
 
         private ITimeSet GetTimeSet()

@@ -10,13 +10,14 @@ namespace DistTestCore
     {
         private readonly DateTime testStart;
 
-        public TestLifecycle(BaseLog log, Configuration configuration, ITimeSet timeSet)
+        public TestLifecycle(BaseLog log, Configuration configuration, ITimeSet timeSet, string testsType)
         {
             Log = log;
             Configuration = configuration;
             TimeSet = timeSet;
 
-            WorkflowCreator = new WorkflowCreator(log, configuration.GetK8sConfiguration(timeSet), "dist-tests");
+            var podLabels = new PodLabels(testsType, GetCodexId());
+            WorkflowCreator = new WorkflowCreator(log, configuration.GetK8sConfiguration(timeSet), podLabels);
 
             FileManager = new FileManager(Log, configuration);
             CodexStarter = new CodexStarter(this);
@@ -65,6 +66,14 @@ namespace DistTestCore
         public void SetCodexVersion(CodexDebugVersionResponse version)
         {
             if (CodexVersion == null) CodexVersion = version;
+        }
+
+        public string GetCodexId()
+        {
+            var v = CodexVersion;
+            if (v == null) return new CodexContainerRecipe().Image;
+            if (v.version != "untagged build") return v.version;
+            return v.revision;
         }
     }
 }

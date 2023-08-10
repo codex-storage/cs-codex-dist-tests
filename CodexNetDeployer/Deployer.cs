@@ -72,7 +72,7 @@ namespace CodexNetDeployer
                 k8sNamespacePrefix: config.KubeNamespace
             );
 
-            return new TestLifecycle(log, lifecycleConfig, timeset);
+            return new TestLifecycle(log, lifecycleConfig, timeset, config.TestsTypePodLabel);
         }
 
         private RunningContainer? StartMetricsService(TestLifecycle lifecycle, CodexSetup setup, List<RunningContainer> codexContainers)
