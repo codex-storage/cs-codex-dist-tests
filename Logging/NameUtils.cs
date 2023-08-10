@@ -22,6 +22,7 @@ namespace Logging
         public static string GetRawFixtureName()
         {
             var test = TestContext.CurrentContext.Test;
+            if (test.ClassName!.Contains("AdhocContext")) return "-";
             var className = test.ClassName!.Substring(test.ClassName.LastIndexOf('.') + 1);
             return className.Replace('.', '-');
         }
