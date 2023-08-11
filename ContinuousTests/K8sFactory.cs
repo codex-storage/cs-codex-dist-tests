@@ -6,7 +6,7 @@ namespace ContinuousTests
 {
     public class K8sFactory
     {
-        public TestLifecycle CreateTestLifecycle(string kubeConfigFile, string logPath, string dataFilePath, string customNamespace, ITimeSet timeSet, BaseLog log, TestRunnerLocation runnerLocation)
+        public TestLifecycle CreateTestLifecycle(string kubeConfigFile, string logPath, string dataFilePath, string customNamespace, ITimeSet timeSet, BaseLog log)
         {
             var kubeConfig = GetKubeConfig(kubeConfigFile);
             var lifecycleConfig = new DistTestCore.Configuration
@@ -16,7 +16,6 @@ namespace ContinuousTests
                 logDebug: false,
                 dataFilesPath: dataFilePath,
                 codexLogLevel: CodexLogLevel.Debug,
-                runnerLocation: runnerLocation,
                 k8sNamespacePrefix: customNamespace
             );
 

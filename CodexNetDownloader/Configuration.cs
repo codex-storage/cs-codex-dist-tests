@@ -1,5 +1,4 @@
 ﻿using ArgsUniform;
-using DistTestCore;
 using DistTestCore.Codex;
 
 namespace CodexNetDownloader
@@ -16,7 +15,5 @@ namespace CodexNetDownloader
         public string KubeConfigFile { get; set; } = "null";
 
         public CodexDeployment CodexDeployment { get; set; } = null!;
-
-        public TestRunnerLocation RunnerLocation { get; set; } = TestRunnerLocation.InternalToCluster;
     }
 }

@@ -1,6 +1,5 @@
 ﻿using ArgsUniform;
 using CodexNetDeployer;
-using DistTestCore;
 using DistTestCore.Codex;
 using DistTestCore.Marketplace;
 using DistTestCore.Metrics;
@@ -17,11 +16,6 @@ public class Program
         var uniformArgs = new ArgsUniform<Configuration>(PrintHelp, args);
         var config = uniformArgs.Parse(true);
         
-        if (args.Any(a => a == "--external"))
-        {
-            config.RunnerLocation = TestRunnerLocation.ExternalToCluster;
-        }
-
         var errors = config.Validate();
         if (errors.Any())
         {

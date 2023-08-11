@@ -12,7 +12,7 @@ namespace ContinuousTests
             return containers.Select(container =>
             {
                 var address = container.ClusterExternalAddress;
-                if (config.RunnerLocation == TestRunnerLocation.InternalToCluster) address = container.ClusterInternalAddress;
+                if (config.RunnerLocation == RunnerLocation.InternalToCluster) address = container.ClusterInternalAddress;
                 return new CodexAccess(log, container, timeSet, address);
             }).ToArray();
         }

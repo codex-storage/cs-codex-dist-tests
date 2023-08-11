@@ -1,5 +1,4 @@
 ﻿using ArgsUniform;
-using DistTestCore;
 using DistTestCore.Codex;
 
 namespace CodexNetDeployer
@@ -51,8 +50,6 @@ namespace CodexNetDeployer
             "set this option to override the label value.")]
         public string TestsTypePodLabel { get; set; } = "continuous-tests";
        
-        public TestRunnerLocation RunnerLocation { get; set; } = TestRunnerLocation.InternalToCluster;
-
         public List<string> Validate()
         {
             var errors = new List<string>();

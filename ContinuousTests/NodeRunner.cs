@@ -91,7 +91,7 @@ namespace ContinuousTests
 
         private TestLifecycle CreateTestLifecycle()
         {
-            return k8SFactory.CreateTestLifecycle(config.KubeConfigFile, config.LogPath, config.DataPath, customNamespace, timeSet, log, config.RunnerLocation);
+            return k8SFactory.CreateTestLifecycle(config.KubeConfigFile, config.LogPath, config.DataPath, customNamespace, timeSet, log);
         }
     }
 }

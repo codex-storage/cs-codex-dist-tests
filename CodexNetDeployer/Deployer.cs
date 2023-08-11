@@ -68,7 +68,6 @@ namespace CodexNetDeployer
                 logDebug: false,
                 dataFilesPath: "notUsed",
                 codexLogLevel: config.CodexLogLevel,
-                runnerLocation: config.RunnerLocation,
                 k8sNamespacePrefix: config.KubeNamespace
             );
 
