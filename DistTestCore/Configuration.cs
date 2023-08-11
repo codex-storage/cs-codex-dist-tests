@@ -13,6 +13,7 @@ namespace DistTestCore
         private readonly string dataFilesPath;
         private readonly CodexLogLevel codexLogLevel;
         private readonly string k8sNamespacePrefix;
+        private RunnerLocation? runnerLocation = null;
 
         public Configuration()
         {
@@ -59,8 +60,6 @@ namespace DistTestCore
             return codexLogLevel;
         }
 
-        private RunnerLocation? runnerLocation = null;
-
         public Address GetAddress(RunningContainer container)
         {
             if (runnerLocation == null)
@@ -96,7 +95,7 @@ namespace DistTestCore
         InternalToCluster,
     }
 
-    public class RunnerLocationUtils
+    public static class RunnerLocationUtils
     {
         private static bool alreadyDidThat = false;
 
@@ -108,11 +107,11 @@ namespace DistTestCore
             if (alreadyDidThat) throw new Exception("We already did that.");
             alreadyDidThat = true;
 
-            if (PingHost(container.ClusterInternalAddress))
+            if (PingHost(container.Pod.PodInfo.Ip))
             {
                 return RunnerLocation.InternalToCluster;
             }
-            if (PingHost(container.ClusterExternalAddress))
+            if (PingHost(Format(container.ClusterExternalAddress)))
             {
                 return RunnerLocation.ExternalToCluster;
             }
@@ -127,12 +126,12 @@ namespace DistTestCore
                 .Replace("https://", "");
         }
 
-        private static bool PingHost(Address host)
+        private static bool PingHost(string host)
         {
             try
             {
                 using var pinger = new Ping();
-                PingReply reply = pinger.Send(Format(host));
+                PingReply reply = pinger.Send(host);
                 return reply.Status == IPStatus.Success;
             }
             catch (PingException)
