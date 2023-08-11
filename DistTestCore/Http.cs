@@ -68,6 +68,23 @@ namespace DistTestCore
             }, $"HTTP-POST-JSON: {route}");
         }
 
+        public string HttpPostString(string route, string body)
+        {
+            return Retry(() =>
+            {
+                using var client = GetClient();
+                var url = GetUrl() + route;
+                Log(url, body);
+                client.SetBasicAuthentication("admin", "admin");
+                var content = new StringContent(body);
+                content.Headers.ContentType = MediaTypeHeaderValue.Parse("application/json");
+                var result = Time.Wait(client.PostAsync(url, content));
+                var str = Time.Wait(result.Content.ReadAsStringAsync());
+                Log(url, str);
+                return str;
+            }, $"HTTP-POST-STRING: {route}");
+        }
+
         public string HttpPostStream(string route, Stream stream)
         {
             return Retry(() =>

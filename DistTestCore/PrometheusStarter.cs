@@ -2,13 +2,8 @@
 using DistTestCore.Metrics;
 using KubernetesWorkflow;
 using Logging;
-using System;
-using System.Diagnostics;
-using System.Net.Http.Headers;
+using System.Reflection;
 using System.Text;
-using Utils;
-using static System.Net.Mime.MediaTypeNames;
-using static System.Net.WebRequestMethods;
 
 namespace DistTestCore
 {
@@ -40,44 +35,10 @@ namespace DistTestCore
 
             var c = grafanaContainers.Containers.First().ClusterExternalAddress;
 
-
-
-            //{
-            //    //setup reusable http client
-            //    HttpClient client = new HttpClient();
-            //    Uri baseUri = new Uri(c.Host + ":" + c.Port);
-            //    client.BaseAddress = baseUri;
-            //    client.DefaultRequestHeaders.Clear();
-            //    client.DefaultRequestHeaders.ConnectionClose = true;
-
-            //    //Post body content
-            //    var values = new List<KeyValuePair<string, string>>();
-            //    values.Add(new KeyValuePair<string, string>("grant_type", "client_credentials"));
-            //    var content = new FormUrlEncodedContent(values);
-
-            //    var authenticationString = $"admin:admin";
-            //    var base64EncodedAuthenticationString = Convert.ToBase64String(System.Text.ASCIIEncoding.ASCII.GetBytes(authenticationString));
-
-            //    var requestMessage = new HttpRequestMessage(HttpMethod.Post, "/oauth2/token");
-            //    requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Basic", base64EncodedAuthenticationString);
-            //    requestMessage.Content = content;
-
-            //    //make the request
-            //    var responsea = Time.Wait(client.SendAsync(requestMessage));
-            //    responsea.EnsureSuccessStatusCode();
-            //    string responseBody = Time.Wait(responsea.Content.ReadAsStringAsync());
-            //    Console.WriteLine(responseBody);
-
-            //}
-
-            //POST / api / datasources HTTP / 1.1
-            //Accept: application / json
-            //Content - Type: application / json
-            //Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
-
             var http = new Http(new NullLog(), new DefaultTimeSet(), c, "api/");
             var response = http.HttpPostJson("datasources", new GrafanaDataSource
             {
+                uid = "c89eaad3-9184-429f-ac94-8ba0b1824dbb",
                 name = "CodexPrometheus",
                 type = "prometheus",
                 url = prometheusUrl,
@@ -89,26 +50,19 @@ namespace DistTestCore
                 }
             });
 
-
-    // [{ "id":1,"uid":"c89eaad3-9184-429f-ac94-8ba0b1824dbb","orgId":1,
-    // "name":"Prometheus","type":"prometheus","typeName":"Prometheus",
-    // "typeLogoUrl":"public/app/plugins/datasource/prometheus/img/prometheus_logo.svg",
-    // "access":"proxy","url":"http://kubernetes.docker.internal:31234","user":"","database":"",
-    // "basicAuth":false,"isDefault":true,"jsonData":{ "httpMethod":"POST"},"readOnly":false}]
-
+            var response2 = http.HttpPostString("dashboards/db", GetDashboardJson());
 
             var grafanaUrl = c.Host + ":" + c.Port;
             System.Diagnostics.Process.Start("C:\\Users\\Ben\\AppData\\Local\\Programs\\Opera\\opera.exe", grafanaUrl);
 
             LogEnd("Metrics server started.");
 
-
-
             return runningContainers;
         }
 
         public class GrafanaDataSource
         {
+            public string uid { get; set; } = string.Empty;
             public string name { get; set; } = string.Empty;
             public string type { get; set; } = string.Empty;
             public string url { get; set; } = string.Empty;
@@ -120,6 +74,20 @@ namespace DistTestCore
         public class GrafanaDataSourceJsonData
         {
             public string httpMethod { get; set; } = string.Empty;
+        }
+
+        private string GetDashboardJson()
+        {
+            var assembly = Assembly.GetExecutingAssembly();
+            var resourceName = "DistTestCore.Metrics.dashboard.json";
+
+            //var names = assembly.GetManifestResourceNames();
+
+            using (Stream stream = assembly.GetManifestResourceStream(resourceName))
+            using (StreamReader reader = new StreamReader(stream))
+            {
+                return reader.ReadToEnd();
+            }
         }
 
         private string GeneratePrometheusConfig(RunningContainer[] nodes)
