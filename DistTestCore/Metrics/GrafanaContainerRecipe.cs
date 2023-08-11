@@ -19,8 +19,8 @@ namespace DistTestCore.Metrics
             //  enabled = true
             //GF_<SectionName>_<KeyName>__FILE
 
-            AddEnvVar("GF_AUTH_ANONYMOUS_ENABLED", "true");
-            AddEnvVar("GF_AUTH_DISABLE_LOGIN_FORM", "true");
+            //AddEnvVar("GF_AUTH_ANONYMOUS_ENABLED", "true");
+            //AddEnvVar("GF_AUTH_DISABLE_LOGIN_FORM", "true");
 
             //[auth]
             //disable_login_form = true

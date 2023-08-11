@@ -1,4 +1,5 @@
-﻿using Logging;
+﻿using IdentityModel.Client;
+using Logging;
 using Newtonsoft.Json;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
@@ -59,6 +60,7 @@ namespace DistTestCore
                 var url = GetUrl() + route;
                 using var content = JsonContent.Create(body);
                 Log(url, JsonConvert.SerializeObject(body));
+                client.SetBasicAuthentication("admin", "admin");
                 var result = Time.Wait(client.PostAsync(url, content));
                 var str = Time.Wait(result.Content.ReadAsStringAsync());
                 Log(url, str);
