@@ -14,6 +14,16 @@ namespace DistTestCore.Metrics
             //AddExposedPortAndVar("PROM_PORT");
             AddExposedPort(3000);
             //AddEnvVar("PROM_CONFIG", config.PrometheusConfigBase64);
+
+            // [auth.anonymous]
+            //  enabled = true
+            //GF_<SectionName>_<KeyName>__FILE
+
+            AddEnvVar("GF_AUTH_ANONYMOUS_ENABLED", "true");
+            AddEnvVar("GF_AUTH_DISABLE_LOGIN_FORM", "true");
+
+            //[auth]
+            //disable_login_form = true
         }
     }
 }
