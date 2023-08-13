@@ -26,7 +26,7 @@ namespace DistTestCore
 
             Log("Uploading dashboard configurations...");
             var jsons = ReadEachDashboardJsonFile();
-            var dashboardUrls = jsons.Select(j => UploadDashboard(http, grafanaAddress, j)).ToArray();
+            var dashboardUrls = jsons.Select(j => UploadDashboard(http, grafanaContainer, j)).ToArray();
 
             LogEnd("Dashboard server started.");
 
@@ -68,13 +68,14 @@ namespace DistTestCore
             }
         }
 
-        public static string UploadDashboard(Http http, Address grafanaAddress, string dashboardJson)
+        public static string UploadDashboard(Http http, RunningContainer grafanaContainer, string dashboardJson)
         {
             var request = GetDashboardCreateRequest(dashboardJson);
             var response = http.HttpPostString("dashboards/db", request);
             var jsonResponse = JsonConvert.DeserializeObject<GrafanaPostDashboardResponse>(response);
             if (jsonResponse == null || string.IsNullOrEmpty(jsonResponse.url)) throw new Exception("Failed to upload dashboard.");
 
+            var grafanaAddress = grafanaContainer.ClusterExternalAddress;
             return grafanaAddress.Host + ":" + grafanaAddress.Port + jsonResponse.url;
         }
 
