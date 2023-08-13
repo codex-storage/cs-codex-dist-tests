@@ -1,8 +1,8 @@
 ﻿using DistTestCore.Metrics;
 using KubernetesWorkflow;
-using Logging;
 using Newtonsoft.Json;
 using System.Reflection;
+using Utils;
 
 namespace DistTestCore
 {
@@ -15,24 +15,40 @@ namespace DistTestCore
         public GrafanaStartInfo StartDashboard(RunningContainer prometheusContainer)
         {
             LogStart($"Starting dashboard server");
+
+            var grafanaContainer = StartGrafanaContainer();
+            var grafanaAddress = lifecycle.Configuration.GetAddress(grafanaContainer);
+
+            var http = new Http(lifecycle.Log, new DefaultTimeSet(), grafanaAddress, "api/");
+
+            Log("Connecting datasource...");
+            AddDataSource(http, prometheusContainer);
+
+            Log("Uploading dashboard configurations...");
+            var jsons = ReadEachDashboardJsonFile();
+            var dashboardUrls = jsons.Select(j => UploadDashboard(http, grafanaAddress, j)).ToArray();
+
+            LogEnd("Dashboard server started.");
+
+            return new GrafanaStartInfo(dashboardUrls, grafanaContainer);
+        }
+
+        private RunningContainer StartGrafanaContainer()
+        {
             var startupConfig = new StartupConfig();
-            
-            var pc = prometheusContainer.ClusterExternalAddress;
-            var prometheusUrl = pc.Host + ":" + pc.Port;
 
             var workflow = lifecycle.WorkflowCreator.CreateWorkflow();
             var grafanaContainers = workflow.Start(1, Location.Unspecified, new GrafanaContainerRecipe(), startupConfig);
             if (grafanaContainers.Containers.Length != 1) throw new InvalidOperationException("Expected 1 dashboard container to be created.");
 
-            //Thread.Sleep(3000);
+            return grafanaContainers.Containers.First();
+        }
 
-            var grafanaContainer = grafanaContainers.Containers.First();
-            var c = grafanaContainer.ClusterExternalAddress;
-
-            var http = new Http(new NullLog(), new DefaultTimeSet(), c, "api/");
-
-            // {"datasource":{"id":1,"uid":"c89eaad3-9184-429f-ac94-8ba0b1824dbb","orgId":1,"name":"CodexPrometheus","type":"prometheus","typeLogoUrl":"","access":"proxy","url":"http://kubernetes.docker.internal:31971","user":"","database":"","basicAuth":false,"basicAuthUser":"","withCredentials":false,"isDefault":false,"jsonData":{"httpMethod":"POST"},"secureJsonFields":{},"version":1,"readOnly":false},"id":1,"message":"Datasource added","name":"CodexPrometheus"}
-            var response = http.HttpPostJson("datasources", new GrafanaDataSource
+        private static void AddDataSource(Http http, RunningContainer prometheusContainer)
+        {
+            var prometheusAddress = prometheusContainer.ClusterExternalAddress;
+            var prometheusUrl = prometheusAddress.Host + ":" + prometheusAddress.Port;
+            var response = http.HttpPostJson<GrafanaDataSourceRequest, GrafanaDataSourceResponse>("datasources", new GrafanaDataSourceRequest
             {
                 uid = "c89eaad3-9184-429f-ac94-8ba0b1824dbb",
                 name = "CodexPrometheus",
@@ -46,45 +62,60 @@ namespace DistTestCore
                 }
             });
 
-            var response2 = http.HttpPostString("dashboards/db", GetDashboardJson());
-            var jsonResponse = JsonConvert.DeserializeObject<GrafanaPostDashboardResponse>(response2);
-
-            var grafanaUrl = c.Host + ":" + c.Port + jsonResponse.url;
-            System.Diagnostics.Process.Start("C:\\Users\\Ben\\AppData\\Local\\Programs\\Opera\\opera.exe", grafanaUrl);
-
-            LogEnd("Metrics server started.");
-
-            return new GrafanaStartInfo(grafanaUrl, grafanaContainer);
+            if (response.message != "Datasource added")
+            {
+                throw new Exception("Test infra failure: Failed to add datasource to dashboard: " + response.message);
+            }
         }
 
-        private string GetDashboardJson()
+        public static string UploadDashboard(Http http, Address grafanaAddress, string dashboardJson)
+        {
+            var request = GetDashboardCreateRequest(dashboardJson);
+            var response = http.HttpPostString("dashboards/db", request);
+            var jsonResponse = JsonConvert.DeserializeObject<GrafanaPostDashboardResponse>(response);
+            if (jsonResponse == null || string.IsNullOrEmpty(jsonResponse.url)) throw new Exception("Failed to upload dashboard.");
+
+            return grafanaAddress.Host + ":" + grafanaAddress.Port + jsonResponse.url;
+        }
+
+        private static string[] ReadEachDashboardJsonFile()
         {
             var assembly = Assembly.GetExecutingAssembly();
-            var resourceName = "DistTestCore.Metrics.dashboard.json";
-
-            using (Stream stream = assembly.GetManifestResourceStream(resourceName))
-            using (StreamReader reader = new StreamReader(stream))
+            var resourceNames = new[]
             {
-                var dashboard = reader.ReadToEnd();
+                "DistTestCore.Metrics.dashboard.json"
+            };
 
-                return $"{{\"dashboard\": {dashboard} ,\"message\": \"Default Codex Dashboard\",\"overwrite\": false}}";
-            }
+            return resourceNames.Select(r => GetManifestResource(assembly, r)).ToArray();
+        }
+
+        private static string GetManifestResource(Assembly assembly, string resourceName)
+        {
+            using var stream = assembly.GetManifestResourceStream(resourceName);
+            if (stream == null) throw new Exception("Unable to find resource " + resourceName);
+            using var reader = new StreamReader(stream);
+            return reader.ReadToEnd();
+        }
+
+        private static string GetDashboardCreateRequest(string dashboardJson)
+        {
+            return $"{{\"dashboard\": {dashboardJson} ,\"message\": \"Default Codex Dashboard\",\"overwrite\": false}}";
         }
     }
 
     public class GrafanaStartInfo
     {
-        public GrafanaStartInfo(string dashboardUrl, RunningContainer container)
+        public GrafanaStartInfo(string[] dashboardUrls, RunningContainer container)
         {
-            DashboardUrl = dashboardUrl;
+            DashboardUrls = dashboardUrls;
             Container = container;
         }
 
-        public string DashboardUrl { get; }
+        public string[] DashboardUrls { get; }
         public RunningContainer Container { get; }
     }
 
-    public class GrafanaDataSource
+    public class GrafanaDataSourceRequest
     {
         public string uid { get; set; } = string.Empty;
         public string name { get; set; } = string.Empty;
@@ -93,6 +124,13 @@ namespace DistTestCore
         public string access { get; set; } = string.Empty;
         public bool basicAuth { get; set; }
         public GrafanaDataSourceJsonData jsonData { get; set; } = new();
+    }
+
+    public class GrafanaDataSourceResponse
+    {
+        public int id { get; set; }
+        public string message { get; set; } = string.Empty;
+        public string name { get; set; } = string.Empty;
     }
 
     public class GrafanaDataSourceJsonData
@@ -109,5 +147,4 @@ namespace DistTestCore
         public string url { get; set; } = string.Empty;
         public int version { get; set; }
     }
-
 }
