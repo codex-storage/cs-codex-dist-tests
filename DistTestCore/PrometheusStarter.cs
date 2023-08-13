@@ -2,6 +2,7 @@
 using DistTestCore.Metrics;
 using KubernetesWorkflow;
 using Logging;
+using Newtonsoft.Json;
 using System.Reflection;
 using System.Text;
 
@@ -51,8 +52,9 @@ namespace DistTestCore
             });
 
             var response2 = http.HttpPostString("dashboards/db", GetDashboardJson());
+            var jsonResponse = JsonConvert.DeserializeObject<GrafanaPostDashboardResponse>(response2);
 
-            var grafanaUrl = c.Host + ":" + c.Port;
+            var grafanaUrl = c.Host + ":" + c.Port + jsonResponse.url;
             System.Diagnostics.Process.Start("C:\\Users\\Ben\\AppData\\Local\\Programs\\Opera\\opera.exe", grafanaUrl);
 
             LogEnd("Metrics server started.");
@@ -76,6 +78,16 @@ namespace DistTestCore
             public string httpMethod { get; set; } = string.Empty;
         }
 
+        public class GrafanaPostDashboardResponse
+        {
+            public int id { get; set; }
+            public string slug { get; set; } = string.Empty;
+            public string status { get; set; } = string.Empty;
+            public string uid { get; set; } = string.Empty;
+            public string url { get; set; } = string.Empty;
+            public int version { get; set; }
+        }
+
         private string GetDashboardJson()
         {
             var assembly = Assembly.GetExecutingAssembly();
@@ -86,7 +98,9 @@ namespace DistTestCore
             using (Stream stream = assembly.GetManifestResourceStream(resourceName))
             using (StreamReader reader = new StreamReader(stream))
             {
-                return reader.ReadToEnd();
+                var dashboard = reader.ReadToEnd();
+
+                return $"{{\"dashboard\": {dashboard} ,\"message\": \"Default Codex Dashboard\",\"overwrite\": false}}";
             }
         }
 
