@@ -27,7 +27,7 @@ namespace CodexNetDeployer
             // We trick the Geth companion node into unlocking all of its accounts, by saying we want to start 999 codex nodes.
             var setup = new CodexSetup(999, config.CodexLogLevel);
             setup.WithStorageQuota(config.StorageQuota!.Value.MB()).EnableMarketplace(0.TestTokens());
-            setup.MetricsEnabled = config.RecordMetrics;
+            setup.MetricsMode = config.Metrics;
 
             Log("Creating Geth instance and deploying contracts...");
             var gethStarter = new GethStarter(lifecycle);
@@ -52,9 +52,9 @@ namespace CodexNetDeployer
                 if (container != null) codexContainers.Add(container);
             }
 
-            var prometheusContainer = StartMetricsService(lifecycle, setup, codexContainers);
+            var (prometheusContainer, grafanaStartInfo) = StartMetricsService(lifecycle, setup, codexContainers);
 
-            return new CodexDeployment(gethResults, codexContainers.ToArray(), prometheusContainer, CreateMetadata());
+            return new CodexDeployment(gethResults, codexContainers.ToArray(), prometheusContainer, grafanaStartInfo, CreateMetadata());
         }
 
         private TestLifecycle CreateTestLifecycle()
@@ -74,13 +74,19 @@ namespace CodexNetDeployer
             return new TestLifecycle(log, lifecycleConfig, timeset, config.TestsTypePodLabel, string.Empty);
         }
 
-        private RunningContainer? StartMetricsService(TestLifecycle lifecycle, CodexSetup setup, List<RunningContainer> codexContainers)
+        private (RunningContainer?, GrafanaStartInfo?) StartMetricsService(TestLifecycle lifecycle, CodexSetup setup, List<RunningContainer> codexContainers)
         {
-            if (!setup.MetricsEnabled) return null;
+            if (setup.MetricsMode == DistTestCore.Metrics.MetricsMode.None) return (null, null);
 
             Log("Starting metrics service...");
             var runningContainers = new[] { new RunningContainers(null!, null!, codexContainers.ToArray()) };
-            return lifecycle.PrometheusStarter.CollectMetricsFor(runningContainers).Containers.Single();
+            var prometheusContainer = lifecycle.PrometheusStarter.CollectMetricsFor(runningContainers).Containers.Single();
+
+            if (setup.MetricsMode == DistTestCore.Metrics.MetricsMode.Record) return (prometheusContainer, null);
+
+            Log("Starting dashboard service...");
+            var grafanaStartInfo = lifecycle.GrafanaStarter.StartDashboard(prometheusContainer);
+            return (prometheusContainer, grafanaStartInfo);
         }
 
         private string? GetKubeConfig(string kubeConfigFile)
