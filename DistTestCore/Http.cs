@@ -1,5 +1,4 @@
-﻿using IdentityModel.Client;
-using Logging;
+﻿using Logging;
 using Newtonsoft.Json;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
@@ -13,14 +12,21 @@ namespace DistTestCore
         private readonly ITimeSet timeSet;
         private readonly Address address;
         private readonly string baseUrl;
+        private readonly Action<HttpClient> onClientCreated;
         private readonly string? logAlias;
 
         public Http(BaseLog log, ITimeSet timeSet, Address address, string baseUrl, string? logAlias = null)
+            : this(log, timeSet, address, baseUrl, DoNothing, logAlias)
+        {
+        }
+
+        public Http(BaseLog log, ITimeSet timeSet, Address address, string baseUrl, Action<HttpClient> onClientCreated, string? logAlias = null)
         {
             this.log = log;
             this.timeSet = timeSet;
             this.address = address;
             this.baseUrl = baseUrl;
+            this.onClientCreated = onClientCreated;
             this.logAlias = logAlias;
             if (!this.baseUrl.StartsWith("/")) this.baseUrl = "/" + this.baseUrl;
             if (!this.baseUrl.EndsWith("/")) this.baseUrl += "/";
@@ -60,7 +66,6 @@ namespace DistTestCore
                 var url = GetUrl() + route;
                 using var content = JsonContent.Create(body);
                 Log(url, JsonConvert.SerializeObject(body));
-                client.SetBasicAuthentication("admin", "admin");
                 var result = Time.Wait(client.PostAsync(url, content));
                 var str = Time.Wait(result.Content.ReadAsStringAsync());
                 Log(url, str);
@@ -75,7 +80,6 @@ namespace DistTestCore
                 using var client = GetClient();
                 var url = GetUrl() + route;
                 Log(url, body);
-                client.SetBasicAuthentication("admin", "admin");
                 var content = new StringContent(body);
                 content.Headers.ContentType = MediaTypeHeaderValue.Parse("application/json");
                 var result = Time.Wait(client.PostAsync(url, content));
@@ -151,7 +155,12 @@ namespace DistTestCore
         {
             var client = new HttpClient();
             client.Timeout = timeSet.HttpCallTimeout();
+            onClientCreated(client);
             return client;
+        }
+
+        private static void DoNothing(HttpClient client)
+        {
         }
     }
 }

@@ -1,8 +1,8 @@
 ﻿using DistTestCore.Metrics;
+using IdentityModel.Client;
 using KubernetesWorkflow;
 using Newtonsoft.Json;
 using System.Reflection;
-using Utils;
 
 namespace DistTestCore
 {
@@ -19,7 +19,7 @@ namespace DistTestCore
             var grafanaContainer = StartGrafanaContainer();
             var grafanaAddress = lifecycle.Configuration.GetAddress(grafanaContainer);
 
-            var http = new Http(lifecycle.Log, new DefaultTimeSet(), grafanaAddress, "api/");
+            var http = new Http(lifecycle.Log, new DefaultTimeSet(), grafanaAddress, "api/", AddBasicAuth);
 
             Log("Connecting datasource...");
             AddDataSource(http, prometheusContainer);
@@ -42,6 +42,13 @@ namespace DistTestCore
             if (grafanaContainers.Containers.Length != 1) throw new InvalidOperationException("Expected 1 dashboard container to be created.");
 
             return grafanaContainers.Containers.First();
+        }
+
+        private void AddBasicAuth(HttpClient client)
+        {
+            client.SetBasicAuthentication(
+                GrafanaContainerRecipe.DefaultAdminUser,
+                GrafanaContainerRecipe.DefaultAdminPassword);
         }
 
         private static void AddDataSource(Http http, RunningContainer prometheusContainer)
