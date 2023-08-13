@@ -78,7 +78,8 @@ namespace DistTestCore
                 codexId: GetCodexId(),
                 gethId: new GethContainerRecipe().Image,
                 prometheusId: new PrometheusContainerRecipe().Image,
-                codexContractsId: new CodexContractsContainerRecipe().Image
+                codexContractsId: new CodexContractsContainerRecipe().Image,
+                grafanaId: new GrafanaContainerRecipe().Image
             );
         }
 

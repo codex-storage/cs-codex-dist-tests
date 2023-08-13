@@ -26,6 +26,7 @@ namespace Logging
                 gethid = applicationIds.GethId,
                 prometheusid = applicationIds.PrometheusId,
                 codexcontractsid = applicationIds.CodexContractsId,
+                grafanaid = applicationIds.GrafanaId,
                 category = NameUtils.GetCategoryName(),
                 fixturename = fixtureName,
                 testname = NameUtils.GetTestMethodName(),
@@ -59,6 +60,7 @@ namespace Logging
         public string gethid { get; set; } = string.Empty;
         public string prometheusid { get; set; } = string.Empty;
         public string codexcontractsid { get; set; } = string.Empty;
+        public string grafanaid { get; set; } = string.Empty;
         public string category { get; set; } = string.Empty;
         public string fixturename { get; set; } = string.Empty;
         public string testname { get; set; } = string.Empty;

@@ -30,7 +30,8 @@ public class Program
             $"\tCodex image: '{new CodexContainerRecipe().Image}'" + nl +
             $"\tCodexContracts image: '{new CodexContractsContainerRecipe().Image}'" + nl +
             $"\tPrometheus image: '{new PrometheusContainerRecipe().Image}'" + nl +
-            $"\tGeth image: '{new GethContainerRecipe().Image}'" + nl);
+            $"\tGeth image: '{new GethContainerRecipe().Image}'" + nl +
+            $"\tGrafana image: '{new GrafanaContainerRecipe().Image}'" + nl);
 
         if (!args.Any(a => a == "-y"))
         {
