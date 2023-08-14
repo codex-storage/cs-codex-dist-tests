@@ -85,7 +85,7 @@ namespace CodexNetDeployer
             if (setup.MetricsMode == DistTestCore.Metrics.MetricsMode.Record) return (prometheusContainer, null);
 
             Log("Starting dashboard service...");
-            var grafanaStartInfo = lifecycle.GrafanaStarter.StartDashboard(prometheusContainer);
+            var grafanaStartInfo = lifecycle.GrafanaStarter.StartDashboard(prometheusContainer, setup);
             return (prometheusContainer, grafanaStartInfo);
         }
 

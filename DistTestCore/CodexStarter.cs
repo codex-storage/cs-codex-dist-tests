@@ -74,7 +74,7 @@ namespace DistTestCore
 
             if (codexSetup.MetricsMode == MetricsMode.Dashboard)
             {
-                lifecycle.GrafanaStarter.StartDashboard(runningContainers.Containers.First());
+                lifecycle.GrafanaStarter.StartDashboard(runningContainers.Containers.First(), codexSetup);
             }
 
             return new CodexNodeMetricsAccessFactory(lifecycle, runningContainers);

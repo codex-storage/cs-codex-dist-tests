@@ -148,14 +148,7 @@ namespace DistTestCore
 
         private T Retry<T>(Func<T> operation, string description)
         {
-            try
-            {
-                return operation();
-            }
-            catch (Exception ex)
-            {
-                throw new Exception(description, ex);
-            }
+            return Time.Retry(operation, timeSet.HttpCallRetryTime(), timeSet.HttpCallRetryDelay(), description);
         }
 
         private HttpClient GetClient()

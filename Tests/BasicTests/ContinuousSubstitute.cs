@@ -1,5 +1,4 @@
-﻿using ContinuousTests;
-using DistTestCore;
+﻿using DistTestCore;
 using NUnit.Framework;
 using Utils;
 
@@ -12,53 +11,34 @@ namespace Tests.BasicTests
         [UseLongTimeouts]
         public void ContinuousTestSubstitute()
         {
-            var nodes = new List<OnlineCodexNode>();
-            for (var i = 0; i < 5; i++)
+            var group = SetupCodexNodes(5, o => o
+                    .EnableMetrics()
+                    .EnableMarketplace(100000.TestTokens(), 0.Eth(), isValidator: true)
+                    .WithBlockTTL(TimeSpan.FromMinutes(2))
+                    .WithStorageQuota(3.GB()));
+
+            var nodes = group.Cast<OnlineCodexNode>().ToArray();
+
+            foreach (var node in nodes)
             {
-                nodes.Add((OnlineCodexNode)SetupCodexNode(o => o
-                    .EnableMarketplace(100000.TestTokens(), 0.Eth(), isValidator: i < 2)
-                    .WithStorageQuota(3.GB())
-                ));
+                node.Marketplace.MakeStorageAvailable(
+                size: 1.GB(),
+                minPricePerBytePerSecond: 1.TestTokens(),
+                maxCollateral: 1024.TestTokens(),
+                maxDuration: TimeSpan.FromMinutes(5));
             }
 
-            var cts = new CancellationTokenSource();
-            var ct = cts.Token;
-            var dlPath = Path.Combine(new FileInfo(Get().Log.LogFile.FullFilename)!.Directory!.FullName, "continuouslogs");
-            Directory.CreateDirectory(dlPath);
-
-            var containers = nodes.Select(n => n.CodexAccess.Container).ToArray();
-            var cd = new ContinuousLogDownloader(Get(), containers, dlPath, ct);
-
-            var logTask = Task.Run(cd.Run);
-
-            try
+            var endTime = DateTime.UtcNow + TimeSpan.FromHours(10);
+            while (DateTime.UtcNow < endTime)
             {
-                foreach (var node in nodes)
-                {
-                    node.Marketplace.MakeStorageAvailable(
-                    size: 1.GB(),
-                    minPricePerBytePerSecond: 1.TestTokens(),
-                    maxCollateral: 1024.TestTokens(),
-                    maxDuration: TimeSpan.FromMinutes(5));
-                }
+                var allNodes = nodes.ToList();
+                var primary = allNodes.PickOneRandom();
+                var secondary = allNodes.PickOneRandom();
 
-                var endTime = DateTime.UtcNow + TimeSpan.FromHours(1);
-                while (DateTime.UtcNow < endTime)
-                {
-                    var allNodes = nodes.ToList();
-                    var primary = allNodes.PickOneRandom();
-                    var secondary = allNodes.PickOneRandom();
+                Log("Run Test");
+                PerformTest(primary, secondary);
 
-                    Log("Run Test");
-                    PerformTest(primary, secondary);
-
-                    Thread.Sleep(TimeSpan.FromSeconds(5));
-                }
-            }
-            finally
-            {
-                cts.Cancel();
-                logTask.Wait();
+                Thread.Sleep(TimeSpan.FromSeconds(5));
             }
         }
 
@@ -76,6 +56,43 @@ namespace Tests.BasicTests
 
                 testFile.AssertIsEqual(downloadedFile);
             });
+        }
+
+        [Test]
+        [UseLongTimeouts]
+        public void HoldMyBeerTest()
+        {
+            var group = SetupCodexNodes(5, o => o
+                    .EnableMetrics()
+                    .EnableMarketplace(100000.TestTokens(), 0.Eth(), isValidator: true)
+                    .WithBlockTTL(TimeSpan.FromMinutes(2))
+                    .WithStorageQuota(3.GB()));
+
+            var nodes = group.Cast<OnlineCodexNode>().ToArray();
+
+            foreach (var node in nodes)
+            {
+                node.Marketplace.MakeStorageAvailable(
+                size: 1.GB(),
+                minPricePerBytePerSecond: 1.TestTokens(),
+                maxCollateral: 1024.TestTokens(),
+                maxDuration: TimeSpan.FromMinutes(5));
+            }
+
+            var endTime = DateTime.UtcNow + TimeSpan.FromHours(2);
+            while (DateTime.UtcNow < endTime)
+            {
+                foreach (var node in nodes)
+                {
+                    var file = GenerateTestFile(80.MB());
+                    var cid = node.UploadFile(file);
+
+                    var dl = node.DownloadContent(cid);
+                    file.AssertIsEqual(dl);
+                }
+
+                Thread.Sleep(TimeSpan.FromMinutes(2));
+            }
         }
     }
 }

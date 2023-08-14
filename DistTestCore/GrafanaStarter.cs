@@ -8,11 +8,14 @@ namespace DistTestCore
 {
     public class GrafanaStarter : BaseStarter
     {
+        private const string StorageQuotaThresholdReplaceToken = "\"<CODEX_STORAGEQUOTA>\"";
+        private const string BytesUsedGraphAxisSoftMaxReplaceToken = "\"<CODEX_BYTESUSED_SOFTMAX>\"";
+
         public GrafanaStarter(TestLifecycle lifecycle)
             : base(lifecycle)
         {
         }
-        public GrafanaStartInfo StartDashboard(RunningContainer prometheusContainer)
+        public GrafanaStartInfo StartDashboard(RunningContainer prometheusContainer, CodexSetup codexSetup)
         {
             LogStart($"Starting dashboard server");
 
@@ -25,7 +28,7 @@ namespace DistTestCore
             AddDataSource(http, prometheusContainer);
 
             Log("Uploading dashboard configurations...");
-            var jsons = ReadEachDashboardJsonFile();
+            var jsons = ReadEachDashboardJsonFile(codexSetup);
             var dashboardUrls = jsons.Select(j => UploadDashboard(http, grafanaContainer, j)).ToArray();
 
             LogEnd("Dashboard server started.");
@@ -86,7 +89,7 @@ namespace DistTestCore
             return grafanaAddress.Host + ":" + grafanaAddress.Port + jsonResponse.url;
         }
 
-        private static string[] ReadEachDashboardJsonFile()
+        private static string[] ReadEachDashboardJsonFile(CodexSetup codexSetup)
         {
             var assembly = Assembly.GetExecutingAssembly();
             var resourceNames = new[]
@@ -94,15 +97,45 @@ namespace DistTestCore
                 "DistTestCore.Metrics.dashboard.json"
             };
 
-            return resourceNames.Select(r => GetManifestResource(assembly, r)).ToArray();
+            return resourceNames.Select(r => GetManifestResource(assembly, r, codexSetup)).ToArray();
         }
 
-        private static string GetManifestResource(Assembly assembly, string resourceName)
+        private static string GetManifestResource(Assembly assembly, string resourceName, CodexSetup codexSetup)
         {
             using var stream = assembly.GetManifestResourceStream(resourceName);
             if (stream == null) throw new Exception("Unable to find resource " + resourceName);
             using var reader = new StreamReader(stream);
-            return reader.ReadToEnd();
+            return ApplyReplacements(reader.ReadToEnd(), codexSetup);
+        }
+
+        private static string ApplyReplacements(string input, CodexSetup codexSetup)
+        {
+            var quotaString = GetQuotaString(codexSetup);
+            var softMaxString = GetSoftMaxString(codexSetup);
+
+            return input
+                .Replace(StorageQuotaThresholdReplaceToken, quotaString)
+                .Replace(BytesUsedGraphAxisSoftMaxReplaceToken, softMaxString);
+        }
+
+        private static string GetQuotaString(CodexSetup codexSetup)
+        {
+            return GetCodexStorageQuotaInBytes(codexSetup).ToString();
+        }
+
+        private static string GetSoftMaxString(CodexSetup codexSetup)
+        {
+            var quota = GetCodexStorageQuotaInBytes(codexSetup);
+            var softMax = Convert.ToInt64(quota * 1.1); // + 10%, for nice viewing.
+            return softMax.ToString();
+        }
+
+        private static long GetCodexStorageQuotaInBytes(CodexSetup codexSetup)
+        {
+            if (codexSetup.StorageQuota != null) return codexSetup.StorageQuota.SizeInBytes;
+
+            // Codex default: 8GB
+            return 8.GB().SizeInBytes;
         }
 
         private static string GetDashboardCreateRequest(string dashboardJson)

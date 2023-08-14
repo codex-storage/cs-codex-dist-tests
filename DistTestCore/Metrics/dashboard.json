@@ -431,6 +431,8 @@
             "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
+            "axisSoftMax": "<CODEX_BYTESUSED_SOFTMAX>",
+            "axisSoftMin": 0,
             "barAlignment": 0,
             "drawStyle": "line",
             "fillOpacity": 0,
@@ -453,7 +455,7 @@
               "mode": "none"
             },
             "thresholdsStyle": {
-              "mode": "off"
+              "mode": "line"
             }
           },
           "mappings": [],
@@ -466,7 +468,7 @@
               },
               {
                 "color": "red",
-                "value": 80
+                "value": "<CODEX_STORAGEQUOTA>"
               }
             ]
           }
