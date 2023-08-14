@@ -19,5 +19,6 @@ namespace DistTestCore.Codex
         public MarketplaceInitialConfig? MarketplaceConfig { get; set; }
         public string? BootstrapSpr { get; set; }
         public int? BlockTTL { get; set; }
+        public TimeSpan? BlockMaintenanceInterval { get; set; }
     }
 }

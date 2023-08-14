@@ -67,6 +67,7 @@ namespace Tests.BasicTests
                     .EnableMetrics()
                     .EnableMarketplace(100000.TestTokens(), 0.Eth(), isValidator: true)
                     .WithBlockTTL(TimeSpan.FromMinutes(2))
+                    .WithBlockMaintenanceInterval(TimeSpan.FromMinutes(3))
                     .WithStorageQuota(3.GB()));
 
             var nodes = group.Cast<OnlineCodexNode>().ToArray();

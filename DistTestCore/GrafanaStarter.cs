@@ -15,6 +15,7 @@ namespace DistTestCore
             : base(lifecycle)
         {
         }
+
         public GrafanaStartInfo StartDashboard(RunningContainer prometheusContainer, CodexSetup codexSetup)
         {
             LogStart($"Starting dashboard server");
