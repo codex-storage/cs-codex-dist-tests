@@ -10,4 +10,4 @@ dotnet run \
     --max-collateral=1024 \
     --max-duration=3600000 \
     --block-ttl=300 \
-    --record-metrics=true
+    --metrics=Dashboard

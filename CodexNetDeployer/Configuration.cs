@@ -1,6 +1,6 @@
 ﻿using ArgsUniform;
-using DistTestCore;
 using DistTestCore.Codex;
+using DistTestCore.Metrics;
 
 namespace CodexNetDeployer
 {
@@ -44,15 +44,13 @@ namespace CodexNetDeployer
         [Uniform("block-ttl", "bt", "BLOCKTTL", false, "Block timeout in seconds. Default is 24 hours.")]
         public int BlockTTL { get; set; } = SecondsIn1Day;
 
-        [Uniform("record-metrics", "rm", "RECORDMETRICS", false, "If true, metrics will be collected for all Codex nodes.")]
-        public bool RecordMetrics { get; set; } = false;
+        [Uniform("metrics", "m", "METRICS", false, "[None*, Record, Dashboard]. Determines if metrics will be recorded and if a dashboard service will be created.")]
+        public MetricsMode Metrics { get; set; } = MetricsMode.None;
 
         [Uniform("teststype-podlabel", "ttpl", "TESTSTYPE-PODLABEL", false, "Each kubernetes pod will be created with a label 'teststype' with value 'continuous'. " +
             "set this option to override the label value.")]
-        public string TestsTypePodLabel { get; set; } = "continuous";
+        public string TestsTypePodLabel { get; set; } = "continuous-tests";
        
-        public TestRunnerLocation RunnerLocation { get; set; } = TestRunnerLocation.InternalToCluster;
-
         public List<string> Validate()
         {
             var errors = new List<string>();

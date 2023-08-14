@@ -1,5 +1,6 @@
 ﻿using DistTestCore.Codex;
 using KubernetesWorkflow;
+using System.Net.NetworkInformation;
 using Utils;
 
 namespace DistTestCore
@@ -11,8 +12,8 @@ namespace DistTestCore
         private readonly bool logDebug;
         private readonly string dataFilesPath;
         private readonly CodexLogLevel codexLogLevel;
-        private readonly TestRunnerLocation runnerLocation;
         private readonly string k8sNamespacePrefix;
+        private RunnerLocation? runnerLocation = null;
 
         public Configuration()
         {
@@ -21,18 +22,16 @@ namespace DistTestCore
             logDebug = GetEnvVarOrDefault("LOGDEBUG", "false").ToLowerInvariant() == "true";
             dataFilesPath = GetEnvVarOrDefault("DATAFILEPATH", "TestDataFiles");
             codexLogLevel = ParseEnum.Parse<CodexLogLevel>(GetEnvVarOrDefault("LOGLEVEL", nameof(CodexLogLevel.Trace)));
-            runnerLocation = ParseEnum.Parse<TestRunnerLocation>(GetEnvVarOrDefault("RUNNERLOCATION", nameof(TestRunnerLocation.ExternalToCluster)));
             k8sNamespacePrefix = "ct-";
         }
 
-        public Configuration(string? kubeConfigFile, string logPath, bool logDebug, string dataFilesPath, CodexLogLevel codexLogLevel, TestRunnerLocation runnerLocation, string k8sNamespacePrefix)
+        public Configuration(string? kubeConfigFile, string logPath, bool logDebug, string dataFilesPath, CodexLogLevel codexLogLevel, string k8sNamespacePrefix)
         {
             this.kubeConfigFile = kubeConfigFile;
             this.logPath = logPath;
             this.logDebug = logDebug;
             this.dataFilesPath = dataFilesPath;
             this.codexLogLevel = codexLogLevel;
-            this.runnerLocation = runnerLocation;
             this.k8sNamespacePrefix = k8sNamespacePrefix;
         }
 
@@ -61,14 +60,14 @@ namespace DistTestCore
             return codexLogLevel;
         }
 
-        public TestRunnerLocation GetTestRunnerLocation()
-        {
-            return runnerLocation;
-        }
-
         public Address GetAddress(RunningContainer container)
         {
-            if (GetTestRunnerLocation() == TestRunnerLocation.InternalToCluster)
+            if (runnerLocation == null)
+            {
+                runnerLocation = RunnerLocationUtils.DetermineRunnerLocation(container);
+            }
+            
+            if (runnerLocation == RunnerLocation.InternalToCluster)
             {
                 return container.ClusterInternalAddress;
             }
@@ -90,9 +89,56 @@ namespace DistTestCore
         }
     }
 
-    public enum TestRunnerLocation
+    public enum RunnerLocation
     {
         ExternalToCluster,
         InternalToCluster,
+    }
+
+    public static class RunnerLocationUtils
+    {
+        private static bool alreadyDidThat = false;
+
+        public static RunnerLocation DetermineRunnerLocation(RunningContainer container)
+        {
+            // We want to be sure we don't ping more often than strictly necessary.
+            // If we have already determined the location during this application
+            // lifetime, don't do it again.
+            if (alreadyDidThat) throw new Exception("We already did that.");
+            alreadyDidThat = true;
+
+            if (PingHost(container.Pod.PodInfo.Ip))
+            {
+                return RunnerLocation.InternalToCluster;
+            }
+            if (PingHost(Format(container.ClusterExternalAddress)))
+            {
+                return RunnerLocation.ExternalToCluster;
+            }
+
+            throw new Exception("Unable to determine runner location.");
+        }
+
+        private static string Format(Address host)
+        {
+            return host.Host
+                .Replace("http://", "")
+                .Replace("https://", "");
+        }
+
+        private static bool PingHost(string host)
+        {
+            try
+            {
+                using var pinger = new Ping();
+                PingReply reply = pinger.Send(host);
+                return reply.Status == IPStatus.Success;
+            }
+            catch (PingException)
+            {
+            }
+
+            return false;
+        }
     }
 }

@@ -30,7 +30,7 @@ namespace ContinuousTests
 
         public CodexDeployment CodexDeployment { get; set; } = null!;
 
-        public TestRunnerLocation RunnerLocation { get; set; } = TestRunnerLocation.InternalToCluster;
+        public RunnerLocation RunnerLocation { get; set; }
     }
 
     public class ConfigLoader
@@ -42,10 +42,7 @@ namespace ContinuousTests
             var result = uniformArgs.Parse(true);
             
             result.CodexDeployment = ParseCodexDeploymentJson(result.CodexDeploymentJson);
-            if (args.Any(a => a == "--external"))
-            {
-                result.RunnerLocation = TestRunnerLocation.ExternalToCluster;
-            }
+            result.RunnerLocation = RunnerLocationUtils.DetermineRunnerLocation(result.CodexDeployment.CodexContainers.First());
 
             return result;
         }
@@ -62,7 +59,6 @@ namespace ContinuousTests
             var nl = Environment.NewLine;
             Console.WriteLine("ContinuousTests will run a set of tests against a codex deployment given a codex-deployment.json file." + nl +
                 "The tests will run in an endless loop unless otherwise specified, using the test-specific timing values." + nl);
-
 
             Console.WriteLine("ContinuousTests assumes you are running this tool from *inside* the Kubernetes cluster. " +
                 "If you are not running this from a container inside the cluster, add the argument '--external'." + nl);

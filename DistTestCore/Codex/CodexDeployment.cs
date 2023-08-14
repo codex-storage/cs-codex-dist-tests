@@ -5,17 +5,19 @@ namespace DistTestCore.Codex
 {
     public class CodexDeployment
     {
-        public CodexDeployment(GethStartResult gethStartResult, RunningContainer[] codexContainers, RunningContainer? prometheusContainer, DeploymentMetadata metadata)
+        public CodexDeployment(GethStartResult gethStartResult, RunningContainer[] codexContainers, RunningContainer? prometheusContainer, GrafanaStartInfo? grafanaStartInfo, DeploymentMetadata metadata)
         {
             GethStartResult = gethStartResult;
             CodexContainers = codexContainers;
             PrometheusContainer = prometheusContainer;
+            GrafanaStartInfo = grafanaStartInfo;
             Metadata = metadata;
         }
 
         public GethStartResult GethStartResult { get; }
         public RunningContainer[] CodexContainers { get; }
         public RunningContainer? PrometheusContainer { get; }
+        public GrafanaStartInfo? GrafanaStartInfo { get; }
         public DeploymentMetadata Metadata { get; }
     }
 

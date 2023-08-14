@@ -59,7 +59,7 @@ namespace DistTestCore
 
         public ICodexSetup EnableMetrics()
         {
-            MetricsEnabled = true;
+            MetricsMode = Metrics.MetricsMode.Record;
             return this;
         }
 

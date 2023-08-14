@@ -68,9 +68,15 @@ namespace DistTestCore
 
         private IMetricsAccessFactory CollectMetrics(CodexSetup codexSetup, RunningContainers[] containers)
         {
-            if (!codexSetup.MetricsEnabled) return new MetricsUnavailableAccessFactory();
+            if (codexSetup.MetricsMode == MetricsMode.None) return new MetricsUnavailableAccessFactory();
 
             var runningContainers = lifecycle.PrometheusStarter.CollectMetricsFor(containers);
+
+            if (codexSetup.MetricsMode == MetricsMode.Dashboard)
+            {
+                lifecycle.GrafanaStarter.StartDashboard(runningContainers.Containers.First());
+            }
+
             return new CodexNodeMetricsAccessFactory(lifecycle, runningContainers);
         }
 

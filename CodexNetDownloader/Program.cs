@@ -15,17 +15,12 @@ public class Program
         var uniformArgs = new ArgsUniform<CodexNetDownloader.Configuration>(PrintHelp, args);
         var config = uniformArgs.Parse(true);
 
-        if (args.Any(a => a == "--external"))
-        {
-            config.RunnerLocation = TestRunnerLocation.ExternalToCluster;
-        }
-
         config.CodexDeployment = ParseCodexDeploymentJson(config.CodexDeploymentJson);
 
         if (!Directory.Exists(config.OutputPath)) Directory.CreateDirectory(config.OutputPath);
 
         var k8sFactory = new K8sFactory();
-        var lifecycle = k8sFactory.CreateTestLifecycle(config.KubeConfigFile, config.OutputPath, "dataPath", config.CodexDeployment.Metadata.KubeNamespace, new DefaultTimeSet(), new NullLog(), config.RunnerLocation);
+        var lifecycle = k8sFactory.CreateTestLifecycle(config.KubeConfigFile, config.OutputPath, "dataPath", config.CodexDeployment.Metadata.KubeNamespace, new DefaultTimeSet(), new NullLog());
 
         foreach (var container in config.CodexDeployment.CodexContainers)
         {

@@ -22,8 +22,6 @@ namespace DistTestCore
             var runningContainers = workflow.Start(1, Location.Unspecified, new PrometheusContainerRecipe(), startupConfig);
             if (runningContainers.Containers.Length != 1) throw new InvalidOperationException("Expected only 1 Prometheus container to be created.");
 
-            LogEnd("Metrics server started.");
-
             return runningContainers;
         }
 
