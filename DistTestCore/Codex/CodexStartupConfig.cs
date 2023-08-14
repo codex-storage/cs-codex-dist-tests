@@ -20,5 +20,6 @@ namespace DistTestCore.Codex
         public string? BootstrapSpr { get; set; }
         public int? BlockTTL { get; set; }
         public TimeSpan? BlockMaintenanceInterval { get; set; }
+        public int? BlockMaintenanceNumber { get; set; }
     }
 }

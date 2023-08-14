@@ -12,6 +12,7 @@ namespace DistTestCore
         ICodexSetup WithStorageQuota(ByteSize storageQuota);
         ICodexSetup WithBlockTTL(TimeSpan duration);
         ICodexSetup WithBlockMaintenanceInterval(TimeSpan duration);
+        ICodexSetup WithBlockMaintenanceNumber(int numberOfBlocks);
         ICodexSetup EnableMetrics();
         ICodexSetup EnableMarketplace(TestToken initialBalance);
         ICodexSetup EnableMarketplace(TestToken initialBalance, Ether initialEther);
@@ -61,6 +62,12 @@ namespace DistTestCore
         public ICodexSetup WithBlockMaintenanceInterval(TimeSpan duration)
         {
             BlockMaintenanceInterval = duration;
+            return this;
+        }
+
+        public ICodexSetup WithBlockMaintenanceNumber(int numberOfBlocks)
+        {
+            BlockMaintenanceNumber = numberOfBlocks;
             return this;
         }
 

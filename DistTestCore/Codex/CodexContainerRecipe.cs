@@ -55,6 +55,10 @@ namespace DistTestCore.Codex
             {
                 AddEnvVar("CODEX_BLOCK_MI", Convert.ToInt32(config.BlockMaintenanceInterval.Value.TotalSeconds).ToString());
             }
+            if (config.BlockMaintenanceNumber != null)
+            {
+                AddEnvVar("CODEX_BLOCK_MN", config.BlockMaintenanceNumber.ToString()!);
+            }
             if (config.MetricsMode != Metrics.MetricsMode.None)
             {
                 AddEnvVar("CODEX_METRICS", "true");
