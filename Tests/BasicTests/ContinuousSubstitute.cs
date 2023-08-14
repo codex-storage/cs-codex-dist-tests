@@ -1,11 +1,12 @@
 ﻿using DistTestCore;
+using KubernetesWorkflow;
 using NUnit.Framework;
 using Utils;
 
 namespace Tests.BasicTests
 {
     [TestFixture]
-    public class ContinuousSubstitute : AutoBootstrapDistTest
+    public class ContinuousSubstitute : AutoBootstrapDistTest, ILogHandler
     {
         [Test]
         [UseLongTimeouts]
@@ -57,7 +58,7 @@ namespace Tests.BasicTests
                 testFile.AssertIsEqual(downloadedFile);
             });
         }
-
+        
         [Test]
         [UseLongTimeouts]
         public void HoldMyBeerTest()
@@ -70,28 +71,53 @@ namespace Tests.BasicTests
 
             var nodes = group.Cast<OnlineCodexNode>().ToArray();
 
-            foreach (var node in nodes)
-            {
-                node.Marketplace.MakeStorageAvailable(
-                size: 1.GB(),
-                minPricePerBytePerSecond: 1.TestTokens(),
-                maxCollateral: 1024.TestTokens(),
-                maxDuration: TimeSpan.FromMinutes(5));
-            }
+            var flow = Get().WorkflowCreator.CreateWorkflow();
+            var cst = new CancellationTokenSource();
+            var tasks = nodes.Select(n => flow.WatchForCrashLogs(n.CodexAccess.Container, cst.Token, this)).ToArray();
 
-            var endTime = DateTime.UtcNow + TimeSpan.FromHours(2);
-            while (DateTime.UtcNow < endTime)
+            try
             {
                 foreach (var node in nodes)
                 {
-                    var file = GenerateTestFile(80.MB());
-                    var cid = node.UploadFile(file);
-
-                    var dl = node.DownloadContent(cid);
-                    file.AssertIsEqual(dl);
+                    node.Marketplace.MakeStorageAvailable(
+                    size: 1.GB(),
+                    minPricePerBytePerSecond: 1.TestTokens(),
+                    maxCollateral: 1024.TestTokens(),
+                    maxDuration: TimeSpan.FromMinutes(5));
                 }
 
-                Thread.Sleep(TimeSpan.FromMinutes(2));
+                var endTime = DateTime.UtcNow + TimeSpan.FromHours(2);
+                while (DateTime.UtcNow < endTime)
+                {
+                    foreach (var node in nodes)
+                    {
+                        var file = GenerateTestFile(80.MB());
+                        var cid = node.UploadFile(file);
+
+                        var dl = node.DownloadContent(cid);
+                        file.AssertIsEqual(dl);
+                    }
+
+                    Thread.Sleep(TimeSpan.FromMinutes(2));
+                }
+            }
+            finally
+            {
+                cst.Cancel();
+                foreach (var t in tasks) t.Wait();
+            }
+        }
+
+        public void Log(Stream log)
+        {
+            Log("Well damn, container crashed. Here's the log:");
+            using var reader = new StreamReader(log);
+
+            var line = reader.ReadLine();
+            while(line != null)
+            {
+                Log(line);
+                line = reader.ReadLine();
             }
         }
     }

@@ -377,7 +377,8 @@
                 "value": 80
               }
             ]
-          }
+          },
+          "unit": "decbytes"
         },
         "overrides": []
       },
@@ -471,7 +472,8 @@
                 "value": "<CODEX_STORAGEQUOTA>"
               }
             ]
-          }
+          },
+          "unit": "decbytes"
         },
         "overrides": []
       },
