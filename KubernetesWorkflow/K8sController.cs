@@ -604,29 +604,9 @@ namespace KubernetesWorkflow
 
         #endregion
 
-        public Task WatchForCrashLogs(RunningContainer container, CancellationToken token, ILogHandler logHandler)
+        public CrashWatcher CreateCrashWatcher(RunningContainer container)
         {
-            return Task.Run(() =>
-            {
-                var myOwnClient = new Kubernetes(cluster.GetK8sClientConfig());
-                while (!token.IsCancellationRequested)
-                {
-                    token.WaitHandle.WaitOne(TimeSpan.FromSeconds(3));
-
-                    var pod = container.Pod;
-                    var recipe = container.Recipe;
-                    var podName = pod.PodInfo.Name;
-                    var podInfo = myOwnClient.ReadNamespacedPod(podName, K8sTestNamespace);
-                    
-                    if (podInfo.Status.ContainerStatuses.Any(c => c.RestartCount > 0))
-                    {
-                        log.Log("Pod crash detected for " + container.Name);
-                        using var stream = myOwnClient.ReadNamespacedPodLog(podName, K8sTestNamespace, recipe.Name, previous: true);
-                        logHandler.Log(stream);
-                        return;
-                    }
-                }
-            });
+            return new CrashWatcher(log, cluster.GetK8sClientConfig(), K8sTestNamespace, container);
         }
 
         private PodInfo FetchNewPod()

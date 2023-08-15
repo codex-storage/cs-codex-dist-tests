@@ -1,4 +1,5 @@
-﻿using Utils;
+﻿using Newtonsoft.Json;
+using Utils;
 
 namespace KubernetesWorkflow
 {
@@ -39,6 +40,9 @@ namespace KubernetesWorkflow
         public Port[] ServicePorts { get; }
         public Address ClusterExternalAddress { get; }
         public Address ClusterInternalAddress { get; }
+
+        [JsonIgnore]
+        public CrashWatcher? CrashWatcher { get; set; }
     }
 
     public static class RunningContainersExtensions

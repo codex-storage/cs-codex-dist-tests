@@ -4,10 +4,11 @@ using Utils;
 
 namespace DistTestCore.Codex
 {
-    public class CodexAccess
+    public class CodexAccess : ILogHandler
     {
         private readonly BaseLog log;
         private readonly ITimeSet timeSet;
+        private bool hasContainerCrashed;
 
         public CodexAccess(BaseLog log, RunningContainer container, ITimeSet timeSet, Address address)
         {
@@ -15,6 +16,9 @@ namespace DistTestCore.Codex
             Container = container;
             this.timeSet = timeSet;
             Address = address;
+            hasContainerCrashed = false;
+
+            if (container.CrashWatcher != null) container.CrashWatcher.Start(this);
         }
 
         public RunningContainer Container { get; }
@@ -86,7 +90,30 @@ namespace DistTestCore.Codex
 
         private Http Http()
         {
+            CheckContainerCrashed();
             return new Http(log, timeSet, Address, baseUrl: "/api/codex/v1", Container.Name);
+        }
+
+        private void CheckContainerCrashed()
+        {
+            if (hasContainerCrashed) throw new Exception("Container has crashed.");
+        }
+
+        public void Log(Stream crashLog)
+        {
+            var file = log.CreateSubfile();
+            log.Log($"Container {Container.Name} has crashed. Downloading crash log to '{file.FullFilename}'...");
+
+            using var reader = new StreamReader(crashLog);
+            var line = reader.ReadLine();
+            while (line != null)
+            {
+                file.Write(line);
+                line = reader.ReadLine();
+            }
+
+            log.Log("Crash log successfully downloaded.");
+            hasContainerCrashed = true;
         }
     }
 }

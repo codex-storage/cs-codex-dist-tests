@@ -1,7 +1,6 @@
 ﻿using DistTestCore;
 using KubernetesWorkflow;
 using NUnit.Framework;
-using System.ComponentModel;
 using Utils;
 
 namespace Tests.BasicTests
@@ -73,53 +72,41 @@ namespace Tests.BasicTests
 
             var nodes = group.Cast<OnlineCodexNode>().ToArray();
 
-            var flow = Get().WorkflowCreator.CreateWorkflow();
-            var cst = new CancellationTokenSource();
-            var tasks = nodes.Select(n => flow.WatchForCrashLogs(n.CodexAccess.Container, cst.Token, this)).ToArray();
+            //foreach (var node in nodes)
+            //{
+            //    node.Marketplace.MakeStorageAvailable(
+            //    size: 1.GB(),
+            //    minPricePerBytePerSecond: 1.TestTokens(),
+            //    maxCollateral: 1024.TestTokens(),
+            //    maxDuration: TimeSpan.FromMinutes(5));
+            //}
 
-            try
-            {
-                //foreach (var node in nodes)
-                //{
-                //    node.Marketplace.MakeStorageAvailable(
-                //    size: 1.GB(),
-                //    minPricePerBytePerSecond: 1.TestTokens(),
-                //    maxCollateral: 1024.TestTokens(),
-                //    maxDuration: TimeSpan.FromMinutes(5));
-                //}
+            Thread.Sleep(2000);
 
-                Thread.Sleep(2000);
+            Log("calling crash...");
+            var http = new Http(Get().Log, Get().TimeSet, nodes.First().CodexAccess.Address, baseUrl: "/api/codex/v1", nodes.First().CodexAccess.Container.Name);
+            var str = http.HttpGetString("debug/crash");
 
-                Log("calling crash...");
-                var http = new Http(Get().Log, Get().TimeSet, nodes.First().CodexAccess.Address, baseUrl: "/api/codex/v1", nodes.First().CodexAccess.Container.Name);
-                var str = http.HttpGetString("debug/crash");
+            Log("crash called.");
 
-                Log("crash called.");
+            Thread.Sleep(TimeSpan.FromSeconds(60));
 
-                Thread.Sleep(TimeSpan.FromSeconds(60));
+            Log("test done.");
 
-                Log("test done.");
+            //var endTime = DateTime.UtcNow + TimeSpan.FromHours(2);
+            //while (DateTime.UtcNow < endTime)
+            //{
+            //    foreach (var node in nodes)
+            //    {
+            //        var file = GenerateTestFile(80.MB());
+            //        var cid = node.UploadFile(file);
 
-                //var endTime = DateTime.UtcNow + TimeSpan.FromHours(2);
-                //while (DateTime.UtcNow < endTime)
-                //{
-                //    foreach (var node in nodes)
-                //    {
-                //        var file = GenerateTestFile(80.MB());
-                //        var cid = node.UploadFile(file);
+            //        var dl = node.DownloadContent(cid);
+            //        file.AssertIsEqual(dl);
+            //    }
 
-                //        var dl = node.DownloadContent(cid);
-                //        file.AssertIsEqual(dl);
-                //    }
-
-                //    Thread.Sleep(TimeSpan.FromSeconds(30));
-                //}
-            }
-            finally
-            {
-                cst.Cancel();
-                foreach (var t in tasks) t.Wait();
-            }
+            //    Thread.Sleep(TimeSpan.FromSeconds(30));
+            //}
         }
 
         public void Log(Stream log)

@@ -47,7 +47,11 @@ namespace DistTestCore
         {
             LogStart($"Stopping {group.Describe()}...");
             var workflow = CreateWorkflow();
-            foreach (var c in group.Containers) workflow.Stop(c);
+            foreach (var c in group.Containers)
+            {
+                StopCrashWatcher(c);
+                workflow.Stop(c);
+            }
             RunningGroups.Remove(group);
             LogEnd("Stopped.");
         }
@@ -96,7 +100,9 @@ namespace DistTestCore
             for (var i = 0; i < numberOfNodes; i++)
             {
                 var workflow = CreateWorkflow();
-                result.Add(workflow.Start(1, location, recipe, startupConfig));
+                var rc = workflow.Start(1, location, recipe, startupConfig);
+                CreateCrashWatcher(workflow, rc);
+                result.Add(rc);
             }
             return result.ToArray();
         }
@@ -133,6 +139,20 @@ namespace DistTestCore
         private void LogSeparator()
         {
             Log("----------------------------------------------------------------------------");
+        }
+
+        private void CreateCrashWatcher(StartupWorkflow workflow, RunningContainers rc)
+        {
+            var c = rc.Containers.Single();
+            c.CrashWatcher = workflow.CreateCrashWatcher(c);
+        }
+
+        private void StopCrashWatcher(RunningContainers containers)
+        {
+            foreach (var c in containers.Containers)
+            {
+                c.CrashWatcher?.Stop();
+            }
         }
     }
 }

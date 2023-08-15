@@ -37,9 +37,9 @@ namespace KubernetesWorkflow
             }, pl);
         }
 
-        public Task WatchForCrashLogs(RunningContainer container, CancellationToken token, ILogHandler logHandler)
+        public CrashWatcher CreateCrashWatcher(RunningContainer container)
         {
-            return K8s(controller => controller.WatchForCrashLogs(container, token, logHandler));
+            return K8s(controller => controller.CreateCrashWatcher(container));
         }
 
         public void Stop(RunningContainers runningContainers)
