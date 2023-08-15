@@ -1,6 +1,7 @@
 ﻿using DistTestCore;
 using KubernetesWorkflow;
 using NUnit.Framework;
+using System.ComponentModel;
 using Utils;
 
 namespace Tests.BasicTests
@@ -60,16 +61,15 @@ namespace Tests.BasicTests
         }
         
         [Test]
-        [UseLongTimeouts]
         public void HoldMyBeerTest()
         {
-            var group = SetupCodexNodes(5, o => o
+            var group = SetupCodexNodes(2, o => o
                     .EnableMetrics()
-                    .EnableMarketplace(100000.TestTokens(), 0.Eth(), isValidator: true)
+                    //.EnableMarketplace(100000.TestTokens(), 0.Eth(), isValidator: true)
                     .WithBlockTTL(TimeSpan.FromMinutes(2))
-                    .WithBlockMaintenanceInterval(TimeSpan.FromMinutes(3))
+                    .WithBlockMaintenanceInterval(TimeSpan.FromMinutes(10))
                     .WithBlockMaintenanceNumber(10000)
-                    .WithStorageQuota(3.GB()));
+                    .WithStorageQuota(500.MB()));
 
             var nodes = group.Cast<OnlineCodexNode>().ToArray();
 
@@ -79,29 +79,41 @@ namespace Tests.BasicTests
 
             try
             {
-                foreach (var node in nodes)
-                {
-                    node.Marketplace.MakeStorageAvailable(
-                    size: 1.GB(),
-                    minPricePerBytePerSecond: 1.TestTokens(),
-                    maxCollateral: 1024.TestTokens(),
-                    maxDuration: TimeSpan.FromMinutes(5));
-                }
+                //foreach (var node in nodes)
+                //{
+                //    node.Marketplace.MakeStorageAvailable(
+                //    size: 1.GB(),
+                //    minPricePerBytePerSecond: 1.TestTokens(),
+                //    maxCollateral: 1024.TestTokens(),
+                //    maxDuration: TimeSpan.FromMinutes(5));
+                //}
 
-                var endTime = DateTime.UtcNow + TimeSpan.FromHours(2);
-                while (DateTime.UtcNow < endTime)
-                {
-                    foreach (var node in nodes)
-                    {
-                        var file = GenerateTestFile(80.MB());
-                        var cid = node.UploadFile(file);
+                Thread.Sleep(2000);
 
-                        var dl = node.DownloadContent(cid);
-                        file.AssertIsEqual(dl);
-                    }
+                Log("calling crash...");
+                var http = new Http(Get().Log, Get().TimeSet, nodes.First().CodexAccess.Address, baseUrl: "/api/codex/v1", nodes.First().CodexAccess.Container.Name);
+                var str = http.HttpGetString("debug/crash");
 
-                    Thread.Sleep(TimeSpan.FromMinutes(2));
-                }
+                Log("crash called.");
+
+                Thread.Sleep(TimeSpan.FromSeconds(60));
+
+                Log("test done.");
+
+                //var endTime = DateTime.UtcNow + TimeSpan.FromHours(2);
+                //while (DateTime.UtcNow < endTime)
+                //{
+                //    foreach (var node in nodes)
+                //    {
+                //        var file = GenerateTestFile(80.MB());
+                //        var cid = node.UploadFile(file);
+
+                //        var dl = node.DownloadContent(cid);
+                //        file.AssertIsEqual(dl);
+                //    }
+
+                //    Thread.Sleep(TimeSpan.FromSeconds(30));
+                //}
             }
             finally
             {

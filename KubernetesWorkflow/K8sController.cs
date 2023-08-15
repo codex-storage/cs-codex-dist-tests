@@ -621,8 +621,9 @@ namespace KubernetesWorkflow
                     if (podInfo.Status.ContainerStatuses.Any(c => c.RestartCount > 0))
                     {
                         log.Log("Pod crash detected for " + container.Name);
-                        using var stream = client.Run(c => c.ReadNamespacedPodLog(pod.PodInfo.Name, K8sTestNamespace, recipe.Name, previous: true));
+                        using var stream = myOwnClient.ReadNamespacedPodLog(podName, K8sTestNamespace, recipe.Name, previous: true);
                         logHandler.Log(stream);
+                        return;
                     }
                 }
             });
