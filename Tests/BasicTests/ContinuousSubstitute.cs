@@ -1,12 +1,11 @@
 ﻿using DistTestCore;
-using KubernetesWorkflow;
 using NUnit.Framework;
 using Utils;
 
 namespace Tests.BasicTests
 {
     [TestFixture]
-    public class ContinuousSubstitute : AutoBootstrapDistTest, ILogHandler
+    public class ContinuousSubstitute : AutoBootstrapDistTest
     {
         [Test]
         [UseLongTimeouts]
@@ -60,13 +59,14 @@ namespace Tests.BasicTests
         }
         
         [Test]
+        [UseLongTimeouts]
         public void HoldMyBeerTest()
         {
-            var group = SetupCodexNodes(2, o => o
+            var group = SetupCodexNodes(5, o => o
                     .EnableMetrics()
                     //.EnableMarketplace(100000.TestTokens(), 0.Eth(), isValidator: true)
                     .WithBlockTTL(TimeSpan.FromMinutes(2))
-                    .WithBlockMaintenanceInterval(TimeSpan.FromMinutes(10))
+                    .WithBlockMaintenanceInterval(TimeSpan.FromMinutes(5))
                     .WithBlockMaintenanceNumber(10000)
                     .WithStorageQuota(500.MB()));
 
@@ -81,44 +81,31 @@ namespace Tests.BasicTests
             //    maxDuration: TimeSpan.FromMinutes(5));
             //}
 
-            Thread.Sleep(2000);
+            //Thread.Sleep(2000);
 
-            Log("calling crash...");
-            var http = new Http(Get().Log, Get().TimeSet, nodes.First().CodexAccess.Address, baseUrl: "/api/codex/v1", nodes.First().CodexAccess.Container.Name);
-            var str = http.HttpGetString("debug/crash");
+            //Log("calling crash...");
+            //var http = new Http(Get().Log, Get().TimeSet, nodes.First().CodexAccess.Address, baseUrl: "/api/codex/v1", nodes.First().CodexAccess.Container.Name);
+            //var str = http.HttpGetString("debug/crash");
 
-            Log("crash called.");
+            //Log("crash called.");
 
-            Thread.Sleep(TimeSpan.FromSeconds(60));
+            //Thread.Sleep(TimeSpan.FromSeconds(60));
 
-            Log("test done.");
+            //Log("test done.");
 
-            //var endTime = DateTime.UtcNow + TimeSpan.FromHours(2);
-            //while (DateTime.UtcNow < endTime)
-            //{
-            //    foreach (var node in nodes)
-            //    {
-            //        var file = GenerateTestFile(80.MB());
-            //        var cid = node.UploadFile(file);
-
-            //        var dl = node.DownloadContent(cid);
-            //        file.AssertIsEqual(dl);
-            //    }
-
-            //    Thread.Sleep(TimeSpan.FromSeconds(30));
-            //}
-        }
-
-        public void Log(Stream log)
-        {
-            Log("Well damn, container crashed. Here's the log:");
-            using var reader = new StreamReader(log);
-
-            var line = reader.ReadLine();
-            while(line != null)
+            var endTime = DateTime.UtcNow + TimeSpan.FromHours(2);
+            while (DateTime.UtcNow < endTime)
             {
-                Log(line);
-                line = reader.ReadLine();
+                foreach (var node in nodes)
+                {
+                    var file = GenerateTestFile(80.MB());
+                    var cid = node.UploadFile(file);
+
+                    var dl = node.DownloadContent(cid);
+                    file.AssertIsEqual(dl);
+                }
+
+                Thread.Sleep(TimeSpan.FromSeconds(60));
             }
         }
     }

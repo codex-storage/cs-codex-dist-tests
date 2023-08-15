@@ -60,7 +60,7 @@ namespace KubernetesWorkflow
             var client = new Kubernetes(config);
             while (!token.IsCancellationRequested)
             {
-                token.WaitHandle.WaitOne(TimeSpan.FromSeconds(10));
+                token.WaitHandle.WaitOne(TimeSpan.FromSeconds(1));
 
                 var pod = container.Pod;
                 var recipe = container.Recipe;
