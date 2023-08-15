@@ -64,48 +64,35 @@ namespace Tests.BasicTests
         {
             var group = SetupCodexNodes(5, o => o
                     .EnableMetrics()
-                    //.EnableMarketplace(100000.TestTokens(), 0.Eth(), isValidator: true)
                     .WithBlockTTL(TimeSpan.FromMinutes(2))
                     .WithBlockMaintenanceInterval(TimeSpan.FromMinutes(5))
                     .WithBlockMaintenanceNumber(10000)
-                    .WithStorageQuota(500.MB()));
+                    .WithStorageQuota(1000.MB()));
 
             var nodes = group.Cast<OnlineCodexNode>().ToArray();
 
-            //foreach (var node in nodes)
-            //{
-            //    node.Marketplace.MakeStorageAvailable(
-            //    size: 1.GB(),
-            //    minPricePerBytePerSecond: 1.TestTokens(),
-            //    maxCollateral: 1024.TestTokens(),
-            //    maxDuration: TimeSpan.FromMinutes(5));
-            //}
-
-            //Thread.Sleep(2000);
-
-            //Log("calling crash...");
-            //var http = new Http(Get().Log, Get().TimeSet, nodes.First().CodexAccess.Address, baseUrl: "/api/codex/v1", nodes.First().CodexAccess.Container.Name);
-            //var str = http.HttpGetString("debug/crash");
-
-            //Log("crash called.");
-
-            //Thread.Sleep(TimeSpan.FromSeconds(60));
-
-            //Log("test done.");
-
-            var endTime = DateTime.UtcNow + TimeSpan.FromHours(2);
+            var endTime = DateTime.UtcNow + TimeSpan.FromHours(1);
             while (DateTime.UtcNow < endTime)
             {
                 foreach (var node in nodes)
                 {
-                    var file = GenerateTestFile(80.MB());
-                    var cid = node.UploadFile(file);
+                    try
+                    {
+                        var file = GenerateTestFile(80.MB());
+                        var cid = node.UploadFile(file);
 
-                    var dl = node.DownloadContent(cid);
-                    file.AssertIsEqual(dl);
+                        var dl = node.DownloadContent(cid);
+                        file.AssertIsEqual(dl);
+                    }
+                    catch
+                    {
+                        Log("Test failed. Delaying shut-down by 30 seconds to collect metrics.");
+                        Thread.Sleep(TimeSpan.FromSeconds(30));
+                        throw;
+                    }
                 }
 
-                Thread.Sleep(TimeSpan.FromSeconds(60));
+                Thread.Sleep(TimeSpan.FromSeconds(3));
             }
         }
     }
