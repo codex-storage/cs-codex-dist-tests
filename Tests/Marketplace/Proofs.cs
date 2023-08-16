@@ -15,21 +15,21 @@ namespace Tests.BasicTests
             var buyerInitialBalance = 1000.TestTokens();
 
             var seller = SetupCodexNode(s => s
-                .WithLogLevel(CodexLogLevel.Trace, "market", "sales", "proving")
+                .WithLogLevel(CodexLogLevel.Trace, "marketplace", "sales", "proving", "reservations")
                 .WithStorageQuota(11.GB())
                 .EnableMarketplace(sellerInitialBalance)
                 .WithName("seller"));
 
             var sellerWithFailures = SetupCodexNode(s => s
-                .WithLogLevel(CodexLogLevel.Trace, "market", "sales", "proving")
+                .WithLogLevel(CodexLogLevel.Trace, "marketplace", "sales", "proving", "reservations")
                 .WithStorageQuota(11.GB())
                 .WithBootstrapNode(seller)
-                .WithSimulateProofFailures(3)
+                .WithSimulateProofFailures(2)
                 .EnableMarketplace(sellerInitialBalance)
                 .WithName("seller with failures"));
 
             var buyer = SetupCodexNode(s => s
-                .WithLogLevel(CodexLogLevel.Trace, "market", "purchasing", "node", "restapi")
+                .WithLogLevel(CodexLogLevel.Trace, "marketplace", "purchasing", "node", "restapi")
                 .WithBootstrapNode(seller)
                 .EnableMarketplace(buyerInitialBalance)
                 .WithName("buyer"));
@@ -49,13 +49,13 @@ namespace Tests.BasicTests
                 size: 10.GB(),
                 minPricePerBytePerSecond: 1.TestTokens(),
                 maxCollateral: 20.TestTokens(),
-                maxDuration: TimeSpan.FromMinutes(3));
+                maxDuration: TimeSpan.FromMinutes(5));
 
             sellerWithFailures.Marketplace.MakeStorageAvailable(
                 size: 10.GB(),
                 minPricePerBytePerSecond: 1.TestTokens(),
                 maxCollateral: 20.TestTokens(),
-                maxDuration: TimeSpan.FromMinutes(3));
+                maxDuration: TimeSpan.FromMinutes(5));
 
             var testFile = GenerateTestFile(10.MB());
             var contentId = buyer.UploadFile(testFile);
@@ -64,8 +64,8 @@ namespace Tests.BasicTests
                 pricePerSlotPerSecond: 2.TestTokens(),
                 requiredCollateral: 10.TestTokens(),
                 minRequiredNumberOfNodes: 2,
-                proofProbability: 5,
-                duration: TimeSpan.FromMinutes(2));
+                proofProbability: 2,
+                duration: TimeSpan.FromMinutes(4));
 
             // Time.Sleep(TimeSpan.FromMinutes(1));
 
