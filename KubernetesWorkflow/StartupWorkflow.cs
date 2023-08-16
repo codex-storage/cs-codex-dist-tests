@@ -50,11 +50,11 @@ namespace KubernetesWorkflow
             });
         }
 
-        public void DownloadContainerLog(RunningContainer container, ILogHandler logHandler)
+        public void DownloadContainerLog(RunningContainer container, ILogHandler logHandler, int? tailLines)
         {
             K8s(controller =>
             {
-                controller.DownloadPodLog(container.Pod, container.Recipe, logHandler);
+                controller.DownloadPodLog(container.Pod, container.Recipe, logHandler, tailLines);
             });
         }
 

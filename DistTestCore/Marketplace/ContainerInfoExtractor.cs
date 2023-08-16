@@ -80,7 +80,7 @@ namespace DistTestCore.Marketplace
         private string FetchPubKey()
         {
             var enodeFinder = new PubKeyFinder(s => log.Debug(s));
-            workflow.DownloadContainerLog(container, enodeFinder);
+            workflow.DownloadContainerLog(container, enodeFinder, null);
             return enodeFinder.GetPubKey();
         }
 

@@ -64,10 +64,10 @@ namespace DistTestCore
             RunningGroups.Clear();
         }
 
-        public void DownloadLog(RunningContainer container, ILogHandler logHandler)
+        public void DownloadLog(RunningContainer container, ILogHandler logHandler, int? tailLines)
         {
             var workflow = CreateWorkflow();
-            workflow.DownloadContainerLog(container, logHandler);
+            workflow.DownloadContainerLog(container, logHandler, tailLines);
         }
 
         private IMetricsAccessFactory CollectMetrics(CodexSetup codexSetup, RunningContainers[] containers)

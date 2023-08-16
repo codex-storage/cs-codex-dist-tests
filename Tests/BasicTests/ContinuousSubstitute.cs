@@ -1,4 +1,5 @@
 ﻿using DistTestCore;
+using Logging;
 using NUnit.Framework;
 using Utils;
 
@@ -61,12 +62,13 @@ namespace Tests.BasicTests
         [Test]
         public void HoldMyBeerTest()
         {
-            var group = SetupCodexNodes(5, o => o
+            var blockExpirationTime = TimeSpan.FromMinutes(3);
+            var group = SetupCodexNodes(1, o => o
                     .EnableMetrics()
-                    .WithBlockTTL(TimeSpan.FromMinutes(2))
-                    .WithBlockMaintenanceInterval(TimeSpan.FromMinutes(5))
+                    .WithBlockTTL(blockExpirationTime)
+                    .WithBlockMaintenanceInterval(TimeSpan.FromMinutes(1))
                     .WithBlockMaintenanceNumber(10000)
-                    .WithStorageQuota(1000.MB()));
+                    .WithStorageQuota(2000.MB()));
 
             var nodes = group.Cast<OnlineCodexNode>().ToArray();
 
@@ -78,43 +80,63 @@ namespace Tests.BasicTests
             var sizeInBytes = filesize.SizeInBytes;
             Assert.That(numberOfBlocks, Is.EqualTo(1282));
 
+            var successfulUploads = 0;
+            var successfulDownloads = 0;
+
             while (DateTime.UtcNow < endTime)
             {
                 foreach (var node in nodes)
                 {
                     try
                     {
+                        var uploadStartTime = DateTime.UtcNow;
                         var file = GenerateTestFile(filesize);
                         var cid = node.UploadFile(file);
 
                         var cidTag = cid.Id.Substring(cid.Id.Length - 6);
-                        var uploadLog = node.DownloadLog();
+                        Stopwatch.Measure(Get().Log, "upload-log-asserts", () =>
+                        {
+                            var uploadLog = node.DownloadLog(tailLines: 50000);
 
-                        var storeLines = uploadLog.FindLinesThatContain("Stored data", "topics=\"codex node\"");
-                        uploadLog.DeleteFile();
+                            var storeLines = uploadLog.FindLinesThatContain("Stored data", "topics=\"codex node\"");
+                            uploadLog.DeleteFile();
 
-                        var storeLine = GetLineForCidTag(storeLines, cidTag);
-                        AssertStoreLineContains(storeLine, numberOfBlocks, sizeInBytes);
+                            var storeLine = GetLineForCidTag(storeLines, cidTag);
+                            AssertStoreLineContains(storeLine, numberOfBlocks, sizeInBytes);
+                        });
+                        successfulUploads++;
+
+                        var uploadTimeTaken = DateTime.UtcNow - uploadStartTime;
+                        if (uploadTimeTaken >= blockExpirationTime.Subtract(TimeSpan.FromSeconds(10)))
+                        {
+                            Assert.Fail("Upload took too long. Blocks already expired.");
+                        }
 
                         var dl = node.DownloadContent(cid);
                         file.AssertIsEqual(dl);
-                        var downloadLog = node.DownloadLog();
 
-                        var sentLines = downloadLog.FindLinesThatContain("Sent bytes", "topics=\"codex restapi\"");
-                        downloadLog.DeleteFile();
+                        Stopwatch.Measure(Get().Log, "download-log-asserts", () =>
+                        {
+                            var downloadLog = node.DownloadLog(tailLines: 50000);
 
-                        var sentLine = GetLineForCidTag(sentLines, cidTag);
-                        AssertSentLineContains(sentLine, sizeInBytes);
+                            var sentLines = downloadLog.FindLinesThatContain("Sent bytes", "topics=\"codex restapi\"");
+                            downloadLog.DeleteFile();
+
+                            var sentLine = GetLineForCidTag(sentLines, cidTag);
+                            AssertSentLineContains(sentLine, sizeInBytes);
+                        });
+                        successfulDownloads++;
                     }
                     catch
                     {
                         Log("Test failed. Delaying shut-down by 30 seconds to collect metrics.");
+                        Log($"Test failed after {successfulUploads} successful uploads and {successfulDownloads} successful downloads");
                         Thread.Sleep(TimeSpan.FromSeconds(30));
                         throw;
                     }
                 }
 
-                Thread.Sleep(TimeSpan.FromSeconds(3));
+                Thread.Sleep(TimeSpan.FromSeconds(5));
             }
         }
 

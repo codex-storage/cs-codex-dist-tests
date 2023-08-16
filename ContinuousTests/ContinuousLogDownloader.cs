@@ -55,7 +55,7 @@ namespace ContinuousTests
 
             var appender = new LogAppender(filepath);
 
-            lifecycle.CodexStarter.DownloadLog(container, appender);
+            lifecycle.CodexStarter.DownloadLog(container, appender, null);
         }
 
         private static string GetLogName(RunningContainer container)

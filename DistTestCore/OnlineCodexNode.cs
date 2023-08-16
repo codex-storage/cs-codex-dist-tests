@@ -16,7 +16,7 @@ namespace DistTestCore
         ContentId UploadFile(TestFile file);
         TestFile? DownloadContent(ContentId contentId, string fileLabel = "");
         void ConnectToPeer(IOnlineCodexNode node);
-        IDownloadedLog DownloadLog();
+        IDownloadedLog DownloadLog(int? tailLines = null);
         IMetricsAccess Metrics { get; }
         IMarketplaceAccess Marketplace { get; }
         CodexDebugVersionResponse Version { get; }
@@ -103,9 +103,9 @@ namespace DistTestCore
             Log($"Successfully connected to peer {peer.GetName()}.");
         }
 
-        public IDownloadedLog DownloadLog()
+        public IDownloadedLog DownloadLog(int? tailLines = null)
         {
-            return lifecycle.DownloadLog(CodexAccess.Container);
+            return lifecycle.DownloadLog(CodexAccess.Container, tailLines);
         }
 
         public ICodexSetup BringOffline()

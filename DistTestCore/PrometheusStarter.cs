@@ -29,7 +29,7 @@ namespace DistTestCore
         {
             var config = "";
             config += "global:\n";
-            config += "  scrape_interval: 30s\n";
+            config += "  scrape_interval: 10s\n";
             config += "  scrape_timeout: 10s\n";
             config += "\n";
             config += "scrape_configs:\n";
