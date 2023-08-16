@@ -1,6 +1,5 @@
 ﻿using DistTestCore;
 using NUnit.Framework;
-using NUnit.Framework.Constraints;
 using Utils;
 
 namespace Tests.BasicTests
@@ -88,20 +87,14 @@ namespace Tests.BasicTests
                         var file = GenerateTestFile(filesize);
                         var cid = node.UploadFile(file);
 
-                        var cidTag = cid.Id.Substring(cid.Id.Length - (1 + 6));
+                        var cidTag = cid.Id.Substring(cid.Id.Length - 6);
                         var uploadLog = node.DownloadLog();
 
                         var storeLines = uploadLog.FindLinesThatContain("Stored data", "topics=\"codex node\"");
                         uploadLog.DeleteFile();
 
                         var storeLine = GetLineForCidTag(storeLines, cidTag);
-                        if (storeLine == null)
-                        {
-                            Assert.Fail("Storeline not found for cid" + cidTag);
-                            return;
-                        }
                         AssertStoreLineContains(storeLine, numberOfBlocks, sizeInBytes);
-
 
                         var dl = node.DownloadContent(cid);
                         file.AssertIsEqual(dl);
@@ -111,13 +104,7 @@ namespace Tests.BasicTests
                         downloadLog.DeleteFile();
 
                         var sentLine = GetLineForCidTag(sentLines, cidTag);
-                        if (sentLine == null)
-                        {
-                            Assert.Fail("Sentline not found for cid" + cidTag);
-                            return;
-                        }
                         AssertSentLineContains(sentLine, sizeInBytes);
-
                     }
                     catch
                     {
@@ -136,7 +123,7 @@ namespace Tests.BasicTests
             var tag = "bytes=";
             var token = sentLine.Substring(sentLine.IndexOf(tag) + tag.Length);
             var bytes = Convert.ToInt64(token);
-            Assert.AreEqual(sizeInBytes, bytes, "Sent bytes: Number of bytes incorrect");
+            Assert.AreEqual(sizeInBytes, bytes, $"Sent bytes: Number of bytes incorrect. Line: '{sentLine}'");
         }
 
         private void AssertStoreLineContains(string storeLine, long numberOfBlocks, long sizeInBytes)
@@ -149,15 +136,23 @@ namespace Tests.BasicTests
             if (sizeToken == null) Assert.Fail("sizeToken not found in " + storeLine);
 
             var blocks = Convert.ToInt64(blocksToken);
-            var size = Convert.ToInt64(sizeToken);
+            var size = Convert.ToInt64(sizeToken?.Replace("'NByte", ""));
 
-            Assert.AreEqual(numberOfBlocks, blocks, "Stored data: Number of blocks incorrect");
-            Assert.AreEqual(sizeInBytes, size, "Stored data: Number of blocks incorrect");
+            var lineLog = $" Line: '{storeLine}'";
+            Assert.AreEqual(numberOfBlocks, blocks, "Stored data: Number of blocks incorrect." + lineLog);
+            Assert.AreEqual(sizeInBytes, size, "Stored data: Number of blocks incorrect." + lineLog);
         }
 
-        private string? GetLineForCidTag(string[] lines, string cidTag)
+        private string GetLineForCidTag(string[] lines, string cidTag)
         {
-            return lines.SingleOrDefault(l => l.Contains(cidTag));
+            var result = lines.SingleOrDefault(l => l.Contains(cidTag));
+            if (result == null)
+            {
+                Assert.Fail($"Failed to find '{cidTag}' in lines: '{string.Join(",", lines)}'");
+                throw new Exception();
+            }
+
+            return result;
         }
 
         private string? GetToken(string[] tokens, string tag)
