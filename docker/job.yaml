@@ -14,7 +14,8 @@ spec:
     spec:
       containers:
       - name: ${NAMEPREFIX}-runner
-        image: codexstorage/cs-codex-dist-tests:sha-300b91e
+        image: codexstorage/cs-codex-dist-tests:latest
+        imagePullPolicy: Always
         env:
         - name: RUNNERLOCATION
           value: InternalToCluster
