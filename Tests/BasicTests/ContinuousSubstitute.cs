@@ -1,5 +1,6 @@
 ﻿using DistTestCore;
 using NUnit.Framework;
+using NUnit.Framework.Constraints;
 using Utils;
 
 namespace Tests.BasicTests
@@ -59,7 +60,6 @@ namespace Tests.BasicTests
         }
         
         [Test]
-        [UseLongTimeouts]
         public void HoldMyBeerTest()
         {
             var group = SetupCodexNodes(5, o => o
@@ -72,17 +72,52 @@ namespace Tests.BasicTests
             var nodes = group.Cast<OnlineCodexNode>().ToArray();
 
             var endTime = DateTime.UtcNow + TimeSpan.FromHours(1);
+
+            var filesize = 80.MB();
+            double codexDefaultBlockSize = 31 * 64 * 33;
+            var numberOfBlocks = Convert.ToInt64(Math.Ceiling(filesize.SizeInBytes / codexDefaultBlockSize));
+            var sizeInBytes = filesize.SizeInBytes;
+            Assert.That(numberOfBlocks, Is.EqualTo(1282));
+
             while (DateTime.UtcNow < endTime)
             {
                 foreach (var node in nodes)
                 {
                     try
                     {
-                        var file = GenerateTestFile(80.MB());
+                        var file = GenerateTestFile(filesize);
                         var cid = node.UploadFile(file);
+
+                        var cidTag = cid.Id.Substring(cid.Id.Length - (1 + 6));
+                        var uploadLog = node.DownloadLog();
+
+                        var storeLines = uploadLog.FindLinesThatContain("Stored data", "topics=\"codex node\"");
+                        uploadLog.DeleteFile();
+
+                        var storeLine = GetLineForCidTag(storeLines, cidTag);
+                        if (storeLine == null)
+                        {
+                            Assert.Fail("Storeline not found for cid" + cidTag);
+                            return;
+                        }
+                        AssertStoreLineContains(storeLine, numberOfBlocks, sizeInBytes);
+
 
                         var dl = node.DownloadContent(cid);
                         file.AssertIsEqual(dl);
+                        var downloadLog = node.DownloadLog();
+
+                        var sentLines = downloadLog.FindLinesThatContain("Sent bytes", "topics=\"codex restapi\"");
+                        downloadLog.DeleteFile();
+
+                        var sentLine = GetLineForCidTag(sentLines, cidTag);
+                        if (sentLine == null)
+                        {
+                            Assert.Fail("Sentline not found for cid" + cidTag);
+                            return;
+                        }
+                        AssertSentLineContains(sentLine, sizeInBytes);
+
                     }
                     catch
                     {
@@ -94,6 +129,42 @@ namespace Tests.BasicTests
 
                 Thread.Sleep(TimeSpan.FromSeconds(3));
             }
+        }
+
+        private void AssertSentLineContains(string sentLine, long sizeInBytes)
+        {
+            var tag = "bytes=";
+            var token = sentLine.Substring(sentLine.IndexOf(tag) + tag.Length);
+            var bytes = Convert.ToInt64(token);
+            Assert.AreEqual(sizeInBytes, bytes, "Sent bytes: Number of bytes incorrect");
+        }
+
+        private void AssertStoreLineContains(string storeLine, long numberOfBlocks, long sizeInBytes)
+        {
+            var tokens = storeLine.Split(" ");
+
+            var blocksToken = GetToken(tokens, "blocks=");
+            var sizeToken = GetToken(tokens, "size=");
+            if (blocksToken == null) Assert.Fail("blockToken not found in " + storeLine);
+            if (sizeToken == null) Assert.Fail("sizeToken not found in " + storeLine);
+
+            var blocks = Convert.ToInt64(blocksToken);
+            var size = Convert.ToInt64(sizeToken);
+
+            Assert.AreEqual(numberOfBlocks, blocks, "Stored data: Number of blocks incorrect");
+            Assert.AreEqual(sizeInBytes, size, "Stored data: Number of blocks incorrect");
+        }
+
+        private string? GetLineForCidTag(string[] lines, string cidTag)
+        {
+            return lines.SingleOrDefault(l => l.Contains(cidTag));
+        }
+
+        private string? GetToken(string[] tokens, string tag)
+        {
+            var token = tokens.SingleOrDefault(t => t.StartsWith(tag));
+            if (token == null) return null;
+            return token.Substring(tag.Length);
         }
     }
 }
