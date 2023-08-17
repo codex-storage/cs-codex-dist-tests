@@ -8,7 +8,7 @@ namespace DistTestCore.Marketplace
         public const string MarketplaceArtifactFilename = "/hardhat/artifacts/contracts/Marketplace.sol/Marketplace.json";
 
         public override string AppName => "codex-contracts";
-        public override string Image => "codexstorage/dist-tests-codex-contracts-eth:sha-d6fbfdc";
+        public override string Image => "codexstorage/codex-contracts-eth:latest-dist-tests";
 
         protected override void Initialize(StartupConfig startupConfig)
         {

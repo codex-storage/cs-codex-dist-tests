@@ -13,7 +13,7 @@ namespace DistTestCore
         private readonly string dataFilesPath;
         private readonly CodexLogLevel codexLogLevel;
         private readonly string k8sNamespacePrefix;
-        private RunnerLocation? runnerLocation = null;
+        private static RunnerLocation? runnerLocation = null;
 
         public Configuration()
         {
