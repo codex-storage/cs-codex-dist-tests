@@ -80,6 +80,7 @@ namespace Tests.BasicTests
             var sizeInBytes = filesize.SizeInBytes;
             Assert.That(numberOfBlocks, Is.EqualTo(1282));
 
+            var startTime = DateTime.UtcNow;
             var successfulUploads = 0;
             var successfulDownloads = 0;
 
@@ -129,8 +130,9 @@ namespace Tests.BasicTests
                     }
                     catch
                     {
+                        var testDuration = DateTime.UtcNow - startTime;
                         Log("Test failed. Delaying shut-down by 30 seconds to collect metrics.");
-                        Log($"Test failed after {successfulUploads} successful uploads and {successfulDownloads} successful downloads");
+                        Log($"Test failed after {Time.FormatDuration(testDuration)} and {successfulUploads} successful uploads and {successfulDownloads} successful downloads");
                         Thread.Sleep(TimeSpan.FromSeconds(30));
                         throw;
                     }

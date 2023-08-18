@@ -5,6 +5,7 @@ using KubernetesWorkflow;
 using NUnit.Framework;
 using Logging;
 using Utils;
+using DistTestCore.Logs;
 
 namespace ContinuousTests
 {
@@ -36,6 +37,21 @@ namespace ContinuousTests
         public void RunNode(CodexAccess bootstrapNode, Action<CodexAccess, MarketplaceAccess, TestLifecycle> operation)
         {
             RunNode(bootstrapNode, operation, 0.TestTokens());
+        }
+
+        public IDownloadedLog DownloadLog(RunningContainer container, int? tailLines = null)
+        {
+            var subFile = log.CreateSubfile();
+            var description = container.Name;
+            var handler = new LogDownloadHandler(container, description, subFile);
+
+            log.Log($"Downloading logs for {description} to file '{subFile.FullFilename}'");
+
+            var lifecycle = CreateTestLifecycle();
+            var flow = lifecycle.WorkflowCreator.CreateWorkflow();
+            flow.DownloadContainerLog(container, handler, tailLines);
+
+            return new DownloadedLog(subFile, description);
         }
 
         public void RunNode(CodexAccess bootstrapNode, Action<CodexAccess, MarketplaceAccess, TestLifecycle> operation, TestToken mintTestTokens)
