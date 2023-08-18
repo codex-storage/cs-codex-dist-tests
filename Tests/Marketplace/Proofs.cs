@@ -22,7 +22,7 @@ namespace Tests.BasicTests
 
             var sellerWithFailures = SetupCodexNode(s => s
                 .WithLogLevel(CodexLogLevel.Trace, "marketplace", "sales", "proving", "reservations")
-                .WithStorageQuota(11.GB())
+                .WithStorageQuota(20.GB())
                 .WithBootstrapNode(seller)
                 .WithSimulateProofFailures(2)
                 .EnableMarketplace(sellerInitialBalance)
