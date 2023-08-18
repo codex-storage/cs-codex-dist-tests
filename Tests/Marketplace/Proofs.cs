@@ -16,7 +16,7 @@ namespace Tests.BasicTests
 
             var seller = SetupCodexNode(s => s
                 .WithLogLevel(CodexLogLevel.Trace, "marketplace", "sales", "proving", "reservations")
-                .WithStorageQuota(11.GB())
+                .WithStorageQuota(20.GB())
                 .EnableMarketplace(sellerInitialBalance)
                 .WithName("seller"));
 
@@ -49,32 +49,49 @@ namespace Tests.BasicTests
                 size: 10.GB(),
                 minPricePerBytePerSecond: 1.TestTokens(),
                 maxCollateral: 20.TestTokens(),
-                maxDuration: TimeSpan.FromMinutes(5));
+                maxDuration: TimeSpan.FromMinutes(3));
 
             sellerWithFailures.Marketplace.MakeStorageAvailable(
                 size: 10.GB(),
                 minPricePerBytePerSecond: 1.TestTokens(),
                 maxCollateral: 20.TestTokens(),
-                maxDuration: TimeSpan.FromMinutes(5));
+                maxDuration: TimeSpan.FromMinutes(3));
 
-            var testFile = GenerateTestFile(10.MB());
+            seller.Marketplace.MakeStorageAvailable(
+                size: 10.GB(),
+                minPricePerBytePerSecond: 1.TestTokens(),
+                maxCollateral: 20.TestTokens(),
+                maxDuration: TimeSpan.FromMinutes(3));
+
+            sellerWithFailures.Marketplace.MakeStorageAvailable(
+                size: 10.GB(),
+                minPricePerBytePerSecond: 1.TestTokens(),
+                maxCollateral: 20.TestTokens(),
+                maxDuration: TimeSpan.FromMinutes(3));
+
+            var fileSize = 10.MB();
+            var testFile = GenerateTestFile(fileSize);
             var contentId = buyer.UploadFile(testFile);
 
-            buyer.Marketplace.RequestStorage(contentId,
+            var purchaseContract = buyer.Marketplace.RequestStorage(
+                contentId,
                 pricePerSlotPerSecond: 2.TestTokens(),
                 requiredCollateral: 10.TestTokens(),
                 minRequiredNumberOfNodes: 2,
                 proofProbability: 2,
-                duration: TimeSpan.FromMinutes(4));
+                duration: TimeSpan.FromMinutes(3));
 
             // Time.Sleep(TimeSpan.FromMinutes(1));
 
             // seller.Marketplace.AssertThatBalance(Is.LessThan(sellerInitialBalance), "Collateral was not placed.");
 
-            Time.Sleep(TimeSpan.FromMinutes(3));
+            purchaseContract.WaitForStorageContractStarted(fileSize);
+            purchaseContract.WaitForStorageContractFinished();
 
             var sellerBalance = seller.Marketplace.GetBalance();
             sellerWithFailures.Marketplace.AssertThatBalance(Is.LessThan(sellerBalance), "Seller that was slashed should have less balance than seller that was not slashed.");
+
+            new List<IOnlineCodexNode>(){seller, sellerWithFailures, buyer, validator}.ForEach(node => node.DownloadLog());
         }
     }
 }

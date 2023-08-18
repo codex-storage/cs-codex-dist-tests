@@ -58,6 +58,16 @@
         {
             return $"{Amount} TestTokens";
         }
+
+        public static TestToken operator - (TestToken t1, int amount)
+        {
+            return t1 - Convert.ToDecimal(amount);
+        }
+
+        public static TestToken operator - (TestToken t1, decimal amount)
+        {
+            return (t1.Amount - amount).TestTokens();
+        }
     }
 
     public static class TokensIntExtensions
