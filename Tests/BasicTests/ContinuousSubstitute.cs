@@ -63,8 +63,8 @@ namespace Tests.BasicTests
         public void HoldMyBeerTest()
         {
             var blockExpirationTime = TimeSpan.FromMinutes(3);
-            var group = SetupCodexNodes(1, o => o
-                    .EnableMetrics()
+            var group = SetupCodexNodes(3, o => o
+                    //.EnableMetrics()
                     .WithBlockTTL(blockExpirationTime)
                     .WithBlockMaintenanceInterval(TimeSpan.FromMinutes(1))
                     .WithBlockMaintenanceNumber(10000)
@@ -72,7 +72,7 @@ namespace Tests.BasicTests
 
             var nodes = group.Cast<OnlineCodexNode>().ToArray();
 
-            var endTime = DateTime.UtcNow + TimeSpan.FromHours(1);
+            var endTime = DateTime.UtcNow + TimeSpan.FromHours(24);
 
             var filesize = 80.MB();
             double codexDefaultBlockSize = 31 * 64 * 33;
@@ -90,43 +90,48 @@ namespace Tests.BasicTests
                 {
                     try
                     {
-                        var uploadStartTime = DateTime.UtcNow;
-                        var file = GenerateTestFile(filesize);
-                        var cid = node.UploadFile(file);
+                        Thread.Sleep(TimeSpan.FromSeconds(5));
 
-                        var cidTag = cid.Id.Substring(cid.Id.Length - 6);
-                        Stopwatch.Measure(Get().Log, "upload-log-asserts", () =>
+                        ScopedTestFiles(() =>
                         {
-                            var uploadLog = node.DownloadLog(tailLines: 50000);
+                            var uploadStartTime = DateTime.UtcNow;
+                            var file = GenerateTestFile(filesize);
+                            var cid = node.UploadFile(file);
 
-                            var storeLines = uploadLog.FindLinesThatContain("Stored data", "topics=\"codex node\"");
-                            uploadLog.DeleteFile();
+                            var cidTag = cid.Id.Substring(cid.Id.Length - 6);
+                            Stopwatch.Measure(Get().Log, "upload-log-asserts", () =>
+                            {
+                                var uploadLog = node.DownloadLog(tailLines: 50000);
 
-                            var storeLine = GetLineForCidTag(storeLines, cidTag);
-                            AssertStoreLineContains(storeLine, numberOfBlocks, sizeInBytes);
+                                var storeLines = uploadLog.FindLinesThatContain("Stored data", "topics=\"codex node\"");
+                                uploadLog.DeleteFile();
+
+                                var storeLine = GetLineForCidTag(storeLines, cidTag);
+                                AssertStoreLineContains(storeLine, numberOfBlocks, sizeInBytes);
+                            });
+                            successfulUploads++;
+
+                            var uploadTimeTaken = DateTime.UtcNow - uploadStartTime;
+                            if (uploadTimeTaken >= blockExpirationTime.Subtract(TimeSpan.FromSeconds(10)))
+                            {
+                                Assert.Fail("Upload took too long. Blocks already expired.");
+                            }
+
+                            var dl = node.DownloadContent(cid);
+                            file.AssertIsEqual(dl);
+
+                            Stopwatch.Measure(Get().Log, "download-log-asserts", () =>
+                            {
+                                var downloadLog = node.DownloadLog(tailLines: 50000);
+
+                                var sentLines = downloadLog.FindLinesThatContain("Sent bytes", "topics=\"codex restapi\"");
+                                downloadLog.DeleteFile();
+
+                                var sentLine = GetLineForCidTag(sentLines, cidTag);
+                                AssertSentLineContains(sentLine, sizeInBytes);
+                            });
+                            successfulDownloads++;
                         });
-                        successfulUploads++;
-
-                        var uploadTimeTaken = DateTime.UtcNow - uploadStartTime;
-                        if (uploadTimeTaken >= blockExpirationTime.Subtract(TimeSpan.FromSeconds(10)))
-                        {
-                            Assert.Fail("Upload took too long. Blocks already expired.");
-                        }
-
-                        var dl = node.DownloadContent(cid);
-                        file.AssertIsEqual(dl);
-
-                        Stopwatch.Measure(Get().Log, "download-log-asserts", () =>
-                        {
-                            var downloadLog = node.DownloadLog(tailLines: 50000);
-
-                            var sentLines = downloadLog.FindLinesThatContain("Sent bytes", "topics=\"codex restapi\"");
-                            downloadLog.DeleteFile();
-
-                            var sentLine = GetLineForCidTag(sentLines, cidTag);
-                            AssertSentLineContains(sentLine, sizeInBytes);
-                        });
-                        successfulDownloads++;
                     }
                     catch
                     {
