@@ -25,6 +25,7 @@ namespace KubernetesWorkflow
             Add("gethid", applicationIds.GethId);
             Add("prometheusid", applicationIds.PrometheusId);
             Add("codexcontractsid", applicationIds.CodexContractsId);
+            Add("grafanaid", applicationIds.GrafanaId);
         }
 
         public PodLabels GetLabelsForAppName(string appName)

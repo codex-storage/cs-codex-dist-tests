@@ -1,4 +1,5 @@
 ﻿using DistTestCore.Marketplace;
+using DistTestCore.Metrics;
 using KubernetesWorkflow;
 
 namespace DistTestCore.Codex
@@ -14,9 +15,11 @@ namespace DistTestCore.Codex
         public Location Location { get; set; }
         public CodexLogLevel LogLevel { get; }
         public ByteSize? StorageQuota { get; set; }
-        public bool MetricsEnabled { get; set; }
+        public MetricsMode MetricsMode { get; set; }
         public MarketplaceInitialConfig? MarketplaceConfig { get; set; }
         public string? BootstrapSpr { get; set; }
         public int? BlockTTL { get; set; }
+        public TimeSpan? BlockMaintenanceInterval { get; set; }
+        public int? BlockMaintenanceNumber { get; set; }
     }
 }

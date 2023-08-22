@@ -25,7 +25,7 @@ namespace DistTestCore.Marketplace
             WaitUntil(() =>
             {
                 var logHandler = new ContractsReadyLogHandler(Debug);
-                workflow.DownloadContainerLog(container, logHandler);
+                workflow.DownloadContainerLog(container, logHandler, null);
                 return logHandler.Found;
             });
             Log("Contracts deployed. Extracting addresses...");

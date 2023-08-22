@@ -11,6 +11,8 @@ namespace DistTestCore
         ICodexSetup WithBootstrapNode(IOnlineCodexNode node);
         ICodexSetup WithStorageQuota(ByteSize storageQuota);
         ICodexSetup WithBlockTTL(TimeSpan duration);
+        ICodexSetup WithBlockMaintenanceInterval(TimeSpan duration);
+        ICodexSetup WithBlockMaintenanceNumber(int numberOfBlocks);
         ICodexSetup EnableMetrics();
         ICodexSetup EnableMarketplace(TestToken initialBalance);
         ICodexSetup EnableMarketplace(TestToken initialBalance, Ether initialEther);
@@ -57,9 +59,21 @@ namespace DistTestCore
             return this;
         }
 
+        public ICodexSetup WithBlockMaintenanceInterval(TimeSpan duration)
+        {
+            BlockMaintenanceInterval = duration;
+            return this;
+        }
+
+        public ICodexSetup WithBlockMaintenanceNumber(int numberOfBlocks)
+        {
+            BlockMaintenanceNumber = numberOfBlocks;
+            return this;
+        }
+
         public ICodexSetup EnableMetrics()
         {
-            MetricsEnabled = true;
+            MetricsMode = Metrics.MetricsMode.Record;
             return this;
         }
 

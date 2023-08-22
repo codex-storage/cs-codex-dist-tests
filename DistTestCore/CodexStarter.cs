@@ -47,7 +47,11 @@ namespace DistTestCore
         {
             LogStart($"Stopping {group.Describe()}...");
             var workflow = CreateWorkflow();
-            foreach (var c in group.Containers) workflow.Stop(c);
+            foreach (var c in group.Containers)
+            {
+                StopCrashWatcher(c);
+                workflow.Stop(c);
+            }
             RunningGroups.Remove(group);
             LogEnd("Stopped.");
         }
@@ -60,17 +64,23 @@ namespace DistTestCore
             RunningGroups.Clear();
         }
 
-        public void DownloadLog(RunningContainer container, ILogHandler logHandler)
+        public void DownloadLog(RunningContainer container, ILogHandler logHandler, int? tailLines)
         {
             var workflow = CreateWorkflow();
-            workflow.DownloadContainerLog(container, logHandler);
+            workflow.DownloadContainerLog(container, logHandler, tailLines);
         }
 
         private IMetricsAccessFactory CollectMetrics(CodexSetup codexSetup, RunningContainers[] containers)
         {
-            if (!codexSetup.MetricsEnabled) return new MetricsUnavailableAccessFactory();
+            if (codexSetup.MetricsMode == MetricsMode.None) return new MetricsUnavailableAccessFactory();
 
             var runningContainers = lifecycle.PrometheusStarter.CollectMetricsFor(containers);
+
+            if (codexSetup.MetricsMode == MetricsMode.Dashboard)
+            {
+                lifecycle.GrafanaStarter.StartDashboard(runningContainers.Containers.First(), codexSetup);
+            }
+
             return new CodexNodeMetricsAccessFactory(lifecycle, runningContainers);
         }
 
@@ -90,7 +100,9 @@ namespace DistTestCore
             for (var i = 0; i < numberOfNodes; i++)
             {
                 var workflow = CreateWorkflow();
-                result.Add(workflow.Start(1, location, recipe, startupConfig));
+                var rc = workflow.Start(1, location, recipe, startupConfig);
+                CreateCrashWatcher(workflow, rc);
+                result.Add(rc);
             }
             return result.ToArray();
         }
@@ -127,6 +139,20 @@ namespace DistTestCore
         private void LogSeparator()
         {
             Log("----------------------------------------------------------------------------");
+        }
+
+        private void CreateCrashWatcher(StartupWorkflow workflow, RunningContainers rc)
+        {
+            var c = rc.Containers.Single();
+            c.CrashWatcher = workflow.CreateCrashWatcher(c);
+        }
+
+        private void StopCrashWatcher(RunningContainers containers)
+        {
+            foreach (var c in containers.Containers)
+            {
+                c.CrashWatcher?.Stop();
+            }
         }
     }
 }

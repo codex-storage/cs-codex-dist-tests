@@ -37,6 +37,11 @@ namespace KubernetesWorkflow
             }, pl);
         }
 
+        public CrashWatcher CreateCrashWatcher(RunningContainer container)
+        {
+            return K8s(controller => controller.CreateCrashWatcher(container));
+        }
+
         public void Stop(RunningContainers runningContainers)
         {
             K8s(controller =>
@@ -45,11 +50,11 @@ namespace KubernetesWorkflow
             });
         }
 
-        public void DownloadContainerLog(RunningContainer container, ILogHandler logHandler)
+        public void DownloadContainerLog(RunningContainer container, ILogHandler logHandler, int? tailLines)
         {
             K8s(controller =>
             {
-                controller.DownloadPodLog(container.Pod, container.Recipe, logHandler);
+                controller.DownloadPodLog(container.Pod, container.Recipe, logHandler, tailLines);
             });
         }
 

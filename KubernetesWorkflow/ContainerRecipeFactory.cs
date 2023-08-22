@@ -40,6 +40,13 @@
             return p;
         }
 
+        protected Port AddExposedPort(int number, string tag = "")
+        {
+            var p = factory.CreatePort(number, tag);
+            exposedPorts.Add(p);
+            return p;
+        }
+
         protected Port AddInternalPort(string tag = "")
         {
             var p = factory.CreatePort(tag);

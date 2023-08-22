@@ -30,7 +30,8 @@ namespace ContinuousTests
 
             ClearAllCustomNamespaces(allTests, overviewLog);
 
-            StartLogDownloader(taskFactory);
+            // Disabled for now. Still looking for a better way.
+            // StartLogDownloader(taskFactory);
 
             var testLoops = allTests.Select(t => new TestLoop(taskFactory, config, overviewLog, t.GetType(), t.RunTestEvery, cancelToken)).ToArray();
 
@@ -72,7 +73,7 @@ namespace ContinuousTests
             if (!Directory.Exists(path)) Directory.CreateDirectory(path);
 
             var lifecycle = k8SFactory.CreateTestLifecycle(config.KubeConfigFile, config.LogPath, config.DataPath, config.CodexDeployment.Metadata.KubeNamespace, new DefaultTimeSet(), new NullLog());
-            var downloader = new ContinuousLogDownloader(lifecycle, config.CodexDeployment, path, cancelToken);
+            var downloader = new ContinuousLogDownloader(lifecycle, config.CodexDeployment.CodexContainers, path, cancelToken);
 
             taskFactory.Run(downloader.Run);
         }

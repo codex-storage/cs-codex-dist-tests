@@ -24,6 +24,7 @@ namespace DistTestCore
             FileManager = new FileManager(Log, configuration);
             CodexStarter = new CodexStarter(this);
             PrometheusStarter = new PrometheusStarter(this);
+            GrafanaStarter = new GrafanaStarter(this);
             GethStarter = new GethStarter(this);
             testStart = DateTime.UtcNow;
             CodexVersion = null;
@@ -38,6 +39,7 @@ namespace DistTestCore
         public FileManager FileManager { get; }
         public CodexStarter CodexStarter { get; }
         public PrometheusStarter PrometheusStarter { get; }
+        public GrafanaStarter GrafanaStarter { get; }
         public GethStarter GethStarter { get; }
         public CodexDebugVersionResponse? CodexVersion { get; private set; }
 
@@ -47,14 +49,14 @@ namespace DistTestCore
             FileManager.DeleteAllTestFiles();
         }
 
-        public IDownloadedLog DownloadLog(RunningContainer container)
+        public IDownloadedLog DownloadLog(RunningContainer container, int? tailLines = null)
         {
             var subFile = Log.CreateSubfile();
             var description = container.Name;
             var handler = new LogDownloadHandler(container, description, subFile);
 
             Log.Log($"Downloading logs for {description} to file '{subFile.FullFilename}'");
-            CodexStarter.DownloadLog(container, handler);
+            CodexStarter.DownloadLog(container, handler, tailLines);
 
             return new DownloadedLog(subFile, description);
         }
@@ -76,7 +78,8 @@ namespace DistTestCore
                 codexId: GetCodexId(),
                 gethId: new GethContainerRecipe().Image,
                 prometheusId: new PrometheusContainerRecipe().Image,
-                codexContractsId: new CodexContractsContainerRecipe().Image
+                codexContractsId: new CodexContractsContainerRecipe().Image,
+                grafanaId: new GrafanaContainerRecipe().Image
             );
         }
 

@@ -175,6 +175,11 @@ namespace DistTestCore
             GetTestLog().Debug(msg);
         }
 
+        public void Measure(string name, Action action)
+        {
+            Stopwatch.Measure(Get().Log, name, action);
+        }
+
         protected CodexSetup CreateCodexSetup(int numberOfNodes)
         {
             return new CodexSetup(numberOfNodes, configuration.GetCodexLogLevel());
