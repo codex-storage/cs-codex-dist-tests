@@ -41,7 +41,7 @@ namespace ContinuousTests.Tests
             });
 
 
-            var dl = DownloadFile(Nodes[1], cid!);
+            var dl = DownloadFile(Nodes[0], cid!);
             file.AssertIsEqual(dl);
 
             Stopwatch.Measure(Log, "download-log-asserts", () =>

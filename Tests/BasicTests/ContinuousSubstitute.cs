@@ -64,9 +64,9 @@ namespace Tests.BasicTests
         {
             var blockExpirationTime = TimeSpan.FromMinutes(3);
             var group = SetupCodexNodes(3, o => o
-                    //.EnableMetrics()
+                    .EnableMetrics()
                     .WithBlockTTL(blockExpirationTime)
-                    .WithBlockMaintenanceInterval(TimeSpan.FromMinutes(1))
+                    .WithBlockMaintenanceInterval(TimeSpan.FromMinutes(2))
                     .WithBlockMaintenanceNumber(10000)
                     .WithStorageQuota(2000.MB()));
 
