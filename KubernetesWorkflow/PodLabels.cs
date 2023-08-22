@@ -37,12 +37,20 @@ namespace KubernetesWorkflow
 
         private void Add(string key, string value)
         {
-            labels.Add(key, 
-                value.ToLowerInvariant()
-                .Replace(":","-")
+            labels.Add(key, Format(value));
+        }
+
+        private static string Format(string s)
+        {
+            var result = s.ToLowerInvariant()
+                .Replace(":", "-")
                 .Replace("/", "-")
                 .Replace("\\", "-")
-            );
+                .Replace("[", "-")
+                .Replace("]", "-")
+                .Replace(",", "-");
+
+            return result.Trim('-');
         }
 
         internal Dictionary<string, string> GetLabels()

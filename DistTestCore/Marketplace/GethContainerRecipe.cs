@@ -11,7 +11,7 @@ namespace DistTestCore.Marketplace
         public const string AccountsFilename = "accounts.csv";
 
         public override string AppName => "geth";
-        public override string Image => "codexstorage/dist-tests-geth:sha-b788a2d";
+        public override string Image => "codexstorage/dist-tests-geth:latest";
 
         protected override void Initialize(StartupConfig startupConfig)
         {
