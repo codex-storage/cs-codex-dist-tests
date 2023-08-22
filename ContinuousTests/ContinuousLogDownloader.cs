@@ -8,7 +8,6 @@ namespace ContinuousTests
     {
         private readonly TestLifecycle lifecycle;
         private readonly RunningContainer[] containers;
-        //private readonly CodexDeployment deployment;
         private readonly string outputPath;
         private readonly CancellationToken cancelToken;
 
@@ -16,7 +15,6 @@ namespace ContinuousTests
         {
             this.lifecycle = lifecycle;
             this.containers = containers;
-            //this.deployment = deployment;
             this.outputPath = outputPath;
             this.cancelToken = cancelToken;
         }

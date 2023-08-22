@@ -99,7 +99,7 @@ namespace Tests.BasicTests
                             var cid = node.UploadFile(file);
 
                             var cidTag = cid.Id.Substring(cid.Id.Length - 6);
-                            Stopwatch.Measure(Get().Log, "upload-log-asserts", () =>
+                            Measure("upload-log-asserts", () =>
                             {
                                 var uploadLog = node.DownloadLog(tailLines: 50000);
 
@@ -120,7 +120,7 @@ namespace Tests.BasicTests
                             var dl = node.DownloadContent(cid);
                             file.AssertIsEqual(dl);
 
-                            Stopwatch.Measure(Get().Log, "download-log-asserts", () =>
+                            Measure("download-log-asserts", () =>
                             {
                                 var downloadLog = node.DownloadLog(tailLines: 50000);
 

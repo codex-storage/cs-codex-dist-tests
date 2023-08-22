@@ -30,7 +30,8 @@ namespace ContinuousTests
 
             ClearAllCustomNamespaces(allTests, overviewLog);
 
-            StartLogDownloader(taskFactory);
+            // Disabled for now. Still looking for a better way.
+            // StartLogDownloader(taskFactory);
 
             var testLoops = allTests.Select(t => new TestLoop(taskFactory, config, overviewLog, t.GetType(), t.RunTestEvery, cancelToken)).ToArray();
 
