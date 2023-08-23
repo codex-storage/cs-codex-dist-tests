@@ -106,7 +106,10 @@ namespace CodexNetDeployer
                 initialTestTokens: config.InitialTestTokens,
                 minPrice: config.MinPrice,
                 maxCollateral: config.MaxCollateral,
-                maxDuration: config.MaxDuration);
+                maxDuration: config.MaxDuration,
+                blockTTL: config.BlockTTL,
+                blockMI: config.BlockMI,
+                blockMN: config.BlockMN);
         }
 
         private void Log(string msg)

@@ -7,6 +7,7 @@ namespace CodexNetDeployer
     public class Configuration
     {
         public const int SecondsIn1Day = 24 * 60 * 60;
+        public const int TenMinutes = 10 * 60;
 
         [Uniform("kube-config", "kc", "KUBECONFIG", false, "Path to Kubeconfig file. Use 'null' (default) to use local cluster.")]
         public string KubeConfigFile { get; set; } = "null";
@@ -43,6 +44,12 @@ namespace CodexNetDeployer
 
         [Uniform("block-ttl", "bt", "BLOCKTTL", false, "Block timeout in seconds. Default is 24 hours.")]
         public int BlockTTL { get; set; } = SecondsIn1Day;
+
+        [Uniform("block-mi", "bmi", "BLOCKMI", false, "Block maintenance interval in seconds. Default is 10 minutes.")]
+        public int BlockMI { get; set; } = TenMinutes;
+
+        [Uniform("block-mn", "bmn", "BLOCKMN", false, "Number of blocks maintained per interval. Default is 1000 blocks.")]
+        public int BlockMN { get; set; } = 1000;
 
         [Uniform("metrics", "m", "METRICS", false, "[None*, Record, Dashboard]. Determines if metrics will be recorded and if a dashboard service will be created.")]
         public MetricsMode Metrics { get; set; } = MetricsMode.None;

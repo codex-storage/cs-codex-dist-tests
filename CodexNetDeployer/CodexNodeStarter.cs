@@ -90,6 +90,14 @@ namespace CodexNetDeployer
             {
                 codexStart.BlockTTL = config.BlockTTL;
             }
+            if (config.BlockMI != Configuration.TenMinutes)
+            {
+                codexStart.BlockMaintenanceInterval = TimeSpan.FromSeconds(config.BlockMI);
+            }
+            if (config.BlockMN != 1000)
+            {
+                codexStart.BlockMaintenanceNumber = config.BlockMN;
+            }
 
             return codexStart;
         }

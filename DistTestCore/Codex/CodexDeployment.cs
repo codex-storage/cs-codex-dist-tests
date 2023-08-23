@@ -23,7 +23,7 @@ namespace DistTestCore.Codex
 
     public class DeploymentMetadata
     {
-        public DeploymentMetadata(string kubeNamespace, int numberOfCodexNodes, int numberOfValidators, int storageQuotaMB, CodexLogLevel codexLogLevel, int initialTestTokens, int minPrice, int maxCollateral, int maxDuration)
+        public DeploymentMetadata(string kubeNamespace, int numberOfCodexNodes, int numberOfValidators, int storageQuotaMB, CodexLogLevel codexLogLevel, int initialTestTokens, int minPrice, int maxCollateral, int maxDuration, int blockTTL, int blockMI, int blockMN)
         {
             DeployDateTimeUtc = DateTime.UtcNow;
             KubeNamespace = kubeNamespace;
@@ -35,6 +35,9 @@ namespace DistTestCore.Codex
             MinPrice = minPrice;
             MaxCollateral = maxCollateral;
             MaxDuration = maxDuration;
+            BlockTTL = blockTTL;
+            BlockMI = blockMI;
+            BlockMN = blockMN;
         }
 
         public DateTime DeployDateTimeUtc { get; }
@@ -47,5 +50,8 @@ namespace DistTestCore.Codex
         public int MinPrice { get; }
         public int MaxCollateral { get; }
         public int MaxDuration { get; }
+        public int BlockTTL { get; }
+        public int BlockMI { get; }
+        public int BlockMN { get; }
     }
 }

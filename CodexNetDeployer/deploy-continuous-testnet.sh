@@ -9,5 +9,7 @@ dotnet run \
     --min-price=1024 \
     --max-collateral=1024 \
     --max-duration=3600000 \
-    --block-ttl=300 \
+    --block-ttl=180 \
+    --block-mi=120 \
+    --block-mn=10000 \
     --metrics=Dashboard
