@@ -1,4 +1,5 @@
 ﻿using DistTestCore.Codex;
+using Logging;
 using NUnit.Framework;
 using Utils;
 
@@ -14,12 +15,12 @@ namespace DistTestCore.Helpers
     public class FullConnectivityHelper
     {
         private static string Nl = Environment.NewLine;
-        private readonly DistTest test;
+        private readonly BaseLog log;
         private readonly IFullConnectivityImplementation implementation;
 
-        public FullConnectivityHelper(DistTest test, IFullConnectivityImplementation implementation)
+        public FullConnectivityHelper(BaseLog log, IFullConnectivityImplementation implementation)
         {
-            this.test = test;
+            this.log = log;
             this.implementation = implementation;
         }
 
@@ -30,7 +31,7 @@ namespace DistTestCore.Helpers
 
         private void AssertFullyConnected(IOnlineCodexNode[] nodes)
         {
-            test.Log($"Asserting '{implementation.Description()}' for nodes: '{string.Join(",", nodes.Select(n => n.GetName()))}'...");
+            Log($"Asserting '{implementation.Description()}' for nodes: '{string.Join(",", nodes.Select(n => n.GetName()))}'...");
             var entries = CreateEntries(nodes);
             var pairs = CreatePairs(entries);
 
@@ -43,13 +44,13 @@ namespace DistTestCore.Helpers
             {
                 var pairDetails = string.Join(Nl, pairs.SelectMany(p => p.GetResultMessages()));
 
-                test.Log($"Connections failed:{Nl}{pairDetails}");
+                Log($"Connections failed:{Nl}{pairDetails}");
 
                 Assert.Fail(string.Join(Nl, pairs.SelectMany(p => p.GetResultMessages())));
             }
             else
             {
-                test.Log($"'{implementation.Description()}' = Success! for nodes: {string.Join(",", nodes.Select(n => n.GetName()))}");
+                Log($"'{implementation.Description()}' = Success! for nodes: {string.Join(",", nodes.Select(n => n.GetName()))}");
             }
         }
 
@@ -72,7 +73,7 @@ namespace DistTestCore.Helpers
 
             foreach (var pair in selectedPair)
             {
-                test.ScopedTestFiles(pair.Check);
+                pair.Check();
 
                 if (pair.Success)
                 {
@@ -81,7 +82,7 @@ namespace DistTestCore.Helpers
                 }
             }
 
-            test.Log($"Connections successful:{Nl}{string.Join(Nl, pairDetails)}");
+            Log($"Connections successful:{Nl}{string.Join(Nl, pairDetails)}");
         }
 
         private Entry[] CreateEntries(IOnlineCodexNode[] nodes)
@@ -115,6 +116,11 @@ namespace DistTestCore.Helpers
                     yield return new Pair(implementation, entries[x], entries[y]);
                 }
             }
+        }
+
+        private void Log(string msg)
+        {
+            log.Log(msg);
         }
 
         public class Entry

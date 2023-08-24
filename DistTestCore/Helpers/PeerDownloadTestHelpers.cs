@@ -1,18 +1,19 @@
-﻿using static DistTestCore.Helpers.FullConnectivityHelper;
+﻿using Logging;
+using static DistTestCore.Helpers.FullConnectivityHelper;
 
 namespace DistTestCore.Helpers
 {
     public class PeerDownloadTestHelpers : IFullConnectivityImplementation
     {
         private readonly FullConnectivityHelper helper;
-        private readonly DistTest test;
+        private readonly FileManager fileManager;
         private ByteSize testFileSize;
 
-        public PeerDownloadTestHelpers(DistTest test)
+        public PeerDownloadTestHelpers(BaseLog log, FileManager fileManager)
         {
-            helper = new FullConnectivityHelper(test, this);
+            helper = new FullConnectivityHelper(log, this);
             testFileSize = 1.MB();
-            this.test = test;
+            this.fileManager = fileManager;
         }
 
         public void AssertFullDownloadInterconnectivity(IEnumerable<IOnlineCodexNode> nodes, ByteSize testFileSize)
@@ -33,6 +34,7 @@ namespace DistTestCore.Helpers
 
         public PeerConnectionState Check(Entry from, Entry to)
         {
+            fileManager.PushFileSet();
             var expectedFile = GenerateTestFile(from.Node, to.Node);
 
             var contentId = from.Node.UploadFile(expectedFile);
@@ -49,6 +51,10 @@ namespace DistTestCore.Helpers
                 // We consider that as no-connection for the purpose of this test.
                 return PeerConnectionState.NoConnection;
             }
+            finally
+            {
+                fileManager.PopFileSet();
+            }
 
             // Should an exception occur during upload, then this try is inconclusive and we try again next loop.
         }
@@ -58,7 +64,7 @@ namespace DistTestCore.Helpers
             var up = uploader.GetName().Replace("<", "").Replace(">", "");
             var down = downloader.GetName().Replace("<", "").Replace(">", "");
             var label = $"~from:{up}-to:{down}~";
-            return test.GenerateTestFile(testFileSize, label);
+            return fileManager.GenerateTestFile(testFileSize, label);
         }
     }
 }

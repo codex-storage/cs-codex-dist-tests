@@ -1,4 +1,5 @@
 ﻿using DistTestCore.Codex;
+using Logging;
 using static DistTestCore.Helpers.FullConnectivityHelper;
 
 namespace DistTestCore.Helpers
@@ -7,9 +8,9 @@ namespace DistTestCore.Helpers
     {
         private readonly FullConnectivityHelper helper;
 
-        public PeerConnectionTestHelpers(DistTest test)
+        public PeerConnectionTestHelpers(BaseLog log)
         {
-            helper = new FullConnectivityHelper(test, this);
+            helper = new FullConnectivityHelper(log, this);
         }
 
         public void AssertFullyConnected(IEnumerable<IOnlineCodexNode> nodes)

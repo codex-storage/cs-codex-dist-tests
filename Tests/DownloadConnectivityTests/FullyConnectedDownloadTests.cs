@@ -14,7 +14,7 @@ namespace Tests.DownloadConnectivityTests
         {
             for (var i = 0; i < numberOfNodes; i++) SetupCodexNode();
 
-            PeerDownloadTestHelpers.AssertFullDownloadInterconnectivity(GetAllOnlineCodexNodes(), sizeMBs.MB());
+            CreatePeerDownloadTestHelpers().AssertFullDownloadInterconnectivity(GetAllOnlineCodexNodes(), sizeMBs.MB());
         }
     }
 }
