@@ -57,6 +57,9 @@ namespace CodexNetDeployer
         [Uniform("teststype-podlabel", "ttpl", "TESTSTYPE-PODLABEL", false, "Each kubernetes pod will be created with a label 'teststype' with value 'continuous'. " +
             "set this option to override the label value.")]
         public string TestsTypePodLabel { get; set; } = "continuous-tests";
+
+        [Uniform("check-connect", "cc", "CHECKCONNECT", false, "If true, deployer check ensure peer-connectivity between all deployed nodes after deployment.")]
+        public bool CheckPeerConnection { get; set; } = false;
        
         public List<string> Validate()
         {

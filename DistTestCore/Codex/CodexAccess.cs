@@ -88,6 +88,11 @@ namespace DistTestCore.Codex
             return Http().HttpGetString($"connect/{peerId}?addrs={peerMultiAddress}");
         }
 
+        public string GetName()
+        {
+            return Container.Name;
+        }
+
         private Http Http()
         {
             CheckContainerCrashed();

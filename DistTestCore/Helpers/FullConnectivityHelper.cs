@@ -24,12 +24,12 @@ namespace DistTestCore.Helpers
             this.implementation = implementation;
         }
 
-        public void AssertFullyConnected(IEnumerable<IOnlineCodexNode> nodes)
+        public void AssertFullyConnected(IEnumerable<CodexAccess> nodes)
         {
             AssertFullyConnected(nodes.ToArray());
         }
 
-        private void AssertFullyConnected(IOnlineCodexNode[] nodes)
+        private void AssertFullyConnected(CodexAccess[] nodes)
         {
             Log($"Asserting '{implementation.Description()}' for nodes: '{string.Join(",", nodes.Select(n => n.GetName()))}'...");
             var entries = CreateEntries(nodes);
@@ -85,7 +85,7 @@ namespace DistTestCore.Helpers
             Log($"Connections successful:{Nl}{string.Join(Nl, pairDetails)}");
         }
 
-        private Entry[] CreateEntries(IOnlineCodexNode[] nodes)
+        private Entry[] CreateEntries(CodexAccess[] nodes)
         {
             var entries = nodes.Select(n => new Entry(n)).ToArray();
 
@@ -125,13 +125,13 @@ namespace DistTestCore.Helpers
 
         public class Entry
         {
-            public Entry(IOnlineCodexNode node)
+            public Entry(CodexAccess node)
             {
                 Node = node;
                 Response = node.GetDebugInfo();
             }
 
-            public IOnlineCodexNode Node { get; }
+            public CodexAccess Node { get; }
             public CodexDebugResponse Response { get; }
 
             public override string ToString()

@@ -21,7 +21,7 @@ namespace CodexNetDeployer
             validatorsLeft = numberOfValidators;
         }
 
-        public RunningContainer? Start(int i)
+        public CodexNodeStartResult? Start(int i)
         {
             Console.Write($" - {i} = ");
             var workflow = lifecycle.WorkflowCreator.CreateWorkflow();
@@ -60,7 +60,7 @@ namespace CodexNetDeployer
 
                         if (string.IsNullOrEmpty(bootstrapSpr)) bootstrapSpr = debugInfo.spr;
                         validatorsLeft--;
-                        return container;
+                        return new CodexNodeStartResult(container, codexAccess);
                     }
                 }
             }
@@ -101,5 +101,17 @@ namespace CodexNetDeployer
 
             return codexStart;
         }
+    }
+
+    public class CodexNodeStartResult
+    {
+        public CodexNodeStartResult(RunningContainer container, CodexAccess access)
+        {
+            Container = container;
+            Access = access;
+        }
+
+        public RunningContainer Container { get; }
+        public CodexAccess Access { get; }
     }
 }

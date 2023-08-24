@@ -1,4 +1,5 @@
-﻿using Logging;
+﻿using DistTestCore.Codex;
+using Logging;
 using static DistTestCore.Helpers.FullConnectivityHelper;
 
 namespace DistTestCore.Helpers
@@ -17,6 +18,11 @@ namespace DistTestCore.Helpers
         }
 
         public void AssertFullDownloadInterconnectivity(IEnumerable<IOnlineCodexNode> nodes, ByteSize testFileSize)
+        {
+            AssertFullDownloadInterconnectivity(nodes.Select(n => ((OnlineCodexNode)n).CodexAccess), testFileSize);
+        }
+
+        public void AssertFullDownloadInterconnectivity(IEnumerable<CodexAccess> nodes, ByteSize testFileSize)
         {
             this.testFileSize = testFileSize;
             helper.AssertFullyConnected(nodes);
@@ -37,11 +43,16 @@ namespace DistTestCore.Helpers
             fileManager.PushFileSet();
             var expectedFile = GenerateTestFile(from.Node, to.Node);
 
-            var contentId = from.Node.UploadFile(expectedFile);
+            using var uploadStream = File.OpenRead(expectedFile.Filename);
+            var contentId = from.Node.UploadFile(uploadStream);
 
             try
             {
-                var downloadedFile = to.Node.DownloadContent(contentId, expectedFile.Label + "_downloaded");
+                var downloadedFile = fileManager.CreateEmptyTestFile(expectedFile.Label + "_downloaded");
+                using var downloadStream = File.OpenWrite(downloadedFile.Filename);
+                using var stream = to.Node.DownloadFile(contentId);
+                stream.CopyTo(downloadStream);
+
                 expectedFile.AssertIsEqual(downloadedFile);
                 return PeerConnectionState.Connection;
             }
@@ -59,7 +70,7 @@ namespace DistTestCore.Helpers
             // Should an exception occur during upload, then this try is inconclusive and we try again next loop.
         }
 
-        private TestFile GenerateTestFile(IOnlineCodexNode uploader, IOnlineCodexNode downloader)
+        private TestFile GenerateTestFile(CodexAccess uploader, CodexAccess downloader)
         {
             var up = uploader.GetName().Replace("<", "").Replace(">", "");
             var down = downloader.GetName().Replace("<", "").Replace(">", "");
