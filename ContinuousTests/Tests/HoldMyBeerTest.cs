@@ -37,7 +37,7 @@ namespace ContinuousTests.Tests
             var cidTag = cid!.Id.Substring(cid.Id.Length - 6);
             Stopwatch.Measure(Log, "upload-log-asserts", () =>
             {
-                var uploadLog = NodeRunner.DownloadLog(Nodes[0].Container, 50000);
+                var uploadLog = DownloadContainerLog(Nodes[0].Container, 50000);
 
                 var storeLines = uploadLog.FindLinesThatContain("Stored data", "topics=\"codex node\"");
                 uploadLog.DeleteFile();
@@ -46,13 +46,12 @@ namespace ContinuousTests.Tests
                 AssertStoreLineContains(storeLine, numberOfBlocks, sizeInBytes);
             });
 
-
             var dl = DownloadFile(Nodes[0], cid!);
             file.AssertIsEqual(dl);
 
             Stopwatch.Measure(Log, "download-log-asserts", () =>
             {
-                var downloadLog = NodeRunner.DownloadLog(Nodes[0].Container, 50000);
+                var downloadLog = DownloadContainerLog(Nodes[0].Container, 50000);
 
                 var sentLines = downloadLog.FindLinesThatContain("Sent bytes", "topics=\"codex restapi\"");
                 downloadLog.DeleteFile();
