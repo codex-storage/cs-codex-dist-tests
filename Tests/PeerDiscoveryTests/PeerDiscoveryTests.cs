@@ -20,7 +20,7 @@ namespace Tests.PeerDiscoveryTests
         [TestCase(3)]
         [TestCase(10)]
         [TestCase(20)]
-        public void VariableNodesInPods(int number)
+        public void VariableNodes(int number)
         {
             SetupCodexNodes(number);
 

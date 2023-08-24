@@ -48,11 +48,7 @@ namespace DistTestCore.Helpers
 
             try
             {
-                var downloadedFile = fileManager.CreateEmptyTestFile(expectedFile.Label + "_downloaded");
-                using var downloadStream = File.OpenWrite(downloadedFile.Filename);
-                using var stream = to.Node.DownloadFile(contentId);
-                stream.CopyTo(downloadStream);
-
+                var downloadedFile = DownloadFile(to.Node, contentId, expectedFile.Label + "_downloaded");
                 expectedFile.AssertIsEqual(downloadedFile);
                 return PeerConnectionState.Connection;
             }
@@ -68,6 +64,15 @@ namespace DistTestCore.Helpers
             }
 
             // Should an exception occur during upload, then this try is inconclusive and we try again next loop.
+        }
+
+        private TestFile DownloadFile(CodexAccess node, string contentId, string label)
+        {
+            var downloadedFile = fileManager.CreateEmptyTestFile(label);
+            using var downloadStream = File.OpenWrite(downloadedFile.Filename);
+            using var stream = node.DownloadFile(contentId);
+            stream.CopyTo(downloadStream);
+            return downloadedFile;
         }
 
         private TestFile GenerateTestFile(CodexAccess uploader, CodexAccess downloader)
