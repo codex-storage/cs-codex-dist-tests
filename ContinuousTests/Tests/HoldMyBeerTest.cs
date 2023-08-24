@@ -7,7 +7,7 @@ namespace ContinuousTests.Tests
     public class HoldMyBeerTest : ContinuousTest
     {
         public override int RequiredNumberOfNodes => 1;
-        public override TimeSpan RunTestEvery => TimeSpan.FromSeconds(30);
+        public override TimeSpan RunTestEvery => TimeSpan.FromMinutes(5);
         public override TestFailMode TestFailMode => TestFailMode.StopAfterFirstFailure;
 
         private ContentId? cid;
