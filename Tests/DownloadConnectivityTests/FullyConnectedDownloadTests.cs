@@ -12,7 +12,7 @@ namespace Tests.DownloadConnectivityTests
             [Values(1, 3, 5)] int numberOfNodes,
             [Values(1, 10)] int sizeMBs)
         {
-            for (var i = 0; i < numberOfNodes; i++) SetupCodexNode();
+            SetupCodexNodes(numberOfNodes);
 
             CreatePeerDownloadTestHelpers().AssertFullDownloadInterconnectivity(GetAllOnlineCodexNodes(), sizeMBs.MB());
         }

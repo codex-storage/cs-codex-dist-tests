@@ -22,10 +22,7 @@ namespace Tests.PeerDiscoveryTests
         [TestCase(20)]
         public void VariableNodesInPods(int number)
         {
-            for (var i = 0; i < number; i++)
-            {
-                SetupCodexNode();
-            }
+            SetupCodexNodes(number);
 
             AssertAllNodesConnected();
         }

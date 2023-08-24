@@ -7,17 +7,17 @@ namespace CodexNetDeployer
     {
         public void CheckConnectivity(List<CodexNodeStartResult> startResults)
         {
-            var checker = new PeerConnectionTestHelpers(new ConsoleLogger());
-
+            var log = new ConsoleLog();
+            var checker = new PeerConnectionTestHelpers(log);
             var access = startResults.Select(r => r.Access);
 
             checker.AssertFullyConnected(access);
         }
     }
 
-    public class ConsoleLogger : BaseLog
+    public class ConsoleLog : BaseLog
     {
-        public ConsoleLogger() : base(false)
+        public ConsoleLog() : base(false)
         {
         }
 
