@@ -11,9 +11,8 @@ namespace KubernetesWorkflow
             annotations = source.annotations.ToDictionary(p => p.Key, p => p.Value);
         }
 
-        public PodAnnotations(ApplicationIds applicationIds)
+        public PodAnnotations()
         {
-            if (applicationIds == null) return;
         }
 
         public PodAnnotations GetAnnotationsForAppName(string appName)
