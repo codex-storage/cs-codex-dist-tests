@@ -10,7 +10,7 @@ namespace DistTestCore.Codex
         public const string MetricsPortTag = "metrics_port";
         public const string DiscoveryPortTag = "discovery-port";
 
-        // Used by tests for time-constraint assersions.
+        // Used by tests for time-constraint assertions.
         public static readonly TimeSpan MaxUploadTimePerMegabyte = TimeSpan.FromSeconds(2.0);
         public static readonly TimeSpan MaxDownloadTimePerMegabyte = TimeSpan.FromSeconds(2.0);
 

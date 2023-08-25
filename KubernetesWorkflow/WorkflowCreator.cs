@@ -11,13 +11,15 @@ namespace KubernetesWorkflow
         private readonly K8sCluster cluster;
         private readonly BaseLog log;
         private readonly PodLabels podLabels;
+        private readonly PodAnnotations podAnnotations;
         private readonly string testNamespace;
 
-        public WorkflowCreator(BaseLog log, Configuration configuration, PodLabels podLabels, string testNamespace)
+        public WorkflowCreator(BaseLog log, Configuration configuration, PodLabels podLabels, PodAnnotations podAnnotations, string testNamespace)
         {
             cluster = new K8sCluster(configuration);
             this.log = log;
             this.podLabels = podLabels;
+            this.podAnnotations = podAnnotations;
             this.testNamespace = testNamespace.ToLowerInvariant();
         }
 
@@ -26,7 +28,7 @@ namespace KubernetesWorkflow
             var workflowNumberSource = new WorkflowNumberSource(numberSource.GetNextNumber(),
                                                                     containerNumberSource);
 
-            return new StartupWorkflow(log, workflowNumberSource, cluster, knownPods, testNamespace, podLabels);
+            return new StartupWorkflow(log, workflowNumberSource, cluster, knownPods, testNamespace, podLabels, podAnnotations);
         }
     }
 }

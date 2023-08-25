@@ -12,15 +12,17 @@ namespace KubernetesWorkflow
         private readonly KnownK8sPods knownPods;
         private readonly WorkflowNumberSource workflowNumberSource;
         private readonly PodLabels podLabels;
+        private readonly PodAnnotations podAnnotations;
         private readonly K8sClient client;
 
-        public K8sController(BaseLog log, K8sCluster cluster, KnownK8sPods knownPods, WorkflowNumberSource workflowNumberSource, string testNamespace, PodLabels podLabels)
+        public K8sController(BaseLog log, K8sCluster cluster, KnownK8sPods knownPods, WorkflowNumberSource workflowNumberSource, string testNamespace, PodLabels podLabels, PodAnnotations podAnnotations)
         {
             this.log = log;
             this.cluster = cluster;
             this.knownPods = knownPods;
             this.workflowNumberSource = workflowNumberSource;
             this.podLabels = podLabels;
+            this.podAnnotations = podAnnotations;
             client = new K8sClient(cluster.GetK8sClientConfig());
 
             K8sTestNamespace = cluster.Configuration.K8sNamespacePrefix + testNamespace;
@@ -274,7 +276,7 @@ namespace KubernetesWorkflow
                                     {
                                         IpBlock = new V1IPBlock
                                         {
-                                          Cidr = "0.0.0.0/0"
+                                            Cidr = "0.0.0.0/0"
                                         }
                                     }
                                 },
@@ -328,7 +330,8 @@ namespace KubernetesWorkflow
                     {
                         Metadata = new V1ObjectMeta
                         {
-                            Labels = GetSelector()
+                            Labels = GetSelector(),
+                            Annotations = GetAnnotations()
                         },
                         Spec = new V1PodSpec
                         {
@@ -372,13 +375,20 @@ namespace KubernetesWorkflow
             return new Dictionary<string, string> { { "kubernetes.io/metadata.name", "default" } };
         }
 
+
+        private IDictionary<string, string> GetAnnotations()
+        {
+            return podAnnotations.GetAnnotations();
+        }
+
         private V1ObjectMeta CreateDeploymentMetadata()
         {
             return new V1ObjectMeta
             {
                 Name = "deploy-" + workflowNumberSource.WorkflowNumber,
                 NamespaceProperty = K8sTestNamespace,
-                Labels = GetSelector()
+                Labels = GetSelector(),
+                Annotations = GetAnnotations()
             };
         }
 
@@ -425,7 +435,7 @@ namespace KubernetesWorkflow
             return new V1ContainerPort
             {
                 Name = GetNameForPort(recipe, port),
-                ContainerPort = port.Number 
+                ContainerPort = port.Number
             };
         }
 
