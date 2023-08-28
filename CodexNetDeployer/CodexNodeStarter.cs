@@ -60,7 +60,7 @@ namespace CodexNetDeployer
 
                         if (string.IsNullOrEmpty(bootstrapSpr)) bootstrapSpr = debugInfo.spr;
                         validatorsLeft--;
-                        return new CodexNodeStartResult(container, codexAccess);
+                        return new CodexNodeStartResult(workflow, container, codexAccess);
                     }
                 }
             }
@@ -105,12 +105,14 @@ namespace CodexNetDeployer
 
     public class CodexNodeStartResult
     {
-        public CodexNodeStartResult(RunningContainer container, CodexAccess access)
+        public CodexNodeStartResult(StartupWorkflow workflow, RunningContainer container, CodexAccess access)
         {
+            Workflow = workflow;
             Container = container;
             Access = access;
         }
 
+        public StartupWorkflow Workflow { get; }
         public RunningContainer Container { get; }
         public CodexAccess Access { get; }
     }

@@ -43,6 +43,12 @@ namespace KubernetesWorkflow
             if (workerException != null) throw new Exception("Exception occurred in CrashWatcher worker thread.", workerException);
         }
 
+        public bool HasContainerCrashed()
+        {
+            using var client = new Kubernetes(config);
+            return HasContainerBeenRestarted(client, container.Pod.PodInfo.Name);
+        }
+
         private void Worker()
         {
             try
@@ -57,7 +63,7 @@ namespace KubernetesWorkflow
 
         private void MonitorContainer(CancellationToken token)
         {
-            var client = new Kubernetes(config);
+            using var client = new Kubernetes(config);
             while (!token.IsCancellationRequested)
             {
                 token.WaitHandle.WaitOne(TimeSpan.FromSeconds(1));
@@ -65,14 +71,18 @@ namespace KubernetesWorkflow
                 var pod = container.Pod;
                 var recipe = container.Recipe;
                 var podName = pod.PodInfo.Name;
-                var podInfo = client.ReadNamespacedPod(podName, k8sNamespace);
-
-                if (podInfo.Status.ContainerStatuses.Any(c => c.RestartCount > 0))
+                if (HasContainerBeenRestarted(client, podName))
                 {
                     DownloadCrashedContainerLogs(client, podName, recipe);
                     return;
                 }
             }
+        }
+
+        private bool HasContainerBeenRestarted(Kubernetes client, string podName)
+        {
+            var podInfo = client.ReadNamespacedPod(podName, k8sNamespace);
+            return podInfo.Status.ContainerStatuses.Any(c => c.RestartCount > 0);
         }
 
         private void DownloadCrashedContainerLogs(Kubernetes client, string podName, ContainerRecipe recipe)

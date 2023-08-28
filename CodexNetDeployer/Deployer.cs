@@ -55,6 +55,7 @@ namespace CodexNetDeployer
             var (prometheusContainer, grafanaStartInfo) = StartMetricsService(lifecycle, setup, startResults.Select(r => r.Container));
 
             CheckPeerConnectivity(startResults);
+            CheckContainerRestarts(startResults);
 
             return new CodexDeployment(gethResults, startResults.Select(r => r.Container).ToArray(), prometheusContainer, grafanaStartInfo, CreateMetadata());
         }
@@ -104,6 +105,26 @@ namespace CodexNetDeployer
             Log("Starting peer-connectivity check for deployed nodes...");
             peerConnectivityChecker.CheckConnectivity(codexContainers);
             Log("Check passed.");
+        }
+
+        private void CheckContainerRestarts(List<CodexNodeStartResult> startResults)
+        {
+            var crashes = new List<RunningContainer>();
+            foreach (var startResult in startResults)
+            {
+                var watcher = startResult.Workflow.CreateCrashWatcher(startResult.Container);
+                if (watcher.HasContainerCrashed()) crashes.Add(startResult.Container);
+            }
+
+            if (!crashes.Any())
+            {
+                Log("Container restart check passed.");
+            }
+            else
+            {
+                Log($"Deployment failed. The following containers have crashed: {string.Join(",", crashes.Select(c => c.Name))}");
+                throw new Exception("Deployment failed: One or more containers crashed.");
+            }
         }
 
         private DeploymentMetadata CreateMetadata()
