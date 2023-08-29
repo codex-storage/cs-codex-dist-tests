@@ -1,4 +1,5 @@
 ﻿using DistTestCore.Codex;
+using Logging;
 using static DistTestCore.Helpers.FullConnectivityHelper;
 
 namespace DistTestCore.Helpers
@@ -7,12 +8,17 @@ namespace DistTestCore.Helpers
     {
         private readonly FullConnectivityHelper helper;
 
-        public PeerConnectionTestHelpers(DistTest test)
+        public PeerConnectionTestHelpers(BaseLog log)
         {
-            helper = new FullConnectivityHelper(test, this);
+            helper = new FullConnectivityHelper(log, this);
         }
 
         public void AssertFullyConnected(IEnumerable<IOnlineCodexNode> nodes)
+        {
+            AssertFullyConnected(nodes.Select(n => ((OnlineCodexNode)n).CodexAccess));
+        }
+
+        public void AssertFullyConnected(IEnumerable<CodexAccess> nodes)
         {
             helper.AssertFullyConnected(nodes);
         }
@@ -57,9 +63,8 @@ namespace DistTestCore.Helpers
             var peer = allEntries.SingleOrDefault(e => e.Response.table.localNode.peerId == node.peerId);
             if (peer == null) return $"peerId: {node.peerId} is not known.";
 
-            var n = (OnlineCodexNode)peer.Node;
-            var ip = n.CodexAccess.Container.Pod.PodInfo.Ip;
-            var discPort = n.CodexAccess.Container.Recipe.GetPortByTag(CodexContainerRecipe.DiscoveryPortTag);
+            var ip = peer.Node.Container.Pod.PodInfo.Ip;
+            var discPort = peer.Node.Container.Recipe.GetPortByTag(CodexContainerRecipe.DiscoveryPortTag);
             return $"{ip}:{discPort.Number}";
         }
     }

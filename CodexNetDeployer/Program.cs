@@ -56,8 +56,5 @@ public class Program
         Console.WriteLine("CodexNetDeployer allows you to easily deploy multiple Codex nodes in a Kubernetes cluster. " +
             "The deployer will set up the required supporting services, deploy the Codex on-chain contracts, start and bootstrap the Codex instances. " +
             "All Kubernetes objects will be created in the namespace provided, allowing you to easily find, modify, and delete them afterwards." + nl);
-
-        Console.WriteLine("CodexNetDeployer assumes you are running this tool from *inside* the Kubernetes cluster you want to deploy to. " +
-            "If you are not running this from a container inside the cluster, add the argument '--external'." + nl);
     }
 }

@@ -30,13 +30,7 @@ namespace DistTestCore
             var startTime = DateTime.UtcNow;
             fixtureLog = new FixtureLog(logConfig, startTime);
             statusLog = new StatusLog(logConfig, startTime);
-
-            PeerConnectionTestHelpers = new PeerConnectionTestHelpers(this);
-            PeerDownloadTestHelpers = new PeerDownloadTestHelpers(this);
         }
-
-        public PeerConnectionTestHelpers PeerConnectionTestHelpers { get; }
-        public PeerDownloadTestHelpers PeerDownloadTestHelpers { get; }
 
         [OneTimeSetUp]
         public void GlobalSetup()
@@ -173,6 +167,16 @@ namespace DistTestCore
         {
             TestContext.Progress.WriteLine(msg);
             GetTestLog().Debug(msg);
+        }
+
+        public PeerConnectionTestHelpers CreatePeerConnectionTestHelpers()
+        {
+            return new PeerConnectionTestHelpers(GetTestLog());
+        }
+
+        public PeerDownloadTestHelpers CreatePeerDownloadTestHelpers()
+        {
+            return new PeerDownloadTestHelpers(GetTestLog(), Get().FileManager);
         }
 
         public void Measure(string name, Action action)

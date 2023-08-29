@@ -8,21 +8,12 @@ namespace Tests.BasicTests
     public class TwoClientTests : DistTest
     {
         [Test]
-        public void TwoClientsOnePodTest()
+        public void TwoClientTest()
         {
             var group = SetupCodexNodes(2);
 
             var primary = group[0];
             var secondary = group[1];
-
-            PerformTwoClientTest(primary, secondary);
-        }
-
-        [Test]
-        public void TwoClientsTwoPodsTest()
-        {
-            var primary = SetupCodexNode();
-            var secondary = SetupCodexNode();
 
             PerformTwoClientTest(primary, secondary);
         }

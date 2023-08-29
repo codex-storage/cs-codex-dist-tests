@@ -8,14 +8,14 @@ namespace CodexNetDeployer
     public class Deployer
     {
         private readonly Configuration config;
-        private readonly NullLog log;
         private readonly DefaultTimeSet timeset;
+        private readonly PeerConnectivityChecker peerConnectivityChecker;
 
         public Deployer(Configuration config)
         {
             this.config = config;
-            log = new NullLog();
             timeset = new DefaultTimeSet();
+            peerConnectivityChecker = new PeerConnectivityChecker();
         }
 
         public CodexDeployment Deploy()
@@ -45,16 +45,19 @@ namespace CodexNetDeployer
 
             // Each node must have its own IP, so it needs it own pod. Start them 1 at a time.
             var codexStarter = new CodexNodeStarter(config, lifecycle, gethResults, config.NumberOfValidators!.Value);
-            var codexContainers = new List<RunningContainer>();
+            var startResults = new List<CodexNodeStartResult>();
             for (var i = 0; i < config.NumberOfCodexNodes; i++)
             {
-                var container = codexStarter.Start(i);
-                if (container != null) codexContainers.Add(container);
+                var result = codexStarter.Start(i);
+                if (result != null) startResults.Add(result);
             }
 
-            var (prometheusContainer, grafanaStartInfo) = StartMetricsService(lifecycle, setup, codexContainers);
+            var (prometheusContainer, grafanaStartInfo) = StartMetricsService(lifecycle, setup, startResults.Select(r => r.Container));
 
-            return new CodexDeployment(gethResults, codexContainers.ToArray(), prometheusContainer, grafanaStartInfo, CreateMetadata());
+            CheckPeerConnectivity(startResults);
+            CheckContainerRestarts(startResults);
+
+            return new CodexDeployment(gethResults, startResults.Select(r => r.Container).ToArray(), prometheusContainer, grafanaStartInfo, CreateMetadata());
         }
 
         private TestLifecycle CreateTestLifecycle()
@@ -71,10 +74,10 @@ namespace CodexNetDeployer
                 k8sNamespacePrefix: config.KubeNamespace
             );
 
-            return new TestLifecycle(log, lifecycleConfig, timeset, config.TestsTypePodLabel, string.Empty);
+            return new TestLifecycle(new NullLog(), lifecycleConfig, timeset, config.TestsTypePodLabel, string.Empty);
         }
 
-        private (RunningContainer?, GrafanaStartInfo?) StartMetricsService(TestLifecycle lifecycle, CodexSetup setup, List<RunningContainer> codexContainers)
+        private (RunningContainer?, GrafanaStartInfo?) StartMetricsService(TestLifecycle lifecycle, CodexSetup setup, IEnumerable<RunningContainer> codexContainers)
         {
             if (setup.MetricsMode == DistTestCore.Metrics.MetricsMode.None) return (null, null);
 
@@ -93,6 +96,35 @@ namespace CodexNetDeployer
         {
             if (string.IsNullOrEmpty(kubeConfigFile) || kubeConfigFile.ToLowerInvariant() == "null") return null;
             return kubeConfigFile;
+        }
+
+        private void CheckPeerConnectivity(List<CodexNodeStartResult> codexContainers)
+        {
+            if (!config.CheckPeerConnection) return;
+
+            Log("Starting peer-connectivity check for deployed nodes...");
+            peerConnectivityChecker.CheckConnectivity(codexContainers);
+            Log("Check passed.");
+        }
+
+        private void CheckContainerRestarts(List<CodexNodeStartResult> startResults)
+        {
+            var crashes = new List<RunningContainer>();
+            foreach (var startResult in startResults)
+            {
+                var watcher = startResult.Workflow.CreateCrashWatcher(startResult.Container);
+                if (watcher.HasContainerCrashed()) crashes.Add(startResult.Container);
+            }
+
+            if (!crashes.Any())
+            {
+                Log("Container restart check passed.");
+            }
+            else
+            {
+                Log($"Deployment failed. The following containers have crashed: {string.Join(",", crashes.Select(c => c.Name))}");
+                throw new Exception("Deployment failed: One or more containers crashed.");
+            }
         }
 
         private DeploymentMetadata CreateMetadata()

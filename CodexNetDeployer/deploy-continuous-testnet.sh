@@ -12,4 +12,5 @@ dotnet run \
     --block-ttl=180 \
     --block-mi=120 \
     --block-mn=10000 \
-    --metrics=Dashboard
+    --metrics=Dashboard \
+    --check-connect=1
