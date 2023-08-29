@@ -1,5 +1,4 @@
 ﻿using DistTestCore;
-using Logging;
 using NUnit.Framework;
 using Utils;
 
@@ -9,21 +8,23 @@ namespace Tests.BasicTests
     public class ContinuousSubstitute : AutoBootstrapDistTest
     {
         [Test]
-        [UseLongTimeouts]
         public void ContinuousTestSubstitute()
         {
             var group = SetupCodexNodes(5, o => o
                     .EnableMetrics()
                     .EnableMarketplace(100000.TestTokens(), 0.Eth(), isValidator: true)
                     .WithBlockTTL(TimeSpan.FromMinutes(2))
-                    .WithStorageQuota(3.GB()));
+                    .WithBlockMaintenanceInterval(TimeSpan.FromMinutes(2))
+                    .WithBlockMaintenanceNumber(10000)
+                    .WithBlockTTL(TimeSpan.FromMinutes(2))
+                    .WithStorageQuota(1.GB()));
 
             var nodes = group.Cast<OnlineCodexNode>().ToArray();
 
             foreach (var node in nodes)
             {
                 node.Marketplace.MakeStorageAvailable(
-                size: 1.GB(),
+                size: 500.MB(),
                 minPricePerBytePerSecond: 1.TestTokens(),
                 maxCollateral: 1024.TestTokens(),
                 maxDuration: TimeSpan.FromMinutes(5));
@@ -41,6 +42,62 @@ namespace Tests.BasicTests
 
                 Thread.Sleep(TimeSpan.FromSeconds(5));
             }
+        }
+
+        [Test]
+        public void PeerTest()
+        {
+            var group = SetupCodexNodes(5, o => o
+                    .EnableMetrics()
+                    .EnableMarketplace(100000.TestTokens(), 0.Eth(), isValidator: true)
+                    .WithBlockTTL(TimeSpan.FromMinutes(2))
+                    .WithBlockMaintenanceInterval(TimeSpan.FromMinutes(2))
+                    .WithBlockMaintenanceNumber(10000)
+                    .WithBlockTTL(TimeSpan.FromMinutes(2))
+                    .WithStorageQuota(1.GB()));
+
+            var nodes = group.Cast<OnlineCodexNode>().ToArray();
+
+            var checkTime = DateTime.UtcNow + TimeSpan.FromMinutes(1);
+            var endTime = DateTime.UtcNow + TimeSpan.FromHours(10);
+            while (DateTime.UtcNow < endTime)
+            {
+                CreatePeerConnectionTestHelpers().AssertFullyConnected(GetAllOnlineCodexNodes());
+
+                if (DateTime.UtcNow > checkTime)
+                {
+                    CheckRoutingTables(GetAllOnlineCodexNodes());
+                }
+
+                Thread.Sleep(5000);
+            }
+        }
+
+        private void CheckRoutingTables(IEnumerable<IOnlineCodexNode> nodes)
+        {
+            var all = nodes.ToArray();
+            var allIds = all.Select(n => n.GetDebugInfo().table.localNode.nodeId).ToArray();
+
+            var errors = all.Select(n => AreAllPresent(n, allIds)).Where(s => !string.IsNullOrEmpty(s)).ToArray();
+            
+            if (errors.Any())
+            {
+                Assert.Fail(string.Join(Environment.NewLine, errors));
+            }
+        }
+
+        private string AreAllPresent(IOnlineCodexNode n, string[] allIds)
+        {
+            var info = n.GetDebugInfo();
+            var known = info.table.nodes.Select(n => n.nodeId).ToArray();
+            var expected = allIds.Where(i => i != info.table.localNode.nodeId).ToArray();
+
+            if (!expected.All(ex => known.Contains(ex)))
+            {
+                return $"Not all of '{string.Join(",", expected)}' were present in routing table: '{string.Join(",", known)}'";
+            }
+
+            return string.Empty;
         }
 
         private ByteSize fileSize = 80.MB();
