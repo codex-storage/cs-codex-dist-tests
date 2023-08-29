@@ -95,11 +95,10 @@ namespace DistTestCore.Codex
 
         private Http Http()
         {
-            CheckContainerCrashed();
-            return new Http(log, timeSet, Address, baseUrl: "/api/codex/v1", Container.Name);
+            return new Http(log, timeSet, Address, baseUrl: "/api/codex/v1", CheckContainerCrashed, Container.Name);
         }
 
-        private void CheckContainerCrashed()
+        private void CheckContainerCrashed(HttpClient client)
         {
             if (hasContainerCrashed) throw new Exception("Container has crashed.");
         }

@@ -56,7 +56,7 @@ namespace DistTestCore.Helpers
 
         private static void RetryWhilePairs(List<Pair> pairs, Action action)
         {
-            var timeout = DateTime.UtcNow + TimeSpan.FromMinutes(5);
+            var timeout = DateTime.UtcNow + TimeSpan.FromMinutes(2);
             while (pairs.Any(p => p.Inconclusive) && timeout > DateTime.UtcNow)
             {
                 action();

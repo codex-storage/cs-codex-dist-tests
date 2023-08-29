@@ -7,6 +7,7 @@ namespace DistTestCore.Helpers
     public class PeerDownloadTestHelpers : IFullConnectivityImplementation
     {
         private readonly FullConnectivityHelper helper;
+        private readonly BaseLog log;
         private readonly FileManager fileManager;
         private ByteSize testFileSize;
 
@@ -14,6 +15,7 @@ namespace DistTestCore.Helpers
         {
             helper = new FullConnectivityHelper(log, this);
             testFileSize = 1.MB();
+            this.log = log;
             this.fileManager = fileManager;
         }
 
@@ -44,11 +46,11 @@ namespace DistTestCore.Helpers
             var expectedFile = GenerateTestFile(from.Node, to.Node);
 
             using var uploadStream = File.OpenRead(expectedFile.Filename);
-            var contentId = from.Node.UploadFile(uploadStream);
+            var contentId = Stopwatch.Measure(log, "Upload", () => from.Node.UploadFile(uploadStream));
 
             try
             {
-                var downloadedFile = DownloadFile(to.Node, contentId, expectedFile.Label + "_downloaded");
+                var downloadedFile = Stopwatch.Measure(log, "Download", () => DownloadFile(to.Node, contentId, expectedFile.Label + "_downloaded"));
                 expectedFile.AssertIsEqual(downloadedFile);
                 return PeerConnectionState.Connection;
             }
