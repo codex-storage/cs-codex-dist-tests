@@ -24,6 +24,7 @@ namespace ContinuousTests.Tests
             {
                 var info = n.GetDebugInfo();
                 Log.Log($"{n.GetName()} = {info.table.localNode.nodeId}");
+                Log.AddStringReplace(info.table.localNode.nodeId, n.GetName());
                 return info;
             }).ToArray();
 
@@ -45,7 +46,9 @@ namespace ContinuousTests.Tests
             if (!expected.All(ex => known.Contains(ex)))
             {
                 var nl = Environment.NewLine;
-                return $"Not all of{nl}'{string.Join(",", expected)}'{nl}were present in routing table:{nl}'{string.Join(",", known)}'";
+                return $"{nl}At node '{info.table.localNode.nodeId}'{nl}" +
+                    $"Not all of{nl}'{string.Join(",", expected)}'{nl}" +
+                    $"were present in routing table:{nl}'{string.Join(",", known)}'";
             }
 
             return string.Empty;
