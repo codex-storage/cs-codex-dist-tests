@@ -126,10 +126,11 @@ namespace ContinuousTests
 
         private void ThrowFailTest()
         {
-            var ex = UnpackException(exceptions.First());
-            Log(ex.ToString());
-            OverviewLog($" > Test failed {FuturesInfo()}: " + ex.Message);
-            throw ex;
+            var exs = UnpackExceptions(exceptions);
+            var exceptionsMessage = GetCombinedExceptionsMessage(exs);
+            Log(exceptionsMessage);
+            OverviewLog($" > Test failed {FuturesInfo()}: " + exceptionsMessage);
+            throw new Exception(exceptionsMessage);
         }
 
         private string FuturesInfo()
@@ -150,6 +151,16 @@ namespace ContinuousTests
             {
                 lifecycle.DownloadLog(container);
             }
+        }
+
+        private string GetCombinedExceptionsMessage(Exception[] exceptions)
+        {
+            return string.Join(Environment.NewLine, exceptions.Select(ex => ex.ToString()));
+        }
+
+        private Exception[] UnpackExceptions(List<Exception> exceptions)
+        {
+            return exceptions.Select(UnpackException).ToArray();
         }
 
         private Exception UnpackException(Exception exception)
