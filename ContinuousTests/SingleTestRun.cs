@@ -23,6 +23,7 @@ namespace ContinuousTests
         private readonly FixtureLog fixtureLog;
         private readonly string testName;
         private readonly string dataFolder;
+        private static int failureCount = 0;
 
         public SingleTestRun(TaskFactory taskFactory, Configuration config, BaseLog overviewLog, TestHandle handle, CancellationToken cancelToken)
         {
@@ -71,12 +72,17 @@ namespace ContinuousTests
                 fixtureLog.Error("Test run failed with exception: " + ex);
                 fixtureLog.MarkAsFailed();
 
-                if (config.StopOnFailure)
+                failureCount++;
+                if (config.StopOnFailure > 0)
                 {
-                    OverviewLog("Configured to stop on first failure. Downloading cluster logs...");
-                    DownloadClusterLogs();
-                    OverviewLog("Log download finished. Cancelling test runner...");
-                    Cancellation.Cts.Cancel();
+                    OverviewLog($"Failures: {failureCount} / {config.StopOnFailure}");
+                    if (failureCount >= config.StopOnFailure)
+                    {
+                        OverviewLog($"Configured to stop after {config.StopOnFailure} failures. Downloading cluster logs...");
+                        DownloadClusterLogs();
+                        OverviewLog("Log download finished. Cancelling test runner...");
+                        Cancellation.Cts.Cancel();
+                    }
                 }
             }
         }
