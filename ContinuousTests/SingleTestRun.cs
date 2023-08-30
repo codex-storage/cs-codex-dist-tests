@@ -25,7 +25,7 @@ namespace ContinuousTests
         private readonly string dataFolder;
         private static int failureCount = 0;
 
-        public SingleTestRun(TaskFactory taskFactory, Configuration config, BaseLog overviewLog, TestHandle handle, CancellationToken cancelToken)
+        public SingleTestRun(TaskFactory taskFactory, Configuration config, BaseLog overviewLog, TestHandle handle, StartupChecker startupChecker, CancellationToken cancelToken)
         {
             this.taskFactory = taskFactory;
             this.config = config;
@@ -34,6 +34,7 @@ namespace ContinuousTests
             this.cancelToken = cancelToken;
             testName = handle.Test.GetType().Name;
             fixtureLog = new FixtureLog(new LogConfig(config.LogPath, true), DateTime.UtcNow, testName);
+            ApplyLogReplacements(fixtureLog, startupChecker);
 
             nodes = CreateRandomNodes(handle.Test.RequiredNumberOfNodes);
             dataFolder = config.DataPath + "-" + Guid.NewGuid();
@@ -85,6 +86,11 @@ namespace ContinuousTests
                     }
                 }
             }
+        }
+
+        private void ApplyLogReplacements(FixtureLog fixtureLog, StartupChecker startupChecker)
+        {
+            foreach (var replacement in startupChecker.LogReplacements) fixtureLog.AddStringReplace(replacement.From, replacement.To);
         }
 
         private void RunTestMoments()

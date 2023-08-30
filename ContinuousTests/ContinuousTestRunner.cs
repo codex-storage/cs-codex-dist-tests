@@ -30,7 +30,7 @@ namespace ContinuousTests
 
             ClearAllCustomNamespaces(allTests, overviewLog);
 
-            var testLoops = allTests.Select(t => new TestLoop(taskFactory, config, overviewLog, t.GetType(), t.RunTestEvery, cancelToken)).ToArray();
+            var testLoops = allTests.Select(t => new TestLoop(taskFactory, config, overviewLog, t.GetType(), t.RunTestEvery, startupChecker, cancelToken)).ToArray();
 
             foreach (var testLoop in testLoops)
             {

@@ -60,6 +60,7 @@ namespace Logging
         public virtual void AddStringReplace(string from, string to)
         {
             if (string.IsNullOrWhiteSpace(from)) return;
+            if (replacements.Any(r => r.From == from)) return;
             replacements.Add(new BaseLogStringReplacement(from, to));
         }
 
@@ -98,20 +99,20 @@ namespace Logging
 
     public class BaseLogStringReplacement
     {
-        private readonly string from;
-        private readonly string to;
-
         public BaseLogStringReplacement(string from, string to)
         {
-            this.from = from;
-            this.to = to;
+            From = from;
+            To = to;
 
             if (string.IsNullOrEmpty(from) || string.IsNullOrEmpty(to) || from == to) throw new ArgumentException();
         }
 
+        public string From { get; }
+        public string To { get; }
+
         public string Apply(string msg)
         {
-            return msg.Replace(from, to);
+            return msg.Replace(From, To);
         }
     }
 }

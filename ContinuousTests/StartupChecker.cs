@@ -15,6 +15,7 @@ namespace ContinuousTests
         {
             this.config = config;
             this.cancelToken = cancelToken;
+            LogReplacements = new List<BaseLogStringReplacement>();
         }
 
         public void Check()
@@ -27,6 +28,8 @@ namespace ContinuousTests
             CheckCodexNodes(log, config);
             log.Log("All OK.");
         }
+
+        public List<BaseLogStringReplacement> LogReplacements { get; }
 
         private void PreflightCheck(Configuration config)
         {
@@ -90,6 +93,7 @@ namespace ContinuousTests
                 if (info == null || string.IsNullOrEmpty(info.id)) return false;
 
                 log.Log($"Codex version: '{info.codex.version}' revision: '{info.codex.revision}'");
+                LogReplacements.Add(new BaseLogStringReplacement(info.id, n.GetName()));
             }
             catch
             {
