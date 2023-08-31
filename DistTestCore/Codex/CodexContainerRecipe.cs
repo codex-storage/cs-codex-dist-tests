@@ -65,8 +65,8 @@ namespace DistTestCore.Codex
                 AddEnvVar("CODEX_METRICS", "true");
                 AddEnvVar("CODEX_METRICS_ADDRESS", "0.0.0.0");
                 AddEnvVar("CODEX_METRICS_PORT", metricsPort);
-                AddPodAnnotation("prometheus/scrape", "true");
-                AddPodAnnotation("prometheus/port", metricsPort.Number.ToString());
+                AddPodAnnotation("prometheus.io/scrape", "true");
+                AddPodAnnotation("prometheus.io/port", metricsPort.Number.ToString());
             }
 
             if (config.MarketplaceConfig != null)
