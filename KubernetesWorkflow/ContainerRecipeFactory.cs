@@ -5,7 +5,7 @@
         private readonly List<Port> exposedPorts = new List<Port>();
         private readonly List<Port> internalPorts = new List<Port>();
         private readonly List<EnvVar> envVars = new List<EnvVar>();
-        private PodAnnotations podAnnotations = new PodAnnotations();
+        private readonly PodAnnotations podAnnotations = new PodAnnotations();
         private readonly List<object> additionals = new List<object>();
         private RecipeComponentFactory factory = null!;
 
@@ -17,11 +17,12 @@
 
             Initialize(config);
 
-            var recipe = new ContainerRecipe(containerNumber, Image, exposedPorts.ToArray(), internalPorts.ToArray(), envVars.ToArray(), additionals.ToArray());
+            var recipe = new ContainerRecipe(containerNumber, Image, exposedPorts.ToArray(), internalPorts.ToArray(), envVars.ToArray(), podAnnotations.Clone(), additionals.ToArray());
 
             exposedPorts.Clear();
             internalPorts.Clear();
             envVars.Clear();
+            podAnnotations.Clear();
             additionals.Clear();
             this.factory = null!;
 
@@ -31,10 +32,6 @@
         public abstract string AppName { get; }
         public abstract string Image { get; }
         protected int ContainerNumber { get; private set; } = 0;
-        public PodAnnotations GetPodAnnotations()
-        {
-            return podAnnotations;
-        }
         protected int Index { get; private set; } = 0;
         protected abstract void Initialize(StartupConfig config);
 
@@ -82,10 +79,6 @@
         protected void AddPodAnnotation(string name, string value)
         {
             podAnnotations.Add(name, value);
-
-            // var tmp = podAnnotations;
-            // podAnnotations = new PodAnnotations();
-            // return tmp;
         }
 
         protected void Additional(object userData)

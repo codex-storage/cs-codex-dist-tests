@@ -12,17 +12,15 @@ namespace KubernetesWorkflow
         private readonly KnownK8sPods knownPods;
         private readonly WorkflowNumberSource workflowNumberSource;
         private readonly PodLabels podLabels;
-        private readonly PodAnnotations podAnnotations;
         private readonly K8sClient client;
 
-        public K8sController(BaseLog log, K8sCluster cluster, KnownK8sPods knownPods, WorkflowNumberSource workflowNumberSource, string testNamespace, PodLabels podLabels, PodAnnotations podAnnotations)
+        public K8sController(BaseLog log, K8sCluster cluster, KnownK8sPods knownPods, WorkflowNumberSource workflowNumberSource, string testNamespace, PodLabels podLabels)
         {
             this.log = log;
             this.cluster = cluster;
             this.knownPods = knownPods;
             this.workflowNumberSource = workflowNumberSource;
             this.podLabels = podLabels;
-            this.podAnnotations = podAnnotations;
             client = new K8sClient(cluster.GetK8sClientConfig());
 
             K8sTestNamespace = cluster.Configuration.K8sNamespacePrefix + testNamespace;
@@ -318,7 +316,7 @@ namespace KubernetesWorkflow
             var deploymentSpec = new V1Deployment
             {
                 ApiVersion = "apps/v1",
-                Metadata = CreateDeploymentMetadata(),
+                Metadata = CreateDeploymentMetadata(containerRecipes),
                 Spec = new V1DeploymentSpec
                 {
                     Replicas = 1,
@@ -331,7 +329,7 @@ namespace KubernetesWorkflow
                         Metadata = new V1ObjectMeta
                         {
                             Labels = GetSelector(),
-                            Annotations = GetAnnotations()
+                            Annotations = GetAnnotations(containerRecipes)
                         },
                         Spec = new V1PodSpec
                         {
@@ -375,20 +373,19 @@ namespace KubernetesWorkflow
             return new Dictionary<string, string> { { "kubernetes.io/metadata.name", "default" } };
         }
 
-
-        private IDictionary<string, string> GetAnnotations()
+        private IDictionary<string, string> GetAnnotations(ContainerRecipe[] containerRecipes)
         {
-            return podAnnotations.GetAnnotations();
+            return containerRecipes.First().PodAnnotations.GetAnnotations();
         }
 
-        private V1ObjectMeta CreateDeploymentMetadata()
+        private V1ObjectMeta CreateDeploymentMetadata(ContainerRecipe[] containerRecipes)
         {
             return new V1ObjectMeta
             {
                 Name = "deploy-" + workflowNumberSource.WorkflowNumber,
                 NamespaceProperty = K8sTestNamespace,
                 Labels = GetSelector(),
-                Annotations = GetAnnotations()
+                Annotations = GetAnnotations(containerRecipes)
             };
         }
 

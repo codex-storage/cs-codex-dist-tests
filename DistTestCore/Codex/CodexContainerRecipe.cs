@@ -61,11 +61,12 @@ namespace DistTestCore.Codex
             }
             if (config.MetricsMode != Metrics.MetricsMode.None)
             {
+                var metricsPort = AddInternalPort(MetricsPortTag);
                 AddEnvVar("CODEX_METRICS", "true");
                 AddEnvVar("CODEX_METRICS_ADDRESS", "0.0.0.0");
-                AddInternalPortAndVar("CODEX_METRICS_PORT", tag: MetricsPortTag);
+                AddEnvVar("CODEX_METRICS_PORT", metricsPort);
                 AddPodAnnotation("prometheus/scrape", "true");
-                AddPodAnnotation("prometheus/port", "8008");
+                AddPodAnnotation("prometheus/port", metricsPort.Number.ToString());
             }
 
             if (config.MarketplaceConfig != null)

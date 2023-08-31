@@ -11,10 +11,9 @@ namespace KubernetesWorkflow
         private readonly KnownK8sPods knownK8SPods;
         private readonly string testNamespace;
         private readonly PodLabels podLabels;
-        private readonly PodAnnotations podAnnotations;
         private readonly RecipeComponentFactory componentFactory = new RecipeComponentFactory();
 
-        internal StartupWorkflow(BaseLog log, WorkflowNumberSource numberSource, K8sCluster cluster, KnownK8sPods knownK8SPods, string testNamespace, PodLabels podLabels, PodAnnotations podAnnotations)
+        internal StartupWorkflow(BaseLog log, WorkflowNumberSource numberSource, K8sCluster cluster, KnownK8sPods knownK8SPods, string testNamespace, PodLabels podLabels)
         {
             this.log = log;
             this.numberSource = numberSource;
@@ -22,13 +21,11 @@ namespace KubernetesWorkflow
             this.knownK8SPods = knownK8SPods;
             this.testNamespace = testNamespace;
             this.podLabels = podLabels;
-            this.podAnnotations = podAnnotations;
         }
 
         public RunningContainers Start(int numberOfContainers, Location location, ContainerRecipeFactory recipeFactory, StartupConfig startupConfig)
         {
             var pl = podLabels.GetLabelsForAppName(recipeFactory.AppName);
-            var pa = recipeFactory.GetPodAnnotations();
 
             return K8s(controller =>
             {
@@ -37,7 +34,7 @@ namespace KubernetesWorkflow
                 var runningPod = controller.BringOnline(recipes, location);
 
                 return new RunningContainers(startupConfig, runningPod, CreateContainers(runningPod, recipes, startupConfig));
-            }, pl, pa);
+            }, pl);
         }
 
         public CrashWatcher CreateCrashWatcher(RunningContainer container)
@@ -159,22 +156,22 @@ namespace KubernetesWorkflow
 
         private void K8s(Action<K8sController> action)
         {
-            var controller = new K8sController(log, cluster, knownK8SPods, numberSource, testNamespace, podLabels, podAnnotations);
+            var controller = new K8sController(log, cluster, knownK8SPods, numberSource, testNamespace, podLabels);
             action(controller);
             controller.Dispose();
         }
 
         private T K8s<T>(Func<K8sController, T> action)
         {
-            var controller = new K8sController(log, cluster, knownK8SPods, numberSource, testNamespace, podLabels, podAnnotations);
+            var controller = new K8sController(log, cluster, knownK8SPods, numberSource, testNamespace, podLabels);
             var result = action(controller);
             controller.Dispose();
             return result;
         }
 
-        private T K8s<T>(Func<K8sController, T> action, PodLabels labels, PodAnnotations annotations)
+        private T K8s<T>(Func<K8sController, T> action, PodLabels labels)
         {
-            var controller = new K8sController(log, cluster, knownK8SPods, numberSource, testNamespace, labels, annotations);
+            var controller = new K8sController(log, cluster, knownK8SPods, numberSource, testNamespace, labels);
             var result = action(controller);
             controller.Dispose();
             return result;

@@ -19,8 +19,7 @@ namespace DistTestCore
             TimeSet = timeSet;
 
             var podLabels = new PodLabels(testsType, GetApplicationIds());
-            var podAnnotations = new PodAnnotations();
-            WorkflowCreator = new WorkflowCreator(log, configuration.GetK8sConfiguration(timeSet), podLabels, podAnnotations, testNamespace);
+            WorkflowCreator = new WorkflowCreator(log, configuration.GetK8sConfiguration(timeSet), podLabels, testNamespace);
 
             FileManager = new FileManager(Log, configuration);
             CodexStarter = new CodexStarter(this);
