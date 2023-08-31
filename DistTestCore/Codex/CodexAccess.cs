@@ -75,7 +75,7 @@ namespace DistTestCore.Codex
 
         public string RequestStorage(CodexSalesRequestStorageRequest request, string contentId)
         {
-            return Http().HttpPostJson<CodexSalesRequestStorageRequest, string>($"storage/request/{contentId}", request);
+            return Http().HttpPostJson($"storage/request/{contentId}", request);
         }
 
         public CodexStoragePurchase GetPurchaseStatus(string purchaseId)
