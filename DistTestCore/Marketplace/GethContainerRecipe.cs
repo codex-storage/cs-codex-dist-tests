@@ -2,7 +2,7 @@
 
 namespace DistTestCore.Marketplace
 {
-    public class GethContainerRecipe : ContainerRecipeFactory
+    public class GethContainerRecipe : DefaultContainerRecipe
     {
         private const string defaultArgs = "--ipcdisable --syncmode full";
 
@@ -13,7 +13,7 @@ namespace DistTestCore.Marketplace
         public override string AppName => "geth";
         public override string Image => "codexstorage/dist-tests-geth:latest";
 
-        protected override void Initialize(StartupConfig startupConfig)
+        protected override void InitializeRecipe(StartupConfig startupConfig)
         {
             var config = startupConfig.Get<GethStartupConfig>();
 

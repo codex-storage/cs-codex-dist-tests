@@ -5,6 +5,7 @@
         private readonly List<Port> exposedPorts = new List<Port>();
         private readonly List<Port> internalPorts = new List<Port>();
         private readonly List<EnvVar> envVars = new List<EnvVar>();
+        private readonly PodLabels podLabels = new PodLabels();
         private readonly PodAnnotations podAnnotations = new PodAnnotations();
         private readonly List<object> additionals = new List<object>();
         private RecipeComponentFactory factory = null!;
@@ -17,11 +18,18 @@
 
             Initialize(config);
 
-            var recipe = new ContainerRecipe(containerNumber, Image, exposedPorts.ToArray(), internalPorts.ToArray(), envVars.ToArray(), podAnnotations.Clone(), additionals.ToArray());
+            var recipe = new ContainerRecipe(containerNumber, Image,
+                exposedPorts.ToArray(),
+                internalPorts.ToArray(), 
+                envVars.ToArray(), 
+                podLabels.Clone(),
+                podAnnotations.Clone(),
+                additionals.ToArray());
 
             exposedPorts.Clear();
             internalPorts.Clear();
             envVars.Clear();
+            podLabels.Clear();
             podAnnotations.Clear();
             additionals.Clear();
             this.factory = null!;
@@ -74,6 +82,11 @@
         protected void AddEnvVar(string name, Port value)
         {
             envVars.Add(factory.CreateEnvVar(name, value.Number));
+        }
+
+        protected void AddPodLabel(string name, string value)
+        {
+            podLabels.Add(name, value);
         }
 
         protected void AddPodAnnotation(string name, string value)

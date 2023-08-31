@@ -53,7 +53,7 @@ namespace DistTestCore
             {
                 Stopwatch.Measure(fixtureLog, "Global setup", () =>
                 {
-                    var wc = new WorkflowCreator(fixtureLog, configuration.GetK8sConfiguration(GetTimeSet()), new PodLabels(TestsType, null!), string.Empty);
+                    var wc = new WorkflowCreator(fixtureLog, configuration.GetK8sConfiguration(GetTimeSet()), string.Empty);
                     wc.CreateWorkflow().DeleteAllResources();
                 });                
             }
@@ -202,8 +202,10 @@ namespace DistTestCore
                 lock (lifecycleLock)
                 {
                     var testNamespace = Guid.NewGuid().ToString();
-                    var lifecycle = new TestLifecycle(fixtureLog.CreateTestLog(), configuration, GetTimeSet(), TestsType, testNamespace);
+                    var lifecycle = new TestLifecycle(fixtureLog.CreateTestLog(), configuration, GetTimeSet(), testNamespace);
                     lifecycles.Add(testName, lifecycle);
+                    DefaultContainerRecipe.TestsType = TestsType;
+                    DefaultContainerRecipe.ApplicationIds = lifecycle.GetApplicationIds();
                 }
             });
         }

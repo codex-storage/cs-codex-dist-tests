@@ -3,7 +3,7 @@ using KubernetesWorkflow;
 
 namespace DistTestCore.Codex
 {
-    public class CodexContainerRecipe : ContainerRecipeFactory
+    public class CodexContainerRecipe : DefaultContainerRecipe
     {
         private const string DefaultDockerImage = "codexstorage/nim-codex:latest-dist-tests";
 
@@ -22,7 +22,7 @@ namespace DistTestCore.Codex
             Image = GetDockerImage();
         }
 
-        protected override void Initialize(StartupConfig startupConfig)
+        protected override void InitializeRecipe(StartupConfig startupConfig)
         {
             var config = startupConfig.Get<CodexStartupConfig>();
 

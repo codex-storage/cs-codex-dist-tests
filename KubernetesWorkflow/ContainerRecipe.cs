@@ -2,13 +2,14 @@
 {
     public class ContainerRecipe
     {
-        public ContainerRecipe(int number, string image, Port[] exposedPorts, Port[] internalPorts, EnvVar[] envVars, PodAnnotations podAnnotations, object[] additionals)
+        public ContainerRecipe(int number, string image, Port[] exposedPorts, Port[] internalPorts, EnvVar[] envVars, PodLabels podLabels, PodAnnotations podAnnotations, object[] additionals)
         {
             Number = number;
             Image = image;
             ExposedPorts = exposedPorts;
             InternalPorts = internalPorts;
             EnvVars = envVars;
+            PodLabels = podLabels;
             PodAnnotations = podAnnotations;
             Additionals = additionals;
         }
@@ -19,6 +20,7 @@
         public Port[] ExposedPorts { get; }
         public Port[] InternalPorts { get; }
         public EnvVar[] EnvVars { get; }
+        public PodLabels PodLabels { get; }
         public PodAnnotations PodAnnotations { get; }
         public object[] Additionals { get; }
 
