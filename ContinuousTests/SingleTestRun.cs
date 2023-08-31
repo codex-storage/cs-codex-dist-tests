@@ -36,7 +36,7 @@ namespace ContinuousTests
             fixtureLog = new FixtureLog(new LogConfig(config.LogPath, true), DateTime.UtcNow, testName);
             ApplyLogReplacements(fixtureLog, startupChecker);
 
-            nodes = CreateRandomNodes(handle.Test.RequiredNumberOfNodes);
+            nodes = CreateRandomNodes();
             dataFolder = config.DataPath + "-" + Guid.NewGuid();
             fileManager = new FileManager(fixtureLog, CreateFileManagerConfiguration());
         }
@@ -219,19 +219,26 @@ namespace ContinuousTests
         private void OverviewLog(string msg)
         {
             Log(msg);
-            var containerNames = $"({string.Join(",", nodes.Select(n => n.Container.Name))})";
+            var containerNames = GetContainerNames();
             overviewLog.Log($"{containerNames} {testName}: {msg}");
         }
 
-        private CodexAccess[] CreateRandomNodes(int number)
+        private string GetContainerNames()
         {
-            var containers = SelectRandomContainers(number);
+            if (handle.Test.RequiredNumberOfNodes == -1) return "(All Nodes)";
+            return $"({string.Join(",", nodes.Select(n => n.Container.Name))})";
+        }
+
+        private CodexAccess[] CreateRandomNodes()
+        {
+            var containers = SelectRandomContainers();
             fixtureLog.Log("Selected nodes: " + string.Join(",", containers.Select(c => c.Name)));
             return codexNodeFactory.Create(config, containers, fixtureLog, handle.Test.TimeSet);
         }
 
-        private RunningContainer[] SelectRandomContainers(int number)
+        private RunningContainer[] SelectRandomContainers()
         {
+            var number = handle.Test.RequiredNumberOfNodes;
             if (number == -1) return config.CodexDeployment.CodexContainers;
 
             var containers = config.CodexDeployment.CodexContainers.ToList();
