@@ -28,7 +28,7 @@ namespace KubernetesWorkflow
         public RunningContainers Start(int numberOfContainers, Location location, ContainerRecipeFactory recipeFactory, StartupConfig startupConfig)
         {
             var pl = podLabels.GetLabelsForAppName(recipeFactory.AppName);
-            var pa = podAnnotations.GetAnnotationsForAppName(recipeFactory.AppName);
+            var pa = recipeFactory.GetPodAnnotations();
 
             return K8s(controller =>
             {

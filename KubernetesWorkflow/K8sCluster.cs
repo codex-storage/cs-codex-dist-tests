@@ -8,7 +8,7 @@ namespace KubernetesWorkflow
         {
             Configuration = configuration;
         }
-       
+
         public Configuration Configuration { get; }
         public string HostAddress { get; private set; } = string.Empty;
         public K8sNodeLabel[] AvailableK8sNodes { get; set; } = new K8sNodeLabel[0];

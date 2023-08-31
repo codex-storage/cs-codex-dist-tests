@@ -1,28 +1,10 @@
-﻿using Logging;
-
-namespace KubernetesWorkflow
+﻿namespace KubernetesWorkflow
 {
     public class PodAnnotations
     {
         private readonly Dictionary<string, string> annotations = new Dictionary<string, string>();
 
-        private PodAnnotations(PodAnnotations source)
-        {
-            annotations = source.annotations.ToDictionary(p => p.Key, p => p.Value);
-        }
-
-        public PodAnnotations()
-        {
-        }
-
-        public PodAnnotations GetAnnotationsForAppName(string appName)
-        {
-            var pa = new PodAnnotations(this);
-            if (appName == "codex") pa.Add("prometheus.io/scrape", "true");
-            return pa;
-        }
-
-        private void Add(string key, string value)
+        public void Add(string key, string value)
         {
             annotations.Add(key, value);
         }

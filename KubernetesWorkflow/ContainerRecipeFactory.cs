@@ -5,6 +5,7 @@
         private readonly List<Port> exposedPorts = new List<Port>();
         private readonly List<Port> internalPorts = new List<Port>();
         private readonly List<EnvVar> envVars = new List<EnvVar>();
+        private PodAnnotations podAnnotations = new PodAnnotations();
         private readonly List<object> additionals = new List<object>();
         private RecipeComponentFactory factory = null!;
 
@@ -30,6 +31,10 @@
         public abstract string AppName { get; }
         public abstract string Image { get; }
         protected int ContainerNumber { get; private set; } = 0;
+        public PodAnnotations GetPodAnnotations()
+        {
+            return podAnnotations;
+        }
         protected int Index { get; private set; } = 0;
         protected abstract void Initialize(StartupConfig config);
 
@@ -72,6 +77,15 @@
         protected void AddEnvVar(string name, Port value)
         {
             envVars.Add(factory.CreateEnvVar(name, value.Number));
+        }
+
+        protected void AddPodAnnotation(string name, string value)
+        {
+            podAnnotations.Add(name, value);
+
+            // var tmp = podAnnotations;
+            // podAnnotations = new PodAnnotations();
+            // return tmp;
         }
 
         protected void Additional(object userData)
