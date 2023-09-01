@@ -61,22 +61,16 @@ namespace Tests.BasicTests
 
             var checkTime = DateTime.UtcNow + TimeSpan.FromMinutes(1);
             var endTime = DateTime.UtcNow + TimeSpan.FromHours(10);
-            var uploadInterval = 0;
             while (DateTime.UtcNow < endTime)
             {
                 CreatePeerConnectionTestHelpers().AssertFullyConnected(GetAllOnlineCodexNodes());
                 CheckRoutingTables(GetAllOnlineCodexNodes());
 
-                if (uploadInterval == 0)
-                {
-                    uploadInterval = 2;
-                    var node = RandomUtils.PickOneRandom(nodes.ToList());
-                    var file = GenerateTestFile(50.MB());
-                    node.UploadFile(file);
-                }
-                else uploadInterval--;
+                var node = RandomUtils.PickOneRandom(nodes.ToList());
+                var file = GenerateTestFile(50.MB());
+                node.UploadFile(file);
 
-                Thread.Sleep(30000);
+                Thread.Sleep(20000);
             }
         }
 
