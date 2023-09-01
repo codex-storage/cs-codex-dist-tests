@@ -4,6 +4,7 @@ using Utils;
 
 namespace Tests.BasicTests
 {
+    [Ignore("Used for debugging continuous tests")]
     [TestFixture]
     public class ContinuousSubstitute : AutoBootstrapDistTest
     {
@@ -60,16 +61,22 @@ namespace Tests.BasicTests
 
             var checkTime = DateTime.UtcNow + TimeSpan.FromMinutes(1);
             var endTime = DateTime.UtcNow + TimeSpan.FromHours(10);
+            var uploadInterval = 0;
             while (DateTime.UtcNow < endTime)
             {
                 CreatePeerConnectionTestHelpers().AssertFullyConnected(GetAllOnlineCodexNodes());
+                CheckRoutingTables(GetAllOnlineCodexNodes());
 
-                if (DateTime.UtcNow > checkTime)
+                if (uploadInterval == 0)
                 {
-                    CheckRoutingTables(GetAllOnlineCodexNodes());
+                    uploadInterval = 2;
+                    var node = RandomUtils.PickOneRandom(nodes.ToList());
+                    var file = GenerateTestFile(50.MB());
+                    node.UploadFile(file);
                 }
+                else uploadInterval--;
 
-                Thread.Sleep(5000);
+                Thread.Sleep(30000);
             }
         }
 
