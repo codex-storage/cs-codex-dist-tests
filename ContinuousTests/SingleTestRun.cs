@@ -142,7 +142,9 @@ namespace ContinuousTests
         private void DownloadClusterLogs()
         {
             var k8sFactory = new K8sFactory();
-            var lifecycle = k8sFactory.CreateTestLifecycle(config.KubeConfigFile, config.LogPath, "dataPath", config.CodexDeployment.Metadata.KubeNamespace, new DefaultTimeSet(), new NullLog());
+            var log = new NullLog();
+            log.FullFilename = Path.Combine(config.LogPath, "NODE");
+            var lifecycle = k8sFactory.CreateTestLifecycle(config.KubeConfigFile, config.LogPath, "dataPath", config.CodexDeployment.Metadata.KubeNamespace, new DefaultTimeSet(), log);
 
             foreach (var container in config.CodexDeployment.CodexContainers)
             {
