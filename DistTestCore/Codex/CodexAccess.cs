@@ -47,12 +47,6 @@ namespace DistTestCore.Codex
             return result;
         }
 
-        public int GetDebugFutures()
-        {
-            // Some Codex images support debug/futures to count the number of open futures.
-            return 0; // Http().HttpGetJson<CodexDebugFutures>("debug/futures").futures;
-        }
-
         public CodexDebugThresholdBreaches GetDebugThresholdBreaches()
         {
             return Http().HttpGetJson<CodexDebugThresholdBreaches>("debug/loop");

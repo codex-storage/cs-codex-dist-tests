@@ -124,7 +124,7 @@ namespace ContinuousTests
                     {
                         ThrowFailTest();
                     }
-                    OverviewLog(" > Test passed. " + FuturesInfo());
+                    OverviewLog(" > Test passed.");
                     return;
                 }
             }
@@ -135,17 +135,8 @@ namespace ContinuousTests
             var exs = UnpackExceptions(exceptions);
             var exceptionsMessage = GetCombinedExceptionsMessage(exs);
             Log(exceptionsMessage);
-            OverviewLog($" > Test failed {FuturesInfo()}: " + exceptionsMessage);
+            OverviewLog($" > Test failed: " + exceptionsMessage);
             throw new Exception(exceptionsMessage);
-        }
-
-        private string FuturesInfo()
-        {
-            var containers = config.CodexDeployment.CodexContainers;
-            var nodes = codexNodeFactory.Create(config, containers, fixtureLog, handle.Test.TimeSet);
-            var f = nodes.Select(n => n.GetDebugFutures().ToString());
-            var msg = $"(Futures: [{string.Join(", ", f)}])";
-            return msg;
         }
 
         private void DownloadClusterLogs()
