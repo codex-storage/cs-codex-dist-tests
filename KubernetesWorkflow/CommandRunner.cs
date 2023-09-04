@@ -1,5 +1,4 @@
-﻿using k8s;
-using Utils;
+﻿using Utils;
 
 namespace KubernetesWorkflow
 {

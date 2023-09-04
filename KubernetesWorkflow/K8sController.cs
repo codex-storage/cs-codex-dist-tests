@@ -11,16 +11,14 @@ namespace KubernetesWorkflow
         private readonly K8sCluster cluster;
         private readonly KnownK8sPods knownPods;
         private readonly WorkflowNumberSource workflowNumberSource;
-        private readonly PodLabels podLabels;
         private readonly K8sClient client;
 
-        public K8sController(BaseLog log, K8sCluster cluster, KnownK8sPods knownPods, WorkflowNumberSource workflowNumberSource, string testNamespace, PodLabels podLabels)
+        public K8sController(BaseLog log, K8sCluster cluster, KnownK8sPods knownPods, WorkflowNumberSource workflowNumberSource, string testNamespace)
         {
             this.log = log;
             this.cluster = cluster;
             this.knownPods = knownPods;
             this.workflowNumberSource = workflowNumberSource;
-            this.podLabels = podLabels;
             client = new K8sClient(cluster.GetK8sClientConfig());
 
             K8sTestNamespace = cluster.Configuration.K8sNamespacePrefix + testNamespace;
@@ -274,7 +272,7 @@ namespace KubernetesWorkflow
                                     {
                                         IpBlock = new V1IPBlock
                                         {
-                                          Cidr = "0.0.0.0/0"
+                                            Cidr = "0.0.0.0/0"
                                         }
                                     }
                                 },
@@ -316,19 +314,20 @@ namespace KubernetesWorkflow
             var deploymentSpec = new V1Deployment
             {
                 ApiVersion = "apps/v1",
-                Metadata = CreateDeploymentMetadata(),
+                Metadata = CreateDeploymentMetadata(containerRecipes),
                 Spec = new V1DeploymentSpec
                 {
                     Replicas = 1,
                     Selector = new V1LabelSelector
                     {
-                        MatchLabels = GetSelector()
+                        MatchLabels = GetSelector(containerRecipes)
                     },
                     Template = new V1PodTemplateSpec
                     {
                         Metadata = new V1ObjectMeta
                         {
-                            Labels = GetSelector()
+                            Labels = GetSelector(containerRecipes),
+                            Annotations = GetAnnotations(containerRecipes)
                         },
                         Spec = new V1PodSpec
                         {
@@ -362,9 +361,9 @@ namespace KubernetesWorkflow
             };
         }
 
-        private IDictionary<string, string> GetSelector()
+        private IDictionary<string, string> GetSelector(ContainerRecipe[] containerRecipes)
         {
-            return podLabels.GetLabels();
+            return containerRecipes.First().PodLabels.GetLabels();
         }
 
         private IDictionary<string, string> GetRunnerNamespaceSelector()
@@ -372,13 +371,19 @@ namespace KubernetesWorkflow
             return new Dictionary<string, string> { { "kubernetes.io/metadata.name", "default" } };
         }
 
-        private V1ObjectMeta CreateDeploymentMetadata()
+        private IDictionary<string, string> GetAnnotations(ContainerRecipe[] containerRecipes)
+        {
+            return containerRecipes.First().PodAnnotations.GetAnnotations();
+        }
+
+        private V1ObjectMeta CreateDeploymentMetadata(ContainerRecipe[] containerRecipes)
         {
             return new V1ObjectMeta
             {
                 Name = "deploy-" + workflowNumberSource.WorkflowNumber,
                 NamespaceProperty = K8sTestNamespace,
-                Labels = GetSelector()
+                Labels = GetSelector(containerRecipes),
+                Annotations = GetAnnotations(containerRecipes)
             };
         }
 
@@ -425,7 +430,7 @@ namespace KubernetesWorkflow
             return new V1ContainerPort
             {
                 Name = GetNameForPort(recipe, port),
-                ContainerPort = port.Number 
+                ContainerPort = port.Number
             };
         }
 
@@ -458,7 +463,7 @@ namespace KubernetesWorkflow
                 Spec = new V1ServiceSpec
                 {
                     Type = "NodePort",
-                    Selector = GetSelector(),
+                    Selector = GetSelector(containerRecipes),
                     Ports = ports
                 }
             };

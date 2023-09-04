@@ -2,12 +2,12 @@
 
 namespace DistTestCore.Metrics
 {
-    public class PrometheusContainerRecipe : ContainerRecipeFactory
+    public class PrometheusContainerRecipe : DefaultContainerRecipe
     {
         public override string AppName => "prometheus";
         public override string Image => "codexstorage/dist-tests-prometheus:latest";
 
-        protected override void Initialize(StartupConfig startupConfig)
+        protected override void InitializeRecipe(StartupConfig startupConfig)
         {
             var config = startupConfig.Get<PrometheusStartupConfig>();
 

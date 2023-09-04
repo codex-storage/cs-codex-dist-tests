@@ -74,7 +74,10 @@ namespace CodexNetDeployer
                 k8sNamespacePrefix: config.KubeNamespace
             );
 
-            return new TestLifecycle(new NullLog(), lifecycleConfig, timeset, config.TestsTypePodLabel, string.Empty);
+            var lifecycle = new TestLifecycle(new NullLog(), lifecycleConfig, timeset, string.Empty);
+            DefaultContainerRecipe.TestsType = config.TestsTypePodLabel;
+            DefaultContainerRecipe.ApplicationIds = lifecycle.GetApplicationIds();
+            return lifecycle;
         }
 
         private (RunningContainer?, GrafanaStartInfo?) StartMetricsService(TestLifecycle lifecycle, CodexSetup setup, IEnumerable<RunningContainer> codexContainers)

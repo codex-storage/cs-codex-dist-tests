@@ -19,7 +19,10 @@ namespace ContinuousTests
                 k8sNamespacePrefix: customNamespace
             );
 
-            return new TestLifecycle(log, lifecycleConfig, timeSet, "continuous-tests", string.Empty);
+            var lifecycle = new TestLifecycle(log, lifecycleConfig, timeSet, string.Empty);
+            DefaultContainerRecipe.TestsType = "continuous-tests";
+            DefaultContainerRecipe.ApplicationIds = lifecycle.GetApplicationIds();
+            return lifecycle;
         }
 
         private static string? GetKubeConfig(string kubeConfigFile)

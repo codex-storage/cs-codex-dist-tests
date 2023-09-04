@@ -12,14 +12,13 @@ namespace DistTestCore
     {
         private readonly DateTime testStart;
 
-        public TestLifecycle(BaseLog log, Configuration configuration, ITimeSet timeSet, string testsType, string testNamespace)
+        public TestLifecycle(BaseLog log, Configuration configuration, ITimeSet timeSet, string testNamespace)
         {
             Log = log;
             Configuration = configuration;
             TimeSet = timeSet;
 
-            var podLabels = new PodLabels(testsType, GetApplicationIds());
-            WorkflowCreator = new WorkflowCreator(log, configuration.GetK8sConfiguration(timeSet), podLabels, testNamespace);
+            WorkflowCreator = new WorkflowCreator(log, configuration.GetK8sConfiguration(timeSet), testNamespace);
 
             FileManager = new FileManager(Log, configuration);
             CodexStarter = new CodexStarter(this);
