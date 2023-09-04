@@ -2,7 +2,7 @@
 
 namespace DistTestCore.Metrics
 {
-    public class GrafanaContainerRecipe : ContainerRecipeFactory
+    public class GrafanaContainerRecipe : DefaultContainerRecipe
     {
         public override string AppName => "grafana";
         public override string Image => "grafana/grafana-oss:10.0.3";
@@ -10,7 +10,7 @@ namespace DistTestCore.Metrics
         public const string DefaultAdminUser = "adminium";
         public const string DefaultAdminPassword = "passwordium";
 
-        protected override void Initialize(StartupConfig startupConfig)
+        protected override void InitializeRecipe(StartupConfig startupConfig)
         {
             AddExposedPort(3000);
 

@@ -3,14 +3,14 @@ using KubernetesWorkflow;
 
 namespace DistTestCore.Codex
 {
-    public class CodexContainerRecipe : ContainerRecipeFactory
+    public class CodexContainerRecipe : DefaultContainerRecipe
     {
         private const string DefaultDockerImage = "codexstorage/nim-codex:latest-dist-tests";
 
         public const string MetricsPortTag = "metrics_port";
         public const string DiscoveryPortTag = "discovery-port";
 
-        // Used by tests for time-constraint assersions.
+        // Used by tests for time-constraint assertions.
         public static readonly TimeSpan MaxUploadTimePerMegabyte = TimeSpan.FromSeconds(2.0);
         public static readonly TimeSpan MaxDownloadTimePerMegabyte = TimeSpan.FromSeconds(2.0);
 
@@ -22,7 +22,7 @@ namespace DistTestCore.Codex
             Image = GetDockerImage();
         }
 
-        protected override void Initialize(StartupConfig startupConfig)
+        protected override void InitializeRecipe(StartupConfig startupConfig)
         {
             var config = startupConfig.Get<CodexStartupConfig>();
 
@@ -61,9 +61,12 @@ namespace DistTestCore.Codex
             }
             if (config.MetricsMode != Metrics.MetricsMode.None)
             {
+                var metricsPort = AddInternalPort(MetricsPortTag);
                 AddEnvVar("CODEX_METRICS", "true");
                 AddEnvVar("CODEX_METRICS_ADDRESS", "0.0.0.0");
-                AddInternalPortAndVar("CODEX_METRICS_PORT", tag: MetricsPortTag);
+                AddEnvVar("CODEX_METRICS_PORT", metricsPort);
+                AddPodAnnotation("prometheus.io/scrape", "true");
+                AddPodAnnotation("prometheus.io/port", metricsPort.Number.ToString());
             }
 
             if (config.MarketplaceConfig != null)

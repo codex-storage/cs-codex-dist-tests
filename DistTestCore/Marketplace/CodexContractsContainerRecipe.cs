@@ -2,7 +2,7 @@
 
 namespace DistTestCore.Marketplace
 {
-    public class CodexContractsContainerRecipe : ContainerRecipeFactory
+    public class CodexContractsContainerRecipe : DefaultContainerRecipe
     {
         public const string MarketplaceAddressFilename = "/hardhat/deployments/codexdisttestnetwork/Marketplace.json";
         public const string MarketplaceArtifactFilename = "/hardhat/artifacts/contracts/Marketplace.sol/Marketplace.json";
@@ -10,7 +10,7 @@ namespace DistTestCore.Marketplace
         public override string AppName => "codex-contracts";
         public override string Image => "codexstorage/codex-contracts-eth:latest-dist-tests";
 
-        protected override void Initialize(StartupConfig startupConfig)
+        protected override void InitializeRecipe(StartupConfig startupConfig)
         {
             var config = startupConfig.Get<CodexContractsContainerConfig>();
 
