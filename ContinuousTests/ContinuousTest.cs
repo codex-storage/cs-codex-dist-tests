@@ -1,5 +1,7 @@
 ﻿using DistTestCore;
 using DistTestCore.Codex;
+using DistTestCore.Logs;
+using KubernetesWorkflow;
 using Logging;
 
 namespace ContinuousTests
@@ -85,6 +87,12 @@ namespace ContinuousTests
             Stopwatch.Measure(Log, logMessage, () => DownloadToFile(node, contentId.Id, file));
             Log.Log($"Downloaded file {file.Describe()} to '{file.Filename}'.");
             return file;
+        }
+
+        public IDownloadedLog DownloadContainerLog(RunningContainer container, int? tailLines = null)
+        {
+            var nodeRunner = new NodeRunner(Nodes, Configuration, TimeSet, Log, Configuration.CodexDeployment.Metadata.KubeNamespace, EthereumAccountIndex);
+            return nodeRunner.DownloadLog(container, tailLines);
         }
 
         private void DownloadToFile(CodexAccess node, string contentId, TestFile file)

@@ -1,5 +1,6 @@
 ﻿using Logging;
 using Newtonsoft.Json;
+using Serialization = Newtonsoft.Json.Serialization;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using Utils;
@@ -54,11 +55,16 @@ namespace DistTestCore
 
         public TResponse HttpPostJson<TRequest, TResponse>(string route, TRequest body)
         {
-            var json = HttpPostJson(route, body);
+            var response = HttpPostJson(route, body);
+            var json = Time.Wait(response.Content.ReadAsStringAsync());
+            if(!response.IsSuccessStatusCode) {
+                throw new HttpRequestException(json);
+            }
+            Log(GetUrl() + route, json);
             return TryJsonDeserialize<TResponse>(json);
         }
 
-        public string HttpPostJson<TRequest>(string route, TRequest body)
+        public HttpResponseMessage HttpPostJson<TRequest>(string route, TRequest body)
         {
             return Retry(() =>
             {
@@ -66,10 +72,7 @@ namespace DistTestCore
                 var url = GetUrl() + route;
                 using var content = JsonContent.Create(body);
                 Log(url, JsonConvert.SerializeObject(body));
-                var result = Time.Wait(client.PostAsync(url, content));
-                var str = Time.Wait(result.Content.ReadAsStringAsync());
-                Log(url, str);
-                return str;
+                return Time.Wait(client.PostAsync(url, content));
             }, $"HTTP-POST-JSON: {route}");
         }
 
@@ -118,15 +121,28 @@ namespace DistTestCore
 
         public T TryJsonDeserialize<T>(string json)
         {
-            try
-            {
-                return JsonConvert.DeserializeObject<T>(json)!;
+            var errors = new List<string>();
+            var deserialized = JsonConvert.DeserializeObject<T>(json, new JsonSerializerSettings(){
+                Error = delegate(object? sender, Serialization.ErrorEventArgs args)
+                {
+                    if (args.CurrentObject == args.ErrorContext.OriginalObject)
+                    {
+                        errors.Add($"""
+                                    Member: '{args.ErrorContext.Member?.ToString() ?? "<null>"}'
+                                    Path: {args.ErrorContext.Path}
+                                    Error: {args.ErrorContext.Error.Message}
+                                    """);
+                        args.ErrorContext.Handled = true;
+                    }
+                }
+            });
+            if (errors.Count() > 0) {
+                throw new JsonSerializationException($"Failed to deserialize JSON '{json}' with exception(s): \n{string.Join("\n", errors)}");
             }
-            catch (Exception exception)
-            {
-                var msg = $"Failed to deserialize JSON: '{json}' with exception: {exception}";
-                throw new InvalidOperationException(msg, exception);
+            else if (deserialized == null) {
+                throw new JsonSerializationException($"Failed to deserialize JSON '{json}': resulting deserialized object is null");
             }
+            return deserialized;
         }
 
         private string GetUrl()

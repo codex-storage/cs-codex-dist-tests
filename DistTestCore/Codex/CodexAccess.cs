@@ -75,7 +75,7 @@ namespace DistTestCore.Codex
 
         public string RequestStorage(CodexSalesRequestStorageRequest request, string contentId)
         {
-            return Http().HttpPostJson($"storage/request/{contentId}", request);
+            return Http().HttpPostJson<CodexSalesRequestStorageRequest, string>($"storage/request/{contentId}", request);
         }
 
         public CodexStoragePurchase GetPurchaseStatus(string purchaseId)
@@ -88,13 +88,17 @@ namespace DistTestCore.Codex
             return Http().HttpGetString($"connect/{peerId}?addrs={peerMultiAddress}");
         }
 
-        private Http Http()
+        public string GetName()
         {
-            CheckContainerCrashed();
-            return new Http(log, timeSet, Address, baseUrl: "/api/codex/v1", Container.Name);
+            return Container.Name;
         }
 
-        private void CheckContainerCrashed()
+        private Http Http()
+        {
+            return new Http(log, timeSet, Address, baseUrl: "/api/codex/v1", CheckContainerCrashed, Container.Name);
+        }
+
+        private void CheckContainerCrashed(HttpClient client)
         {
             if (hasContainerCrashed) throw new Exception("Container has crashed.");
         }

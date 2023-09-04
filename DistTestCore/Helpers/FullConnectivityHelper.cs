@@ -1,4 +1,5 @@
 ﻿using DistTestCore.Codex;
+using Logging;
 using NUnit.Framework;
 using Utils;
 
@@ -14,23 +15,23 @@ namespace DistTestCore.Helpers
     public class FullConnectivityHelper
     {
         private static string Nl = Environment.NewLine;
-        private readonly DistTest test;
+        private readonly BaseLog log;
         private readonly IFullConnectivityImplementation implementation;
 
-        public FullConnectivityHelper(DistTest test, IFullConnectivityImplementation implementation)
+        public FullConnectivityHelper(BaseLog log, IFullConnectivityImplementation implementation)
         {
-            this.test = test;
+            this.log = log;
             this.implementation = implementation;
         }
 
-        public void AssertFullyConnected(IEnumerable<IOnlineCodexNode> nodes)
+        public void AssertFullyConnected(IEnumerable<CodexAccess> nodes)
         {
             AssertFullyConnected(nodes.ToArray());
         }
 
-        private void AssertFullyConnected(IOnlineCodexNode[] nodes)
+        private void AssertFullyConnected(CodexAccess[] nodes)
         {
-            test.Log($"Asserting '{implementation.Description()}' for nodes: '{string.Join(",", nodes.Select(n => n.GetName()))}'...");
+            Log($"Asserting '{implementation.Description()}' for nodes: '{string.Join(",", nodes.Select(n => n.GetName()))}'...");
             var entries = CreateEntries(nodes);
             var pairs = CreatePairs(entries);
 
@@ -43,19 +44,19 @@ namespace DistTestCore.Helpers
             {
                 var pairDetails = string.Join(Nl, pairs.SelectMany(p => p.GetResultMessages()));
 
-                test.Log($"Connections failed:{Nl}{pairDetails}");
+                Log($"Connections failed:{Nl}{pairDetails}");
 
                 Assert.Fail(string.Join(Nl, pairs.SelectMany(p => p.GetResultMessages())));
             }
             else
             {
-                test.Log($"'{implementation.Description()}' = Success! for nodes: {string.Join(",", nodes.Select(n => n.GetName()))}");
+                Log($"'{implementation.Description()}' = Success! for nodes: {string.Join(",", nodes.Select(n => n.GetName()))}");
             }
         }
 
         private static void RetryWhilePairs(List<Pair> pairs, Action action)
         {
-            var timeout = DateTime.UtcNow + TimeSpan.FromMinutes(5);
+            var timeout = DateTime.UtcNow + TimeSpan.FromMinutes(2);
             while (pairs.Any(p => p.Inconclusive) && timeout > DateTime.UtcNow)
             {
                 action();
@@ -72,7 +73,7 @@ namespace DistTestCore.Helpers
 
             foreach (var pair in selectedPair)
             {
-                test.ScopedTestFiles(pair.Check);
+                pair.Check();
 
                 if (pair.Success)
                 {
@@ -81,10 +82,10 @@ namespace DistTestCore.Helpers
                 }
             }
 
-            test.Log($"Connections successful:{Nl}{string.Join(Nl, pairDetails)}");
+            Log($"Connections successful:{Nl}{string.Join(Nl, pairDetails)}");
         }
 
-        private Entry[] CreateEntries(IOnlineCodexNode[] nodes)
+        private Entry[] CreateEntries(CodexAccess[] nodes)
         {
             var entries = nodes.Select(n => new Entry(n)).ToArray();
 
@@ -117,15 +118,20 @@ namespace DistTestCore.Helpers
             }
         }
 
+        private void Log(string msg)
+        {
+            log.Log(msg);
+        }
+
         public class Entry
         {
-            public Entry(IOnlineCodexNode node)
+            public Entry(CodexAccess node)
             {
                 Node = node;
                 Response = node.GetDebugInfo();
             }
 
-            public IOnlineCodexNode Node { get; }
+            public CodexAccess Node { get; }
             public CodexDebugResponse Response { get; }
 
             public override string ToString()

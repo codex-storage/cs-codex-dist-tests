@@ -156,9 +156,16 @@ namespace ContinuousTests
         {
             foreach (var test in tests)
             {
-                if (test.RequiredNumberOfNodes > config.CodexDeployment.CodexContainers.Length)
+                if (test.RequiredNumberOfNodes != -1)
                 {
-                    errors.Add($"Test '{test.Name}' requires {test.RequiredNumberOfNodes} nodes. Deployment only has {config.CodexDeployment.CodexContainers.Length}");
+                    if (test.RequiredNumberOfNodes < 1)
+                    {
+                        errors.Add($"Test '{test.Name}' requires {test.RequiredNumberOfNodes} nodes. Test must require > 0 nodes, or -1 to select all nodes.");
+                    }
+                    else if (test.RequiredNumberOfNodes > config.CodexDeployment.CodexContainers.Length)
+                    {
+                        errors.Add($"Test '{test.Name}' requires {test.RequiredNumberOfNodes} nodes. Deployment only has {config.CodexDeployment.CodexContainers.Length}");
+                    }
                 }
             }
         }

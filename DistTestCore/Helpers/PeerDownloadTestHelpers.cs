@@ -1,21 +1,30 @@
-﻿using static DistTestCore.Helpers.FullConnectivityHelper;
+﻿using DistTestCore.Codex;
+using Logging;
+using static DistTestCore.Helpers.FullConnectivityHelper;
 
 namespace DistTestCore.Helpers
 {
     public class PeerDownloadTestHelpers : IFullConnectivityImplementation
     {
         private readonly FullConnectivityHelper helper;
-        private readonly DistTest test;
+        private readonly BaseLog log;
+        private readonly FileManager fileManager;
         private ByteSize testFileSize;
 
-        public PeerDownloadTestHelpers(DistTest test)
+        public PeerDownloadTestHelpers(BaseLog log, FileManager fileManager)
         {
-            helper = new FullConnectivityHelper(test, this);
+            helper = new FullConnectivityHelper(log, this);
             testFileSize = 1.MB();
-            this.test = test;
+            this.log = log;
+            this.fileManager = fileManager;
         }
 
         public void AssertFullDownloadInterconnectivity(IEnumerable<IOnlineCodexNode> nodes, ByteSize testFileSize)
+        {
+            AssertFullDownloadInterconnectivity(nodes.Select(n => ((OnlineCodexNode)n).CodexAccess), testFileSize);
+        }
+
+        public void AssertFullDownloadInterconnectivity(IEnumerable<CodexAccess> nodes, ByteSize testFileSize)
         {
             this.testFileSize = testFileSize;
             helper.AssertFullyConnected(nodes);
@@ -33,13 +42,15 @@ namespace DistTestCore.Helpers
 
         public PeerConnectionState Check(Entry from, Entry to)
         {
+            fileManager.PushFileSet();
             var expectedFile = GenerateTestFile(from.Node, to.Node);
 
-            var contentId = from.Node.UploadFile(expectedFile);
+            using var uploadStream = File.OpenRead(expectedFile.Filename);
+            var contentId = Stopwatch.Measure(log, "Upload", () => from.Node.UploadFile(uploadStream));
 
             try
             {
-                var downloadedFile = to.Node.DownloadContent(contentId, expectedFile.Label + "_downloaded");
+                var downloadedFile = Stopwatch.Measure(log, "Download", () => DownloadFile(to.Node, contentId, expectedFile.Label + "_downloaded"));
                 expectedFile.AssertIsEqual(downloadedFile);
                 return PeerConnectionState.Connection;
             }
@@ -49,16 +60,29 @@ namespace DistTestCore.Helpers
                 // We consider that as no-connection for the purpose of this test.
                 return PeerConnectionState.NoConnection;
             }
+            finally
+            {
+                fileManager.PopFileSet();
+            }
 
             // Should an exception occur during upload, then this try is inconclusive and we try again next loop.
         }
 
-        private TestFile GenerateTestFile(IOnlineCodexNode uploader, IOnlineCodexNode downloader)
+        private TestFile DownloadFile(CodexAccess node, string contentId, string label)
+        {
+            var downloadedFile = fileManager.CreateEmptyTestFile(label);
+            using var downloadStream = File.OpenWrite(downloadedFile.Filename);
+            using var stream = node.DownloadFile(contentId);
+            stream.CopyTo(downloadStream);
+            return downloadedFile;
+        }
+
+        private TestFile GenerateTestFile(CodexAccess uploader, CodexAccess downloader)
         {
             var up = uploader.GetName().Replace("<", "").Replace(">", "");
             var down = downloader.GetName().Replace("<", "").Replace(">", "");
             var label = $"~from:{up}-to:{down}~";
-            return test.GenerateTestFile(testFileSize, label);
+            return fileManager.GenerateTestFile(testFileSize, label);
         }
     }
 }

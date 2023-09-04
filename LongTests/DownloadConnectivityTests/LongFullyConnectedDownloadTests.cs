@@ -1,5 +1,4 @@
-﻿using DistTestCore.Helpers;
-using DistTestCore;
+﻿using DistTestCore;
 using NUnit.Framework;
 
 namespace TestsLong.DownloadConnectivityTests
@@ -16,7 +15,7 @@ namespace TestsLong.DownloadConnectivityTests
         {
             for (var i = 0; i < numberOfNodes; i++) SetupCodexNode();
 
-            PeerDownloadTestHelpers.AssertFullDownloadInterconnectivity(GetAllOnlineCodexNodes(), sizeMBs.MB());
+            CreatePeerDownloadTestHelpers().AssertFullDownloadInterconnectivity(GetAllOnlineCodexNodes(), sizeMBs.MB());
         }
     }
 }

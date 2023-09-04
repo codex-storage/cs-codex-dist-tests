@@ -6,7 +6,7 @@ namespace ContinuousTests.Tests
     public class TwoClientTest : ContinuousTest
     {
         public override int RequiredNumberOfNodes => 2;
-        public override TimeSpan RunTestEvery => TimeSpan.FromSeconds(30);
+        public override TimeSpan RunTestEvery => TimeSpan.FromMinutes(1);
         public override TestFailMode TestFailMode => TestFailMode.StopAfterFirstFailure;
 
         private ContentId? cid;
