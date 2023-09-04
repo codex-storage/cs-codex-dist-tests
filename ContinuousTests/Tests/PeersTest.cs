@@ -7,7 +7,7 @@ namespace ContinuousTests.Tests
     public class PeersTest : ContinuousTest
     {
         public override int RequiredNumberOfNodes => -1;
-        public override TimeSpan RunTestEvery => TimeSpan.FromSeconds(30);
+        public override TimeSpan RunTestEvery => TimeSpan.FromMinutes(2);
         public override TestFailMode TestFailMode => TestFailMode.AlwaysRunAllMoments;
 
         [TestMoment(t: 0)]
