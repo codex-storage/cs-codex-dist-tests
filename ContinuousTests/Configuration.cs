@@ -22,8 +22,8 @@ namespace ContinuousTests
         [Uniform("kube-config", "kc", "KUBECONFIG", true, "Path to Kubeconfig file. Use 'null' (default) to use local cluster.")]
         public string KubeConfigFile { get; set; } = "null";
 
-        [Uniform("stop", "s", "STOPONFAIL", false, "If true, runner will stop on first test failure and download all cluster container logs. False by default.")]
-        public bool StopOnFailure { get; set; } = false;
+        [Uniform("stop", "s", "STOPONFAIL", false, "If greater than zero, runner will stop after this many test failures and download all cluster container logs. 0 by default.")]
+        public int StopOnFailure { get; set; } = 0;
 
         [Uniform("dl-logs", "dl", "DLLOGS", false, "If true, runner will periodically download and save/append container logs to the log path.")]
         public bool DownloadContainerLogs { get; set; } = false;

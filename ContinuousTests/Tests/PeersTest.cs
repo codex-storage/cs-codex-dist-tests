@@ -1,4 +1,5 @@
 ﻿using DistTestCore.Codex;
+using DistTestCore.Helpers;
 using NUnit.Framework;
 
 namespace ContinuousTests.Tests
@@ -10,10 +11,24 @@ namespace ContinuousTests.Tests
         public override TestFailMode TestFailMode => TestFailMode.AlwaysRunAllMoments;
 
         [TestMoment(t: 0)]
+        public void CheckConnectivity()
+        {
+            var checker = new PeerConnectionTestHelpers(Log);
+            checker.AssertFullyConnected(Nodes);
+        }
+
+        [TestMoment(t: 10)]
         public void CheckRoutingTables()
         {
-            var allIds = Nodes.Select(n => n.GetDebugInfo().table.localNode.nodeId).ToArray();
+            var allInfos = Nodes.Select(n =>
+            {
+                var info = n.GetDebugInfo();
+                Log.Log($"{n.GetName()} = {info.table.localNode.nodeId}");
+                Log.AddStringReplace(info.table.localNode.nodeId, n.GetName());
+                return info;
+            }).ToArray();
 
+            var allIds = allInfos.Select(i => i.table.localNode.nodeId).ToArray();
             var errors = Nodes.Select(n => AreAllPresent(n, allIds)).Where(s => !string.IsNullOrEmpty(s)).ToArray();
 
             if (errors.Any())
@@ -30,7 +45,10 @@ namespace ContinuousTests.Tests
 
             if (!expected.All(ex => known.Contains(ex)))
             {
-                return $"Not all of '{string.Join(",", expected)}' were present in routing table: '{string.Join(",", known)}'";
+                var nl = Environment.NewLine;
+                return $"{nl}At node '{info.table.localNode.nodeId}'{nl}" +
+                    $"Not all of{nl}'{string.Join(",", expected)}'{nl}" +
+                    $"were present in routing table:{nl}'{string.Join(",", known)}'";
             }
 
             return string.Empty;

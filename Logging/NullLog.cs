@@ -6,9 +6,11 @@
         {
         }
 
+        public string FullFilename { get; set; } = "NULL";
+
         protected override string GetFullName()
         {
-            return "NULL";
+            return FullFilename;
         }
 
         public override void Log(string message)

@@ -28,6 +28,7 @@ namespace CodexNetDeployer
             var workflowStartup = new StartupConfig();
             workflowStartup.Add(gethResult);
             workflowStartup.Add(CreateCodexStartupConfig(bootstrapSpr, i, validatorsLeft));
+            workflowStartup.NameOverride = GetCodexContainerName(i);
 
             var containers = workflow.Start(1, Location.Unspecified, new CodexContainerRecipe(), workflowStartup);
 
@@ -73,6 +74,12 @@ namespace CodexNetDeployer
             lifecycle.DownloadLog(container);
 
             return null;
+        }
+
+        private string GetCodexContainerName(int i)
+        {
+            if (i == 0) return "BOOTSTRAP";
+            return "CODEX" + i;
         }
 
         private CodexStartupConfig CreateCodexStartupConfig(string bootstrapSpr, int i, int validatorsLeft)

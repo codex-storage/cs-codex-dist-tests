@@ -55,25 +55,20 @@ namespace DistTestCore
 
         public TResponse HttpPostJson<TRequest, TResponse>(string route, TRequest body)
         {
-            var response = HttpPostJson(route, body);
+            var response = PostJson(route, body);
             var json = Time.Wait(response.Content.ReadAsStringAsync());
-            if(!response.IsSuccessStatusCode) {
+            if (!response.IsSuccessStatusCode)
+            {
                 throw new HttpRequestException(json);
             }
             Log(GetUrl() + route, json);
             return TryJsonDeserialize<TResponse>(json);
         }
 
-        public HttpResponseMessage HttpPostJson<TRequest>(string route, TRequest body)
+        public string HttpPostJson<TRequest>(string route, TRequest body)
         {
-            return Retry(() =>
-            {
-                using var client = GetClient();
-                var url = GetUrl() + route;
-                using var content = JsonContent.Create(body);
-                Log(url, JsonConvert.SerializeObject(body));
-                return Time.Wait(client.PostAsync(url, content));
-            }, $"HTTP-POST-JSON: {route}");
+            var response = PostJson<TRequest>(route, body);
+            return Time.Wait(response.Content.ReadAsStringAsync());
         }
 
         public string HttpPostString(string route, string body)
@@ -122,7 +117,8 @@ namespace DistTestCore
         public T TryJsonDeserialize<T>(string json)
         {
             var errors = new List<string>();
-            var deserialized = JsonConvert.DeserializeObject<T>(json, new JsonSerializerSettings(){
+            var deserialized = JsonConvert.DeserializeObject<T>(json, new JsonSerializerSettings()
+            {
                 Error = delegate(object? sender, Serialization.ErrorEventArgs args)
                 {
                     if (args.CurrentObject == args.ErrorContext.OriginalObject)
@@ -136,13 +132,27 @@ namespace DistTestCore
                     }
                 }
             });
-            if (errors.Count() > 0) {
+            if (errors.Count() > 0)
+            {
                 throw new JsonSerializationException($"Failed to deserialize JSON '{json}' with exception(s): \n{string.Join("\n", errors)}");
             }
-            else if (deserialized == null) {
+            else if (deserialized == null)
+            {
                 throw new JsonSerializationException($"Failed to deserialize JSON '{json}': resulting deserialized object is null");
             }
             return deserialized;
+        }
+
+        private HttpResponseMessage PostJson<TRequest>(string route, TRequest body)
+        {
+            return Retry(() =>
+            {
+                using var client = GetClient();
+                var url = GetUrl() + route;
+                using var content = JsonContent.Create(body);
+                Log(url, JsonConvert.SerializeObject(body));
+                return Time.Wait(client.PostAsync(url, content));
+            }, $"HTTP-POST-JSON: {route}");
         }
 
         private string GetUrl()

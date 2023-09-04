@@ -9,16 +9,18 @@ namespace ContinuousTests
         private readonly BaseLog overviewLog;
         private readonly Type testType;
         private readonly TimeSpan runsEvery;
+        private readonly StartupChecker startupChecker;
         private readonly CancellationToken cancelToken;
         private readonly EventWaitHandle runFinishedHandle = new EventWaitHandle(true, EventResetMode.ManualReset);
 
-        public TestLoop(TaskFactory taskFactory, Configuration config, BaseLog overviewLog, Type testType, TimeSpan runsEvery, CancellationToken cancelToken)
+        public TestLoop(TaskFactory taskFactory, Configuration config, BaseLog overviewLog, Type testType, TimeSpan runsEvery, StartupChecker startupChecker, CancellationToken cancelToken)
         {
             this.taskFactory = taskFactory;
             this.config = config;
             this.overviewLog = overviewLog;
             this.testType = testType;
             this.runsEvery = runsEvery;
+            this.startupChecker = startupChecker;
             this.cancelToken = cancelToken;
             Name = testType.Name;
         }
@@ -58,7 +60,7 @@ namespace ContinuousTests
         {
             var test = (ContinuousTest)Activator.CreateInstance(testType)!;
             var handle = new TestHandle(test);
-            var run = new SingleTestRun(taskFactory, config, overviewLog, handle, cancelToken);
+            var run = new SingleTestRun(taskFactory, config, overviewLog, handle, startupChecker, cancelToken);
 
             runFinishedHandle.Reset();
             run.Run(runFinishedHandle);

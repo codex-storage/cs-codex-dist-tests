@@ -23,8 +23,9 @@ namespace ContinuousTests
         private readonly FixtureLog fixtureLog;
         private readonly string testName;
         private readonly string dataFolder;
+        private static int failureCount = 0;
 
-        public SingleTestRun(TaskFactory taskFactory, Configuration config, BaseLog overviewLog, TestHandle handle, CancellationToken cancelToken)
+        public SingleTestRun(TaskFactory taskFactory, Configuration config, BaseLog overviewLog, TestHandle handle, StartupChecker startupChecker, CancellationToken cancelToken)
         {
             this.taskFactory = taskFactory;
             this.config = config;
@@ -33,8 +34,9 @@ namespace ContinuousTests
             this.cancelToken = cancelToken;
             testName = handle.Test.GetType().Name;
             fixtureLog = new FixtureLog(new LogConfig(config.LogPath, true), DateTime.UtcNow, testName);
+            ApplyLogReplacements(fixtureLog, startupChecker);
 
-            nodes = CreateRandomNodes(handle.Test.RequiredNumberOfNodes);
+            nodes = CreateRandomNodes();
             dataFolder = config.DataPath + "-" + Guid.NewGuid();
             fileManager = new FileManager(fixtureLog, CreateFileManagerConfiguration());
         }
@@ -71,14 +73,24 @@ namespace ContinuousTests
                 fixtureLog.Error("Test run failed with exception: " + ex);
                 fixtureLog.MarkAsFailed();
 
-                if (config.StopOnFailure)
+                failureCount++;
+                if (config.StopOnFailure > 0)
                 {
-                    OverviewLog("Configured to stop on first failure. Downloading cluster logs...");
-                    DownloadClusterLogs();
-                    OverviewLog("Log download finished. Cancelling test runner...");
-                    Cancellation.Cts.Cancel();
+                    OverviewLog($"Failures: {failureCount} / {config.StopOnFailure}");
+                    if (failureCount >= config.StopOnFailure)
+                    {
+                        OverviewLog($"Configured to stop after {config.StopOnFailure} failures. Downloading cluster logs...");
+                        DownloadClusterLogs();
+                        OverviewLog("Log download finished. Cancelling test runner...");
+                        Cancellation.Cts.Cancel();
+                    }
                 }
             }
+        }
+
+        private void ApplyLogReplacements(FixtureLog fixtureLog, StartupChecker startupChecker)
+        {
+            foreach (var replacement in startupChecker.LogReplacements) fixtureLog.AddStringReplace(replacement.From, replacement.To);
         }
 
         private void RunTestMoments()
@@ -112,7 +124,7 @@ namespace ContinuousTests
                     {
                         ThrowFailTest();
                     }
-                    OverviewLog(" > Test passed. " + FuturesInfo());
+                    OverviewLog(" > Test passed.");
                     return;
                 }
             }
@@ -120,30 +132,34 @@ namespace ContinuousTests
 
         private void ThrowFailTest()
         {
-            var ex = UnpackException(exceptions.First());
-            Log(ex.ToString());
-            OverviewLog($" > Test failed {FuturesInfo()}: " + ex.Message);
-            throw ex;
-        }
-
-        private string FuturesInfo()
-        {
-            var containers = config.CodexDeployment.CodexContainers;
-            var nodes = codexNodeFactory.Create(config, containers, fixtureLog, handle.Test.TimeSet);
-            var f = nodes.Select(n => n.GetDebugFutures().ToString());
-            var msg = $"(Futures: [{string.Join(", ", f)}])";
-            return msg;
+            var exs = UnpackExceptions(exceptions);
+            var exceptionsMessage = GetCombinedExceptionsMessage(exs);
+            Log(exceptionsMessage);
+            OverviewLog($" > Test failed: " + exceptionsMessage);
+            throw new Exception(exceptionsMessage);
         }
 
         private void DownloadClusterLogs()
         {
             var k8sFactory = new K8sFactory();
-            var lifecycle = k8sFactory.CreateTestLifecycle(config.KubeConfigFile, config.LogPath, "dataPath", config.CodexDeployment.Metadata.KubeNamespace, new DefaultTimeSet(), new NullLog());
+            var log = new NullLog();
+            log.FullFilename = Path.Combine(config.LogPath, "NODE");
+            var lifecycle = k8sFactory.CreateTestLifecycle(config.KubeConfigFile, config.LogPath, "dataPath", config.CodexDeployment.Metadata.KubeNamespace, new DefaultTimeSet(), log);
 
             foreach (var container in config.CodexDeployment.CodexContainers)
             {
                 lifecycle.DownloadLog(container);
             }
+        }
+
+        private string GetCombinedExceptionsMessage(Exception[] exceptions)
+        {
+            return string.Join(Environment.NewLine, exceptions.Select(ex => ex.ToString()));
+        }
+
+        private Exception[] UnpackExceptions(List<Exception> exceptions)
+        {
+            return exceptions.Select(UnpackException).ToArray();
         }
 
         private Exception UnpackException(Exception exception)
@@ -196,19 +212,26 @@ namespace ContinuousTests
         private void OverviewLog(string msg)
         {
             Log(msg);
-            var containerNames = $"({string.Join(",", nodes.Select(n => n.Container.Name))})";
+            var containerNames = GetContainerNames();
             overviewLog.Log($"{containerNames} {testName}: {msg}");
         }
 
-        private CodexAccess[] CreateRandomNodes(int number)
+        private string GetContainerNames()
         {
-            var containers = SelectRandomContainers(number);
+            if (handle.Test.RequiredNumberOfNodes == -1) return "(All Nodes)";
+            return $"({string.Join(",", nodes.Select(n => n.Container.Name))})";
+        }
+
+        private CodexAccess[] CreateRandomNodes()
+        {
+            var containers = SelectRandomContainers();
             fixtureLog.Log("Selected nodes: " + string.Join(",", containers.Select(c => c.Name)));
             return codexNodeFactory.Create(config, containers, fixtureLog, handle.Test.TimeSet);
         }
 
-        private RunningContainer[] SelectRandomContainers(int number)
+        private RunningContainer[] SelectRandomContainers()
         {
+            var number = handle.Test.RequiredNumberOfNodes;
             if (number == -1) return config.CodexDeployment.CodexContainers;
 
             var containers = config.CodexDeployment.CodexContainers.ToList();

@@ -47,12 +47,6 @@ namespace DistTestCore.Codex
             return result;
         }
 
-        public int GetDebugFutures()
-        {
-            // Some Codex images support debug/futures to count the number of open futures.
-            return 0; // Http().HttpGetJson<CodexDebugFutures>("debug/futures").futures;
-        }
-
         public CodexDebugThresholdBreaches GetDebugThresholdBreaches()
         {
             return Http().HttpGetJson<CodexDebugThresholdBreaches>("debug/loop");
@@ -75,7 +69,7 @@ namespace DistTestCore.Codex
 
         public string RequestStorage(CodexSalesRequestStorageRequest request, string contentId)
         {
-            return Http().HttpPostJson<CodexSalesRequestStorageRequest, string>($"storage/request/{contentId}", request);
+            return Http().HttpPostJson($"storage/request/{contentId}", request);
         }
 
         public CodexStoragePurchase GetPurchaseStatus(string purchaseId)
