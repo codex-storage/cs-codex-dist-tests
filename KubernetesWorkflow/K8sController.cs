@@ -219,6 +219,19 @@ namespace KubernetesWorkflow
                                         }
                                     }
                                 }
+                            },
+                            new V1NetworkPolicyIngressRule
+                            {
+                                FromProperty = new List<V1NetworkPolicyPeer>
+                                {
+                                    new V1NetworkPolicyPeer
+                                    {
+                                        NamespaceSelector = new V1LabelSelector
+                                        {
+                                            MatchLabels = GetPrometheusNamespaceSelector()
+                                        }
+                                    }
+                                }
                             }
                         },
                         Egress = new List<V1NetworkPolicyEgressRule>
@@ -369,6 +382,11 @@ namespace KubernetesWorkflow
         private IDictionary<string, string> GetRunnerNamespaceSelector()
         {
             return new Dictionary<string, string> { { "kubernetes.io/metadata.name", "default" } };
+        }
+
+        private IDictionary<string, string> GetPrometheusNamespaceSelector()
+        {
+            return new Dictionary<string, string> { { "kubernetes.io/metadata.name", "monitoring" } };
         }
 
         private IDictionary<string, string> GetAnnotations(ContainerRecipe[] containerRecipes)
