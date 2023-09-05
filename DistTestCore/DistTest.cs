@@ -179,6 +179,11 @@ namespace DistTestCore
             return new PeerDownloadTestHelpers(GetTestLog(), Get().FileManager);
         }
 
+        public PeerFetchTestHelpers CreatePeerFetchTestHelpers()
+        {
+            return new PeerFetchTestHelpers(GetTestLog(), Get().FileManager);
+        }
+
         public void Measure(string name, Action action)
         {
             Stopwatch.Measure(Get().Log, name, action);

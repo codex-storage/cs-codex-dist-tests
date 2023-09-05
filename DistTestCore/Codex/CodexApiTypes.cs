@@ -84,6 +84,23 @@ namespace DistTestCore.Codex
         public string address { get; set; } = string.Empty;
     }
 
+    public class CodexDebugFetchResponse
+    {
+        public string originalBytes { get; set; } = string.Empty;
+        public string blockSize { get; set; } = string.Empty;
+        public string numberOfBlocks { get; set; } = string.Empty;
+        public string version { get; set; } = string.Empty;
+        public string hcodec { get; set; } = string.Empty;
+        public string codec { get; set; } = string.Empty;
+        public string @protected { get; set; } = string.Empty;
+        public CodexDebugFetchBlockResponse[] blocks { get; set; } = Array.Empty<CodexDebugFetchBlockResponse>();
+    }
+
+    public class CodexDebugFetchBlockResponse
+    {
+        public string cid { get; set; } = string.Empty;
+    }
+
     public class CodexDebugThresholdBreaches
     {
         public string[] breaches { get; set; } = Array.Empty<string>();

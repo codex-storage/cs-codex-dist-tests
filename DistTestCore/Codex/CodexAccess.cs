@@ -47,6 +47,12 @@ namespace DistTestCore.Codex
             return result;
         }
 
+        public CodexDebugFetchResponse DebugFetch(string contentId)
+        {
+            var http = Http();
+            return http.HttpGetJson<CodexDebugFetchResponse>($"debug/fetch/{contentId}");
+        }
+
         public CodexDebugThresholdBreaches GetDebugThresholdBreaches()
         {
             return Http().HttpGetJson<CodexDebugThresholdBreaches>("debug/loop");
