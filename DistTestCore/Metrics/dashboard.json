@@ -38,7 +38,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "c89eaad3-9184-429f-ac94-8ba0b1824dbb"
+        "uid": "${datasource}"
       },
       "fieldConfig": {
         "defaults": {
@@ -115,7 +115,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "c89eaad3-9184-429f-ac94-8ba0b1824dbb"
+            "uid": "${datasource}"
           },
           "editorMode": "builder",
           "expr": "codexApiUploads_total",
@@ -130,7 +130,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "c89eaad3-9184-429f-ac94-8ba0b1824dbb"
+        "uid": "${datasource}"
       },
       "fieldConfig": {
         "defaults": {
@@ -207,7 +207,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "c89eaad3-9184-429f-ac94-8ba0b1824dbb"
+            "uid": "${datasource}"
           },
           "editorMode": "builder",
           "expr": "codexApiDownloads_total",
@@ -235,7 +235,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "c89eaad3-9184-429f-ac94-8ba0b1824dbb"
+        "uid": "${datasource}"
       },
       "fieldConfig": {
         "defaults": {
@@ -312,7 +312,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "c89eaad3-9184-429f-ac94-8ba0b1824dbb"
+            "uid": "${datasource}"
           },
           "editorMode": "builder",
           "expr": "codexRepostoreBlocks",
@@ -327,7 +327,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "c89eaad3-9184-429f-ac94-8ba0b1824dbb"
+        "uid": "${datasource}"
       },
       "fieldConfig": {
         "defaults": {
@@ -405,7 +405,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "c89eaad3-9184-429f-ac94-8ba0b1824dbb"
+            "uid": "${datasource}"
           },
           "editorMode": "builder",
           "expr": "codexRepostoreBytesReserved",
@@ -420,7 +420,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "c89eaad3-9184-429f-ac94-8ba0b1824dbb"
+        "uid": "${datasource}"
       },
       "fieldConfig": {
         "defaults": {
@@ -500,7 +500,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "c89eaad3-9184-429f-ac94-8ba0b1824dbb"
+            "uid": "${datasource}"
           },
           "editorMode": "builder",
           "expr": "codexRepostoreBytesUsed",
@@ -528,7 +528,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "c89eaad3-9184-429f-ac94-8ba0b1824dbb"
+        "uid": "${datasource}"
       },
       "fieldConfig": {
         "defaults": {
@@ -605,7 +605,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "c89eaad3-9184-429f-ac94-8ba0b1824dbb"
+            "uid": "${datasource}"
           },
           "editorMode": "builder",
           "expr": "libp2p_peers",
@@ -620,7 +620,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "c89eaad3-9184-429f-ac94-8ba0b1824dbb"
+        "uid": "${datasource}"
       },
       "fieldConfig": {
         "defaults": {
@@ -697,7 +697,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "c89eaad3-9184-429f-ac94-8ba0b1824dbb"
+            "uid": "${datasource}"
           },
           "editorMode": "builder",
           "expr": "routing_table_nodes",
@@ -725,7 +725,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "c89eaad3-9184-429f-ac94-8ba0b1824dbb"
+        "uid": "${datasource}"
       },
       "fieldConfig": {
         "defaults": {
@@ -802,7 +802,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "c89eaad3-9184-429f-ac94-8ba0b1824dbb"
+            "uid": "${datasource}"
           },
           "editorMode": "builder",
           "expr": "codexBlockExchangeBlocksSent_total",
@@ -817,7 +817,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "c89eaad3-9184-429f-ac94-8ba0b1824dbb"
+        "uid": "${datasource}"
       },
       "fieldConfig": {
         "defaults": {
@@ -894,7 +894,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "c89eaad3-9184-429f-ac94-8ba0b1824dbb"
+            "uid": "${datasource}"
           },
           "editorMode": "builder",
           "expr": "codexBlockExchangeBlocksReceived_total",
@@ -909,7 +909,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "c89eaad3-9184-429f-ac94-8ba0b1824dbb"
+        "uid": "${datasource}"
       },
       "fieldConfig": {
         "defaults": {
@@ -986,7 +986,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "c89eaad3-9184-429f-ac94-8ba0b1824dbb"
+            "uid": "${datasource}"
           },
           "editorMode": "builder",
           "expr": "codexBlockExchangeWantHaveListsSent_total",
@@ -1001,7 +1001,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "c89eaad3-9184-429f-ac94-8ba0b1824dbb"
+        "uid": "${datasource}"
       },
       "fieldConfig": {
         "defaults": {
@@ -1078,7 +1078,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "c89eaad3-9184-429f-ac94-8ba0b1824dbb"
+            "uid": "${datasource}"
           },
           "editorMode": "builder",
           "expr": "codexBlockExchangeWantBlockListsSent_total",
@@ -1093,7 +1093,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "c89eaad3-9184-429f-ac94-8ba0b1824dbb"
+        "uid": "${datasource}"
       },
       "fieldConfig": {
         "defaults": {
@@ -1170,7 +1170,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "c89eaad3-9184-429f-ac94-8ba0b1824dbb"
+            "uid": "${datasource}"
           },
           "editorMode": "builder",
           "expr": "codexBlockExchangeWantHaveListsReceived_total",
@@ -1185,7 +1185,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "c89eaad3-9184-429f-ac94-8ba0b1824dbb"
+        "uid": "${datasource}"
       },
       "fieldConfig": {
         "defaults": {
@@ -1262,7 +1262,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "c89eaad3-9184-429f-ac94-8ba0b1824dbb"
+            "uid": "${datasource}"
           },
           "editorMode": "builder",
           "expr": "codexBlockExchangeWantBlockListsReceived_total",
@@ -1290,7 +1290,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "c89eaad3-9184-429f-ac94-8ba0b1824dbb"
+        "uid": "${datasource}"
       },
       "fieldConfig": {
         "defaults": {
@@ -1367,7 +1367,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "c89eaad3-9184-429f-ac94-8ba0b1824dbb"
+            "uid": "${datasource}"
           },
           "editorMode": "builder",
           "expr": "codexPurchasesPending_total",
@@ -1382,7 +1382,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "c89eaad3-9184-429f-ac94-8ba0b1824dbb"
+        "uid": "${datasource}"
       },
       "fieldConfig": {
         "defaults": {
@@ -1459,7 +1459,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "c89eaad3-9184-429f-ac94-8ba0b1824dbb"
+            "uid": "${datasource}"
           },
           "editorMode": "builder",
           "expr": "codexPurchasesSubmitted_total",
@@ -1474,7 +1474,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "c89eaad3-9184-429f-ac94-8ba0b1824dbb"
+        "uid": "${datasource}"
       },
       "fieldConfig": {
         "defaults": {
@@ -1551,7 +1551,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "c89eaad3-9184-429f-ac94-8ba0b1824dbb"
+            "uid": "${datasource}"
           },
           "editorMode": "builder",
           "expr": "codexPurchasesStarted_total",
@@ -1566,7 +1566,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "c89eaad3-9184-429f-ac94-8ba0b1824dbb"
+        "uid": "${datasource}"
       },
       "fieldConfig": {
         "defaults": {
@@ -1643,7 +1643,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "c89eaad3-9184-429f-ac94-8ba0b1824dbb"
+            "uid": "${datasource}"
           },
           "editorMode": "builder",
           "expr": "codexPurchasesFinished_total",
@@ -1658,7 +1658,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "c89eaad3-9184-429f-ac94-8ba0b1824dbb"
+        "uid": "${datasource}"
       },
       "fieldConfig": {
         "defaults": {
@@ -1735,7 +1735,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "c89eaad3-9184-429f-ac94-8ba0b1824dbb"
+            "uid": "${datasource}"
           },
           "editorMode": "builder",
           "expr": "codexPurchasesFailed_total",
@@ -1750,7 +1750,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "c89eaad3-9184-429f-ac94-8ba0b1824dbb"
+        "uid": "${datasource}"
       },
       "fieldConfig": {
         "defaults": {
@@ -1827,7 +1827,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "c89eaad3-9184-429f-ac94-8ba0b1824dbb"
+            "uid": "${datasource}"
           },
           "editorMode": "builder",
           "expr": "codexPurchasesCancelled_total",
@@ -1842,7 +1842,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "c89eaad3-9184-429f-ac94-8ba0b1824dbb"
+        "uid": "${datasource}"
       },
       "fieldConfig": {
         "defaults": {
@@ -1919,7 +1919,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "c89eaad3-9184-429f-ac94-8ba0b1824dbb"
+            "uid": "${datasource}"
           },
           "editorMode": "builder",
           "expr": "codexPurchasesUnknown_total",
@@ -1934,7 +1934,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "c89eaad3-9184-429f-ac94-8ba0b1824dbb"
+        "uid": "${datasource}"
       },
       "fieldConfig": {
         "defaults": {
@@ -2011,7 +2011,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "c89eaad3-9184-429f-ac94-8ba0b1824dbb"
+            "uid": "${datasource}"
           },
           "editorMode": "builder",
           "expr": "codexPurchasesError_total",
@@ -2029,7 +2029,27 @@
   "style": "dark",
   "tags": [],
   "templating": {
-    "list": []
+    "list": [
+      {
+        "current": {
+          "selected": true,
+          "text": "Prometheus",
+          "value": "Prometheus"
+        },
+        "hide": 0,
+        "includeAll": false,
+        "label": "Datasource",
+        "multi": false,
+        "name": "datasource",
+        "options": [],
+        "query": "prometheus",
+        "queryValue": "",
+        "refresh": 1,
+        "regex": "/^(?!default).*/",
+        "skipUrlSync": false,
+        "type": "datasource"
+      }
+    ]
   },
   "time": {
     "from": "now-30m",
