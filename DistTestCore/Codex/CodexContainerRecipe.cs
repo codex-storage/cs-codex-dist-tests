@@ -31,7 +31,7 @@ namespace DistTestCore.Codex
 
             var dataDir = $"datadir{ContainerNumber}";
             AddEnvVar("CODEX_DATA_DIR", dataDir);
-            AddVolume(dataDir);
+            AddVolume($"codex/{dataDir}", GetVolumeCapacity(config));
 
             AddInternalPortAndVar("CODEX_DISC_PORT", DiscoveryPortTag);
             AddEnvVar("CODEX_LOG_LEVEL", config.LogLevel.ToString()!.ToUpperInvariant());
@@ -92,6 +92,13 @@ namespace DistTestCore.Codex
                     AddEnvVar("CODEX_VALIDATOR", "true");
                 }
             }
+        }
+
+        private long GetVolumeCapacity(CodexStartupConfig config)
+        {
+            if (config.StorageQuota != null) return config.StorageQuota.SizeInBytes;
+            // Default Codex quota: 8 Gb, using 9 to be safe.
+            return 9.GB().SizeInBytes;
         }
 
         private int GetAccountIndex(MarketplaceInitialConfig marketplaceConfig)

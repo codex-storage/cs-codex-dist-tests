@@ -1,6 +1,9 @@
 ﻿using k8s;
 using k8s.Models;
 using Logging;
+using Microsoft.VisualStudio.TestPlatform.CommunicationUtilities.Resources;
+using System.Collections.Generic;
+using System.Xml.Linq;
 using Utils;
 
 namespace KubernetesWorkflow
@@ -345,7 +348,8 @@ namespace KubernetesWorkflow
                         Spec = new V1PodSpec
                         {
                             NodeSelector = CreateNodeSelector(location),
-                            Containers = CreateDeploymentContainers(containerRecipes)
+                            Containers = CreateDeploymentContainers(containerRecipes),
+                            Volumes = CreateVolumes(containerRecipes)
                         }
                     }
                 }
@@ -407,7 +411,7 @@ namespace KubernetesWorkflow
 
         private List<V1Container> CreateDeploymentContainers(ContainerRecipe[] containerRecipes)
         {
-            return containerRecipes.Select(r => CreateDeploymentContainer(r)).ToList();
+            return containerRecipes.Select(CreateDeploymentContainer).ToList();
         }
 
         private V1Container CreateDeploymentContainer(ContainerRecipe recipe)
@@ -418,7 +422,67 @@ namespace KubernetesWorkflow
                 Image = recipe.Image,
                 ImagePullPolicy = "Always",
                 Ports = CreateContainerPorts(recipe),
-                Env = CreateEnv(recipe)
+                Env = CreateEnv(recipe),
+                VolumeMounts = CreateContainerVolumeMounts(recipe)
+            };
+        }
+
+        private List<V1VolumeMount> CreateContainerVolumeMounts(ContainerRecipe recipe)
+        {
+            return recipe.Volumes.Select(CreateContainerVolumeMount).ToList();
+        }
+
+        private V1VolumeMount CreateContainerVolumeMount(VolumeMount v)
+        {
+            return new V1VolumeMount
+            {
+                Name = v.VolumeName,
+                MountPath = v.MountPath
+            };
+        }
+
+        private List<V1Volume> CreateVolumes(ContainerRecipe[] containerRecipes)
+        {
+            return containerRecipes.Where(c => c.Volumes.Any()).SelectMany(CreateVolumes).ToList();
+        }
+
+        private List<V1Volume> CreateVolumes(ContainerRecipe recipe)
+        {
+            return recipe.Volumes.Select(CreateVolume).ToList();
+        }
+
+        private V1Volume CreateVolume(VolumeMount v)
+        {
+            client.Run(c => c.CreateNamespacedPersistentVolumeClaim(new V1PersistentVolumeClaim
+            {
+                ApiVersion = "v1",
+                Metadata = new V1ObjectMeta
+                {
+                    Name = v.VolumeName
+                },
+                Spec = new V1PersistentVolumeClaimSpec
+                {
+                    AccessModes = new List<string>
+                    {
+                        "ReadWriteMany"
+                    },
+                    Resources = new V1ResourceRequirements
+                    {
+                        Requests = new Dictionary<string, ResourceQuantity>
+                        {
+                            {"storage", new ResourceQuantity(v.ResourceQuantity) }
+                        }
+                    }
+                }
+            }, K8sTestNamespace));
+
+            return new V1Volume
+            {
+                Name = v.VolumeName,
+                PersistentVolumeClaim = new V1PersistentVolumeClaimVolumeSource
+                {
+                    ClaimName = v.VolumeName
+                }
             };
         }
 

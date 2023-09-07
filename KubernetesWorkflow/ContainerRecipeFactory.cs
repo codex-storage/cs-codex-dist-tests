@@ -97,16 +97,38 @@
             podAnnotations.Add(name, value);
         }
 
-        protected void AddVolume(string mountPath)
+        protected void AddVolume(string mountPath, long capacityBytes)
         {
             volumeMounts.Add(new VolumeMount(
                 $"autovolume-{Guid.NewGuid().ToString().ToLowerInvariant()}",
-                mountPath));
+                mountPath,
+                FormatBytesQuantity(capacityBytes)));
         }
 
         protected void Additional(object userData)
         {
             additionals.Add(userData);
+        }
+
+        private static string FormatBytesQuantity(long capacityBytes)
+        {
+            var map = new Dictionary<long, string>
+            {
+                { (1024*1024*1024), "Gi" },
+                { (1024*1024), "Mi" },
+                { (1024), "Ki" },
+            };
+
+            foreach (var pair in map)
+            {
+                if (capacityBytes > pair.Key)
+                {
+                    var v = (capacityBytes / pair.Key) + 1;
+                    return $"{v}{pair.Value}";
+                }
+            }
+
+            return $"{capacityBytes * 2}Ki";
         }
     }
 }
