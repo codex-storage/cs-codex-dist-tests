@@ -29,7 +29,10 @@ namespace DistTestCore.Codex
             AddExposedPortAndVar("CODEX_API_PORT");
             AddEnvVar("CODEX_API_BINDADDR", "0.0.0.0");
 
-            AddEnvVar("CODEX_DATA_DIR", $"datadir{ContainerNumber}");
+            var dataDir = $"datadir{ContainerNumber}";
+            AddEnvVar("CODEX_DATA_DIR", dataDir);
+            AddVolume(dataDir);
+
             AddInternalPortAndVar("CODEX_DISC_PORT", DiscoveryPortTag);
             AddEnvVar("CODEX_LOG_LEVEL", config.LogLevel.ToString()!.ToUpperInvariant());
 

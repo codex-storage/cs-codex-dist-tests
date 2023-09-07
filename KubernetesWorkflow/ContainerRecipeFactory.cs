@@ -7,6 +7,7 @@
         private readonly List<EnvVar> envVars = new List<EnvVar>();
         private readonly PodLabels podLabels = new PodLabels();
         private readonly PodAnnotations podAnnotations = new PodAnnotations();
+        private readonly List<VolumeMount> volumeMounts = new List<VolumeMount>();
         private readonly List<object> additionals = new List<object>();
         private RecipeComponentFactory factory = null!;
 
@@ -20,10 +21,11 @@
 
             var recipe = new ContainerRecipe(containerNumber, Image,
                 exposedPorts.ToArray(),
-                internalPorts.ToArray(), 
-                envVars.ToArray(), 
+                internalPorts.ToArray(),
+                envVars.ToArray(),
                 podLabels.Clone(),
                 podAnnotations.Clone(),
+                volumeMounts.ToArray(),
                 additionals.ToArray());
 
             exposedPorts.Clear();
@@ -31,6 +33,7 @@
             envVars.Clear();
             podLabels.Clear();
             podAnnotations.Clear();
+            volumeMounts.Clear();
             additionals.Clear();
             this.factory = null!;
 
@@ -92,6 +95,13 @@
         protected void AddPodAnnotation(string name, string value)
         {
             podAnnotations.Add(name, value);
+        }
+
+        protected void AddVolume(string mountPath)
+        {
+            volumeMounts.Add(new VolumeMount(
+                $"autovolume-{Guid.NewGuid().ToString().ToLowerInvariant()}",
+                mountPath));
         }
 
         protected void Additional(object userData)

@@ -2,7 +2,7 @@
 {
     public class ContainerRecipe
     {
-        public ContainerRecipe(int number, string image, Port[] exposedPorts, Port[] internalPorts, EnvVar[] envVars, PodLabels podLabels, PodAnnotations podAnnotations, object[] additionals)
+        public ContainerRecipe(int number, string image, Port[] exposedPorts, Port[] internalPorts, EnvVar[] envVars, PodLabels podLabels, PodAnnotations podAnnotations, VolumeMount[] volumes, object[] additionals)
         {
             Number = number;
             Image = image;
@@ -11,6 +11,7 @@
             EnvVars = envVars;
             PodLabels = podLabels;
             PodAnnotations = podAnnotations;
+            Volumes = volumes;
             Additionals = additionals;
         }
 
@@ -22,6 +23,7 @@
         public EnvVar[] EnvVars { get; }
         public PodLabels PodLabels { get; }
         public PodAnnotations PodAnnotations { get; }
+        public VolumeMount[] Volumes { get; }
         public object[] Additionals { get; }
 
         public Port GetPortByTag(string tag)
@@ -34,7 +36,8 @@
             return $"(container-recipe: {Name}, image: {Image}, " +
                 $"exposedPorts: {string.Join(",", ExposedPorts.Select(p => p.Number))}, " +
                 $"internalPorts: {string.Join(",", InternalPorts.Select(p => p.Number))}, " +
-                $"envVars: {string.Join(",", EnvVars.Select(v => v.Name + ":" + v.Value))}, ";
+                $"envVars: {string.Join(",", EnvVars.Select(v => v.Name + ":" + v.Value))}, " +
+                $"volumes: {string.Join(",", Volumes.Select(v => $"'{v.MountPath}'"))}";
         }
     }
 
@@ -60,5 +63,17 @@
 
         public string Name { get; }
         public string Value { get; }
+    }
+
+    public class VolumeMount
+    {
+        public VolumeMount(string volumeName, string mountPath)
+        {
+            VolumeName = volumeName;
+            MountPath = mountPath;
+        }
+
+        public string VolumeName { get; }
+        public string MountPath { get; }
     }
 }
