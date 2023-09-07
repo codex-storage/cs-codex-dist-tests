@@ -464,7 +464,7 @@ namespace KubernetesWorkflow
                 {
                     AccessModes = new List<string>
                     {
-                        "ReadWriteMany"
+                        "ReadWriteOnce"
                     },
                     Resources = new V1ResourceRequirements
                     {
