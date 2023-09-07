@@ -16,13 +16,13 @@ namespace Tests.BasicTests
 
             var seller = SetupCodexNode(s => s
                 .WithLogLevel(CodexLogLevel.Trace, "marketplace", "sales", "proving", "reservations")
-                .WithStorageQuota(20.GB())
+                .WithStorageQuota(21.GB())
                 .EnableMarketplace(sellerInitialBalance)
                 .WithName("seller"));
 
             var sellerWithFailures = SetupCodexNode(s => s
                 .WithLogLevel(CodexLogLevel.Trace, "marketplace", "sales", "proving", "reservations")
-                .WithStorageQuota(20.GB())
+                .WithStorageQuota(21.GB())
                 .WithBootstrapNode(seller)
                 .WithSimulateProofFailures(2)
                 .EnableMarketplace(sellerInitialBalance)
