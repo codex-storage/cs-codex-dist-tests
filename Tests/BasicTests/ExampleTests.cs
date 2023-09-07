@@ -1,4 +1,5 @@
 ﻿using DistTestCore;
+using DistTestCore.Codex;
 using NUnit.Framework;
 
 namespace Tests.BasicTests
@@ -46,6 +47,7 @@ namespace Tests.BasicTests
             var fileSize = 10.MB();
 
             var seller = SetupCodexNode(s => s
+                            .WithLogLevel(CodexLogLevel.Trace, "marketplace", "sales", "proving", "reservations")
                             .WithStorageQuota(11.GB())
                             .EnableMarketplace(sellerInitialBalance));
 
@@ -59,11 +61,12 @@ namespace Tests.BasicTests
             var testFile = GenerateTestFile(fileSize);
 
             var buyer = SetupCodexNode(s => s
+                .WithLogLevel(CodexLogLevel.Trace, "marketplace", "purchasing", "node", "restapi")
                 .WithBootstrapNode(seller)
                 .EnableMarketplace(buyerInitialBalance));
 
             buyer.Marketplace.AssertThatBalance(Is.EqualTo(buyerInitialBalance));
-            
+
             var contentId = buyer.UploadFile(testFile);
             var purchaseContract = buyer.Marketplace.RequestStorage(contentId,
                 pricePerSlotPerSecond: 2.TestTokens(),
