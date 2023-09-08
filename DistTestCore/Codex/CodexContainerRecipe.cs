@@ -1,5 +1,6 @@
 ﻿using DistTestCore.Marketplace;
 using KubernetesWorkflow;
+using Utils;
 
 namespace DistTestCore.Codex
 {
@@ -94,11 +95,11 @@ namespace DistTestCore.Codex
             }
         }
 
-        private long GetVolumeCapacity(CodexStartupConfig config)
+        private ByteSize GetVolumeCapacity(CodexStartupConfig config)
         {
-            if (config.StorageQuota != null) return config.StorageQuota.SizeInBytes;
-            // Default Codex quota: 8 Gb, using 9 to be safe.
-            return 9.GB().SizeInBytes;
+            if (config.StorageQuota != null) return config.StorageQuota;
+            // Default Codex quota: 8 Gb, using +20% to be safe.
+            return 8.GB().Multiply(1.2);
         }
 
         private int GetAccountIndex(MarketplaceInitialConfig marketplaceConfig)

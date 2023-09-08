@@ -1,5 +1,6 @@
 ﻿using DistTestCore;
 using NUnit.Framework;
+using Utils;
 
 namespace Tests.DownloadConnectivityTests
 {
