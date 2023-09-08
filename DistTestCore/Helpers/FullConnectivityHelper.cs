@@ -1,7 +1,6 @@
 ﻿using DistTestCore.Codex;
 using Logging;
 using NUnit.Framework;
-using Utils;
 
 namespace DistTestCore.Helpers
 {
@@ -35,10 +34,9 @@ namespace DistTestCore.Helpers
             var entries = CreateEntries(nodes);
             var pairs = CreatePairs(entries);
 
-            RetryWhilePairs(pairs, () =>
-            {
-                CheckAndRemoveSuccessful(pairs);
-            });
+            // Each pair gets two chances.
+            CheckAndRemoveSuccessful(pairs);
+            CheckAndRemoveSuccessful(pairs);
 
             if (pairs.Any())
             {
@@ -54,35 +52,19 @@ namespace DistTestCore.Helpers
             }
         }
 
-        private static void RetryWhilePairs(List<Pair> pairs, Action action)
-        {
-            var timeout = DateTime.UtcNow + TimeSpan.FromMinutes(2);
-            while (pairs.Any(p => p.Inconclusive) && timeout > DateTime.UtcNow)
-            {
-                action();
-
-                Time.Sleep(TimeSpan.FromSeconds(2));
-            }
-        }
-
         private void CheckAndRemoveSuccessful(List<Pair> pairs)
         {
-            // For large sets, don't try and do all of them at once.
-            var selectedPair = pairs.Take(20).ToArray();
-            var pairDetails = new List<string>();
-
-            foreach (var pair in selectedPair)
+            var results = new List<string>();
+            foreach (var pair in pairs.ToArray())
             {
                 pair.Check();
-
                 if (pair.Success)
                 {
-                    pairDetails.AddRange(pair.GetResultMessages());
+                    results.AddRange(pair.GetResultMessages());
                     pairs.Remove(pair);
                 }
             }
-
-            Log($"Connections successful:{Nl}{string.Join(Nl, pairDetails)}");
+            Log($"Connections successful:{Nl}{string.Join(Nl, results)}");
         }
 
         private Entry[] CreateEntries(CodexAccess[] nodes)
