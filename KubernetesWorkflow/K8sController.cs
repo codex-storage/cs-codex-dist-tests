@@ -423,8 +423,31 @@ namespace KubernetesWorkflow
                 ImagePullPolicy = "Always",
                 Ports = CreateContainerPorts(recipe),
                 Env = CreateEnv(recipe),
-                VolumeMounts = CreateContainerVolumeMounts(recipe)
+                VolumeMounts = CreateContainerVolumeMounts(recipe),
+                Resources = CreateResourceLimits(recipe)
             };
+        }
+
+        private V1ResourceRequirements CreateResourceLimits(ContainerRecipe recipe)
+        {
+            return new V1ResourceRequirements
+            {
+                Limits = CreateResourceLimit(recipe.ResourceLimits)
+            };
+        }
+
+        private Dictionary<string, ResourceQuantity> CreateResourceLimit(ResourceLimits limits)
+        {
+            var result = new Dictionary<string, ResourceQuantity>();
+            if (limits.MilliCPUs != 0)
+            {
+                result.Add("cpu", new ResourceQuantity($"{limits.MilliCPUs}m"));
+            }
+            if (limits.Memory.SizeInBytes != 0)
+            {
+                result.Add("memory", new ResourceQuantity(limits.Memory.ToSuffixNotation()));
+            }
+            return result;
         }
 
         private List<V1VolumeMount> CreateContainerVolumeMounts(ContainerRecipe recipe)

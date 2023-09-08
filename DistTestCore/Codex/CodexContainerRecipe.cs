@@ -17,6 +17,7 @@ namespace DistTestCore.Codex
 
         public override string AppName => "codex";
         public override string Image { get; }
+        protected override ResourceLimits ResourceLimits => new ResourceLimits(milliCPUs: 500, memory: 2.GB());
 
         public CodexContainerRecipe()
         {

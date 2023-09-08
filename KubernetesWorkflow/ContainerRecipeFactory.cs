@@ -21,7 +21,7 @@ namespace KubernetesWorkflow
 
             Initialize(config);
 
-            var recipe = new ContainerRecipe(containerNumber, Image,
+            var recipe = new ContainerRecipe(containerNumber, Image, ResourceLimits,
                 exposedPorts.ToArray(),
                 internalPorts.ToArray(),
                 envVars.ToArray(),
@@ -46,6 +46,7 @@ namespace KubernetesWorkflow
         public abstract string Image { get; }
         protected int ContainerNumber { get; private set; } = 0;
         protected int Index { get; private set; } = 0;
+        protected virtual ResourceLimits ResourceLimits { get; } = new ResourceLimits();
         protected abstract void Initialize(StartupConfig config);
 
         protected Port AddExposedPort(string tag = "")
