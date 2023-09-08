@@ -22,8 +22,8 @@ namespace DistTestCore.Codex
         {
             Image = GetDockerImage();
 
-            Resources.Requests = new ContainerResourceSet(milliCPUs: 250, memory: 512.MB());
-            Resources.Limits = new ContainerResourceSet(milliCPUs: 1000, memory: 2.GB());
+            Resources.Requests = new ContainerResourceSet(milliCPUs: 1000, memory: 6.GB());
+            Resources.Limits = new ContainerResourceSet(milliCPUs: 4000, memory: 12.GB());
         }
 
         protected override void InitializeRecipe(StartupConfig startupConfig)
