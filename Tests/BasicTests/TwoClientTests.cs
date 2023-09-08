@@ -1,6 +1,7 @@
 ﻿using DistTestCore;
 using KubernetesWorkflow;
 using NUnit.Framework;
+using Utils;
 
 namespace Tests.BasicTests
 {

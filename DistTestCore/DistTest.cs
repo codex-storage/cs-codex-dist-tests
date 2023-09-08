@@ -7,6 +7,7 @@ using KubernetesWorkflow;
 using Logging;
 using NUnit.Framework;
 using System.Reflection;
+using Utils;
 
 namespace DistTestCore
 {

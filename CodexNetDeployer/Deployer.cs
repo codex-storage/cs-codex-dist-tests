@@ -2,6 +2,7 @@
 using DistTestCore.Codex;
 using KubernetesWorkflow;
 using Logging;
+using Utils;
 
 namespace CodexNetDeployer
 {
