@@ -2,11 +2,11 @@
 {
     public class ContainerRecipe
     {
-        public ContainerRecipe(int number, string image, ResourceLimits resourceLimits, Port[] exposedPorts, Port[] internalPorts, EnvVar[] envVars, PodLabels podLabels, PodAnnotations podAnnotations, VolumeMount[] volumes, object[] additionals)
+        public ContainerRecipe(int number, string image, ContainerResources resources, Port[] exposedPorts, Port[] internalPorts, EnvVar[] envVars, PodLabels podLabels, PodAnnotations podAnnotations, VolumeMount[] volumes, object[] additionals)
         {
             Number = number;
             Image = image;
-            ResourceLimits = resourceLimits;
+            Resources = resources;
             ExposedPorts = exposedPorts;
             InternalPorts = internalPorts;
             EnvVars = envVars;
@@ -18,7 +18,7 @@
 
         public string Name { get { return $"ctnr{Number}"; } }
         public int Number { get; }
-        public ResourceLimits ResourceLimits { get; }
+        public ContainerResources Resources { get; }
         public string Image { get; }
         public Port[] ExposedPorts { get; }
         public Port[] InternalPorts { get; }
@@ -39,7 +39,7 @@
                 $"exposedPorts: {string.Join(",", ExposedPorts.Select(p => p.Number))}, " +
                 $"internalPorts: {string.Join(",", InternalPorts.Select(p => p.Number))}, " +
                 $"envVars: {string.Join(",", EnvVars.Select(v => v.Name + ":" + v.Value))}, " +
-                $"limits: {ResourceLimits}, " +
+                $"limits: {Resources}, " +
                 $"volumes: {string.Join(",", Volumes.Select(v => $"'{v.MountPath}'"))}";
         }
     }

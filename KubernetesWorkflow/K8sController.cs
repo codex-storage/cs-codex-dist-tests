@@ -432,20 +432,21 @@ namespace KubernetesWorkflow
         {
             return new V1ResourceRequirements
             {
-                Limits = CreateResourceLimit(recipe.ResourceLimits)
+                Requests = CreateResourceQuantities(recipe.Resources.Requests),
+                Limits = CreateResourceQuantities(recipe.Resources.Limits)
             };
         }
 
-        private Dictionary<string, ResourceQuantity> CreateResourceLimit(ResourceLimits limits)
+        private Dictionary<string, ResourceQuantity> CreateResourceQuantities(ContainerResourceSet set)
         {
             var result = new Dictionary<string, ResourceQuantity>();
-            if (limits.MilliCPUs != 0)
+            if (set.MilliCPUs != 0)
             {
-                result.Add("cpu", new ResourceQuantity($"{limits.MilliCPUs}m"));
+                result.Add("cpu", new ResourceQuantity($"{set.MilliCPUs}m"));
             }
-            if (limits.Memory.SizeInBytes != 0)
+            if (set.Memory.SizeInBytes != 0)
             {
-                result.Add("memory", new ResourceQuantity(limits.Memory.ToSuffixNotation()));
+                result.Add("memory", new ResourceQuantity(set.Memory.ToSuffixNotation()));
             }
             return result;
         }

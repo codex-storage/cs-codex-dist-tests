@@ -2,25 +2,36 @@
 
 namespace KubernetesWorkflow
 {
-    public class ResourceLimits
+    public class ContainerResources
     {
-        public ResourceLimits(int milliCPUs, ByteSize memory)
+        public ContainerResourceSet Requests { get; set; } = new ContainerResourceSet();
+        public ContainerResourceSet Limits { get; set; } = new ContainerResourceSet();
+
+        public override string ToString()
+        {
+            return $"requests:{Requests}, limits:{Limits}";
+        }
+    }
+
+    public class ContainerResourceSet
+    {
+        public ContainerResourceSet(int milliCPUs, ByteSize memory)
         {
             MilliCPUs = milliCPUs;
             Memory = memory;
         }
 
-        public ResourceLimits(int milliCPUs)
+        public ContainerResourceSet(int milliCPUs)
             : this(milliCPUs, new ByteSize(0))
         {
         }
 
-        public ResourceLimits(ByteSize memory)
+        public ContainerResourceSet(ByteSize memory)
             : this(0, memory)
         {
         }
 
-        public ResourceLimits()
+        public ContainerResourceSet()
             : this(0)
         {
         }
