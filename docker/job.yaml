@@ -17,8 +17,6 @@ spec:
         image: codexstorage/cs-codex-dist-tests:latest
         imagePullPolicy: Always
         env:
-        - name: RUNNERLOCATION
-          value: InternalToCluster
         - name: KUBECONFIG
           value: /opt/kubeconfig.yaml
         - name: LOGPATH
@@ -32,7 +30,7 @@ spec:
         - name: RUNID
           value: ${RUNID}
         - name: TESTID
-          value: ${TESTID}
+          value: "${TESTID}"
         volumeMounts:
         - name: kubeconfig
           mountPath: /opt/kubeconfig.yaml
