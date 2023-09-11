@@ -1,9 +1,6 @@
 ﻿using k8s;
 using k8s.Models;
 using Logging;
-using Microsoft.VisualStudio.TestPlatform.CommunicationUtilities.Resources;
-using System.Collections.Generic;
-using System.Xml.Linq;
 using Utils;
 
 namespace KubernetesWorkflow
