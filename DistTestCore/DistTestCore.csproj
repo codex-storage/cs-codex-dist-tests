@@ -10,14 +10,6 @@
   <PropertyGroup Condition="'$(IsArm64)'=='true'">
     <DefineConstants>Arm64</DefineConstants>
   </PropertyGroup>
-  <ItemGroup>
-    <None Remove="Metrics\dashboard.json" />
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="Metrics\dashboard.json">
-      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-    </EmbeddedResource>
-  </ItemGroup>
 
   <ItemGroup>
 	  <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />

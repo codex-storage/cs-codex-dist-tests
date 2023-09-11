@@ -1,7 +1,4 @@
-﻿using DistTestCore.Codex;
-using DistTestCore.Logs;
-using DistTestCore.Marketplace;
-using DistTestCore.Metrics;
+﻿using DistTestCore.Logs;
 using FileUtils;
 using KubernetesWorkflow;
 using Logging;
@@ -22,12 +19,12 @@ namespace DistTestCore
             WorkflowCreator = new WorkflowCreator(log, configuration.GetK8sConfiguration(timeSet), testNamespace);
 
             FileManager = new FileManager(Log, configuration.GetFileManagerFolder());
-            CodexStarter = new CodexStarter(this);
+            //CodexStarter = new CodexStarter(this);
             PrometheusStarter = new PrometheusStarter(this);
             GrafanaStarter = new GrafanaStarter(this);
-            GethStarter = new GethStarter(this);
+            //GethStarter = new GethStarter(this);
             testStart = DateTime.UtcNow;
-            CodexVersion = null;
+            //CodexVersion = null;
 
             Log.WriteLogTag();
         }
@@ -37,15 +34,15 @@ namespace DistTestCore
         public ITimeSet TimeSet { get; }
         public WorkflowCreator WorkflowCreator { get; }
         public FileManager FileManager { get; }
-        public CodexStarter CodexStarter { get; }
+        //public CodexStarter CodexStarter { get; }
         public PrometheusStarter PrometheusStarter { get; }
         public GrafanaStarter GrafanaStarter { get; }
-        public GethStarter GethStarter { get; }
-        public CodexDebugVersionResponse? CodexVersion { get; private set; }
+        //public GethStarter GethStarter { get; }
+        //public CodexDebugVersionResponse? CodexVersion { get; private set; }
 
         public void DeleteAllResources()
         {
-            CodexStarter.DeleteAllResources();
+            //CodexStarter.DeleteAllResources();
             FileManager.DeleteAllTestFiles();
         }
 
@@ -56,7 +53,7 @@ namespace DistTestCore
             var handler = new LogDownloadHandler(container, description, subFile);
 
             Log.Log($"Downloading logs for {description} to file '{subFile.FullFilename}'");
-            CodexStarter.DownloadLog(container, handler, tailLines);
+            //CodexStarter.DownloadLog(container, handler, tailLines);
 
             return new DownloadedLog(subFile, description);
         }
@@ -67,28 +64,30 @@ namespace DistTestCore
             return Time.FormatDuration(testDuration);
         }
 
-        public void SetCodexVersion(CodexDebugVersionResponse version)
-        {
-            if (CodexVersion == null) CodexVersion = version;
-        }
+        //public void SetCodexVersion(CodexDebugVersionResponse version)
+        //{
+        //    if (CodexVersion == null) CodexVersion = version;
+        //}
 
         public ApplicationIds GetApplicationIds()
         {
-            return new ApplicationIds(
-                codexId: GetCodexId(),
-                gethId: new GethContainerRecipe().Image,
-                prometheusId: new PrometheusContainerRecipe().Image,
-                codexContractsId: new CodexContractsContainerRecipe().Image,
-                grafanaId: new GrafanaContainerRecipe().Image
-            );
+            //return new ApplicationIds(
+            //    codexId: GetCodexId(),
+            //    gethId: new GethContainerRecipe().Image,
+            //    prometheusId: new PrometheusContainerRecipe().Image,
+            //    codexContractsId: new CodexContractsContainerRecipe().Image,
+            //    grafanaId: new GrafanaContainerRecipe().Image
+            //);
+            return null!;
         }
 
         private string GetCodexId()
         {
-            var v = CodexVersion;
-            if (v == null) return new CodexContainerRecipe().Image;
-            if (v.version != "untagged build") return v.version;
-            return v.revision;
+            return "";
+            //var v = CodexVersion;
+            //if (v == null) return new CodexContainerRecipe().Image;
+            //if (v.version != "untagged build") return v.version;
+            //return v.revision;
         }
     }
 }

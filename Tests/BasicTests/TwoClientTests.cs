@@ -2,6 +2,7 @@
 using KubernetesWorkflow;
 using NUnit.Framework;
 using Utils;
+using CodexPlugin;
 
 namespace Tests.BasicTests
 {
@@ -11,7 +12,7 @@ namespace Tests.BasicTests
         [Test]
         public void TwoClientTest()
         {
-            var group = SetupCodexNodes(2);
+            var group = this.SetupCodexNodes(2);
 
             var primary = group[0];
             var secondary = group[1];
@@ -22,8 +23,8 @@ namespace Tests.BasicTests
         [Test]
         public void TwoClientsTwoLocationsTest()
         {
-            var primary = SetupCodexNode(s => s.At(Location.One));
-            var secondary = SetupCodexNode(s => s.At(Location.Two));
+            var primary = this.SetupCodexNode(s => s.At(Location.One));
+            var secondary = this.SetupCodexNode(s => s.At(Location.Two));
 
             PerformTwoClientTest(primary, secondary);
         }
