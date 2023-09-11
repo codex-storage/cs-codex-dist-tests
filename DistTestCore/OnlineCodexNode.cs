@@ -2,6 +2,7 @@
 using DistTestCore.Logs;
 using DistTestCore.Marketplace;
 using DistTestCore.Metrics;
+using FileUtils;
 using Logging;
 using NUnit.Framework;
 using Utils;

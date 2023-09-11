@@ -1,0 +1,83 @@
+﻿using Logging;
+using NUnit.Framework;
+using Utils;
+
+namespace FileUtils
+{
+    public class TestFile
+    {
+        private readonly BaseLog log;
+
+        public TestFile(BaseLog log, string filename, string label)
+        {
+            this.log = log;
+            Filename = filename;
+            Label = label;
+        }
+
+        public string Filename { get; }
+        public string Label { get; }
+
+        public void AssertIsEqual(TestFile? actual)
+        {
+            var sw = Stopwatch.Begin(log);
+            try
+            {
+                AssertEqual(actual);
+            }
+            finally
+            {
+                sw.End($"{nameof(TestFile)}.{nameof(AssertIsEqual)}");
+            }
+        }
+
+        public string Describe()
+        {
+            var sizePostfix = $" ({Formatter.FormatByteSize(GetFileSize())})";
+            if (!string.IsNullOrEmpty(Label)) return Label + sizePostfix;
+            return $"'{Filename}'{sizePostfix}";
+        }
+
+        private void AssertEqual(TestFile? actual)
+        {
+            if (actual == null)  Assert.Fail("TestFile is null.");
+            if (actual == this || actual!.Filename == Filename) Assert.Fail("TestFile is compared to itself.");
+
+            Assert.That(actual.GetFileSize(), Is.EqualTo(GetFileSize()), "Files are not of equal length.");
+
+            using var streamExpected = new FileStream(Filename, FileMode.Open, FileAccess.Read);
+            using var streamActual = new FileStream(actual.Filename, FileMode.Open, FileAccess.Read);
+
+            var bytesExpected = new byte[FileManager.ChunkSize];
+            var bytesActual = new byte[FileManager.ChunkSize];
+
+            var readExpected = 0;
+            var readActual = 0;
+
+            while (true)
+            {
+                readExpected = streamExpected.Read(bytesExpected, 0, FileManager.ChunkSize);
+                readActual = streamActual.Read(bytesActual, 0, FileManager.ChunkSize);
+
+                if (readExpected == 0 && readActual == 0)
+                {
+                    log.Log($"OK: '{Describe()}' is equal to '{actual.Describe()}'.");
+                    return;
+                }
+
+                Assert.That(readActual, Is.EqualTo(readExpected), "Unable to read buffers of equal length.");
+
+                for (var i = 0; i < readActual; i++)
+                {
+                    if (bytesExpected[i] != bytesActual[i]) Assert.Fail("File contents not equal.");
+                }
+            }
+        }
+
+        private long GetFileSize()
+        {
+            var info = new FileInfo(Filename);
+            return info.Length;
+        }
+    }
+}

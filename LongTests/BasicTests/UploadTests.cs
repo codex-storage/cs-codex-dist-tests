@@ -1,4 +1,5 @@
 using DistTestCore;
+using FileUtils;
 using NUnit.Framework;
 using Utils;
 

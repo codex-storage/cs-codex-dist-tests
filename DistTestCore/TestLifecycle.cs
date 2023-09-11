@@ -2,6 +2,7 @@
 using DistTestCore.Logs;
 using DistTestCore.Marketplace;
 using DistTestCore.Metrics;
+using FileUtils;
 using KubernetesWorkflow;
 using Logging;
 using Utils;
@@ -20,7 +21,7 @@ namespace DistTestCore
 
             WorkflowCreator = new WorkflowCreator(log, configuration.GetK8sConfiguration(timeSet), testNamespace);
 
-            FileManager = new FileManager(Log, configuration);
+            FileManager = new FileManager(Log, configuration.GetFileManagerFolder());
             CodexStarter = new CodexStarter(this);
             PrometheusStarter = new PrometheusStarter(this);
             GrafanaStarter = new GrafanaStarter(this);

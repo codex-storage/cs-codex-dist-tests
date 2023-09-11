@@ -3,6 +3,7 @@ using DistTestCore.Helpers;
 using DistTestCore.Logs;
 using DistTestCore.Marketplace;
 using DistTestCore.Metrics;
+using FileUtils;
 using KubernetesWorkflow;
 using Logging;
 using NUnit.Framework;
@@ -100,9 +101,7 @@ namespace DistTestCore
         /// </summary>
         public void ScopedTestFiles(Action action)
         {
-            Get().FileManager.PushFileSet();
-            action();
-            Get().FileManager.PopFileSet();
+            Get().FileManager.ScopedFiles(action);
         }
 
         public IOnlineCodexNode SetupCodexBootstrapNode()

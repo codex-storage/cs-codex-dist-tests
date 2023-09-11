@@ -10,7 +10,7 @@ namespace Tests.BasicTests
         [Test]
         public void CodexLogExample()
         {
-            var primary = SetupCodexNode();
+            var primary = SetupCodexNodes(2)[0];
 
             primary.UploadFile(GenerateTestFile(5.MB()));
 

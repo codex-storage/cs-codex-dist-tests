@@ -6,6 +6,7 @@ using KubernetesWorkflow;
 using NUnit.Framework.Internal;
 using System.Reflection;
 using static Program;
+using FileUtils;
 
 namespace ContinuousTests
 {
@@ -38,7 +39,7 @@ namespace ContinuousTests
 
             nodes = CreateRandomNodes();
             dataFolder = config.DataPath + "-" + Guid.NewGuid();
-            fileManager = new FileManager(fixtureLog, CreateFileManagerConfiguration());
+            fileManager = new FileManager(fixtureLog, CreateFileManagerConfiguration().GetFileManagerFolder());
         }
 
         public void Run(EventWaitHandle runFinishedHandle)

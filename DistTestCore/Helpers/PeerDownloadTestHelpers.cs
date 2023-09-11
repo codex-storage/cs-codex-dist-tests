@@ -1,4 +1,5 @@
 ﻿using DistTestCore.Codex;
+using FileUtils;
 using Logging;
 using Utils;
 using static DistTestCore.Helpers.FullConnectivityHelper;
@@ -43,7 +44,11 @@ namespace DistTestCore.Helpers
 
         public PeerConnectionState Check(Entry from, Entry to)
         {
-            fileManager.PushFileSet();
+            return fileManager.ScopedFiles(() => CheckConnectivity(from, to));
+        }
+
+        private PeerConnectionState CheckConnectivity(Entry from, Entry to)
+        { 
             var expectedFile = GenerateTestFile(from.Node, to.Node);
 
             using var uploadStream = File.OpenRead(expectedFile.Filename);
@@ -61,11 +66,6 @@ namespace DistTestCore.Helpers
                 // We consider that as no-connection for the purpose of this test.
                 return PeerConnectionState.NoConnection;
             }
-            finally
-            {
-                fileManager.PopFileSet();
-            }
-
             // Should an exception occur during upload, then this try is inconclusive and we try again next loop.
         }
 

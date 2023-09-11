@@ -23,7 +23,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CodexNetDeployer", "CodexNe
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ArgsUniform", "ArgsUniform\ArgsUniform.csproj", "{634324B1-E359-42B4-A269-BDC429936B3C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CodexNetDownloader", "CodexNetDownloader\CodexNetDownloader.csproj", "{6CDF35D2-906A-4285-8E1F-4794588B948B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CodexNetDownloader", "CodexNetDownloader\CodexNetDownloader.csproj", "{6CDF35D2-906A-4285-8E1F-4794588B948B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FileUtils", "FileUtils\FileUtils.csproj", "{ECC954DA-8D4E-49EE-83AD-80085A43DEEB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -75,6 +77,10 @@ Global
 		{6CDF35D2-906A-4285-8E1F-4794588B948B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6CDF35D2-906A-4285-8E1F-4794588B948B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6CDF35D2-906A-4285-8E1F-4794588B948B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{ECC954DA-8D4E-49EE-83AD-80085A43DEEB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ECC954DA-8D4E-49EE-83AD-80085A43DEEB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ECC954DA-8D4E-49EE-83AD-80085A43DEEB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{ECC954DA-8D4E-49EE-83AD-80085A43DEEB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
