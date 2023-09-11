@@ -3,7 +3,7 @@ namespace CodexPlugin
 {
     public interface ICodexNodeFactory
     {
-        //OnlineCodexNode CreateOnlineCodexNode(CodexAccess access, CodexNodeGroup group);
+        OnlineCodexNode CreateOnlineCodexNode(CodexAccess access, CodexNodeGroup group);
     }
 
     public class CodexNodeFactory : ICodexNodeFactory
@@ -19,11 +19,11 @@ namespace CodexPlugin
         //    this.marketplaceAccessFactory = marketplaceAccessFactory;
         //}
 
-        //public OnlineCodexNode CreateOnlineCodexNode(CodexAccess access, CodexNodeGroup group)
-        //{
-        //    var metricsAccess = metricsAccessFactory.CreateMetricsAccess(access.Container);
-        //    var marketplaceAccess = marketplaceAccessFactory.CreateMarketplaceAccess(access);
-        //    return new OnlineCodexNode(lifecycle, access, group, metricsAccess, marketplaceAccess);
-        //}
+        public OnlineCodexNode CreateOnlineCodexNode(CodexAccess access, CodexNodeGroup group)
+        {
+            //var metricsAccess = metricsAccessFactory.CreateMetricsAccess(access.Container);
+            //var marketplaceAccess = marketplaceAccessFactory.CreateMarketplaceAccess(access);
+            return new OnlineCodexNode(/*lifecycle,*/ access, group/*, metricsAccess, marketplaceAccess*/);
+        }
     }
 }

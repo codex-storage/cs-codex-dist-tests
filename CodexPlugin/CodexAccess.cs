@@ -7,11 +7,11 @@ namespace CodexPlugin
 {
     public class CodexAccess : ILogHandler
     {
-        private readonly BaseLog log;
+        private readonly ILog log;
         private readonly ITimeSet timeSet;
         private bool hasContainerCrashed;
 
-        public CodexAccess(BaseLog log, RunningContainer container, ITimeSet timeSet, Address address)
+        public CodexAccess(ILog log, RunningContainer container, ITimeSet timeSet, Address address)
         {
             this.log = log;
             Container = container;

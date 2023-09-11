@@ -9,19 +9,19 @@ namespace DistTestCore
 {
     public class Http
     {
-        private readonly BaseLog log;
+        private readonly ILog log;
         private readonly ITimeSet timeSet;
         private readonly Address address;
         private readonly string baseUrl;
         private readonly Action<HttpClient> onClientCreated;
         private readonly string? logAlias;
 
-        public Http(BaseLog log, ITimeSet timeSet, Address address, string baseUrl, string? logAlias = null)
+        public Http(ILog log, ITimeSet timeSet, Address address, string baseUrl, string? logAlias = null)
             : this(log, timeSet, address, baseUrl, DoNothing, logAlias)
         {
         }
 
-        public Http(BaseLog log, ITimeSet timeSet, Address address, string baseUrl, Action<HttpClient> onClientCreated, string? logAlias = null)
+        public Http(ILog log, ITimeSet timeSet, Address address, string baseUrl, Action<HttpClient> onClientCreated, string? logAlias = null)
         {
             this.log = log;
             this.timeSet = timeSet;

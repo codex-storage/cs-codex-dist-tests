@@ -5,6 +5,7 @@
         private readonly List<object> configs = new List<object>();
 
         public string? NameOverride { get; set; }
+        public bool CreateCrashWatcher { get; set; }
 
         public void Add(object config)
         {

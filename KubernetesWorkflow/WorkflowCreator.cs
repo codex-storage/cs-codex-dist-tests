@@ -19,7 +19,7 @@ namespace KubernetesWorkflow
             this.testNamespace = testNamespace.ToLowerInvariant();
         }
 
-        public StartupWorkflow CreateWorkflow()
+        public IStartupWorkflow CreateWorkflow()
         {
             var workflowNumberSource = new WorkflowNumberSource(numberSource.GetNextNumber(),
                                                                     containerNumberSource);

@@ -3,7 +3,17 @@ using Utils;
 
 namespace KubernetesWorkflow
 {
-    public class StartupWorkflow
+    public interface IStartupWorkflow
+    {
+        RunningContainers Start(int numberOfContainers, Location location, ContainerRecipeFactory recipeFactory, StartupConfig startupConfig);
+        void Stop(RunningContainers runningContainers);
+        void DownloadContainerLog(RunningContainer container, ILogHandler logHandler, int? tailLines);
+        string ExecuteCommand(RunningContainer container, string command, params string[] args);
+        void DeleteAllResources();// !!!  delete namespace then!?
+        void DeleteTestResources(); // !!! do not mention tests. what are we deleting?
+    }
+
+    public class StartupWorkflow : IStartupWorkflow
     {
         private readonly BaseLog log;
         private readonly WorkflowNumberSource numberSource;
@@ -26,16 +36,13 @@ namespace KubernetesWorkflow
             return K8s(controller =>
             {
                 var recipes = CreateRecipes(numberOfContainers, recipeFactory, startupConfig);
-
                 var runningPod = controller.BringOnline(recipes, location);
+                var containers = CreateContainers(runningPod, recipes, startupConfig);
 
-                return new RunningContainers(startupConfig, runningPod, CreateContainers(runningPod, recipes, startupConfig));
+                if (startupConfig.CreateCrashWatcher) CreateCrashWatchers(controller, containers);
+
+                return new RunningContainers(startupConfig, runningPod, containers);
             });
-        }
-
-        public CrashWatcher CreateCrashWatcher(RunningContainer container)
-        {
-            return K8s(controller => controller.CreateCrashWatcher(container));
         }
 
         public void Stop(RunningContainers runningContainers)
@@ -76,6 +83,14 @@ namespace KubernetesWorkflow
             {
                 controller.DeleteTestNamespace();
             });
+        }
+
+        private void CreateCrashWatchers(K8sController controller, RunningContainer[] runningContainers)
+        {
+            foreach (var container in runningContainers)
+            {
+                container.CrashWatcher = controller.CreateCrashWatcher(container);
+            }
         }
 
         private RunningContainer[] CreateContainers(RunningPod runningPod, ContainerRecipe[] recipes, StartupConfig startupConfig)

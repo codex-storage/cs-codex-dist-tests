@@ -12,7 +12,6 @@ namespace DistTestCore
         private readonly string dataFilesPath;
         //private readonly CodexLogLevel codexLogLevel;
         private readonly string k8sNamespacePrefix;
-        private static RunnerLocation? runnerLocation = null;
 
         public Configuration()
         {
@@ -59,20 +58,6 @@ namespace DistTestCore
         //    return codexLogLevel;
         //}
 
-        public Address GetAddress(RunningContainer container)
-        {
-            if (runnerLocation == null)
-            {
-                runnerLocation = RunnerLocationUtils.DetermineRunnerLocation(container);
-            }
-            
-            if (runnerLocation == RunnerLocation.InternalToCluster)
-            {
-                return container.ClusterInternalAddress;
-            }
-            return container.ClusterExternalAddress;
-        }
-
         private static string GetEnvVarOrDefault(string varName, string defaultValue)
         {
             var v = Environment.GetEnvironmentVariable(varName);
@@ -88,56 +73,5 @@ namespace DistTestCore
         }
     }
 
-    public enum RunnerLocation
-    {
-        ExternalToCluster,
-        InternalToCluster,
-    }
 
-    public static class RunnerLocationUtils
-    {
-        private static bool alreadyDidThat = false;
-
-        public static RunnerLocation DetermineRunnerLocation(RunningContainer container)
-        {
-            // We want to be sure we don't ping more often than strictly necessary.
-            // If we have already determined the location during this application
-            // lifetime, don't do it again.
-            if (alreadyDidThat) throw new Exception("We already did that.");
-            alreadyDidThat = true;
-
-            if (PingHost(container.Pod.PodInfo.Ip))
-            {
-                return RunnerLocation.InternalToCluster;
-            }
-            if (PingHost(Format(container.ClusterExternalAddress)))
-            {
-                return RunnerLocation.ExternalToCluster;
-            }
-
-            throw new Exception("Unable to determine runner location.");
-        }
-
-        private static string Format(Address host)
-        {
-            return host.Host
-                .Replace("http://", "")
-                .Replace("https://", "");
-        }
-
-        private static bool PingHost(string host)
-        {
-            try
-            {
-                using var pinger = new Ping();
-                PingReply reply = pinger.Send(host);
-                return reply.Status == IPStatus.Success;
-            }
-            catch (PingException)
-            {
-            }
-
-            return false;
-        }
-    }
 }

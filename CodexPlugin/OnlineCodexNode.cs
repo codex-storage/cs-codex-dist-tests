@@ -1,6 +1,5 @@
 ﻿using DistTestCore.Logs;
 using FileUtils;
-using Logging;
 using NUnit.Framework;
 using Utils;
 
@@ -18,7 +17,7 @@ namespace CodexPlugin
         //IMetricsAccess Metrics { get; }
         //IMarketplaceAccess Marketplace { get; }
         CodexDebugVersionResponse Version { get; }
-        ICodexSetup BringOffline();
+        void BringOffline();
     }
 
     public class OnlineCodexNode : IOnlineCodexNode
@@ -108,13 +107,13 @@ namespace CodexPlugin
             return null!; // lifecycle.DownloadLog(CodexAccess.Container, tailLines);
         }
 
-        public ICodexSetup BringOffline()
+        public void BringOffline()
         {
             if (Group.Count() > 1) throw new InvalidOperationException("Codex-nodes that are part of a group cannot be " +
                 "individually shut down. Use 'BringOffline()' on the group object to stop the group. This method is only " +
                 "available for codex-nodes in groups of 1.");
 
-            return Group.BringOffline();
+            Group.BringOffline();
         }
 
         public void EnsureOnlineGetVersionResponse()

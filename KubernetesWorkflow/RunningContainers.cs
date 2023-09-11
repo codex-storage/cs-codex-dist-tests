@@ -43,6 +43,19 @@ namespace KubernetesWorkflow
 
         [JsonIgnore]
         public CrashWatcher? CrashWatcher { get; set; }
+
+        [JsonIgnore]
+        public Address Address
+        {
+            get
+            {
+                if (RunnerLocationUtils.DetermineRunnerLocation(this) == RunnerLocation.InternalToCluster)
+                {
+                    return ClusterInternalAddress;
+                }
+                return ClusterExternalAddress;
+            }
+        }
     }
 
     public static class RunningContainersExtensions

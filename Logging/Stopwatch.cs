@@ -5,25 +5,25 @@ namespace Logging
     public class Stopwatch
     {
         private readonly DateTime start = DateTime.UtcNow;
-        private readonly BaseLog log;
+        private readonly ILog log;
         private readonly string name;
         private readonly bool debug;
 
-        private Stopwatch(BaseLog log, string name, bool debug)
+        private Stopwatch(ILog log, string name, bool debug)
         {
             this.log = log;
             this.name = name;
             this.debug = debug;
         }
 
-        public static void Measure(BaseLog log, string name, Action action, bool debug = false)
+        public static void Measure(ILog log, string name, Action action, bool debug = false)
         {
             var sw = Begin(log, name, debug);
             action();
             sw.End();
         }
 
-        public static T Measure<T>(BaseLog log, string name, Func<T> action, bool debug = false)
+        public static T Measure<T>(ILog log, string name, Func<T> action, bool debug = false)
         {
             var sw = Begin(log, name, debug);
             var result = action();
@@ -31,22 +31,22 @@ namespace Logging
             return result;
         }
 
-        public static Stopwatch Begin(BaseLog log)
+        public static Stopwatch Begin(ILog log)
         {
             return Begin(log, "");
         }
 
-        public static Stopwatch Begin(BaseLog log, string name)
+        public static Stopwatch Begin(ILog log, string name)
         {
             return Begin(log, name, false);
         }
 
-        public static Stopwatch Begin(BaseLog log, bool debug)
+        public static Stopwatch Begin(ILog log, bool debug)
         {
             return Begin(log, "", debug);
         }
 
-        public static Stopwatch Begin(BaseLog log, string name, bool debug)
+        public static Stopwatch Begin(ILog log, string name, bool debug)
         {
             return new Stopwatch(log, name, debug);
         }

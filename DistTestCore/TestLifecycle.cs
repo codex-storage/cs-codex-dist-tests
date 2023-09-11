@@ -26,6 +26,14 @@ namespace DistTestCore
             testStart = DateTime.UtcNow;
             //CodexVersion = null;
 
+            // the plugin manager is starting to look like the testlifecycle, that's bad because they are not supposed to be doing the same things:
+            // pluginmanager should be useful for disttest-deployer-continuoustest, everyone!
+            // but testlifecycle should be a disttest specific user of the plugin manager.
+            // disttest requires a hook by which it can keep track of containers created?? (does it?) /namespace used? for the purpose of cleaning up.
+
+            //var pluginManager = new PluginManager(Log, configuration, timeSet, testNamespace);
+            //pluginManager.InitializeAllPlugins();
+
             Log.WriteLogTag();
         }
 

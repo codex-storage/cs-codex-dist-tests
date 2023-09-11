@@ -1,11 +1,13 @@
-﻿using KubernetesWorkflow;
+﻿using DistTestCore;
+using KubernetesWorkflow;
+using Logging;
 using System.Collections;
 
 namespace CodexPlugin
 {
     public interface ICodexNodeGroup : IEnumerable<IOnlineCodexNode>
     {
-        ICodexSetup BringOffline();
+        void BringOffline();
         IOnlineCodexNode this[int index] { get; }
     }
 
@@ -13,12 +15,12 @@ namespace CodexPlugin
     {
         //private readonly TestLifecycle lifecycle;
 
-        public CodexNodeGroup(/*TestLifecycle lifecycle, */CodexSetup setup, RunningContainers[] containers, ICodexNodeFactory codexNodeFactory)
+        public CodexNodeGroup(/*TestLifecycle lifecycle, CodexSetup setup,*/ILog log, ITimeSet timeSet, RunningContainers[] containers, ICodexNodeFactory codexNodeFactory)
         {
             //this.lifecycle = lifecycle;
-            Setup = setup;
+            //Setup = setup;
             Containers = containers;
-            Nodes = containers.Containers().Select(c => CreateOnlineCodexNode(c, codexNodeFactory)).ToArray();
+            Nodes = containers.Containers().Select(c => CreateOnlineCodexNode(c, log, timeSet, codexNodeFactory)).ToArray();
             Version = new CodexDebugVersionResponse();
         }
 
@@ -30,20 +32,18 @@ namespace CodexPlugin
             }
         }
 
-        public ICodexSetup BringOffline()
+        public void BringOffline()
         {
             //lifecycle.CodexStarter.BringOffline(this);
 
-            var result = Setup;
+            //var result = Setup;
             // Clear everything. Prevent accidental use.
-            Setup = null!;
+            //Setup = null!;
             Nodes = Array.Empty<OnlineCodexNode>();
             Containers = null!;
-
-            return result;
         }
 
-        public CodexSetup Setup { get; private set; }
+        //public CodexSetup Setup { get; private set; }
         public RunningContainers[] Containers { get; private set; }
         public OnlineCodexNode[] Nodes { get; private set; }
         public CodexDebugVersionResponse Version { get; private set; }
@@ -78,11 +78,10 @@ namespace CodexPlugin
             Version = first;
         }
 
-        private OnlineCodexNode CreateOnlineCodexNode(RunningContainer c, ICodexNodeFactory factory)
+        private OnlineCodexNode CreateOnlineCodexNode(RunningContainer c, ILog log, ITimeSet timeSet, ICodexNodeFactory factory)
         {
-            //var access = new CodexAccess(lifecycle.Log, c, lifecycle.TimeSet, lifecycle.Configuration.GetAddress(c));
-            //return factory.CreateOnlineCodexNode(access, this);
-            return null!;
+            var access = new CodexAccess(log, c, timeSet, c.Address);
+            return factory.CreateOnlineCodexNode(access, this);
         }
     }
 }

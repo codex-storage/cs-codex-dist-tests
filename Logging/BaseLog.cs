@@ -1,8 +1,17 @@
-﻿using Utils;
+﻿using System.Diagnostics;
+using Utils;
 
 namespace Logging
 {
-    public abstract class BaseLog
+    public interface ILog
+    {
+        void Log(string message);
+        void Debug(string message = "", int skipFrames = 0);
+        void Error(string message);
+        LogFile CreateSubfile(string ext = "log");
+    }
+
+    public abstract class BaseLog : ILog
     {
         private readonly NumberSource subfileNumberSource = new NumberSource(0);
         private readonly bool debug;
