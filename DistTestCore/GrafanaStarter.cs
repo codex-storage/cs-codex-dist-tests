@@ -3,6 +3,7 @@ using IdentityModel.Client;
 using KubernetesWorkflow;
 using Newtonsoft.Json;
 using System.Reflection;
+using Utils;
 
 namespace DistTestCore
 {

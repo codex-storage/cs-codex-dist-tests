@@ -2,6 +2,7 @@
 using DistTestCore.Codex;
 using NUnit.Framework;
 using NUnit.Framework.Interfaces;
+using Utils;
 
 namespace TestsLong.BasicTests
 {

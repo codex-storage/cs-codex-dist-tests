@@ -345,7 +345,8 @@ namespace KubernetesWorkflow
                         Spec = new V1PodSpec
                         {
                             NodeSelector = CreateNodeSelector(location),
-                            Containers = CreateDeploymentContainers(containerRecipes)
+                            Containers = CreateDeploymentContainers(containerRecipes),
+                            Volumes = CreateVolumes(containerRecipes)
                         }
                     }
                 }
@@ -407,7 +408,7 @@ namespace KubernetesWorkflow
 
         private List<V1Container> CreateDeploymentContainers(ContainerRecipe[] containerRecipes)
         {
-            return containerRecipes.Select(r => CreateDeploymentContainer(r)).ToList();
+            return containerRecipes.Select(CreateDeploymentContainer).ToList();
         }
 
         private V1Container CreateDeploymentContainer(ContainerRecipe recipe)
@@ -418,7 +419,91 @@ namespace KubernetesWorkflow
                 Image = recipe.Image,
                 ImagePullPolicy = "Always",
                 Ports = CreateContainerPorts(recipe),
-                Env = CreateEnv(recipe)
+                Env = CreateEnv(recipe),
+                VolumeMounts = CreateContainerVolumeMounts(recipe),
+                Resources = CreateResourceLimits(recipe)
+            };
+        }
+
+        private V1ResourceRequirements CreateResourceLimits(ContainerRecipe recipe)
+        {
+            return new V1ResourceRequirements
+            {
+                Requests = CreateResourceQuantities(recipe.Resources.Requests),
+                Limits = CreateResourceQuantities(recipe.Resources.Limits)
+            };
+        }
+
+        private Dictionary<string, ResourceQuantity> CreateResourceQuantities(ContainerResourceSet set)
+        {
+            var result = new Dictionary<string, ResourceQuantity>();
+            if (set.MilliCPUs != 0)
+            {
+                result.Add("cpu", new ResourceQuantity($"{set.MilliCPUs}m"));
+            }
+            if (set.Memory.SizeInBytes != 0)
+            {
+                result.Add("memory", new ResourceQuantity(set.Memory.ToSuffixNotation()));
+            }
+            return result;
+        }
+
+        private List<V1VolumeMount> CreateContainerVolumeMounts(ContainerRecipe recipe)
+        {
+            return recipe.Volumes.Select(CreateContainerVolumeMount).ToList();
+        }
+
+        private V1VolumeMount CreateContainerVolumeMount(VolumeMount v)
+        {
+            return new V1VolumeMount
+            {
+                Name = v.VolumeName,
+                MountPath = v.MountPath
+            };
+        }
+
+        private List<V1Volume> CreateVolumes(ContainerRecipe[] containerRecipes)
+        {
+            return containerRecipes.Where(c => c.Volumes.Any()).SelectMany(CreateVolumes).ToList();
+        }
+
+        private List<V1Volume> CreateVolumes(ContainerRecipe recipe)
+        {
+            return recipe.Volumes.Select(CreateVolume).ToList();
+        }
+
+        private V1Volume CreateVolume(VolumeMount v)
+        {
+            client.Run(c => c.CreateNamespacedPersistentVolumeClaim(new V1PersistentVolumeClaim
+            {
+                ApiVersion = "v1",
+                Metadata = new V1ObjectMeta
+                {
+                    Name = v.VolumeName
+                },
+                Spec = new V1PersistentVolumeClaimSpec
+                {
+                    AccessModes = new List<string>
+                    {
+                        "ReadWriteOnce"
+                    },
+                    Resources = new V1ResourceRequirements
+                    {
+                        Requests = new Dictionary<string, ResourceQuantity>
+                        {
+                            {"storage", new ResourceQuantity(v.ResourceQuantity) }
+                        }
+                    }
+                }
+            }, K8sTestNamespace));
+
+            return new V1Volume
+            {
+                Name = v.VolumeName,
+                PersistentVolumeClaim = new V1PersistentVolumeClaimVolumeSource
+                {
+                    ClaimName = v.VolumeName
+                }
             };
         }
 

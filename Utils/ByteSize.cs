@@ -1,10 +1,7 @@
-﻿using Utils;
-
-namespace DistTestCore
+﻿namespace Utils
 {
     public class ByteSize
     {
-
         public ByteSize(long sizeInBytes)
         {
             if (sizeInBytes < 0) throw new ArgumentException("Cannot create ByteSize object with size less than 0. Was: " + sizeInBytes);
@@ -16,6 +13,13 @@ namespace DistTestCore
         public long ToMB()
         {
             return SizeInBytes / (1024 * 1024);
+        }
+
+        public ByteSize Multiply(double factor)
+        {
+            double bytes = SizeInBytes;
+            double result = Math.Round(bytes * factor);
+            return new ByteSize(Convert.ToInt64(result));
         }
 
         public override bool Equals(object? obj)

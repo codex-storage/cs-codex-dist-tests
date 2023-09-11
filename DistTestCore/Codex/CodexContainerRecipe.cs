@@ -1,5 +1,6 @@
 ﻿using DistTestCore.Marketplace;
 using KubernetesWorkflow;
+using Utils;
 
 namespace DistTestCore.Codex
 {
@@ -16,10 +17,13 @@ namespace DistTestCore.Codex
 
         public override string AppName => "codex";
         public override string Image { get; }
-
+        
         public CodexContainerRecipe()
         {
             Image = GetDockerImage();
+
+            Resources.Requests = new ContainerResourceSet(milliCPUs: 1000, memory: 6.GB());
+            Resources.Limits = new ContainerResourceSet(milliCPUs: 4000, memory: 12.GB());
         }
 
         protected override void InitializeRecipe(StartupConfig startupConfig)
@@ -29,7 +33,10 @@ namespace DistTestCore.Codex
             AddExposedPortAndVar("CODEX_API_PORT");
             AddEnvVar("CODEX_API_BINDADDR", "0.0.0.0");
 
-            AddEnvVar("CODEX_DATA_DIR", $"datadir{ContainerNumber}");
+            var dataDir = $"datadir{ContainerNumber}";
+            AddEnvVar("CODEX_DATA_DIR", dataDir);
+            AddVolume($"codex/{dataDir}", GetVolumeCapacity(config));
+
             AddInternalPortAndVar("CODEX_DISC_PORT", DiscoveryPortTag);
             AddEnvVar("CODEX_LOG_LEVEL", config.LogLevel.ToString()!.ToUpperInvariant());
 
@@ -89,6 +96,13 @@ namespace DistTestCore.Codex
                     AddEnvVar("CODEX_VALIDATOR", "true");
                 }
             }
+        }
+
+        private ByteSize GetVolumeCapacity(CodexStartupConfig config)
+        {
+            if (config.StorageQuota != null) return config.StorageQuota;
+            // Default Codex quota: 8 Gb, using +20% to be safe.
+            return 8.GB().Multiply(1.2);
         }
 
         private int GetAccountIndex(MarketplaceInitialConfig marketplaceConfig)
