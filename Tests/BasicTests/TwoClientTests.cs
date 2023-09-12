@@ -1,8 +1,8 @@
-﻿using DistTestCore;
+﻿using CodexPlugin;
+using DistTestCore;
 using KubernetesWorkflow;
 using NUnit.Framework;
 using Utils;
-using CodexPlugin;
 
 namespace Tests.BasicTests
 {

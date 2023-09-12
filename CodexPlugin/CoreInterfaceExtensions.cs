@@ -15,6 +15,11 @@ namespace CodexPlugin
             return Plugin(ci).WrapCodexContainers(containers);
         }
 
+        public static IOnlineCodexNode SetupCodexNode(this CoreInterface ci)
+        {
+            return Plugin(ci).SetupCodexNode(s => { }); // do more unification here. Keep plugin simpler.
+        }
+
         public static IOnlineCodexNode SetupCodexNode(this CoreInterface ci, Action<ICodexSetup> setup)
         {
             return Plugin(ci).SetupCodexNode(setup);
