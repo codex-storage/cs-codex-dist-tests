@@ -1,4 +1,5 @@
-﻿
+﻿using DistTestCore;
+
 namespace CodexPlugin
 {
     public interface ICodexNodeFactory
@@ -8,6 +9,13 @@ namespace CodexPlugin
 
     public class CodexNodeFactory : ICodexNodeFactory
     {
+        private readonly IPluginTools tools;
+
+        public CodexNodeFactory(IPluginTools tools)
+        {
+            this.tools = tools;
+        }
+
         //private readonly TestLifecycle lifecycle;
         //private readonly IMetricsAccessFactory metricsAccessFactory;
         //private readonly IMarketplaceAccessFactory marketplaceAccessFactory;
@@ -23,7 +31,7 @@ namespace CodexPlugin
         {
             //var metricsAccess = metricsAccessFactory.CreateMetricsAccess(access.Container);
             //var marketplaceAccess = marketplaceAccessFactory.CreateMarketplaceAccess(access);
-            return new OnlineCodexNode(/*lifecycle,*/ access, group/*, metricsAccess, marketplaceAccess*/);
+            return new OnlineCodexNode(tools, access, group/*, metricsAccess, marketplaceAccess*/);
         }
     }
 }

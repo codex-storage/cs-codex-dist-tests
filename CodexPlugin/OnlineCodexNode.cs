@@ -1,5 +1,7 @@
-﻿using DistTestCore.Logs;
+﻿using DistTestCore;
+using DistTestCore.Logs;
 using FileUtils;
+using Logging;
 using NUnit.Framework;
 using Utils;
 
@@ -24,11 +26,11 @@ namespace CodexPlugin
     {
         private const string SuccessfullyConnectedMessage = "Successfully connected to peer";
         private const string UploadFailedMessage = "Unable to store block";
-        //private readonly TestLifecycle lifecycle;
+        private readonly IPluginTools tools;
 
-        public OnlineCodexNode(/*TestLifecycle lifecycle, */CodexAccess codexAccess, CodexNodeGroup group/*, IMetricsAccess metricsAccess, IMarketplaceAccess marketplaceAccess*/)
+        public OnlineCodexNode(IPluginTools tools, CodexAccess codexAccess, CodexNodeGroup group/*, IMetricsAccess metricsAccess, IMarketplaceAccess marketplaceAccess*/)
         {
-            //this.lifecycle = lifecycle;
+            this.tools = tools;
             CodexAccess = codexAccess;
             Group = group;
             //Metrics = metricsAccess;
@@ -62,32 +64,30 @@ namespace CodexPlugin
 
         public ContentId UploadFile(TestFile file)
         {
-            //using var fileStream = File.OpenRead(file.Filename);
+            using var fileStream = File.OpenRead(file.Filename);
 
-            //var logMessage = $"Uploading file {file.Describe()}...";
-            //Log(logMessage);
-            //var response = Stopwatch.Measure(lifecycle.Log, logMessage, () =>
-            //{
-            //    return CodexAccess.UploadFile(fileStream);
-            //});
+            var logMessage = $"Uploading file {file.Describe()}...";
+            Log(logMessage);
+            var response = Stopwatch.Measure(tools.GetLog(), logMessage, () =>
+            {
+                return CodexAccess.UploadFile(fileStream);
+            });
 
-            //if (string.IsNullOrEmpty(response)) Assert.Fail("Received empty response.");
-            //if (response.StartsWith(UploadFailedMessage)) Assert.Fail("Node failed to store block.");
+            if (string.IsNullOrEmpty(response)) Assert.Fail("Received empty response.");
+            if (response.StartsWith(UploadFailedMessage)) Assert.Fail("Node failed to store block.");
 
-            //Log($"Uploaded file. Received contentId: '{response}'.");
-            //return new ContentId(response);
-            return null!;
+            Log($"Uploaded file. Received contentId: '{response}'.");
+            return new ContentId(response);
         }
 
         public TestFile? DownloadContent(ContentId contentId, string fileLabel = "")
         {
-            //var logMessage = $"Downloading for contentId: '{contentId.Id}'...";
-            //Log(logMessage);
-            //var file = lifecycle.FileManager.CreateEmptyTestFile(fileLabel);
-            //Stopwatch.Measure(lifecycle.Log, logMessage, () => DownloadToFile(contentId.Id, file));
-            //Log($"Downloaded file {file.Describe()} to '{file.Filename}'.");
-            //return file;
-            return null!;
+            var logMessage = $"Downloading for contentId: '{contentId.Id}'...";
+            Log(logMessage);
+            var file = tools.GetFileManager().CreateEmptyTestFile(fileLabel);
+            Stopwatch.Measure(tools.GetLog(), logMessage, () => DownloadToFile(contentId.Id, file));
+            Log($"Downloaded file {file.Describe()} to '{file.Filename}'.");
+            return file;
         }
 
         public void ConnectToPeer(IOnlineCodexNode node)
@@ -159,7 +159,7 @@ namespace CodexPlugin
 
         private void Log(string msg)
         {
-            //lifecycle.Log.Log($"{GetName()}: {msg}");
+            tools.GetLog().Log($"{GetName()}: {msg}");
         }
     }
 

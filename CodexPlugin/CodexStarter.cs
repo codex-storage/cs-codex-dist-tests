@@ -50,7 +50,7 @@ namespace CodexPlugin
         {
             //var metricAccessFactory = CollectMetrics(codexSetup, containers);
 
-            var codexNodeFactory = new CodexNodeFactory();// (lifecycle, metricAccessFactory, gethStartResult.MarketplaceAccessFactory);
+            var codexNodeFactory = new CodexNodeFactory(pluginTools);// (lifecycle, metricAccessFactory, gethStartResult.MarketplaceAccessFactory);
 
             return CreateCodexGroup(/*codexSetup,*/ containers, codexNodeFactory);
             //lifecycle.SetCodexVersion(group.Version);
