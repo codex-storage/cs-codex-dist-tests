@@ -1,11 +1,10 @@
 ﻿using Logging;
-using NUnit.Framework;
 
-namespace DistTestCore.Logs
+namespace Core
 {
     public interface IDownloadedLog
     {
-        void AssertLogContains(string expectedString);
+        bool DoesLogContain(string expectedString);
         string[] FindLinesThatContain(params string[] tags);
         void DeleteFile();
     }
@@ -13,15 +12,13 @@ namespace DistTestCore.Logs
     public class DownloadedLog : IDownloadedLog
     {
         private readonly LogFile logFile;
-        private readonly string owner;
 
-        public DownloadedLog(LogFile logFile, string owner)
+        public DownloadedLog(LogFile logFile)
         {
             this.logFile = logFile;
-            this.owner = owner;
         }
 
-        public void AssertLogContains(string expectedString)
+        public bool DoesLogContain(string expectedString)
         {
             using var file = File.OpenRead(logFile.FullFilename);
             using var streamReader = new StreamReader(file);
@@ -29,11 +26,12 @@ namespace DistTestCore.Logs
             var line = streamReader.ReadLine();
             while (line != null)
             {
-                if (line.Contains(expectedString)) return;
+                if (line.Contains(expectedString)) return true;
                 line = streamReader.ReadLine();
             }
 
-            Assert.Fail($"{owner} Unable to find string '{expectedString}' in CodexNode log file {logFile.FullFilename}");
+            //Assert.Fail($"{owner} Unable to find string '{expectedString}' in CodexNode log file {logFile.FullFilename}");
+            return false;
         }
 
         public string[] FindLinesThatContain(params string[] tags)

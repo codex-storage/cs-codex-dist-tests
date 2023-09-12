@@ -21,7 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\DistTestCore\DistTestCore.csproj" />
+    <ProjectReference Include="..\Core\Core.csproj" />
     <ProjectReference Include="..\KubernetesWorkflow\KubernetesWorkflow.csproj" />
   </ItemGroup>
 

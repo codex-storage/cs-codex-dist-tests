@@ -4,11 +4,11 @@ using Utils;
 
 namespace FileUtils
 {
-    public class TestFile
+    public class TrackedFile
     {
         private readonly ILog log;
 
-        public TestFile(ILog log, string filename, string label)
+        public TrackedFile(ILog log, string filename, string label)
         {
             this.log = log;
             Filename = filename;
@@ -18,7 +18,7 @@ namespace FileUtils
         public string Filename { get; }
         public string Label { get; }
 
-        public void AssertIsEqual(TestFile? actual)
+        public void AssertIsEqual(TrackedFile? actual)
         {
             var sw = Stopwatch.Begin(log);
             try
@@ -27,7 +27,7 @@ namespace FileUtils
             }
             finally
             {
-                sw.End($"{nameof(TestFile)}.{nameof(AssertIsEqual)}");
+                sw.End($"{nameof(TrackedFile)}.{nameof(AssertIsEqual)}");
             }
         }
 
@@ -38,7 +38,7 @@ namespace FileUtils
             return $"'{Filename}'{sizePostfix}";
         }
 
-        private void AssertEqual(TestFile? actual)
+        private void AssertEqual(TrackedFile? actual)
         {
             if (actual == null)  Assert.Fail("TestFile is null.");
             if (actual == this || actual!.Filename == Filename) Assert.Fail("TestFile is compared to itself.");

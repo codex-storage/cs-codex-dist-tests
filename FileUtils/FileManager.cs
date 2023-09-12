@@ -6,8 +6,8 @@ namespace FileUtils
 {
     public interface IFileManager
     {
-        TestFile CreateEmptyTestFile(string label = "");
-        TestFile GenerateTestFile(ByteSize size, string label = "");
+        TrackedFile CreateEmptyTestFile(string label = "");
+        TrackedFile GenerateTestFile(ByteSize size, string label = "");
         void DeleteAllTestFiles();
         void ScopedFiles(Action action);
         T ScopedFiles<T>(Func<T> action);
@@ -20,7 +20,7 @@ namespace FileUtils
         private readonly Random random = new Random();
         private readonly ILog log;
         private readonly string folder;
-        private readonly List<List<TestFile>> fileSetStack = new List<List<TestFile>>();
+        private readonly List<List<TrackedFile>> fileSetStack = new List<List<TrackedFile>>();
 
         public FileManager(ILog log, string rootFolder)
         {
@@ -30,16 +30,16 @@ namespace FileUtils
             this.log = log;
         }
 
-        public TestFile CreateEmptyTestFile(string label = "")
+        public TrackedFile CreateEmptyTestFile(string label = "")
         {
             var path = Path.Combine(folder, Guid.NewGuid().ToString() + "_test.bin");
-            var result = new TestFile(log, path, label);
+            var result = new TrackedFile(log, path, label);
             File.Create(result.Filename).Close();
             if (fileSetStack.Any()) fileSetStack.Last().Add(result);
             return result;
         }
 
-        public TestFile GenerateTestFile(ByteSize size, string label)
+        public TrackedFile GenerateTestFile(ByteSize size, string label)
         {
             var sw = Stopwatch.Begin(log);
             var result = GenerateFile(size, label);
@@ -69,7 +69,7 @@ namespace FileUtils
 
         private void PushFileSet()
         {
-            fileSetStack.Add(new List<TestFile>());
+            fileSetStack.Add(new List<TrackedFile>());
         }
 
         private void PopFileSet()
@@ -88,7 +88,7 @@ namespace FileUtils
             }
         }
 
-        private TestFile GenerateFile(ByteSize size, string label)
+        private TrackedFile GenerateFile(ByteSize size, string label)
         {
             var result = CreateEmptyTestFile(label);
             CheckSpaceAvailable(result, size);
@@ -97,7 +97,7 @@ namespace FileUtils
             return result;
         }
 
-        private void CheckSpaceAvailable(TestFile testFile, ByteSize size)
+        private void CheckSpaceAvailable(TrackedFile testFile, ByteSize size)
         {
             var file = new FileInfo(testFile.Filename);
             var drive = new DriveInfo(file.Directory!.Root.FullName);
@@ -115,7 +115,7 @@ namespace FileUtils
             }
         }
 
-        private void GenerateFileBytes(TestFile result, ByteSize size)
+        private void GenerateFileBytes(TrackedFile result, ByteSize size)
         {
             long bytesLeft = size.SizeInBytes;
             int chunkSize = ChunkSize;
@@ -135,7 +135,7 @@ namespace FileUtils
             }
         }
 
-        private void AppendRandomBytesToFile(TestFile result, long length)
+        private void AppendRandomBytesToFile(TrackedFile result, long length)
         {
             var bytes = new byte[length];
             random.NextBytes(bytes);

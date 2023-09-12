@@ -1,4 +1,4 @@
-﻿using DistTestCore;
+﻿using Core;
 using KubernetesWorkflow;
 
 namespace CodexPlugin
@@ -18,6 +18,11 @@ namespace CodexPlugin
         public static IOnlineCodexNode SetupCodexNode(this PluginInterface pluginInterface, Action<ICodexSetup> setup)
         {
             return Plugin(pluginInterface).SetupCodexNode(setup);
+        }
+
+        public static ICodexNodeGroup SetupCodexNodes(this PluginInterface pluginInterface, int number, Action<ICodexSetup> setup)
+        {
+            return Plugin(pluginInterface).SetupCodexNodes(number, setup);
         }
 
         public static ICodexNodeGroup SetupCodexNodes(this PluginInterface pluginInterface, int number)

@@ -1,4 +1,4 @@
-﻿namespace DistTestCore
+﻿namespace Core
 {
     public abstract class PluginInterface
     {

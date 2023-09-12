@@ -1,7 +1,7 @@
 ﻿using KubernetesWorkflow;
 using Logging;
 
-namespace DistTestCore
+namespace Core
 {
     public abstract class DefaultContainerRecipe : ContainerRecipeFactory
     {

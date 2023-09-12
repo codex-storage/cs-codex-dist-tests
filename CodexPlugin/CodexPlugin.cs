@@ -1,4 +1,4 @@
-﻿using DistTestCore;
+﻿using Core;
 using KubernetesWorkflow;
 using Logging;
 
@@ -40,7 +40,13 @@ namespace CodexPlugin
 
         public IOnlineCodexNode SetupCodexNode(Action<ICodexSetup> setup)
         {
-            return null!;
+            return SetupCodexNodes(1, setup)[0];
+        }
+
+        public ICodexNodeGroup SetupCodexNodes(int number, Action<ICodexSetup> setup)
+        {
+            var rc = StartCodexNodes(number, setup);
+            return WrapCodexContainers(rc);
         }
 
         public ICodexNodeGroup SetupCodexNodes(int number)
@@ -48,6 +54,5 @@ namespace CodexPlugin
             var rc = StartCodexNodes(number, s => { });
             return WrapCodexContainers(rc);
         }
-
     }
 }

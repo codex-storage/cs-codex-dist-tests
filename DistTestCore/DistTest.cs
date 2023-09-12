@@ -1,4 +1,4 @@
-﻿using DistTestCore.Logs;
+﻿using Core;
 using FileUtils;
 using KubernetesWorkflow;
 using Logging;
@@ -92,7 +92,7 @@ namespace DistTestCore
             }
         }
 
-        public TestFile GenerateTestFile(ByteSize size, string label = "")
+        public TrackedFile GenerateTestFile(ByteSize size, string label = "")
         {
             return Get().FileManager.GenerateTestFile(size, label);
         }

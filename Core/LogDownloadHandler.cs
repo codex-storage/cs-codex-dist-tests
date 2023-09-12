@@ -1,25 +1,23 @@
 ﻿using KubernetesWorkflow;
 using Logging;
 
-namespace DistTestCore.Logs
+namespace Core
 {
     public class LogDownloadHandler : LogHandler, ILogHandler
     {
-        private readonly RunningContainer container;
         private readonly LogFile log;
 
-        public LogDownloadHandler(RunningContainer container, string description, LogFile log)
+        public LogDownloadHandler(string description, LogFile log)
         {
-            this.container = container;
             this.log = log;
 
             log.Write($"{description} -->> {log.FullFilename}");
             log.WriteRaw(description);
         }
 
-        public DownloadedLog DownloadLog()
+        public IDownloadedLog DownloadLog()
         {
-            return new DownloadedLog(log, container.Name);
+            return new DownloadedLog(log);
         }
 
         protected override void ProcessLine(string line)

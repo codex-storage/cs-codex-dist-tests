@@ -1,5 +1,5 @@
 ﻿//using DistTestCore.Marketplace;
-using DistTestCore;
+using Core;
 using KubernetesWorkflow;
 using Utils;
 

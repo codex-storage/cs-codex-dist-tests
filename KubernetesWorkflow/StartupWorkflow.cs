@@ -7,7 +7,7 @@ namespace KubernetesWorkflow
     {
         RunningContainers Start(int numberOfContainers, Location location, ContainerRecipeFactory recipeFactory, StartupConfig startupConfig);
         void Stop(RunningContainers runningContainers);
-        void DownloadContainerLog(RunningContainer container, ILogHandler logHandler, int? tailLines);
+        void DownloadContainerLog(RunningContainer container, ILogHandler logHandler, int? tailLines = null);
         string ExecuteCommand(RunningContainer container, string command, params string[] args);
         void DeleteNamespace();
         void DeleteNamespacesStartingWith(string namespacePrefix);
@@ -53,7 +53,7 @@ namespace KubernetesWorkflow
             });
         }
 
-        public void DownloadContainerLog(RunningContainer container, ILogHandler logHandler, int? tailLines)
+        public void DownloadContainerLog(RunningContainer container, ILogHandler logHandler, int? tailLines = null)
         {
             K8s(controller =>
             {

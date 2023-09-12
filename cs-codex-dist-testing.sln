@@ -23,9 +23,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ArgsUniform", "ArgsUniform\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CodexNetDownloader", "CodexNetDownloader\CodexNetDownloader.csproj", "{6CDF35D2-906A-4285-8E1F-4794588B948B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FileUtils", "FileUtils\FileUtils.csproj", "{ECC954DA-8D4E-49EE-83AD-80085A43DEEB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FileUtils", "FileUtils\FileUtils.csproj", "{ECC954DA-8D4E-49EE-83AD-80085A43DEEB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CodexPlugin", "CodexPlugin\CodexPlugin.csproj", "{DE4E802C-288C-45C4-84B6-8A5A6A96EF49}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CodexPlugin", "CodexPlugin\CodexPlugin.csproj", "{DE4E802C-288C-45C4-84B6-8A5A6A96EF49}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Core", "Core\Core.csproj", "{F2BF34B3-C660-43EF-BD42-BC5C60237FC4}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -81,6 +83,10 @@ Global
 		{DE4E802C-288C-45C4-84B6-8A5A6A96EF49}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DE4E802C-288C-45C4-84B6-8A5A6A96EF49}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DE4E802C-288C-45C4-84B6-8A5A6A96EF49}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F2BF34B3-C660-43EF-BD42-BC5C60237FC4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F2BF34B3-C660-43EF-BD42-BC5C60237FC4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F2BF34B3-C660-43EF-BD42-BC5C60237FC4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F2BF34B3-C660-43EF-BD42-BC5C60237FC4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

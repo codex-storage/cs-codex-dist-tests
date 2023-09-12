@@ -1,5 +1,4 @@
-﻿using DistTestCore;
-using DistTestCore.Logs;
+﻿using Core;
 using FileUtils;
 using Logging;
 using NUnit.Framework;
@@ -12,8 +11,8 @@ namespace CodexPlugin
         string GetName();
         CodexDebugResponse GetDebugInfo();
         CodexDebugPeerResponse GetDebugPeer(string peerId);
-        ContentId UploadFile(TestFile file);
-        TestFile? DownloadContent(ContentId contentId, string fileLabel = "");
+        ContentId UploadFile(TrackedFile file);
+        TrackedFile? DownloadContent(ContentId contentId, string fileLabel = "");
         void ConnectToPeer(IOnlineCodexNode node);
         IDownloadedLog DownloadLog(int? tailLines = null);
         //IMetricsAccess Metrics { get; }
@@ -62,7 +61,7 @@ namespace CodexPlugin
             return CodexAccess.GetDebugPeer(peerId);
         }
 
-        public ContentId UploadFile(TestFile file)
+        public ContentId UploadFile(TrackedFile file)
         {
             using var fileStream = File.OpenRead(file.Filename);
 
@@ -80,7 +79,7 @@ namespace CodexPlugin
             return new ContentId(response);
         }
 
-        public TestFile? DownloadContent(ContentId contentId, string fileLabel = "")
+        public TrackedFile? DownloadContent(ContentId contentId, string fileLabel = "")
         {
             var logMessage = $"Downloading for contentId: '{contentId.Id}'...";
             Log(logMessage);
@@ -104,7 +103,11 @@ namespace CodexPlugin
 
         public IDownloadedLog DownloadLog(int? tailLines = null)
         {
-            return null!; // lifecycle.DownloadLog(CodexAccess.Container, tailLines);
+            var workflow = tools.CreateWorkflow();
+            var file = tools.GetLog().CreateSubfile();
+            var logHandler = new LogDownloadHandler(CodexAccess.GetName(), file);
+            workflow.DownloadContainerLog(CodexAccess.Container, logHandler);
+            return logHandler.DownloadLog();
         }
 
         public void BringOffline()
@@ -142,7 +145,7 @@ namespace CodexPlugin
             return multiAddress.Replace("0.0.0.0", peer.CodexAccess.Container.Pod.PodInfo.Ip);
         }
 
-        private void DownloadToFile(string contentId, TestFile file)
+        private void DownloadToFile(string contentId, TrackedFile file)
         {
             using var fileStream = File.OpenWrite(file.Filename);
             try

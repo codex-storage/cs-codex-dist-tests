@@ -4,7 +4,7 @@ using Logging;
 using System.Reflection;
 using Utils;
 
-namespace DistTestCore
+namespace Core
 {
     public class PluginManager
     {
