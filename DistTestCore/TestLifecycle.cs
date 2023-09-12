@@ -9,6 +9,7 @@ namespace DistTestCore
     {
         private readonly PluginManager pluginManager;
         private readonly DateTime testStart;
+        private readonly WorkflowCreator workflowCreator;
 
         public TestLifecycle(TestLog log, Configuration configuration, ITimeSet timeSet, string testNamespace)
         {
@@ -18,6 +19,8 @@ namespace DistTestCore
             TestNamespace = testNamespace;
             testStart = DateTime.UtcNow;
             FileManager = new FileManager(Log, Configuration.GetFileManagerFolder());
+
+            workflowCreator = new WorkflowCreator(Log, Configuration.GetK8sConfiguration(TimeSet), TestNamespace);
 
             pluginManager = new PluginManager();
             pluginManager.DiscoverPlugins();
@@ -50,8 +53,7 @@ namespace DistTestCore
         public IStartupWorkflow CreateWorkflow(string? namespaceOverride = null)
         {
             if (namespaceOverride != null) throw new Exception("Namespace override is not supported in the DistTest environment. (It would mess up automatic resource cleanup.)");
-            var wc = new WorkflowCreator(Log, Configuration.GetK8sConfiguration(TimeSet), TestNamespace);
-            return wc.CreateWorkflow();
+            return workflowCreator.CreateWorkflow();
         }
 
         public IFileManager GetFileManager()

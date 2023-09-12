@@ -45,7 +45,7 @@ namespace CodexPlugin
 
         public ICodexNodeGroup SetupCodexNodes(int number)
         {
-            var rc = StartCodexNodes(1, s => { });
+            var rc = StartCodexNodes(number, s => { });
             return WrapCodexContainers(rc);
         }
 

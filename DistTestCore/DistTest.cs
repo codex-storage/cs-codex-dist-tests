@@ -12,6 +12,7 @@ namespace DistTestCore
     public abstract class DistTest : PluginInterface
     {
         private const string TestsType = "dist-tests";
+        private const string TestNamespacePrefix = "ct-";
         private readonly Configuration configuration = new Configuration();
         private readonly Assembly[] testAssemblies;
         private readonly FixtureLog fixtureLog;
@@ -45,7 +46,7 @@ namespace DistTestCore
                 Stopwatch.Measure(fixtureLog, "Global setup", () =>
                 {
                     var wc = new WorkflowCreator(fixtureLog, configuration.GetK8sConfiguration(GetTimeSet()), string.Empty);
-                    wc.CreateWorkflow().DeleteNamespace();
+                    wc.CreateWorkflow().DeleteNamespacesStartingWith(TestNamespacePrefix);
                 });                
             }
             catch (Exception ex)
@@ -221,7 +222,7 @@ namespace DistTestCore
             {
                 lock (lifecycleLock)
                 {
-                    var testNamespace = Guid.NewGuid().ToString();
+                    var testNamespace = TestNamespacePrefix + Guid.NewGuid().ToString();
                     var lifecycle = new TestLifecycle(fixtureLog.CreateTestLog(), configuration, GetTimeSet(), testNamespace);
                     lifecycles.Add(testName, lifecycle);
                     DefaultContainerRecipe.TestsType = TestsType;
