@@ -8,25 +8,20 @@ namespace CodexPlugin
     {
         private readonly IPluginTools pluginTools;
 
-        //public CodexStarter(TestLifecycle lifecycle)
-        //    : base(lifecycle)
-        //{
-        //}
-
-        public CodexStarter(IPluginTools pluginActions)
+        public CodexStarter(IPluginTools pluginTools)
         {
-            this.pluginTools = pluginActions;
+            this.pluginTools = pluginTools;
         }
 
         public RunningContainers[] BringOnline(CodexSetup codexSetup)
         {
-            //LogSeparator();
-            //LogStart($"Starting {codexSetup.Describe()}...");
+            LogSeparator();
+            Log($"Starting {codexSetup.Describe()}...");
             //var gethStartResult = lifecycle.GethStarter.BringOnlineMarketplaceFor(codexSetup);
 
             var startupConfig = CreateStartupConfig(/*gethStartResult,*/ codexSetup);
 
-            return StartCodexContainers(startupConfig, codexSetup.NumberOfNodes, codexSetup.Location);
+            var containers = StartCodexContainers(startupConfig, codexSetup.NumberOfNodes, codexSetup.Location);
 
             //var metricAccessFactory = CollectMetrics(codexSetup, containers);
 
@@ -35,15 +30,11 @@ namespace CodexPlugin
             //var group = CreateCodexGroup(codexSetup, containers, codexNodeFactory);
             //lifecycle.SetCodexVersion(group.Version);
 
-            //var nl = Environment.NewLine;
-            //var podInfos = string.Join(nl, containers.Containers().Select(c => $"Container: '{c.Name}' runs at '{c.Pod.PodInfo.K8SNodeName}'={c.Pod.PodInfo.Ip}"));
-            //LogEnd($"Started {codexSetup.NumberOfNodes} nodes " +
-            //    $"of image '{containers.Containers().First().Recipe.Image}' " +
-            //    $"and version '{group.Version}'{nl}" +
-            //    podInfos);
-            //LogSeparator();
+            var podInfos = string.Join(", ", containers.Containers().Select(c => $"Container: '{c.Name}' runs at '{c.Pod.PodInfo.K8SNodeName}'={c.Pod.PodInfo.Ip}"));
+            Log($"Started {codexSetup.NumberOfNodes} nodes of image '{containers.Containers().First().Recipe.Image}'. ({podInfos})");
+            LogSeparator();
 
-            //return group;
+            return containers;
         }
 
         public ICodexNodeGroup WrapCodexContainers(RunningContainers[] containers)
@@ -52,18 +43,13 @@ namespace CodexPlugin
 
             var codexNodeFactory = new CodexNodeFactory(pluginTools);// (lifecycle, metricAccessFactory, gethStartResult.MarketplaceAccessFactory);
 
-            return CreateCodexGroup(/*codexSetup,*/ containers, codexNodeFactory);
+            var group = CreateCodexGroup(containers, codexNodeFactory);
+
+            Log($"Codex version: {group.Version}");
+
             //lifecycle.SetCodexVersion(group.Version);
 
-            //var nl = Environment.NewLine;
-            //var podInfos = string.Join(nl, containers.Containers().Select(c => $"Container: '{c.Name}' runs at '{c.Pod.PodInfo.K8SNodeName}'={c.Pod.PodInfo.Ip}"));
-            //LogEnd($"Started {codexSetup.NumberOfNodes} nodes " +
-            //    $"of image '{containers.Containers().First().Recipe.Image}' " +
-            //    $"and version '{group.Version}'{nl}" +
-            //    podInfos);
-            //LogSeparator();
-
-            //return group;
+            return group;
         }
 
         public void BringOffline(CodexNodeGroup group)
@@ -132,7 +118,7 @@ namespace CodexPlugin
 
             try
             {
-                Stopwatch.Measure(pluginTools.GetLog(), "EnsureOnline", group.EnsureOnline, debug: true);
+                Stopwatch.Measure(pluginTools.GetLog(), "(CodexStarter) EnsureOnline", group.EnsureOnline); // log prefixer plz
             }
             catch
             {
@@ -155,10 +141,15 @@ namespace CodexPlugin
         //    return lifecycle.WorkflowCreator.CreateWorkflow();
         //}
 
-        //private void LogSeparator()
-        //{
-        //    Log("----------------------------------------------------------------------------");
-        //}
+        private void LogSeparator()
+        {
+            Log("----------------------------------------------------------------------------");
+        }
+
+        private void Log(string message)
+        {
+            pluginTools.GetLog().Log($"(CodexStarter) {message}");
+        }
 
         //private void StopCrashWatcher(RunningContainers containers)
         //{

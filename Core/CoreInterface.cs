@@ -16,8 +16,13 @@
 
         internal static void Desociate(EntryPoint entryPoint)
         {
-            var key = coreAssociations.Single(p => p.Value == entryPoint).Key;
-            coreAssociations.Remove(key);
+            var keys = coreAssociations.Where(p => p.Value == entryPoint).ToArray();
+            if (keys.Length == 0) return;
+            
+            foreach (var key in keys)
+            {
+                coreAssociations.Remove(key.Key);
+            }
         }
     }
 }
