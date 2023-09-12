@@ -4,7 +4,7 @@ using Logging;
 
 namespace CodexPlugin
 {
-    public class Plugin : IProjectPlugin
+    public class CodexPlugin : IProjectPlugin
     {
         private CodexStarter codexStarter = null!;
 
@@ -18,8 +18,6 @@ namespace CodexPlugin
         public void Initialize(IPluginTools tools)
         {
             codexStarter = new CodexStarter(tools);
-
-            DistTestExtensions.Plugin = this;
         }
 
         public void Finalize(ILog log)

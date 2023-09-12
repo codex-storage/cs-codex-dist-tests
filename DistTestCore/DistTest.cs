@@ -9,7 +9,7 @@ using Utils;
 namespace DistTestCore
 {
     [Parallelizable(ParallelScope.All)]
-    public abstract class DistTest
+    public abstract class DistTest : PluginInterface
     {
         private const string TestsType = "dist-tests";
         private readonly Configuration configuration = new Configuration();
@@ -152,6 +152,11 @@ namespace DistTestCore
         //{
         //    return Get().CodexStarter.RunningGroups.SelectMany(g => g.Nodes);
         //}
+
+        public override T GetPlugin<T>()
+        {
+            return Get().GetPlugin<T>();
+        }
 
         private void AnnouncePlugins(FixtureLog fixtureLog)
         {

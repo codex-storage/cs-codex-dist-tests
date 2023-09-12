@@ -1,6 +1,7 @@
 ﻿using FileUtils;
 using KubernetesWorkflow;
 using Logging;
+using System.Reflection;
 using Utils;
 
 namespace DistTestCore
@@ -34,6 +35,11 @@ namespace DistTestCore
         {
             foreach (var plugin in projectPlugins) plugin.Finalize(log);
         }
+
+        public T GetPlugin<T>() where T : IProjectPlugin
+        {
+            return (T)projectPlugins.Single(p => p.GetType() == typeof(T));
+        }
     }
 
     public static class PluginFinder
@@ -45,9 +51,36 @@ namespace DistTestCore
             if (pluginTypes != null) return pluginTypes;
 
             // Reflection can be costly. Do this only once.
+            FindAndLoadPluginAssemblies();
+
             var assemblies = AppDomain.CurrentDomain.GetAssemblies();
-            pluginTypes = assemblies.SelectMany(a => a.GetTypes().Where(t => typeof(IProjectPlugin).IsAssignableFrom(t))).ToArray();
+            pluginTypes = assemblies.SelectMany(a => a.GetTypes().Where(t =>
+                typeof(IProjectPlugin).IsAssignableFrom(t) &&
+                !t.IsAbstract)
+            ).ToArray();
+
             return pluginTypes;
+        }
+
+        private static void FindAndLoadPluginAssemblies()
+        {
+            var files = Directory.GetFiles(".");
+            foreach (var file in files)
+            {
+                var f = file.ToLowerInvariant();
+                if (f.Contains("plugin") && f.EndsWith("dll"))
+                {
+                    var name = Path.GetFileNameWithoutExtension(file);
+                    try
+                    {
+                        Assembly.Load(name);
+                    }
+                    catch (Exception ex)
+                    {
+                        throw new Exception($"Failed to load plugin from file '{name}'.", ex);
+                    }
+                }
+            }
         }
     }
 

@@ -32,6 +32,11 @@ namespace DistTestCore
         public string TestNamespace { get; }
         public IFileManager FileManager { get; }
 
+        public T GetPlugin<T>() where T : IProjectPlugin
+        {
+            return pluginManager.GetPlugin<T>();
+        }
+
         public Http CreateHttp(Address address, string baseUrl, Action<HttpClient> onClientCreated, string? logAlias = null)
         {
             return new Http(Log, TimeSet, address, baseUrl, onClientCreated, logAlias);

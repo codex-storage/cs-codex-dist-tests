@@ -1,12 +1,12 @@
 ﻿namespace Logging
 {
-    public class FixtureLog : TestLog
+    public class FixtureLog : BaseTestLog
     {
         private readonly string fullName;
         private readonly LogConfig config;
 
         public FixtureLog(LogConfig config, DateTime start, string name = "")
-            : base(config.LogRoot, config.DebugEnabled)
+            : base(config.DebugEnabled)
         {
             fullName = NameUtils.GetFixtureFullName(config, start, name);
             this.config = config;

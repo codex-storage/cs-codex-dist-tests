@@ -1,10 +1,9 @@
 ﻿namespace Logging
 {
-    public class TestLog : BaseLog
+    public class TestLog : BaseTestLog
     {
         private readonly string methodName;
         private readonly string fullName;
-        private bool hasFailed;
 
         public TestLog(string folder, bool debug, string name = "")
             : base(debug)
@@ -13,13 +12,6 @@
             fullName = Path.Combine(folder, methodName);
 
             Log($"*** Begin: {methodName}");
-        }
-
-        public void MarkAsFailed()
-        {
-            if (hasFailed) return;
-            hasFailed = true;
-            LogFile.ConcatToFilename("_FAILED");
         }
 
         protected override string GetFullName()
