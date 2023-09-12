@@ -1,5 +1,4 @@
-﻿using System.Diagnostics;
-using Utils;
+﻿using Utils;
 
 namespace Logging
 {
@@ -16,7 +15,6 @@ namespace Logging
         private readonly NumberSource subfileNumberSource = new NumberSource(0);
         private readonly bool debug;
         private readonly List<BaseLogStringReplacement> replacements = new List<BaseLogStringReplacement>();
-        private bool hasFailed;
         private LogFile? logFile;
 
         protected BaseLog(bool debug)
@@ -33,10 +31,6 @@ namespace Logging
                 if (logFile == null) logFile = new LogFile(GetFullName(), "log");
                 return logFile;
             }
-        }
-
-        public virtual void EndTest()
-        {
         }
 
         public virtual void Log(string message)
@@ -57,13 +51,6 @@ namespace Logging
         public virtual void Error(string message)
         {
             Log($"[ERROR] {message}");
-        }
-
-        public virtual void MarkAsFailed()
-        {
-            if (hasFailed) return;
-            hasFailed = true;
-            LogFile.ConcatToFilename("_FAILED");
         }
 
         public virtual void AddStringReplace(string from, string to)

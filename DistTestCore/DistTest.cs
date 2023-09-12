@@ -18,7 +18,8 @@ namespace DistTestCore
         private readonly StatusLog statusLog;
         private readonly object lifecycleLock = new object();
         private readonly Dictionary<string, TestLifecycle> lifecycles = new Dictionary<string, TestLifecycle>();
-
+        private readonly PluginManager PluginManager = new PluginManager();
+        
         public DistTest()
         {
             var assemblies = AppDomain.CurrentDomain.GetAssemblies();
@@ -33,11 +34,9 @@ namespace DistTestCore
         [OneTimeSetUp]
         public void GlobalSetup()
         {
-            fixtureLog.Log($"Codex Distributed Tests are starting...");
-            //fixtureLog.Log($"Codex image: '{new CodexContainerRecipe().Image}'");
-            //fixtureLog.Log($"CodexContracts image: '{new CodexContractsContainerRecipe().Image}'");
-            //fixtureLog.Log($"Prometheus image: '{new PrometheusContainerRecipe().Image}'");
-            //fixtureLog.Log($"Geth image: '{new GethContainerRecipe().Image}'");
+            fixtureLog.Log($"Distributed Tests are starting...");
+            PluginManager.DiscoverPlugins();
+            AnnouncePlugins(fixtureLog);
 
             // Previous test run may have been interrupted.
             // Begin by cleaning everything up.
@@ -46,7 +45,7 @@ namespace DistTestCore
                 Stopwatch.Measure(fixtureLog, "Global setup", () =>
                 {
                     var wc = new WorkflowCreator(fixtureLog, configuration.GetK8sConfiguration(GetTimeSet()), string.Empty);
-                    wc.CreateWorkflow().DeleteAllResources();
+                    wc.CreateWorkflow().DeleteNamespace();
                 });                
             }
             catch (Exception ex)
@@ -57,6 +56,12 @@ namespace DistTestCore
             }
 
             fixtureLog.Log("Global setup cleanup successful");
+        }
+
+        [OneTimeTearDown]
+        public void GlobalTearDown()
+        {
+            FinalizePlugins(fixtureLog);
         }
 
         [SetUp]
@@ -148,7 +153,17 @@ namespace DistTestCore
         //    return Get().CodexStarter.RunningGroups.SelectMany(g => g.Nodes);
         //}
 
-        public BaseLog GetTestLog()
+        private void AnnouncePlugins(FixtureLog fixtureLog)
+        {
+            PluginManager.AnnouncePlugins(fixtureLog);
+        }
+
+        private void FinalizePlugins(FixtureLog fixtureLog)
+        {
+            PluginManager.FinalizePlugins(fixtureLog);
+        }
+
+        public ILog GetTestLog()
         {
             return Get().Log;
         }
@@ -205,7 +220,7 @@ namespace DistTestCore
                     var lifecycle = new TestLifecycle(fixtureLog.CreateTestLog(), configuration, GetTimeSet(), testNamespace);
                     lifecycles.Add(testName, lifecycle);
                     DefaultContainerRecipe.TestsType = TestsType;
-                    DefaultContainerRecipe.ApplicationIds = lifecycle.GetApplicationIds();
+                    //DefaultContainerRecipe.ApplicationIds = lifecycle.GetApplicationIds();
                 }
             });
         }
@@ -216,14 +231,32 @@ namespace DistTestCore
             var testResult = GetTestResult();
             var testDuration = lifecycle.GetTestDuration();
             fixtureLog.Log($"{GetCurrentTestName()} = {testResult} ({testDuration})");
-            statusLog.ConcludeTest(testResult, testDuration, lifecycle.GetApplicationIds());
+            statusLog.ConcludeTest(testResult, testDuration);//, lifecycle.GetApplicationIds());
             Stopwatch.Measure(fixtureLog, $"Teardown for {GetCurrentTestName()}", () =>
             {
-                lifecycle.Log.EndTest();
+                WriteEndTestLog(lifecycle.Log);
+
                 IncludeLogsAndMetricsOnTestFailure(lifecycle);
                 lifecycle.DeleteAllResources();
                 lifecycle = null!;
             });
+        }
+
+        private void WriteEndTestLog(TestLog log)
+        {
+            var result = TestContext.CurrentContext.Result;
+
+            Log($"*** Finished: {GetCurrentTestName()} = {result.Outcome.Status}");
+            if (!string.IsNullOrEmpty(result.Message))
+            {
+                Log(result.Message);
+                Log($"{result.StackTrace}");
+            }
+
+            if (result.Outcome.Status == NUnit.Framework.Interfaces.TestStatus.Failed)
+            {
+                log.MarkAsFailed();
+            }
         }
 
         private ITimeSet GetTimeSet()

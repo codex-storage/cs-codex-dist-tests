@@ -101,7 +101,7 @@ namespace ContinuousTests
             }
             finally
             {
-                flow.DeleteTestResources();
+                flow.DeleteNamespacesStartingWith();
             }
         }
 

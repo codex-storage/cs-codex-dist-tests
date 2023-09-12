@@ -18,11 +18,11 @@ namespace FileUtils
         public const int ChunkSize = 1024 * 1024 * 100;
         private static NumberSource folderNumberSource = new NumberSource(0);
         private readonly Random random = new Random();
-        private readonly BaseLog log;
+        private readonly ILog log;
         private readonly string folder;
         private readonly List<List<TestFile>> fileSetStack = new List<List<TestFile>>();
 
-        public FileManager(BaseLog log, string rootFolder)
+        public FileManager(ILog log, string rootFolder)
         {
             folder = Path.Combine(rootFolder, folderNumberSource.GetNextNumber().ToString("D5"));
 

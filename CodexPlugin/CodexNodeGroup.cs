@@ -13,14 +13,10 @@ namespace CodexPlugin
 
     public class CodexNodeGroup : ICodexNodeGroup
     {
-        //private readonly TestLifecycle lifecycle;
-
-        public CodexNodeGroup(/*TestLifecycle lifecycle, CodexSetup setup,*/ILog log, ITimeSet timeSet, RunningContainers[] containers, ICodexNodeFactory codexNodeFactory)
+        public CodexNodeGroup(IPluginTools tools, RunningContainers[] containers, ICodexNodeFactory codexNodeFactory)
         {
-            //this.lifecycle = lifecycle;
-            //Setup = setup;
             Containers = containers;
-            Nodes = containers.Containers().Select(c => CreateOnlineCodexNode(c, log, timeSet, codexNodeFactory)).ToArray();
+            Nodes = containers.Containers().Select(c => CreateOnlineCodexNode(c, tools, codexNodeFactory)).ToArray();
             Version = new CodexDebugVersionResponse();
         }
 
@@ -43,7 +39,6 @@ namespace CodexPlugin
             Containers = null!;
         }
 
-        //public CodexSetup Setup { get; private set; }
         public RunningContainers[] Containers { get; private set; }
         public OnlineCodexNode[] Nodes { get; private set; }
         public CodexDebugVersionResponse Version { get; private set; }
@@ -78,9 +73,9 @@ namespace CodexPlugin
             Version = first;
         }
 
-        private OnlineCodexNode CreateOnlineCodexNode(RunningContainer c, ILog log, ITimeSet timeSet, ICodexNodeFactory factory)
+        private OnlineCodexNode CreateOnlineCodexNode(RunningContainer c, IPluginTools tools, ICodexNodeFactory factory)
         {
-            var access = new CodexAccess(log, c, timeSet, c.Address);
+            var access = new CodexAccess(tools, c);
             return factory.CreateOnlineCodexNode(access, this);
         }
     }

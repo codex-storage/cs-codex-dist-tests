@@ -26,10 +26,6 @@
             Console.WriteLine("Error: " + message);
         }
 
-        public override void MarkAsFailed()
-        {
-        }
-
         public override void AddStringReplace(string from, string to)
         {
         }

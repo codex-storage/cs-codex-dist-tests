@@ -9,26 +9,26 @@ namespace KubernetesWorkflow
         void Stop(RunningContainers runningContainers);
         void DownloadContainerLog(RunningContainer container, ILogHandler logHandler, int? tailLines);
         string ExecuteCommand(RunningContainer container, string command, params string[] args);
-        void DeleteAllResources();// !!!  delete namespace then!?
-        void DeleteTestResources(); // !!! do not mention tests. what are we deleting?
+        void DeleteNamespace();
+        void DeleteNamespacesStartingWith(string namespacePrefix);
     }
 
     public class StartupWorkflow : IStartupWorkflow
     {
-        private readonly BaseLog log;
+        private readonly ILog log;
         private readonly WorkflowNumberSource numberSource;
         private readonly K8sCluster cluster;
         private readonly KnownK8sPods knownK8SPods;
-        private readonly string testNamespace;
+        private readonly string k8sNamespace;
         private readonly RecipeComponentFactory componentFactory = new RecipeComponentFactory();
 
-        internal StartupWorkflow(BaseLog log, WorkflowNumberSource numberSource, K8sCluster cluster, KnownK8sPods knownK8SPods, string testNamespace)
+        internal StartupWorkflow(ILog log, WorkflowNumberSource numberSource, K8sCluster cluster, KnownK8sPods knownK8SPods, string k8sNamespace)
         {
             this.log = log;
             this.numberSource = numberSource;
             this.cluster = cluster;
             this.knownK8SPods = knownK8SPods;
-            this.testNamespace = testNamespace;
+            this.k8sNamespace = k8sNamespace;
         }
 
         public RunningContainers Start(int numberOfContainers, Location location, ContainerRecipeFactory recipeFactory, StartupConfig startupConfig)
@@ -69,19 +69,19 @@ namespace KubernetesWorkflow
             });
         }
 
-        public void DeleteAllResources()
+        public void DeleteNamespace()
         {
             K8s(controller =>
             {
-                controller.DeleteAllResources();
+                controller.DeleteNamespace();
             });
         }
 
-        public void DeleteTestResources()
+        public void DeleteNamespacesStartingWith(string namespacePrefix)
         {
             K8s(controller =>
             {
-                controller.DeleteTestNamespace();
+                controller.DeleteAllNamespacesStartingWith(namespacePrefix);
             });
         }
 
@@ -133,11 +133,10 @@ namespace KubernetesWorkflow
         private Address GetContainerInternalAddress(ContainerRecipe recipe)
         {
             var serviceName = "service-" + numberSource.WorkflowNumber;
-            var namespaceName = cluster.Configuration.K8sNamespacePrefix + testNamespace;
             var port = GetInternalPort(recipe);
 
             return new Address(
-                $"http://{serviceName}.{namespaceName}.svc.cluster.local",
+                $"http://{serviceName}.{k8sNamespace}.svc.cluster.local",
                 port);
         }
 
@@ -167,14 +166,14 @@ namespace KubernetesWorkflow
 
         private void K8s(Action<K8sController> action)
         {
-            var controller = new K8sController(log, cluster, knownK8SPods, numberSource, testNamespace);
+            var controller = new K8sController(log, cluster, knownK8SPods, numberSource, k8sNamespace);
             action(controller);
             controller.Dispose();
         }
 
         private T K8s<T>(Func<K8sController, T> action)
         {
-            var controller = new K8sController(log, cluster, knownK8SPods, numberSource, testNamespace);
+            var controller = new K8sController(log, cluster, knownK8SPods, numberSource, k8sNamespace);
             var result = action(controller);
             controller.Dispose();
             return result;

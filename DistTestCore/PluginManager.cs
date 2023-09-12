@@ -1,64 +1,85 @@
-﻿using KubernetesWorkflow;
+﻿using FileUtils;
+using KubernetesWorkflow;
 using Logging;
+using Utils;
 
 namespace DistTestCore
 {
-    public class PluginManager : IPluginActions
+    public class PluginManager
     {
-        private readonly BaseLog log;
-        private readonly Configuration configuration;
-        private readonly string testNamespace;
-        private readonly WorkflowCreator workflowCreator;
-        private readonly ITimeSet timeSet;
         private readonly List<IProjectPlugin> projectPlugins = new List<IProjectPlugin>();
 
-        public PluginManager(BaseLog log, Configuration configuration, ITimeSet timeSet, string testNamespace)
+        public void DiscoverPlugins()
         {
-            this.log = log;
-            this.configuration = configuration;
-            this.timeSet = timeSet;
-            this.testNamespace = testNamespace;
-            workflowCreator = new WorkflowCreator(log, configuration.GetK8sConfiguration(timeSet), testNamespace);
-        }
-
-        public IStartupWorkflow CreateWorkflow()
-        {
-            return workflowCreator.CreateWorkflow();
-        }
-
-        public ILog GetLog()
-        {
-            return log;
-        }
-
-        public ITimeSet GetTimeSet()
-        {
-            return timeSet;
-        }
-
-        public void InitializeAllPlugins()
-        {
-            var assemblies = AppDomain.CurrentDomain.GetAssemblies();
-            var pluginTypes = assemblies.SelectMany(a => a.GetTypes().Where(t => typeof(IProjectPlugin).IsAssignableFrom(t))).ToArray();
-
+            projectPlugins.Clear();
+            var pluginTypes = PluginFinder.GetPluginTypes();
             foreach (var pluginType in pluginTypes)
             {
-                IPluginActions actions = this;
-                var plugin = (IProjectPlugin)Activator.CreateInstance(pluginType, args: actions)!;
+                var plugin = (IProjectPlugin)Activator.CreateInstance(pluginType)!;
                 projectPlugins.Add(plugin);
             }
+        }
+
+        public void AnnouncePlugins(ILog log)
+        {
+            foreach (var plugin in projectPlugins) plugin.Announce(log);
+        }
+
+        public void InitializePlugins(IPluginTools tools)
+        {
+            foreach (var plugin in projectPlugins) plugin.Initialize(tools);
+        }
+
+        public void FinalizePlugins(ILog log)
+        {
+            foreach (var plugin in projectPlugins) plugin.Finalize(log);
+        }
+    }
+
+    public static class PluginFinder
+    {
+        private static Type[]? pluginTypes = null;
+
+        public static Type[] GetPluginTypes()
+        {
+            if (pluginTypes != null) return pluginTypes;
+
+            // Reflection can be costly. Do this only once.
+            var assemblies = AppDomain.CurrentDomain.GetAssemblies();
+            pluginTypes = assemblies.SelectMany(a => a.GetTypes().Where(t => typeof(IProjectPlugin).IsAssignableFrom(t))).ToArray();
+            return pluginTypes;
         }
     }
 
     public interface IProjectPlugin
     {
+        void Announce(ILog log);
+        void Initialize(IPluginTools tools);
+        void Finalize(ILog log);
     }
 
-    // probably seggregate this out.
-    public interface IPluginActions
+    public interface IPluginTools : IWorkflowTool, ILogTool, IHttpFactoryTool, IFileTool
+    {        
+    }
+
+    public interface IWorkflowTool
     {
-        IStartupWorkflow CreateWorkflow();
+        IStartupWorkflow CreateWorkflow(string? namespaceOverride = null);
+    }
+
+    public interface ILogTool
+    {
         ILog GetLog();
-        ITimeSet GetTimeSet();
+    }
+
+    public interface IHttpFactoryTool
+    {
+        Http CreateHttp(Address address, string baseUrl, Action<HttpClient> onClientCreated, string? logAlias = null);
+        Http CreateHttp(Address address, string baseUrl, string? logAlias = null);
+    }
+    
+    public interface IFileTool
+    {
+        IFileManager GetFileManager();
     }
 }

@@ -1,11 +1,10 @@
-﻿using NUnit.Framework;
-
-namespace Logging
+﻿namespace Logging
 {
     public class TestLog : BaseLog
     {
         private readonly string methodName;
         private readonly string fullName;
+        private bool hasFailed;
 
         public TestLog(string folder, bool debug, string name = "")
             : base(debug)
@@ -16,21 +15,11 @@ namespace Logging
             Log($"*** Begin: {methodName}");
         }
 
-        public override void EndTest()
+        public void MarkAsFailed()
         {
-            var result = TestContext.CurrentContext.Result;
-
-            Log($"*** Finished: {methodName} = {result.Outcome.Status}");
-            if (!string.IsNullOrEmpty(result.Message))
-            {
-                Log(result.Message);
-                Log($"{result.StackTrace}");
-            }
-
-            if (result.Outcome.Status == NUnit.Framework.Interfaces.TestStatus.Failed)
-            {
-                MarkAsFailed();
-            }
+            if (hasFailed) return;
+            hasFailed = true;
+            LogFile.ConcatToFilename("_FAILED");
         }
 
         protected override string GetFullName()

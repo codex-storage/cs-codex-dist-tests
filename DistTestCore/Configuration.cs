@@ -36,7 +36,6 @@ namespace DistTestCore
         public KubernetesWorkflow.Configuration GetK8sConfiguration(ITimeSet timeSet)
         {
             return new KubernetesWorkflow.Configuration(
-                k8sNamespacePrefix: k8sNamespacePrefix,
                 kubeConfigFile: kubeConfigFile,
                 operationTimeout: timeSet.K8sOperationTimeout(),
                 retryDelay: timeSet.WaitForK8sServiceDelay()

@@ -1,29 +1,24 @@
 ﻿using DistTestCore;
 using KubernetesWorkflow;
-using Logging;
 using Utils;
 
 namespace CodexPlugin
 {
     public class CodexAccess : ILogHandler
     {
-        private readonly ILog log;
-        private readonly ITimeSet timeSet;
+        private readonly IPluginTools tools;
         private bool hasContainerCrashed;
 
-        public CodexAccess(ILog log, RunningContainer container, ITimeSet timeSet, Address address)
+        public CodexAccess(IPluginTools tools, RunningContainer container)
         {
-            this.log = log;
+            this.tools = tools;
             Container = container;
-            this.timeSet = timeSet;
-            Address = address;
             hasContainerCrashed = false;
 
             if (container.CrashWatcher != null) container.CrashWatcher.Start(this);
         }
 
         public RunningContainer Container { get; }
-        public Address Address { get; }
 
         public CodexDebugResponse GetDebugInfo()
         {
@@ -90,7 +85,7 @@ namespace CodexPlugin
 
         private Http Http()
         {
-            return new Http(log, timeSet, Address, baseUrl: "/api/codex/v1", CheckContainerCrashed, Container.Name);
+            return tools.CreateHttp(Container.Address, baseUrl: "/api/codex/v1", CheckContainerCrashed, Container.Name);
         }
 
         private void CheckContainerCrashed(HttpClient client)
@@ -100,6 +95,7 @@ namespace CodexPlugin
 
         public void Log(Stream crashLog)
         {
+            var log = tools.GetLog();
             var file = log.CreateSubfile();
             log.Log($"Container {Container.Name} has crashed. Downloading crash log to '{file.FullFilename}'...");
 

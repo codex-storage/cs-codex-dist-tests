@@ -1,18 +1,32 @@
 ﻿using DistTestCore;
 using KubernetesWorkflow;
+using Logging;
 
 namespace CodexPlugin
 {
     public class Plugin : IProjectPlugin
     {
-        private readonly CodexStarter codexStarter;
+        private CodexStarter codexStarter = null!;
 
-        public Plugin(IPluginActions actions)
+        #region IProjectPlugin Implementation
+
+        public void Announce(ILog log)
         {
-            codexStarter = new CodexStarter(actions);
+            log.Log("hello from codex plugin. codex container info here.");
+        }
+
+        public void Initialize(IPluginTools tools)
+        {
+            codexStarter = new CodexStarter(tools);
 
             DistTestExtensions.Plugin = this;
         }
+
+        public void Finalize(ILog log)
+        {
+        }
+
+        #endregion
 
         public RunningContainers[] StartCodexNodes(int numberOfNodes, Action<ICodexSetup> setup)
         {
@@ -36,5 +50,6 @@ namespace CodexPlugin
             var rc = StartCodexNodes(1, s => { });
             return WrapCodexContainers(rc);
         }
+
     }
 }

@@ -5,7 +5,7 @@ namespace KubernetesWorkflow
 {
     public class CrashWatcher
     {
-        private readonly BaseLog log;
+        private readonly ILog log;
         private readonly KubernetesClientConfiguration config;
         private readonly string k8sNamespace;
         private readonly RunningContainer container;
@@ -14,7 +14,7 @@ namespace KubernetesWorkflow
         private Task? worker;
         private Exception? workerException;
 
-        public CrashWatcher(BaseLog log, KubernetesClientConfiguration config, string k8sNamespace, RunningContainer container)
+        public CrashWatcher(ILog log, KubernetesClientConfiguration config, string k8sNamespace, RunningContainer container)
         {
             this.log = log;
             this.config = config;

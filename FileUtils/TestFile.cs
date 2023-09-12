@@ -6,9 +6,9 @@ namespace FileUtils
 {
     public class TestFile
     {
-        private readonly BaseLog log;
+        private readonly ILog log;
 
-        public TestFile(BaseLog log, string filename, string label)
+        public TestFile(ILog log, string filename, string label)
         {
             this.log = log;
             Filename = filename;

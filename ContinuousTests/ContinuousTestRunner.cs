@@ -59,7 +59,7 @@ namespace ContinuousTests
 
             log.Log($"Clearing namespace '{test.CustomK8sNamespace}'...");
             var lifecycle = k8SFactory.CreateTestLifecycle(config.KubeConfigFile, config.LogPath, config.DataPath, test.CustomK8sNamespace, new DefaultTimeSet(), log);
-            lifecycle.WorkflowCreator.CreateWorkflow().DeleteTestResources();
+            lifecycle.WorkflowCreator.CreateWorkflow().DeleteNamespacesStartingWith();
         }
     }
 }

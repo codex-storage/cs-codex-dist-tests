@@ -14,7 +14,7 @@ namespace Logging
             fixtureName = NameUtils.GetRawFixtureName();
         }
 
-        public void ConcludeTest(string resultStatus, string testDuration, ApplicationIds applicationIds)
+        public void ConcludeTest(string resultStatus, string testDuration/*, ApplicationIds applicationIds*/)
         {
             Write(new StatusLogJson
             {
@@ -22,11 +22,11 @@ namespace Logging
                 runid = NameUtils.GetRunId(),
                 status = resultStatus,
                 testid = NameUtils.GetTestId(),
-                codexid = applicationIds.CodexId,
-                gethid = applicationIds.GethId,
-                prometheusid = applicationIds.PrometheusId,
-                codexcontractsid = applicationIds.CodexContractsId,
-                grafanaid = applicationIds.GrafanaId,
+                //codexid = applicationIds.CodexId,
+                //gethid = applicationIds.GethId,
+                //prometheusid = applicationIds.PrometheusId,
+                //codexcontractsid = applicationIds.CodexContractsId,
+                //grafanaid = applicationIds.GrafanaId,
                 category = NameUtils.GetCategoryName(),
                 fixturename = fixtureName,
                 testname = NameUtils.GetTestMethodName(),

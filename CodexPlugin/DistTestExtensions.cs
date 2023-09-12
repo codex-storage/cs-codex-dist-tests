@@ -12,7 +12,7 @@ namespace CodexPlugin
             return Plugin.StartCodexNodes(number, setup);
         }
 
-        public static ICodexNodeGroup WrapCodexContainers(this DistTest distTest, RunningContainers containers)
+        public static ICodexNodeGroup WrapCodexContainers(this DistTest distTest, RunningContainers[] containers)
         {
             return Plugin.WrapCodexContainers(containers);
         }

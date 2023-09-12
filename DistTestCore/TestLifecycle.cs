@@ -1,70 +1,81 @@
-﻿using DistTestCore.Logs;
-using FileUtils;
+﻿using FileUtils;
 using KubernetesWorkflow;
 using Logging;
 using Utils;
 
 namespace DistTestCore
 {
-    public class TestLifecycle
+    public class TestLifecycle : IPluginTools
     {
+        private readonly PluginManager pluginManager;
         private readonly DateTime testStart;
 
-        public TestLifecycle(BaseLog log, Configuration configuration, ITimeSet timeSet, string testNamespace)
+        public TestLifecycle(TestLog log, Configuration configuration, ITimeSet timeSet, string testNamespace)
         {
             Log = log;
             Configuration = configuration;
             TimeSet = timeSet;
-
-            WorkflowCreator = new WorkflowCreator(log, configuration.GetK8sConfiguration(timeSet), testNamespace);
-
-            FileManager = new FileManager(Log, configuration.GetFileManagerFolder());
-            //CodexStarter = new CodexStarter(this);
-            PrometheusStarter = new PrometheusStarter(this);
-            GrafanaStarter = new GrafanaStarter(this);
-            //GethStarter = new GethStarter(this);
+            TestNamespace = testNamespace;
             testStart = DateTime.UtcNow;
-            //CodexVersion = null;
+            FileManager = new FileManager(Log, Configuration.GetFileManagerFolder());
 
-            // the plugin manager is starting to look like the testlifecycle, that's bad because they are not supposed to be doing the same things:
-            // pluginmanager should be useful for disttest-deployer-continuoustest, everyone!
-            // but testlifecycle should be a disttest specific user of the plugin manager.
-            // disttest requires a hook by which it can keep track of containers created?? (does it?) /namespace used? for the purpose of cleaning up.
+            pluginManager = new PluginManager();
+            pluginManager.DiscoverPlugins();
+            pluginManager.InitializePlugins(this);
 
-            //var pluginManager = new PluginManager(Log, configuration, timeSet, testNamespace);
-            //pluginManager.InitializeAllPlugins();
-
-            Log.WriteLogTag();
+            log.WriteLogTag();
         }
 
-        public BaseLog Log { get; }
+        public TestLog Log { get; }
         public Configuration Configuration { get; }
         public ITimeSet TimeSet { get; }
-        public WorkflowCreator WorkflowCreator { get; }
-        public FileManager FileManager { get; }
-        //public CodexStarter CodexStarter { get; }
-        public PrometheusStarter PrometheusStarter { get; }
-        public GrafanaStarter GrafanaStarter { get; }
-        //public GethStarter GethStarter { get; }
-        //public CodexDebugVersionResponse? CodexVersion { get; private set; }
+        public string TestNamespace { get; }
+        public IFileManager FileManager { get; }
+
+        public Http CreateHttp(Address address, string baseUrl, Action<HttpClient> onClientCreated, string? logAlias = null)
+        {
+            return new Http(Log, TimeSet, address, baseUrl, onClientCreated, logAlias);
+        }
+
+        public Http CreateHttp(Address address, string baseUrl, string? logAlias = null)
+        {
+            return new Http(Log, TimeSet, address, baseUrl, logAlias);
+        }
+
+        public IStartupWorkflow CreateWorkflow(string? namespaceOverride = null)
+        {
+            if (namespaceOverride != null) throw new Exception("Namespace override is not supported in the DistTest environment. (It would mess up automatic resource cleanup.)");
+            var wc = new WorkflowCreator(Log, Configuration.GetK8sConfiguration(TimeSet), TestNamespace);
+            return wc.CreateWorkflow();
+        }
+
+        public IFileManager GetFileManager()
+        {
+            return FileManager;
+        }
+
+        public ILog GetLog()
+        {
+            return Log;
+        }
 
         public void DeleteAllResources()
         {
-            //CodexStarter.DeleteAllResources();
+            CreateWorkflow().DeleteNamespace();
             FileManager.DeleteAllTestFiles();
         }
 
-        public IDownloadedLog DownloadLog(RunningContainer container, int? tailLines = null)
-        {
-            var subFile = Log.CreateSubfile();
-            var description = container.Name;
-            var handler = new LogDownloadHandler(container, description, subFile);
+        //public IDownloadedLog DownloadLog(RunningContainer container, int? tailLines = null)
+        //{
+        //    var subFile = Log.CreateSubfile();
+        //    var description = container.Name;
+        //    var handler = new LogDownloadHandler(container, description, subFile);
 
-            Log.Log($"Downloading logs for {description} to file '{subFile.FullFilename}'");
-            //CodexStarter.DownloadLog(container, handler, tailLines);
+        //    Log.Log($"Downloading logs for {description} to file '{subFile.FullFilename}'");
+        //    //CodexStarter.DownloadLog(container, handler, tailLines);
 
-            return new DownloadedLog(subFile, description);
-        }
+        //    return new DownloadedLog(subFile, description);
+        //}
 
         public string GetTestDuration()
         {
@@ -72,30 +83,30 @@ namespace DistTestCore
             return Time.FormatDuration(testDuration);
         }
 
-        //public void SetCodexVersion(CodexDebugVersionResponse version)
+        ////public void SetCodexVersion(CodexDebugVersionResponse version)
+        ////{
+        ////    if (CodexVersion == null) CodexVersion = version;
+        ////}
+
+        //public ApplicationIds GetApplicationIds()
         //{
-        //    if (CodexVersion == null) CodexVersion = version;
+        //    //return new ApplicationIds(
+        //    //    codexId: GetCodexId(),
+        //    //    gethId: new GethContainerRecipe().Image,
+        //    //    prometheusId: new PrometheusContainerRecipe().Image,
+        //    //    codexContractsId: new CodexContractsContainerRecipe().Image,
+        //    //    grafanaId: new GrafanaContainerRecipe().Image
+        //    //);
+        //    return null!;
         //}
 
-        public ApplicationIds GetApplicationIds()
-        {
-            //return new ApplicationIds(
-            //    codexId: GetCodexId(),
-            //    gethId: new GethContainerRecipe().Image,
-            //    prometheusId: new PrometheusContainerRecipe().Image,
-            //    codexContractsId: new CodexContractsContainerRecipe().Image,
-            //    grafanaId: new GrafanaContainerRecipe().Image
-            //);
-            return null!;
-        }
-
-        private string GetCodexId()
-        {
-            return "";
-            //var v = CodexVersion;
-            //if (v == null) return new CodexContainerRecipe().Image;
-            //if (v.version != "untagged build") return v.version;
-            //return v.revision;
-        }
+        //private string GetCodexId()
+        //{
+        //    return "";
+        //    //var v = CodexVersion;
+        //    //if (v == null) return new CodexContainerRecipe().Image;
+        //    //if (v.version != "untagged build") return v.version;
+        //    //return v.revision;
+        //}
     }
 }

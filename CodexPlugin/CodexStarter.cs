@@ -6,16 +6,16 @@ namespace CodexPlugin
 {
     public class CodexStarter
     {
-        private readonly IPluginActions pluginActions;
+        private readonly IPluginTools pluginTools;
 
         //public CodexStarter(TestLifecycle lifecycle)
         //    : base(lifecycle)
         //{
         //}
 
-        public CodexStarter(IPluginActions pluginActions)
+        public CodexStarter(IPluginTools pluginActions)
         {
-            this.pluginActions = pluginActions;
+            this.pluginTools = pluginActions;
         }
 
         public RunningContainers[] BringOnline(CodexSetup codexSetup)
@@ -120,19 +120,19 @@ namespace CodexPlugin
             var recipe = new CodexContainerRecipe();
             for (var i = 0; i < numberOfNodes; i++)
             {
-                var workflow = pluginActions.CreateWorkflow();
+                var workflow = pluginTools.CreateWorkflow();
                 result.Add(workflow.Start(1, location, recipe, startupConfig));
             }
             return result.ToArray();
         }
 
-        private CodexNodeGroup CreateCodexGroup(/*CodexSetup codexSetup, */RunningContainers[] runningContainers, CodexNodeFactory codexNodeFactory)
+        private CodexNodeGroup CreateCodexGroup(RunningContainers[] runningContainers, CodexNodeFactory codexNodeFactory)
         {
-            var group = new CodexNodeGroup(pluginActions.GetLog(), pluginActions.GetTimeSet(), /*lifecycle, codexSetup,*/ runningContainers, codexNodeFactory);
+            var group = new CodexNodeGroup(pluginTools, runningContainers, codexNodeFactory);
 
             try
             {
-                Stopwatch.Measure(pluginActions.GetLog(), "EnsureOnline", group.EnsureOnline, debug: true);
+                Stopwatch.Measure(pluginTools.GetLog(), "EnsureOnline", group.EnsureOnline, debug: true);
             }
             catch
             {
@@ -145,7 +145,7 @@ namespace CodexPlugin
 
         private void CodexNodesNotOnline(RunningContainers[] runningContainers)
         {
-            pluginActions.GetLog().Log("Codex nodes failed to start");
+            pluginTools.GetLog().Log("Codex nodes failed to start");
             // todo:
             //foreach (var container in runningContainers.Containers()) lifecycle.DownloadLog(container);
         }
