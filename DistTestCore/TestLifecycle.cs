@@ -1,31 +1,22 @@
 ﻿using Core;
-using FileUtils;
-using KubernetesWorkflow;
 using Logging;
 using Utils;
 
 namespace DistTestCore
 {
-    public class TestLifecycle : IPluginTools
+    public class TestLifecycle
     {
-        private readonly PluginManager pluginManager;
         private readonly DateTime testStart;
-        private readonly WorkflowCreator workflowCreator;
 
         public TestLifecycle(TestLog log, Configuration configuration, ITimeSet timeSet, string testNamespace)
         {
             Log = log;
             Configuration = configuration;
             TimeSet = timeSet;
-            TestNamespace = testNamespace;
             testStart = DateTime.UtcNow;
-            FileManager = new FileManager(Log, Configuration.GetFileManagerFolder());
 
-            workflowCreator = new WorkflowCreator(Log, Configuration.GetK8sConfiguration(TimeSet), TestNamespace);
-
-            pluginManager = new PluginManager();
-            pluginManager.DiscoverPlugins();
-            pluginManager.InitializePlugins(this);
+            EntryPoint = new EntryPoint(log, configuration.GetK8sConfiguration(timeSet, testNamespace), configuration.GetFileManagerFolder(), timeSet);
+            EntryPoint.Initialize();
 
             log.WriteLogTag();
         }
@@ -33,44 +24,12 @@ namespace DistTestCore
         public TestLog Log { get; }
         public Configuration Configuration { get; }
         public ITimeSet TimeSet { get; }
-        public string TestNamespace { get; }
-        public IFileManager FileManager { get; }
-
-        public T GetPlugin<T>() where T : IProjectPlugin
-        {
-            return pluginManager.GetPlugin<T>();
-        }
-
-        public Http CreateHttp(Address address, string baseUrl, Action<HttpClient> onClientCreated, string? logAlias = null)
-        {
-            return new Http(Log, TimeSet, address, baseUrl, onClientCreated, logAlias);
-        }
-
-        public Http CreateHttp(Address address, string baseUrl, string? logAlias = null)
-        {
-            return new Http(Log, TimeSet, address, baseUrl, logAlias);
-        }
-
-        public IStartupWorkflow CreateWorkflow(string? namespaceOverride = null)
-        {
-            if (namespaceOverride != null) throw new Exception("Namespace override is not supported in the DistTest environment. (It would mess up automatic resource cleanup.)");
-            return workflowCreator.CreateWorkflow();
-        }
-
-        public IFileManager GetFileManager()
-        {
-            return FileManager;
-        }
-
-        public ILog GetLog()
-        {
-            return Log;
-        }
+        public EntryPoint EntryPoint { get; }
 
         public void DeleteAllResources()
         {
-            CreateWorkflow().DeleteNamespace();
-            FileManager.DeleteAllTestFiles();
+            EntryPoint.CreateWorkflow().DeleteNamespace();
+            EntryPoint.GetFileManager().DeleteAllTestFiles();
         }
 
         //public IDownloadedLog DownloadLog(RunningContainer container, int? tailLines = null)

@@ -1,6 +1,5 @@
 ﻿using Core;
 using FileUtils;
-using KubernetesWorkflow;
 using Logging;
 using NUnit.Framework;
 using System.Reflection;
@@ -9,7 +8,7 @@ using Utils;
 namespace DistTestCore
 {
     [Parallelizable(ParallelScope.All)]
-    public abstract class DistTest : PluginInterface
+    public abstract class DistTest : CoreInterface
     {
         private const string TestsType = "dist-tests";
         private const string TestNamespacePrefix = "ct-";
@@ -18,8 +17,8 @@ namespace DistTestCore
         private readonly FixtureLog fixtureLog;
         private readonly StatusLog statusLog;
         private readonly object lifecycleLock = new object();
+        private readonly EntryPoint globalEntryPoint;
         private readonly Dictionary<string, TestLifecycle> lifecycles = new Dictionary<string, TestLifecycle>();
-        private readonly PluginManager PluginManager = new PluginManager();
         
         public DistTest()
         {
@@ -30,14 +29,15 @@ namespace DistTestCore
             var startTime = DateTime.UtcNow;
             fixtureLog = new FixtureLog(logConfig, startTime);
             statusLog = new StatusLog(logConfig, startTime);
+
+            globalEntryPoint = new EntryPoint(fixtureLog, configuration.GetK8sConfiguration(new DefaultTimeSet(), TestNamespacePrefix), configuration.GetFileManagerFolder());
         }
 
         [OneTimeSetUp]
         public void GlobalSetup()
         {
             fixtureLog.Log($"Distributed Tests are starting...");
-            PluginManager.DiscoverPlugins();
-            AnnouncePlugins(fixtureLog);
+            globalEntryPoint.Announce();
 
             // Previous test run may have been interrupted.
             // Begin by cleaning everything up.
@@ -45,8 +45,7 @@ namespace DistTestCore
             {
                 Stopwatch.Measure(fixtureLog, "Global setup", () =>
                 {
-                    var wc = new WorkflowCreator(fixtureLog, configuration.GetK8sConfiguration(GetTimeSet()), string.Empty);
-                    wc.CreateWorkflow().DeleteNamespacesStartingWith(TestNamespacePrefix);
+                    globalEntryPoint.CreateWorkflow().DeleteNamespacesStartingWith(TestNamespacePrefix);
                 });                
             }
             catch (Exception ex)
@@ -62,7 +61,7 @@ namespace DistTestCore
         [OneTimeTearDown]
         public void GlobalTearDown()
         {
-            FinalizePlugins(fixtureLog);
+            globalEntryPoint.Decommission();
         }
 
         [SetUp]
@@ -94,7 +93,7 @@ namespace DistTestCore
 
         public TrackedFile GenerateTestFile(ByteSize size, string label = "")
         {
-            return Get().FileManager.GenerateTestFile(size, label);
+            return Get().EntryPoint.GetFileManager().GenerateTestFile(size, label);
         }
 
         /// <summary>
@@ -103,7 +102,7 @@ namespace DistTestCore
         /// </summary>
         public void ScopedTestFiles(Action action)
         {
-            Get().FileManager.ScopedFiles(action);
+            Get().EntryPoint.GetFileManager().ScopedFiles(action);
         }
 
         //public IOnlineCodexNode SetupCodexBootstrapNode()
@@ -154,20 +153,10 @@ namespace DistTestCore
         //    return Get().CodexStarter.RunningGroups.SelectMany(g => g.Nodes);
         //}
 
-        public override T GetPlugin<T>()
-        {
-            return Get().GetPlugin<T>();
-        }
-
-        private void AnnouncePlugins(FixtureLog fixtureLog)
-        {
-            PluginManager.AnnouncePlugins(fixtureLog);
-        }
-
-        private void FinalizePlugins(FixtureLog fixtureLog)
-        {
-            PluginManager.FinalizePlugins(fixtureLog);
-        }
+        //public override T GetPlugin<T>()
+        //{
+        //    return Get().GetPlugin<T>();
+        //}
 
         public ILog GetTestLog()
         {
@@ -224,6 +213,7 @@ namespace DistTestCore
                 {
                     var testNamespace = TestNamespacePrefix + Guid.NewGuid().ToString();
                     var lifecycle = new TestLifecycle(fixtureLog.CreateTestLog(), configuration, GetTimeSet(), testNamespace);
+                    lifecycle.EntryPoint.ManuallyAssociateCoreInterface(this);
                     lifecycles.Add(testName, lifecycle);
                     DefaultContainerRecipe.TestsType = TestsType;
                     //DefaultContainerRecipe.ApplicationIds = lifecycle.GetApplicationIds();
@@ -243,6 +233,7 @@ namespace DistTestCore
                 WriteEndTestLog(lifecycle.Log);
 
                 IncludeLogsAndMetricsOnTestFailure(lifecycle);
+                lifecycle.EntryPoint.Decommission();
                 lifecycle.DeleteAllResources();
                 lifecycle = null!;
             });

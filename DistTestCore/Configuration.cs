@@ -31,12 +31,13 @@ namespace DistTestCore
             this.k8sNamespacePrefix = k8sNamespacePrefix;
         }
 
-        public KubernetesWorkflow.Configuration GetK8sConfiguration(ITimeSet timeSet)
+        public KubernetesWorkflow.Configuration GetK8sConfiguration(ITimeSet timeSet, string k8sNamespace)
         {
             return new KubernetesWorkflow.Configuration(
                 kubeConfigFile: kubeConfigFile,
                 operationTimeout: timeSet.K8sOperationTimeout(),
-                retryDelay: timeSet.WaitForK8sServiceDelay()
+                retryDelay: timeSet.WaitForK8sServiceDelay(),
+                kubernetesNamespace: k8sNamespace
             );
         }
 
