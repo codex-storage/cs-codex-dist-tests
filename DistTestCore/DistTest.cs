@@ -110,7 +110,7 @@ namespace DistTestCore
         /// </summary>
         public void ScopedTestFiles(Action action)
         {
-            Get().ScopedTestFiles(action);
+            Get().GetFileManager().ScopedFiles(action);
         }
 
         //public IOnlineCodexNode SetupCodexBootstrapNode()
@@ -183,16 +183,6 @@ namespace DistTestCore
             GetTestLog().Debug(msg);
         }
 
-        //public PeerConnectionTestHelpers CreatePeerConnectionTestHelpers()
-        //{
-        //    return new PeerConnectionTestHelpers(GetTestLog());
-        //}
-
-        //public PeerDownloadTestHelpers CreatePeerDownloadTestHelpers()
-        //{
-        //    return new PeerDownloadTestHelpers(GetTestLog(), Get().FileManager);
-        //}
-
         public void Measure(string name, Action action)
         {
             Stopwatch.Measure(Get().Log, name, action);
@@ -203,7 +193,7 @@ namespace DistTestCore
         //    return new CodexSetup(numberOfNodes, configuration.GetCodexLogLevel());
         //}
 
-        private TestLifecycle Get()
+        protected TestLifecycle Get()
         {
             lock (lifecycleLock)
             {

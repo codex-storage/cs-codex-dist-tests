@@ -1,6 +1,4 @@
-﻿using CodexPlugin;
-using DistTestCore;
-using NUnit.Framework;
+﻿using NUnit.Framework;
 using Utils;
 
 namespace Tests.DownloadConnectivityTests
@@ -11,7 +9,7 @@ namespace Tests.DownloadConnectivityTests
         [Test]
         public void MetricsDoesNotInterfereWithPeerDownload()
         {
-            //AddCodex(2, s => s.EnableMetrics());
+            AddCodex(2, s => s.EnableMetrics());
 
             AssertAllNodesConnected();
         }
@@ -37,7 +35,7 @@ namespace Tests.DownloadConnectivityTests
 
         private void AssertAllNodesConnected(int sizeMBs = 10)
         {
-            //CreatePeerDownloadTestHelpers().AssertFullDownloadInterconnectivity(GetAllOnlineCodexNodes(), sizeMBs.MB());
+            CreatePeerDownloadTestHelpers().AssertFullDownloadInterconnectivity(GetAllOnlineCodexNodes(), sizeMBs.MB());
         }
     }
 }

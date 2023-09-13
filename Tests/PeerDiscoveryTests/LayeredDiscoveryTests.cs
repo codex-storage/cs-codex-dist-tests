@@ -1,11 +1,10 @@
 ﻿using CodexPlugin;
-using DistTestCore;
 using NUnit.Framework;
 
 namespace Tests.PeerDiscoveryTests
 {
     [TestFixture]
-    public class LayeredDiscoveryTests : DistTest
+    public class LayeredDiscoveryTests : CodexDistTest
     {
         [Test]
         public void TwoLayersTest()
@@ -47,7 +46,7 @@ namespace Tests.PeerDiscoveryTests
 
         private void AssertAllNodesConnected()
         {
-            //CreatePeerConnectionTestHelpers().AssertFullyConnected(GetAllOnlineCodexNodes());
+            CreatePeerConnectionTestHelpers().AssertFullyConnected(GetAllOnlineCodexNodes());
         }
     }
 }

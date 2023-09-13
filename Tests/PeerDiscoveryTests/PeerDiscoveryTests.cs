@@ -1,5 +1,4 @@
-﻿using DistTestCore;
-using NUnit.Framework;
+﻿using NUnit.Framework;
 
 namespace Tests.PeerDiscoveryTests
 {
@@ -45,7 +44,7 @@ namespace Tests.PeerDiscoveryTests
 
         private void AssertAllNodesConnected()
         {
-            //CreatePeerConnectionTestHelpers().AssertFullyConnected(GetAllOnlineCodexNodes());
+            CreatePeerConnectionTestHelpers().AssertFullyConnected(GetAllOnlineCodexNodes());
         }
     }
 }

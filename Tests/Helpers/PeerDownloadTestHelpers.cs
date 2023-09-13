@@ -10,10 +10,10 @@ namespace DistTestCore.Helpers
     {
         private readonly FullConnectivityHelper helper;
         private readonly ILog log;
-        private readonly FileManager fileManager;
+        private readonly IFileManager fileManager;
         private ByteSize testFileSize;
 
-        public PeerDownloadTestHelpers(ILog log, FileManager fileManager)
+        public PeerDownloadTestHelpers(ILog log, IFileManager fileManager)
         {
             helper = new FullConnectivityHelper(log, this);
             testFileSize = 1.MB();

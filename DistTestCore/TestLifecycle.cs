@@ -40,9 +40,9 @@ namespace DistTestCore
             return entryPoint.Tools.GetFileManager().GenerateFile(size, label);
         }
 
-        public void ScopedTestFiles(Action action)
+        public IFileManager GetFileManager()
         {
-            entryPoint.Tools.GetFileManager().ScopedFiles(action);
+            return entryPoint.Tools.GetFileManager();
         }
 
         //public IDownloadedLog DownloadLog(RunningContainer container, int? tailLines = null)

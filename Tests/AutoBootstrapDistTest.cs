@@ -1,45 +1,26 @@
 ﻿using CodexPlugin;
 using DistTestCore;
+using DistTestCore.Helpers;
 using NUnit.Framework;
 
 namespace Tests
 {
-    public class AutoBootstrapDistTest : DistTest
+    public class AutoBootstrapDistTest : CodexDistTest
     {
-        public IOnlineCodexNode AddCodex()
-        {
-            return AddCodex(s => { });
-        }
-
-        public IOnlineCodexNode AddCodex(Action<ICodexSetup> setup)
-        {
-            return Ci.SetupCodexNode(s =>
-            {
-                setup(s);
-                s.WithBootstrapNode(BootstrapNode);
-            });
-        }
-
-        public ICodexNodeGroup AddCodex(int numberOfNodes)
-        {
-            return Ci.SetupCodexNodes(numberOfNodes, s => s.WithBootstrapNode(BootstrapNode));
-        }
-
-        public ICodexNodeGroup AddCodex(int numberOfNodes, Action<ICodexSetup> setup)
-        {
-            return Ci.SetupCodexNodes(numberOfNodes, s =>
-            {
-                setup(s);
-                s.WithBootstrapNode(BootstrapNode);
-            });
-        }
+        private readonly List<IOnlineCodexNode> onlineCodexNodes = new List<IOnlineCodexNode>();
 
         [SetUp]
         public void SetUpBootstrapNode()
         {
-            BootstrapNode = Ci.SetupCodexNode(s => s.WithName("BOOTSTRAP"));
+            BootstrapNode = AddCodex(s => s.WithName("BOOTSTRAP"));
+            onlineCodexNodes.Add(BootstrapNode);
         }
 
-        protected IOnlineCodexNode BootstrapNode { get; private set; } = null!;
+        protected override void OnCodexSetup(ICodexSetup setup)
+        {
+            if (BootstrapNode != null) setup.WithBootstrapNode(BootstrapNode);
+        }
+
+        protected IOnlineCodexNode? BootstrapNode { get; private set; }
     }
 }
