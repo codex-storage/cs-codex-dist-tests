@@ -21,9 +21,9 @@ namespace Tests.BasicTests
         {
             var primary = Ci.SetupCodexNode();
 
-            //var setup = primary.BringOffline();
+            primary.BringOffline();
 
-            //primary = BringOnline(setup)[0];
+            primary = Ci.SetupCodexNode();
 
             PerformOneClientTest(primary);
         }

@@ -13,8 +13,11 @@ namespace CodexPlugin
 
     public class CodexNodeGroup : ICodexNodeGroup
     {
-        public CodexNodeGroup(IPluginTools tools, RunningContainers[] containers, ICodexNodeFactory codexNodeFactory)
+        private readonly CodexStarter starter;
+
+        public CodexNodeGroup(CodexStarter starter, IPluginTools tools, RunningContainers[] containers, ICodexNodeFactory codexNodeFactory)
         {
+            this.starter = starter;
             Containers = containers;
             Nodes = containers.Containers().Select(c => CreateOnlineCodexNode(c, tools, codexNodeFactory)).ToArray();
             Version = new CodexDebugVersionResponse();
@@ -30,11 +33,8 @@ namespace CodexPlugin
 
         public void BringOffline()
         {
-            //lifecycle.CodexStarter.BringOffline(this);
-
-            //var result = Setup;
+            starter.BringOffline(this);
             // Clear everything. Prevent accidental use.
-            //Setup = null!;
             Nodes = Array.Empty<OnlineCodexNode>();
             Containers = null!;
         }

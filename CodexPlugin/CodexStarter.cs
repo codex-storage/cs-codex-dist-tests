@@ -54,27 +54,27 @@ namespace CodexPlugin
 
         public void BringOffline(CodexNodeGroup group)
         {
-            //LogStart($"Stopping {group.Describe()}...");
-            //var workflow = CreateWorkflow();
-            //foreach (var c in group.Containers)
-            //{
-            //    StopCrashWatcher(c);
-            //    workflow.Stop(c);
-            //}
-            //LogEnd("Stopped.");
+            Log($"Stopping {group.Describe()}...");
+            var workflow = pluginTools.CreateWorkflow();
+            foreach (var c in group.Containers)
+            {
+                StopCrashWatcher(c);
+                workflow.Stop(c);
+            }
+            Log("Stopped.");
         }
 
-        public void DeleteAllResources()
-        {
-            //var workflow = CreateWorkflow();
-            //workflow.DeleteTestResources();
-        }
+        //public void DeleteAllResources()
+        //{
+        //    //var workflow = CreateWorkflow();
+        //    //workflow.DeleteTestResources();
+        //}
 
-        public void DownloadLog(RunningContainer container, ILogHandler logHandler, int? tailLines)
-        {
-            //var workflow = CreateWorkflow();
-            //workflow.DownloadContainerLog(container, logHandler, tailLines);
-        }
+        //public void DownloadLog(RunningContainer container, ILogHandler logHandler, int? tailLines)
+        //{
+        //    //var workflow = CreateWorkflow();
+        //    //workflow.DownloadContainerLog(container, logHandler, tailLines);
+        //}
 
         //private IMetricsAccessFactory CollectMetrics(CodexSetup codexSetup, RunningContainers[] containers)
         //{
@@ -114,7 +114,7 @@ namespace CodexPlugin
 
         private CodexNodeGroup CreateCodexGroup(RunningContainers[] runningContainers, CodexNodeFactory codexNodeFactory)
         {
-            var group = new CodexNodeGroup(pluginTools, runningContainers, codexNodeFactory);
+            var group = new CodexNodeGroup(this, pluginTools, runningContainers, codexNodeFactory);
 
             try
             {
@@ -151,12 +151,12 @@ namespace CodexPlugin
             pluginTools.GetLog().Log(message);
         }
 
-        //private void StopCrashWatcher(RunningContainers containers)
-        //{
-        //    foreach (var c in containers.Containers)
-        //    {
-        //        c.CrashWatcher?.Stop();
-        //    }
-        //}
+        private void StopCrashWatcher(RunningContainers containers)
+        {
+            foreach (var c in containers.Containers)
+            {
+                c.CrashWatcher?.Stop();
+            }
+        }
     }
 }
