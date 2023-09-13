@@ -1,6 +1,6 @@
 ﻿using KubernetesWorkflow;
 
-namespace DistTestCore
+namespace MetricsPlugin
 {
     public class GrafanaStarter : BaseStarter
     {

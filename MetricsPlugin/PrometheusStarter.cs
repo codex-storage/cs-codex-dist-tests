@@ -1,13 +1,16 @@
-﻿using KubernetesWorkflow;
+﻿using Core;
+using KubernetesWorkflow;
 using System.Text;
 
-namespace DistTestCore
+namespace MetricsPlugin
 {
-    public class PrometheusStarter : BaseStarter
+    public class PrometheusStarter
     {
-        public PrometheusStarter(TestLifecycle lifecycle)
-            : base(lifecycle)
+        private readonly IPluginTools tools;
+
+        public PrometheusStarter(IPluginTools tools)
         {
+            this.tools = tools;
         }
 
         public RunningContainers CollectMetricsFor(RunningContainers[] containers)
