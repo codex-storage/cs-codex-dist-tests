@@ -6,9 +6,9 @@ namespace FileUtils
 {
     public interface IFileManager
     {
-        TrackedFile CreateEmptyTestFile(string label = "");
-        TrackedFile GenerateTestFile(ByteSize size, string label = "");
-        void DeleteAllTestFiles();
+        TrackedFile CreateEmptyFile(string label = "");
+        TrackedFile GenerateFile(ByteSize size, string label = "");
+        void DeleteAllFiles();
         void ScopedFiles(Action action);
         T ScopedFiles<T>(Func<T> action);
     }
@@ -30,7 +30,7 @@ namespace FileUtils
             this.log = log;
         }
 
-        public TrackedFile CreateEmptyTestFile(string label = "")
+        public TrackedFile CreateEmptyFile(string label = "")
         {
             var path = Path.Combine(folder, Guid.NewGuid().ToString() + "_test.bin");
             var result = new TrackedFile(log, path, label);
@@ -39,15 +39,15 @@ namespace FileUtils
             return result;
         }
 
-        public TrackedFile GenerateTestFile(ByteSize size, string label)
+        public TrackedFile GenerateFile(ByteSize size, string label)
         {
             var sw = Stopwatch.Begin(log);
-            var result = GenerateFile(size, label);
+            var result = GenerateRandomFile(size, label);
             sw.End($"Generated file '{result.Describe()}'.");
             return result;
         }
 
-        public void DeleteAllTestFiles()
+        public void DeleteAllFiles()
         {
             DeleteDirectory();
         }
@@ -88,9 +88,9 @@ namespace FileUtils
             }
         }
 
-        private TrackedFile GenerateFile(ByteSize size, string label)
+        private TrackedFile GenerateRandomFile(ByteSize size, string label)
         {
-            var result = CreateEmptyTestFile(label);
+            var result = CreateEmptyFile(label);
             CheckSpaceAvailable(result, size);
 
             GenerateFileBytes(result, size);

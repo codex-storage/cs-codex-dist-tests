@@ -83,7 +83,7 @@ namespace CodexPlugin
         {
             var logMessage = $"Downloading for contentId: '{contentId.Id}'...";
             Log(logMessage);
-            var file = tools.GetFileManager().CreateEmptyTestFile(fileLabel);
+            var file = tools.GetFileManager().CreateEmptyFile(fileLabel);
             Stopwatch.Measure(tools.GetLog(), logMessage, () => DownloadToFile(contentId.Id, file));
             Log($"Downloaded file {file.Describe()} to '{file.Filename}'.");
             return file;

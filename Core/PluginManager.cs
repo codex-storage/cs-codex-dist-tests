@@ -1,7 +1,6 @@
 ﻿using FileUtils;
 using KubernetesWorkflow;
 using Logging;
-using System.Reflection;
 using Utils;
 
 namespace Core
@@ -10,29 +9,24 @@ namespace Core
     {
         private readonly List<IProjectPlugin> projectPlugins = new List<IProjectPlugin>();
 
-        public void InstantiatePlugins(Type[] pluginTypes)
+        public void InstantiatePlugins(Type[] pluginTypes, IPluginTools tools)
         {
             projectPlugins.Clear();
             foreach (var pluginType in pluginTypes)
             {
-                var plugin = (IProjectPlugin)Activator.CreateInstance(pluginType)!;
+                var plugin = (IProjectPlugin)Activator.CreateInstance(pluginType, args: tools)!;
                 projectPlugins.Add(plugin);
             }
         }
 
-        public void AnnouncePlugins(ILog log)
+        public void AnnouncePlugins()
         {
-            foreach (var plugin in projectPlugins) plugin.Announce(log);
+            foreach (var plugin in projectPlugins) plugin.Announce();
         }
 
-        public void InitializePlugins(IPluginTools tools)
+        public void DecommissionPlugins()
         {
-            foreach (var plugin in projectPlugins) plugin.Initialize(tools);
-        }
-
-        public void FinalizePlugins(ILog log)
-        {
-            foreach (var plugin in projectPlugins) plugin.Finalize(log);
+            foreach (var plugin in projectPlugins) plugin.Decommission();
         }
 
         public T GetPlugin<T>() where T : IProjectPlugin
@@ -43,13 +37,12 @@ namespace Core
 
     public interface IProjectPlugin
     {
-        void Announce(ILog log);
-        void Initialize(IPluginTools tools);
-        void Finalize(ILog log);
+        void Announce();
+        void Decommission();
     }
 
     public interface IPluginTools : IWorkflowTool, ILogTool, IHttpFactoryTool, IFileTool
-    {        
+    {
     }
 
     public interface IWorkflowTool

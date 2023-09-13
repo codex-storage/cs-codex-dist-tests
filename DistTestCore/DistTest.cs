@@ -45,7 +45,7 @@ namespace DistTestCore
             {
                 Stopwatch.Measure(fixtureLog, "Global setup", () =>
                 {
-                    globalEntryPoint.CreateWorkflow().DeleteNamespacesStartingWith(TestNamespacePrefix);
+                    globalEntryPoint.Tools.CreateWorkflow().DeleteNamespacesStartingWith(TestNamespacePrefix);
                 });                
             }
             catch (Exception ex)
@@ -101,7 +101,7 @@ namespace DistTestCore
 
         public TrackedFile GenerateTestFile(ByteSize size, string label = "")
         {
-            return Get().EntryPoint.GetFileManager().GenerateTestFile(size, label);
+            return Get().GenerateTestFile(size, label);
         }
 
         /// <summary>
@@ -110,7 +110,7 @@ namespace DistTestCore
         /// </summary>
         public void ScopedTestFiles(Action action)
         {
-            Get().EntryPoint.GetFileManager().ScopedFiles(action);
+            Get().ScopedTestFiles(action);
         }
 
         //public IOnlineCodexNode SetupCodexBootstrapNode()
@@ -240,7 +240,6 @@ namespace DistTestCore
                 WriteEndTestLog(lifecycle.Log);
 
                 IncludeLogsAndMetricsOnTestFailure(lifecycle);
-                lifecycle.EntryPoint.Decommission();
                 lifecycle.DeleteAllResources();
                 lifecycle = null!;
             });

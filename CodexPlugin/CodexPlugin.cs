@@ -1,26 +1,27 @@
 ﻿using Core;
 using KubernetesWorkflow;
-using Logging;
 
 namespace CodexPlugin
 {
     public class CodexPlugin : IProjectPlugin
     {
-        private CodexStarter codexStarter = null!;
+        private readonly CodexStarter codexStarter;
+        private readonly IPluginTools tools;
+
+        public CodexPlugin(IPluginTools tools)
+        {
+            codexStarter = new CodexStarter(tools);
+            this.tools = tools;
+        }
 
         #region IProjectPlugin Implementation
 
-        public void Announce(ILog log)
+        public void Announce()
         {
-            log.Log("hello from codex plugin. codex container info here.");
+            tools.GetLog().Log("hello from codex plugin. codex container info here.");
         }
 
-        public void Initialize(IPluginTools tools)
-        {
-            codexStarter = new CodexStarter(tools);
-        }
-
-        public void Finalize(ILog log)
+        public void Decommission()
         {
         }
 

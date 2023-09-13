@@ -2,13 +2,12 @@
 
 namespace MetricsPlugin
 {
-    public class GrafanaStarter : BaseStarter
+    public class GrafanaStarter
     {
         private const string StorageQuotaThresholdReplaceToken = "\"<CODEX_STORAGEQUOTA>\"";
         private const string BytesUsedGraphAxisSoftMaxReplaceToken = "\"<CODEX_BYTESUSED_SOFTMAX>\"";
 
-        public GrafanaStarter(TestLifecycle lifecycle)
-            : base(lifecycle)
+        public GrafanaStarter()
         {
         }
 

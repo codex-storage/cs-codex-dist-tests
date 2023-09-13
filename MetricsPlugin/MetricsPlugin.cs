@@ -1,6 +1,5 @@
 ﻿using Core;
 using KubernetesWorkflow;
-using Logging;
 
 namespace MetricsPlugin
 {
@@ -9,16 +8,12 @@ namespace MetricsPlugin
 
         #region IProjectPlugin Implementation
 
-        public void Announce(ILog log)
+        public void Announce()
         {
-            log.Log("Hi from the metrics plugin.");
+            //log.Log("Hi from the metrics plugin.");
         }
 
-        public void Initialize(IPluginTools tools)
-        {
-        }
-
-        public void Finalize(ILog log)
+        public void Decommission()
         {
         }
 

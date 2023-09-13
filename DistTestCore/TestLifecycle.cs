@@ -1,4 +1,5 @@
 ﻿using Core;
+using FileUtils;
 using Logging;
 using Utils;
 
@@ -7,6 +8,7 @@ namespace DistTestCore
     public class TestLifecycle
     {
         private readonly DateTime testStart;
+        private readonly EntryPoint entryPoint;
 
         public TestLifecycle(TestLog log, Configuration configuration, ITimeSet timeSet, string testNamespace)
         {
@@ -15,9 +17,8 @@ namespace DistTestCore
             TimeSet = timeSet;
             testStart = DateTime.UtcNow;
 
-            EntryPoint = new EntryPoint(log, configuration.GetK8sConfiguration(timeSet, testNamespace), configuration.GetFileManagerFolder(), timeSet);
-            EntryPoint.Initialize();
-            CoreInterface = EntryPoint.CreateInterface();
+            entryPoint = new EntryPoint(log, configuration.GetK8sConfiguration(timeSet, testNamespace), configuration.GetFileManagerFolder(), timeSet);
+            CoreInterface = entryPoint.CreateInterface();
 
             log.WriteLogTag();
         }
@@ -25,13 +26,23 @@ namespace DistTestCore
         public TestLog Log { get; }
         public Configuration Configuration { get; }
         public ITimeSet TimeSet { get; }
-        public EntryPoint EntryPoint { get; }
         public CoreInterface CoreInterface { get; }
 
         public void DeleteAllResources()
         {
-            EntryPoint.CreateWorkflow().DeleteNamespace();
-            EntryPoint.GetFileManager().DeleteAllTestFiles();
+            entryPoint.Tools.CreateWorkflow().DeleteNamespace();
+            entryPoint.Tools.GetFileManager().DeleteAllFiles();
+            entryPoint.Decommission();
+        }
+
+        public TrackedFile GenerateTestFile(ByteSize size, string label = "")
+        {
+            return entryPoint.Tools.GetFileManager().GenerateFile(size, label);
+        }
+
+        public void ScopedTestFiles(Action action)
+        {
+            entryPoint.Tools.GetFileManager().ScopedFiles(action);
         }
 
         //public IDownloadedLog DownloadLog(RunningContainer container, int? tailLines = null)
