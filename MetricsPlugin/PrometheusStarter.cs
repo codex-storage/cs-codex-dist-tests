@@ -1,6 +1,5 @@
 ﻿using Core;
 using KubernetesWorkflow;
-using System.Text;
 
 namespace MetricsPlugin
 {

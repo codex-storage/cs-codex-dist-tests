@@ -3,7 +3,7 @@ using KubernetesWorkflow;
 
 namespace CodexPlugin
 {
-    public class CodexPlugin : IProjectPlugin
+    public class CodexPlugin : IProjectPlugin, IHasLogPrefix
     {
         private readonly CodexStarter codexStarter;
         private readonly IPluginTools tools;
@@ -14,7 +14,7 @@ namespace CodexPlugin
             this.tools = tools;
         }
 
-        #region IProjectPlugin Implementation
+        public string LogPrefix => "(Codex) ";
 
         public void Announce()
         {
@@ -24,8 +24,6 @@ namespace CodexPlugin
         public void Decommission()
         {
         }
-
-        #endregion
 
         public RunningContainers[] StartCodexNodes(int numberOfNodes, Action<ICodexSetup> setup)
         {

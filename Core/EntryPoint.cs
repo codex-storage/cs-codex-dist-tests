@@ -5,12 +5,15 @@ namespace Core
 {
     public class EntryPoint
     {
+        private readonly IToolsFactory toolsFactory;
         private readonly PluginManager manager = new PluginManager();
-        
+
         public EntryPoint(ILog log, Configuration configuration, string fileManagerRootFolder, ITimeSet timeSet)
         {
-            Tools = new ToolsProvider(log, configuration, fileManagerRootFolder, timeSet);
-            manager.InstantiatePlugins(PluginFinder.GetPluginTypes(), Tools);
+            toolsFactory = new ToolsFactory(log, configuration, fileManagerRootFolder, timeSet);
+
+            Tools = toolsFactory.CreateTools();
+            manager.InstantiatePlugins(PluginFinder.GetPluginTypes(), toolsFactory);
         }
 
         public EntryPoint(ILog log, Configuration configuration, string fileManagerRootFolder)

@@ -5,19 +5,49 @@ using Utils;
 
 namespace Core
 {
-    public class ToolsProvider : IPluginTools
+    public interface IPluginTools : IWorkflowTool, ILogTool, IHttpFactoryTool, IFileTool
     {
-        private readonly ILog log;
+    }
+
+    public interface IWorkflowTool
+    {
+        IStartupWorkflow CreateWorkflow(string? namespaceOverride = null);
+    }
+
+    public interface ILogTool
+    {
+        ILog GetLog();
+    }
+
+    public interface IHttpFactoryTool
+    {
+        Http CreateHttp(Address address, string baseUrl, Action<HttpClient> onClientCreated, string? logAlias = null);
+        Http CreateHttp(Address address, string baseUrl, string? logAlias = null);
+    }
+
+    public interface IFileTool
+    {
+        IFileManager GetFileManager();
+    }
+
+    internal class PluginTools : IPluginTools
+    {
         private readonly ITimeSet timeSet;
         private readonly WorkflowCreator workflowCreator;
         private readonly IFileManager fileManager;
+        private ILog log;
 
-        public ToolsProvider(ILog log, Configuration configuration, string fileManagerRootFolder, ITimeSet timeSet)
+        public PluginTools(ILog log, Configuration configuration, string fileManagerRootFolder, ITimeSet timeSet)
         {
             this.log = log;
             this.timeSet = timeSet;
             fileManager = new FileManager(log, fileManagerRootFolder);
             workflowCreator = new WorkflowCreator(log, configuration);
+        }
+
+        public void ApplyLogPrefix(string prefix)
+        {
+            log = new LogPrefixer(log, prefix);
         }
 
         public Http CreateHttp(Address address, string baseUrl, Action<HttpClient> onClientCreated, string? logAlias = null)

@@ -7,12 +7,10 @@ namespace CodexPlugin
     public class CodexStarter
     {
         private readonly IPluginTools pluginTools;
-        private readonly ILog log;
 
         public CodexStarter(IPluginTools pluginTools)
         {
             this.pluginTools = pluginTools;
-            log = new LogPrefixer(pluginTools.GetLog(), "(CodexStarter) ");
         }
 
         public RunningContainers[] BringOnline(CodexSetup codexSetup)
@@ -120,7 +118,7 @@ namespace CodexPlugin
 
             try
             {
-                Stopwatch.Measure(log, "EnsureOnline", group.EnsureOnline);
+                Stopwatch.Measure(pluginTools.GetLog(), "EnsureOnline", group.EnsureOnline);
             }
             catch
             {
@@ -150,7 +148,7 @@ namespace CodexPlugin
 
         private void Log(string message)
         {
-            log.Log(message);
+            pluginTools.GetLog().Log(message);
         }
 
         //private void StopCrashWatcher(RunningContainers containers)

@@ -7,7 +7,7 @@ namespace MetricsPlugin
     {
         public static RunningContainer StartMetricsCollector(this CoreInterface ci, RunningContainers[] scrapeTargets)
         {
-            return Plugin(ci).StartMetricsCollector(scrapeTargets);
+            return null!;// Plugin(ci).StartMetricsCollector(scrapeTargets);
         }
 
         private static MetricsPlugin Plugin(CoreInterface ci)

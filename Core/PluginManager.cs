@@ -1,21 +1,18 @@
-﻿using FileUtils;
-using KubernetesWorkflow;
-using Logging;
-using Utils;
-
-namespace Core
+﻿namespace Core
 {
     public class PluginManager
     {
         private readonly List<IProjectPlugin> projectPlugins = new List<IProjectPlugin>();
 
-        public void InstantiatePlugins(Type[] pluginTypes, IPluginTools tools)
+        internal void InstantiatePlugins(Type[] pluginTypes, IToolsFactory provider)
         {
             projectPlugins.Clear();
             foreach (var pluginType in pluginTypes)
             {
-                var plugin = (IProjectPlugin)Activator.CreateInstance(pluginType, args: tools)!;
-                projectPlugins.Add(plugin);
+                var tools = provider.CreateTools();
+                var plugin = InstantiatePlugins(pluginType, tools);
+
+                ApplyLogPrefix(plugin, tools);
             }
         }
 
@@ -33,6 +30,21 @@ namespace Core
         {
             return (T)projectPlugins.Single(p => p.GetType() == typeof(T));
         }
+
+        private IProjectPlugin InstantiatePlugins(Type pluginType, PluginTools tools)
+        {
+            var plugin = (IProjectPlugin)Activator.CreateInstance(pluginType, args: tools)!;
+            projectPlugins.Add(plugin);
+            return plugin;
+        }
+
+        private void ApplyLogPrefix(IProjectPlugin plugin, PluginTools tools)
+        {
+            if (plugin is IHasLogPrefix hasLogPrefix)
+            {
+                tools.ApplyLogPrefix(hasLogPrefix.LogPrefix);
+            }
+        }
     }
 
     public interface IProjectPlugin
@@ -41,28 +53,8 @@ namespace Core
         void Decommission();
     }
 
-    public interface IPluginTools : IWorkflowTool, ILogTool, IHttpFactoryTool, IFileTool
+    public interface IHasLogPrefix
     {
-    }
-
-    public interface IWorkflowTool
-    {
-        IStartupWorkflow CreateWorkflow(string? namespaceOverride = null);
-    }
-
-    public interface ILogTool
-    {
-        ILog GetLog();
-    }
-
-    public interface IHttpFactoryTool
-    {
-        Http CreateHttp(Address address, string baseUrl, Action<HttpClient> onClientCreated, string? logAlias = null);
-        Http CreateHttp(Address address, string baseUrl, string? logAlias = null);
-    }
-    
-    public interface IFileTool
-    {
-        IFileManager GetFileManager();
+        string LogPrefix { get; }
     }
 }

@@ -5,8 +5,15 @@ namespace MetricsPlugin
 {
     public class MetricsPlugin : IProjectPlugin
     {
+        private readonly IPluginTools tools;
+        private readonly PrometheusStarter starter;
 
-        #region IProjectPlugin Implementation
+        public MetricsPlugin(IPluginTools tools)
+        {
+            this.tools = tools;
+            starter = new PrometheusStarter(tools);
+        }
+
 
         public void Announce()
         {
@@ -17,11 +24,9 @@ namespace MetricsPlugin
         {
         }
 
-        #endregion
-
-        public RunningContainer StartMetricsCollector(RunningContainers[] scrapeTargets)
+        public RunningContainers StartMetricsCollector(RunningContainers[] scrapeTargets)
         {
-            return null!;
+            return starter.CollectMetricsFor(scrapeTargets);
         }
     }
 }
