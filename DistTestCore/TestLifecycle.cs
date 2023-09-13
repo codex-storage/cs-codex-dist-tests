@@ -1,14 +1,16 @@
 ﻿using Core;
 using FileUtils;
+using KubernetesWorkflow;
 using Logging;
 using Utils;
 
 namespace DistTestCore
 {
-    public class TestLifecycle
+    public class TestLifecycle : IK8sHooks
     {
         private readonly DateTime testStart;
         private readonly EntryPoint entryPoint;
+        private readonly List<RunningContainers> runningContainers = new List<RunningContainers>();
 
         public TestLifecycle(TestLog log, Configuration configuration, ITimeSet timeSet, string testNamespace)
         {
@@ -17,7 +19,7 @@ namespace DistTestCore
             TimeSet = timeSet;
             testStart = DateTime.UtcNow;
 
-            entryPoint = new EntryPoint(log, configuration.GetK8sConfiguration(timeSet, testNamespace), configuration.GetFileManagerFolder(), timeSet);
+            entryPoint = new EntryPoint(log, configuration.GetK8sConfiguration(timeSet, this, testNamespace), configuration.GetFileManagerFolder(), timeSet);
             CoreInterface = entryPoint.CreateInterface();
 
             log.WriteLogTag();
@@ -49,6 +51,36 @@ namespace DistTestCore
         {
             var testDuration = DateTime.UtcNow - testStart;
             return Time.FormatDuration(testDuration);
+        }
+
+        public void OnContainersStarted(RunningContainers rc)
+        {
+            runningContainers.Add(rc);
+        }
+
+        public void OnContainersStopped(RunningContainers rc)
+        {
+            runningContainers.Remove(rc);
+        }
+
+        public void DownloadAllLogs()
+        {
+            var workflow = entryPoint.Tools.CreateWorkflow();
+            foreach (var rc in runningContainers)
+            {
+                foreach (var c in rc.Containers)
+                {
+                    DownloadContainerLog(workflow, c);
+                }
+            }
+        }
+
+        private void DownloadContainerLog(IStartupWorkflow workflow, RunningContainer c)
+        {
+            var file = Log.CreateSubfile();
+            Log.Log($"Downloading container log for '{c.Name}' to file '{file.FullFilename}'...");
+            var handler = new LogDownloadHandler(c.Name, file);
+            workflow.DownloadContainerLog(c, handler);
         }
 
         //public ApplicationIds GetApplicationIds()

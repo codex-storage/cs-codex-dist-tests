@@ -15,5 +15,6 @@
         public TimeSpan RetryDelay { get; }
         public string KubernetesNamespace { get; }
         public bool AllowNamespaceOverride { get; set; } = true;
+        public IK8sHooks Hooks { get; set; } = new DoNothingK8sHooks();
     }
 }

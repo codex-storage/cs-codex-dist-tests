@@ -1,4 +1,5 @@
 ﻿using Core;
+using KubernetesWorkflow;
 
 namespace DistTestCore
 {
@@ -27,6 +28,11 @@ namespace DistTestCore
 
         public KubernetesWorkflow.Configuration GetK8sConfiguration(ITimeSet timeSet, string k8sNamespace)
         {
+            return GetK8sConfiguration(timeSet, new DoNothingK8sHooks(), k8sNamespace);
+        }
+
+        public KubernetesWorkflow.Configuration GetK8sConfiguration(ITimeSet timeSet, IK8sHooks hooks, string k8sNamespace)
+        {
             var config = new KubernetesWorkflow.Configuration(
                 kubeConfigFile: kubeConfigFile,
                 operationTimeout: timeSet.K8sOperationTimeout(),
@@ -35,6 +41,7 @@ namespace DistTestCore
             );
 
             config.AllowNamespaceOverride = false;
+            config.Hooks = hooks;
 
             return config;
         }

@@ -41,7 +41,9 @@ namespace KubernetesWorkflow
 
                 if (startupConfig.CreateCrashWatcher) CreateCrashWatchers(controller, containers);
 
-                return new RunningContainers(startupConfig, runningPod, containers);
+                var rc = new RunningContainers(startupConfig, runningPod, containers);
+                cluster.Configuration.Hooks.OnContainersStarted(rc);
+                return rc;
             });
         }
 
@@ -50,6 +52,7 @@ namespace KubernetesWorkflow
             K8s(controller =>
             {
                 controller.Stop(runningContainers.RunningPod);
+                cluster.Configuration.Hooks.OnContainersStopped(runningContainers);
             });
         }
 

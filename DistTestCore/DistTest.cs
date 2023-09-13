@@ -171,7 +171,7 @@ namespace DistTestCore
             {
                 WriteEndTestLog(lifecycle.Log);
 
-                IncludeLogsAndMetricsOnTestFailure(lifecycle);
+                IncludeLogsOnTestFailure(lifecycle);
                 lifecycle.DeleteAllResources();
                 lifecycle = null!;
             });
@@ -215,22 +215,21 @@ namespace DistTestCore
             return testMethods.Any(m => m.GetCustomAttribute<UseLongTimeoutsAttribute>() != null);
         }
 
-        private void IncludeLogsAndMetricsOnTestFailure(TestLifecycle lifecycle)
+        private void IncludeLogsOnTestFailure(TestLifecycle lifecycle)
         {
             var result = TestContext.CurrentContext.Result;
             if (result.Outcome.Status == NUnit.Framework.Interfaces.TestStatus.Failed)
             {
                 fixtureLog.MarkAsFailed();
 
-                if (IsDownloadingLogsAndMetricsEnabled())
+                if (IsDownloadingLogsEnabled())
                 {
-                    lifecycle.Log.Log("Downloading all CodexNode logs and metrics because of test failure...");
-                    //DownloadAllLogs(lifecycle);
-                    //DownloadAllMetrics(lifecycle);
+                    lifecycle.Log.Log("Downloading all container logs because of test failure...");
+                    lifecycle.DownloadAllLogs();
                 }
                 else
                 {
-                    lifecycle.Log.Log("Skipping download of all CodexNode logs and metrics due to [DontDownloadLogsAndMetricsOnFailure] attribute.");
+                    lifecycle.Log.Log("Skipping download of all container logs due to [DontDownloadLogsOnFailure] attribute.");
                 }
             }
         }
@@ -245,10 +244,10 @@ namespace DistTestCore
             return TestContext.CurrentContext.Result.Outcome.Status.ToString();
         }
 
-        private bool IsDownloadingLogsAndMetricsEnabled()
+        private bool IsDownloadingLogsEnabled()
         {
             var testProperties = TestContext.CurrentContext.Test.Properties;
-            return !testProperties.ContainsKey(DontDownloadLogsAndMetricsOnFailureAttribute.DontDownloadKey);
+            return !testProperties.ContainsKey(DontDownloadLogsOnFailureAttribute.DontDownloadKey);
         }
     }
 
