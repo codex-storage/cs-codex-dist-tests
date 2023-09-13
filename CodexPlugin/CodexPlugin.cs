@@ -3,7 +3,7 @@ using KubernetesWorkflow;
 
 namespace CodexPlugin
 {
-    public class CodexPlugin : IProjectPlugin, IHasLogPrefix
+    public class CodexPlugin : IProjectPlugin, IHasLogPrefix, IHasMetadata
     {
         private readonly CodexStarter codexStarter;
         private readonly IPluginTools tools;
@@ -19,7 +19,12 @@ namespace CodexPlugin
 
         public void Announce()
         {
-            tools.GetLog().Log("hello from codex plugin. codex container info here.");
+            tools.GetLog().Log($"Loaded with Codex ID: '{codexStarter.GetCodexId()}'");
+        }
+
+        public void AddMetadata(IAddMetadata metadata)
+        {
+            metadata.Add("codexid", codexStarter.GetCodexId());
         }
 
         public void Decommission()

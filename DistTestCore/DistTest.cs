@@ -10,7 +10,6 @@ namespace DistTestCore
     [Parallelizable(ParallelScope.All)]
     public abstract class DistTest
     {
-        private const string TestsType = "dist-tests";
         private const string TestNamespacePrefix = "ct-";
         private readonly Configuration configuration = new Configuration();
         private readonly Assembly[] testAssemblies;
@@ -154,8 +153,6 @@ namespace DistTestCore
                     var testNamespace = TestNamespacePrefix + Guid.NewGuid().ToString();
                     var lifecycle = new TestLifecycle(fixtureLog.CreateTestLog(), configuration, GetTimeSet(), testNamespace);
                     lifecycles.Add(testName, lifecycle);
-                    DefaultContainerRecipe.TestsType = TestsType;
-                    //DefaultContainerRecipe.ApplicationIds = lifecycle.GetApplicationIds();
                 }
             });
         }
@@ -166,7 +163,7 @@ namespace DistTestCore
             var testResult = GetTestResult();
             var testDuration = lifecycle.GetTestDuration();
             fixtureLog.Log($"{GetCurrentTestName()} = {testResult} ({testDuration})");
-            statusLog.ConcludeTest(testResult, testDuration);//, lifecycle.GetApplicationIds());
+            statusLog.ConcludeTest(testResult, testDuration, lifecycle.GetPluginMetadata());
             Stopwatch.Measure(fixtureLog, $"Teardown for {GetCurrentTestName()}", () =>
             {
                 WriteEndTestLog(lifecycle.Log);

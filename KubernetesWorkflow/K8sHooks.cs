@@ -4,6 +4,7 @@
     {
         void OnContainersStarted(RunningContainers runningContainers);
         void OnContainersStopped(RunningContainers runningContainers);
+        void OnContainerRecipeCreated(ContainerRecipe recipe);
     }
 
     public class DoNothingK8sHooks : IK8sHooks
@@ -13,6 +14,10 @@
         }
 
         public void OnContainersStopped(RunningContainers runningContainers)
+        {
+        }
+
+        public void OnContainerRecipeCreated(ContainerRecipe recipe)
         {
         }
     }

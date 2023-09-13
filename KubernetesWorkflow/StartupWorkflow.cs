@@ -161,7 +161,10 @@ namespace KubernetesWorkflow
             var result = new List<ContainerRecipe>();
             for (var i = 0; i < numberOfContainers; i++)
             {
-                result.Add(recipeFactory.CreateRecipe(i, numberSource.GetContainerNumber(), componentFactory, startupConfig));
+                var recipe = recipeFactory.CreateRecipe(i, numberSource.GetContainerNumber(), componentFactory, startupConfig);
+                if (cluster.Configuration.AddAppPodLabel) recipe.PodLabels.Add("app", recipeFactory.AppName);
+                cluster.Configuration.Hooks.OnContainerRecipeCreated(recipe);
+                result.Add(recipe);
             }
 
             return result.ToArray();

@@ -5,7 +5,7 @@ using Utils;
 
 namespace CodexPlugin
 {
-    public class CodexContainerRecipe : DefaultContainerRecipe
+    public class CodexContainerRecipe : ContainerRecipeFactory
     {
         private const string DefaultDockerImage = "codexstorage/nim-codex:latest-dist-tests";
 
@@ -27,7 +27,7 @@ namespace CodexPlugin
             //Resources.Limits = new ContainerResourceSet(milliCPUs: 4000, memory: 12.GB());
         }
 
-        protected override void InitializeRecipe(StartupConfig startupConfig)
+        protected override void Initialize(StartupConfig startupConfig)
         {
             var config = startupConfig.Get<CodexStartupConfig>();
 
@@ -97,6 +97,8 @@ namespace CodexPlugin
             //        AddEnvVar("CODEX_VALIDATOR", "true");
             //    }
             //}
+
+            AddPodLabel("codexid", Image);
         }
 
         private ByteSize GetVolumeCapacity(CodexStartupConfig config)

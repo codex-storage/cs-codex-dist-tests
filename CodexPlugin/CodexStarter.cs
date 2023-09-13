@@ -7,6 +7,8 @@ namespace CodexPlugin
     public class CodexStarter
     {
         private readonly IPluginTools pluginTools;
+        private readonly CodexContainerRecipe recipe = new CodexContainerRecipe();
+        private CodexDebugVersionResponse? versionResponse;
 
         public CodexStarter(IPluginTools pluginTools)
         {
@@ -46,8 +48,7 @@ namespace CodexPlugin
             var group = CreateCodexGroup(containers, codexNodeFactory);
 
             Log($"Codex version: {group.Version}");
-
-            //lifecycle.SetCodexVersion(group.Version);
+            versionResponse = group.Version;
 
             return group;
         }
@@ -62,6 +63,12 @@ namespace CodexPlugin
                 workflow.Stop(c);
             }
             Log("Stopped.");
+        }
+
+        public string GetCodexId()
+        {
+            if (versionResponse != null) return versionResponse.version;
+            return recipe.Image;
         }
 
         //public void DeleteAllResources()
@@ -103,7 +110,6 @@ namespace CodexPlugin
         private RunningContainers[] StartCodexContainers(StartupConfig startupConfig, int numberOfNodes, Location location)
         {
             var result = new List<RunningContainers>();
-            var recipe = new CodexContainerRecipe();
             for (var i = 0; i < numberOfNodes; i++)
             {
                 var workflow = pluginTools.CreateWorkflow();

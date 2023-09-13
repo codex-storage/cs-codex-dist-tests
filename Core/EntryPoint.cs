@@ -28,6 +28,11 @@ namespace Core
             manager.AnnouncePlugins();
         }
 
+        public Dictionary<string, string> GetPluginMetadata()
+        {
+            return manager.GatherPluginMetadata().Get();
+        }
+
         public CoreInterface CreateInterface()
         {
             return new CoreInterface(this);

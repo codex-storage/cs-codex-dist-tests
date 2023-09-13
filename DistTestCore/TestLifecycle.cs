@@ -8,6 +8,7 @@ namespace DistTestCore
 {
     public class TestLifecycle : IK8sHooks
     {
+        private const string TestsType = "dist-tests";
         private readonly DateTime testStart;
         private readonly EntryPoint entryPoint;
         private readonly List<RunningContainers> runningContainers = new List<RunningContainers>();
@@ -47,6 +48,11 @@ namespace DistTestCore
             return entryPoint.Tools.GetFileManager();
         }
 
+        public Dictionary<string, string> GetPluginMetadata()
+        {
+            return entryPoint.GetPluginMetadata();
+        }
+
         public string GetTestDuration()
         {
             var testDuration = DateTime.UtcNow - testStart;
@@ -61,6 +67,16 @@ namespace DistTestCore
         public void OnContainersStopped(RunningContainers rc)
         {
             runningContainers.Remove(rc);
+        }
+
+        public void OnContainerRecipeCreated(ContainerRecipe recipe)
+        {
+            recipe.PodLabels.Add("tests-type", TestsType);
+            recipe.PodLabels.Add("runid", NameUtils.GetRunId());
+            recipe.PodLabels.Add("testid", NameUtils.GetTestId());
+            recipe.PodLabels.Add("category", NameUtils.GetCategoryName());
+            recipe.PodLabels.Add("fixturename", NameUtils.GetRawFixtureName());
+            recipe.PodLabels.Add("testname", NameUtils.GetTestMethodName());
         }
 
         public void DownloadAllLogs()
@@ -82,26 +98,5 @@ namespace DistTestCore
             var handler = new LogDownloadHandler(c.Name, file);
             workflow.DownloadContainerLog(c, handler);
         }
-
-        //public ApplicationIds GetApplicationIds()
-        //{
-        //    //return new ApplicationIds(
-        //    //    codexId: GetCodexId(),
-        //    //    gethId: new GethContainerRecipe().Image,
-        //    //    prometheusId: new PrometheusContainerRecipe().Image,
-        //    //    codexContractsId: new CodexContractsContainerRecipe().Image,
-        //    //    grafanaId: new GrafanaContainerRecipe().Image
-        //    //);
-        //    return null!;
-        //}
-
-        //private string GetCodexId()
-        //{
-        //    return "";
-        //    //var v = CodexVersion;
-        //    //if (v == null) return new CodexContainerRecipe().Image;
-        //    //if (v.version != "untagged build") return v.version;
-        //    //return v.revision;
-        //}
     }
 }

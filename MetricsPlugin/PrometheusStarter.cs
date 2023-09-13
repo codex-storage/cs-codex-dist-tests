@@ -6,6 +6,7 @@ namespace MetricsPlugin
 {
     public class PrometheusStarter
     {
+        private readonly PrometheusContainerRecipe recipe = new PrometheusContainerRecipe();
         private readonly IPluginTools tools;
 
         public PrometheusStarter(IPluginTools tools)
@@ -20,7 +21,7 @@ namespace MetricsPlugin
             startupConfig.Add(new PrometheusStartupConfig(GeneratePrometheusConfig(targets)));
 
             var workflow = tools.CreateWorkflow();
-            var runningContainers = workflow.Start(1, Location.Unspecified, new PrometheusContainerRecipe(), startupConfig);
+            var runningContainers = workflow.Start(1, Location.Unspecified, recipe, startupConfig);
             if (runningContainers.Containers.Length != 1) throw new InvalidOperationException("Expected only 1 Prometheus container to be created.");
 
             Log("Metrics server started.");
@@ -31,6 +32,11 @@ namespace MetricsPlugin
         {
             var metricsQuery = new MetricsQuery(tools, metricsContainer);
             return new MetricsAccess(metricsQuery, target);
+        }
+
+        public string GetPrometheusId()
+        {
+            return recipe.Image;
         }
 
         private void Log(string msg)

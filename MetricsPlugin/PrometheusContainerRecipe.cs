@@ -1,14 +1,13 @@
-﻿using Core;
-using KubernetesWorkflow;
+﻿using KubernetesWorkflow;
 
 namespace MetricsPlugin
 {
-    public class PrometheusContainerRecipe : DefaultContainerRecipe
+    public class PrometheusContainerRecipe : ContainerRecipeFactory
     {
         public override string AppName => "prometheus";
         public override string Image => "codexstorage/dist-tests-prometheus:latest";
 
-        protected override void InitializeRecipe(StartupConfig startupConfig)
+        protected override void Initialize(StartupConfig startupConfig)
         {
             var config = startupConfig.Get<PrometheusStartupConfig>();
 

@@ -4,7 +4,7 @@ using Logging;
 
 namespace MetricsPlugin
 {
-    public class MetricsPlugin : IProjectPlugin
+    public class MetricsPlugin : IProjectPlugin, IHasLogPrefix, IHasMetadata
     {
         private readonly IPluginTools tools;
         private readonly PrometheusStarter starter;
@@ -15,9 +15,16 @@ namespace MetricsPlugin
             starter = new PrometheusStarter(tools);
         }
 
+        public string LogPrefix => "(Metrics) ";
+
         public void Announce()
         {
-            tools.GetLog().Log("Hi from the metrics plugin.");
+            tools.GetLog().Log($"Prometheus plugin loaded with '{starter.GetPrometheusId()}'.");
+        }
+
+        public void AddMetadata(IAddMetadata metadata)
+        {
+            metadata.Add("prometheusid", starter.GetPrometheusId());
         }
 
         public void Decommission()

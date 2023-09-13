@@ -21,6 +21,19 @@
             foreach (var plugin in projectPlugins) plugin.Announce();
         }
 
+        public PluginMetadata GatherPluginMetadata()
+        {
+            var metadata = new PluginMetadata();
+            foreach (var plugin in projectPlugins)
+            {
+                if (plugin is IHasMetadata m)
+                {
+                    m.AddMetadata(metadata);
+                }
+            }
+            return metadata;
+        }
+
         public void DecommissionPlugins()
         {
             foreach (var plugin in projectPlugins) plugin.Decommission();
@@ -56,5 +69,10 @@
     public interface IHasLogPrefix
     {
         string LogPrefix { get; }
+    }
+
+    public interface IHasMetadata
+    {
+        void AddMetadata(IAddMetadata metadata);
     }
 }
