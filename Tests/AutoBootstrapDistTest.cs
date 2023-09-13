@@ -13,7 +13,7 @@ namespace Tests
 
         public IOnlineCodexNode AddCodex(Action<ICodexSetup> setup)
         {
-            return this.SetupCodexNode(s =>
+            return Ci.SetupCodexNode(s =>
             {
                 setup(s);
                 s.WithBootstrapNode(BootstrapNode);
@@ -22,12 +22,12 @@ namespace Tests
 
         public ICodexNodeGroup AddCodex(int numberOfNodes)
         {
-            return this.SetupCodexNodes(numberOfNodes, s => s.WithBootstrapNode(BootstrapNode));
+            return Ci.SetupCodexNodes(numberOfNodes, s => s.WithBootstrapNode(BootstrapNode));
         }
 
         public ICodexNodeGroup AddCodex(int numberOfNodes, Action<ICodexSetup> setup)
         {
-            return this.SetupCodexNodes(numberOfNodes, s =>
+            return Ci.SetupCodexNodes(numberOfNodes, s =>
             {
                 setup(s);
                 s.WithBootstrapNode(BootstrapNode);
@@ -37,7 +37,7 @@ namespace Tests
         [SetUp]
         public void SetUpBootstrapNode()
         {
-            BootstrapNode = this.SetupCodexNode(s => s.WithName("BOOTSTRAP"));
+            BootstrapNode = Ci.SetupCodexNode(s => s.WithName("BOOTSTRAP"));
         }
 
         protected IOnlineCodexNode BootstrapNode { get; private set; } = null!;

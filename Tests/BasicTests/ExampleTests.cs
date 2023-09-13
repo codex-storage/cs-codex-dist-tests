@@ -11,7 +11,7 @@ namespace Tests.BasicTests
         [Test]
         public void CodexLogExample()
         {
-            var primary = this.SetupCodexNode();
+            var primary = Ci.SetupCodexNode();
 
             primary.UploadFile(GenerateTestFile(5.MB()));
 
@@ -23,8 +23,8 @@ namespace Tests.BasicTests
         [Test]
         public void TwoMetricsExample()
         {
-            //var group = this.SetupCodexNodes(2, s => s.EnableMetrics());
-            //var group2 = this.SetupCodexNodes(2, s => s.EnableMetrics());
+            //var group = Ci.SetupCodexNodes(2, s => s.EnableMetrics());
+            //var group2 = Ci.SetupCodexNodes(2, s => s.EnableMetrics());
 
             //var primary = group[0];
             //var secondary = group[1];
@@ -47,7 +47,7 @@ namespace Tests.BasicTests
             //var buyerInitialBalance = 1000.TestTokens();
             //var fileSize = 10.MB();
 
-            //var seller = this.SetupCodexNode(s => s
+            //var seller = Ci.SetupCodexNode(s => s
             //                .WithStorageQuota(11.GB())
             //                .EnableMarketplace(sellerInitialBalance));
 
@@ -60,7 +60,7 @@ namespace Tests.BasicTests
 
             //var testFile = GenerateTestFile(fileSize);
 
-            //var buyer = this.SetupCodexNode(s => s
+            //var buyer = Ci.SetupCodexNode(s => s
             //    .WithBootstrapNode(seller)
             //    .EnableMarketplace(buyerInitialBalance));
 

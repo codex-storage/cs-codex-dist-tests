@@ -17,6 +17,7 @@ namespace DistTestCore
 
             EntryPoint = new EntryPoint(log, configuration.GetK8sConfiguration(timeSet, testNamespace), configuration.GetFileManagerFolder(), timeSet);
             EntryPoint.Initialize();
+            CoreInterface = EntryPoint.CreateInterface();
 
             log.WriteLogTag();
         }
@@ -25,6 +26,7 @@ namespace DistTestCore
         public Configuration Configuration { get; }
         public ITimeSet TimeSet { get; }
         public EntryPoint EntryPoint { get; }
+        public CoreInterface CoreInterface { get; }
 
         public void DeleteAllResources()
         {

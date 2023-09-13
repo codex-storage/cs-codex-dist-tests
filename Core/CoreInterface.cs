@@ -1,28 +1,17 @@
 ﻿namespace Core
 {
-    public class CoreInterface
+    public sealed class CoreInterface
     {
-        private static readonly Dictionary<CoreInterface, EntryPoint> coreAssociations = new Dictionary<CoreInterface, EntryPoint>();
+        private readonly EntryPoint entryPoint;
+
+        internal CoreInterface(EntryPoint entryPoint)
+        {
+            this.entryPoint = entryPoint;
+        }
 
         public T GetPlugin<T>() where T : IProjectPlugin
         {
-            return coreAssociations[this].GetPlugin<T>();
-        }
-
-        internal static void Associate(CoreInterface coreInterface, EntryPoint entryPoint)
-        {
-            coreAssociations.Add(coreInterface, entryPoint);
-        }
-
-        internal static void Desociate(EntryPoint entryPoint)
-        {
-            var keys = coreAssociations.Where(p => p.Value == entryPoint).ToArray();
-            if (keys.Length == 0) return;
-            
-            foreach (var key in keys)
-            {
-                coreAssociations.Remove(key.Key);
-            }
+            return entryPoint.GetPlugin<T>();
         }
     }
 }

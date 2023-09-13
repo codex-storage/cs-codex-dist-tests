@@ -37,22 +37,5 @@ namespace CodexPlugin
         {
             return codexStarter.WrapCodexContainers(containers);
         }
-
-        public IOnlineCodexNode SetupCodexNode(Action<ICodexSetup> setup)
-        {
-            return SetupCodexNodes(1, setup)[0];
-        }
-
-        public ICodexNodeGroup SetupCodexNodes(int number, Action<ICodexSetup> setup)
-        {
-            var rc = StartCodexNodes(number, setup);
-            return WrapCodexContainers(rc);
-        }
-
-        public ICodexNodeGroup SetupCodexNodes(int number)
-        {
-            var rc = StartCodexNodes(number, s => { });
-            return WrapCodexContainers(rc);
-        }
     }
 }

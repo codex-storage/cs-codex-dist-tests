@@ -38,21 +38,13 @@ namespace Core
             manager.InitializePlugins(this);
         }
 
-        public void ManuallyAssociateCoreInterface(CoreInterface ci)
-        {
-            CoreInterface.Associate(ci, this);
-        }
-
         public CoreInterface CreateInterface()
         {
-            var ci = new CoreInterface();
-            CoreInterface.Associate(ci, this);
-            return ci;
+            return new CoreInterface(this);
         }
 
         public void Decommission()
         {
-            CoreInterface.Desociate(this);
             manager.FinalizePlugins(log);
         }
 

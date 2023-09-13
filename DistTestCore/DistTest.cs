@@ -8,7 +8,7 @@ using Utils;
 namespace DistTestCore
 {
     [Parallelizable(ParallelScope.All)]
-    public abstract class DistTest : CoreInterface
+    public abstract class DistTest
     {
         private const string TestsType = "dist-tests";
         private const string TestNamespacePrefix = "ct-";
@@ -88,6 +88,14 @@ namespace DistTestCore
             {
                 fixtureLog.Error("Cleanup failed: " + ex.Message);
                 GlobalTestFailure.HasFailed = true;
+            }
+        }
+
+        public CoreInterface Ci
+        {
+            get
+            {
+                return Get().CoreInterface;
             }
         }
 
@@ -213,7 +221,6 @@ namespace DistTestCore
                 {
                     var testNamespace = TestNamespacePrefix + Guid.NewGuid().ToString();
                     var lifecycle = new TestLifecycle(fixtureLog.CreateTestLog(), configuration, GetTimeSet(), testNamespace);
-                    lifecycle.EntryPoint.ManuallyAssociateCoreInterface(this);
                     lifecycles.Add(testName, lifecycle);
                     DefaultContainerRecipe.TestsType = TestsType;
                     //DefaultContainerRecipe.ApplicationIds = lifecycle.GetApplicationIds();

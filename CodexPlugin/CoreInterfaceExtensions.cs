@@ -17,22 +17,23 @@ namespace CodexPlugin
 
         public static IOnlineCodexNode SetupCodexNode(this CoreInterface ci)
         {
-            return Plugin(ci).SetupCodexNode(s => { }); // do more unification here. Keep plugin simpler.
+            return ci.SetupCodexNodes(1)[0];
         }
 
         public static IOnlineCodexNode SetupCodexNode(this CoreInterface ci, Action<ICodexSetup> setup)
         {
-            return Plugin(ci).SetupCodexNode(setup);
+            return ci.SetupCodexNodes(1, setup)[0];
         }
 
         public static ICodexNodeGroup SetupCodexNodes(this CoreInterface ci, int number, Action<ICodexSetup> setup)
         {
-            return Plugin(ci).SetupCodexNodes(number, setup);
+            var rc = ci.StartCodexNodes(number, setup);
+            return ci.WrapCodexContainers(rc);
         }
 
         public static ICodexNodeGroup SetupCodexNodes(this CoreInterface ci, int number)
         {
-            return Plugin(ci).SetupCodexNodes(number);
+            return ci.SetupCodexNodes(number, s => { });
         }
 
         private static CodexPlugin Plugin(CoreInterface ci)

@@ -10,10 +10,10 @@ namespace Tests.PeerDiscoveryTests
         [Test]
         public void TwoLayersTest()
         {
-            var root = this.SetupCodexNode();
-            var l1Source = this.SetupCodexNode(s => s.WithBootstrapNode(root));
-            var l1Node = this.SetupCodexNode(s => s.WithBootstrapNode(root));
-            var l2Target = this.SetupCodexNode(s => s.WithBootstrapNode(l1Node));
+            var root = Ci.SetupCodexNode();
+            var l1Source = Ci.SetupCodexNode(s => s.WithBootstrapNode(root));
+            var l1Node = Ci.SetupCodexNode(s => s.WithBootstrapNode(root));
+            var l2Target = Ci.SetupCodexNode(s => s.WithBootstrapNode(l1Node));
 
             AssertAllNodesConnected();
         }
@@ -21,11 +21,11 @@ namespace Tests.PeerDiscoveryTests
         [Test]
         public void ThreeLayersTest()
         {
-            var root = this.SetupCodexNode();
-            var l1Source = this.SetupCodexNode(s => s.WithBootstrapNode(root));
-            var l1Node = this.SetupCodexNode(s => s.WithBootstrapNode(root));
-            var l2Node = this.SetupCodexNode(s => s.WithBootstrapNode(l1Node));
-            var l3Target = this.SetupCodexNode(s => s.WithBootstrapNode(l2Node));
+            var root = Ci.SetupCodexNode();
+            var l1Source = Ci.SetupCodexNode(s => s.WithBootstrapNode(root));
+            var l1Node = Ci.SetupCodexNode(s => s.WithBootstrapNode(root));
+            var l2Node = Ci.SetupCodexNode(s => s.WithBootstrapNode(l1Node));
+            var l3Target = Ci.SetupCodexNode(s => s.WithBootstrapNode(l2Node));
 
             AssertAllNodesConnected();
         }
@@ -36,10 +36,10 @@ namespace Tests.PeerDiscoveryTests
         [TestCase(20)]
         public void NodeChainTest(int chainLength)
         {
-            var node = this.SetupCodexNode();
+            var node = Ci.SetupCodexNode();
             for (var i = 1; i < chainLength; i++)
             {
-                node = this.SetupCodexNode(s => s.WithBootstrapNode(node));
+                node = Ci.SetupCodexNode(s => s.WithBootstrapNode(node));
             }
 
             AssertAllNodesConnected();
