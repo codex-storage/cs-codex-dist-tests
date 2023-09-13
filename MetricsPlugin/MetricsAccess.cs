@@ -4,6 +4,7 @@ namespace MetricsPlugin
 {
     public interface IMetricsAccess
     {
+        string TargetName { get; }
         Metrics? GetAllMetrics();
         MetricsSet GetMetric(string metricName);
         MetricsSet GetMetric(string metricName, TimeSpan timeout);
@@ -18,19 +19,10 @@ namespace MetricsPlugin
         {
             this.query = query;
             this.target = target;
+            TargetName = target.Name;
         }
 
-        //public void AssertThat(string metricName, IResolveConstraint constraint, string message = "")
-        //{
-        //    AssertHelpers.RetryAssert(constraint, () =>
-        //    {
-        //        var metricSet = GetMetricWithTimeout(metricName);
-        //        var metricValue = metricSet.Values[0].Value;
-
-        //        log.Log($"{node.Name} metric '{metricName}' = {metricValue}");
-        //        return metricValue;
-        //    }, message);
-        //}
+        public string TargetName { get; }
 
         public Metrics? GetAllMetrics()
         {

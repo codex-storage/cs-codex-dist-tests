@@ -11,21 +11,21 @@ namespace Core
     internal class ToolsFactory : IToolsFactory
     {
         private readonly ILog log;
-        private readonly Configuration configuration;
+        private readonly WorkflowCreator workflowCreator;
         private readonly string fileManagerRootFolder;
         private readonly ITimeSet timeSet;
 
         public ToolsFactory(ILog log, Configuration configuration, string fileManagerRootFolder, ITimeSet timeSet)
         {
             this.log = log;
-            this.configuration = configuration;
+            workflowCreator = new WorkflowCreator(log, configuration);
             this.fileManagerRootFolder = fileManagerRootFolder;
             this.timeSet = timeSet;
         }
 
         public PluginTools CreateTools()
         {
-            return new PluginTools(log, configuration, fileManagerRootFolder, timeSet);
+            return new PluginTools(log, workflowCreator, fileManagerRootFolder, timeSet);
         }
     }
 }

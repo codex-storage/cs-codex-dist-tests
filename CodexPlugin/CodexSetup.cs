@@ -12,7 +12,7 @@ namespace CodexPlugin
         ICodexSetup WithBlockTTL(TimeSpan duration);
         ICodexSetup WithBlockMaintenanceInterval(TimeSpan duration);
         ICodexSetup WithBlockMaintenanceNumber(int numberOfBlocks);
-        //ICodexSetup EnableMetrics();
+        ICodexSetup EnableMetrics();
         //ICodexSetup EnableMarketplace(TestToken initialBalance);
         //ICodexSetup EnableMarketplace(TestToken initialBalance, Ether initialEther);
         //ICodexSetup EnableMarketplace(TestToken initialBalance, Ether initialEther, bool isValidator);
@@ -70,11 +70,11 @@ namespace CodexPlugin
             return this;
         }
 
-        //public ICodexSetup EnableMetrics()
-        //{
-        //    MetricsMode = Metrics.MetricsMode.Record;
-        //    return this;
-        //}
+        public ICodexSetup EnableMetrics()
+        {
+            MetricsEnabled = true;
+            return this;
+        }
 
         //public ICodexSetup EnableMarketplace(TestToken initialBalance)
         //{

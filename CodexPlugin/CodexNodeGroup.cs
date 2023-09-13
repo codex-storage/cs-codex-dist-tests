@@ -1,10 +1,11 @@
 ﻿using Core;
 using KubernetesWorkflow;
+using MetricsPlugin;
 using System.Collections;
 
 namespace CodexPlugin
 {
-    public interface ICodexNodeGroup : IEnumerable<IOnlineCodexNode>
+    public interface ICodexNodeGroup : IEnumerable<IOnlineCodexNode>, IManyMetricScrapeTargets
     {
         void BringOffline();
         IOnlineCodexNode this[int index] { get; }
@@ -41,6 +42,7 @@ namespace CodexPlugin
         public RunningContainers[] Containers { get; private set; }
         public OnlineCodexNode[] Nodes { get; private set; }
         public CodexDebugVersionResponse Version { get; private set; }
+        public IMetricsScrapeTarget[] ScrapeTargets => Nodes.Select(n => n.MetricsScrapeTarget).ToArray();
 
         public IEnumerator<IOnlineCodexNode> GetEnumerator()
         {

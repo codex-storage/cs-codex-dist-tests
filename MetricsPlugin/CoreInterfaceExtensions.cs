@@ -16,6 +16,11 @@ namespace MetricsPlugin
             return Plugin(ci).CreateAccessForTarget(metricsContainer, scrapeTarget);
         }
 
+        public static IMetricsAccess[] GetMetricsFor(this CoreInterface ci, params IManyMetricScrapeTargets[] manyScrapeTargets)
+        {
+            return ci.GetMetricsFor(manyScrapeTargets.SelectMany(t => t.ScrapeTargets).ToArray());
+        }
+
         public static IMetricsAccess[] GetMetricsFor(this CoreInterface ci, params IMetricsScrapeTarget[] scrapeTargets)
         {
             var rc = ci.StartMetricsCollector(scrapeTargets);

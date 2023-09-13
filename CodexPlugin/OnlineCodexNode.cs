@@ -1,6 +1,7 @@
 ﻿using Core;
 using FileUtils;
 using Logging;
+using MetricsPlugin;
 using NUnit.Framework;
 using Utils;
 
@@ -15,10 +16,9 @@ namespace CodexPlugin
         TrackedFile? DownloadContent(ContentId contentId, string fileLabel = "");
         void ConnectToPeer(IOnlineCodexNode node);
         IDownloadedLog DownloadLog(int? tailLines = null);
-        //IMetricsAccess Metrics { get; }
-        //IMarketplaceAccess Marketplace { get; }
         CodexDebugVersionResponse Version { get; }
         void BringOffline();
+        IMetricsScrapeTarget MetricsScrapeTarget { get; }
     }
 
     public class OnlineCodexNode : IOnlineCodexNode
@@ -27,21 +27,26 @@ namespace CodexPlugin
         private const string UploadFailedMessage = "Unable to store block";
         private readonly IPluginTools tools;
 
-        public OnlineCodexNode(IPluginTools tools, CodexAccess codexAccess, CodexNodeGroup group/*, IMetricsAccess metricsAccess, IMarketplaceAccess marketplaceAccess*/)
+        public OnlineCodexNode(IPluginTools tools, CodexAccess codexAccess, CodexNodeGroup group)
         {
             this.tools = tools;
             CodexAccess = codexAccess;
             Group = group;
-            //Metrics = metricsAccess;
-            //Marketplace = marketplaceAccess;
             Version = new CodexDebugVersionResponse();
         }
 
         public CodexAccess CodexAccess { get; }
         public CodexNodeGroup Group { get; }
-        //public IMetricsAccess Metrics { get; }
-        //public IMarketplaceAccess Marketplace { get; }
         public CodexDebugVersionResponse Version { get; private set; }
+        public IMetricsScrapeTarget MetricsScrapeTarget
+        {
+            get
+            {
+                var port = CodexAccess.Container.Recipe.GetPortByTag(CodexContainerRecipe.MetricsPortTag);
+                if (port == null) throw new Exception("Metrics is not available for this Codex node. Please start it with the option '.EnableMetrics()' to enable it.");
+                return new MetricsScrapeTarget(CodexAccess.Container, port);
+            }
+        }
 
         public string GetName()
         {

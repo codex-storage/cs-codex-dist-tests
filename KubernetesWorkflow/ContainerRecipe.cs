@@ -28,9 +28,9 @@
         public VolumeMount[] Volumes { get; }
         public object[] Additionals { get; }
 
-        public Port GetPortByTag(string tag)
+        public Port? GetPortByTag(string tag)
         {
-            return ExposedPorts.Concat(InternalPorts).Single(p => p.Tag == tag);
+            return ExposedPorts.Concat(InternalPorts).SingleOrDefault(p => p.Tag == tag);
         }
 
         public override string ToString()

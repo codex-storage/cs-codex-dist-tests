@@ -24,23 +24,23 @@ namespace Tests.BasicTests
         [Test]
         public void TwoMetricsExample()
         {
-            var rc = Ci.StartMetricsCollector();
+            var group = Ci.SetupCodexNodes(2, s => s.EnableMetrics());
+            var group2 = Ci.SetupCodexNodes(2, s => s.EnableMetrics());
 
-            //var group = Ci.SetupCodexNodes(2, s => s.EnableMetrics());
-            //var group2 = Ci.SetupCodexNodes(2, s => s.EnableMetrics());
+            var primary = group[0];
+            var secondary = group[1];
+            var primary2 = group2[0];
+            var secondary2 = group2[1];
 
-            //var primary = group[0];
-            //var secondary = group[1];
-            //var primary2 = group2[0];
-            //var secondary2 = group2[1];
+            var metrics = Ci.GetMetricsFor(primary.MetricsScrapeTarget, primary2.MetricsScrapeTarget);
 
-            //primary.ConnectToPeer(secondary);
-            //primary2.ConnectToPeer(secondary2);
+            primary.ConnectToPeer(secondary);
+            primary2.ConnectToPeer(secondary2);
 
-            //Thread.Sleep(TimeSpan.FromMinutes(2));
+            Thread.Sleep(TimeSpan.FromMinutes(2));
 
-            //primary.Metrics.AssertThat("libp2p_peers", Is.EqualTo(1));
-            //primary2.Metrics.AssertThat("libp2p_peers", Is.EqualTo(1));
+            metrics[0].AssertThat("libp2p_peers", Is.EqualTo(1));
+            metrics[1].AssertThat("libp2p_peers", Is.EqualTo(1));
         }
 
         [Test]

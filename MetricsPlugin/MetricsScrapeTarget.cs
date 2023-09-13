@@ -4,20 +4,27 @@ namespace MetricsPlugin
 {
     public interface IMetricsScrapeTarget
     {
+        string Name { get; }
         string Ip { get; }
         int Port { get; }
     }
 
+    public interface IManyMetricScrapeTargets
+    {
+        IMetricsScrapeTarget[] ScrapeTargets { get; }
+    }
+
     public class MetricsScrapeTarget : IMetricsScrapeTarget
     {
-        public MetricsScrapeTarget(string ip, int port)
+        public MetricsScrapeTarget(string ip, int port, string name)
         {
             Ip = ip;
             Port = port;
+            Name = name;
         }
 
         public MetricsScrapeTarget(RunningContainer container, int port)
-            : this(container.Pod.PodInfo.Ip, port)
+            : this(container.Pod.PodInfo.Ip, port, container.Name)
         {
         }
 
@@ -26,6 +33,7 @@ namespace MetricsPlugin
         {
         }
 
+        public string Name { get; }
         public string Ip { get; }
         public int Port { get; }
     }

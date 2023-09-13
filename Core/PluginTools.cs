@@ -37,12 +37,12 @@ namespace Core
         private readonly IFileManager fileManager;
         private ILog log;
 
-        public PluginTools(ILog log, Configuration configuration, string fileManagerRootFolder, ITimeSet timeSet)
+        public PluginTools(ILog log, WorkflowCreator workflowCreator, string fileManagerRootFolder, ITimeSet timeSet)
         {
             this.log = log;
+            this.workflowCreator = workflowCreator;
             this.timeSet = timeSet;
             fileManager = new FileManager(log, fileManagerRootFolder);
-            workflowCreator = new WorkflowCreator(log, configuration);
         }
 
         public void ApplyLogPrefix(string prefix)

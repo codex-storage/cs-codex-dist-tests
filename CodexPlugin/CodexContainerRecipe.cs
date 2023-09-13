@@ -67,15 +67,15 @@ namespace CodexPlugin
             {
                 AddEnvVar("CODEX_BLOCK_MN", config.BlockMaintenanceNumber.ToString()!);
             }
-            //if (config.MetricsMode != Metrics.MetricsMode.None)
-            //{
-            //    var metricsPort = AddInternalPort(MetricsPortTag);
-            //    AddEnvVar("CODEX_METRICS", "true");
-            //    AddEnvVar("CODEX_METRICS_ADDRESS", "0.0.0.0");
-            //    AddEnvVar("CODEX_METRICS_PORT", metricsPort);
-            //    AddPodAnnotation("prometheus.io/scrape", "true");
-            //    AddPodAnnotation("prometheus.io/port", metricsPort.Number.ToString());
-            //}
+            if (config.MetricsEnabled)
+            {
+                var metricsPort = AddInternalPort(MetricsPortTag);
+                AddEnvVar("CODEX_METRICS", "true");
+                AddEnvVar("CODEX_METRICS_ADDRESS", "0.0.0.0");
+                AddEnvVar("CODEX_METRICS_PORT", metricsPort);
+                AddPodAnnotation("prometheus.io/scrape", "true");
+                AddPodAnnotation("prometheus.io/port", metricsPort.Number.ToString());
+            }
 
             //if (config.MarketplaceConfig != null)
             //{
