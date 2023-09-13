@@ -1,5 +1,6 @@
 ﻿using Core;
 using KubernetesWorkflow;
+using System.Text;
 
 namespace MetricsPlugin
 {
@@ -12,42 +13,51 @@ namespace MetricsPlugin
             this.tools = tools;
         }
 
-        public RunningContainers CollectMetricsFor(RunningContainers[] containers)
+        public RunningContainers CollectMetricsFor(IMetricsScrapeTarget[] targets)
         {
-            //LogStart($"Starting metrics server for {containers.Describe()}");
-            //var startupConfig = new StartupConfig();
-            //startupConfig.Add(new PrometheusStartupConfig(GeneratePrometheusConfig(containers.Containers())));
+            Log($"Starting metrics server for {targets.Length} targets...");
+            var startupConfig = new StartupConfig();
+            startupConfig.Add(new PrometheusStartupConfig(GeneratePrometheusConfig(targets)));
 
-            //var workflow = lifecycle.WorkflowCreator.CreateWorkflow();
-            //var runningContainers = workflow.Start(1, Location.Unspecified, new PrometheusContainerRecipe(), startupConfig);
-            //if (runningContainers.Containers.Length != 1) throw new InvalidOperationException("Expected only 1 Prometheus container to be created.");
+            var workflow = tools.CreateWorkflow();
+            var runningContainers = workflow.Start(1, Location.Unspecified, new PrometheusContainerRecipe(), startupConfig);
+            if (runningContainers.Containers.Length != 1) throw new InvalidOperationException("Expected only 1 Prometheus container to be created.");
 
-            //return runningContainers;
-            return null!;
+            Log("Metrics server started.");
+            return runningContainers;
         }
 
-        //private string GeneratePrometheusConfig(RunningContainer[] nodes)
-        //{
-        //    var config = "";
-        //    config += "global:\n";
-        //    config += "  scrape_interval: 10s\n";
-        //    config += "  scrape_timeout: 10s\n";
-        //    config += "\n";
-        //    config += "scrape_configs:\n";
-        //    config += "  - job_name: services\n";
-        //    config += "    metrics_path: /metrics\n";
-        //    config += "    static_configs:\n";
-        //    config += "      - targets:\n";
+        public MetricsAccess CreateAccessForTarget(RunningContainers metricsContainer, IMetricsScrapeTarget target)
+        {
+            var metricsQuery = new MetricsQuery(tools, metricsContainer);
+            return new MetricsAccess(metricsQuery, target);
+        }
 
-        //    foreach (var node in nodes)
-        //    {
-        //        var ip = node.Pod.PodInfo.Ip;
-        //        var port = node.Recipe.GetPortByTag(CodexContainerRecipe.MetricsPortTag).Number;
-        //        config += $"          - '{ip}:{port}'\n";
-        //    }
+        private void Log(string msg)
+        {
+            tools.GetLog().Log(msg);
+        }
 
-        //    var bytes = Encoding.ASCII.GetBytes(config);
-        //    return Convert.ToBase64String(bytes);
-        //}
+        private static string GeneratePrometheusConfig(IMetricsScrapeTarget[] targets)
+        {
+            var config = "";
+            config += "global:\n";
+            config += "  scrape_interval: 10s\n";
+            config += "  scrape_timeout: 10s\n";
+            config += "\n";
+            config += "scrape_configs:\n";
+            config += "  - job_name: services\n";
+            config += "    metrics_path: /metrics\n";
+            config += "    static_configs:\n";
+            config += "      - targets:\n";
+
+            foreach (var target in targets)
+            {
+                config += $"          - '{target.Ip}:{target.Port}'\n";
+            }
+
+            var bytes = Encoding.ASCII.GetBytes(config);
+            return Convert.ToBase64String(bytes);
+        }
     }
 }

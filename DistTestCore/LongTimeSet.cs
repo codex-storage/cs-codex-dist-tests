@@ -28,10 +28,5 @@ namespace DistTestCore
         {
             return TimeSpan.FromMinutes(15);
         }
-
-        public TimeSpan WaitForMetricTimeout()
-        {
-            return TimeSpan.FromMinutes(5);
-        }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using CodexPlugin;
 using DistTestCore;
+using MetricsPlugin;
 using NUnit.Framework;
 using Utils;
 
@@ -23,6 +24,8 @@ namespace Tests.BasicTests
         [Test]
         public void TwoMetricsExample()
         {
+            var rc = Ci.StartMetricsCollector();
+
             //var group = Ci.SetupCodexNodes(2, s => s.EnableMetrics());
             //var group2 = Ci.SetupCodexNodes(2, s => s.EnableMetrics());
 

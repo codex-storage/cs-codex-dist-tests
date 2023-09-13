@@ -7,7 +7,6 @@
         TimeSpan HttpCallRetryDelay();
         TimeSpan WaitForK8sServiceDelay();
         TimeSpan K8sOperationTimeout();
-        TimeSpan WaitForMetricTimeout();
     }
 
     public class DefaultTimeSet : ITimeSet
@@ -35,11 +34,6 @@
         public TimeSpan K8sOperationTimeout()
         {
             return TimeSpan.FromMinutes(30);
-        }
-
-        public TimeSpan WaitForMetricTimeout()
-        {
-            return TimeSpan.FromSeconds(30);
         }
     }
 }

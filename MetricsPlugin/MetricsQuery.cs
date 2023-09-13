@@ -1,198 +1,189 @@
-﻿//using DistTestCore.Codex;
-//using KubernetesWorkflow;
-//using System.Globalization;
+﻿using Core;
+using KubernetesWorkflow;
+using System.Globalization;
 
-//namespace DistTestCore.Metrics
-//{
-//    public class MetricsQuery
-//    {
-//        private readonly Http http;
+namespace MetricsPlugin
+{
+    public class MetricsQuery
+    {
+        private readonly Http http;
 
-//        public MetricsQuery(TestLifecycle lifecycle, RunningContainers runningContainers)
-//        {
-//            RunningContainers = runningContainers;
+        public MetricsQuery(IPluginTools tools, RunningContainers runningContainers)
+        {
+            RunningContainers = runningContainers;
+            http = tools.CreateHttp(runningContainers.Containers[0].Address, "api/v1");
+        }
 
-//            var address = lifecycle.Configuration.GetAddress(runningContainers.Containers[0]);
+        public RunningContainers RunningContainers { get; }
 
-//            http = new Http(
-//                lifecycle.Log,
-//                lifecycle.TimeSet,
-//                address,
-//                "api/v1");
-//        }
+        public Metrics? GetMostRecent(string metricName, IMetricsScrapeTarget target)
+        {
+            var response = GetLastOverTime(metricName, GetInstanceStringForNode(target));
+            if (response == null) return null;
 
-//        public RunningContainers RunningContainers { get; }
+            return new Metrics
+            {
+                Sets = response.data.result.Select(r =>
+                {
+                    return new MetricsSet
+                    {
+                        Instance = r.metric.instance,
+                        Values = MapSingleValue(r.value)
+                    };
+                }).ToArray()
+            };
+        }
 
-//        public Metrics? GetMostRecent(string metricName, RunningContainer node)
-//        {
-//            var response = GetLastOverTime(metricName, GetInstanceStringForNode(node));
-//            if (response == null) return null;
+        public Metrics? GetMetrics(string metricName)
+        {
+            var response = GetAll(metricName);
+            if (response == null) return null;
+            return MapResponseToMetrics(response);
+        }
 
-//            return new Metrics
-//            {
-//                Sets = response.data.result.Select(r =>
-//                {
-//                    return new MetricsSet
-//                    {
-//                        Instance = r.metric.instance,
-//                        Values = MapSingleValue(r.value)
-//                    };
-//                }).ToArray()
-//            };
-//        }
+        public Metrics? GetAllMetricsForNode(IMetricsScrapeTarget target)
+        {
+            var response = http.HttpGetJson<PrometheusQueryResponse>($"query?query={GetInstanceStringForNode(target)}{GetQueryTimeRange()}");
+            if (response.status != "success") return null;
+            return MapResponseToMetrics(response);
+        }
 
-//        public Metrics? GetMetrics(string metricName)
-//        {
-//            var response = GetAll(metricName);
-//            if (response == null) return null;
-//            return MapResponseToMetrics(response);
-//        }
+        private PrometheusQueryResponse? GetLastOverTime(string metricName, string instanceString)
+        {
+            var response = http.HttpGetJson<PrometheusQueryResponse>($"query?query=last_over_time({metricName}{instanceString}{GetQueryTimeRange()})");
+            if (response.status != "success") return null;
+            return response;
+        }
 
-//        public Metrics? GetAllMetricsForNode(RunningContainer node)
-//        {
-//            var response = http.HttpGetJson<PrometheusQueryResponse>($"query?query={GetInstanceStringForNode(node)}{GetQueryTimeRange()}");
-//            if (response.status != "success") return null;
-//            return MapResponseToMetrics(response);
-//        }
+        private PrometheusQueryResponse? GetAll(string metricName)
+        {
+            var response = http.HttpGetJson<PrometheusQueryResponse>($"query?query={metricName}{GetQueryTimeRange()}");
+            if (response.status != "success") return null;
+            return response;
+        }
 
-//        private PrometheusQueryResponse? GetLastOverTime(string metricName, string instanceString)
-//        {
-//            var response = http.HttpGetJson<PrometheusQueryResponse>($"query?query=last_over_time({metricName}{instanceString}{GetQueryTimeRange()})");
-//            if (response.status != "success") return null;
-//            return response;
-//        }
+        private Metrics MapResponseToMetrics(PrometheusQueryResponse response)
+        {
+            return new Metrics
+            {
+                Sets = response.data.result.Select(r =>
+                {
+                    return new MetricsSet
+                    {
+                        Name = r.metric.__name__,
+                        Instance = r.metric.instance,
+                        Values = MapMultipleValues(r.values)
+                    };
+                }).ToArray()
+            };
+        }
 
-//        private PrometheusQueryResponse? GetAll(string metricName)
-//        {
-//            var response = http.HttpGetJson<PrometheusQueryResponse>($"query?query={metricName}{GetQueryTimeRange()}");
-//            if (response.status != "success") return null;
-//            return response;
-//        }
+        private MetricsSetValue[] MapSingleValue(object[] value)
+        {
+            if (value != null && value.Length > 0)
+            {
+                return new[]
+                {
+                    MapValue(value)
+                };
+            }
+            return Array.Empty<MetricsSetValue>();
+        }
 
-//        private Metrics MapResponseToMetrics(PrometheusQueryResponse response)
-//        {
-//            return new Metrics
-//            {
-//                Sets = response.data.result.Select(r =>
-//                {
-//                    return new MetricsSet
-//                    {
-//                        Name = r.metric.__name__,
-//                        Instance = r.metric.instance,
-//                        Values = MapMultipleValues(r.values)
-//                    };
-//                }).ToArray()
-//            };
-//        }
+        private MetricsSetValue[] MapMultipleValues(object[][] values)
+        {
+            if (values != null && values.Length > 0)
+            {
+                return values.Select(v => MapValue(v)).ToArray();
+            }
+            return Array.Empty<MetricsSetValue>();
+        }
 
-//        private MetricsSetValue[] MapSingleValue(object[] value)
-//        {
-//            if (value != null && value.Length > 0)
-//            {
-//                return new[]
-//                {
-//                    MapValue(value)
-//                };
-//            }
-//            return Array.Empty<MetricsSetValue>();
-//        }
+        private MetricsSetValue MapValue(object[] value)
+        {
+            if (value.Length != 2) throw new InvalidOperationException("Expected value to be [double, string].");
 
-//        private MetricsSetValue[] MapMultipleValues(object[][] values)
-//        {
-//            if (values != null && values.Length > 0)
-//            {
-//                return values.Select(v => MapValue(v)).ToArray();
-//            }
-//            return Array.Empty<MetricsSetValue>();
-//        }
+            return new MetricsSetValue
+            {
+                Timestamp = ToTimestamp(value[0]),
+                Value = ToValue(value[1])
+            };
+        }
 
-//        private MetricsSetValue MapValue(object[] value)
-//        {
-//            if (value.Length != 2) throw new InvalidOperationException("Expected value to be [double, string].");
+        private string GetInstanceNameForNode(IMetricsScrapeTarget target)
+        {
+            return $"{target.Ip}:{target.Port}";
+        }
 
-//            return new MetricsSetValue
-//            {
-//                Timestamp = ToTimestamp(value[0]),
-//                Value = ToValue(value[1])
-//            };
-//        }
+        private string GetInstanceStringForNode(IMetricsScrapeTarget target)
+        {
+            return "{instance=\"" + GetInstanceNameForNode(target) + "\"}";
+        }
 
-//        private string GetInstanceNameForNode(RunningContainer node)
-//        {
-//            var ip = node.Pod.PodInfo.Ip;
-//            var port = node.Recipe.GetPortByTag(CodexContainerRecipe.MetricsPortTag).Number;
-//            return $"{ip}:{port}";
-//        }
+        private string GetQueryTimeRange()
+        {
+            return "[12h]";
+        }
 
-//        private string GetInstanceStringForNode(RunningContainer node)
-//        {
-//            return "{instance=\"" + GetInstanceNameForNode(node) + "\"}";
-//        }
+        private double ToValue(object v)
+        {
+            return Convert.ToDouble(v, CultureInfo.InvariantCulture);
+        }
 
-//        private string GetQueryTimeRange()
-//        {
-//            return "[12h]";
-//        }
+        private DateTime ToTimestamp(object v)
+        {
+            var unixSeconds = ToValue(v);
+            return new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddSeconds(unixSeconds);
+        }
+    }
 
-//        private double ToValue(object v)
-//        {
-//            return Convert.ToDouble(v, CultureInfo.InvariantCulture);
-//        }
+    public class Metrics
+    {
+        public MetricsSet[] Sets { get; set; } = Array.Empty<MetricsSet>();
+    }
 
-//        private DateTime ToTimestamp(object v)
-//        {
-//            var unixSeconds = ToValue(v);
-//            return new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddSeconds(unixSeconds);
-//        }
-//    }
+    public class MetricsSet
+    {
+        public string Name { get; set; } = string.Empty;
+        public string Instance { get; set; } = string.Empty;
+        public MetricsSetValue[] Values { get; set; } = Array.Empty<MetricsSetValue>();
+    }
 
-//    public class Metrics
-//    {
-//        public MetricsSet[] Sets { get; set; } = Array.Empty<MetricsSet>();
-//    }
+    public class MetricsSetValue
+    {
+        public DateTime Timestamp { get; set; }
+        public double Value { get; set; }
+    }
 
-//    public class MetricsSet
-//    {
-//        public string Name { get; set; } = string.Empty;
-//        public string Instance { get; set; } = string.Empty;
-//        public MetricsSetValue[] Values { get; set; } = Array.Empty<MetricsSetValue>();
-//    }
+    public class PrometheusQueryResponse
+    {
+        public string status { get; set; } = string.Empty;
+        public PrometheusQueryResponseData data { get; set; } = new();
+    }
 
-//    public class MetricsSetValue
-//    {
-//        public DateTime Timestamp { get; set; }
-//        public double Value { get; set; }
-//    }
+    public class PrometheusQueryResponseData
+    {
+        public string resultType { get; set; } = string.Empty;
+        public PrometheusQueryResponseDataResultEntry[] result { get; set; } = Array.Empty<PrometheusQueryResponseDataResultEntry>();
+    }
 
-//    public class PrometheusQueryResponse
-//    {
-//        public string status { get; set; } = string.Empty;
-//        public PrometheusQueryResponseData data { get; set; } = new();
-//    }
+    public class PrometheusQueryResponseDataResultEntry
+    {
+        public ResultEntryMetric metric { get; set; } = new();
+        public object[] value { get; set; } = Array.Empty<object>();
+        public object[][] values { get; set; } = Array.Empty<object[]>();
+    }
 
-//    public class PrometheusQueryResponseData
-//    {
-//        public string resultType { get; set; } = string.Empty;
-//        public PrometheusQueryResponseDataResultEntry[] result { get; set; } = Array.Empty<PrometheusQueryResponseDataResultEntry>();
-//    }
+    public class ResultEntryMetric
+    {
+        public string __name__ { get; set; } = string.Empty;
+        public string instance { get; set; } = string.Empty;
+        public string job { get; set; } = string.Empty;
+    }
 
-//    public class PrometheusQueryResponseDataResultEntry
-//    {
-//        public ResultEntryMetric metric { get; set; } = new();
-//        public object[] value { get; set; } = Array.Empty<object>();
-//        public object[][] values { get; set; } = Array.Empty<object[]>();
-//    }
-
-//    public class ResultEntryMetric
-//    {
-//        public string __name__ { get; set; } = string.Empty;
-//        public string instance { get; set; } = string.Empty;
-//        public string job { get; set; } = string.Empty;
-//    }
-
-//    public class PrometheusAllNamesResponse
-//    {
-//        public string status { get; set; } = string.Empty;
-//        public string[] data { get; set; } = Array.Empty<string>();
-//    }
-//}
+    public class PrometheusAllNamesResponse
+    {
+        public string status { get; set; } = string.Empty;
+        public string[] data { get; set; } = Array.Empty<string>();
+    }
+}
