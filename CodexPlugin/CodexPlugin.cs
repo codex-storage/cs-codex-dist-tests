@@ -7,6 +7,7 @@ namespace CodexPlugin
     {
         private readonly CodexStarter codexStarter;
         private readonly IPluginTools tools;
+        private readonly CodexLogLevel defaultLogLevel = CodexLogLevel.Trace;
 
         public CodexPlugin(IPluginTools tools)
         {
@@ -27,7 +28,8 @@ namespace CodexPlugin
 
         public RunningContainers[] StartCodexNodes(int numberOfNodes, Action<ICodexSetup> setup)
         {
-            var codexSetup = new CodexSetup(numberOfNodes, CodexLogLevel.Trace);
+            var codexSetup = new CodexSetup(numberOfNodes);
+            codexSetup.LogLevel = defaultLogLevel;
             setup(codexSetup);
             return codexStarter.BringOnline(codexSetup);
         }

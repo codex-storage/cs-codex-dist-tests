@@ -62,8 +62,7 @@ namespace Core
 
         public IStartupWorkflow CreateWorkflow(string? namespaceOverride = null)
         {
-            if (namespaceOverride != null) throw new Exception("Namespace override is not supported in the DistTest environment. (It would mess up automatic resource cleanup.)");
-            return workflowCreator.CreateWorkflow();
+            return workflowCreator.CreateWorkflow(namespaceOverride);
         }
 
         public IFileManager GetFileManager()

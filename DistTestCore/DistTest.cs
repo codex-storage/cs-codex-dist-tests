@@ -113,59 +113,6 @@ namespace DistTestCore
             Get().GetFileManager().ScopedFiles(action);
         }
 
-        //public IOnlineCodexNode SetupCodexBootstrapNode()
-        //{
-        //    return SetupCodexBootstrapNode(s => { });
-        //}
-
-        //public virtual IOnlineCodexNode SetupCodexBootstrapNode(Action<ICodexSetup> setup)
-        //{
-        //    return SetupCodexNode(s =>
-        //    {
-        //        setup(s);
-        //        s.WithName("Bootstrap");
-        //    });
-        //}
-
-        //public IOnlineCodexNode SetupCodexNode()
-        //{
-        //    return SetupCodexNode(s => { });
-        //}
-
-        //public IOnlineCodexNode SetupCodexNode(Action<ICodexSetup> setup)
-        //{
-        //    return SetupCodexNodes(1, setup)[0];
-        //}
-
-        //public ICodexNodeGroup SetupCodexNodes(int numberOfNodes)
-        //{
-        //    return SetupCodexNodes(numberOfNodes, s => { });
-        //}
-
-        //public virtual ICodexNodeGroup SetupCodexNodes(int numberOfNodes, Action<ICodexSetup> setup)
-        //{
-        //    var codexSetup = CreateCodexSetup(numberOfNodes);
-
-        //    setup(codexSetup);
-
-        //    return BringOnline(codexSetup);
-        //}
-
-        //public ICodexNodeGroup BringOnline(ICodexSetup codexSetup)
-        //{
-        //    return Get().CodexStarter.BringOnline((CodexSetup)codexSetup);
-        //}
-
-        //public IEnumerable<IOnlineCodexNode> GetAllOnlineCodexNodes()
-        //{
-        //    return Get().CodexStarter.RunningGroups.SelectMany(g => g.Nodes);
-        //}
-
-        //public override T GetPlugin<T>()
-        //{
-        //    return Get().GetPlugin<T>();
-        //}
-
         public ILog GetTestLog()
         {
             return Get().Log;
@@ -187,11 +134,6 @@ namespace DistTestCore
         {
             Stopwatch.Measure(Get().Log, name, action);
         }
-
-        //protected CodexSetup CreateCodexSetup(int numberOfNodes)
-        //{
-        //    return new CodexSetup(numberOfNodes, configuration.GetCodexLogLevel());
-        //}
 
         protected TestLifecycle Get()
         {
@@ -292,37 +234,6 @@ namespace DistTestCore
                 }
             }
         }
-
-        //private void DownloadAllLogs(TestLifecycle lifecycle)
-        //{
-        //    OnEachCodexNode(lifecycle, node =>
-        //    {
-        //        lifecycle.DownloadLog(node.CodexAccess.Container);
-        //    });
-        //}
-
-        //private void DownloadAllMetrics(TestLifecycle lifecycle)
-        //{
-        //    var metricsDownloader = new MetricsDownloader(lifecycle.Log);
-
-        //    OnEachCodexNode(lifecycle, node =>
-        //    {
-        //        var m = node.Metrics as MetricsAccess;
-        //        if (m != null)
-        //        {
-        //            metricsDownloader.DownloadAllMetricsForNode(node.GetName(), m);
-        //        }
-        //    });
-        //}
-
-        //private void OnEachCodexNode(TestLifecycle lifecycle, Action<OnlineCodexNode> action)
-        //{
-        //    var allNodes = lifecycle.CodexStarter.RunningGroups.SelectMany(g => g.Nodes);
-        //    foreach (var node in allNodes)
-        //    {
-        //        action(node);
-        //    }
-        //}
 
         private string GetCurrentTestName()
         {

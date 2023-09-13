@@ -5,6 +5,7 @@ namespace CodexPlugin
 {
     public interface ICodexSetup
     {
+        ICodexSetup WithLogLevel(CodexLogLevel logLevel);
         ICodexSetup WithName(string name);
         ICodexSetup At(Location location);
         ICodexSetup WithBootstrapNode(IOnlineCodexNode node);
@@ -22,10 +23,15 @@ namespace CodexPlugin
     {
         public int NumberOfNodes { get; }
 
-        public CodexSetup(int numberOfNodes, CodexLogLevel logLevel)
-            : base(logLevel)
+        public CodexSetup(int numberOfNodes)
         {
             NumberOfNodes = numberOfNodes;
+        }
+
+        public ICodexSetup WithLogLevel(CodexLogLevel logLevel)
+        {
+            LogLevel = logLevel;
+            return this;
         }
 
         public ICodexSetup WithName(string name)

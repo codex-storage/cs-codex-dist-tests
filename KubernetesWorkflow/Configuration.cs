@@ -14,5 +14,6 @@
         public TimeSpan OperationTimeout { get; }
         public TimeSpan RetryDelay { get; }
         public string KubernetesNamespace { get; }
+        public bool AllowNamespaceOverride { get; set; } = true;
     }
 }

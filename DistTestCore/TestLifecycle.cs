@@ -45,28 +45,11 @@ namespace DistTestCore
             return entryPoint.Tools.GetFileManager();
         }
 
-        //public IDownloadedLog DownloadLog(RunningContainer container, int? tailLines = null)
-        //{
-        //    var subFile = Log.CreateSubfile();
-        //    var description = container.Name;
-        //    var handler = new LogDownloadHandler(container, description, subFile);
-
-        //    Log.Log($"Downloading logs for {description} to file '{subFile.FullFilename}'");
-        //    //CodexStarter.DownloadLog(container, handler, tailLines);
-
-        //    return new DownloadedLog(subFile, description);
-        //}
-
         public string GetTestDuration()
         {
             var testDuration = DateTime.UtcNow - testStart;
             return Time.FormatDuration(testDuration);
         }
-
-        ////public void SetCodexVersion(CodexDebugVersionResponse version)
-        ////{
-        ////    if (CodexVersion == null) CodexVersion = version;
-        ////}
 
         //public ApplicationIds GetApplicationIds()
         //{

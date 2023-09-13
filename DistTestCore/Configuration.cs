@@ -8,8 +8,6 @@ namespace DistTestCore
         private readonly string logPath;
         private readonly bool logDebug;
         private readonly string dataFilesPath;
-        //private readonly CodexLogLevel codexLogLevel;
-        private readonly string k8sNamespacePrefix;
 
         public Configuration()
         {
@@ -17,28 +15,28 @@ namespace DistTestCore
             logPath = GetEnvVarOrDefault("LOGPATH", "CodexTestLogs");
             logDebug = GetEnvVarOrDefault("LOGDEBUG", "false").ToLowerInvariant() == "true";
             dataFilesPath = GetEnvVarOrDefault("DATAFILEPATH", "TestDataFiles");
-            //codexLogLevel = ParseEnum.Parse<CodexLogLevel>(GetEnvVarOrDefault("LOGLEVEL", nameof(CodexLogLevel.Trace)));
-            k8sNamespacePrefix = "ct-";
         }
 
-        public Configuration(string? kubeConfigFile, string logPath, bool logDebug, string dataFilesPath, /*CodexLogLevel codexLogLevel,*/ string k8sNamespacePrefix)
+        public Configuration(string? kubeConfigFile, string logPath, bool logDebug, string dataFilesPath)
         {
             this.kubeConfigFile = kubeConfigFile;
             this.logPath = logPath;
             this.logDebug = logDebug;
             this.dataFilesPath = dataFilesPath;
-            //this.codexLogLevel = codexLogLevel;
-            this.k8sNamespacePrefix = k8sNamespacePrefix;
         }
 
         public KubernetesWorkflow.Configuration GetK8sConfiguration(ITimeSet timeSet, string k8sNamespace)
         {
-            return new KubernetesWorkflow.Configuration(
+            var config = new KubernetesWorkflow.Configuration(
                 kubeConfigFile: kubeConfigFile,
                 operationTimeout: timeSet.K8sOperationTimeout(),
                 retryDelay: timeSet.WaitForK8sServiceDelay(),
                 kubernetesNamespace: k8sNamespace
             );
+
+            config.AllowNamespaceOverride = false;
+
+            return config;
         }
 
         public Logging.LogConfig GetLogConfig()
@@ -50,11 +48,6 @@ namespace DistTestCore
         {
             return dataFilesPath;
         }
-
-        //public CodexLogLevel GetCodexLogLevel()
-        //{
-        //    return codexLogLevel;
-        //}
 
         private static string GetEnvVarOrDefault(string varName, string defaultValue)
         {
@@ -70,6 +63,4 @@ namespace DistTestCore
             return v;
         }
     }
-
-
 }
