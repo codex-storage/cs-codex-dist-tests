@@ -19,7 +19,7 @@ namespace Tests.PeerDiscoveryTests
         [Test]
         public void MetricsDoesNotInterfereWithPeerDiscovery()
         {
-            //AddCodex(2, s => s.EnableMetrics());
+            AddCodex(2, s => s.EnableMetrics());
 
             AssertAllNodesConnected();
         }

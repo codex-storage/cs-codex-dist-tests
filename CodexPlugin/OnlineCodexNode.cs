@@ -1,5 +1,6 @@
 ﻿using Core;
 using FileUtils;
+using KubernetesWorkflow;
 using Logging;
 using MetricsPlugin;
 using NUnit.Framework;
@@ -10,6 +11,7 @@ namespace CodexPlugin
     public interface IOnlineCodexNode
     {
         string GetName();
+        RunningContainer Container { get; }
         CodexDebugResponse GetDebugInfo();
         CodexDebugPeerResponse GetDebugPeer(string peerId);
         ContentId UploadFile(TrackedFile file);
@@ -35,6 +37,7 @@ namespace CodexPlugin
             Version = new CodexDebugVersionResponse();
         }
 
+        public RunningContainer Container { get { return CodexAccess.Container; } }
         public CodexAccess CodexAccess { get; }
         public CodexNodeGroup Group { get; }
         public CodexDebugVersionResponse Version { get; private set; }
