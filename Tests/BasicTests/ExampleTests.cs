@@ -16,7 +16,7 @@ namespace Tests.BasicTests
 
             primary.UploadFile(GenerateTestFile(5.MB()));
 
-            var log = primary.DownloadLog();
+            var log = Ci.DownloadLog(primary);
 
             log.AssertLogContains("Uploaded file");
         }

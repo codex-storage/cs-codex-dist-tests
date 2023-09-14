@@ -160,7 +160,7 @@ namespace Tests.BasicTests
                             var cidTag = cid.Id.Substring(cid.Id.Length - 6);
                             Measure("upload-log-asserts", () =>
                             {
-                                var uploadLog = node.DownloadLog(tailLines: 50000);
+                                var uploadLog = Ci.DownloadLog(node, tailLines: 50000);
 
                                 var storeLines = uploadLog.FindLinesThatContain("Stored data", "topics=\"codex node\"");
                                 uploadLog.DeleteFile();
@@ -181,7 +181,7 @@ namespace Tests.BasicTests
 
                             Measure("download-log-asserts", () =>
                             {
-                                var downloadLog = node.DownloadLog(tailLines: 50000);
+                                var downloadLog = Ci.DownloadLog(node, tailLines: 50000);
 
                                 var sentLines = downloadLog.FindLinesThatContain("Sent bytes", "topics=\"codex restapi\"");
                                 downloadLog.DeleteFile();

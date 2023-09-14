@@ -8,16 +8,14 @@ using Utils;
 
 namespace CodexPlugin
 {
-    public interface IOnlineCodexNode
+    public interface IOnlineCodexNode : IHasContainer
     {
         string GetName();
-        RunningContainer Container { get; }
         CodexDebugResponse GetDebugInfo();
         CodexDebugPeerResponse GetDebugPeer(string peerId);
         ContentId UploadFile(TrackedFile file);
         TrackedFile? DownloadContent(ContentId contentId, string fileLabel = "");
         void ConnectToPeer(IOnlineCodexNode node);
-        IDownloadedLog DownloadLog(int? tailLines = null);
         CodexDebugVersionResponse Version { get; }
         void BringOffline();
         IMetricsScrapeTarget MetricsScrapeTarget { get; }
@@ -107,15 +105,6 @@ namespace CodexPlugin
 
             Assert.That(response, Is.EqualTo(SuccessfullyConnectedMessage), "Unable to connect codex nodes.");
             Log($"Successfully connected to peer {peer.GetName()}.");
-        }
-
-        public IDownloadedLog DownloadLog(int? tailLines = null)
-        {
-            var workflow = tools.CreateWorkflow();
-            var file = tools.GetLog().CreateSubfile();
-            var logHandler = new LogDownloadHandler(CodexAccess.GetName(), file);
-            workflow.DownloadContainerLog(CodexAccess.Container, logHandler);
-            return logHandler.DownloadLog();
         }
 
         public void BringOffline()
