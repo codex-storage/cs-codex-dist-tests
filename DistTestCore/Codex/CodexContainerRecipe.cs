@@ -16,7 +16,7 @@ namespace DistTestCore.Codex
 
         public override string AppName => "codex";
         public override string Image { get; }
-        
+
         public CodexContainerRecipe()
         {
             Image = GetDockerImage();
@@ -75,7 +75,7 @@ namespace DistTestCore.Codex
                 AddPodAnnotation("prometheus.io/port", metricsPort.Number.ToString());
             }
 
-			if (config.SimulateProofFailures != null)
+            if (config.SimulateProofFailures != null)
             {
                 AddEnvVar("CODEX_SIMULATE_PROOF_FAILURES", config.SimulateProofFailures.ToString()!);
             }

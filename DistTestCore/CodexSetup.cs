@@ -24,7 +24,7 @@ namespace DistTestCore
         ICodexSetup EnableMarketplace(TestToken initialBalance);
         ICodexSetup EnableMarketplace(TestToken initialBalance, Ether initialEther);
         ICodexSetup EnableMarketplace(TestToken initialBalance, Ether initialEther, bool isValidator);
-		/// <summary>
+        /// <summary>
         /// Provides an invalid proof every N proofs
         /// </summary>
         ICodexSetup WithSimulateProofFailures(uint failEveryNProofs);
