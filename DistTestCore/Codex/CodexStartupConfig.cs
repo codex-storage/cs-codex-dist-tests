@@ -15,6 +15,7 @@ namespace DistTestCore.Codex
         public string? NameOverride { get; set; }
         public Location Location { get; set; }
         public CodexLogLevel LogLevel { get; set; }
+        public string[]? LogTopics { get; set; }
         public ByteSize? StorageQuota { get; set; }
         public MetricsMode MetricsMode { get; set; }
         public MarketplaceInitialConfig? MarketplaceConfig { get; set; }
