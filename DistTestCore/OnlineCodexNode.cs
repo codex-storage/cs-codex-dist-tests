@@ -17,6 +17,7 @@ namespace DistTestCore
         TestFile? DownloadContent(ContentId contentId, string fileLabel = "");
         void ConnectToPeer(IOnlineCodexNode node);
         IDownloadedLog DownloadLog(int? tailLines = null);
+        IDownloadedLog DownloadGethLog();
         IMetricsAccess Metrics { get; }
         IMarketplaceAccess Marketplace { get; }
         CodexDebugVersionResponse Version { get; }
@@ -106,6 +107,11 @@ namespace DistTestCore
         public IDownloadedLog DownloadLog(int? tailLines = null)
         {
             return lifecycle.DownloadLog(CodexAccess.Container, tailLines);
+        }
+
+        public IDownloadedLog DownloadGethLog()
+        {
+            return lifecycle.DownloadLog(Group.GethContainer);
         }
 
         public ICodexSetup BringOffline()

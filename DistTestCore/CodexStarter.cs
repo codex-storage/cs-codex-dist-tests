@@ -29,7 +29,7 @@ namespace DistTestCore
             
             var codexNodeFactory = new CodexNodeFactory(lifecycle, metricAccessFactory, gethStartResult.MarketplaceAccessFactory);
 
-            var group = CreateCodexGroup(codexSetup, containers, codexNodeFactory);
+            var group = CreateCodexGroup(codexSetup, containers, codexNodeFactory, gethStartResult.CompanionNode.RunningContainer);
             lifecycle.SetCodexVersion(group.Version);
 
             var nl = Environment.NewLine;
@@ -107,9 +107,9 @@ namespace DistTestCore
             return result.ToArray();
         }
 
-        private CodexNodeGroup CreateCodexGroup(CodexSetup codexSetup, RunningContainers[] runningContainers, CodexNodeFactory codexNodeFactory)
+        private CodexNodeGroup CreateCodexGroup(CodexSetup codexSetup, RunningContainers[] runningContainers, CodexNodeFactory codexNodeFactory, RunningContainer gethContainer)
         {
-            var group = new CodexNodeGroup(lifecycle, codexSetup, runningContainers, codexNodeFactory);
+            var group = new CodexNodeGroup(lifecycle, codexSetup, runningContainers, codexNodeFactory, gethContainer);
             RunningGroups.Add(group);
 
             try
