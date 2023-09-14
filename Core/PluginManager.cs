@@ -1,6 +1,6 @@
 ﻿namespace Core
 {
-    public class PluginManager
+    internal class PluginManager
     {
         private readonly List<IProjectPlugin> projectPlugins = new List<IProjectPlugin>();
 
@@ -16,12 +16,12 @@
             }
         }
 
-        public void AnnouncePlugins()
+        internal void AnnouncePlugins()
         {
             foreach (var plugin in projectPlugins) plugin.Announce();
         }
 
-        public PluginMetadata GatherPluginMetadata()
+        internal PluginMetadata GatherPluginMetadata()
         {
             var metadata = new PluginMetadata();
             foreach (var plugin in projectPlugins)
@@ -34,12 +34,12 @@
             return metadata;
         }
 
-        public void DecommissionPlugins()
+        internal void DecommissionPlugins()
         {
             foreach (var plugin in projectPlugins) plugin.Decommission();
         }
 
-        public T GetPlugin<T>() where T : IProjectPlugin
+        internal T GetPlugin<T>() where T : IProjectPlugin
         {
             return (T)projectPlugins.Single(p => p.GetType() == typeof(T));
         }

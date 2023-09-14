@@ -1,6 +1,6 @@
 ﻿namespace Core
 {
-    public interface IPluginMetadata
+    internal interface IPluginMetadata
     {
         Dictionary<string, string> Get();
     }
@@ -10,7 +10,7 @@
         void Add(string key, string value);
     }
 
-    public class PluginMetadata : IPluginMetadata, IAddMetadata
+    internal class PluginMetadata : IPluginMetadata, IAddMetadata
     {
         private readonly Dictionary<string, string> metadata = new Dictionary<string, string>();
 

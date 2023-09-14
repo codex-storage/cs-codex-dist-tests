@@ -3,11 +3,11 @@ using Logging;
 
 namespace Core
 {
-    public class LogDownloadHandler : LogHandler, ILogHandler
+    internal class LogDownloadHandler : LogHandler, ILogHandler
     {
         private readonly LogFile log;
 
-        public LogDownloadHandler(string description, LogFile log)
+        internal LogDownloadHandler(string description, LogFile log)
         {
             this.log = log;
 
@@ -15,7 +15,7 @@ namespace Core
             log.WriteRaw(description);
         }
 
-        public IDownloadedLog DownloadLog()
+        internal IDownloadedLog DownloadLog()
         {
             return new DownloadedLog(log);
         }

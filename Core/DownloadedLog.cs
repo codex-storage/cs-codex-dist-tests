@@ -9,11 +9,11 @@ namespace Core
         void DeleteFile();
     }
 
-    public class DownloadedLog : IDownloadedLog
+    internal class DownloadedLog : IDownloadedLog
     {
         private readonly LogFile logFile;
 
-        public DownloadedLog(LogFile logFile)
+        internal DownloadedLog(LogFile logFile)
         {
             this.logFile = logFile;
         }

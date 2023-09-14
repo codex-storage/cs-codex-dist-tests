@@ -81,22 +81,13 @@ namespace DistTestCore
 
         public void DownloadAllLogs()
         {
-            var workflow = entryPoint.Tools.CreateWorkflow();
             foreach (var rc in runningContainers)
             {
                 foreach (var c in rc.Containers)
                 {
-                    DownloadContainerLog(workflow, c);
+                    CoreInterface.DownloadLog(c);
                 }
             }
-        }
-
-        private void DownloadContainerLog(IStartupWorkflow workflow, RunningContainer c)
-        {
-            var file = Log.CreateSubfile();
-            Log.Log($"Downloading container log for '{c.Name}' to file '{file.FullFilename}'...");
-            var handler = new LogDownloadHandler(c.Name, file);
-            workflow.DownloadContainerLog(c, handler);
         }
     }
 }

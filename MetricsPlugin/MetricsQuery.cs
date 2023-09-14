@@ -6,7 +6,7 @@ namespace MetricsPlugin
 {
     public class MetricsQuery
     {
-        private readonly Http http;
+        private readonly IHttp http;
 
         public MetricsQuery(IPluginTools tools, RunningContainer runningContainer)
         {

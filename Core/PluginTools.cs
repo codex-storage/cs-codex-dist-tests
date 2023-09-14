@@ -21,8 +21,8 @@ namespace Core
 
     public interface IHttpFactoryTool
     {
-        Http CreateHttp(Address address, string baseUrl, Action<HttpClient> onClientCreated, string? logAlias = null);
-        Http CreateHttp(Address address, string baseUrl, string? logAlias = null);
+        IHttp CreateHttp(Address address, string baseUrl, Action<HttpClient> onClientCreated, string? logAlias = null);
+        IHttp CreateHttp(Address address, string baseUrl, string? logAlias = null);
     }
 
     public interface IFileTool
@@ -37,7 +37,7 @@ namespace Core
         private readonly IFileManager fileManager;
         private ILog log;
 
-        public PluginTools(ILog log, WorkflowCreator workflowCreator, string fileManagerRootFolder, ITimeSet timeSet)
+        internal PluginTools(ILog log, WorkflowCreator workflowCreator, string fileManagerRootFolder, ITimeSet timeSet)
         {
             this.log = log;
             this.workflowCreator = workflowCreator;
@@ -50,12 +50,12 @@ namespace Core
             log = new LogPrefixer(log, prefix);
         }
 
-        public Http CreateHttp(Address address, string baseUrl, Action<HttpClient> onClientCreated, string? logAlias = null)
+        public IHttp CreateHttp(Address address, string baseUrl, Action<HttpClient> onClientCreated, string? logAlias = null)
         {
             return new Http(log, timeSet, address, baseUrl, onClientCreated, logAlias);
         }
 
-        public Http CreateHttp(Address address, string baseUrl, string? logAlias = null)
+        public IHttp CreateHttp(Address address, string baseUrl, string? logAlias = null)
         {
             return new Http(log, timeSet, address, baseUrl, logAlias);
         }

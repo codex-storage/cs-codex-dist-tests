@@ -2,11 +2,11 @@
 
 namespace Core
 {
-    public static class PluginFinder
+    internal static class PluginFinder
     {
         private static Type[]? pluginTypes = null;
 
-        public static Type[] GetPluginTypes()
+        internal static Type[] GetPluginTypes()
         {
             if (pluginTypes != null) return pluginTypes;
 

@@ -7,7 +7,19 @@ using Utils;
 
 namespace Core
 {
-    public class Http
+    public interface IHttp
+    {
+        string HttpGetString(string route);
+        T HttpGetJson<T>(string route);
+        TResponse HttpPostJson<TRequest, TResponse>(string route, TRequest body);
+        string HttpPostJson<TRequest>(string route, TRequest body);
+        string HttpPostString(string route, string body);
+        string HttpPostStream(string route, Stream stream);
+        Stream HttpGetStream(string route);
+        T TryJsonDeserialize<T>(string json);
+    }
+
+    internal class Http : IHttp
     {
         private readonly ILog log;
         private readonly ITimeSet timeSet;
@@ -16,12 +28,12 @@ namespace Core
         private readonly Action<HttpClient> onClientCreated;
         private readonly string? logAlias;
 
-        public Http(ILog log, ITimeSet timeSet, Address address, string baseUrl, string? logAlias = null)
+        internal Http(ILog log, ITimeSet timeSet, Address address, string baseUrl, string? logAlias = null)
             : this(log, timeSet, address, baseUrl, DoNothing, logAlias)
         {
         }
 
-        public Http(ILog log, ITimeSet timeSet, Address address, string baseUrl, Action<HttpClient> onClientCreated, string? logAlias = null)
+        internal Http(ILog log, ITimeSet timeSet, Address address, string baseUrl, Action<HttpClient> onClientCreated, string? logAlias = null)
         {
             this.log = log;
             this.timeSet = timeSet;

@@ -25,6 +25,7 @@ namespace Core
         {
             var workflow = entryPoint.Tools.CreateWorkflow();
             var file = entryPoint.Tools.GetLog().CreateSubfile();
+            entryPoint.Tools.GetLog().Log($"Downloading container log for '{container.Name}' to file '{file.FullFilename}'...");
             var logHandler = new LogDownloadHandler(container.Name, file);
             workflow.DownloadContainerLog(container, logHandler, tailLines);
             return logHandler.DownloadLog();
