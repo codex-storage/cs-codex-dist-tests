@@ -28,10 +28,6 @@ namespace DistTestCore
         /// Provides an invalid proof every N proofs
         /// </summary>
         ICodexSetup WithSimulateProofFailures(uint failEveryNProofs);
-        /// <summary>
-        /// Enables the validation module in the node
-        /// </summary>
-        // ICodexSetup WithValidator();
     }
 
     public class CodexSetup : CodexStartupConfig, ICodexSetup
@@ -112,7 +108,7 @@ namespace DistTestCore
 
         public ICodexSetup EnableMarketplace(TestToken initialBalance, Ether initialEther)
         {
-			return EnableMarketplace(initialBalance, initialEther, false);
+            return EnableMarketplace(initialBalance, initialEther, false);
         }
 
         public ICodexSetup EnableMarketplace(TestToken initialBalance, Ether initialEther, bool isValidator)
@@ -126,12 +122,6 @@ namespace DistTestCore
             SimulateProofFailures = failEveryNProofs;
             return this;
         }
-
-        // public ICodexSetup WithValidator()
-        // {
-        //     EnableValidator = true;
-        //     return this;
-        // }
 
         public string Describe()
         {

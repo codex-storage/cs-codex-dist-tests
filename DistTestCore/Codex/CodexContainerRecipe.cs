@@ -79,10 +79,7 @@ namespace DistTestCore.Codex
             {
                 AddEnvVar("CODEX_SIMULATE_PROOF_FAILURES", config.SimulateProofFailures.ToString()!);
             }
-			// if (config.EnableValidator == true)
-            // {
-            //     AddEnvVar("CODEX_VALIDATOR", "true");
-            // }
+
             if (config.MarketplaceConfig != null)
             {
                 var gethConfig = startupConfig.Get<GethStartResult>();
@@ -103,9 +100,6 @@ namespace DistTestCore.Codex
                    AddEnvVar("CODEX_VALIDATOR", "true");
                 }
             }
-			// if (config.MarketplaceConfig != null) {
-            //     AddEnvVar("CODEX_PERSISTENCE", "true");
-            // }
 
             if(!string.IsNullOrEmpty(config.NameOverride)) {
                 AddEnvVar("CODEX_NODENAME", config.NameOverride);
