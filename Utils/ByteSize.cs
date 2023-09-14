@@ -10,6 +10,8 @@
 
         public long SizeInBytes { get; }
 
+        public const double DefaultSecondsPerMB = 10.0;
+
         public long ToMB()
         {
             return SizeInBytes / (1024 * 1024);
@@ -35,6 +37,12 @@
         public override string ToString()
         {
             return Formatter.FormatByteSize(SizeInBytes);
+        }
+
+        public TimeSpan ToTimeSpan(double secsPerMB = DefaultSecondsPerMB)
+        {
+            var filesizeInMb = SizeInBytes / (1024 * 1024);
+            return TimeSpan.FromSeconds(filesizeInMb * secsPerMB);
         }
     }
 
@@ -91,5 +99,6 @@
         {
             return Convert.ToInt64(i).TB();
         }
+
     }
 }
