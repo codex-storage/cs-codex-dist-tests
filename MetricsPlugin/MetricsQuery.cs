@@ -8,13 +8,13 @@ namespace MetricsPlugin
     {
         private readonly Http http;
 
-        public MetricsQuery(IPluginTools tools, RunningContainers runningContainers)
+        public MetricsQuery(IPluginTools tools, RunningContainer runningContainer)
         {
-            RunningContainers = runningContainers;
-            http = tools.CreateHttp(runningContainers.Containers[0].Address, "api/v1");
+            RunningContainer = runningContainer;
+            http = tools.CreateHttp(RunningContainer.Address, "api/v1");
         }
 
-        public RunningContainers RunningContainers { get; }
+        public RunningContainer RunningContainer { get; }
 
         public Metrics? GetMostRecent(string metricName, IMetricsScrapeTarget target)
         {

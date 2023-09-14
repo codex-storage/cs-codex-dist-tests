@@ -31,14 +31,14 @@ namespace MetricsPlugin
         {
         }
 
-        public RunningContainers StartMetricsCollector(IMetricsScrapeTarget[] scrapeTargets)
+        public RunningContainer StartMetricsCollector(IMetricsScrapeTarget[] scrapeTargets)
         {
             return starter.CollectMetricsFor(scrapeTargets);
         }
 
-        public MetricsAccess CreateAccessForTarget(RunningContainers runningContainers, IMetricsScrapeTarget target)
+        public MetricsAccess CreateAccessForTarget(RunningContainer runningContainer, IMetricsScrapeTarget target)
         {
-            return starter.CreateAccessForTarget(runningContainers, target);
+            return starter.CreateAccessForTarget(runningContainer, target);
         }
 
         public LogFile? DownloadAllMetrics(IMetricsAccess metricsAccess, string targetName)

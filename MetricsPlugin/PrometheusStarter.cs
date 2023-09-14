@@ -14,7 +14,7 @@ namespace MetricsPlugin
             this.tools = tools;
         }
 
-        public RunningContainers CollectMetricsFor(IMetricsScrapeTarget[] targets)
+        public RunningContainer CollectMetricsFor(IMetricsScrapeTarget[] targets)
         {
             Log($"Starting metrics server for {targets.Length} targets...");
             var startupConfig = new StartupConfig();
@@ -25,10 +25,10 @@ namespace MetricsPlugin
             if (runningContainers.Containers.Length != 1) throw new InvalidOperationException("Expected only 1 Prometheus container to be created.");
 
             Log("Metrics server started.");
-            return runningContainers;
+            return runningContainers.Containers.Single();
         }
 
-        public MetricsAccess CreateAccessForTarget(RunningContainers metricsContainer, IMetricsScrapeTarget target)
+        public MetricsAccess CreateAccessForTarget(RunningContainer metricsContainer, IMetricsScrapeTarget target)
         {
             var metricsQuery = new MetricsQuery(tools, metricsContainer);
             return new MetricsAccess(metricsQuery, target);

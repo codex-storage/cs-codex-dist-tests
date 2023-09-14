@@ -1,8 +1,10 @@
-﻿using Utils;
+﻿using Core;
+using KubernetesWorkflow;
+using Utils;
 
 namespace MetricsPlugin
 {
-    public interface IMetricsAccess
+    public interface IMetricsAccess : IHasContainer
     {
         string TargetName { get; }
         Metrics? GetAllMetrics();
@@ -23,6 +25,7 @@ namespace MetricsPlugin
         }
 
         public string TargetName { get; }
+        public RunningContainer Container => query.RunningContainer;
 
         public Metrics? GetAllMetrics()
         {

@@ -6,12 +6,12 @@ namespace MetricsPlugin
 {
     public static class CoreInterfaceExtensions
     {
-        public static RunningContainers StartMetricsCollector(this CoreInterface ci, params IMetricsScrapeTarget[] scrapeTargets)
+        public static RunningContainer StartMetricsCollector(this CoreInterface ci, params IMetricsScrapeTarget[] scrapeTargets)
         {
             return Plugin(ci).StartMetricsCollector(scrapeTargets);
         }
 
-        public static IMetricsAccess GetMetricsFor(this CoreInterface ci, RunningContainers metricsContainer, IMetricsScrapeTarget scrapeTarget)
+        public static IMetricsAccess GetMetricsFor(this CoreInterface ci, RunningContainer metricsContainer, IMetricsScrapeTarget scrapeTarget)
         {
             return Plugin(ci).CreateAccessForTarget(metricsContainer, scrapeTarget);
         }
