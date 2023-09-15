@@ -4,13 +4,13 @@ using Utils;
 
 namespace GethPlugin
 {
-    public class ContainerInfoExtractor
+    public class GethContainerInfoExtractor
     {
         private readonly ILog log;
         private readonly IStartupWorkflow workflow;
         private readonly RunningContainer container;
 
-        public ContainerInfoExtractor(ILog log, IStartupWorkflow workflow, RunningContainer container)
+        public GethContainerInfoExtractor(ILog log, IStartupWorkflow workflow, RunningContainer container)
         {
             this.log = log;
             this.workflow = workflow;
@@ -93,7 +93,7 @@ namespace GethPlugin
 
         private static string Retry(Func<string> fetch)
         {
-            return Time.Retry(fetch, nameof(ContainerInfoExtractor));
+            return Time.Retry(fetch, nameof(GethContainerInfoExtractor));
         }
     }
 

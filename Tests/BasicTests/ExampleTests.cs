@@ -1,4 +1,5 @@
-﻿using CodexPlugin;
+﻿using CodexContractsPlugin;
+using CodexPlugin;
 using DistTestCore;
 using GethPlugin;
 using MetricsPlugin;
@@ -48,6 +49,8 @@ namespace Tests.BasicTests
         public void MarketplaceExample()
         {
             var geth = Ci.StartGethNode(s => s.IsMiner().WithName("disttest-geth"));
+
+            var contracts = Ci.DeployCodexContracts(geth);
 
             //var sellerInitialBalance = 234.TestTokens();
             //var buyerInitialBalance = 1000.TestTokens();

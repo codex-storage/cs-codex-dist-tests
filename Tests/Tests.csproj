@@ -13,6 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\CodexContractsPlugin\CodexContractsPlugin.csproj" />
     <ProjectReference Include="..\CodexPlugin\CodexPlugin.csproj" />
     <ProjectReference Include="..\DistTestCore\DistTestCore.csproj" />
     <ProjectReference Include="..\GethPlugin\GethPlugin.csproj" />

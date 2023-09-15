@@ -5,12 +5,12 @@ namespace NethereumWorkflow
 {
     public class NethereumInteractionCreator
     {
-        private readonly BaseLog log;
+        private readonly ILog log;
         private readonly string ip;
         private readonly int port;
         private readonly string privateKey;
 
-        public NethereumInteractionCreator(BaseLog log, string ip, int port, string privateKey)
+        public NethereumInteractionCreator(ILog log, string ip, int port, string privateKey)
         {
             this.log = log;
             this.ip = ip;

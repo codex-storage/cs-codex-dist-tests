@@ -8,6 +8,7 @@ namespace GethPlugin
 
         public const string HttpPortTag = "http_port";
         public const string DiscoveryPortTag = "disc_port";
+        public const string wsPortTag = "ws_port";
         public const string AccountsFilename = "accounts.csv";
 
         public override string AppName => "geth";
@@ -28,10 +29,11 @@ namespace GethPlugin
 
             if (config.IsMiner) AddEnvVar("ENABLE_MINER", "1");
             UnlockAccounts(0, 1);
-            var exposedPort = AddExposedPort(tag: HttpPortTag);
-            var args = $"--http.addr 0.0.0.0 --http.port {exposedPort.Number} --port {discovery.Number} --discovery.port {discovery.Number} {defaultArgs}";
+            var httpPort = AddExposedPort(tag: HttpPortTag);
+            var args = $"--http.addr 0.0.0.0 --http.port {httpPort.Number} --port {discovery.Number} --discovery.port {discovery.Number} {defaultArgs}";
 
             var authRpc = AddInternalPort();
+            var wsPort = AddInternalPort(tag: wsPortTag);
 
             if (config.BootstrapNode != null)
             {
@@ -42,7 +44,7 @@ namespace GethPlugin
                 args += bootstrapArg;
             }
 
-            return args + $" --authrpc.port {authRpc.Number} --ws --ws.addr 0.0.0.0 --ws.port {exposedPort.Number}";
+            return args + $" --authrpc.port {authRpc.Number} --ws --ws.addr 0.0.0.0 --ws.port {wsPort.Number}";
         }
 
         private void UnlockAccounts(int startIndex, int numberOfAccounts)

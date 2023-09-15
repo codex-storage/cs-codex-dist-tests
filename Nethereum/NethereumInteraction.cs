@@ -10,10 +10,10 @@ namespace NethereumWorkflow
 {
     public class NethereumInteraction
     {
-        private readonly BaseLog log;
+        private readonly ILog log;
         private readonly Web3 web3;
 
-        internal NethereumInteraction(BaseLog log, Web3 web3)
+        internal NethereumInteraction(ILog log, Web3 web3)
         {
             this.log = log;
             this.web3 = web3;

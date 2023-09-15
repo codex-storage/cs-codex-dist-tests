@@ -7,16 +7,9 @@ namespace GethPlugin
     {
         private readonly IPluginTools tools;
 
-        //private readonly MarketplaceNetworkCache marketplaceNetworkCache;
-        //private readonly GethCompanionNodeStarter companionNodeStarter;
-
         public GethStarter(IPluginTools tools)
         {
             this.tools = tools;
-            //marketplaceNetworkCache = new MarketplaceNetworkCache(
-            //    new GethBootstrapNodeStarter(lifecycle),
-            //    new CodexContractsStarter(lifecycle));
-            //companionNodeStarter = new GethCompanionNodeStarter(lifecycle);
         }
 
         public IGethNodeInfo StartGeth(GethStartupConfig gethStartupConfig)
@@ -32,12 +25,18 @@ namespace GethPlugin
             if (containers.Containers.Length != 1) throw new InvalidOperationException("Expected 1 Geth bootstrap node to be created. Test infra failure.");
             var container = containers.Containers[0];
 
-            var extractor = new ContainerInfoExtractor(tools.GetLog(), workflow, container);
+            var extractor = new GethContainerInfoExtractor(tools.GetLog(), workflow, container);
             var accounts = extractor.ExtractAccounts();
             var pubKey = extractor.ExtractPubKey();
+            
             var discoveryPort = container.Recipe.GetPortByTag(GethContainerRecipe.DiscoveryPortTag);
             if (discoveryPort == null) throw new Exception("Expected discovery port to be created.");
-            var result = new GethNodeInfo(container, accounts, pubKey, discoveryPort);
+            var httpPort = container.Recipe.GetPortByTag(GethContainerRecipe.HttpPortTag);
+            if (httpPort == null) throw new Exception("Expected http port to be created.");
+            var wsPort = container.Recipe.GetPortByTag(GethContainerRecipe.wsPortTag);
+            if (wsPort == null) throw new Exception("Expected ws port to be created.");
+
+            var result = new GethNodeInfo(container, accounts, pubKey, discoveryPort, httpPort, wsPort);
 
             Log($"Geth bootstrap node started with account '{result.Account.Account}'");
 
