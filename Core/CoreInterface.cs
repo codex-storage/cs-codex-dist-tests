@@ -31,6 +31,11 @@ namespace Core
             return logHandler.DownloadLog();
         }
 
+        public string ExecuteContainerCommand(IHasContainer containerSource, string command, params string[] args)
+        {
+            return ExecuteContainerCommand(containerSource.Container, command, args);
+        }
+
         public string ExecuteContainerCommand(RunningContainer container, string command, params string[] args)
         {
             var workflow = entryPoint.Tools.CreateWorkflow();
