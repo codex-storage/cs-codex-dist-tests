@@ -51,16 +51,12 @@ namespace KubernetesWorkflow
 
         protected Port AddExposedPort(string tag = "")
         {
-            var p = factory.CreatePort(tag);
-            exposedPorts.Add(p);
-            return p;
+            return AddExposedPort(factory.CreatePort(tag));
         }
 
         protected Port AddExposedPort(int number, string tag = "")
         {
-            var p = factory.CreatePort(number, tag);
-            exposedPorts.Add(p);
-            return p;
+            return AddExposedPort(factory.CreatePort(number, tag));
         }
 
         protected Port AddInternalPort(string tag = "")
@@ -111,6 +107,17 @@ namespace KubernetesWorkflow
         protected void Additional(object userData)
         {
             additionals.Add(userData);
+        }
+
+        private Port AddExposedPort(Port port)
+        {
+            if (exposedPorts.Any())
+            {
+                throw new NotImplementedException("Current implementation only support 1 exposed port per container recipe. " +
+                    $"Methods for determining container addresses in {nameof(StartupWorkflow)} currently rely on this constraint.");
+            }
+            exposedPorts.Add(port);
+            return port;
         }
     }
 }

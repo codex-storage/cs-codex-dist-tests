@@ -26,38 +26,23 @@ namespace GethPlugin
         {
             var discovery = AddInternalPort(tag: DiscoveryPortTag);
 
-            if (config.IsBootstrapNode)
-            {
-                return CreateBootstapArgs(discovery);
-            }
-
-            return CreateCompanionArgs(discovery, config);
-        }
-
-        private string CreateBootstapArgs(Port discovery)
-        {
-            AddEnvVar("ENABLE_MINER", "1");
+            if (config.IsMiner) AddEnvVar("ENABLE_MINER", "1");
             UnlockAccounts(0, 1);
             var exposedPort = AddExposedPort(tag: HttpPortTag);
-            return $"--http.port {exposedPort.Number} --port {discovery.Number} --discovery.port {discovery.Number} {defaultArgs}";
-        }
+            var args = $"--http.addr 0.0.0.0 --http.port {exposedPort.Number} --port {discovery.Number} --discovery.port {discovery.Number} {defaultArgs}";
 
-        private string CreateCompanionArgs(Port discovery, GethStartupConfig config)
-        {
-            UnlockAccounts(
-                config.CompanionAccountStartIndex + 1,
-                config.NumberOfCompanionAccounts);
-
-            var port = AddInternalPort();
             var authRpc = AddInternalPort();
-            var httpPort = AddExposedPort(tag: HttpPortTag);
 
-            var bootPubKey = config.BootstrapNode.PubKey;
-            var bootIp = config.BootstrapNode.RunningContainers.Containers[0].Pod.PodInfo.Ip;
-            var bootPort = config.BootstrapNode.DiscoveryPort.Number;
-            var bootstrapArg = $"--bootnodes enode://{bootPubKey}@{bootIp}:{bootPort} --nat=extip:{bootIp}";
+            if (config.BootstrapNode != null)
+            {
+                var bootPubKey = config.BootstrapNode.PublicKey;
+                var bootIp = config.BootstrapNode.IpAddress;
+                var bootPort = config.BootstrapNode.Port;
+                var bootstrapArg = $" --bootnodes enode://{bootPubKey}@{bootIp}:{bootPort} --nat=extip:{bootIp}";
+                args += bootstrapArg;
+            }
 
-            return $"--port {port.Number} --discovery.port {discovery.Number} --authrpc.port {authRpc.Number} --http.addr 0.0.0.0 --http.port {httpPort.Number} --ws --ws.addr 0.0.0.0 --ws.port {httpPort.Number} {bootstrapArg} {defaultArgs}";
+            return args + $" --authrpc.port {authRpc.Number} --ws --ws.addr 0.0.0.0 --ws.port {exposedPort.Number}";
         }
 
         private void UnlockAccounts(int startIndex, int numberOfAccounts)

@@ -6,11 +6,12 @@ namespace GethPlugin
     public class GethPlugin : IProjectPlugin, IHasLogPrefix, IHasMetadata
     {
         private readonly IPluginTools tools;
+        private readonly GethStarter starter;
 
         public GethPlugin(IPluginTools tools)
         {
-            //codexStarter = new CodexStarter(tools);
             this.tools = tools;
+            starter = new GethStarter(tools);
         }
 
         public string LogPrefix => "(Geth) ";
@@ -27,6 +28,13 @@ namespace GethPlugin
 
         public void Decommission()
         {
+        }
+
+        public IGethNodeInfo StartGeth(Action<IGethSetup> setup)
+        {
+            var startupConfig = new GethStartupConfig();
+            setup(startupConfig);
+            return starter.StartGeth(startupConfig);
         }
 
         //public RunningContainers[] StartCodexNodes(int numberOfNodes, Action<ICodexSetup> setup)

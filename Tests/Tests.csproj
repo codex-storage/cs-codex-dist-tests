@@ -15,6 +15,7 @@
   <ItemGroup>
     <ProjectReference Include="..\CodexPlugin\CodexPlugin.csproj" />
     <ProjectReference Include="..\DistTestCore\DistTestCore.csproj" />
+    <ProjectReference Include="..\GethPlugin\GethPlugin.csproj" />
     <ProjectReference Include="..\MetricsPlugin\MetricsPlugin.csproj" />
   </ItemGroup>
 

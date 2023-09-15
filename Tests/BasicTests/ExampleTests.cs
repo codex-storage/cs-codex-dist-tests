@@ -1,5 +1,6 @@
 ﻿using CodexPlugin;
 using DistTestCore;
+using GethPlugin;
 using MetricsPlugin;
 using NUnit.Framework;
 using Utils;
@@ -46,6 +47,8 @@ namespace Tests.BasicTests
         [Test]
         public void MarketplaceExample()
         {
+            var geth = Ci.StartGethNode(s => s.IsMiner().WithName("disttest-geth"));
+
             //var sellerInitialBalance = 234.TestTokens();
             //var buyerInitialBalance = 1000.TestTokens();
             //var fileSize = 10.MB();
