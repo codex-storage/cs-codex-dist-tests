@@ -6,7 +6,7 @@
 
         public void Add(string key, string value)
         {
-            labels.Add(key, Format(value));
+            labels.Add(key, K8sNameUtils.Format(value));
         }
 
         public PodLabels Clone()
@@ -19,19 +19,6 @@
         public void Clear()
         {
             labels.Clear();
-        }
-
-        private static string Format(string s)
-        {
-            var result = s.ToLowerInvariant()
-                .Replace(":", "-")
-                .Replace("/", "-")
-                .Replace("\\", "-")
-                .Replace("[", "-")
-                .Replace("]", "-")
-                .Replace(",", "-");
-
-            return result.Trim('-');
         }
 
         internal Dictionary<string, string> GetLabels()

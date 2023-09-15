@@ -399,7 +399,7 @@ namespace KubernetesWorkflow
         {
             return new V1ObjectMeta
             {
-                Name = "deploy-" + workflowNumberSource.WorkflowNumber,
+                Name = string.Join('-',containerRecipes.Select(r => r.Name)),
                 NamespaceProperty = K8sNamespace,
                 Labels = GetSelector(containerRecipes),
                 Annotations = GetAnnotations(containerRecipes)

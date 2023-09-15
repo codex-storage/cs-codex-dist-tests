@@ -30,6 +30,12 @@ namespace Core
             workflow.DownloadContainerLog(container, logHandler, tailLines);
             return logHandler.DownloadLog();
         }
+
+        public string ExecuteContainerCommand(RunningContainer container, string command, params string[] args)
+        {
+            var workflow = entryPoint.Tools.CreateWorkflow();
+            return workflow.ExecuteCommand(container, command, args);
+        }
     }
 
     public interface IHasContainer

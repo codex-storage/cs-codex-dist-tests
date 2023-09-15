@@ -21,7 +21,7 @@ namespace KubernetesWorkflow
 
             Initialize(config);
 
-            var recipe = new ContainerRecipe(containerNumber, Image, Resources,
+            var recipe = new ContainerRecipe(containerNumber, config.NameOverride, Image, Resources,
                 exposedPorts.ToArray(),
                 internalPorts.ToArray(),
                 envVars.ToArray(),

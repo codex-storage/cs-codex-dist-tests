@@ -2,9 +2,10 @@
 {
     public class ContainerRecipe
     {
-        public ContainerRecipe(int number, string image, ContainerResources resources, Port[] exposedPorts, Port[] internalPorts, EnvVar[] envVars, PodLabels podLabels, PodAnnotations podAnnotations, VolumeMount[] volumes, object[] additionals)
+        public ContainerRecipe(int number, string? nameOverride, string image, ContainerResources resources, Port[] exposedPorts, Port[] internalPorts, EnvVar[] envVars, PodLabels podLabels, PodAnnotations podAnnotations, VolumeMount[] volumes, object[] additionals)
         {
             Number = number;
+            NameOverride = nameOverride;
             Image = image;
             Resources = resources;
             ExposedPorts = exposedPorts;
@@ -14,10 +15,20 @@
             PodAnnotations = podAnnotations;
             Volumes = volumes;
             Additionals = additionals;
+
+            if (NameOverride != null)
+            {
+                Name = $"{K8sNameUtils.Format(NameOverride)}-{Number}";
+            }
+            else
+            {
+                Name = $"ctnr{Number}";
+            }
         }
 
-        public string Name { get { return $"ctnr{Number}"; } }
+        public string Name { get; }
         public int Number { get; }
+        public string? NameOverride { get; }
         public ContainerResources Resources { get; }
         public string Image { get; }
         public Port[] ExposedPorts { get; }
