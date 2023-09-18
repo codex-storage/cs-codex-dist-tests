@@ -1,4 +1,4 @@
-# Distributed Tests automation
+# Tests automation
 
  1. [Description](#description)
  2. [Architecture](#architecture)
@@ -15,7 +15,7 @@
 
  We can [run Tests locally](LOCALSETUP.md) and it works well, but in order to scale that we may need to run Tests in an automatic way using remote Kubernetes cluster.
 
- Initially, we are considering to run dist-tests on [nim-codex](https://github.com/codex-storage/nim-codex) master branch merge, to be able to determine regressions. And we also working on [Continuous Tests](/ContinuousTests) which are called to detect issues on continuous Codex runs.
+ Initially, we are considering to run dist-tests on [nim-codex](https://github.com/codex-storage/nim-codex) master branch merge, to be able to determine regressions. And we also working on [Continuous Tests](Continuous-Tests.md) which are called to detect issues on continuous Codex runs.
 
 
 ## Architecture
@@ -23,12 +23,20 @@
 <img src="Architecture.png" alt="Architecture" width="800"/>
 
 ```
-                                        Logs     --> Kibana
-                                      /                |
-GitHub --> CI --> Kubernetes -->  Job    Prometheus  Elaticsearch
-      \                          /    \  /         \   |
-        ------------------------        Metrics  --> Grafana
+                                        Vector --> Elaticsearch --> Kibana
+                                      / (Logs)         |
+GitHub --> CI --> Kubernetes -->  Job                  |
+      \             /                 \                |
+        -----------                     Prometheus --> Grafana
+                                        (Metrics)
 ```
+ 1. GitHub Actions run a workflow
+ 2. This workflow create a Job in Kubernetes cluster
+ 3. Job run Dist-Tests runner Pod with specified parameters
+ 4. Dists-Tests runner run the tests from inside the Kubernetes and generate the logs
+ 5. Vector ship the logs of the Dists-Tests Pods
+ 6. Prometheus collect the metrics of the Dists-Tests Codex Pods
+ 7. We can see the status of the Dist-Test
 
 
 ### Components
