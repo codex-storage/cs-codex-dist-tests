@@ -20,13 +20,13 @@ namespace CodexPlugin
         public CodexContainerRecipe()
         {
             Image = GetDockerImage();
-
-            //Resources.Requests = new ContainerResourceSet(milliCPUs: 1000, memory: 6.GB());
-            //Resources.Limits = new ContainerResourceSet(milliCPUs: 4000, memory: 12.GB());
         }
 
         protected override void Initialize(StartupConfig startupConfig)
         {
+            SetResourcesRequest(milliCPUs: 1000, memory: 6.GB());
+            SetResourceLimits(milliCPUs: 4000, memory: 12.GB());
+
             var config = startupConfig.Get<CodexStartupConfig>();
 
             AddExposedPortAndVar("CODEX_API_PORT");

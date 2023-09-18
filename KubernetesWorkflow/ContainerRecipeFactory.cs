@@ -12,6 +12,7 @@ namespace KubernetesWorkflow
         private readonly List<VolumeMount> volumeMounts = new List<VolumeMount>();
         private readonly List<object> additionals = new List<object>();
         private RecipeComponentFactory factory = null!;
+        private ContainerResources resources = new ContainerResources();
 
         public ContainerRecipe CreateRecipe(int index, int containerNumber, RecipeComponentFactory factory, StartupConfig config)
         {
@@ -21,7 +22,7 @@ namespace KubernetesWorkflow
 
             Initialize(config);
 
-            var recipe = new ContainerRecipe(containerNumber, config.NameOverride, Image, Resources,
+            var recipe = new ContainerRecipe(containerNumber, config.NameOverride, Image, resources,
                 exposedPorts.ToArray(),
                 internalPorts.ToArray(),
                 envVars.ToArray(),
@@ -38,13 +39,13 @@ namespace KubernetesWorkflow
             volumeMounts.Clear();
             additionals.Clear();
             this.factory = null!;
+            resources = new ContainerResources();
 
             return recipe;
         }
 
         public abstract string AppName { get; }
         public abstract string Image { get; }
-        public ContainerResources Resources { get; } = new ContainerResources();
         protected int ContainerNumber { get; private set; } = 0;
         protected int Index { get; private set; } = 0;
         protected abstract void Initialize(StartupConfig config);
@@ -107,6 +108,26 @@ namespace KubernetesWorkflow
         protected void Additional(object userData)
         {
             additionals.Add(userData);
+        }
+
+        protected void SetResourcesRequest(int milliCPUs, ByteSize memory)
+        {
+            SetResourcesRequest(new ContainerResourceSet(milliCPUs, memory));
+        }
+
+        protected void SetResourceLimits(int milliCPUs, ByteSize memory)
+        {
+            SetResourceLimits(new ContainerResourceSet(milliCPUs, memory));
+        }
+
+        protected void SetResourcesRequest(ContainerResourceSet requests)
+        {
+            resources.Requests = requests;
+        }
+
+        protected void SetResourceLimits(ContainerResourceSet limits)
+        {
+            resources.Limits = limits;
         }
 
         private Port AddExposedPort(Port port)
