@@ -2,6 +2,7 @@
 using Nethereum.ABI.FunctionEncoding.Attributes;
 using Nethereum.Contracts;
 using Nethereum.Hex.HexTypes;
+using Nethereum.RPC.Eth.DTOs;
 using Nethereum.Web3;
 using System.Numerics;
 using Utils;
@@ -17,6 +18,23 @@ namespace NethereumWorkflow
         {
             this.log = log;
             this.web3 = web3;
+        }
+
+        public void SendEth(string toAddress, decimal ethAmount)
+        {
+            var receipt = Time.Wait(web3.Eth.GetEtherTransferService().TransferEtherAndWaitForReceiptAsync(toAddress, ethAmount));
+            if (!receipt.Succeeded()) throw new Exception("Unable to send Eth");
+        }
+
+        public decimal GetEthBalance()
+        {
+            return GetEthBalance(web3.TransactionManager.Account.Address);
+        }
+
+        public decimal GetEthBalance(string address)
+        {
+            var balance = Time.Wait(web3.Eth.GetBalance.SendRequestAsync(address));
+            return Web3.Convert.FromWei(balance.Value);
         }
 
         public string GetTokenAddress(string marketplaceAddress)

@@ -1,19 +1,34 @@
-﻿//using Newtonsoft.Json;
+﻿using KubernetesWorkflow;
 
-//namespace   GethPlugin
-//{
-//    public class GethStartResult
-//    {
-//        public GethStartResult(IMarketplaceAccessFactory marketplaceAccessFactory, MarketplaceNetwork marketplaceNetwork, GethCompanionNodeInfo companionNode)
-//        {
-//            MarketplaceAccessFactory = marketplaceAccessFactory;
-//            MarketplaceNetwork = marketplaceNetwork;
-//            CompanionNode = companionNode;
-//        }
+namespace GethPlugin
+{
+    public interface IGethStartResult
+    {
+        RunningContainer RunningContainer { get; }
+        Port DiscoveryPort { get; }
+        Port HttpPort { get; }
+        Port WsPort { get; }
+        AllGethAccounts AllAccounts { get; }
+        string PubKey { get; }
+    }
 
-//        [JsonIgnore]
-//        public IMarketplaceAccessFactory MarketplaceAccessFactory { get; }
-//        public MarketplaceNetwork MarketplaceNetwork { get; }
-//        public GethCompanionNodeInfo CompanionNode { get; }
-//    }
-//}
+    public class GethStartResult : IGethStartResult
+    {
+        public GethStartResult(RunningContainer runningContainer, Port discoveryPort, Port httpPort, Port wsPort, AllGethAccounts allAccounts, string pubKey)
+        {
+            RunningContainer = runningContainer;
+            DiscoveryPort = discoveryPort;
+            HttpPort = httpPort;
+            WsPort = wsPort;
+            AllAccounts = allAccounts;
+            PubKey = pubKey;
+        }
+
+        public RunningContainer RunningContainer { get; }
+        public Port DiscoveryPort { get; }
+        public Port HttpPort { get; }
+        public Port WsPort { get; }
+        public AllGethAccounts AllAccounts { get; }
+        public string PubKey { get; }
+    }
+}

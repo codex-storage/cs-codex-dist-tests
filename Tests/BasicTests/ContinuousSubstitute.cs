@@ -21,7 +21,7 @@ namespace Tests.BasicTests
                     .WithBlockTTL(TimeSpan.FromMinutes(2))
                     .WithStorageQuota(1.GB()));
 
-            var nodes = group.Cast<OnlineCodexNode>().ToArray();
+            var nodes = group.Cast<CodexNode>().ToArray();
 
             foreach (var node in nodes)
             {
@@ -58,7 +58,7 @@ namespace Tests.BasicTests
                     .WithBlockTTL(TimeSpan.FromMinutes(2))
                     .WithStorageQuota(1.GB()));
 
-            var nodes = group.Cast<OnlineCodexNode>().ToArray();
+            var nodes = group.Cast<CodexNode>().ToArray();
 
             var checkTime = DateTime.UtcNow + TimeSpan.FromMinutes(1);
             var endTime = DateTime.UtcNow + TimeSpan.FromHours(10);
@@ -75,7 +75,7 @@ namespace Tests.BasicTests
             }
         }
 
-        private void CheckRoutingTables(IEnumerable<IOnlineCodexNode> nodes)
+        private void CheckRoutingTables(IEnumerable<ICodexNode> nodes)
         {
             var all = nodes.ToArray();
             var allIds = all.Select(n => n.GetDebugInfo().table.localNode.nodeId).ToArray();
@@ -88,7 +88,7 @@ namespace Tests.BasicTests
             }
         }
 
-        private string AreAllPresent(IOnlineCodexNode n, string[] allIds)
+        private string AreAllPresent(ICodexNode n, string[] allIds)
         {
             var info = n.GetDebugInfo();
             var known = info.table.nodes.Select(n => n.nodeId).ToArray();
@@ -104,7 +104,7 @@ namespace Tests.BasicTests
 
         private ByteSize fileSize = 80.MB();
 
-        private void PerformTest(IOnlineCodexNode primary, IOnlineCodexNode secondary)
+        private void PerformTest(ICodexNode primary, ICodexNode secondary)
         {
             ScopedTestFiles(() =>
             {
@@ -129,7 +129,7 @@ namespace Tests.BasicTests
                     .WithBlockMaintenanceNumber(10000)
                     .WithStorageQuota(2000.MB()));
 
-            var nodes = group.Cast<OnlineCodexNode>().ToArray();
+            var nodes = group.Cast<CodexNode>().ToArray();
 
             var endTime = DateTime.UtcNow + TimeSpan.FromHours(24);
 

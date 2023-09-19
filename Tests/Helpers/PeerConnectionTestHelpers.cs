@@ -13,7 +13,7 @@ namespace DistTestCore.Helpers
             helper = new FullConnectivityHelper(log, this);
         }
 
-        public void AssertFullyConnected(IEnumerable<IOnlineCodexNode> nodes)
+        public void AssertFullyConnected(IEnumerable<ICodexNode> nodes)
         {
             helper.AssertFullyConnected(nodes);
         }

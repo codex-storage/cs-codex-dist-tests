@@ -1,16 +1,13 @@
 ﻿using Core;
-using KubernetesWorkflow;
 
 namespace GethPlugin
 {
     public class GethPlugin : IProjectPlugin, IHasLogPrefix, IHasMetadata
     {
-        private readonly IPluginTools tools;
         private readonly GethStarter starter;
 
         public GethPlugin(IPluginTools tools)
         {
-            this.tools = tools;
             starter = new GethStarter(tools);
         }
 
@@ -30,24 +27,16 @@ namespace GethPlugin
         {
         }
 
-        public IGethNode StartGeth(Action<IGethSetup> setup)
+        public IGethStartResult StartGeth(Action<IGethSetup> setup)
         {
             var startupConfig = new GethStartupConfig();
             setup(startupConfig);
             return starter.StartGeth(startupConfig);
         }
 
-        //public RunningContainers[] StartCodexNodes(int numberOfNodes, Action<ICodexSetup> setup)
-        //{
-        //    var codexSetup = new CodexSetup(numberOfNodes);
-        //    codexSetup.LogLevel = defaultLogLevel;
-        //    setup(codexSetup);
-        //    return codexStarter.BringOnline(codexSetup);
-        //}
-
-        //public ICodexNodeGroup WrapCodexContainers(RunningContainers[] containers)
-        //{
-        //    return codexStarter.WrapCodexContainers(containers);
-        //}
+        public IGethNode WrapGethContainer(IGethStartResult startResult)
+        {
+            return starter.WrapGethContainer(startResult);
+        }
     }
 }

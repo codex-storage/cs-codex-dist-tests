@@ -12,7 +12,7 @@ namespace Tests.BasicTests
     [Ignore("Disabled until a solution is implemented.")]
     public class NetworkIsolationTest : DistTest
     {
-        private IOnlineCodexNode? node = null;
+        private ICodexNode? node = null;
 
         [Test]
         public void SetUpANodeAndWait()

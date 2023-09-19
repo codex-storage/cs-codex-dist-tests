@@ -6,7 +6,8 @@ namespace GethPlugin
     {
         public static IGethNode StartGethNode(this CoreInterface ci, Action<IGethSetup> setup)
         {
-            return Plugin(ci).StartGeth(setup);
+            var p = Plugin(ci);
+            return p.WrapGethContainer(p.StartGeth(setup));
         }
 
         private static GethPlugin Plugin(CoreInterface ci)

@@ -21,7 +21,7 @@ namespace DistTestCore.Helpers
             this.fileManager = fileManager;
         }
 
-        public void AssertFullDownloadInterconnectivity(IEnumerable<IOnlineCodexNode> nodes, ByteSize testFileSize)
+        public void AssertFullDownloadInterconnectivity(IEnumerable<ICodexNode> nodes, ByteSize testFileSize)
         {
             this.testFileSize = testFileSize;
             helper.AssertFullyConnected(nodes);
@@ -62,12 +62,12 @@ namespace DistTestCore.Helpers
             // Should an exception occur during upload, then this try is inconclusive and we try again next loop.
         }
 
-        private TrackedFile? DownloadFile(IOnlineCodexNode node, ContentId contentId, string label)
+        private TrackedFile? DownloadFile(ICodexNode node, ContentId contentId, string label)
         {
             return node.DownloadContent(contentId, label);
         }
 
-        private TrackedFile GenerateTestFile(IOnlineCodexNode uploader, IOnlineCodexNode downloader)
+        private TrackedFile GenerateTestFile(ICodexNode uploader, ICodexNode downloader)
         {
             var up = uploader.GetName().Replace("<", "").Replace(">", "");
             var down = downloader.GetName().Replace("<", "").Replace(">", "");

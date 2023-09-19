@@ -1,13 +1,11 @@
 ﻿using CodexPlugin;
-using DistTestCore;
-using DistTestCore.Helpers;
 using NUnit.Framework;
 
 namespace Tests
 {
     public class AutoBootstrapDistTest : CodexDistTest
     {
-        private readonly List<IOnlineCodexNode> onlineCodexNodes = new List<IOnlineCodexNode>();
+        private readonly List<ICodexNode> onlineCodexNodes = new List<ICodexNode>();
 
         [SetUp]
         public void SetUpBootstrapNode()
@@ -21,6 +19,6 @@ namespace Tests
             if (BootstrapNode != null) setup.WithBootstrapNode(BootstrapNode);
         }
 
-        protected IOnlineCodexNode? BootstrapNode { get; private set; }
+        protected ICodexNode? BootstrapNode { get; private set; }
     }
 }

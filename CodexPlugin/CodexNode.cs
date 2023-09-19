@@ -1,5 +1,6 @@
 ﻿using Core;
 using FileUtils;
+using GethPlugin;
 using KubernetesWorkflow;
 using Logging;
 using MetricsPlugin;
@@ -8,28 +9,29 @@ using Utils;
 
 namespace CodexPlugin
 {
-    public interface IOnlineCodexNode : IHasContainer
+    public interface ICodexNode : IHasContainer, IHasMetricsScrapeTarget, IHasEthAddress
     {
         string GetName();
         CodexDebugResponse GetDebugInfo();
         CodexDebugPeerResponse GetDebugPeer(string peerId);
         ContentId UploadFile(TrackedFile file);
         TrackedFile? DownloadContent(ContentId contentId, string fileLabel = "");
-        void ConnectToPeer(IOnlineCodexNode node);
+        void ConnectToPeer(ICodexNode node);
         CodexDebugVersionResponse Version { get; }
-        void BringOffline();
-        IMetricsScrapeTarget MetricsScrapeTarget { get; }
+        void Stop();
     }
 
-    public class OnlineCodexNode : IOnlineCodexNode
+    public class CodexNode : ICodexNode
     {
         private const string SuccessfullyConnectedMessage = "Successfully connected to peer";
         private const string UploadFailedMessage = "Unable to store block";
         private readonly IPluginTools tools;
+        private readonly IEthAddress? ethAddress;
 
-        public OnlineCodexNode(IPluginTools tools, CodexAccess codexAccess, CodexNodeGroup group)
+        public CodexNode(IPluginTools tools, CodexAccess codexAccess, CodexNodeGroup group, IEthAddress? ethAddress)
         {
             this.tools = tools;
+            this.ethAddress = ethAddress;
             CodexAccess = codexAccess;
             Group = group;
             Version = new CodexDebugVersionResponse();
@@ -46,6 +48,14 @@ namespace CodexPlugin
                 var port = CodexAccess.Container.Recipe.GetPortByTag(CodexContainerRecipe.MetricsPortTag);
                 if (port == null) throw new Exception("Metrics is not available for this Codex node. Please start it with the option '.EnableMetrics()' to enable it.");
                 return new MetricsScrapeTarget(CodexAccess.Container, port);
+            }
+        }
+        public IEthAddress EthAddress 
+        {
+            get
+            {
+                if (ethAddress == null) throw new Exception("Marketplace is not enabled for this Codex node. Please start it with the option '.EnableMarketplace(...)' to enable it.");
+                return ethAddress;
             }
         }
 
@@ -95,9 +105,9 @@ namespace CodexPlugin
             return file;
         }
 
-        public void ConnectToPeer(IOnlineCodexNode node)
+        public void ConnectToPeer(ICodexNode node)
         {
-            var peer = (OnlineCodexNode)node;
+            var peer = (CodexNode)node;
 
             Log($"Connecting to peer {peer.GetName()}...");
             var peerInfo = node.GetDebugInfo();
@@ -107,7 +117,7 @@ namespace CodexPlugin
             Log($"Successfully connected to peer {peer.GetName()}.");
         }
 
-        public void BringOffline()
+        public void Stop()
         {
             if (Group.Count() > 1) throw new InvalidOperationException("Codex-nodes that are part of a group cannot be " +
                 "individually shut down. Use 'BringOffline()' on the group object to stop the group. This method is only " +
@@ -132,7 +142,7 @@ namespace CodexPlugin
             Version = debugInfo.codex;
         }
 
-        private string GetPeerMultiAddress(OnlineCodexNode peer, CodexDebugResponse peerInfo)
+        private string GetPeerMultiAddress(CodexNode peer, CodexDebugResponse peerInfo)
         {
             var multiAddress = peerInfo.addrs.First();
             // Todo: Is there a case where First address in list is not the way?

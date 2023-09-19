@@ -5,10 +5,10 @@ using System.Collections;
 
 namespace CodexPlugin
 {
-    public interface ICodexNodeGroup : IEnumerable<IOnlineCodexNode>, IManyMetricScrapeTargets
+    public interface ICodexNodeGroup : IEnumerable<ICodexNode>, IHasManyMetricScrapeTargets
     {
         void BringOffline();
-        IOnlineCodexNode this[int index] { get; }
+        ICodexNode this[int index] { get; }
     }
 
     public class CodexNodeGroup : ICodexNodeGroup
@@ -23,7 +23,7 @@ namespace CodexPlugin
             Version = new CodexDebugVersionResponse();
         }
 
-        public IOnlineCodexNode this[int index]
+        public ICodexNode this[int index]
         {
             get
             {
@@ -35,18 +35,18 @@ namespace CodexPlugin
         {
             starter.BringOffline(this);
             // Clear everything. Prevent accidental use.
-            Nodes = Array.Empty<OnlineCodexNode>();
+            Nodes = Array.Empty<CodexNode>();
             Containers = null!;
         }
 
         public RunningContainers[] Containers { get; private set; }
-        public OnlineCodexNode[] Nodes { get; private set; }
+        public CodexNode[] Nodes { get; private set; }
         public CodexDebugVersionResponse Version { get; private set; }
         public IMetricsScrapeTarget[] ScrapeTargets => Nodes.Select(n => n.MetricsScrapeTarget).ToArray();
 
-        public IEnumerator<IOnlineCodexNode> GetEnumerator()
+        public IEnumerator<ICodexNode> GetEnumerator()
         {
-            return Nodes.Cast<IOnlineCodexNode>().GetEnumerator();
+            return Nodes.Cast<ICodexNode>().GetEnumerator();
         }
 
         IEnumerator IEnumerable.GetEnumerator()
@@ -74,7 +74,7 @@ namespace CodexPlugin
             Version = first;
         }
 
-        private OnlineCodexNode CreateOnlineCodexNode(RunningContainer c, IPluginTools tools, ICodexNodeFactory factory)
+        private CodexNode CreateOnlineCodexNode(RunningContainer c, IPluginTools tools, ICodexNodeFactory factory)
         {
             var access = new CodexAccess(tools, c);
             return factory.CreateOnlineCodexNode(access, this);

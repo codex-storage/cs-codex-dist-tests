@@ -38,7 +38,7 @@ namespace CodexContractsPlugin
             var marketplaceAddress = extractor.ExtractMarketplaceAddress();
             var abi = extractor.ExtractMarketplaceAbi();
 
-            var interaction = gethNode.StartInteraction(tools.GetLog());
+            var interaction = gethNode.StartInteraction();
             var tokenAddress = interaction.GetTokenAddress(marketplaceAddress);
 
             Log("Extract completed. Marketplace deployed.");

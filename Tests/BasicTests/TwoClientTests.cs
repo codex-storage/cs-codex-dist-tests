@@ -29,12 +29,12 @@ namespace Tests.BasicTests
             PerformTwoClientTest(primary, secondary);
         }
 
-        private void PerformTwoClientTest(IOnlineCodexNode primary, IOnlineCodexNode secondary)
+        private void PerformTwoClientTest(ICodexNode primary, ICodexNode secondary)
         {
             PerformTwoClientTest(primary, secondary, 1.MB());
         }
 
-        private void PerformTwoClientTest(IOnlineCodexNode primary, IOnlineCodexNode secondary, ByteSize size)
+        private void PerformTwoClientTest(ICodexNode primary, ICodexNode secondary, ByteSize size)
         {
             primary.ConnectToPeer(secondary);
 

@@ -1,47 +1,67 @@
-﻿using KubernetesWorkflow;
-using Logging;
+﻿using Logging;
 using NethereumWorkflow;
 
 namespace GethPlugin
 {
     public interface IGethNode
     {
-        RunningContainer RunningContainer { get; }
-        Port DiscoveryPort { get; }
-        Port HttpPort { get; }
-        Port WsPort { get; }
+        IGethStartResult StartResult { get; }
 
-        NethereumInteraction StartInteraction(ILog log);
+        NethereumInteraction StartInteraction();
+        Ether GetEthBalance();
+        Ether GetEthBalance(IHasEthAddress address);
+        Ether GetEthBalance(IEthAddress address);
+        void SendEth(IHasEthAddress account, Ether eth);
+        void SendEth(IEthAddress account, Ether eth);
     }
 
     public class GethNode : IGethNode
     {
-        public GethNode(RunningContainer runningContainer, AllGethAccounts allAccounts, string pubKey, Port discoveryPort, Port httpPort, Port wsPort)
+        private readonly ILog log;
+
+        public GethNode(ILog log, IGethStartResult startResult)
         {
-            RunningContainer = runningContainer;
-            AllAccounts = allAccounts;
-            Account = allAccounts.Accounts[0];
-            PubKey = pubKey;
-            DiscoveryPort = discoveryPort;
-            HttpPort = httpPort;
-            WsPort = wsPort;
+            this.log = log;
+            StartResult = startResult;
+            Account = startResult.AllAccounts.Accounts.First();
         }
 
-        public RunningContainer RunningContainer { get; }
-        public AllGethAccounts AllAccounts { get; }
+        public IGethStartResult StartResult { get; }
         public GethAccount Account { get; }
-        public string PubKey { get; }
-        public Port DiscoveryPort { get; }
-        public Port HttpPort { get; }
-        public Port WsPort { get; }
 
-        public NethereumInteraction StartInteraction(ILog log)
+        public NethereumInteraction StartInteraction()
         {
-            var address = RunningContainer.Address;
+            var address = StartResult.RunningContainer.Address;
             var account = Account;
 
             var creator = new NethereumInteractionCreator(log, address.Host, address.Port, account.PrivateKey);
             return creator.CreateWorkflow();
+        }
+
+        public Ether GetEthBalance()
+        {
+            return StartInteraction().GetEthBalance().Eth();
+        }
+
+        public Ether GetEthBalance(IHasEthAddress owner)
+        {
+            return GetEthBalance(owner.EthAddress);
+        }
+
+        public Ether GetEthBalance(IEthAddress address)
+        {
+            return StartInteraction().GetEthBalance(address.Address).Eth();
+        }
+
+        public void SendEth(IHasEthAddress owner, Ether eth)
+        {
+            SendEth(owner.EthAddress, eth);
+        }
+
+        public void SendEth(IEthAddress account, Ether eth)
+        {
+            var i = StartInteraction();
+            i.SendEth(account.Address, eth.Eth);
         }
     }
 }

@@ -9,7 +9,12 @@ namespace MetricsPlugin
         int Port { get; }
     }
 
-    public interface IManyMetricScrapeTargets
+    public interface IHasMetricsScrapeTarget
+    {
+        IMetricsScrapeTarget MetricsScrapeTarget { get; }
+    }
+
+    public interface IHasManyMetricScrapeTargets
     {
         IMetricsScrapeTarget[] ScrapeTargets { get; }
     }

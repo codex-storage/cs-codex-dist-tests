@@ -34,7 +34,7 @@ namespace Tests.BasicTests
             var primary2 = group2[0];
             var secondary2 = group2[1];
 
-            var metrics = Ci.GetMetricsFor(primary.MetricsScrapeTarget, primary2.MetricsScrapeTarget);
+            var metrics = Ci.GetMetricsFor(primary, primary2);
 
             primary.ConnectToPeer(secondary);
             primary2.ConnectToPeer(secondary2);
@@ -54,9 +54,9 @@ namespace Tests.BasicTests
 
             var node = Ci.SetupCodexNode(s => s.EnableMarketplace(geth, contracts));
 
-            var i = 0;
-
-            //geth.SendEth(node.EthAddress, 10.Eth());
+            var myBalance = geth.GetEthBalance();
+            geth.SendEth(node, 10.Eth());
+            var nodeBalance = geth.GetEthBalance(node);
 
             //contracts.MintTestTokens(geth, node.EthAddress, 100.TestTokens());
 
@@ -64,7 +64,7 @@ namespace Tests.BasicTests
 
             //contracts.GetTestTokenBalance(geth, node.EthAddress);
 
-
+            var i = 0;
 
 
             //var sellerInitialBalance = 234.TestTokens();

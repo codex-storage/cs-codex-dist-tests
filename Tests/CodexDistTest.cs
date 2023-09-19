@@ -6,14 +6,14 @@ namespace Tests
 {
     public class CodexDistTest : DistTest
     {
-        private readonly List<IOnlineCodexNode> onlineCodexNodes = new List<IOnlineCodexNode>();
+        private readonly List<ICodexNode> onlineCodexNodes = new List<ICodexNode>();
 
-        public IOnlineCodexNode AddCodex()
+        public ICodexNode AddCodex()
         {
             return AddCodex(s => { });
         }
 
-        public IOnlineCodexNode AddCodex(Action<ICodexSetup> setup)
+        public ICodexNode AddCodex(Action<ICodexSetup> setup)
         {
             return AddCodex(1, setup)[0];
         }
@@ -44,7 +44,7 @@ namespace Tests
             return new PeerDownloadTestHelpers(GetTestLog(), Get().GetFileManager());
         }
 
-        public IEnumerable<IOnlineCodexNode> GetAllOnlineCodexNodes()
+        public IEnumerable<ICodexNode> GetAllOnlineCodexNodes()
         {
             return onlineCodexNodes;
         }

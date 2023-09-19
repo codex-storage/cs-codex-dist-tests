@@ -21,14 +21,14 @@ namespace Tests.BasicTests
         {
             var primary = Ci.SetupCodexNode();
 
-            primary.BringOffline();
+            primary.Stop();
 
             primary = Ci.SetupCodexNode();
 
             PerformOneClientTest(primary);
         }
 
-        private void PerformOneClientTest(IOnlineCodexNode primary)
+        private void PerformOneClientTest(ICodexNode primary)
         {
             var testFile = GenerateTestFile(1.MB());
 

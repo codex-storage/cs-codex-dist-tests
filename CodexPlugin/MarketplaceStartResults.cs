@@ -1,15 +1,17 @@
-﻿namespace CodexPlugin
+﻿using GethPlugin;
+
+namespace CodexPlugin
 {
     [Serializable]
     public class MarketplaceStartResults
     {
-        public MarketplaceStartResults(string ethAddress, string privateKey)
+        public MarketplaceStartResults(IEthAddress ethAddress, string privateKey)
         {
             EthAddress = ethAddress;
             PrivateKey = privateKey;
         }
 
-        public string EthAddress { get; }
+        public IEthAddress EthAddress { get; }
         public string PrivateKey { get; }
     }
 }

@@ -10,7 +10,7 @@ namespace CodexPlugin
         ICodexSetup WithLogLevel(CodexLogLevel logLevel);
         ICodexSetup WithName(string name);
         ICodexSetup At(Location location);
-        ICodexSetup WithBootstrapNode(IOnlineCodexNode node);
+        ICodexSetup WithBootstrapNode(ICodexNode node);
         ICodexSetup WithStorageQuota(ByteSize storageQuota);
         ICodexSetup WithBlockTTL(TimeSpan duration);
         ICodexSetup WithBlockMaintenanceInterval(TimeSpan duration);
@@ -50,7 +50,7 @@ namespace CodexPlugin
             return this;
         }
 
-        public ICodexSetup WithBootstrapNode(IOnlineCodexNode node)
+        public ICodexSetup WithBootstrapNode(ICodexNode node)
         {
             BootstrapSpr = node.GetDebugInfo().spr;
             return this;

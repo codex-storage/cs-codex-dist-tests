@@ -15,12 +15,12 @@ namespace CodexPlugin
             return Plugin(ci).WrapCodexContainers(containers);
         }
 
-        public static IOnlineCodexNode SetupCodexNode(this CoreInterface ci)
+        public static ICodexNode SetupCodexNode(this CoreInterface ci)
         {
             return ci.SetupCodexNodes(1)[0];
         }
 
-        public static IOnlineCodexNode SetupCodexNode(this CoreInterface ci, Action<ICodexSetup> setup)
+        public static ICodexNode SetupCodexNode(this CoreInterface ci, Action<ICodexSetup> setup)
         {
             return ci.SetupCodexNodes(1, setup)[0];
         }

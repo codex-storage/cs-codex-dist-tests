@@ -1,10 +1,11 @@
 ﻿using Core;
+using GethPlugin;
 
 namespace CodexPlugin
 {
     public interface ICodexNodeFactory
     {
-        OnlineCodexNode CreateOnlineCodexNode(CodexAccess access, CodexNodeGroup group);
+        CodexNode CreateOnlineCodexNode(CodexAccess access, CodexNodeGroup group);
     }
 
     public class CodexNodeFactory : ICodexNodeFactory
@@ -27,11 +28,21 @@ namespace CodexPlugin
         //    this.marketplaceAccessFactory = marketplaceAccessFactory;
         //}
 
-        public OnlineCodexNode CreateOnlineCodexNode(CodexAccess access, CodexNodeGroup group)
+        public CodexNode CreateOnlineCodexNode(CodexAccess access, CodexNodeGroup group)
         {
+            var ethAddress = GetEthAddress(access);
+
             //var metricsAccess = metricsAccessFactory.CreateMetricsAccess(access.Container);
             //var marketplaceAccess = marketplaceAccessFactory.CreateMarketplaceAccess(access);
-            return new OnlineCodexNode(tools, access, group/*, metricsAccess, marketplaceAccess*/);
+            return new CodexNode(tools, access, group, ethAddress);
+        }
+
+        private IEthAddress? GetEthAddress(CodexAccess access)
+        {
+            var mStart = access.Container.Recipe.Additionals.SingleOrDefault(a => a is MarketplaceStartResults) as MarketplaceStartResults;
+            if (mStart == null) return null;
+            return mStart.EthAddress;
+
         }
     }
 }

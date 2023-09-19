@@ -80,8 +80,9 @@ namespace CodexPlugin
             if (config.MarketplaceConfig != null)
             {
                 var mconfig = config.MarketplaceConfig;
-                var ip = mconfig.GethNode.RunningContainer.Pod.PodInfo.Ip;
-                var port = mconfig.GethNode.WsPort.Number;
+                var gethStart = mconfig.GethNode.StartResult;
+                var ip = gethStart.RunningContainer.Pod.PodInfo.Ip;
+                var port = gethStart.WsPort.Number;
                 var marketplaceAddress = mconfig.CodexContracts.MarketplaceAddress;
 
                 AddEnvVar("CODEX_ETH_PROVIDER", $"ws://{ip}:{port}");
