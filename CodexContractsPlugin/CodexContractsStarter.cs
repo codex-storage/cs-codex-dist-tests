@@ -38,12 +38,12 @@ namespace CodexContractsPlugin
             var marketplaceAddress = extractor.ExtractMarketplaceAddress();
             var abi = extractor.ExtractMarketplaceAbi();
 
-            var interaction = gethNode.StartInteraction();
+            var interaction = new ContractInteractions(tools.GetLog(), gethNode);
             var tokenAddress = interaction.GetTokenAddress(marketplaceAddress);
 
             Log("Extract completed. Marketplace deployed.");
 
-            return new CodexContractsAccess(marketplaceAddress, abi, tokenAddress);
+            return new CodexContractsAccess(tools.GetLog(), marketplaceAddress, abi, tokenAddress);
         }
 
         private void Log(string msg)

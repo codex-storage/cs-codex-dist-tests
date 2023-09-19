@@ -1,4 +1,5 @@
 ﻿using Logging;
+using Nethereum.Contracts;
 using NethereumWorkflow;
 
 namespace GethPlugin
@@ -7,12 +8,13 @@ namespace GethPlugin
     {
         IGethStartResult StartResult { get; }
 
-        NethereumInteraction StartInteraction();
         Ether GetEthBalance();
         Ether GetEthBalance(IHasEthAddress address);
         Ether GetEthBalance(IEthAddress address);
         void SendEth(IHasEthAddress account, Ether eth);
         void SendEth(IEthAddress account, Ether eth);
+        TResult Call<TFunction, TResult>(string contractAddress, TFunction function) where TFunction : FunctionMessage, new();
+        void SendTransaction<TFunction>(string contractAddress, TFunction function) where TFunction : FunctionMessage, new();
     }
 
     public class GethNode : IGethNode
@@ -28,15 +30,6 @@ namespace GethPlugin
 
         public IGethStartResult StartResult { get; }
         public GethAccount Account { get; }
-
-        public NethereumInteraction StartInteraction()
-        {
-            var address = StartResult.RunningContainer.Address;
-            var account = Account;
-
-            var creator = new NethereumInteractionCreator(log, address.Host, address.Port, account.PrivateKey);
-            return creator.CreateWorkflow();
-        }
 
         public Ether GetEthBalance()
         {
@@ -60,8 +53,26 @@ namespace GethPlugin
 
         public void SendEth(IEthAddress account, Ether eth)
         {
-            var i = StartInteraction();
-            i.SendEth(account.Address, eth.Eth);
+            StartInteraction().SendEth(account.Address, eth.Eth);
+        }
+
+        public TResult Call<TFunction, TResult>(string contractAddress, TFunction function) where TFunction : FunctionMessage, new()
+        {
+            return StartInteraction().Call<TFunction, TResult>(contractAddress, function);
+        }
+
+        public void SendTransaction<TFunction>(string contractAddress, TFunction function) where TFunction : FunctionMessage, new()
+        {
+            StartInteraction().SendTransaction(contractAddress, function);
+        }
+
+        private NethereumInteraction StartInteraction()
+        {
+            var address = StartResult.RunningContainer.Address;
+            var account = Account;
+
+            var creator = new NethereumInteractionCreator(log, address.Host, address.Port, account.PrivateKey);
+            return creator.CreateWorkflow();
         }
     }
 }

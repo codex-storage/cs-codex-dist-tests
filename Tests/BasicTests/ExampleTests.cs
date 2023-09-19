@@ -58,14 +58,8 @@ namespace Tests.BasicTests
             geth.SendEth(node, 10.Eth());
             var nodeBalance = geth.GetEthBalance(node);
 
-            //contracts.MintTestTokens(geth, node.EthAddress, 100.TestTokens());
-
-            //geth.GetEthBalance(node.EthAddress);
-
-            //contracts.GetTestTokenBalance(geth, node.EthAddress);
-
-            var i = 0;
-
+            contracts.MintTestTokens(geth, node.EthAddress, 100.TestTokens());
+            contracts.GetTestTokenBalance(geth, node.EthAddress);
 
             //var sellerInitialBalance = 234.TestTokens();
             //var buyerInitialBalance = 1000.TestTokens();
