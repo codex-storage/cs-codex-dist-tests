@@ -15,7 +15,7 @@ namespace CodexContractsPlugin
             this.tools = tools;
         }
 
-        public IMarketplaceInfo Start(IGethNodeInfo gethNode)
+        public ICodexContracts Start(IGethNode gethNode)
         {
             Log("Deploying Codex Marketplace...");
 
@@ -43,7 +43,7 @@ namespace CodexContractsPlugin
 
             Log("Extract completed. Marketplace deployed.");
 
-            return new MarketplaceInfo(marketplaceAddress, abi, tokenAddress);
+            return new CodexContractsAccess(marketplaceAddress, abi, tokenAddress);
         }
 
         private void Log(string msg)
@@ -56,7 +56,7 @@ namespace CodexContractsPlugin
             Time.WaitUntil(predicate, TimeSpan.FromMinutes(3), TimeSpan.FromSeconds(2));
         }
 
-        private StartupConfig CreateStartupConfig(IGethNodeInfo gethNode)
+        private StartupConfig CreateStartupConfig(IGethNode gethNode)
         {
             var startupConfig = new StartupConfig();
             var contractsConfig = new CodexContractsContainerConfig(gethNode);

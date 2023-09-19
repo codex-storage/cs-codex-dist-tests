@@ -5,6 +5,8 @@ namespace CodexPlugin
 {
     public class CodexContainerRecipe : ContainerRecipeFactory
     {
+        private readonly MarketplaceStarter marketplaceStarter = new MarketplaceStarter();
+
         private const string DefaultDockerImage = "codexstorage/nim-codex:latest-dist-tests";
 
         public const string MetricsPortTag = "metrics_port";
@@ -75,26 +77,28 @@ namespace CodexPlugin
                 AddPodAnnotation("prometheus.io/port", metricsPort.Number.ToString());
             }
 
-            //if (config.MarketplaceConfig != null)
-            //{
-            //    var gethConfig = startupConfig.Get<GethStartResult>();
-            //    var companionNode = gethConfig.CompanionNode;
-            //    var companionNodeAccount = companionNode.Accounts[GetAccountIndex(config.MarketplaceConfig)];
-            //    Additional(companionNodeAccount);
+            if (config.MarketplaceConfig != null)
+            {
+                var mconfig = config.MarketplaceConfig;
+                var ip = mconfig.GethNode.RunningContainer.Pod.PodInfo.Ip;
+                var port = mconfig.GethNode.WsPort.Number;
+                var marketplaceAddress = mconfig.CodexContracts.MarketplaceAddress;
 
-            //    var ip = companionNode.RunningContainer.Pod.PodInfo.Ip;
-            //    var port = companionNode.RunningContainer.Recipe.GetPortByTag(GethContainerRecipe.HttpPortTag).Number;
+                AddEnvVar("CODEX_ETH_PROVIDER", $"ws://{ip}:{port}");
+                AddEnvVar("CODEX_MARKETPLACE_ADDRESS", marketplaceAddress);
+                AddEnvVar("CODEX_PERSISTENCE", "true");
 
-            //    AddEnvVar("CODEX_ETH_PROVIDER", $"ws://{ip}:{port}");
-            //    AddEnvVar("CODEX_ETH_ACCOUNT", companionNodeAccount.Account);
-            //    AddEnvVar("CODEX_MARKETPLACE_ADDRESS", gethConfig.MarketplaceNetwork.Marketplace.Address);
-            //    AddEnvVar("CODEX_PERSISTENCE", "true");
+                // Custom scripting in the Codex test image will write this variable to a private-key file,
+                // and pass the correct filename to Codex.
+                var mStart = marketplaceStarter.Start();
+                AddEnvVar("PRIV_KEY", mStart.PrivateKey);
+                Additional(mStart);
 
-            //    if (config.MarketplaceConfig.IsValidator)
-            //    {
-            //        AddEnvVar("CODEX_VALIDATOR", "true");
-            //    }
-            //}
+                if (config.MarketplaceConfig.IsValidator)
+                {
+                    AddEnvVar("CODEX_VALIDATOR", "true");
+                }
+            }
 
             AddPodLabel("codexid", Image);
         }

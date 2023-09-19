@@ -52,6 +52,21 @@ namespace Tests.BasicTests
 
             var contracts = Ci.DeployCodexContracts(geth);
 
+            var node = Ci.SetupCodexNode(s => s.EnableMarketplace(geth, contracts));
+
+            var i = 0;
+
+            //geth.SendEth(node.EthAddress, 10.Eth());
+
+            //contracts.MintTestTokens(geth, node.EthAddress, 100.TestTokens());
+
+            //geth.GetEthBalance(node.EthAddress);
+
+            //contracts.GetTestTokenBalance(geth, node.EthAddress);
+
+
+
+
             //var sellerInitialBalance = 234.TestTokens();
             //var buyerInitialBalance = 1000.TestTokens();
             //var fileSize = 10.MB();

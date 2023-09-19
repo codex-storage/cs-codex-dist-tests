@@ -30,7 +30,7 @@ namespace CodexContractsPlugin
         {
         }
 
-        public IMarketplaceInfo DeployContracts(IGethNodeInfo gethNode)
+        public ICodexContracts DeployContracts(IGethNode gethNode)
         {
             return starter.Start(gethNode);
         }

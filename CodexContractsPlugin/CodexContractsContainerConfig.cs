@@ -5,11 +5,11 @@ namespace CodexContractsPlugin
 {
     public class CodexContractsContainerConfig
     {
-        public CodexContractsContainerConfig(IGethNodeInfo gethNode)
+        public CodexContractsContainerConfig(IGethNode gethNode)
         {
             GethNode = gethNode;
         }
 
-        public IGethNodeInfo GethNode { get; }
+        public IGethNode GethNode { get; }
     }
 }

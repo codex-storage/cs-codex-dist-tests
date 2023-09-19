@@ -4,7 +4,7 @@ using NethereumWorkflow;
 
 namespace GethPlugin
 {
-    public interface IGethNodeInfo
+    public interface IGethNode
     {
         RunningContainer RunningContainer { get; }
         Port DiscoveryPort { get; }
@@ -14,9 +14,9 @@ namespace GethPlugin
         NethereumInteraction StartInteraction(ILog log);
     }
 
-    public class GethNodeInfo : IGethNodeInfo
+    public class GethNode : IGethNode
     {
-        public GethNodeInfo(RunningContainer runningContainer, AllGethAccounts allAccounts, string pubKey, Port discoveryPort, Port httpPort, Port wsPort)
+        public GethNode(RunningContainer runningContainer, AllGethAccounts allAccounts, string pubKey, Port discoveryPort, Port httpPort, Port wsPort)
         {
             RunningContainer = runningContainer;
             AllAccounts = allAccounts;

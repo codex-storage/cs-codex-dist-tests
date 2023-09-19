@@ -1,4 +1,6 @@
-﻿using KubernetesWorkflow;
+﻿using CodexContractsPlugin;
+using GethPlugin;
+using KubernetesWorkflow;
 using Utils;
 
 namespace CodexPlugin
@@ -14,6 +16,8 @@ namespace CodexPlugin
         ICodexSetup WithBlockMaintenanceInterval(TimeSpan duration);
         ICodexSetup WithBlockMaintenanceNumber(int numberOfBlocks);
         ICodexSetup EnableMetrics();
+        ICodexSetup EnableMarketplace(IGethNode gethNode, ICodexContracts codexContracts, bool isValidator = false);
+
         //ICodexSetup EnableMarketplace(TestToken initialBalance);
         //ICodexSetup EnableMarketplace(TestToken initialBalance, Ether initialEther);
         //ICodexSetup EnableMarketplace(TestToken initialBalance, Ether initialEther, bool isValidator);
@@ -79,6 +83,12 @@ namespace CodexPlugin
         public ICodexSetup EnableMetrics()
         {
             MetricsEnabled = true;
+            return this;
+        }
+
+        public ICodexSetup EnableMarketplace(IGethNode gethNode, ICodexContracts codexContracts, bool isValidator = false)
+        {
+            MarketplaceConfig = new MarketplaceInitialConfig(gethNode, codexContracts, isValidator);
             return this;
         }
 

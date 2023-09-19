@@ -12,7 +12,7 @@ namespace GethPlugin
             this.tools = tools;
         }
 
-        public IGethNodeInfo StartGeth(GethStartupConfig gethStartupConfig)
+        public IGethNode StartGeth(GethStartupConfig gethStartupConfig)
         {
             Log("Starting Geth bootstrap node...");
 
@@ -36,7 +36,7 @@ namespace GethPlugin
             var wsPort = container.Recipe.GetPortByTag(GethContainerRecipe.wsPortTag);
             if (wsPort == null) throw new Exception("Expected ws port to be created.");
 
-            var result = new GethNodeInfo(container, accounts, pubKey, discoveryPort, httpPort, wsPort);
+            var result = new GethNode(container, accounts, pubKey, discoveryPort, httpPort, wsPort);
 
             Log($"Geth bootstrap node started with account '{result.Account.Account}'");
 

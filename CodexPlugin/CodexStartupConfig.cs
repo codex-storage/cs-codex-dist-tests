@@ -10,7 +10,7 @@ namespace CodexPlugin
         public CodexLogLevel LogLevel { get; set; }
         public ByteSize? StorageQuota { get; set; }
         public bool MetricsEnabled { get; set; }
-        //public MarketplaceInitialConfig? MarketplaceConfig { get; set; }
+        public MarketplaceInitialConfig? MarketplaceConfig { get; set; }
         public string? BootstrapSpr { get; set; }
         public int? BlockTTL { get; set; }
         public TimeSpan? BlockMaintenanceInterval { get; set; }

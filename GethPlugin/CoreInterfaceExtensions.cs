@@ -4,7 +4,7 @@ namespace GethPlugin
 {
     public static class CoreInterfaceExtensions
     {
-        public static IGethNodeInfo StartGethNode(this CoreInterface ci, Action<IGethSetup> setup)
+        public static IGethNode StartGethNode(this CoreInterface ci, Action<IGethSetup> setup)
         {
             return Plugin(ci).StartGeth(setup);
         }

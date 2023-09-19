@@ -11,7 +11,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\CodexContractsPlugin\CodexContractsPlugin.csproj" />
     <ProjectReference Include="..\Core\Core.csproj" />
+    <ProjectReference Include="..\GethPlugin\GethPlugin.csproj" />
     <ProjectReference Include="..\KubernetesWorkflow\KubernetesWorkflow.csproj" />
     <ProjectReference Include="..\MetricsPlugin\MetricsPlugin.csproj" />
     <ProjectReference Include="..\Nethereum\NethereumWorkflow.csproj" />

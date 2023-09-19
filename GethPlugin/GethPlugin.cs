@@ -30,7 +30,7 @@ namespace GethPlugin
         {
         }
 
-        public IGethNodeInfo StartGeth(Action<IGethSetup> setup)
+        public IGethNode StartGeth(Action<IGethSetup> setup)
         {
             var startupConfig = new GethStartupConfig();
             setup(startupConfig);

@@ -5,7 +5,7 @@ namespace CodexContractsPlugin
 {
     public static class CoreInterfaceExtensions
     {
-        public static IMarketplaceInfo DeployCodexContracts(this CoreInterface ci, IGethNodeInfo gethNode)
+        public static ICodexContracts DeployCodexContracts(this CoreInterface ci, IGethNode gethNode)
         {
             return Plugin(ci).DeployContracts(gethNode);
         }
