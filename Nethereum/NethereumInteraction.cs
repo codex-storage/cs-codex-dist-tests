@@ -47,39 +47,28 @@ namespace NethereumWorkflow
             if (!receipt.Succeeded()) throw new Exception("Unable to perform contract transaction.");
         }
 
-        //public bool IsSynced(string marketplaceAddress, string marketplaceAbi)
-        //{
-        //    try
-        //    {
-        //        return IsBlockNumberOK() && IsContractAvailable(marketplaceAddress, marketplaceAbi);
-        //    }
-        //    catch
-        //    {
-        //        return false;
-        //    }
-        //}
+        public decimal? GetSyncedBlockNumber()
+        {
+            log.Debug();
+            var sync = Time.Wait(web3.Eth.Syncing.SendRequestAsync());
+            var number = Time.Wait(web3.Eth.Blocks.GetBlockNumber.SendRequestAsync());
+            var numberOfBlocks = number.ToDecimal();
+            if (sync.IsSyncing) return null;
+            return numberOfBlocks;
+        }
 
-        //private bool IsBlockNumberOK()
-        //{
-        //    log.Debug();
-        //    var sync = Time.Wait(web3.Eth.Syncing.SendRequestAsync());
-        //    var number = Time.Wait(web3.Eth.Blocks.GetBlockNumber.SendRequestAsync());
-        //    var numberOfBlocks = number.ToDecimal();
-        //    return !sync.IsSyncing && numberOfBlocks > 256;
-        //}
-
-        //private bool IsContractAvailable(string marketplaceAddress, string marketplaceAbi)
-        //{
-        //    log.Debug();
-        //    try
-        //    {
-        //        var contract = web3.Eth.GetContract(marketplaceAbi, marketplaceAddress);
-        //        return contract != null;
-        //    }
-        //    catch
-        //    {
-        //        return false;
-        //    }
-        //}
+        public bool IsContractAvailable(string abi, string contractAddress)
+        {
+            log.Debug();
+            try
+            {
+                var contract = web3.Eth.GetContract(abi, contractAddress);
+                return contract != null;
+            }
+            catch
+            {
+                return false;
+            }
+        }
     }
 }

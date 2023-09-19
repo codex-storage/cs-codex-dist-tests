@@ -4,6 +4,7 @@ namespace GethPlugin
 {
     public class GethContainerRecipe : ContainerRecipeFactory
     {
+        public static string DockerImage { get; } = "codexstorage/dist-tests-geth:latest";
         private const string defaultArgs = "--ipcdisable --syncmode full";
 
         public const string HttpPortTag = "http_port";
@@ -12,7 +13,7 @@ namespace GethPlugin
         public const string AccountsFilename = "accounts.csv";
 
         public override string AppName => "geth";
-        public override string Image => "codexstorage/dist-tests-geth:latest";
+        public override string Image => DockerImage;
 
         protected override void Initialize(StartupConfig startupConfig)
         {

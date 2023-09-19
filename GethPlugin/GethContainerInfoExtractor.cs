@@ -36,44 +36,10 @@ namespace GethPlugin
             return pubKey;
         }
 
-        //public string ExtractMarketplaceAddress()
-        //{
-        //    log.Debug();
-        //    var marketplaceAddress = Retry(FetchMarketplaceAddress);
-        //    if (string.IsNullOrEmpty(marketplaceAddress)) throw new InvalidOperationException("Unable to fetch marketplace account from codex-contracts node. Test infra failure.");
-
-        //    return marketplaceAddress;
-        //}
-
-        //public string ExtractMarketplaceAbi()
-        //{
-        //    log.Debug();
-        //    var marketplaceAbi = Retry(FetchMarketplaceAbi);
-        //    if (string.IsNullOrEmpty(marketplaceAbi)) throw new InvalidOperationException("Unable to fetch marketplace artifacts from codex-contracts node. Test infra failure.");
-
-        //    return marketplaceAbi;
-        //}
-
         private string FetchAccountsCsv()
         {
             return workflow.ExecuteCommand(container, "cat", GethContainerRecipe.AccountsFilename);
         }
-
-        //private string FetchMarketplaceAddress()
-        //{
-        //    var json = workflow.ExecuteCommand(container, "cat", CodexContractsContainerRecipe.MarketplaceAddressFilename);
-        //    var marketplace = JsonConvert.DeserializeObject<MarketplaceJson>(json);
-        //    return marketplace!.address;
-        //}
-
-        //private string FetchMarketplaceAbi()
-        //{
-        //    var json = workflow.ExecuteCommand(container, "cat", CodexContractsContainerRecipe.MarketplaceArtifactFilename);
-
-        //    var artifact = JObject.Parse(json);
-        //    var abi = artifact["abi"];
-        //    return abi!.ToString(Formatting.None);
-        //}
 
         private string FetchPubKey()
         {
@@ -139,9 +105,4 @@ namespace GethPlugin
                     length: closeIndex - openIndex);
         }
     }
-
-    //public class MarketplaceJson
-    //{
-    //    public string address { get; set; } = string.Empty;
-    //}
 }

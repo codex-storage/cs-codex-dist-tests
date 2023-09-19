@@ -39,9 +39,9 @@ namespace CodexPlugin
             return codexStarter.BringOnline(codexSetup);
         }
 
-        public ICodexNodeGroup WrapCodexContainers(RunningContainers[] containers)
+        public ICodexNodeGroup WrapCodexContainers(CoreInterface coreInterface, RunningContainers[] containers)
         {
-            return codexStarter.WrapCodexContainers(containers);
+            return codexStarter.WrapCodexContainers(coreInterface, containers);
         }
     }
 }

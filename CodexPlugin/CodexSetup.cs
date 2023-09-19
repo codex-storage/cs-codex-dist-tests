@@ -17,10 +17,6 @@ namespace CodexPlugin
         ICodexSetup WithBlockMaintenanceNumber(int numberOfBlocks);
         ICodexSetup EnableMetrics();
         ICodexSetup EnableMarketplace(IGethNode gethNode, ICodexContracts codexContracts, bool isValidator = false);
-
-        //ICodexSetup EnableMarketplace(TestToken initialBalance);
-        //ICodexSetup EnableMarketplace(TestToken initialBalance, Ether initialEther);
-        //ICodexSetup EnableMarketplace(TestToken initialBalance, Ether initialEther, bool isValidator);
     }
     
     public class CodexSetup : CodexStartupConfig, ICodexSetup
@@ -91,22 +87,6 @@ namespace CodexPlugin
             MarketplaceConfig = new MarketplaceInitialConfig(gethNode, codexContracts, isValidator);
             return this;
         }
-
-        //public ICodexSetup EnableMarketplace(TestToken initialBalance)
-        //{
-        //    return EnableMarketplace(initialBalance, 1000.Eth());
-        //}
-
-        //public ICodexSetup EnableMarketplace(TestToken initialBalance, Ether initialEther)
-        //{
-        //    return EnableMarketplace(initialBalance, initialEther, false);
-        //}
-
-        //public ICodexSetup EnableMarketplace(TestToken initialBalance, Ether initialEther, bool isValidator)
-        //{
-        //    MarketplaceConfig = new MarketplaceInitialConfig(initialEther, initialBalance, isValidator);
-        //    return this;
-        //}
 
         public string Describe()
         {

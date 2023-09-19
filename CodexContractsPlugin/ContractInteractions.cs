@@ -42,6 +42,18 @@ namespace CodexContractsPlugin
             return gethNode.Call<GetTokenBalanceFunction, BigInteger>(tokenAddress, function).ToDecimal();
         }
 
+        public bool IsSynced(string marketplaceAddress, string marketplaceAbi)
+        {
+            try
+            {
+                return IsBlockNumberOK() && IsContractAvailable(marketplaceAddress, marketplaceAbi);
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
         private void MintTokens(string account, decimal amount, string tokenAddress)
         {
             log.Debug($"({tokenAddress}) {amount} --> {account}");
@@ -54,6 +66,17 @@ namespace CodexContractsPlugin
             };
 
             gethNode.SendTransaction(tokenAddress, function);
+        }
+
+        private bool IsBlockNumberOK()
+        {
+            var n = gethNode.GetSyncedBlockNumber();
+            return n != null && n > 256;
+        }
+
+        private bool IsContractAvailable(string marketplaceAddress, string marketplaceAbi)
+        {
+            return gethNode.IsContractAvailable(marketplaceAbi, marketplaceAddress);
         }
     }
 

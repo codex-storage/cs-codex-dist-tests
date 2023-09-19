@@ -12,7 +12,7 @@ namespace CodexPlugin
 
         public static ICodexNodeGroup WrapCodexContainers(this CoreInterface ci, RunningContainers[] containers)
         {
-            return Plugin(ci).WrapCodexContainers(containers);
+            return Plugin(ci).WrapCodexContainers(ci, containers);
         }
 
         public static ICodexNode SetupCodexNode(this CoreInterface ci)

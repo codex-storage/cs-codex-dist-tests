@@ -15,6 +15,8 @@ namespace GethPlugin
         void SendEth(IEthAddress account, Ether eth);
         TResult Call<TFunction, TResult>(string contractAddress, TFunction function) where TFunction : FunctionMessage, new();
         void SendTransaction<TFunction>(string contractAddress, TFunction function) where TFunction : FunctionMessage, new();
+        decimal? GetSyncedBlockNumber();
+        bool IsContractAvailable(string abi, string contractAddress);
     }
 
     public class GethNode : IGethNode
@@ -73,6 +75,16 @@ namespace GethPlugin
 
             var creator = new NethereumInteractionCreator(log, address.Host, address.Port, account.PrivateKey);
             return creator.CreateWorkflow();
+        }
+
+        public decimal? GetSyncedBlockNumber()
+        {
+            return StartInteraction().GetSyncedBlockNumber();
+        }
+
+        public bool IsContractAvailable(string abi, string contractAddress)
+        {
+            return StartInteraction().IsContractAvailable(abi, contractAddress);
         }
     }
 }

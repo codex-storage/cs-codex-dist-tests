@@ -5,22 +5,24 @@ namespace GethPlugin
     public class GethPlugin : IProjectPlugin, IHasLogPrefix, IHasMetadata
     {
         private readonly GethStarter starter;
+        private readonly IPluginTools tools;
 
         public GethPlugin(IPluginTools tools)
         {
             starter = new GethStarter(tools);
+            this.tools = tools;
         }
 
         public string LogPrefix => "(Geth) ";
 
         public void Announce()
         {
-            //tools.GetLog().Log($"Loaded with Codex ID: '{codexStarter.GetCodexId()}'");
+            tools.GetLog().Log($"Loaded Geth plugin.");
         }
 
         public void AddMetadata(IAddMetadata metadata)
         {
-            //metadata.Add("codexid", codexStarter.GetCodexId());
+            metadata.Add("gethid", GethContainerRecipe.DockerImage);
         }
 
         public void Decommission()

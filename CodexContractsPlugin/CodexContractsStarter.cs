@@ -17,7 +17,7 @@ namespace CodexContractsPlugin
 
         public ICodexContracts Start(IGethNode gethNode)
         {
-            Log("Deploying Codex Marketplace...");
+            Log("Deploying Codex SmartContracts...");
 
             var workflow = tools.CreateWorkflow();
             var startupConfig = CreateStartupConfig(gethNode);
@@ -41,7 +41,11 @@ namespace CodexContractsPlugin
             var interaction = new ContractInteractions(tools.GetLog(), gethNode);
             var tokenAddress = interaction.GetTokenAddress(marketplaceAddress);
 
-            Log("Extract completed. Marketplace deployed.");
+            Log("Extract completed. Checking sync...");
+
+            Time.WaitUntil(() => interaction.IsSynced(marketplaceAddress, abi));
+
+            Log("Synced. Codex SmartContracts deployed.");
 
             return new CodexContractsAccess(tools.GetLog(), marketplaceAddress, abi, tokenAddress);
         }

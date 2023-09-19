@@ -18,12 +18,12 @@ namespace CodexContractsPlugin
 
         public void Announce()
         {
-            //tools.GetLog().Log($"Loaded with Codex ID: '{codexStarter.GetCodexId()}'");
+            tools.GetLog().Log($"Loaded Codex-Marketplace SmartContracts");
         }
 
         public void AddMetadata(IAddMetadata metadata)
         {
-            //metadata.Add("codexid", codexStarter.GetCodexId());
+            metadata.Add("codexcontractsid", CodexContractsContainerRecipe.DockerImage);
         }
 
         public void Decommission()
@@ -34,18 +34,5 @@ namespace CodexContractsPlugin
         {
             return starter.Start(gethNode);
         }
-
-        //public RunningContainers[] StartCodexNodes(int numberOfNodes, Action<ICodexSetup> setup)
-        //{
-        //    var codexSetup = new CodexSetup(numberOfNodes);
-        //    codexSetup.LogLevel = defaultLogLevel;
-        //    setup(codexSetup);
-        //    return codexStarter.BringOnline(codexSetup);
-        //}
-
-        //public ICodexNodeGroup WrapCodexContainers(RunningContainers[] containers)
-        //{
-        //    return codexStarter.WrapCodexContainers(containers);
-        //}
     }
 }

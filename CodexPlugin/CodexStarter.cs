@@ -19,18 +19,10 @@ namespace CodexPlugin
         {
             LogSeparator();
             Log($"Starting {codexSetup.Describe()}...");
-            //var gethStartResult = lifecycle.GethStarter.BringOnlineMarketplaceFor(codexSetup);
 
-            var startupConfig = CreateStartupConfig(/*gethStartResult,*/ codexSetup);
+            var startupConfig = CreateStartupConfig(codexSetup);
 
             var containers = StartCodexContainers(startupConfig, codexSetup.NumberOfNodes, codexSetup.Location);
-
-            //var metricAccessFactory = CollectMetrics(codexSetup, containers);
-
-            //var codexNodeFactory = new CodexNodeFactory(lifecycle, metricAccessFactory, gethStartResult.MarketplaceAccessFactory);
-
-            //var group = CreateCodexGroup(codexSetup, containers, codexNodeFactory);
-            //lifecycle.SetCodexVersion(group.Version);
 
             var podInfos = string.Join(", ", containers.Containers().Select(c => $"Container: '{c.Name}' runs at '{c.Pod.PodInfo.K8SNodeName}'={c.Pod.PodInfo.Ip}"));
             Log($"Started {codexSetup.NumberOfNodes} nodes of image '{containers.Containers().First().Recipe.Image}'. ({podInfos})");
@@ -39,13 +31,11 @@ namespace CodexPlugin
             return containers;
         }
 
-        public ICodexNodeGroup WrapCodexContainers(RunningContainers[] containers)
+        public ICodexNodeGroup WrapCodexContainers(CoreInterface coreInterface, RunningContainers[] containers)
         {
-            //var metricAccessFactory = CollectMetrics(codexSetup, containers);
+            var codexNodeFactory = new CodexNodeFactory(pluginTools);
 
-            var codexNodeFactory = new CodexNodeFactory(pluginTools);// (lifecycle, metricAccessFactory, gethStartResult.MarketplaceAccessFactory);
-
-            var group = CreateCodexGroup(containers, codexNodeFactory);
+            var group = CreateCodexGroup(coreInterface, containers, codexNodeFactory);
 
             Log($"Codex version: {group.Version}");
             versionResponse = group.Version;
@@ -71,39 +61,12 @@ namespace CodexPlugin
             return recipe.Image;
         }
 
-        //public void DeleteAllResources()
-        //{
-        //    //var workflow = CreateWorkflow();
-        //    //workflow.DeleteTestResources();
-        //}
-
-        //public void DownloadLog(RunningContainer container, ILogHandler logHandler, int? tailLines)
-        //{
-        //    //var workflow = CreateWorkflow();
-        //    //workflow.DownloadContainerLog(container, logHandler, tailLines);
-        //}
-
-        //private IMetricsAccessFactory CollectMetrics(CodexSetup codexSetup, RunningContainers[] containers)
-        //{
-        //    if (codexSetup.MetricsMode == MetricsMode.None) return new MetricsUnavailableAccessFactory();
-
-        //    var runningContainers = lifecycle.PrometheusStarter.CollectMetricsFor(containers);
-
-        //    if (codexSetup.MetricsMode == MetricsMode.Dashboard)
-        //    {
-        //        lifecycle.GrafanaStarter.StartDashboard(runningContainers.Containers.First(), codexSetup);
-        //    }
-
-        //    return new CodexNodeMetricsAccessFactory(lifecycle, runningContainers);
-        //}
-
-        private StartupConfig CreateStartupConfig(/*GethStartResult gethStartResult, */ CodexSetup codexSetup)
+        private StartupConfig CreateStartupConfig(CodexSetup codexSetup)
         {
             var startupConfig = new StartupConfig();
             startupConfig.NameOverride = codexSetup.NameOverride;
             startupConfig.CreateCrashWatcher = true;
             startupConfig.Add(codexSetup);
-            //startupConfig.Add(gethStartResult);
             return startupConfig;
         }
 
@@ -118,7 +81,7 @@ namespace CodexPlugin
             return result.ToArray();
         }
 
-        private CodexNodeGroup CreateCodexGroup(RunningContainers[] runningContainers, CodexNodeFactory codexNodeFactory)
+        private CodexNodeGroup CreateCodexGroup(CoreInterface coreInterface, RunningContainers[] runningContainers, CodexNodeFactory codexNodeFactory)
         {
             var group = new CodexNodeGroup(this, pluginTools, runningContainers, codexNodeFactory);
 
@@ -128,24 +91,18 @@ namespace CodexPlugin
             }
             catch
             {
-                CodexNodesNotOnline(runningContainers);
+                CodexNodesNotOnline(coreInterface, runningContainers);
                 throw;
             }
 
             return group;
         }
 
-        private void CodexNodesNotOnline(RunningContainers[] runningContainers)
+        private void CodexNodesNotOnline(CoreInterface coreInterface, RunningContainers[] runningContainers)
         {
             Log("Codex nodes failed to start");
-            // todo:
-            //foreach (var container in runningContainers.Containers()) lifecycle.DownloadLog(container);
+            foreach (var container in runningContainers.Containers()) coreInterface.DownloadLog(container);
         }
-
-        //private StartupWorkflow CreateWorkflow()
-        //{
-        //    return lifecycle.WorkflowCreator.CreateWorkflow();
-        //}
 
         private void LogSeparator()
         {
