@@ -7,7 +7,9 @@ namespace CodexContractsPlugin
     {
         string MarketplaceAddress { get; }
 
+        void MintTestTokens(IGethNode gethNode, IHasEthAddress owner, TestToken testTokens);
         void MintTestTokens(IGethNode gethNode, IEthAddress ethAddress, TestToken testTokens);
+        TestToken GetTestTokenBalance(IGethNode gethNode, IHasEthAddress owner);
         TestToken GetTestTokenBalance(IGethNode gethNode, IEthAddress ethAddress);
     }
 
@@ -27,10 +29,20 @@ namespace CodexContractsPlugin
         public string Abi { get; }
         public string TokenAddress { get; }
 
+        public void MintTestTokens(IGethNode gethNode, IHasEthAddress owner, TestToken testTokens)
+        {
+            MintTestTokens(gethNode, owner.EthAddress, testTokens);
+        }
+
         public void MintTestTokens(IGethNode gethNode, IEthAddress ethAddress, TestToken testTokens)
         {
             var interaction = new ContractInteractions(log, gethNode);
             interaction.MintTestTokens(ethAddress, testTokens.Amount, TokenAddress);
+        }
+
+        public TestToken GetTestTokenBalance(IGethNode gethNode, IHasEthAddress owner)
+        {
+            return GetTestTokenBalance(gethNode, owner.EthAddress);
         }
 
         public TestToken GetTestTokenBalance(IGethNode gethNode, IEthAddress ethAddress)

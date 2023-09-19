@@ -1,6 +1,10 @@
-﻿using CodexPlugin;
+﻿using CodexContractsPlugin;
+using CodexPlugin;
 using DistTestCore;
 using DistTestCore.Helpers;
+using GethPlugin;
+using NUnit.Framework.Constraints;
+using Utils;
 
 namespace Tests
 {
@@ -47,6 +51,11 @@ namespace Tests
         public IEnumerable<ICodexNode> GetAllOnlineCodexNodes()
         {
             return onlineCodexNodes;
+        }
+
+        public void AssertBalance(IGethNode gethNode, ICodexContracts contracts, ICodexNode codexNode, Constraint constraint, string msg = "")
+        {
+            AssertHelpers.RetryAssert(constraint, () => contracts.GetTestTokenBalance(gethNode, codexNode), nameof(AssertBalance) + msg);
         }
 
         protected virtual void OnCodexSetup(ICodexSetup setup)
