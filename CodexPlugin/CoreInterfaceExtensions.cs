@@ -28,7 +28,9 @@ namespace CodexPlugin
         public static ICodexNodeGroup SetupCodexNodes(this CoreInterface ci, int number, Action<ICodexSetup> setup)
         {
             var rc = ci.StartCodexNodes(number, setup);
-            return ci.WrapCodexContainers(rc);
+            var result = ci.WrapCodexContainers(rc);
+            Plugin(ci).WireUpMarketplace(result, setup);
+            return result;
         }
 
         public static ICodexNodeGroup SetupCodexNodes(this CoreInterface ci, int number)

@@ -1,5 +1,4 @@
 ﻿using CodexContractsPlugin;
-using CodexPlugin;
 using DistTestCore;
 using GethPlugin;
 using MetricsPlugin;
@@ -57,9 +56,7 @@ namespace Tests.BasicTests
 
             var seller = AddCodex(s => s
                             .WithStorageQuota(11.GB())
-                            .EnableMarketplace(geth, contracts));
-            geth.SendEth(seller, 10.Eth());
-            contracts.MintTestTokens(geth, seller, sellerInitialBalance);
+                            .EnableMarketplace(geth, contracts, initialEth: 10.Eth(), initialTokens: sellerInitialBalance));
             
             AssertBalance(geth, contracts, seller, Is.EqualTo(sellerInitialBalance));
             seller.Marketplace.MakeStorageAvailable(
@@ -72,10 +69,8 @@ namespace Tests.BasicTests
 
             var buyer = AddCodex(s => s
                             .WithBootstrapNode(seller)
-                            .EnableMarketplace(geth, contracts));
-            geth.SendEth(seller, 10.Eth());
-            contracts.MintTestTokens(geth, seller, buyerInitialBalance);
-
+                            .EnableMarketplace(geth, contracts, initialEth: 10.Eth(), initialTokens: buyerInitialBalance));
+            
             AssertBalance(geth, contracts, buyer, Is.EqualTo(buyerInitialBalance));
 
             var contentId = buyer.UploadFile(testFile);

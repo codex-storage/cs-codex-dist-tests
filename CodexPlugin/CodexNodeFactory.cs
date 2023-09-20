@@ -20,7 +20,14 @@ namespace CodexPlugin
         public CodexNode CreateOnlineCodexNode(CodexAccess access, CodexNodeGroup group)
         {
             var ethAddress = GetEthAddress(access);
-            return new CodexNode(tools, access, group, ethAddress);
+            var marketplaceAccess = GetMarketplaceAccess(access, ethAddress);
+            return new CodexNode(tools, access, group, marketplaceAccess, ethAddress);
+        }
+
+        private IMarketplaceAccess GetMarketplaceAccess(CodexAccess codexAccess, IEthAddress? ethAddress)
+        {
+            if (ethAddress == null) return new MarketplaceUnavailable();
+            return new MarketplaceAccess(tools.GetLog(), codexAccess);
         }
 
         private IEthAddress? GetEthAddress(CodexAccess access)

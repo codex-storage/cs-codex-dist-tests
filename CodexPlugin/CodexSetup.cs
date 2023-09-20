@@ -16,7 +16,7 @@ namespace CodexPlugin
         ICodexSetup WithBlockMaintenanceInterval(TimeSpan duration);
         ICodexSetup WithBlockMaintenanceNumber(int numberOfBlocks);
         ICodexSetup EnableMetrics();
-        ICodexSetup EnableMarketplace(IGethNode gethNode, ICodexContracts codexContracts, bool isValidator = false);
+        ICodexSetup EnableMarketplace(IGethNode gethNode, ICodexContracts codexContracts, Ether initialEth, TestToken initialTokens, bool isValidator = false);
     }
     
     public class CodexSetup : CodexStartupConfig, ICodexSetup
@@ -82,9 +82,9 @@ namespace CodexPlugin
             return this;
         }
 
-        public ICodexSetup EnableMarketplace(IGethNode gethNode, ICodexContracts codexContracts, bool isValidator = false)
+        public ICodexSetup EnableMarketplace(IGethNode gethNode, ICodexContracts codexContracts, Ether initialEth, TestToken initialTokens, bool isValidator = false)
         {
-            MarketplaceConfig = new MarketplaceInitialConfig(gethNode, codexContracts, isValidator);
+            MarketplaceConfig = new MarketplaceInitialConfig(gethNode, codexContracts, initialEth, initialTokens, isValidator);
             return this;
         }
 

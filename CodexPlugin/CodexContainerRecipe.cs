@@ -111,12 +111,6 @@ namespace CodexPlugin
             return 8.GB().Multiply(1.2);
         }
 
-        //private int GetAccountIndex(MarketplaceInitialConfig marketplaceConfig)
-        //{
-        //    if (marketplaceConfig.AccountIndexOverride != null) return marketplaceConfig.AccountIndexOverride.Value;
-        //    return Index;
-        //}
-
         private string GetDockerImage()
         {
             var image = Environment.GetEnvironmentVariable("CODEXDOCKERIMAGE");

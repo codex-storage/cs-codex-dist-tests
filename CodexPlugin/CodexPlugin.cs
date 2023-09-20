@@ -33,15 +33,34 @@ namespace CodexPlugin
 
         public RunningContainers[] StartCodexNodes(int numberOfNodes, Action<ICodexSetup> setup)
         {
-            var codexSetup = new CodexSetup(numberOfNodes);
-            codexSetup.LogLevel = defaultLogLevel;
-            setup(codexSetup);
+            var codexSetup = GetSetup(numberOfNodes, setup);
             return codexStarter.BringOnline(codexSetup);
         }
 
         public ICodexNodeGroup WrapCodexContainers(CoreInterface coreInterface, RunningContainers[] containers)
         {
             return codexStarter.WrapCodexContainers(coreInterface, containers);
+        }
+
+        public void WireUpMarketplace(ICodexNodeGroup result, Action<ICodexSetup> setup)
+        {
+            var codexSetup = GetSetup(1, setup);
+            if (codexSetup.MarketplaceConfig == null) return;
+            
+            var mconfig = codexSetup.MarketplaceConfig;
+            foreach (var node in result)
+            {
+                mconfig.GethNode.SendEth(node, mconfig.InitialEth);
+                mconfig.CodexContracts.MintTestTokens(mconfig.GethNode, node, mconfig.InitialTokens);
+            }
+        }
+
+        private CodexSetup GetSetup(int numberOfNodes, Action<ICodexSetup> setup)
+        {
+            var codexSetup = new CodexSetup(numberOfNodes);
+            codexSetup.LogLevel = defaultLogLevel;
+            setup(codexSetup);
+            return codexSetup;
         }
     }
 }

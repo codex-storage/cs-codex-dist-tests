@@ -18,6 +18,7 @@ namespace CodexPlugin
         TrackedFile? DownloadContent(ContentId contentId, string fileLabel = "");
         void ConnectToPeer(ICodexNode node);
         CodexDebugVersionResponse Version { get; }
+        IMarketplaceAccess Marketplace { get; }
         void Stop();
     }
 
@@ -28,18 +29,20 @@ namespace CodexPlugin
         private readonly IPluginTools tools;
         private readonly IEthAddress? ethAddress;
 
-        public CodexNode(IPluginTools tools, CodexAccess codexAccess, CodexNodeGroup group, IEthAddress? ethAddress)
+        public CodexNode(IPluginTools tools, CodexAccess codexAccess, CodexNodeGroup group, IMarketplaceAccess marketplaceAccess, IEthAddress? ethAddress)
         {
             this.tools = tools;
             this.ethAddress = ethAddress;
             CodexAccess = codexAccess;
             Group = group;
+            Marketplace = marketplaceAccess;
             Version = new CodexDebugVersionResponse();
         }
 
         public RunningContainer Container { get { return CodexAccess.Container; } }
         public CodexAccess CodexAccess { get; }
         public CodexNodeGroup Group { get; }
+        public IMarketplaceAccess Marketplace { get; }
         public CodexDebugVersionResponse Version { get; private set; }
         public IMetricsScrapeTarget MetricsScrapeTarget
         {
