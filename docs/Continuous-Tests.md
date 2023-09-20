@@ -68,7 +68,7 @@
     kubectl apply -f tests-runner.yaml
     ```
 
- 2. Copy kubeconfig to the runner
+ 2. Copy kubeconfig to the runner Pod using the name you set in the previous step
     ```shell
     kubectl cp ~/.kube/codex-dist-tests.yaml tests-runner:/opt/kubeconfig.yaml
     ```
@@ -88,7 +88,7 @@
     apt install -y tmux
     ```
 
- 5. Clone c-tests repository
+ 5. Clone Continuous Tests repository
     ```shell
     tmux
 
@@ -116,4 +116,4 @@
 
 ## Analyze logs
 
- We should check the logs in the `/opt/cs-codex-dist-tests/ContinuousTests/logs/` folder
+ We should check the logs in the `/opt/cs-codex-dist-tests/ContinuousTests/logs` folder
