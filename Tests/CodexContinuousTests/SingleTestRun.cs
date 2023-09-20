@@ -1,33 +1,34 @@
-﻿using DistTestCore.Codex;
-using DistTestCore;
-using Logging;
+﻿using Logging;
 using Utils;
 using KubernetesWorkflow;
 using NUnit.Framework.Internal;
 using System.Reflection;
 using static Program;
 using FileUtils;
+using CodexPlugin;
+using DistTestCore.Logs;
+using Core;
 
 namespace ContinuousTests
 {
     public class SingleTestRun
     {
-        private readonly CodexAccessFactory codexNodeFactory = new CodexAccessFactory();
         private readonly List<Exception> exceptions = new List<Exception>();
+        private readonly EntryPoint entryPoint;
         private readonly TaskFactory taskFactory;
         private readonly Configuration config;
         private readonly BaseLog overviewLog;
         private readonly TestHandle handle;
         private readonly CancellationToken cancelToken;
-        private readonly CodexAccess[] nodes;
-        private readonly FileManager fileManager;
+        private readonly ICodexNode[] nodes;
         private readonly FixtureLog fixtureLog;
         private readonly string testName;
         private readonly string dataFolder;
         private static int failureCount = 0;
 
-        public SingleTestRun(TaskFactory taskFactory, Configuration config, BaseLog overviewLog, TestHandle handle, StartupChecker startupChecker, CancellationToken cancelToken)
+        public SingleTestRun(EntryPoint entryPoint, TaskFactory taskFactory, Configuration config, BaseLog overviewLog, TestHandle handle, StartupChecker startupChecker, CancellationToken cancelToken)
         {
+            this.entryPoint = entryPoint;
             this.taskFactory = taskFactory;
             this.config = config;
             this.overviewLog = overviewLog;
@@ -39,7 +40,6 @@ namespace ContinuousTests
 
             nodes = CreateRandomNodes();
             dataFolder = config.DataPath + "-" + Guid.NewGuid();
-            fileManager = new FileManager(fixtureLog, CreateFileManagerConfiguration().GetFileManagerFolder());
         }
 
         public void Run(EventWaitHandle runFinishedHandle)
@@ -49,7 +49,7 @@ namespace ContinuousTests
                 try
                 {
                     RunTest();
-                    fileManager.DeleteAllTestFiles();
+                    entryPoint.Tools.GetFileManager().DeleteAllFiles();
                     Directory.Delete(dataFolder, true);
                     runFinishedHandle.Set();
                 }
@@ -142,14 +142,14 @@ namespace ContinuousTests
 
         private void DownloadClusterLogs()
         {
-            var k8sFactory = new K8sFactory();
+            var entryPointFactory = new EntryPointFactory();
             var log = new NullLog();
             log.FullFilename = Path.Combine(config.LogPath, "NODE");
-            var lifecycle = k8sFactory.CreateTestLifecycle(config.KubeConfigFile, config.LogPath, "dataPath", config.CodexDeployment.Metadata.KubeNamespace, new DefaultTimeSet(), log);
+            var entryPoint = entryPointFactory.CreateEntryPoint(config.KubeConfigFile, config.DataPath, config.CodexDeployment.Metadata.KubeNamespace, log);
 
             foreach (var container in config.CodexDeployment.CodexContainers)
             {
-                lifecycle.DownloadLog(container);
+                entryPoint.CreateInterface().DownloadLog(container);
             }
         }
 
@@ -197,7 +197,7 @@ namespace ContinuousTests
         private void InitializeTest(string name)
         {
             Log($" > Running TestMoment '{name}'");
-            handle.Test.Initialize(nodes, fixtureLog, fileManager, config, cancelToken);
+            handle.Test.Initialize(nodes, fixtureLog, entryPoint.Tools.GetFileManager(), config, cancelToken);
         }
 
         private void DecommissionTest()
@@ -223,11 +223,11 @@ namespace ContinuousTests
             return $"({string.Join(",", nodes.Select(n => n.Container.Name))})";
         }
 
-        private CodexAccess[] CreateRandomNodes()
+        private ICodexNode[] CreateRandomNodes()
         {
             var containers = SelectRandomContainers();
             fixtureLog.Log("Selected nodes: " + string.Join(",", containers.Select(c => c.Name)));
-            return codexNodeFactory.Create(config, containers, fixtureLog, handle.Test.TimeSet);
+            return entryPoint.CreateInterface().WrapCodexContainers(containers).ToArray();
         }
 
         private RunningContainer[] SelectRandomContainers()
@@ -242,12 +242,6 @@ namespace ContinuousTests
                 result[i] = containers.PickOneRandom();
             }
             return result;
-        }
-
-        private DistTestCore.Configuration CreateFileManagerConfiguration()
-        {
-            return new DistTestCore.Configuration(null, string.Empty, false, dataFolder,
-                CodexLogLevel.Error, string.Empty);
         }
     }
 }

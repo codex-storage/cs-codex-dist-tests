@@ -1,4 +1,4 @@
-﻿using DistTestCore;
+﻿using CodexPlugin;
 using FileUtils;
 using NUnit.Framework;
 using Utils;
@@ -12,21 +12,21 @@ namespace ContinuousTests.Tests
         public override TestFailMode TestFailMode => TestFailMode.StopAfterFirstFailure;
 
         private ContentId? cid;
-        private TestFile file = null!;
+        private TrackedFile file = null!;
 
         [TestMoment(t: Zero)]
         public void UploadTestFile()
         {
-            file = FileManager.GenerateTestFile(80.MB());
+            file = FileManager.GenerateFile(80.MB());
 
-            cid = UploadFile(Nodes[0], file);
+            cid = Nodes[0].UploadFile(file);
             Assert.That(cid, Is.Not.Null);
         }
 
         [TestMoment(t: 10)]
         public void DownloadTestFile()
         {
-            var dl = DownloadFile(Nodes[1], cid!);
+            var dl = Nodes[1].DownloadContent(cid!);
 
             file.AssertIsEqual(dl);
         }

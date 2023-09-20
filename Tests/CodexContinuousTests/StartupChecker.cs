@@ -1,5 +1,6 @@
-﻿using DistTestCore.Codex;
-using DistTestCore;
+﻿using CodexPlugin;
+using Core;
+using DistTestCore.Logs;
 using Logging;
 
 namespace ContinuousTests
@@ -7,12 +8,13 @@ namespace ContinuousTests
     public class StartupChecker
     {
         private readonly TestFactory testFactory = new TestFactory();
-        private readonly CodexAccessFactory codexNodeFactory = new CodexAccessFactory();
+        private readonly EntryPoint entryPoint;
         private readonly Configuration config;
         private readonly CancellationToken cancelToken;
 
-        public StartupChecker(Configuration config, CancellationToken cancelToken)
+        public StartupChecker(EntryPoint entryPoint, Configuration config, CancellationToken cancelToken)
         {
+            this.entryPoint = entryPoint;
             this.config = config;
             this.cancelToken = cancelToken;
             LogReplacements = new List<BaseLogStringReplacement>();
@@ -61,13 +63,13 @@ namespace ContinuousTests
 
         private void CheckCodexNodes(BaseLog log, Configuration config)
         {
-            var nodes = codexNodeFactory.Create(config, config.CodexDeployment.CodexContainers, log, new DefaultTimeSet());
+            var nodes = entryPoint.CreateInterface().WrapCodexContainers(config.CodexDeployment.CodexContainers);
             var pass = true;
             foreach (var n in nodes)
             {
                 cancelToken.ThrowIfCancellationRequested();
 
-                log.Log($"Checking {n.Container.Name} @ '{n.Address.Host}:{n.Address.Port}'...");
+                log.Log($"Checking {n.Container.Name} @ '{n.Container.Address.Host}:{n.Container.Address.Port}'...");
 
                 if (EnsureOnline(log, n))
                 {
@@ -75,7 +77,7 @@ namespace ContinuousTests
                 }
                 else
                 {
-                    log.Error($"No response from '{n.Address.Host}'.");
+                    log.Error($"No response from '{n.Container.Address.Host}'.");
                     pass = false;
                 }
             }
@@ -85,7 +87,7 @@ namespace ContinuousTests
             }
         }
 
-        private bool EnsureOnline(BaseLog log, CodexAccess n)
+        private bool EnsureOnline(BaseLog log, ICodexNode n)
         {
             try
             {
@@ -107,28 +109,7 @@ namespace ContinuousTests
             var errors = new List<string>();
             CheckRequiredNumberOfNodes(tests, errors);
             CheckCustomNamespaceClashes(tests, errors);
-            CheckEthereumIndexClashes(tests, errors);
             return errors;
-        }
-
-        private void CheckEthereumIndexClashes(ContinuousTest[] tests, List<string> errors)
-        {
-            var offLimits = config.CodexDeployment.CodexContainers.Length;
-            foreach (var test in tests)
-            {
-                if (test.EthereumAccountIndex != -1)
-                {
-                    if (test.EthereumAccountIndex <= offLimits)
-                    {
-                        errors.Add($"Test '{test.Name}' has selected 'EthereumAccountIndex' = {test.EthereumAccountIndex}. All accounts up to and including {offLimits} are being used by the targetted Codex net. Select a different 'EthereumAccountIndex'.");
-                    }
-                }
-            }
-
-            DuplicatesCheck(tests, errors,
-                considerCondition: t => t.EthereumAccountIndex != -1,
-                getValue: t => t.EthereumAccountIndex,
-                propertyName: nameof(ContinuousTest.EthereumAccountIndex));
         }
 
         private void CheckCustomNamespaceClashes(ContinuousTest[] tests, List<string> errors)

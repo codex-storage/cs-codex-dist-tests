@@ -30,5 +30,10 @@
         {
             backingLog.Log(prefix + message);
         }
+
+        public void AddStringReplace(string from, string to)
+        {
+            backingLog.AddStringReplace(from, to);
+        }
     }
 }

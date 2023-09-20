@@ -10,6 +10,13 @@ namespace CodexPlugin
             return Plugin(ci).DeployCodexNodes(number, setup);
         }
 
+        public static ICodexNodeGroup WrapCodexContainers(this CoreInterface ci, RunningContainer[] containers)
+        {
+            // ew, clean this up.
+            var rcs = new RunningContainers(null!, containers.First().Pod, containers);
+            return WrapCodexContainers(ci, new[] { rcs });
+        }
+
         public static ICodexNodeGroup WrapCodexContainers(this CoreInterface ci, RunningContainers[] containers)
         {
             return Plugin(ci).WrapCodexContainers(ci, containers);

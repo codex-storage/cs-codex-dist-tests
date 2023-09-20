@@ -7,6 +7,7 @@ namespace Logging
         void Log(string message);
         void Debug(string message = "", int skipFrames = 0);
         void Error(string message);
+        void AddStringReplace(string from, string to);
         LogFile CreateSubfile(string ext = "log");
     }
 

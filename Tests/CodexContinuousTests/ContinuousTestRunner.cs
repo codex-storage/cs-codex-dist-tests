@@ -1,36 +1,39 @@
-﻿using DistTestCore;
+﻿using DistTestCore.Logs;
 using Logging;
 
 namespace ContinuousTests
 {
     public class ContinuousTestRunner
     {
-        private readonly K8sFactory k8SFactory = new K8sFactory();
+        private readonly EntryPointFactory entryPointFactory = new EntryPointFactory();
         private readonly ConfigLoader configLoader = new ConfigLoader();
         private readonly TestFactory testFactory = new TestFactory();
         private readonly Configuration config;
-        private readonly StartupChecker startupChecker;
         private readonly CancellationToken cancelToken;
 
         public ContinuousTestRunner(string[] args, CancellationToken cancelToken)
         {
             config = configLoader.Load(args);
-            startupChecker = new StartupChecker(config, cancelToken);
             this.cancelToken = cancelToken;
         }
 
         public void Run()
         {
+            var overviewLog = new FixtureLog(new LogConfig(config.LogPath, false), DateTime.UtcNow, "Overview");
+
+            var entryPoint = entryPointFactory.CreateEntryPoint(config.KubeConfigFile, config.DataPath, config.CodexDeployment.Metadata.KubeNamespace, overviewLog);
+            entryPoint.Announce();
+
+            var startupChecker = new StartupChecker(entryPoint, config, cancelToken);
             startupChecker.Check();
 
             var taskFactory = new TaskFactory();
-            var overviewLog = new FixtureLog(new LogConfig(config.LogPath, false), DateTime.UtcNow, "Overview");
             overviewLog.Log("Continuous tests starting...");
             var allTests = testFactory.CreateTests();
 
             ClearAllCustomNamespaces(allTests, overviewLog);
 
-            var testLoops = allTests.Select(t => new TestLoop(taskFactory, config, overviewLog, t.GetType(), t.RunTestEvery, startupChecker, cancelToken)).ToArray();
+            var testLoops = allTests.Select(t => new TestLoop(entryPoint, taskFactory, config, overviewLog, t.GetType(), t.RunTestEvery, startupChecker, cancelToken)).ToArray();
 
             foreach (var testLoop in testLoops)
             {
@@ -58,8 +61,9 @@ namespace ContinuousTests
             if (string.IsNullOrEmpty(test.CustomK8sNamespace)) return;
 
             log.Log($"Clearing namespace '{test.CustomK8sNamespace}'...");
-            var lifecycle = k8SFactory.CreateTestLifecycle(config.KubeConfigFile, config.LogPath, config.DataPath, test.CustomK8sNamespace, new DefaultTimeSet(), log);
-            lifecycle.WorkflowCreator.CreateWorkflow().DeleteNamespacesStartingWith();
+
+            var entryPoint = entryPointFactory.CreateEntryPoint(config.KubeConfigFile, config.DataPath, test.CustomK8sNamespace, log);
+            entryPoint.Tools.CreateWorkflow().DeleteNamespacesStartingWith(test.CustomK8sNamespace);
         }
     }
 }

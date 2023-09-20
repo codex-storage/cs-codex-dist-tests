@@ -1,6 +1,5 @@
 ﻿using ArgsUniform;
-using DistTestCore;
-using DistTestCore.Codex;
+using CodexPlugin;
 using Newtonsoft.Json;
 
 namespace ContinuousTests
@@ -29,8 +28,6 @@ namespace ContinuousTests
         public bool DownloadContainerLogs { get; set; } = false;
 
         public CodexDeployment CodexDeployment { get; set; } = null!;
-
-        public RunnerLocation RunnerLocation { get; set; }
     }
 
     public class ConfigLoader
@@ -40,10 +37,7 @@ namespace ContinuousTests
             var uniformArgs = new ArgsUniform<Configuration>(PrintHelp, args);
 
             var result = uniformArgs.Parse(true);
-            
             result.CodexDeployment = ParseCodexDeploymentJson(result.CodexDeploymentJson);
-            result.RunnerLocation = RunnerLocationUtils.DetermineRunnerLocation(result.CodexDeployment.CodexContainers.First());
-
             return result;
         }
         

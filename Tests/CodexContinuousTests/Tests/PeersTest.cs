@@ -1,4 +1,4 @@
-﻿using DistTestCore.Codex;
+﻿using CodexPlugin;
 using DistTestCore.Helpers;
 using NUnit.Framework;
 
@@ -37,7 +37,7 @@ namespace ContinuousTests.Tests
             }
         }
 
-        private string AreAllPresent(CodexAccess n, string[] allIds)
+        private string AreAllPresent(ICodexNode n, string[] allIds)
         {
             var info = n.GetDebugInfo();
             var known = info.table.nodes.Select(n => n.nodeId).ToArray();

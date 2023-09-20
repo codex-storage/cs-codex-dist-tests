@@ -1,8 +1,7 @@
-﻿using DistTestCore;
-using DistTestCore.Codex;
-using DistTestCore.Logs;
+﻿using CodexPlugin;
+using Core;
+using DistTestCore;
 using FileUtils;
-using KubernetesWorkflow;
 using Logging;
 
 namespace ContinuousTests
@@ -22,9 +21,7 @@ namespace ContinuousTests
         protected const int DayOne = HourOne * 24;
         protected const int DayThree = DayOne * 3;
 
-        private const string UploadFailedMessage = "Unable to store block";
-
-        public void Initialize(CodexAccess[] nodes, BaseLog log, FileManager fileManager, Configuration configuration, CancellationToken cancelToken)
+        public void Initialize(ICodexNode[] nodes, ILog log, IFileManager fileManager, Configuration configuration, CancellationToken cancelToken)
         {
             Nodes = nodes;
             Log = log;
@@ -34,7 +31,7 @@ namespace ContinuousTests
 
             if (nodes != null)
             {
-                NodeRunner = new NodeRunner(Nodes, configuration, TimeSet, Log, CustomK8sNamespace, EthereumAccountIndex);
+                NodeRunner = new NodeRunner(Nodes, configuration, Log, CustomK8sNamespace);
             }
             else
             {
@@ -42,8 +39,8 @@ namespace ContinuousTests
             }
         }
 
-        public CodexAccess[] Nodes { get; private set; } = null!;
-        public BaseLog Log { get; private set; } = null!;
+        public ICodexNode[] Nodes { get; private set; } = null!;
+        public ILog Log { get; private set; } = null!;
         public IFileManager FileManager { get; private set; } = null!;
         public Configuration Configuration { get; private set; } = null!;
         public virtual ITimeSet TimeSet { get { return new DefaultTimeSet(); } }
@@ -53,7 +50,6 @@ namespace ContinuousTests
         public abstract int RequiredNumberOfNodes { get; }
         public abstract TimeSpan RunTestEvery { get; }
         public abstract TestFailMode TestFailMode { get; }
-        public virtual int EthereumAccountIndex { get { return -1; } }
         public virtual string CustomK8sNamespace { get { return string.Empty; } }
 
         public string Name
@@ -64,52 +60,6 @@ namespace ContinuousTests
             }
         }
 
-        public ContentId? UploadFile(CodexAccess node, TestFile file)
-        {
-            using var fileStream = File.OpenRead(file.Filename);
-
-            var logMessage = $"Uploading file {file.Describe()}...";
-            var response = Stopwatch.Measure(Log, logMessage, () =>
-            {
-                return node.UploadFile(fileStream);
-            });
-
-            if (string.IsNullOrEmpty(response)) return null;
-            if (response.StartsWith(UploadFailedMessage)) return null;
-            
-            Log.Log($"Uploaded file. Received contentId: '{response}'.");
-            return new ContentId(response);
-        }
-
-        public TestFile DownloadFile(CodexAccess node, ContentId contentId, string fileLabel = "")
-        {
-            var logMessage = $"Downloading for contentId: '{contentId.Id}'...";
-            var file = FileManager.CreateEmptyTestFile(fileLabel);
-            Stopwatch.Measure(Log, logMessage, () => DownloadToFile(node, contentId.Id, file));
-            Log.Log($"Downloaded file {file.Describe()} to '{file.Filename}'.");
-            return file;
-        }
-
-        public IDownloadedLog DownloadContainerLog(RunningContainer container, int? tailLines = null)
-        {
-            var nodeRunner = new NodeRunner(Nodes, Configuration, TimeSet, Log, Configuration.CodexDeployment.Metadata.KubeNamespace, EthereumAccountIndex);
-            return nodeRunner.DownloadLog(container, tailLines);
-        }
-
-        private void DownloadToFile(CodexAccess node, string contentId, TestFile file)
-        {
-            using var fileStream = File.OpenWrite(file.Filename);
-            try
-            {
-                using var downloadStream = node.DownloadFile(contentId);
-                downloadStream.CopyTo(fileStream);
-            }
-            catch
-            {
-                Log.Log($"Failed to download file '{contentId}'.");
-                throw;
-            }
-        }
     }
 
     public enum TestFailMode

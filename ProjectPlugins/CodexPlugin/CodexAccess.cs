@@ -51,6 +51,8 @@ namespace CodexPlugin
 
         public string UploadFile(FileStream fileStream)
         {
+            // private const string UploadFailedMessage = "Unable to store block";
+
             return Http().HttpPostStream("upload", fileStream);
         }
 
