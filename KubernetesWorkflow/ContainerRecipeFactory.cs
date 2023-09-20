@@ -29,7 +29,7 @@ namespace KubernetesWorkflow
                 podLabels.Clone(),
                 podAnnotations.Clone(),
                 volumeMounts.ToArray(),
-                additionals.ToArray());
+                ContainerAdditionals.CreateFromUserData(additionals));
 
             exposedPorts.Clear();
             internalPorts.Clear();

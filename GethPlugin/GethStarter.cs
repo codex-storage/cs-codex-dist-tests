@@ -12,7 +12,7 @@ namespace GethPlugin
             this.tools = tools;
         }
 
-        public IGethDeployment StartGeth(GethStartupConfig gethStartupConfig)
+        public GethDeployment StartGeth(GethStartupConfig gethStartupConfig)
         {
             Log("Starting Geth bootstrap node...");
 
@@ -41,9 +41,10 @@ namespace GethPlugin
             return new GethDeployment(container, discoveryPort, httpPort, wsPort, accounts, pubKey);
         }
 
-        public IGethNode WrapGethContainer(IGethDeployment startResult)
+        public IGethNode WrapGethContainer(GethDeployment startResult)
         {
-            return new GethNode(tools.GetLog(), SerializeGate.Gate(startResult));
+            startResult = SerializeGate.Gate(startResult);
+            return new GethNode(tools.GetLog(), startResult);
         }
 
         private void Log(string msg)

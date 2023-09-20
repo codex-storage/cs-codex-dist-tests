@@ -30,14 +30,15 @@ namespace CodexContractsPlugin
         {
         }
 
-        public ICodexContractsDeployment DeployContracts(IGethNode gethNode)
+        public CodexContractsDeployment DeployContracts(IGethNode gethNode)
         {
             return starter.Deploy(gethNode);
         }
 
-        public ICodexContracts WrapDeploy(ICodexContractsDeployment deployment)
+        public ICodexContracts WrapDeploy(CodexContractsDeployment deployment)
         {
-            return starter.Wrap(SerializeGate.Gate(deployment));
+            deployment = SerializeGate.Gate(deployment);
+            return starter.Wrap(deployment);
         }
     }
 }

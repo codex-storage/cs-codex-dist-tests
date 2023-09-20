@@ -27,9 +27,9 @@ namespace CodexPlugin
         private const string SuccessfullyConnectedMessage = "Successfully connected to peer";
         private const string UploadFailedMessage = "Unable to store block";
         private readonly IPluginTools tools;
-        private readonly IEthAddress? ethAddress;
+        private readonly EthAddress? ethAddress;
 
-        public CodexNode(IPluginTools tools, CodexAccess codexAccess, CodexNodeGroup group, IMarketplaceAccess marketplaceAccess, IEthAddress? ethAddress)
+        public CodexNode(IPluginTools tools, CodexAccess codexAccess, CodexNodeGroup group, IMarketplaceAccess marketplaceAccess, EthAddress? ethAddress)
         {
             this.tools = tools;
             this.ethAddress = ethAddress;
@@ -53,7 +53,7 @@ namespace CodexPlugin
                 return new MetricsScrapeTarget(CodexAccess.Container, port);
             }
         }
-        public IEthAddress EthAddress 
+        public EthAddress EthAddress 
         {
             get
             {

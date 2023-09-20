@@ -24,15 +24,15 @@ namespace CodexPlugin
             return new CodexNode(tools, access, group, marketplaceAccess, ethAddress);
         }
 
-        private IMarketplaceAccess GetMarketplaceAccess(CodexAccess codexAccess, IEthAddress? ethAddress)
+        private IMarketplaceAccess GetMarketplaceAccess(CodexAccess codexAccess, EthAddress? ethAddress)
         {
             if (ethAddress == null) return new MarketplaceUnavailable();
             return new MarketplaceAccess(tools.GetLog(), codexAccess);
         }
 
-        private IEthAddress? GetEthAddress(CodexAccess access)
+        private EthAddress? GetEthAddress(CodexAccess access)
         {
-            var mStart = access.Container.Recipe.Additionals.SingleOrDefault(a => a is MarketplaceStartResults) as MarketplaceStartResults;
+            var mStart = access.Container.Recipe.Additionals.Get<MarketplaceStartResults>();
             if (mStart == null) return null;
             return mStart.EthAddress;
         }

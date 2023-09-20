@@ -6,13 +6,13 @@ namespace GethPlugin
 {
     public interface IGethNode
     {
-        IGethDeployment StartResult { get; }
+        GethDeployment StartResult { get; }
 
         Ether GetEthBalance();
         Ether GetEthBalance(IHasEthAddress address);
-        Ether GetEthBalance(IEthAddress address);
+        Ether GetEthBalance(EthAddress address);
         void SendEth(IHasEthAddress account, Ether eth);
-        void SendEth(IEthAddress account, Ether eth);
+        void SendEth(EthAddress account, Ether eth);
         TResult Call<TFunction, TResult>(string contractAddress, TFunction function) where TFunction : FunctionMessage, new();
         void SendTransaction<TFunction>(string contractAddress, TFunction function) where TFunction : FunctionMessage, new();
         decimal? GetSyncedBlockNumber();
@@ -23,14 +23,14 @@ namespace GethPlugin
     {
         private readonly ILog log;
 
-        public GethNode(ILog log, IGethDeployment startResult)
+        public GethNode(ILog log, GethDeployment startResult)
         {
             this.log = log;
             StartResult = startResult;
             Account = startResult.AllAccounts.Accounts.First();
         }
 
-        public IGethDeployment StartResult { get; }
+        public GethDeployment StartResult { get; }
         public GethAccount Account { get; }
 
         public Ether GetEthBalance()
@@ -43,7 +43,7 @@ namespace GethPlugin
             return GetEthBalance(owner.EthAddress);
         }
 
-        public Ether GetEthBalance(IEthAddress address)
+        public Ether GetEthBalance(EthAddress address)
         {
             return StartInteraction().GetEthBalance(address.Address).Eth();
         }
@@ -53,7 +53,7 @@ namespace GethPlugin
             SendEth(owner.EthAddress, eth);
         }
 
-        public void SendEth(IEthAddress account, Ether eth)
+        public void SendEth(EthAddress account, Ether eth)
         {
             StartInteraction().SendEth(account.Address, eth.Eth);
         }

@@ -15,7 +15,7 @@ namespace CodexContractsPlugin
             this.tools = tools;
         }
 
-        public ICodexContractsDeployment Deploy(IGethNode gethNode)
+        public CodexContractsDeployment Deploy(IGethNode gethNode)
         {
             Log("Deploying Codex SmartContracts...");
 
@@ -50,7 +50,7 @@ namespace CodexContractsPlugin
             return new CodexContractsDeployment(marketplaceAddress, abi, tokenAddress);
         }
 
-        public ICodexContracts Wrap(ICodexContractsDeployment deployment)
+        public ICodexContracts Wrap(CodexContractsDeployment deployment)
         {
             return new CodexContractsAccess(tools.GetLog(), deployment);
         }

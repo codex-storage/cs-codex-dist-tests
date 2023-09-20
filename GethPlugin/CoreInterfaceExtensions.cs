@@ -4,12 +4,12 @@ namespace GethPlugin
 {
     public static class CoreInterfaceExtensions
     {
-        public static IGethDeployment DeployGeth(this CoreInterface ci, Action<IGethSetup> setup)
+        public static GethDeployment DeployGeth(this CoreInterface ci, Action<IGethSetup> setup)
         {
             return Plugin(ci).DeployGeth(setup);
         }
 
-        public static IGethNode WrapGethDeployment(this CoreInterface ci, IGethDeployment deployment)
+        public static IGethNode WrapGethDeployment(this CoreInterface ci, GethDeployment deployment)
         {
             return Plugin(ci).WrapGethDeployment(deployment);
         }

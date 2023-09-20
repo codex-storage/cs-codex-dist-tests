@@ -1,16 +1,11 @@
 ﻿namespace GethPlugin
 {
-    public interface IEthAddress
-    {
-        string Address { get; }
-    }
-
     public interface IHasEthAddress
     {
-        IEthAddress EthAddress { get; }
+        EthAddress EthAddress { get; }
     }
 
-    public class EthAddress : IEthAddress
+    public class EthAddress
     {
         public EthAddress(string address)
         {

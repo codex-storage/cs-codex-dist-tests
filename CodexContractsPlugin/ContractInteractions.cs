@@ -26,7 +26,7 @@ namespace CodexContractsPlugin
             return gethNode.Call<GetTokenFunction, string>(marketplaceAddress, function);
         }
 
-        public void MintTestTokens(IEthAddress address, decimal amount, string tokenAddress)
+        public void MintTestTokens(EthAddress address, decimal amount, string tokenAddress)
         {
             MintTokens(address.Address, amount, tokenAddress);
         }

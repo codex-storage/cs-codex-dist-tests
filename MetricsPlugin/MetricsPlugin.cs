@@ -38,7 +38,8 @@ namespace MetricsPlugin
 
         public IMetricsAccess WrapMetricsCollectorDeployment(RunningContainer runningContainer, IMetricsScrapeTarget target)
         {
-            return starter.CreateAccessForTarget(SerializeGate.Gate(runningContainer), target);
+            runningContainer = SerializeGate.Gate(runningContainer);
+            return starter.CreateAccessForTarget(runningContainer, target);
         }
 
         public LogFile? DownloadAllMetrics(IMetricsAccess metricsAccess, string targetName)

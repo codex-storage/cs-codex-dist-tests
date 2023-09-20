@@ -1,13 +1,6 @@
 ﻿namespace CodexContractsPlugin
 {
-    public interface ICodexContractsDeployment
-    {
-        string MarketplaceAddress { get; }
-        string Abi { get; }
-        string TokenAddress { get; }
-    }
-
-    public class CodexContractsDeployment : ICodexContractsDeployment
+    public class CodexContractsDeployment
     {
         public CodexContractsDeployment(string marketplaceAddress, string abi, string tokenAddress)
         {

@@ -2,7 +2,7 @@
 {
     public class ContainerRecipe
     {
-        public ContainerRecipe(int number, string? nameOverride, string image, ContainerResources resources, Port[] exposedPorts, Port[] internalPorts, EnvVar[] envVars, PodLabels podLabels, PodAnnotations podAnnotations, VolumeMount[] volumes, object[] additionals)
+        public ContainerRecipe(int number, string? nameOverride, string image, ContainerResources resources, Port[] exposedPorts, Port[] internalPorts, EnvVar[] envVars, PodLabels podLabels, PodAnnotations podAnnotations, VolumeMount[] volumes, ContainerAdditionals additionals)
         {
             Number = number;
             NameOverride = nameOverride;
@@ -37,7 +37,7 @@
         public PodLabels PodLabels { get; }
         public PodAnnotations PodAnnotations { get; }
         public VolumeMount[] Volumes { get; }
-        public object[] Additionals { get; }
+        public ContainerAdditionals Additionals { get; }
 
         public Port? GetPortByTag(string tag)
         {

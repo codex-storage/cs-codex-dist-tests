@@ -1,4 +1,6 @@
-﻿namespace KubernetesWorkflow
+﻿using Newtonsoft.Json;
+
+namespace KubernetesWorkflow
 {
     public class Configuration
     {
@@ -16,6 +18,8 @@
         public string KubernetesNamespace { get; }
         public bool AllowNamespaceOverride { get; set; } = true;
         public bool AddAppPodLabel { get; set; } = true;
+
+        [JsonIgnore]
         public IK8sHooks Hooks { get; set; } = new DoNothingK8sHooks();
     }
 }

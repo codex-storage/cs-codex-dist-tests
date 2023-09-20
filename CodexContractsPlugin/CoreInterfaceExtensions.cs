@@ -5,12 +5,12 @@ namespace CodexContractsPlugin
 {
     public static class CoreInterfaceExtensions
     {
-        public static ICodexContractsDeployment DeployCodexContracts(this CoreInterface ci, IGethNode gethNode)
+        public static CodexContractsDeployment DeployCodexContracts(this CoreInterface ci, IGethNode gethNode)
         {
             return Plugin(ci).DeployContracts(gethNode);
         }
 
-        public static ICodexContracts WrapCodexContractsDeployment(this CoreInterface ci, ICodexContractsDeployment deployment)
+        public static ICodexContracts WrapCodexContractsDeployment(this CoreInterface ci, CodexContractsDeployment deployment)
         {
             return Plugin(ci).WrapDeploy(deployment);
         }

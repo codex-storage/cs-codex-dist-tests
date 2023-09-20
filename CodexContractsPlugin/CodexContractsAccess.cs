@@ -5,32 +5,32 @@ namespace CodexContractsPlugin
 {
     public interface ICodexContracts
     {
-        ICodexContractsDeployment Deployment { get; }
+        CodexContractsDeployment Deployment { get; }
 
         void MintTestTokens(IGethNode gethNode, IHasEthAddress owner, TestToken testTokens);
-        void MintTestTokens(IGethNode gethNode, IEthAddress ethAddress, TestToken testTokens);
+        void MintTestTokens(IGethNode gethNode, EthAddress ethAddress, TestToken testTokens);
         TestToken GetTestTokenBalance(IGethNode gethNode, IHasEthAddress owner);
-        TestToken GetTestTokenBalance(IGethNode gethNode, IEthAddress ethAddress);
+        TestToken GetTestTokenBalance(IGethNode gethNode, EthAddress ethAddress);
     }
 
     public class CodexContractsAccess : ICodexContracts
     {
         private readonly ILog log;
 
-        public CodexContractsAccess(ILog log, ICodexContractsDeployment deployment)
+        public CodexContractsAccess(ILog log, CodexContractsDeployment deployment)
         {
             this.log = log;
             Deployment = deployment;
         }
 
-        public ICodexContractsDeployment Deployment { get; }
+        public CodexContractsDeployment Deployment { get; }
 
         public void MintTestTokens(IGethNode gethNode, IHasEthAddress owner, TestToken testTokens)
         {
             MintTestTokens(gethNode, owner.EthAddress, testTokens);
         }
 
-        public void MintTestTokens(IGethNode gethNode, IEthAddress ethAddress, TestToken testTokens)
+        public void MintTestTokens(IGethNode gethNode, EthAddress ethAddress, TestToken testTokens)
         {
             var interaction = new ContractInteractions(log, gethNode);
             interaction.MintTestTokens(ethAddress, testTokens.Amount, Deployment.TokenAddress);
@@ -41,7 +41,7 @@ namespace CodexContractsPlugin
             return GetTestTokenBalance(gethNode, owner.EthAddress);
         }
 
-        public TestToken GetTestTokenBalance(IGethNode gethNode, IEthAddress ethAddress)
+        public TestToken GetTestTokenBalance(IGethNode gethNode, EthAddress ethAddress)
         {
             var interaction = new ContractInteractions(log, gethNode);
             var balance = interaction.GetBalance(Deployment.TokenAddress, ethAddress.Address);
