@@ -1,4 +1,4 @@
-﻿namespace Logging
+﻿namespace DistTestCore.Logs
 {
     public class TestLog : BaseTestLog
     {

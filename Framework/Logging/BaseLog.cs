@@ -70,14 +70,6 @@ namespace Logging
             return new LogFile($"{GetFullName()}_{GetSubfileNumber()}", ext);
         }
 
-        public void WriteLogTag()
-        {
-            var runId = NameUtils.GetRunId();
-            var category = NameUtils.GetCategoryName();
-            var name = NameUtils.GetTestMethodName();
-            LogFile.WriteRaw($"{runId} {category} {name}");
-        }
-
         private string ApplyReplacements(string str)
         {
             foreach (var replacement in replacements)

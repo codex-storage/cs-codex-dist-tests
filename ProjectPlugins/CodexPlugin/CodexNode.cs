@@ -4,7 +4,6 @@ using GethPlugin;
 using KubernetesWorkflow;
 using Logging;
 using MetricsPlugin;
-using NUnit.Framework;
 using Utils;
 
 namespace CodexPlugin
@@ -91,8 +90,8 @@ namespace CodexPlugin
                 return CodexAccess.UploadFile(fileStream);
             });
 
-            if (string.IsNullOrEmpty(response)) Assert.Fail("Received empty response.");
-            if (response.StartsWith(UploadFailedMessage)) Assert.Fail("Node failed to store block.");
+            if (string.IsNullOrEmpty(response)) FrameworkAssert.Fail("Received empty response.");
+            if (response.StartsWith(UploadFailedMessage)) FrameworkAssert.Fail("Node failed to store block.");
 
             Log($"Uploaded file. Received contentId: '{response}'.");
             return new ContentId(response);
@@ -116,7 +115,7 @@ namespace CodexPlugin
             var peerInfo = node.GetDebugInfo();
             var response = CodexAccess.ConnectToPeer(peerInfo.id, GetPeerMultiAddress(peer, peerInfo));
 
-            Assert.That(response, Is.EqualTo(SuccessfullyConnectedMessage), "Unable to connect codex nodes.");
+            FrameworkAssert.That(response == SuccessfullyConnectedMessage, "Unable to connect codex nodes.");
             Log($"Successfully connected to peer {peer.GetName()}.");
         }
 

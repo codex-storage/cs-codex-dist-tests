@@ -1,9 +1,11 @@
 ﻿using Core;
+using DistTestCore.Logs;
 using FileUtils;
 using Logging;
 using NUnit.Framework;
 using System.Reflection;
 using Utils;
+using Assert = NUnit.Framework.Assert;
 
 namespace DistTestCore
 {

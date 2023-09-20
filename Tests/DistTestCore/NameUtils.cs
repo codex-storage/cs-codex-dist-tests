@@ -1,6 +1,7 @@
-﻿using NUnit.Framework;
+﻿using Logging;
+using NUnit.Framework;
 
-namespace Logging
+namespace DistTestCore
 {
     public static class NameUtils
     {

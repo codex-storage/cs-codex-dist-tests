@@ -1,4 +1,6 @@
-﻿namespace Logging
+﻿using Logging;
+
+namespace DistTestCore.Logs
 {
     public class FixtureLog : BaseTestLog
     {

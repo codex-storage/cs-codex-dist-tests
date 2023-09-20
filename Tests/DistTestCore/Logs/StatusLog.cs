@@ -1,7 +1,7 @@
 ﻿using Logging;
 using Newtonsoft.Json;
 
-namespace DistTestCore
+namespace DistTestCore.Logs
 {
     public class StatusLog
     {

@@ -1,5 +1,4 @@
 ﻿using Logging;
-using NUnit.Framework;
 using Utils;
 
 namespace FileUtils
@@ -106,12 +105,12 @@ namespace FileUtils
 
             if (spaceAvailable < size.SizeInBytes)
             {
-                var msg = $"Inconclusive: Not enough disk space to perform test. " +
+                var msg = $"Not enough disk space. " +
                     $"{Formatter.FormatByteSize(size.SizeInBytes)} required. " +
                     $"{Formatter.FormatByteSize(spaceAvailable)} available.";
 
                 log.Log(msg);
-                Assert.Inconclusive(msg);
+                throw new Exception(msg);
             }
         }
 

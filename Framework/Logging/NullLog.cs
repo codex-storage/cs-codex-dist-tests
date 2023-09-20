@@ -1,8 +1,8 @@
 ﻿namespace Logging
 {
-    public class NullLog : TestLog
+    public class NullLog : BaseLog
     {
-        public NullLog() : base("NULL", false, "NULL")
+        public NullLog() : base(false)
         {
         }
 

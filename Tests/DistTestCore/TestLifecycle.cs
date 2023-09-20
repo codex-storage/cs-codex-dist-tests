@@ -1,7 +1,7 @@
 ﻿using Core;
+using DistTestCore.Logs;
 using FileUtils;
 using KubernetesWorkflow;
-using Logging;
 using Utils;
 
 namespace DistTestCore

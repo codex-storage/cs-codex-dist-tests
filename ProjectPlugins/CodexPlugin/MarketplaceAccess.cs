@@ -1,7 +1,6 @@
 ﻿using CodexContractsPlugin;
 using Logging;
 using Newtonsoft.Json;
-using NUnit.Framework;
 using Utils;
 using System.Numerics;
 
@@ -113,7 +112,7 @@ namespace CodexPlugin
 
         private void Unavailable()
         {
-            Assert.Fail("Incorrect test setup: Marketplace was not enabled for this group of Codex nodes. Add 'EnableMarketplace(...)' after 'SetupCodexNodes()' to enable it.");
+            FrameworkAssert.Fail("Incorrect test setup: Marketplace was not enabled for this group of Codex nodes. Add 'EnableMarketplace(...)' after 'SetupCodexNodes()' to enable it.");
             throw new InvalidOperationException();
         }
     }
@@ -189,12 +188,12 @@ namespace CodexPlugin
 
                 if (lastState == "errored")
                 {
-                    Assert.Fail("Contract errored: " + statusJson);
+                    FrameworkAssert.Fail("Contract errored: " + statusJson);
                 }
 
                 if (DateTime.UtcNow - waitStart > timeout)
                 {
-                    Assert.Fail($"Contract did not reach '{desiredState}' within timeout. {statusJson}");
+                    FrameworkAssert.Fail($"Contract did not reach '{desiredState}' within timeout. {statusJson}");
                 }
             }
             log.Log($"Contract '{desiredState}'.");

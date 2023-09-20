@@ -1,4 +1,6 @@
-﻿namespace Logging
+﻿using Logging;
+
+namespace DistTestCore.Logs
 {
     public abstract class BaseTestLog : BaseLog
     {
@@ -7,6 +9,14 @@
         public BaseTestLog(bool debug)
             : base(debug)
         {
+        }
+
+        public void WriteLogTag()
+        {
+            var runId = NameUtils.GetRunId();
+            var category = NameUtils.GetCategoryName();
+            var name = NameUtils.GetTestMethodName();
+            LogFile.WriteRaw($"{runId} {category} {name}");
         }
 
         public void MarkAsFailed()

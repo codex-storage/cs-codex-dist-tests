@@ -1,5 +1,4 @@
 ﻿using Logging;
-using NUnit.Framework;
 using Utils;
 
 namespace FileUtils
@@ -40,10 +39,10 @@ namespace FileUtils
 
         private void AssertEqual(TrackedFile? actual)
         {
-            if (actual == null)  Assert.Fail("TestFile is null.");
-            if (actual == this || actual!.Filename == Filename) Assert.Fail("TestFile is compared to itself.");
+            if (actual == null)  FrameworkAssert.Fail("TestFile is null.");
+            if (actual == this || actual!.Filename == Filename) FrameworkAssert.Fail("TestFile is compared to itself.");
 
-            Assert.That(actual.GetFileSize(), Is.EqualTo(GetFileSize()), "Files are not of equal length.");
+            FrameworkAssert.That(actual.GetFileSize() == GetFileSize(), "Files are not of equal length.");
 
             using var streamExpected = new FileStream(Filename, FileMode.Open, FileAccess.Read);
             using var streamActual = new FileStream(actual.Filename, FileMode.Open, FileAccess.Read);
@@ -65,11 +64,11 @@ namespace FileUtils
                     return;
                 }
 
-                Assert.That(readActual, Is.EqualTo(readExpected), "Unable to read buffers of equal length.");
+                FrameworkAssert.That(readActual == readExpected, "Unable to read buffers of equal length.");
 
                 for (var i = 0; i < readActual; i++)
                 {
-                    if (bytesExpected[i] != bytesActual[i]) Assert.Fail("File contents not equal.");
+                    if (bytesExpected[i] != bytesActual[i]) FrameworkAssert.Fail("File contents not equal.");
                 }
             }
         }
