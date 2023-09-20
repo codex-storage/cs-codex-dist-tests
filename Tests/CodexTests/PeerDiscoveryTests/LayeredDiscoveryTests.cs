@@ -9,10 +9,10 @@ namespace Tests.PeerDiscoveryTests
         [Test]
         public void TwoLayersTest()
         {
-            var root = Ci.SetupCodexNode();
-            var l1Source = Ci.SetupCodexNode(s => s.WithBootstrapNode(root));
-            var l1Node = Ci.SetupCodexNode(s => s.WithBootstrapNode(root));
-            var l2Target = Ci.SetupCodexNode(s => s.WithBootstrapNode(l1Node));
+            var root = Ci.StartCodexNode();
+            var l1Source = Ci.StartCodexNode(s => s.WithBootstrapNode(root));
+            var l1Node = Ci.StartCodexNode(s => s.WithBootstrapNode(root));
+            var l2Target = Ci.StartCodexNode(s => s.WithBootstrapNode(l1Node));
 
             AssertAllNodesConnected();
         }
@@ -20,11 +20,11 @@ namespace Tests.PeerDiscoveryTests
         [Test]
         public void ThreeLayersTest()
         {
-            var root = Ci.SetupCodexNode();
-            var l1Source = Ci.SetupCodexNode(s => s.WithBootstrapNode(root));
-            var l1Node = Ci.SetupCodexNode(s => s.WithBootstrapNode(root));
-            var l2Node = Ci.SetupCodexNode(s => s.WithBootstrapNode(l1Node));
-            var l3Target = Ci.SetupCodexNode(s => s.WithBootstrapNode(l2Node));
+            var root = Ci.StartCodexNode();
+            var l1Source = Ci.StartCodexNode(s => s.WithBootstrapNode(root));
+            var l1Node = Ci.StartCodexNode(s => s.WithBootstrapNode(root));
+            var l2Node = Ci.StartCodexNode(s => s.WithBootstrapNode(l1Node));
+            var l3Target = Ci.StartCodexNode(s => s.WithBootstrapNode(l2Node));
 
             AssertAllNodesConnected();
         }
@@ -35,10 +35,10 @@ namespace Tests.PeerDiscoveryTests
         [TestCase(20)]
         public void NodeChainTest(int chainLength)
         {
-            var node = Ci.SetupCodexNode();
+            var node = Ci.StartCodexNode();
             for (var i = 1; i < chainLength; i++)
             {
-                node = Ci.SetupCodexNode(s => s.WithBootstrapNode(node));
+                node = Ci.StartCodexNode(s => s.WithBootstrapNode(node));
             }
 
             AssertAllNodesConnected();

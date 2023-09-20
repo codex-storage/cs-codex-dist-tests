@@ -5,9 +5,9 @@ namespace CodexPlugin
 {
     public static class CoreInterfaceExtensions
     {
-        public static RunningContainers[] StartCodexNodes(this CoreInterface ci, int number, Action<ICodexSetup> setup)
+        public static RunningContainers[] DeployCodexNodes(this CoreInterface ci, int number, Action<ICodexSetup> setup)
         {
-            return Plugin(ci).StartCodexNodes(number, setup);
+            return Plugin(ci).DeployCodexNodes(number, setup);
         }
 
         public static ICodexNodeGroup WrapCodexContainers(this CoreInterface ci, RunningContainers[] containers)
@@ -15,27 +15,27 @@ namespace CodexPlugin
             return Plugin(ci).WrapCodexContainers(ci, containers);
         }
 
-        public static ICodexNode SetupCodexNode(this CoreInterface ci)
+        public static ICodexNode StartCodexNode(this CoreInterface ci)
         {
-            return ci.SetupCodexNodes(1)[0];
+            return ci.StartCodexNodes(1)[0];
         }
 
-        public static ICodexNode SetupCodexNode(this CoreInterface ci, Action<ICodexSetup> setup)
+        public static ICodexNode StartCodexNode(this CoreInterface ci, Action<ICodexSetup> setup)
         {
-            return ci.SetupCodexNodes(1, setup)[0];
+            return ci.StartCodexNodes(1, setup)[0];
         }
 
-        public static ICodexNodeGroup SetupCodexNodes(this CoreInterface ci, int number, Action<ICodexSetup> setup)
+        public static ICodexNodeGroup StartCodexNodes(this CoreInterface ci, int number, Action<ICodexSetup> setup)
         {
-            var rc = ci.StartCodexNodes(number, setup);
+            var rc = ci.DeployCodexNodes(number, setup);
             var result = ci.WrapCodexContainers(rc);
             Plugin(ci).WireUpMarketplace(result, setup);
             return result;
         }
 
-        public static ICodexNodeGroup SetupCodexNodes(this CoreInterface ci, int number)
+        public static ICodexNodeGroup StartCodexNodes(this CoreInterface ci, int number)
         {
-            return ci.SetupCodexNodes(number, s => { });
+            return ci.StartCodexNodes(number, s => { });
         }
 
         private static CodexPlugin Plugin(CoreInterface ci)

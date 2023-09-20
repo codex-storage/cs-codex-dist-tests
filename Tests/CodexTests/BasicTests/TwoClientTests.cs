@@ -12,7 +12,7 @@ namespace Tests.BasicTests
         [Test]
         public void TwoClientTest()
         {
-            var group = Ci.SetupCodexNodes(2);
+            var group = Ci.StartCodexNodes(2);
 
             var primary = group[0];
             var secondary = group[1];
@@ -23,8 +23,8 @@ namespace Tests.BasicTests
         [Test]
         public void TwoClientsTwoLocationsTest()
         {
-            var primary = Ci.SetupCodexNode(s => s.At(Location.One));
-            var secondary = Ci.SetupCodexNode(s => s.At(Location.Two));
+            var primary = Ci.StartCodexNode(s => s.At(Location.One));
+            var secondary = Ci.StartCodexNode(s => s.At(Location.Two));
 
             PerformTwoClientTest(primary, secondary);
         }

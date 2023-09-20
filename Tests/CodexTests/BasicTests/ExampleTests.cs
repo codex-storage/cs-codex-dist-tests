@@ -61,7 +61,7 @@ namespace Tests.BasicTests
             AssertBalance(geth, contracts, seller, Is.EqualTo(sellerInitialBalance));
             seller.Marketplace.MakeStorageAvailable(
                 size: 10.GB(),
-                minPricePerBytePerSecond: 1.TestTokens(),
+                minPriceForTotalSpace: 1.TestTokens(),
                 maxCollateral: 20.TestTokens(),
                 maxDuration: TimeSpan.FromMinutes(3));
 

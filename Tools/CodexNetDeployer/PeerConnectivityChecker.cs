@@ -9,9 +9,9 @@ namespace CodexNetDeployer
         {
             var log = new ConsoleLog();
             var checker = new PeerConnectionTestHelpers(log);
-            var access = startResults.Select(r => r.Access);
+            var nodes = startResults.Select(r => r.CodexNode);
 
-            checker.AssertFullyConnected(access);
+            checker.AssertFullyConnected(nodes);
         }
     }
 

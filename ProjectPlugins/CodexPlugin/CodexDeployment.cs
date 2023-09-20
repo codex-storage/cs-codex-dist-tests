@@ -1,22 +1,21 @@
-﻿using KubernetesWorkflow;
+﻿using GethPlugin;
+using KubernetesWorkflow;
 
 namespace CodexPlugin
 {
     public class CodexDeployment
     {
-        public CodexDeployment(/*GethStartResult gethStartResult,*/ RunningContainer[] codexContainers, RunningContainer? prometheusContainer, /*GrafanaStartInfo? grafanaStartInfo,*/ DeploymentMetadata metadata)
+        public CodexDeployment(RunningContainer[] codexContainers, GethDeployment gethDeployment, RunningContainer? prometheusContainer, DeploymentMetadata metadata)
         {
-            //GethStartResult = gethStartResult;
             CodexContainers = codexContainers;
+            GethDeployment = gethDeployment;
             PrometheusContainer = prometheusContainer;
-            //GrafanaStartInfo = grafanaStartInfo;
             Metadata = metadata;
         }
 
-        //public GethStartResult GethStartResult { get; }
         public RunningContainer[] CodexContainers { get; }
+        public GethDeployment GethDeployment { get; }
         public RunningContainer? PrometheusContainer { get; }
-        //public GrafanaStartInfo? GrafanaStartInfo { get; }
         public DeploymentMetadata Metadata { get; }
     }
 

@@ -1,51 +1,58 @@
-﻿using DistTestCore;
-using DistTestCore.Codex;
+﻿using CodexContractsPlugin;
+using CodexPlugin;
+using Core;
+using GethPlugin;
 using KubernetesWorkflow;
 using Logging;
-using Utils;
+using MetricsPlugin;
 
 namespace CodexNetDeployer
 {
     public class Deployer
     {
         private readonly Configuration config;
-        private readonly DefaultTimeSet timeset;
         private readonly PeerConnectivityChecker peerConnectivityChecker;
+        private readonly EntryPoint entryPoint;
 
         public Deployer(Configuration config)
         {
             this.config = config;
-            timeset = new DefaultTimeSet();
             peerConnectivityChecker = new PeerConnectivityChecker();
+            
+            entryPoint = CreateEntryPoint(new NullLog());
+        }
+
+        public void AnnouncePlugins()
+        {
+            var ep = CreateEntryPoint(new ConsoleLog());
+
+            Log("Using plugins:" + Environment.NewLine);
+            ep.Announce();
+            Log("");
+            var metadata = ep.GetPluginMetadata();
+            foreach (var entry in metadata)
+            {
+                Log($"{entry.Key}   =   {entry.Value}");
+            }
+            Log("");
         }
 
         public CodexDeployment Deploy()
         {
             Log("Initializing...");
-            var lifecycle = CreateTestLifecycle();
+            var ci = entryPoint.CreateInterface();
 
-            Log("Preparing configuration...");
-            // We trick the Geth companion node into unlocking all of its accounts, by saying we want to start 999 codex nodes.
-            var setup = new CodexSetup(999, config.CodexLogLevel);
-            setup.WithStorageQuota(config.StorageQuota!.Value.MB()).EnableMarketplace(0.TestTokens());
-            setup.MetricsMode = config.Metrics;
+            Log("Deploying Geth instance...");
+            var gethDeployment = ci.DeployGeth(s => s.IsMiner());
+            var gethNode = ci.WrapGethDeployment(gethDeployment);
 
-            Log("Creating Geth instance and deploying contracts...");
-            var gethStarter = new GethStarter(lifecycle);
-            var gethResults = gethStarter.BringOnlineMarketplaceFor(setup);
-
-            Log("Geth started. Codex contracts deployed.");
-            Log("Warning: It can take up to 45 minutes for the Geth node to finish unlocking all if its 1000 preconfigured accounts.");
-
-            // It takes a second for the geth node to unlock a single account. Let's assume 3.
-            // We can't start the codex nodes until their accounts are definitely unlocked. So
-            // We wait:
-            Thread.Sleep(TimeSpan.FromSeconds(3.0 * config.NumberOfCodexNodes!.Value));
+            Log("Geth started. Deploying Codex contracts...");
+            var contractsDeployment = ci.DeployCodexContracts(gethNode);
+            var contracts = ci.WrapCodexContractsDeployment(contractsDeployment);
+            Log("Codex contracts deployed.");
 
             Log("Starting Codex nodes...");
-
-            // Each node must have its own IP, so it needs it own pod. Start them 1 at a time.
-            var codexStarter = new CodexNodeStarter(config, lifecycle, gethResults, config.NumberOfValidators!.Value);
+            var codexStarter = new CodexNodeStarter(config, ci, gethNode, contracts, config.NumberOfValidators!.Value);
             var startResults = new List<CodexNodeStartResult>();
             for (var i = 0; i < config.NumberOfCodexNodes; i++)
             {
@@ -53,47 +60,40 @@ namespace CodexNetDeployer
                 if (result != null) startResults.Add(result);
             }
 
-            var (prometheusContainer, grafanaStartInfo) = StartMetricsService(lifecycle, setup, startResults.Select(r => r.Container));
+            Log("Codex nodes started.");
+            var metricsService = StartMetricsService(ci, startResults);
 
             CheckPeerConnectivity(startResults);
             CheckContainerRestarts(startResults);
 
-            return new CodexDeployment(gethResults, startResults.Select(r => r.Container).ToArray(), prometheusContainer, grafanaStartInfo, CreateMetadata());
+            var codexContainers = startResults.Select(s => s.CodexNode.Container).ToArray();
+            return new CodexDeployment(codexContainers, gethDeployment, metricsService, CreateMetadata());
         }
 
-        private TestLifecycle CreateTestLifecycle()
+        private EntryPoint CreateEntryPoint(ILog log)
         {
             var kubeConfig = GetKubeConfig(config.KubeConfigFile);
 
-            var lifecycleConfig = new DistTestCore.Configuration
-            (
-                kubeConfigFile: kubeConfig,
-                logPath: "null",
-                logDebug: false,
-                dataFilesPath: "notUsed",
-                codexLogLevel: config.CodexLogLevel,
-                k8sNamespacePrefix: config.KubeNamespace
-            );
+            var configuration = new KubernetesWorkflow.Configuration(
+                kubeConfig,
+                operationTimeout: TimeSpan.FromSeconds(30),
+                retryDelay: TimeSpan.FromSeconds(10),
+                kubernetesNamespace: config.KubeNamespace);
 
-            var lifecycle = new TestLifecycle(new NullLog(), lifecycleConfig, timeset, string.Empty);
-            DefaultContainerRecipe.TestsType = config.TestsTypePodLabel;
-            DefaultContainerRecipe.ApplicationIds = lifecycle.GetApplicationIds();
-            return lifecycle;
+            return new EntryPoint(log, configuration, string.Empty);
         }
 
-        private (RunningContainer?, GrafanaStartInfo?) StartMetricsService(TestLifecycle lifecycle, CodexSetup setup, IEnumerable<RunningContainer> codexContainers)
+        private RunningContainer? StartMetricsService(CoreInterface ci, List<CodexNodeStartResult> startResults)
         {
-            if (setup.MetricsMode == DistTestCore.Metrics.MetricsMode.None) return (null, null);
+            if (!config.Metrics) return null;
 
             Log("Starting metrics service...");
-            var runningContainers = new[] { new RunningContainers(null!, null!, codexContainers.ToArray()) };
-            var prometheusContainer = lifecycle.PrometheusStarter.CollectMetricsFor(runningContainers).Containers.Single();
 
-            if (setup.MetricsMode == DistTestCore.Metrics.MetricsMode.Record) return (prometheusContainer, null);
+            var runningContainer = ci.DeployMetricsCollector(startResults.Select(r => r.CodexNode).ToArray());
 
-            Log("Starting dashboard service...");
-            var grafanaStartInfo = lifecycle.GrafanaStarter.StartDashboard(prometheusContainer, setup);
-            return (prometheusContainer, grafanaStartInfo);
+            Log("Metrics service started.");
+
+            return runningContainer;
         }
 
         private string? GetKubeConfig(string kubeConfigFile)
@@ -106,7 +106,7 @@ namespace CodexNetDeployer
         {
             if (!config.CheckPeerConnection) return;
 
-            Log("Starting peer-connectivity check for deployed nodes...");
+            Log("Starting peer connectivity check for deployed nodes...");
             peerConnectivityChecker.CheckConnectivity(codexContainers);
             Log("Check passed.");
         }
@@ -114,19 +114,21 @@ namespace CodexNetDeployer
         private void CheckContainerRestarts(List<CodexNodeStartResult> startResults)
         {
             var crashes = new List<RunningContainer>();
+            Log("Starting container crash check...");
             foreach (var startResult in startResults)
             {
-                var watcher = startResult.Workflow.CreateCrashWatcher(startResult.Container);
-                if (watcher.HasContainerCrashed()) crashes.Add(startResult.Container);
+                var watcher = startResult.CodexNode.Container.CrashWatcher;
+                if (watcher == null) throw new Exception("Expected each CodexNode container to be created with a crash-watcher.");
+                if (watcher.HasContainerCrashed()) crashes.Add(startResult.CodexNode.Container);
             }
 
             if (!crashes.Any())
             {
-                Log("Container restart check passed.");
+                Log("Check passed.");
             }
             else
             {
-                Log($"Deployment failed. The following containers have crashed: {string.Join(",", crashes.Select(c => c.Name))}");
+                Log($"Check failed. The following containers have crashed: {string.Join(",", crashes.Select(c => c.Name))}");
                 throw new Exception("Deployment failed: One or more containers crashed.");
             }
         }

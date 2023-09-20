@@ -1,6 +1,5 @@
 ﻿using ArgsUniform;
-using DistTestCore.Codex;
-using DistTestCore.Metrics;
+using CodexPlugin;
 
 namespace CodexNetDeployer
 {
@@ -51,8 +50,8 @@ namespace CodexNetDeployer
         [Uniform("block-mn", "bmn", "BLOCKMN", false, "Number of blocks maintained per interval. Default is 1000 blocks.")]
         public int BlockMN { get; set; } = 1000;
 
-        [Uniform("metrics", "m", "METRICS", false, "[None*, Record, Dashboard]. Determines if metrics will be recorded and if a dashboard service will be created.")]
-        public MetricsMode Metrics { get; set; } = MetricsMode.None;
+        [Uniform("metrics", "m", "METRICS", false, "[true, false]. Determines if metrics will be recorded. Default is false.")]
+        public bool Metrics { get; set; } = false;
 
         [Uniform("teststype-podlabel", "ttpl", "TESTSTYPE-PODLABEL", false, "Each kubernetes pod will be created with a label 'teststype' with value 'continuous'. " +
             "set this option to override the label value.")]

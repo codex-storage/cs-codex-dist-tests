@@ -1,8 +1,5 @@
 ﻿using ArgsUniform;
 using CodexNetDeployer;
-using DistTestCore.Codex;
-using DistTestCore.Marketplace;
-using DistTestCore.Metrics;
 using Newtonsoft.Json;
 using Configuration = CodexNetDeployer.Configuration;
 
@@ -26,12 +23,8 @@ public class Program
             return;
         }
 
-        Console.WriteLine("Using images:" + nl +
-            $"\tCodex image: '{new CodexContainerRecipe().Image}'" + nl +
-            $"\tCodexContracts image: '{new CodexContractsContainerRecipe().Image}'" + nl +
-            $"\tPrometheus image: '{new PrometheusContainerRecipe().Image}'" + nl +
-            $"\tGeth image: '{new GethContainerRecipe().Image}'" + nl +
-            $"\tGrafana image: '{new GrafanaContainerRecipe().Image}'" + nl);
+        var deployer = new Deployer(config);
+        deployer.AnnouncePlugins();
 
         if (!args.Any(a => a == "-y"))
         {
@@ -40,7 +33,6 @@ public class Program
             Console.WriteLine("I think so too.");
         }
 
-        var deployer = new Deployer(config);
         var deployment = deployer.Deploy();
 
         Console.WriteLine("Writing codex-deployment.json...");

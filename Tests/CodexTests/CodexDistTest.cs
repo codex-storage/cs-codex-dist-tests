@@ -29,7 +29,7 @@ namespace Tests
 
         public ICodexNodeGroup AddCodex(int numberOfNodes, Action<ICodexSetup> setup)
         {
-            var group = Ci.SetupCodexNodes(numberOfNodes, s =>
+            var group = Ci.StartCodexNodes(numberOfNodes, s =>
             {
                 setup(s);
                 OnCodexSetup(s);

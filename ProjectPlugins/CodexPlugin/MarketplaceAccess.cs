@@ -8,7 +8,7 @@ namespace CodexPlugin
 {
     public interface IMarketplaceAccess
     {
-        string MakeStorageAvailable(ByteSize size, TestToken minPricePerBytePerSecond, TestToken maxCollateral, TimeSpan maxDuration);
+        string MakeStorageAvailable(ByteSize size, TestToken minPriceForTotalSpace, TestToken maxCollateral, TimeSpan maxDuration);
         StoragePurchaseContract RequestStorage(ContentId contentId, TestToken pricePerSlotPerSecond, TestToken requiredCollateral, uint minRequiredNumberOfNodes, int proofProbability, TimeSpan duration);
     }
 

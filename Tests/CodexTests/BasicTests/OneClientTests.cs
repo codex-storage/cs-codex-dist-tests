@@ -11,7 +11,7 @@ namespace Tests.BasicTests
         [Test]
         public void OneClientTest()
         {
-            var primary = Ci.SetupCodexNode();
+            var primary = Ci.StartCodexNode();
 
             PerformOneClientTest(primary);
         }
@@ -19,11 +19,11 @@ namespace Tests.BasicTests
         [Test]
         public void RestartTest()
         {
-            var primary = Ci.SetupCodexNode();
+            var primary = Ci.StartCodexNode();
 
             primary.Stop();
 
-            primary = Ci.SetupCodexNode();
+            primary = Ci.StartCodexNode();
 
             PerformOneClientTest(primary);
         }

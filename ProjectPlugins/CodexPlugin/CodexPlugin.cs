@@ -31,7 +31,7 @@ namespace CodexPlugin
         {
         }
 
-        public RunningContainers[] StartCodexNodes(int numberOfNodes, Action<ICodexSetup> setup)
+        public RunningContainers[] DeployCodexNodes(int numberOfNodes, Action<ICodexSetup> setup)
         {
             var codexSetup = GetSetup(numberOfNodes, setup);
             return codexStarter.BringOnline(codexSetup);

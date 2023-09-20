@@ -17,7 +17,7 @@ namespace Tests.BasicTests
         [Test]
         public void SetUpANodeAndWait()
         {
-            node = Ci.SetupCodexNode();
+            node = Ci.StartCodexNode();
 
             Time.WaitUntil(() => node == null, TimeSpan.FromMinutes(5), TimeSpan.FromSeconds(5));
         }
@@ -25,7 +25,7 @@ namespace Tests.BasicTests
         [Test]
         public void ForeignNodeConnects()
         {
-            var myNode = Ci.SetupCodexNode();
+            var myNode = Ci.StartCodexNode();
 
             Time.WaitUntil(() => node != null, TimeSpan.FromMinutes(1), TimeSpan.FromSeconds(5));
 
