@@ -57,7 +57,7 @@ namespace CodexNetDeployer
             "set this option to override the label value.")]
         public string TestsTypePodLabel { get; set; } = "continuous-tests";
 
-        [Uniform("check-connect", "cc", "CHECKCONNECT", false, "If true, deployer check ensure peer-connectivity between all deployed nodes after deployment.")]
+        [Uniform("check-connect", "cc", "CHECKCONNECT", false, "If true, deployer check ensure peer-connectivity between all deployed nodes after deployment. Default is false.")]
         public bool CheckPeerConnection { get; set; } = false;
        
         public List<string> Validate()

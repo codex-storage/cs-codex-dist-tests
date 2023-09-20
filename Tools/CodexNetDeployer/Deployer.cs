@@ -117,7 +117,7 @@ namespace CodexNetDeployer
             Log("Starting container crash check...");
             foreach (var startResult in startResults)
             {
-                var watcher = startResult.CodexNode.Container.CrashWatcher;
+                var watcher = startResult.CodexNode.CrashWatcher;
                 if (watcher == null) throw new Exception("Expected each CodexNode container to be created with a crash-watcher.");
                 if (watcher.HasContainerCrashed()) crashes.Add(startResult.CodexNode.Container);
             }

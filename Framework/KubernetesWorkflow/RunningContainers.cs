@@ -42,9 +42,6 @@ namespace KubernetesWorkflow
         public Address ClusterInternalAddress { get; }
 
         [JsonIgnore]
-        public CrashWatcher? CrashWatcher { get; set; }
-
-        [JsonIgnore]
         public Address Address
         {
             get

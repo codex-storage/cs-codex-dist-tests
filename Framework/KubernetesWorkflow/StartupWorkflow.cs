@@ -6,6 +6,7 @@ namespace KubernetesWorkflow
     public interface IStartupWorkflow
     {
         RunningContainers Start(int numberOfContainers, Location location, ContainerRecipeFactory recipeFactory, StartupConfig startupConfig);
+        CrashWatcher CreateCrashWatcher(RunningContainer container);
         void Stop(RunningContainers runningContainers);
         void DownloadContainerLog(RunningContainer container, ILogHandler logHandler, int? tailLines = null);
         string ExecuteCommand(RunningContainer container, string command, params string[] args);
@@ -39,12 +40,15 @@ namespace KubernetesWorkflow
                 var runningPod = controller.BringOnline(recipes, location);
                 var containers = CreateContainers(runningPod, recipes, startupConfig);
 
-                if (startupConfig.CreateCrashWatcher) CreateCrashWatchers(controller, containers);
-
                 var rc = new RunningContainers(startupConfig, runningPod, containers);
                 cluster.Configuration.Hooks.OnContainersStarted(rc);
                 return rc;
             });
+        }
+
+        public CrashWatcher CreateCrashWatcher(RunningContainer container)
+        {
+            return K8s(c => c.CreateCrashWatcher(container));
         }
 
         public void Stop(RunningContainers runningContainers)
@@ -86,14 +90,6 @@ namespace KubernetesWorkflow
             {
                 controller.DeleteAllNamespacesStartingWith(namespacePrefix);
             });
-        }
-
-        private void CreateCrashWatchers(K8sController controller, RunningContainer[] runningContainers)
-        {
-            foreach (var container in runningContainers)
-            {
-                container.CrashWatcher = controller.CreateCrashWatcher(container);
-            }
         }
 
         private RunningContainer[] CreateContainers(RunningPod runningPod, ContainerRecipe[] recipes, StartupConfig startupConfig)

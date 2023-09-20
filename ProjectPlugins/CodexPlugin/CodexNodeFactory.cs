@@ -1,11 +1,13 @@
 ﻿using Core;
 using GethPlugin;
+using KubernetesWorkflow;
 
 namespace CodexPlugin
 {
     public interface ICodexNodeFactory
     {
         CodexNode CreateOnlineCodexNode(CodexAccess access, CodexNodeGroup group);
+        CrashWatcher CreateCrashWatcher(RunningContainer c);
     }
 
     public class CodexNodeFactory : ICodexNodeFactory
@@ -35,6 +37,11 @@ namespace CodexPlugin
             var mStart = access.Container.Recipe.Additionals.Get<MarketplaceStartResults>();
             if (mStart == null) return null;
             return mStart.EthAddress;
+        }
+
+        public CrashWatcher CreateCrashWatcher(RunningContainer c)
+        {
+            return tools.CreateWorkflow().CreateCrashWatcher(c);
         }
     }
 }

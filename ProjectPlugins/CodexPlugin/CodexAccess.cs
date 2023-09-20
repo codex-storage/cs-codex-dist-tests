@@ -8,16 +8,18 @@ namespace CodexPlugin
         private readonly IPluginTools tools;
         private bool hasContainerCrashed;
 
-        public CodexAccess(IPluginTools tools, RunningContainer container)
+        public CodexAccess(IPluginTools tools, RunningContainer container, CrashWatcher crashWatcher)
         {
             this.tools = tools;
             Container = container;
+            CrashWatcher = crashWatcher;
             hasContainerCrashed = false;
 
-            if (container.CrashWatcher != null) container.CrashWatcher.Start(this);
+            CrashWatcher.Start(this);
         }
 
         public RunningContainer Container { get; }
+        public CrashWatcher CrashWatcher { get; }
 
         public CodexDebugResponse GetDebugInfo()
         {

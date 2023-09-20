@@ -12,5 +12,5 @@ dotnet run \
     --block-ttl=180 \
     --block-mi=120 \
     --block-mn=10000 \
-    --metrics=true \
+    --metrics=1 \
     --check-connect=1

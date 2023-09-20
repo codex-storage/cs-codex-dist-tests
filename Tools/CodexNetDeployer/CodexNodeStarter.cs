@@ -12,7 +12,7 @@ namespace CodexNetDeployer
         private readonly CoreInterface ci;
         private readonly IGethNode gethNode;
         private readonly ICodexContracts contracts;
-        private string bootstrapSpr = "";
+        private ICodexNode? bootstrapNode = null;
         private int validatorsLeft;
 
         public CodexNodeStarter(Configuration config, CoreInterface ci, IGethNode gethNode, ICodexContracts contracts, int numberOfValidators)
@@ -27,7 +27,7 @@ namespace CodexNetDeployer
         public CodexNodeStartResult? Start(int i)
         {
             var name = GetCodexContainerName(i);
-            Console.Write($" - {i} ({name}) = ");
+            Console.Write($" - {i} ({name}) \t= ");
 
             ICodexNode? codexNode = null;
             try
@@ -40,6 +40,7 @@ namespace CodexNetDeployer
                     s.EnableMarketplace(gethNode, contracts, 100.Eth(), config.InitialTestTokens.TestTokens(), validatorsLeft > 0);
                     s.EnableMetrics();
 
+                    if (bootstrapNode != null) s.WithBootstrapNode(bootstrapNode);
                     if (config.BlockTTL != Configuration.SecondsIn1Day) s.WithBlockTTL(TimeSpan.FromSeconds(config.BlockTTL));
                     if (config.BlockMI != Configuration.TenMinutes) s.WithBlockMaintenanceInterval(TimeSpan.FromSeconds(config.BlockMI));
                     if (config.BlockMN != 1000) s.WithBlockMaintenanceNumber(config.BlockMN);
@@ -60,8 +61,8 @@ namespace CodexNetDeployer
                     {
                         Console.Write("Storage available\tOK" + Environment.NewLine);
 
-                        if (string.IsNullOrEmpty(bootstrapSpr)) bootstrapSpr = debugInfo.spr;
                         validatorsLeft--;
+                        if (bootstrapNode == null) bootstrapNode = codexNode;
                         return new CodexNodeStartResult(codexNode);
                     }
                 }

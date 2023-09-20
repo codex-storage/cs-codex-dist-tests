@@ -18,6 +18,7 @@ namespace CodexPlugin
         void ConnectToPeer(ICodexNode node);
         CodexDebugVersionResponse Version { get; }
         IMarketplaceAccess Marketplace { get; }
+        CrashWatcher CrashWatcher { get; }
         void Stop();
     }
 
@@ -40,6 +41,7 @@ namespace CodexPlugin
 
         public RunningContainer Container { get { return CodexAccess.Container; } }
         public CodexAccess CodexAccess { get; }
+        public CrashWatcher CrashWatcher { get => CodexAccess.CrashWatcher; }
         public CodexNodeGroup Group { get; }
         public IMarketplaceAccess Marketplace { get; }
         public CodexDebugVersionResponse Version { get; private set; }

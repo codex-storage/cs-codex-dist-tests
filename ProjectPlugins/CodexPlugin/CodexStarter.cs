@@ -46,10 +46,10 @@ namespace CodexPlugin
         public void BringOffline(CodexNodeGroup group)
         {
             Log($"Stopping {group.Describe()}...");
+            StopCrashWatcher(group);
             var workflow = pluginTools.CreateWorkflow();
             foreach (var c in group.Containers)
             {
-                StopCrashWatcher(c);
                 workflow.Stop(c);
             }
             Log("Stopped.");
@@ -65,7 +65,6 @@ namespace CodexPlugin
         {
             var startupConfig = new StartupConfig();
             startupConfig.NameOverride = codexSetup.NameOverride;
-            startupConfig.CreateCrashWatcher = true;
             startupConfig.Add(codexSetup);
             return startupConfig;
         }
@@ -114,11 +113,11 @@ namespace CodexPlugin
             pluginTools.GetLog().Log(message);
         }
 
-        private void StopCrashWatcher(RunningContainers containers)
+        private void StopCrashWatcher(CodexNodeGroup group)
         {
-            foreach (var c in containers.Containers)
+            foreach (var node in group)
             {
-                c.CrashWatcher?.Stop();
+                node.CrashWatcher.Stop();
             }
         }
     }

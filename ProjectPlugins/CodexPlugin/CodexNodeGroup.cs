@@ -76,7 +76,8 @@ namespace CodexPlugin
 
         private CodexNode CreateOnlineCodexNode(RunningContainer c, IPluginTools tools, ICodexNodeFactory factory)
         {
-            var access = new CodexAccess(tools, c);
+            var watcher = factory.CreateCrashWatcher(c);
+            var access = new CodexAccess(tools, c, watcher);
             return factory.CreateOnlineCodexNode(access, this);
         }
     }
