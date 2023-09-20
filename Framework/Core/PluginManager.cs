@@ -59,20 +59,4 @@
             }
         }
     }
-
-    public interface IProjectPlugin
-    {
-        void Announce();
-        void Decommission();
-    }
-
-    public interface IHasLogPrefix
-    {
-        string LogPrefix { get; }
-    }
-
-    public interface IHasMetadata
-    {
-        void AddMetadata(IAddMetadata metadata);
-    }
 }

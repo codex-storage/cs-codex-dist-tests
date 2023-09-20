@@ -5,6 +5,14 @@ namespace ContinuousTests
 {
     public class EntryPointFactory
     {
+        public EntryPointFactory()
+        {
+            ProjectPlugin.Load<CodexPlugin.CodexPlugin>();
+            ProjectPlugin.Load<CodexContractsPlugin.CodexContractsPlugin>();
+            ProjectPlugin.Load<GethPlugin.GethPlugin>();
+            ProjectPlugin.Load<MetricsPlugin.MetricsPlugin>();
+        }
+
         public EntryPoint CreateEntryPoint(string kubeConfigFile, string dataFilePath, string customNamespace, ILog log)
         {
             var kubeConfig = GetKubeConfig(kubeConfigFile);

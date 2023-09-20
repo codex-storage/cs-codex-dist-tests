@@ -1,16 +1,24 @@
 ﻿using CodexContractsPlugin;
 using CodexPlugin;
+using Core;
 using DistTestCore;
 using DistTestCore.Helpers;
 using GethPlugin;
 using NUnit.Framework.Constraints;
-using Utils;
 
 namespace Tests
 {
     public class CodexDistTest : DistTest
     {
         private readonly List<ICodexNode> onlineCodexNodes = new List<ICodexNode>();
+
+        public CodexDistTest()
+        {
+            ProjectPlugin.Load<CodexPlugin.CodexPlugin>();
+            ProjectPlugin.Load<CodexContractsPlugin.CodexContractsPlugin>();
+            ProjectPlugin.Load<GethPlugin.GethPlugin>();
+            ProjectPlugin.Load<MetricsPlugin.MetricsPlugin>();
+        }
 
         public ICodexNode AddCodex()
         {

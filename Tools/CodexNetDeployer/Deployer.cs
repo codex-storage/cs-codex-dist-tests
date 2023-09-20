@@ -18,7 +18,11 @@ namespace CodexNetDeployer
         {
             this.config = config;
             peerConnectivityChecker = new PeerConnectivityChecker();
-            
+
+            ProjectPlugin.Load<CodexPlugin.CodexPlugin>();
+            ProjectPlugin.Load<CodexContractsPlugin.CodexContractsPlugin>();
+            ProjectPlugin.Load<GethPlugin.GethPlugin>();
+            ProjectPlugin.Load<MetricsPlugin.MetricsPlugin>();
             entryPoint = CreateEntryPoint(new NullLog());
         }
 
@@ -27,8 +31,6 @@ namespace CodexNetDeployer
             var ep = CreateEntryPoint(new ConsoleLog());
 
             Log("Using plugins:" + Environment.NewLine);
-            ep.Announce();
-            Log("");
             var metadata = ep.GetPluginMetadata();
             foreach (var entry in metadata)
             {
