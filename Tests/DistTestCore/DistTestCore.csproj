@@ -19,10 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Core\Core.csproj" />
-    <ProjectReference Include="..\FileUtils\FileUtils.csproj" />
-    <ProjectReference Include="..\KubernetesWorkflow\KubernetesWorkflow.csproj" />
-    <ProjectReference Include="..\Logging\Logging.csproj" />
-    <ProjectReference Include="..\Nethereum\NethereumWorkflow.csproj" />
+    <ProjectReference Include="..\..\Framework\Core\Core.csproj" />
+    <ProjectReference Include="..\..\Framework\FileUtils\FileUtils.csproj" />
   </ItemGroup>
 </Project>

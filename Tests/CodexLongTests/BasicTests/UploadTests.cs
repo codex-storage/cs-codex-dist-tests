@@ -1,12 +1,14 @@
+using CodexPlugin;
 using DistTestCore;
 using FileUtils;
 using NUnit.Framework;
+using Tests;
 using Utils;
 
-namespace TestsLong.BasicTests
+namespace CodexLongTests.BasicTests
 {
     [TestFixture]
-    public class UploadTests : DistTest
+    public class UploadTests : CodexDistTest
     {
         [TestCase(3, 50)]
         [TestCase(5, 75)]
@@ -14,15 +16,15 @@ namespace TestsLong.BasicTests
         [UseLongTimeouts]
         public void ParallelUpload(int numberOfNodes, int filesizeMb)
         {
-            var group = SetupCodexNodes(numberOfNodes);
-            var host = SetupCodexNode();
+            var group = AddCodex(numberOfNodes);
+            var host = AddCodex();
 
             foreach (var node in group)
             {
                 host.ConnectToPeer(node);
             }
 
-            var testfiles = new List<TestFile>();
+            var testfiles = new List<TrackedFile>();
             var contentIds = new List<Task<ContentId>>();
 
             for (int i = 0; i < group.Count(); i++)
@@ -31,7 +33,7 @@ namespace TestsLong.BasicTests
                 var n = i;
                 contentIds.Add(Task.Run(() => { return host.UploadFile(testfiles[n]); }));
             }
-            var downloads = new List<Task<TestFile?>>();
+            var downloads = new List<Task<TrackedFile?>>();
             for (int i = 0; i < group.Count(); i++)
             {
                 var n = i;

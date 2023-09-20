@@ -13,6 +13,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\Framework\Core\Core.csproj" />
+    <ProjectReference Include="..\CodexTests\CodexTests.csproj" />
     <ProjectReference Include="..\DistTestCore\DistTestCore.csproj" />
   </ItemGroup>
 

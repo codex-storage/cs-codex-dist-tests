@@ -1,12 +1,13 @@
 using DistTestCore;
 using FileUtils;
 using NUnit.Framework;
+using Tests;
 using Utils;
 
-namespace TestsLong.BasicTests
+namespace CodexLongTests.BasicTests
 {
     [TestFixture]
-    public class DownloadTests : DistTest
+    public class DownloadTests : CodexDistTest
     {
         [TestCase(3, 500)]
         [TestCase(5, 100)]
@@ -14,8 +15,8 @@ namespace TestsLong.BasicTests
         [UseLongTimeouts]
         public void ParallelDownload(int numberOfNodes, int filesizeMb)
         {
-            var group = SetupCodexNodes(numberOfNodes);
-            var host = SetupCodexNode();
+            var group = AddCodex(numberOfNodes);
+            var host = AddCodex();
 
             foreach (var node in group)
             {
@@ -24,7 +25,7 @@ namespace TestsLong.BasicTests
 
             var testFile = GenerateTestFile(filesizeMb.MB());
             var contentId = host.UploadFile(testFile);
-            var list = new List<Task<TestFile?>>();
+            var list = new List<Task<TrackedFile?>>();
 
             foreach (var node in group)
             {

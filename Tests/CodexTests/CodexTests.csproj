@@ -13,11 +13,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\CodexContractsPlugin\CodexContractsPlugin.csproj" />
-    <ProjectReference Include="..\CodexPlugin\CodexPlugin.csproj" />
+    <ProjectReference Include="..\..\ProjectPlugins\CodexContractsPlugin\CodexContractsPlugin.csproj" />
+    <ProjectReference Include="..\..\ProjectPlugins\CodexPlugin\CodexPlugin.csproj" />
+    <ProjectReference Include="..\..\ProjectPlugins\GethPlugin\GethPlugin.csproj" />
+    <ProjectReference Include="..\..\ProjectPlugins\MetricsPlugin\MetricsPlugin.csproj" />
     <ProjectReference Include="..\DistTestCore\DistTestCore.csproj" />
-    <ProjectReference Include="..\GethPlugin\GethPlugin.csproj" />
-    <ProjectReference Include="..\MetricsPlugin\MetricsPlugin.csproj" />
   </ItemGroup>
 
 </Project>

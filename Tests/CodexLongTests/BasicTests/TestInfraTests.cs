@@ -1,14 +1,15 @@
 ﻿using DistTestCore;
 using NUnit.Framework;
+using Tests;
 
-namespace TestsLong.BasicTests
+namespace CodexLongTests.BasicTests
 {
-    public class TestInfraTests : DistTest
+    public class TestInfraTests : CodexDistTest
     {
         [Test, UseLongTimeouts]
         public void TestInfraShouldHave1000AddressSpacesPerPod()
         {
-            var group = SetupCodexNodes(1000, s => s.EnableMetrics()); // Increases use of port address space per node.
+            var group = AddCodex(1000, s => s.EnableMetrics());
 
             var nodeIds = group.Select(n => n.GetDebugInfo().id).ToArray();
 
@@ -21,7 +22,7 @@ namespace TestsLong.BasicTests
         {
             for (var i = 0; i < 20; i++)
             {
-                var n = SetupCodexNode();
+                var n = AddCodex();
 
                 Assert.That(!string.IsNullOrEmpty(n.GetDebugInfo().id));
             }

@@ -1,13 +1,14 @@
-﻿using DistTestCore;
-using DistTestCore.Codex;
+﻿using CodexPlugin;
+using DistTestCore;
 using NUnit.Framework;
 using NUnit.Framework.Interfaces;
+using Tests;
 using Utils;
 
-namespace TestsLong.BasicTests
+namespace CodexLongTests.BasicTests
 {
     [TestFixture]
-    public class LargeFileTests : DistTest
+    public class LargeFileTests : CodexDistTest
     {
         #region Abort test run after first failure
 
@@ -47,7 +48,7 @@ namespace TestsLong.BasicTests
 
             var expectedFile = GenerateTestFile(sizeMB);
 
-            var node = SetupCodexNode(s => s.WithStorageQuota((size + 10).MB()));
+            var node = AddCodex(s => s.WithStorageQuota((size + 10).MB()));
 
             var uploadStart = DateTime.UtcNow;
             var cid = node.UploadFile(expectedFile);
