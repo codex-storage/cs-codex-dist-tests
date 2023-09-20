@@ -6,7 +6,7 @@ namespace GethPlugin
 {
     public interface IGethNode
     {
-        IGethStartResult StartResult { get; }
+        IGethDeployment StartResult { get; }
 
         Ether GetEthBalance();
         Ether GetEthBalance(IHasEthAddress address);
@@ -23,14 +23,14 @@ namespace GethPlugin
     {
         private readonly ILog log;
 
-        public GethNode(ILog log, IGethStartResult startResult)
+        public GethNode(ILog log, IGethDeployment startResult)
         {
             this.log = log;
             StartResult = startResult;
             Account = startResult.AllAccounts.Accounts.First();
         }
 
-        public IGethStartResult StartResult { get; }
+        public IGethDeployment StartResult { get; }
         public GethAccount Account { get; }
 
         public Ether GetEthBalance()

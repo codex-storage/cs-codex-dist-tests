@@ -39,7 +39,8 @@ namespace CodexPlugin
 
         public ICodexNodeGroup WrapCodexContainers(CoreInterface coreInterface, RunningContainers[] containers)
         {
-            return codexStarter.WrapCodexContainers(coreInterface, containers);
+            var cs = containers.Select(c => SerializeGate.Gate(c)).ToArray();
+            return codexStarter.WrapCodexContainers(coreInterface, cs);
         }
 
         public void WireUpMarketplace(ICodexNodeGroup result, Action<ICodexSetup> setup)

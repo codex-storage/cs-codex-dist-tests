@@ -2,7 +2,7 @@
 
 namespace GethPlugin
 {
-    public interface IGethStartResult
+    public interface IGethDeployment
     {
         RunningContainer RunningContainer { get; }
         Port DiscoveryPort { get; }
@@ -12,9 +12,9 @@ namespace GethPlugin
         string PubKey { get; }
     }
 
-    public class GethStartResult : IGethStartResult
+    public class GethDeployment : IGethDeployment
     {
-        public GethStartResult(RunningContainer runningContainer, Port discoveryPort, Port httpPort, Port wsPort, AllGethAccounts allAccounts, string pubKey)
+        public GethDeployment(RunningContainer runningContainer, Port discoveryPort, Port httpPort, Port wsPort, AllGethAccounts allAccounts, string pubKey)
         {
             RunningContainer = runningContainer;
             DiscoveryPort = discoveryPort;

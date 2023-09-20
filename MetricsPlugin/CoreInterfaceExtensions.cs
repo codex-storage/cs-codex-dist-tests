@@ -6,19 +6,19 @@ namespace MetricsPlugin
 {
     public static class CoreInterfaceExtensions
     {
-        public static RunningContainer StartMetricsCollector(this CoreInterface ci, params IHasMetricsScrapeTarget[] scrapeTargets)
+        public static RunningContainer DeployMetricsCollector(this CoreInterface ci, params IHasMetricsScrapeTarget[] scrapeTargets)
         {
-            return Plugin(ci).StartMetricsCollector(scrapeTargets.Select(t => t.MetricsScrapeTarget).ToArray());
+            return Plugin(ci).DeployMetricsCollector(scrapeTargets.Select(t => t.MetricsScrapeTarget).ToArray());
         }
 
-        public static RunningContainer StartMetricsCollector(this CoreInterface ci, params IMetricsScrapeTarget[] scrapeTargets)
+        public static RunningContainer DeployMetricsCollector(this CoreInterface ci, params IMetricsScrapeTarget[] scrapeTargets)
         {
-            return Plugin(ci).StartMetricsCollector(scrapeTargets);
+            return Plugin(ci).DeployMetricsCollector(scrapeTargets);
         }
 
-        public static IMetricsAccess GetMetricsFor(this CoreInterface ci, RunningContainer metricsContainer, IMetricsScrapeTarget scrapeTarget)
+        public static IMetricsAccess WrapMetricsCollector(this CoreInterface ci, RunningContainer metricsContainer, IMetricsScrapeTarget scrapeTarget)
         {
-            return Plugin(ci).CreateAccessForTarget(metricsContainer, scrapeTarget);
+            return Plugin(ci).WrapMetricsCollectorDeployment(metricsContainer, scrapeTarget);
         }
 
         public static IMetricsAccess[] GetMetricsFor(this CoreInterface ci, params IHasManyMetricScrapeTargets[] manyScrapeTargets)
@@ -33,8 +33,8 @@ namespace MetricsPlugin
 
         public static IMetricsAccess[] GetMetricsFor(this CoreInterface ci, params IMetricsScrapeTarget[] scrapeTargets)
         {
-            var rc = ci.StartMetricsCollector(scrapeTargets);
-            return scrapeTargets.Select(t => ci.GetMetricsFor(rc, t)).ToArray();
+            var rc = ci.DeployMetricsCollector(scrapeTargets);
+            return scrapeTargets.Select(t => ci.WrapMetricsCollector(rc, t)).ToArray();
         }
 
         public static LogFile? DownloadAllMetrics(this CoreInterface ci, IMetricsAccess metricsAccess, string targetName)

@@ -52,7 +52,7 @@ namespace Tests.BasicTests
             var fileSize = 10.MB();
 
             var geth = Ci.StartGethNode(s => s.IsMiner().WithName("disttest-geth"));
-            var contracts = Ci.DeployCodexContracts(geth);
+            var contracts = Ci.StartCodexContracts(geth);
 
             var seller = AddCodex(s => s
                             .WithStorageQuota(11.GB())

@@ -29,16 +29,16 @@ namespace GethPlugin
         {
         }
 
-        public IGethStartResult StartGeth(Action<IGethSetup> setup)
+        public IGethDeployment DeployGeth(Action<IGethSetup> setup)
         {
             var startupConfig = new GethStartupConfig();
             setup(startupConfig);
             return starter.StartGeth(startupConfig);
         }
 
-        public IGethNode WrapGethContainer(IGethStartResult startResult)
+        public IGethNode WrapGethDeployment(IGethDeployment startResult)
         {
-            return starter.WrapGethContainer(startResult);
+            return starter.WrapGethContainer(SerializeGate.Gate(startResult));
         }
     }
 }

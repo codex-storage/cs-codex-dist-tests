@@ -15,7 +15,7 @@ namespace CodexContractsPlugin
             this.tools = tools;
         }
 
-        public ICodexContracts Start(IGethNode gethNode)
+        public ICodexContractsDeployment Deploy(IGethNode gethNode)
         {
             Log("Deploying Codex SmartContracts...");
 
@@ -47,7 +47,12 @@ namespace CodexContractsPlugin
 
             Log("Synced. Codex SmartContracts deployed.");
 
-            return new CodexContractsAccess(tools.GetLog(), marketplaceAddress, abi, tokenAddress);
+            return new CodexContractsDeployment(marketplaceAddress, abi, tokenAddress);
+        }
+
+        public ICodexContracts Wrap(ICodexContractsDeployment deployment)
+        {
+            return new CodexContractsAccess(tools.GetLog(), deployment);
         }
 
         private void Log(string msg)

@@ -26,8 +26,8 @@ namespace CodexPlugin
 
         protected override void Initialize(StartupConfig startupConfig)
         {
-            SetResourcesRequest(milliCPUs: 1000, memory: 6.GB());
-            SetResourceLimits(milliCPUs: 4000, memory: 12.GB());
+            //SetResourcesRequest(milliCPUs: 1000, memory: 6.GB());
+            //SetResourceLimits(milliCPUs: 4000, memory: 12.GB());
 
             var config = startupConfig.Get<CodexStartupConfig>();
 
@@ -83,7 +83,7 @@ namespace CodexPlugin
                 var gethStart = mconfig.GethNode.StartResult;
                 var ip = gethStart.RunningContainer.Pod.PodInfo.Ip;
                 var port = gethStart.WsPort.Number;
-                var marketplaceAddress = mconfig.CodexContracts.MarketplaceAddress;
+                var marketplaceAddress = mconfig.CodexContracts.Deployment.MarketplaceAddress;
 
                 AddEnvVar("CODEX_ETH_PROVIDER", $"ws://{ip}:{port}");
                 AddEnvVar("CODEX_MARKETPLACE_ADDRESS", marketplaceAddress);
