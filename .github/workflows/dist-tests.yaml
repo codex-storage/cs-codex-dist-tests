@@ -41,7 +41,7 @@ env:
   SOURCE: ${{ format('{0}/{1}', github.server_url, github.repository) }}
   NAMEPREFIX: codex-dist-tests
   NAMESPACE: default
-  COMMAND: dotnet test Tests
+  COMMAND: dotnet test Tests/CodexTests
   JOB_MANIFEST: docker/job.yaml
   KUBE_CONFIG: ${{ secrets.KUBE_CONFIG }}
   KUBE_VERSION: v1.26.1

@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net7.0</TargetFramework>
+	  <RootNamespace>DistTestCore</RootNamespace>
+	  <ImplicitUsings>enable</ImplicitUsings>
+	  <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+	  <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+	  <PackageReference Include="nunit" Version="3.13.3" />
+	  <PackageReference Include="NUnit3TestAdapter" Version="4.4.2" />
+	  <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.5.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Framework\Core\Core.csproj" />
+    <ProjectReference Include="..\..\Framework\FileUtils\FileUtils.csproj" />
+  </ItemGroup>
+</Project>

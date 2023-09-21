@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net7.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Framework\ArgsUniform\ArgsUniform.csproj" />
+    <ProjectReference Include="..\..\Framework\Core\Core.csproj" />
+    <ProjectReference Include="..\..\ProjectPlugins\CodexPlugin\CodexPlugin.csproj" />
+    <ProjectReference Include="..\..\Tests\CodexTests\CodexTests.csproj" />
+  </ItemGroup>
+
+</Project>
