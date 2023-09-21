@@ -7,18 +7,27 @@ namespace CodexPlugin
 {
     public interface ICodexSetup
     {
-        ICodexSetup WithLogLevel(CodexLogLevel logLevel);
         ICodexSetup WithName(string name);
         ICodexSetup At(Location location);
         ICodexSetup WithBootstrapNode(ICodexNode node);
+        ICodexSetup WithLogLevel(CodexLogLevel level);
+        /// <summary>
+        /// Sets the log level for codex. The default level is INFO and the
+        /// log level is applied only to the supplied topics.
+        /// </summary>
+        ICodexSetup WithLogLevel(CodexLogLevel level, params string[] topics);
         ICodexSetup WithStorageQuota(ByteSize storageQuota);
         ICodexSetup WithBlockTTL(TimeSpan duration);
         ICodexSetup WithBlockMaintenanceInterval(TimeSpan duration);
         ICodexSetup WithBlockMaintenanceNumber(int numberOfBlocks);
         ICodexSetup EnableMetrics();
         ICodexSetup EnableMarketplace(IGethNode gethNode, ICodexContracts codexContracts, Ether initialEth, TestToken initialTokens, bool isValidator = false);
+        /// <summary>
+        /// Provides an invalid proof every N proofs
+        /// </summary>
+        ICodexSetup WithSimulateProofFailures(uint failEveryNProofs);
     }
-    
+
     public class CodexSetup : CodexStartupConfig, ICodexSetup
     {
         public int NumberOfNodes { get; }
@@ -26,12 +35,6 @@ namespace CodexPlugin
         public CodexSetup(int numberOfNodes)
         {
             NumberOfNodes = numberOfNodes;
-        }
-
-        public ICodexSetup WithLogLevel(CodexLogLevel logLevel)
-        {
-            LogLevel = logLevel;
-            return this;
         }
 
         public ICodexSetup WithName(string name)
@@ -49,6 +52,19 @@ namespace CodexPlugin
         public ICodexSetup WithBootstrapNode(ICodexNode node)
         {
             BootstrapSpr = node.GetDebugInfo().spr;
+            return this;
+        }
+
+        public ICodexSetup WithLogLevel(CodexLogLevel level)
+        {
+            LogLevel = level;
+            return this;
+        }
+
+        public ICodexSetup WithLogLevel(CodexLogLevel level, params string[] topics)
+        {
+            LogLevel = level;
+            LogTopics = topics;
             return this;
         }
 
@@ -88,6 +104,12 @@ namespace CodexPlugin
             return this;
         }
 
+        public ICodexSetup WithSimulateProofFailures(uint failEveryNProofs)
+        {
+            SimulateProofFailures = failEveryNProofs;
+            return this;
+        }
+
         public string Describe()
         {
             var args = string.Join(',', DescribeArgs());
@@ -96,9 +118,11 @@ namespace CodexPlugin
 
         private IEnumerable<string> DescribeArgs()
         {
-            yield return $"LogLevel={LogLevel}";
+            yield return $"LogLevel={LogLevelWithTopics()}";
             if (BootstrapSpr != null) yield return $"BootstrapNode={BootstrapSpr}";
-            if (StorageQuota != null) yield return $"StorageQuote={StorageQuota}";
+            if (StorageQuota != null) yield return $"StorageQuota={StorageQuota}";
+            if (SimulateProofFailures != null) yield return $"SimulateProofFailures={SimulateProofFailures}";
+            if (MarketplaceConfig != null) yield return $"IsValidator={MarketplaceConfig.IsValidator}";
         }
     }
 }

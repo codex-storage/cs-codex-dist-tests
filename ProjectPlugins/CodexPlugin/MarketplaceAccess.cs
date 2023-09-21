@@ -151,6 +151,18 @@ namespace CodexPlugin
             WaitForStorageContractState(timeout, "finished");
         }
 
+        public void WaitForStorageContractFinished(ByteSize contractFileSize)
+        {
+            if (!contractStartUtc.HasValue)
+            {
+                WaitForStorageContractStarted(contractFileSize.ToTimeSpan());
+            }
+            var gracePeriod = TimeSpan.FromSeconds(10);
+            var currentContractTime = DateTime.UtcNow - contractStartUtc!.Value;
+            var timeout = (ContractDuration - currentContractTime) + gracePeriod;
+            WaitForStorageContractState(timeout, "finished");
+        }
+
         /// <summary>
         /// Wait for contract to start. Max timeout depends on contract filesize. Allows more time for larger files.
         /// </summary>
