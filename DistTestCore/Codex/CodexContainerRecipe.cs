@@ -22,7 +22,7 @@ namespace DistTestCore.Codex
         {
             Image = GetDockerImage();
 
-            Resources.Requests = new ContainerResourceSet(milliCPUs: 1000, memory: 6.GB());
+            Resources.Requests = new ContainerResourceSet(milliCPUs: 100, memory: 100.MB());
             Resources.Limits = new ContainerResourceSet(milliCPUs: 4000, memory: 12.GB());
         }
 
