@@ -7,7 +7,6 @@ namespace DistTestCore.Codex
     public class CodexContainerRecipe : DefaultContainerRecipe
     {
         private const string DefaultDockerImage = "codexstorage/nim-codex:latest-dist-tests";
-
         public const string MetricsPortTag = "metrics_port";
         public const string DiscoveryPortTag = "discovery-port";
 
@@ -17,7 +16,7 @@ namespace DistTestCore.Codex
 
         public override string AppName => "codex";
         public override string Image { get; }
-        
+
         public CodexContainerRecipe()
         {
             Image = GetDockerImage();
@@ -38,7 +37,7 @@ namespace DistTestCore.Codex
             AddVolume($"codex/{dataDir}", GetVolumeCapacity(config));
 
             AddInternalPortAndVar("CODEX_DISC_PORT", DiscoveryPortTag);
-            AddEnvVar("CODEX_LOG_LEVEL", config.LogLevel.ToString()!.ToUpperInvariant());
+            AddEnvVar("CODEX_LOG_LEVEL", config.LogLevelWithTopics());
 
             // This makes the node announce itself to its local (pod) IP address.
             AddEnvVar("NAT_IP_AUTO", "true");
@@ -76,6 +75,11 @@ namespace DistTestCore.Codex
                 AddPodAnnotation("prometheus.io/port", metricsPort.Number.ToString());
             }
 
+            if (config.SimulateProofFailures != null)
+            {
+                AddEnvVar("CODEX_SIMULATE_PROOF_FAILURES", config.SimulateProofFailures.ToString()!);
+            }
+
             if (config.MarketplaceConfig != null)
             {
                 var gethConfig = startupConfig.Get<GethStartResult>();
@@ -93,8 +97,12 @@ namespace DistTestCore.Codex
 
                 if (config.MarketplaceConfig.IsValidator)
                 {
-                    AddEnvVar("CODEX_VALIDATOR", "true");
+                   AddEnvVar("CODEX_VALIDATOR", "true");
                 }
+            }
+
+            if(!string.IsNullOrEmpty(config.NameOverride)) {
+                AddEnvVar("CODEX_NODENAME", config.NameOverride);
             }
         }
 
