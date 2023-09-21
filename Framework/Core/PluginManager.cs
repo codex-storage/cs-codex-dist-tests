@@ -2,11 +2,11 @@
 {
     internal class PluginManager
     {
-        private readonly List<IProjectPlugin> projectPlugins = new List<IProjectPlugin>();
+        private readonly List<PluginToolsPair> pairs = new List<PluginToolsPair>();
 
         internal void InstantiatePlugins(Type[] pluginTypes, IToolsFactory provider)
         {
-            projectPlugins.Clear();
+            pairs.Clear();
             foreach (var pluginType in pluginTypes)
             {
                 var tools = provider.CreateTools();
@@ -18,15 +18,15 @@
 
         internal void AnnouncePlugins()
         {
-            foreach (var plugin in projectPlugins) plugin.Announce();
+            foreach (var pair in pairs) pair.Plugin.Announce();
         }
 
         internal PluginMetadata GatherPluginMetadata()
         {
             var metadata = new PluginMetadata();
-            foreach (var plugin in projectPlugins)
+            foreach (var pair in pairs)
             {
-                if (plugin is IHasMetadata m)
+                if (pair.Plugin is IHasMetadata m)
                 {
                     m.AddMetadata(metadata);
                 }
@@ -34,20 +34,24 @@
             return metadata;
         }
 
-        internal void DecommissionPlugins()
+        internal void DecommissionPlugins(bool deleteKubernetesResources, bool deleteTrackedFiles)
         {
-            foreach (var plugin in projectPlugins) plugin.Decommission();
+            foreach (var pair in pairs)
+            {
+                pair.Plugin.Decommission();
+                pair.Tools.Decommission(deleteKubernetesResources, deleteTrackedFiles);
+            }
         }
 
         internal T GetPlugin<T>() where T : IProjectPlugin
         {
-            return (T)projectPlugins.Single(p => p.GetType() == typeof(T));
+            return (T)pairs.Single(p => p.Plugin.GetType() == typeof(T)).Plugin;
         }
 
         private IProjectPlugin InstantiatePlugins(Type pluginType, PluginTools tools)
         {
             var plugin = (IProjectPlugin)Activator.CreateInstance(pluginType, args: tools)!;
-            projectPlugins.Add(plugin);
+            pairs.Add(new PluginToolsPair(plugin, tools));
             return plugin;
         }
 
@@ -57,6 +61,18 @@
             {
                 tools.ApplyLogPrefix(hasLogPrefix.LogPrefix);
             }
+        }
+
+        private class PluginToolsPair
+        {
+            public PluginToolsPair(IProjectPlugin plugin, IPluginTools tools)
+            {
+                Plugin = plugin;
+                Tools = tools;
+            }
+
+            public IProjectPlugin Plugin { get; }
+            public IPluginTools Tools { get; }
         }
     }
 }

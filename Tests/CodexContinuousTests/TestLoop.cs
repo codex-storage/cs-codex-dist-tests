@@ -1,23 +1,22 @@
-﻿using Core;
-using Logging;
+﻿using Logging;
 
 namespace ContinuousTests
 {
     public class TestLoop
     {
-        private readonly EntryPoint entryPoint;
+        private readonly EntryPointFactory entryPointFactory;
         private readonly TaskFactory taskFactory;
         private readonly Configuration config;
-        private readonly BaseLog overviewLog;
+        private readonly ILog overviewLog;
         private readonly Type testType;
         private readonly TimeSpan runsEvery;
         private readonly StartupChecker startupChecker;
         private readonly CancellationToken cancelToken;
         private readonly EventWaitHandle runFinishedHandle = new EventWaitHandle(true, EventResetMode.ManualReset);
 
-        public TestLoop(Core.EntryPoint entryPoint, TaskFactory taskFactory, Configuration config, BaseLog overviewLog, Type testType, TimeSpan runsEvery, StartupChecker startupChecker, CancellationToken cancelToken)
+        public TestLoop(EntryPointFactory entryPointFactory, TaskFactory taskFactory, Configuration config, ILog overviewLog, Type testType, TimeSpan runsEvery, StartupChecker startupChecker, CancellationToken cancelToken)
         {
-            this.entryPoint = entryPoint;
+            this.entryPointFactory = entryPointFactory;
             this.taskFactory = taskFactory;
             this.config = config;
             this.overviewLog = overviewLog;
@@ -63,7 +62,7 @@ namespace ContinuousTests
         {
             var test = (ContinuousTest)Activator.CreateInstance(testType)!;
             var handle = new TestHandle(test);
-            var run = new SingleTestRun(entryPoint, taskFactory, config, overviewLog, handle, startupChecker, cancelToken);
+            var run = new SingleTestRun(entryPointFactory, taskFactory, config, overviewLog, handle, startupChecker, cancelToken);
 
             runFinishedHandle.Reset();
             run.Run(runFinishedHandle);

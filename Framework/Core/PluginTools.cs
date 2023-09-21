@@ -7,6 +7,7 @@ namespace Core
 {
     public interface IPluginTools : IWorkflowTool, ILogTool, IHttpFactoryTool, IFileTool
     {
+        void Decommission(bool deleteKubernetesResources, bool deleteTrackedFiles);
     }
 
     public interface IWorkflowTool
@@ -63,6 +64,12 @@ namespace Core
         public IStartupWorkflow CreateWorkflow(string? namespaceOverride = null)
         {
             return workflowCreator.CreateWorkflow(namespaceOverride);
+        }
+
+        public void Decommission(bool deleteKubernetesResources, bool deleteTrackedFiles)
+        {
+            if (deleteKubernetesResources) CreateWorkflow().DeleteNamespace();
+            if (deleteTrackedFiles) fileManager.DeleteAllFiles();
         }
 
         public IFileManager GetFileManager()

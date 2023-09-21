@@ -3,8 +3,6 @@ using Utils;
 using KubernetesWorkflow;
 using NUnit.Framework.Internal;
 using System.Reflection;
-using static Program;
-using FileUtils;
 using CodexPlugin;
 using DistTestCore.Logs;
 using Core;
@@ -17,18 +15,16 @@ namespace ContinuousTests
         private readonly EntryPoint entryPoint;
         private readonly TaskFactory taskFactory;
         private readonly Configuration config;
-        private readonly BaseLog overviewLog;
+        private readonly ILog overviewLog;
         private readonly TestHandle handle;
         private readonly CancellationToken cancelToken;
         private readonly ICodexNode[] nodes;
         private readonly FixtureLog fixtureLog;
         private readonly string testName;
-        private readonly string dataFolder;
         private static int failureCount = 0;
 
-        public SingleTestRun(EntryPoint entryPoint, TaskFactory taskFactory, Configuration config, BaseLog overviewLog, TestHandle handle, StartupChecker startupChecker, CancellationToken cancelToken)
+        public SingleTestRun(EntryPointFactory entryPointFactory, TaskFactory taskFactory, Configuration config, ILog overviewLog, TestHandle handle, StartupChecker startupChecker, CancellationToken cancelToken)
         {
-            this.entryPoint = entryPoint;
             this.taskFactory = taskFactory;
             this.config = config;
             this.overviewLog = overviewLog;
@@ -36,10 +32,10 @@ namespace ContinuousTests
             this.cancelToken = cancelToken;
             testName = handle.Test.GetType().Name;
             fixtureLog = new FixtureLog(new LogConfig(config.LogPath, true), DateTime.UtcNow, testName);
+            entryPoint = entryPointFactory.CreateEntryPoint(config.KubeConfigFile, config.DataPath, config.CodexDeployment.Metadata.KubeNamespace, fixtureLog);
             ApplyLogReplacements(fixtureLog, startupChecker);
 
             nodes = CreateRandomNodes();
-            dataFolder = config.DataPath + "-" + Guid.NewGuid();
         }
 
         public void Run(EventWaitHandle runFinishedHandle)
@@ -49,8 +45,11 @@ namespace ContinuousTests
                 try
                 {
                     RunTest();
-                    entryPoint.Tools.GetFileManager().DeleteAllFiles();
-                    Directory.Delete(dataFolder, true);
+
+                    entryPoint.Decommission(
+                        deleteKubernetesResources: false, // This would delete the continuous test net.
+                        deleteTrackedFiles: true
+                    );
                     runFinishedHandle.Set();
                 }
                 catch (Exception ex)

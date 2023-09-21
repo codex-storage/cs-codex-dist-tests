@@ -38,9 +38,10 @@ namespace Core
             return new CoreInterface(this);
         }
 
-        public void Decommission()
+        public void Decommission(bool deleteKubernetesResources, bool deleteTrackedFiles)
         {
-            manager.DecommissionPlugins();
+            manager.DecommissionPlugins(deleteKubernetesResources, deleteTrackedFiles);
+            Tools.Decommission(deleteKubernetesResources, deleteTrackedFiles);
         }
 
         internal T GetPlugin<T>() where T : IProjectPlugin

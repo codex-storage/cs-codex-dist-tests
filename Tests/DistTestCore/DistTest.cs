@@ -62,7 +62,11 @@ namespace DistTestCore
         [OneTimeTearDown]
         public void GlobalTearDown()
         {
-            globalEntryPoint.Decommission();
+            globalEntryPoint.Decommission(
+                // There shouldn't be any of either, but clean everything up regardless.
+                deleteKubernetesResources: true,
+                deleteTrackedFiles: true
+            );
         }
 
         [SetUp]

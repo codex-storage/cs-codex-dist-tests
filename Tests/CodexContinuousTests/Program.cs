@@ -5,7 +5,6 @@ public class Program
     public static void Main(string[] args)
     {
         Console.WriteLine("Codex Continous-Test-Runner.");
-        Console.WriteLine("Running...");
 
         var runner = new ContinuousTestRunner(args, Cancellation.Cts.Token);
 
@@ -20,14 +19,14 @@ public class Program
         runner.Run();
         Console.WriteLine("Done.");
     }
+}
 
-    public static class Cancellation
+public static class Cancellation
+{
+    static Cancellation()
     {
-        static Cancellation()
-        {
-            Cts = new CancellationTokenSource();
-        }
-
-        public static CancellationTokenSource Cts { get; } 
+        Cts = new CancellationTokenSource();
     }
+
+    public static CancellationTokenSource Cts { get; }
 }

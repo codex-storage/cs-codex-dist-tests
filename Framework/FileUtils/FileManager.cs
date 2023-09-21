@@ -18,6 +18,7 @@ namespace FileUtils
         private static NumberSource folderNumberSource = new NumberSource(0);
         private readonly Random random = new Random();
         private readonly ILog log;
+        private readonly string rootFolder;
         private readonly string folder;
         private readonly List<List<TrackedFile>> fileSetStack = new List<List<TrackedFile>>();
 
@@ -25,13 +26,15 @@ namespace FileUtils
         {
             folder = Path.Combine(rootFolder, folderNumberSource.GetNextNumber().ToString("D5"));
 
-            EnsureDirectory();
             this.log = log;
+            this.rootFolder = rootFolder;
         }
 
         public TrackedFile CreateEmptyFile(string label = "")
         {
-            var path = Path.Combine(folder, Guid.NewGuid().ToString() + "_test.bin");
+            var path = Path.Combine(folder, Guid.NewGuid().ToString() + ".bin");
+            EnsureDirectory();
+
             var result = new TrackedFile(log, path, label);
             File.Create(result.Filename).Close();
             if (fileSetStack.Any()) fileSetStack.Last().Add(result);
@@ -79,12 +82,11 @@ namespace FileUtils
 
             foreach (var file in pop)
             {
-                try
-                {
-                    File.Delete(file.Filename);
-                }
-                catch { }
+                File.Delete(file.Filename);
             }
+
+            // If the folder is now empty, delete it too.
+            if (!Directory.GetFiles(folder).Any()) DeleteDirectory();
         }
 
         private TrackedFile GenerateRandomFile(ByteSize size, string label)
@@ -144,12 +146,12 @@ namespace FileUtils
 
         private void EnsureDirectory()
         {
-            if (!Directory.Exists(folder)) Directory.CreateDirectory(folder);
+            Directory.CreateDirectory(folder);
         }
 
         private void DeleteDirectory()
         {
-            Directory.Delete(folder, true);
+            if (Directory.Exists(folder)) Directory.Delete(folder, true);
         }
     }
 }

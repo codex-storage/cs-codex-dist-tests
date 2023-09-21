@@ -59,7 +59,6 @@ namespace ContinuousTests
                 return GetType().Name;
             }
         }
-
     }
 
     public enum TestFailMode

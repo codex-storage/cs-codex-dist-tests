@@ -19,21 +19,29 @@ namespace ContinuousTests
 
         public void Run()
         {
-            var overviewLog = new FixtureLog(new LogConfig(config.LogPath, false), DateTime.UtcNow, "Overview");
+            var overviewLog = new LogSplitter(
+                new FixtureLog(new LogConfig(config.LogPath, false), DateTime.UtcNow, "Overview"),
+                new ConsoleLog()
+            );
+
+            overviewLog.Log("Initializing...");
 
             var entryPoint = entryPointFactory.CreateEntryPoint(config.KubeConfigFile, config.DataPath, config.CodexDeployment.Metadata.KubeNamespace, overviewLog);
             entryPoint.Announce();
+
+            overviewLog.Log("Initialized. Performing startup checks...");
 
             var startupChecker = new StartupChecker(entryPoint, config, cancelToken);
             startupChecker.Check();
 
             var taskFactory = new TaskFactory();
-            overviewLog.Log("Continuous tests starting...");
+            overviewLog.Log("Startup checks passed. Continuous tests starting...");
+            overviewLog.Log("");
             var allTests = testFactory.CreateTests();
 
             ClearAllCustomNamespaces(allTests, overviewLog);
 
-            var testLoops = allTests.Select(t => new TestLoop(entryPoint, taskFactory, config, overviewLog, t.GetType(), t.RunTestEvery, startupChecker, cancelToken)).ToArray();
+            var testLoops = allTests.Select(t => new TestLoop(entryPointFactory, taskFactory, config, overviewLog, t.GetType(), t.RunTestEvery, startupChecker, cancelToken)).ToArray();
 
             foreach (var testLoop in testLoops)
             {
@@ -51,12 +59,12 @@ namespace ContinuousTests
             overviewLog.Log("All tasks cancelled.");
         }
 
-        private void ClearAllCustomNamespaces(ContinuousTest[] allTests, FixtureLog log)
+        private void ClearAllCustomNamespaces(ContinuousTest[] allTests, ILog log)
         {
             foreach (var test in allTests) ClearAllCustomNamespaces(test, log);
         }
 
-        private void ClearAllCustomNamespaces(ContinuousTest test, FixtureLog log)
+        private void ClearAllCustomNamespaces(ContinuousTest test, ILog log)
         {
             if (string.IsNullOrEmpty(test.CustomK8sNamespace)) return;
 

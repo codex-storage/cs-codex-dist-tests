@@ -33,9 +33,10 @@ namespace DistTestCore
 
         public void DeleteAllResources()
         {
-            entryPoint.Tools.CreateWorkflow().DeleteNamespace();
-            entryPoint.Tools.GetFileManager().DeleteAllFiles();
-            entryPoint.Decommission();
+            entryPoint.Decommission(
+                deleteKubernetesResources: true,
+                deleteTrackedFiles: true
+            );
         }
 
         public TrackedFile GenerateTestFile(ByteSize size, string label = "")
