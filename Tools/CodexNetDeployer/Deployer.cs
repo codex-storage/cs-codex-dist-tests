@@ -48,7 +48,7 @@ namespace CodexNetDeployer
             var ci = entryPoint.CreateInterface();
 
             Log("Deploying Geth instance...");
-            var gethDeployment = ci.DeployGeth(s => s.IsMiner());
+            var gethDeployment = ci.DeployGeth(s => s.IsMiner().WithName("geth"));
             var gethNode = ci.WrapGethDeployment(gethDeployment);
 
             Log("Geth started. Deploying Codex contracts...");
