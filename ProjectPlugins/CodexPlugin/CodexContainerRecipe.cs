@@ -81,7 +81,7 @@ namespace CodexPlugin
             {
                 var mconfig = config.MarketplaceConfig;
                 var gethStart = mconfig.GethNode.StartResult;
-                var ip = gethStart.RunningContainer.Pod.PodInfo.Ip;
+                var ip = gethStart.Container.Pod.PodInfo.Ip;
                 var port = gethStart.WsPort.Number;
                 var marketplaceAddress = mconfig.CodexContracts.Deployment.MarketplaceAddress;
 

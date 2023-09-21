@@ -1,12 +1,13 @@
-﻿using KubernetesWorkflow;
+﻿using Core;
+using KubernetesWorkflow;
 
 namespace GethPlugin
 {
-    public class GethDeployment
+    public class GethDeployment : IHasContainer
     {
         public GethDeployment(RunningContainer runningContainer, Port discoveryPort, Port httpPort, Port wsPort, AllGethAccounts allAccounts, string pubKey)
         {
-            RunningContainer = runningContainer;
+            Container = runningContainer;
             DiscoveryPort = discoveryPort;
             HttpPort = httpPort;
             WsPort = wsPort;
@@ -14,7 +15,7 @@ namespace GethPlugin
             PubKey = pubKey;
         }
 
-        public RunningContainer RunningContainer { get; }
+        public RunningContainer Container { get; }
         public Port DiscoveryPort { get; }
         public Port HttpPort { get; }
         public Port WsPort { get; }

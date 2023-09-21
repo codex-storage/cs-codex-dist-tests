@@ -16,7 +16,7 @@ namespace CodexContractsPlugin
         {
             var config = startupConfig.Get<CodexContractsContainerConfig>();
 
-            var ip = config.GethNode.StartResult.RunningContainer.Pod.PodInfo.Ip;
+            var ip = config.GethNode.StartResult.Container.Pod.PodInfo.Ip;
             var port = config.GethNode.StartResult.HttpPort.Number;
 
             AddEnvVar("DISTTEST_NETWORK_URL", $"http://{ip}:{port}");

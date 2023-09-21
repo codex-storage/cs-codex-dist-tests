@@ -1,10 +1,12 @@
-﻿using Logging;
+﻿using Core;
+using KubernetesWorkflow;
+using Logging;
 using Nethereum.Contracts;
 using NethereumWorkflow;
 
 namespace GethPlugin
 {
-    public interface IGethNode
+    public interface IGethNode : IHasContainer
     {
         GethDeployment StartResult { get; }
 
@@ -32,6 +34,7 @@ namespace GethPlugin
 
         public GethDeployment StartResult { get; }
         public GethAccount Account { get; }
+        public RunningContainer Container => StartResult.Container;
 
         public Ether GetEthBalance()
         {
@@ -70,7 +73,7 @@ namespace GethPlugin
 
         private NethereumInteraction StartInteraction()
         {
-            var address = StartResult.RunningContainer.Address;
+            var address = StartResult.Container.Address;
             var account = Account;
 
             var creator = new NethereumInteractionCreator(log, address.Host, address.Port, account.PrivateKey);
