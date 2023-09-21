@@ -23,11 +23,15 @@ on:
         required: false
         type: string
       nameprefix:
-        description: Runner prefix (cs-codex-dist-tests)
+        description: Runner prefix (codex-dist-tests)
         required: false
         type: string
       namespace:
-        description: Runner namespace (cs-codex-dist-tests)
+        description: Runner namespace (default)
+        required: false
+        type: string
+      command:
+        description: Runner command (dotnet test Tests)
         required: false
         type: string
 
@@ -35,8 +39,9 @@ on:
 env:
   BRANCH: ${{ github.ref_name }}
   SOURCE: ${{ format('{0}/{1}', github.server_url, github.repository) }}
-  NAMEPREFIX: cs-codex-dist-tests
-  NAMESPACE: cs-codex-dist-tests
+  NAMEPREFIX: codex-dist-tests
+  NAMESPACE: default
+  COMMAND: dotnet test Tests
   JOB_MANIFEST: docker/job.yaml
   KUBE_CONFIG: ${{ secrets.KUBE_CONFIG }}
   KUBE_VERSION: v1.26.1
@@ -56,6 +61,8 @@ jobs:
           [[ -n "${{ github.event.inputs.source }}" ]] && echo "SOURCE=${{ github.event.inputs.source }}" >>"$GITHUB_ENV" || echo "SOURCE=${{ env.SOURCE }}" >>"$GITHUB_ENV"
           [[ -n "${{ github.event.inputs.nameprefix }}" ]] && echo "NAMEPREFIX=${{ github.event.inputs.nameprefix }}" >>"$GITHUB_ENV" || echo "NAMEPREFIX=${{ env.NAMEPREFIX }}" >>"$GITHUB_ENV"
           [[ -n "${{ github.event.inputs.namespace }}" ]] && echo "NAMESPACE=${{ github.event.inputs.namespace }}" >>"$GITHUB_ENV" || echo "NAMESPACE=${{ env.NAMESPACE }}" >>"$GITHUB_ENV"
+          [[ -n "${{ github.event.inputs.command }}" ]] && COMMAND="${{ github.event.inputs.command }}" || COMMAND="${{ env.COMMAND }}"
+          echo "COMMAND=$(jq -c 'split(" ")' <<< '"'$COMMAND'"')" >>"$GITHUB_ENV"
           echo "RUNID=$(date +%Y%m%d-%H%M%S)" >> $GITHUB_ENV
           echo "TESTID=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
 
