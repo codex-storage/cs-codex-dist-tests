@@ -45,7 +45,10 @@ namespace Tests.BasicTests
         }
 
         [Test]
-        public void MarketplaceExample()
+        [Combinatorial]
+        public void MarketplaceExample(
+            [Values(true, false)] bool isValidator,
+            [Values(true, false)] bool simulateProofFailure)
         {
             var sellerInitialBalance = 234.TestTokens();
             var buyerInitialBalance = 1000.TestTokens();
@@ -54,9 +57,12 @@ namespace Tests.BasicTests
             var geth = Ci.StartGethNode(s => s.IsMiner().WithName("disttest-geth"));
             var contracts = Ci.StartCodexContracts(geth);
 
-            var seller = AddCodex(s => s
-                            .WithStorageQuota(11.GB())
-                            .EnableMarketplace(geth, contracts, initialEth: 10.Eth(), initialTokens: sellerInitialBalance));
+            var seller = AddCodex(s =>
+            {
+                s.WithStorageQuota(11.GB());
+                s.EnableMarketplace(geth, contracts, initialEth: 10.Eth(), initialTokens: sellerInitialBalance, isValidator);
+                if (simulateProofFailure) s.WithSimulateProofFailures(3);
+            });
             
             AssertBalance(geth, contracts, seller, Is.EqualTo(sellerInitialBalance));
             seller.Marketplace.MakeStorageAvailable(

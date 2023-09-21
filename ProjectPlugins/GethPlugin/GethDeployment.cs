@@ -5,9 +5,9 @@ namespace GethPlugin
 {
     public class GethDeployment : IHasContainer
     {
-        public GethDeployment(RunningContainer runningContainer, Port discoveryPort, Port httpPort, Port wsPort, AllGethAccounts allAccounts, string pubKey)
+        public GethDeployment(RunningContainer container, Port discoveryPort, Port httpPort, Port wsPort, AllGethAccounts allAccounts, string pubKey)
         {
-            Container = runningContainer;
+            Container = container;
             DiscoveryPort = discoveryPort;
             HttpPort = httpPort;
             WsPort = wsPort;
