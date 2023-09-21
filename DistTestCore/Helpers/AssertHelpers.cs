@@ -10,8 +10,11 @@ namespace DistTestCore.Helpers
         {
             try
             {
-                var c = constraint.Resolve();
-                Time.WaitUntil(() => c.ApplyTo(actual()).IsSuccess);
+
+                Time.WaitUntil(() => {
+                    var c = constraint.Resolve();
+                    return c.ApplyTo(actual()).IsSuccess;
+                });
             }
             catch (TimeoutException)
             {
