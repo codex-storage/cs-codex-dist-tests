@@ -32,9 +32,12 @@ namespace CodexNetDeployer
 
             Log("Using plugins:" + Environment.NewLine);
             var metadata = ep.GetPluginMetadata();
+            var longestKey = metadata.Keys.Max(k => k.Length);
             foreach (var entry in metadata)
             {
-                Log($"{entry.Key}   =   {entry.Value}");
+                Console.Write(entry.Key);
+                Console.CursorLeft = longestKey + 5;
+                Console.WriteLine($"= {entry.Value}");
             }
             Log("");
         }

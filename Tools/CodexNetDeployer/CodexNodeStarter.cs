@@ -27,7 +27,8 @@ namespace CodexNetDeployer
         public CodexNodeStartResult? Start(int i)
         {
             var name = GetCodexContainerName(i);
-            Console.Write($" - {i} ({name}) \t= ");
+            Console.Write($" - {i} ({name})");
+            Console.CursorLeft = 30;
 
             ICodexNode? codexNode = null;
             try
