@@ -85,6 +85,8 @@ namespace CodexNetDeployer
                 retryDelay: TimeSpan.FromSeconds(3),
                 kubernetesNamespace: config.KubeNamespace);
 
+            configuration.Hooks = new K8sHook(config.TestsTypePodLabel);
+
             return new EntryPoint(log, configuration, string.Empty);
         }
 
