@@ -21,7 +21,7 @@ namespace KubernetesWorkflow
             {
                 knownLocation = RunnerLocation.InternalToCluster;
             }
-            if (PingHost(Format(container.ClusterExternalAddress)))
+            else if (PingHost(Format(container.ClusterExternalAddress)))
             {
                 knownLocation = RunnerLocation.ExternalToCluster;
             }
