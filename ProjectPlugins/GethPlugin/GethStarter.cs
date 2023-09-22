@@ -14,7 +14,7 @@ namespace GethPlugin
 
         public GethDeployment StartGeth(GethStartupConfig gethStartupConfig)
         {
-            Log("Starting Geth bootstrap node...");
+            Log("Starting Geth node...");
 
             var startupConfig = new StartupConfig();
             startupConfig.Add(gethStartupConfig);
