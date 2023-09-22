@@ -33,7 +33,7 @@ namespace GethPlugin
             if (discoveryPort == null) throw new Exception("Expected discovery port to be created.");
             var httpPort = container.Recipe.GetPortByTag(GethContainerRecipe.HttpPortTag);
             if (httpPort == null) throw new Exception("Expected http port to be created.");
-            var wsPort = container.Recipe.GetPortByTag(GethContainerRecipe.wsPortTag);
+            var wsPort = container.Recipe.GetPortByTag(GethContainerRecipe.HttpPortTag);
             if (wsPort == null) throw new Exception("Expected ws port to be created.");
 
             Log($"Geth node started.");
