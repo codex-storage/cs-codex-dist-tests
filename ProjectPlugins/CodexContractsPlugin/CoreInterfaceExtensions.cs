@@ -7,7 +7,7 @@ namespace CodexContractsPlugin
     {
         public static CodexContractsDeployment DeployCodexContracts(this CoreInterface ci, IGethNode gethNode)
         {
-            return Plugin(ci).DeployContracts(gethNode);
+            return Plugin(ci).DeployContracts(ci, gethNode);
         }
 
         public static ICodexContracts WrapCodexContractsDeployment(this CoreInterface ci, CodexContractsDeployment deployment)

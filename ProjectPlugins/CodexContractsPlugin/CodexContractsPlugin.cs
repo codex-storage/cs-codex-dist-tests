@@ -30,9 +30,9 @@ namespace CodexContractsPlugin
         {
         }
 
-        public CodexContractsDeployment DeployContracts(IGethNode gethNode)
+        public CodexContractsDeployment DeployContracts(CoreInterface ci, IGethNode gethNode)
         {
-            return starter.Deploy(gethNode);
+            return starter.Deploy(ci, gethNode);
         }
 
         public ICodexContracts WrapDeploy(CodexContractsDeployment deployment)

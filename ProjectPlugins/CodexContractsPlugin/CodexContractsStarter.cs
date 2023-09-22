@@ -2,6 +2,7 @@
 using GethPlugin;
 using KubernetesWorkflow;
 using Logging;
+using Nethereum.Contracts;
 using Utils;
 
 namespace CodexContractsPlugin
@@ -15,17 +16,41 @@ namespace CodexContractsPlugin
             this.tools = tools;
         }
 
-        public CodexContractsDeployment Deploy(IGethNode gethNode)
+        public CodexContractsDeployment Deploy(CoreInterface ci, IGethNode gethNode)
         {
-            Log("Deploying Codex SmartContracts...");
+            Log("Starting Codex SmartContracts container...");
 
             var workflow = tools.CreateWorkflow();
             var startupConfig = CreateStartupConfig(gethNode);
+            startupConfig.NameOverride = "codex-contracts";
 
             var containers = workflow.Start(1, Location.Unspecified, new CodexContractsContainerRecipe(), startupConfig);
             if (containers.Containers.Length != 1) throw new InvalidOperationException("Expected 1 Codex contracts container to be created. Test infra failure.");
             var container = containers.Containers[0];
 
+            Log("Container started.");
+
+            try
+            {
+                return DeployContract(container, workflow, gethNode);
+            }
+            catch
+            {
+                Log("Failed to deploy contract.");
+                Log("Downloading Codex SmartContracts container log...");
+                ci.DownloadLog(container);
+                throw;
+            }
+        }
+
+        public ICodexContracts Wrap(CodexContractsDeployment deployment)
+        {
+            return new CodexContractsAccess(tools.GetLog(), deployment);
+        }
+
+        private CodexContractsDeployment DeployContract(RunningContainer container, IStartupWorkflow workflow, IGethNode gethNode)
+        {
+            Log("Deploying SmartContract...");
             WaitUntil(() =>
             {
                 var logHandler = new ContractsReadyLogHandler(tools.GetLog());
@@ -48,11 +73,6 @@ namespace CodexContractsPlugin
             Log("Synced. Codex SmartContracts deployed.");
 
             return new CodexContractsDeployment(marketplaceAddress, abi, tokenAddress);
-        }
-
-        public ICodexContracts Wrap(CodexContractsDeployment deployment)
-        {
-            return new CodexContractsAccess(tools.GetLog(), deployment);
         }
 
         private void Log(string msg)
