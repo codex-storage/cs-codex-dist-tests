@@ -81,8 +81,8 @@ namespace CodexNetDeployer
 
             var configuration = new KubernetesWorkflow.Configuration(
                 kubeConfig,
-                operationTimeout: TimeSpan.FromSeconds(30),
-                retryDelay: TimeSpan.FromSeconds(10),
+                operationTimeout: TimeSpan.FromSeconds(120),
+                retryDelay: TimeSpan.FromSeconds(3),
                 kubernetesNamespace: config.KubeNamespace);
 
             return new EntryPoint(log, configuration, string.Empty);

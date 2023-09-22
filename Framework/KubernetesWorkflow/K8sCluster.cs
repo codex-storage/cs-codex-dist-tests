@@ -39,7 +39,7 @@ namespace KubernetesWorkflow
             return Configuration.OperationTimeout;
         }
 
-        public TimeSpan WaitForK8sServiceDelay()
+        public TimeSpan K8sOperationRetryDelay()
         {
             return Configuration.RetryDelay;
         }

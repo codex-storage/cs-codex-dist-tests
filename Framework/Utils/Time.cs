@@ -28,7 +28,7 @@
             WaitUntil(predicate, TimeSpan.FromMinutes(1), TimeSpan.FromSeconds(1));
         }
 
-        public static void WaitUntil(Func<bool> predicate, TimeSpan timeout, TimeSpan retryTime)
+        public static void WaitUntil(Func<bool> predicate, TimeSpan timeout, TimeSpan retryDelay)
         {
             var start = DateTime.UtcNow;
             var state = predicate();
@@ -39,7 +39,7 @@
                     throw new TimeoutException("Operation timed out.");
                 }
 
-                Sleep(retryTime);
+                Sleep(retryDelay);
                 state = predicate();
             }
         }
