@@ -32,8 +32,6 @@ namespace WakuPlugin
             {
                 AddEnvVar("WAKUNODE2_DISCV5_BOOTSTRAP_NODE", config.BootstrapEnr);
             }
-
-            AddEnvVar("WAKUNODE2_TOPICS", "test_topics_plz");
         }
     }
 }

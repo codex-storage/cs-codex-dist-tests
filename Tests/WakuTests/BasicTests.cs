@@ -8,16 +8,20 @@ namespace WakuTests
         [Test]
         public void Hi()
         {
-            var node1 = Ci.StartWakuNode();
+            var bootNode = Ci.StartWakuNode(s => s.WithName("BootstrapNode"));
+            var node = Ci.StartWakuNode(s => s.WithName("Waku1").WithBootstrapNode(bootNode));
 
-            var info1 = node1.DebugInfo();
-            Assert.That(info1.enrUri, Is.Not.Empty);
+            var topic = "cheeseWheels";
+            var message = "hmm, cheese...";
 
-            var node2 = Ci.StartWakuNode(s => s.WithBootstrapNode(node1));
-            var info2 = node2.DebugInfo();
-            Assert.That(info2.enrUri, Is.Not.Empty);
+            bootNode.SubscribeToTopic(topic);
+            node.SubscribeToTopic(topic);
 
+            node.SendMessage(topic, message);
 
+            var received = bootNode.GetMessages(topic);
+
+            CollectionAssert.Contains(received, message);
         }
     }
 }

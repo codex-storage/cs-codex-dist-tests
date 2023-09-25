@@ -2,6 +2,7 @@
 {
     public interface IWakuSetup
     {
+        IWakuSetup WithName(string name);
         IWakuSetup WithBootstrapNode(IWakuNode node);
     }
 
