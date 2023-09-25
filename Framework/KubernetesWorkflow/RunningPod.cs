@@ -14,8 +14,8 @@
         public K8sCluster Cluster { get; }
         public PodInfo PodInfo { get; }
         public ContainerRecipePortMapEntry[] PortMapEntries { get; }
-        internal string DeploymentName { get; }
-        internal string ServiceName { get; }
+        public string DeploymentName { get; }
+        public string ServiceName { get; }
 
         public Port[] GetServicePortsForContainerRecipe(ContainerRecipe containerRecipe)
         {
