@@ -21,7 +21,7 @@ namespace MetricsPlugin
             startupConfig.Add(new PrometheusStartupConfig(GeneratePrometheusConfig(targets)));
 
             var workflow = tools.CreateWorkflow();
-            var runningContainers = workflow.Start(1, Location.Unspecified, recipe, startupConfig);
+            var runningContainers = workflow.Start(1, recipe, startupConfig);
             if (runningContainers.Containers.Length != 1) throw new InvalidOperationException("Expected only 1 Prometheus container to be created.");
 
             Log("Metrics server started.");

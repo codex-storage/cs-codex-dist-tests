@@ -28,11 +28,10 @@ namespace KubernetesWorkflow
         {
             client.Dispose();
         }
-        
-        public RunningPod BringOnline(ContainerRecipe[] containerRecipes, Location location)
+
+        public RunningPod BringOnline(ContainerRecipe[] containerRecipes, ILocation location)
         {
             log.Debug();
-            DiscoverK8sNodes();
             EnsureTestNamespace();
 
             var deploymentName = CreateDeployment(containerRecipes, location);
@@ -109,19 +108,7 @@ namespace KubernetesWorkflow
 
         #region Discover K8s Nodes
 
-        private void DiscoverK8sNodes()
-        {
-            if (cluster.AvailableK8sNodes == null || !cluster.AvailableK8sNodes.Any())
-            {
-                cluster.AvailableK8sNodes = GetAvailableK8sNodes();
-                if (cluster.AvailableK8sNodes.Length < 3)
-                {
-                    log.Debug($"Warning: For full location support, at least 3 Kubernetes Nodes are required in the cluster. Nodes found: '{string.Join(",", cluster.AvailableK8sNodes.Select(p => $"{p.Key}={p.Value}"))}'.");
-                }
-            }
-        }
-
-        private K8sNodeLabel[] GetAvailableK8sNodes()
+        public K8sNodeLabel[] GetAvailableK8sNodes()
         {
             var nodes = client.Run(c => c.ListNode());
 
@@ -322,7 +309,7 @@ namespace KubernetesWorkflow
 
         #region Deployment management
 
-        private string CreateDeployment(ContainerRecipe[] containerRecipes, Location location)
+        private string CreateDeployment(ContainerRecipe[] containerRecipes, ILocation location)
         {
             var deploymentSpec = new V1Deployment
             {
@@ -364,15 +351,21 @@ namespace KubernetesWorkflow
             WaitUntilDeploymentOffline(deploymentName);
         }
 
-        private IDictionary<string, string> CreateNodeSelector(Location location)
+        private IDictionary<string, string> CreateNodeSelector(ILocation location)
         {
-            var nodeLabel = cluster.GetNodeLabelForLocation(location);
+            var nodeLabel = GetNodeLabelForLocation(location);
             if (nodeLabel == null) return new Dictionary<string, string>();
 
             return new Dictionary<string, string>
             {
                 { nodeLabel.Key, nodeLabel.Value }
             };
+        }
+
+        private K8sNodeLabel? GetNodeLabelForLocation(ILocation location)
+        {
+            var l = (Location)location;
+            return l.NodeLabel;
         }
 
         private IDictionary<string, string> GetSelector(ContainerRecipe[] containerRecipes)

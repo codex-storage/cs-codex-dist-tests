@@ -6,7 +6,7 @@ namespace CodexPlugin
     public class CodexStartupConfig
     {
         public string? NameOverride { get; set; }
-        public Location Location { get; set; }
+        public ILocation Location { get; set; } = KnownLocations.UnspecifiedLocation;
         public CodexLogLevel LogLevel { get; set; }
         public string[]? LogTopics { get; set; }
         public ByteSize? StorageQuota { get; set; }

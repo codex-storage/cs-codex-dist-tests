@@ -8,7 +8,7 @@ namespace CodexPlugin
     public interface ICodexSetup
     {
         ICodexSetup WithName(string name);
-        ICodexSetup At(Location location);
+        ICodexSetup At(ILocation location);
         ICodexSetup WithBootstrapNode(ICodexNode node);
         ICodexSetup WithLogLevel(CodexLogLevel level);
         /// <summary>
@@ -43,7 +43,7 @@ namespace CodexPlugin
             return this;
         }
 
-        public ICodexSetup At(Location location)
+        public ICodexSetup At(ILocation location)
         {
             Location = location;
             return this;

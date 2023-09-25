@@ -5,7 +5,9 @@ namespace KubernetesWorkflow
 {
     public interface IStartupWorkflow
     {
-        RunningContainers Start(int numberOfContainers, Location location, ContainerRecipeFactory recipeFactory, StartupConfig startupConfig);
+        IKnownLocations GetAvailableLocations();
+        RunningContainers Start(int numberOfContainers, ContainerRecipeFactory recipeFactory, StartupConfig startupConfig);
+        RunningContainers Start(int numberOfContainers, ILocation location, ContainerRecipeFactory recipeFactory, StartupConfig startupConfig);
         CrashWatcher CreateCrashWatcher(RunningContainer container);
         void Stop(RunningContainers runningContainers);
         void DownloadContainerLog(RunningContainer container, ILogHandler logHandler, int? tailLines = null);
@@ -22,6 +24,7 @@ namespace KubernetesWorkflow
         private readonly KnownK8sPods knownK8SPods;
         private readonly string k8sNamespace;
         private readonly RecipeComponentFactory componentFactory = new RecipeComponentFactory();
+        private readonly LocationProvider locationProvider;
 
         internal StartupWorkflow(ILog log, WorkflowNumberSource numberSource, K8sCluster cluster, KnownK8sPods knownK8SPods, string k8sNamespace)
         {
@@ -30,9 +33,21 @@ namespace KubernetesWorkflow
             this.cluster = cluster;
             this.knownK8SPods = knownK8SPods;
             this.k8sNamespace = k8sNamespace;
+
+            locationProvider = new LocationProvider(log, K8s);
         }
 
-        public RunningContainers Start(int numberOfContainers, Location location, ContainerRecipeFactory recipeFactory, StartupConfig startupConfig)
+        public IKnownLocations GetAvailableLocations()
+        {
+            return locationProvider.GetAvailableLocations();
+        }
+
+        public RunningContainers Start(int numberOfContainers, ContainerRecipeFactory recipeFactory, StartupConfig startupConfig)
+        {
+            return Start(numberOfContainers, KnownLocations.UnspecifiedLocation, recipeFactory, startupConfig);
+        }
+
+        public RunningContainers Start(int numberOfContainers, ILocation location, ContainerRecipeFactory recipeFactory, StartupConfig startupConfig)
         {
             return K8s(controller =>
             {

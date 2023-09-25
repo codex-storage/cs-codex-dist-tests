@@ -1,6 +1,5 @@
 ﻿using CodexPlugin;
 using DistTestCore;
-using KubernetesWorkflow;
 using NUnit.Framework;
 using Utils;
 
@@ -23,8 +22,15 @@ namespace Tests.BasicTests
         [Test]
         public void TwoClientsTwoLocationsTest()
         {
-            var primary = Ci.StartCodexNode(s => s.At(Location.One));
-            var secondary = Ci.StartCodexNode(s => s.At(Location.Two));
+            var locations = Ci.GetKnownLocations();
+            if (locations.NumberOfLocations < 2)
+            {
+                Assert.Inconclusive("Two-locations test requires 2 nodes to be available in the cluster.");
+                return;
+            }
+
+            var primary = Ci.StartCodexNode(s => s.At(locations.Get(0)));
+            var secondary = Ci.StartCodexNode(s => s.At(locations.Get(1)));
 
             PerformTwoClientTest(primary, secondary);
         }

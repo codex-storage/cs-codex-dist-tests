@@ -16,6 +16,11 @@ namespace Core
             return entryPoint.GetPlugin<T>();
         }
 
+        public IKnownLocations GetKnownLocations()
+        {
+            return entryPoint.Tools.CreateWorkflow().GetAvailableLocations();
+        }
+
         public IDownloadedLog DownloadLog(IHasContainer containerSource, int? tailLines = null)
         {
             return DownloadLog(containerSource.Container, tailLines);

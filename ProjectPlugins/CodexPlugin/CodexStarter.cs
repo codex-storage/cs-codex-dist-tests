@@ -69,7 +69,7 @@ namespace CodexPlugin
             return startupConfig;
         }
 
-        private RunningContainers[] StartCodexContainers(StartupConfig startupConfig, int numberOfNodes, Location location)
+        private RunningContainers[] StartCodexContainers(StartupConfig startupConfig, int numberOfNodes, ILocation location)
         {
             var result = new List<RunningContainers>();
             for (var i = 0; i < numberOfNodes; i++)
