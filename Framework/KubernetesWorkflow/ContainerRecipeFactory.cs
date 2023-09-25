@@ -67,6 +67,13 @@ namespace KubernetesWorkflow
             return p;
         }
 
+        protected Port AddInternalPort(int number, string tag = "")
+        {
+            var p = factory.CreatePort(number, tag);
+            internalPorts.Add(p);
+            return p;
+        }
+
         protected void AddExposedPortAndVar(string name, string tag = "")
         {
             AddEnvVar(name, AddExposedPort(tag));

@@ -7,10 +7,7 @@ namespace WakuTests
     {
         public WakuDistTest()
         {
-            //ProjectPlugin.Load<CodexPlugin.CodexPlugin>();
-            //ProjectPlugin.Load<CodexContractsPlugin.CodexContractsPlugin>();
-            //ProjectPlugin.Load<GethPlugin.GethPlugin>();
-            //ProjectPlugin.Load<MetricsPlugin.MetricsPlugin>();
+            ProjectPlugin.Load<WakuPlugin.WakuPlugin>();
         }
     }
 }

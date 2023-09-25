@@ -1,4 +1,5 @@
 ﻿using NUnit.Framework;
+using WakuPlugin;
 
 namespace WakuTests
 {
@@ -7,7 +8,9 @@ namespace WakuTests
         [Test]
         public void Hi()
         {
-            Assert.Fail();
+            var rc = Ci.DeployWakuNodes(1);
+
+            var i = 0;
         }
     }
 }
