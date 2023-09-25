@@ -30,9 +30,15 @@ namespace WakuPlugin
         {
         }
 
-        public RunningContainers[] DeployWakuNodes(int numberOfNodes)
+        public RunningContainers[] DeployWakuNodes(int numberOfNodes, Action<IWakuSetup> setup)
         {
-            return starter.Start(numberOfNodes);
+            return starter.Start(numberOfNodes, setup);
+        }
+
+        public IWakuNode WrapWakuContainer(RunningContainer container)
+        {
+            container = SerializeGate.Gate(container);
+            return starter.Wrap(container);
         }
 
         //public ICodexNodeGroup WrapCodexContainers(CoreInterface coreInterface, RunningContainers[] containers)

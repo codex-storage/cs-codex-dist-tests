@@ -5,45 +5,26 @@ namespace WakuPlugin
 {
     public static class CoreInterfaceExtensions
     {
-        public static RunningContainers[] DeployWakuNodes(this CoreInterface ci, int number)
+        public static RunningContainers[] DeployWakuNodes(this CoreInterface ci, int number, Action<IWakuSetup> setup)
         {
-            return Plugin(ci).DeployWakuNodes(number);
+            return Plugin(ci).DeployWakuNodes(number, setup);
         }
 
-        //public static ICodexNodeGroup WrapCodexContainers(this CoreInterface ci, RunningContainer[] containers)
-        //{
-        //    // ew, clean this up.
-        //    var rcs = new RunningContainers(null!, containers.First().Pod, containers);
-        //    return WrapCodexContainers(ci, new[] { rcs });
-        //}
+        public static IWakuNode WrapWakuContainer(this CoreInterface ci, RunningContainer container)
+        {
+            return Plugin(ci).WrapWakuContainer(container);
+        }
 
-        //public static ICodexNodeGroup WrapCodexContainers(this CoreInterface ci, RunningContainers[] containers)
-        //{
-        //    return Plugin(ci).WrapCodexContainers(ci, containers);
-        //}
+        public static IWakuNode StartWakuNode(this CoreInterface ci)
+        {
+            return ci.StartWakuNode(s => { });
+        }
 
-        //public static ICodexNode StartCodexNode(this CoreInterface ci)
-        //{
-        //    return ci.StartCodexNodes(1)[0];
-        //}
-
-        //public static ICodexNode StartCodexNode(this CoreInterface ci, Action<ICodexSetup> setup)
-        //{
-        //    return ci.StartCodexNodes(1, setup)[0];
-        //}
-
-        //public static ICodexNodeGroup StartCodexNodes(this CoreInterface ci, int number, Action<ICodexSetup> setup)
-        //{
-        //    var rc = ci.DeployCodexNodes(number, setup);
-        //    var result = ci.WrapCodexContainers(rc);
-        //    Plugin(ci).WireUpMarketplace(result, setup);
-        //    return result;
-        //}
-
-        //public static ICodexNodeGroup StartCodexNodes(this CoreInterface ci, int number)
-        //{
-        //    return ci.StartCodexNodes(number, s => { });
-        //}
+        public static IWakuNode StartWakuNode(this CoreInterface ci, Action<IWakuSetup> setup)
+        {
+            var rc = ci.DeployWakuNodes(1, setup);
+            return ci.WrapWakuContainer(rc.First().Containers.First());
+        }
 
         private static WakuPlugin Plugin(CoreInterface ci)
         {
