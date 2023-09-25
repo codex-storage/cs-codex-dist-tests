@@ -53,7 +53,7 @@
       #     mountPath: /opt/kubeconfig.yaml
       #     subPath: kubeconfig.yaml
       #   - name: logs
-      #    mountPath: /var/log/codex-dist-tests
+      #     mountPath: /var/log/codex-dist-tests
         command: ["sleep", "infinity"]
       # volumes:
       #   - name: kubeconfig
@@ -85,7 +85,7 @@
  4. Install required packages
     ```shell
     apt update
-    apt install -y tmux
+    apt install -y tmux vim
     ```
 
  5. Clone Continuous Tests repository
@@ -99,21 +99,41 @@
  6. Run `CodexNetDeployer`
     ```shell
     # Usually take ~ 10 minutes
-    cd cs-codex-dist-tests/CodexNetDeployer
+    cd cs-codex-dist-tests/Tools/CodexNetDeployer
 
+    # Adjust values
+    vi deploy-continuous-testnet.sh
+
+    # Deploy Codex Netwotk
     export RUNID=$(date +%Y%m%d-%H%M%S)
     bash deploy-continuous-testnet.sh
     ```
 
  7. Run `ContinuousTests`
-    ```
-    cd ../ContinuousTests
-    cp ../CodexNetDeployer/codex-deployment.json .
+    ```shell
+    cd ../../Tests/CodexContinuousTests
+    cp ../../Tools/CodexNetDeployer/codex-deployment.json .
 
+    # Adjust values
+    vi run.sh
+
+    # Run tests
     bash run.sh
+    ```
+
+ 8. [Tmux sessions](https://tmuxcheatsheet.com)
+    ```shell
+    # Detach
+    Ctrl + b --> d
+
+    # List
+    tmux ls
+
+    # Attach
+    tmux a -t 0
     ```
 
 
 ## Analyze logs
 
- We should check the logs in the `/opt/cs-codex-dist-tests/ContinuousTests/logs` folder
+ We should check the logs in the `/opt/cs-codex-dist-tests/Tests/CodexContinuousTests/logs` folder
