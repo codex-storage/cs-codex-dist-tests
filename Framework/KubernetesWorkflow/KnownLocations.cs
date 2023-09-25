@@ -12,7 +12,7 @@
         /// <summary>
         /// Returns the location object for a specific kubernetes node. Throws if it doesn't exist.
         /// </summary>
-        ILocation Get(string kubeNodeName);
+        ILocation Get(string kubeNodeName, bool allowPartialMatches = false);
     }
 
     public class KnownLocations : IKnownLocations
@@ -34,8 +34,13 @@
             return locations[index];
         }
 
-        public ILocation Get(string kubeNodeName)
+        public ILocation Get(string kubeNodeName, bool allowPartialMatches = false)
         {
+            if (allowPartialMatches)
+            {
+                return locations.Single(l => l.NodeLabel != null && l.NodeLabel.Value.Contains(kubeNodeName));
+            }
+
             return locations.Single(l => l.NodeLabel != null && l.NodeLabel.Value == kubeNodeName);
         }
     }
