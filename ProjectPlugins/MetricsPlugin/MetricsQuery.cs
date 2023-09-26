@@ -1,5 +1,6 @@
 ﻿using Core;
 using KubernetesWorkflow;
+using Logging;
 using System.Globalization;
 
 namespace MetricsPlugin
@@ -7,11 +8,13 @@ namespace MetricsPlugin
     public class MetricsQuery
     {
         private readonly IHttp http;
+        private readonly ILog log;
 
         public MetricsQuery(IPluginTools tools, RunningContainer runningContainer)
         {
             RunningContainer = runningContainer;
             http = tools.CreateHttp(RunningContainer.Address, "api/v1");
+            log = tools.GetLog();
         }
 
         public RunningContainer RunningContainer { get; }
@@ -21,7 +24,7 @@ namespace MetricsPlugin
             var response = GetLastOverTime(metricName, GetInstanceStringForNode(target));
             if (response == null) return null;
 
-            return new Metrics
+            var result = new Metrics
             {
                 Sets = response.data.result.Select(r =>
                 {
@@ -32,20 +35,27 @@ namespace MetricsPlugin
                     };
                 }).ToArray()
             };
+
+            Log(target, metricName, result);
+            return result;
         }
 
         public Metrics? GetMetrics(string metricName)
         {
             var response = GetAll(metricName);
             if (response == null) return null;
-            return MapResponseToMetrics(response);
+            var result = MapResponseToMetrics(response);
+            Log(metricName, result);
+            return result;
         }
 
         public Metrics? GetAllMetricsForNode(IMetricsScrapeTarget target)
         {
             var response = http.HttpGetJson<PrometheusQueryResponse>($"query?query={GetInstanceStringForNode(target)}{GetQueryTimeRange()}");
             if (response.status != "success") return null;
-            return MapResponseToMetrics(response);
+            var result = MapResponseToMetrics(response);
+            Log(target, result);
+            return result;
         }
 
         private PrometheusQueryResponse? GetLastOverTime(string metricName, string instanceString)
@@ -135,11 +145,36 @@ namespace MetricsPlugin
             var unixSeconds = ToValue(v);
             return new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddSeconds(unixSeconds);
         }
+
+        private void Log(IMetricsScrapeTarget target, string metricName, Metrics result)
+        {
+            Log($"{target.Name} '{metricName}' = {result}");
+        }
+
+        private void Log(string metricName, Metrics result)
+        {
+            Log($"'{metricName}' = {result}");
+        }
+
+        private void Log(IMetricsScrapeTarget target, Metrics result)
+        {
+            Log($"{target.Name} => {result}");
+        }
+
+        private void Log(string msg)
+        {
+            log.Log(msg);
+        }
     }
 
     public class Metrics
     {
         public MetricsSet[] Sets { get; set; } = Array.Empty<MetricsSet>();
+
+        public override string ToString()
+        {
+            return "[" + string.Join(',', Sets.Select(s => s.ToString())) + "]";
+        }
     }
 
     public class MetricsSet
@@ -147,12 +182,22 @@ namespace MetricsPlugin
         public string Name { get; set; } = string.Empty;
         public string Instance { get; set; } = string.Empty;
         public MetricsSetValue[] Values { get; set; } = Array.Empty<MetricsSetValue>();
+
+        public override string ToString()
+        {
+            return $"{Name} ({Instance}) : {{{string.Join(",", Values.Select(v => v.ToString()))}}}";
+        }
     }
 
     public class MetricsSetValue
     {
         public DateTime Timestamp { get; set; }
         public double Value { get; set; }
+
+        public override string ToString()
+        {
+            return $"<{Timestamp.ToString("o")}={Value}>";
+        }
     }
 
     public class PrometheusQueryResponse

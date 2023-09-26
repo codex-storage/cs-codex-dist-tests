@@ -11,6 +11,7 @@ namespace DistTestCore
         private const string TestsType = "dist-tests";
         private readonly DateTime testStart;
         private readonly EntryPoint entryPoint;
+        private readonly Dictionary<string, string> metadata;
         private readonly List<RunningContainers> runningContainers = new List<RunningContainers>();
 
         public TestLifecycle(TestLog log, Configuration configuration, ITimeSet timeSet, string testNamespace)
@@ -21,6 +22,7 @@ namespace DistTestCore
             testStart = DateTime.UtcNow;
 
             entryPoint = new EntryPoint(log, configuration.GetK8sConfiguration(timeSet, this, testNamespace), configuration.GetFileManagerFolder(), timeSet);
+            metadata = entryPoint.GetPluginMetadata();
             CoreInterface = entryPoint.CreateInterface();
 
             log.WriteLogTag();
@@ -78,6 +80,11 @@ namespace DistTestCore
             recipe.PodLabels.Add("category", NameUtils.GetCategoryName());
             recipe.PodLabels.Add("fixturename", NameUtils.GetRawFixtureName());
             recipe.PodLabels.Add("testname", NameUtils.GetTestMethodName());
+
+            foreach (var pair in metadata)
+            {
+                recipe.PodLabels.Add(pair.Key, pair.Value);
+            }
         }
 
         public void DownloadAllLogs()

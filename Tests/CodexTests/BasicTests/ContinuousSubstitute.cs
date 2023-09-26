@@ -1,5 +1,8 @@
-﻿using CodexPlugin;
-using DistTestCore;
+﻿using CodexContractsPlugin;
+using CodexPlugin;
+using GethPlugin;
+using KubernetesWorkflow;
+using MetricsPlugin;
 using NUnit.Framework;
 using Utils;
 
@@ -12,24 +15,28 @@ namespace Tests.BasicTests
         [Test]
         public void ContinuousTestSubstitute()
         {
+            var geth = Ci.StartGethNode(s => s.IsMiner().WithName("geth"));
+            var contract = Ci.StartCodexContracts(geth);
+
             var group = AddCodex(5, o => o
-                    //.EnableMetrics()
-                    //.EnableMarketplace(100000.TestTokens(), 0.Eth(), isValidator: true)
-                    .WithBlockTTL(TimeSpan.FromMinutes(2))
-                    .WithBlockMaintenanceInterval(TimeSpan.FromMinutes(2))
-                    .WithBlockMaintenanceNumber(10000)
-                    .WithBlockTTL(TimeSpan.FromMinutes(2))
+                    .EnableMetrics()
+                    .EnableMarketplace(geth, contract, 10.Eth(), 100000.TestTokens(), isValidator: true)
+                    .WithBlockTTL(TimeSpan.FromMinutes(5))
+                    .WithBlockMaintenanceInterval(TimeSpan.FromSeconds(10))
+                    .WithBlockMaintenanceNumber(100)
                     .WithStorageQuota(1.GB()));
 
             var nodes = group.Cast<CodexNode>().ToArray();
 
+            var rc = Ci.DeployMetricsCollector(nodes);
+
             foreach (var node in nodes)
             {
-                //node.Marketplace.MakeStorageAvailable(
-                //size: 500.MB(),
-                //minPricePerBytePerSecond: 1.TestTokens(),
-                //maxCollateral: 1024.TestTokens(),
-                //maxDuration: TimeSpan.FromMinutes(5));
+                node.Marketplace.MakeStorageAvailable(
+                    size: 500.MB(),
+                    minPriceForTotalSpace: 500.TestTokens(),
+                    maxCollateral: 1024.TestTokens(),
+                    maxDuration: TimeSpan.FromMinutes(5));
             }
 
             var endTime = DateTime.UtcNow + TimeSpan.FromHours(10);
@@ -40,7 +47,7 @@ namespace Tests.BasicTests
                 var secondary = allNodes.PickOneRandom();
 
                 Log("Run Test");
-                PerformTest(primary, secondary);
+                PerformTest(primary, secondary, rc);
 
                 Thread.Sleep(TimeSpan.FromSeconds(5));
             }
@@ -81,7 +88,7 @@ namespace Tests.BasicTests
             var allIds = all.Select(n => n.GetDebugInfo().table.localNode.nodeId).ToArray();
 
             var errors = all.Select(n => AreAllPresent(n, allIds)).Where(s => !string.IsNullOrEmpty(s)).ToArray();
-            
+
             if (errors.Any())
             {
                 Assert.Fail(string.Join(Environment.NewLine, errors));
@@ -104,26 +111,43 @@ namespace Tests.BasicTests
 
         private ByteSize fileSize = 80.MB();
 
-        private void PerformTest(ICodexNode primary, ICodexNode secondary)
+        private const string BytesStoredMetric = "codexRepostoreBytesUsed";
+
+        private void PerformTest(ICodexNode primary, ICodexNode secondary, RunningContainer rc)
         {
             ScopedTestFiles(() =>
             {
                 var testFile = GenerateTestFile(fileSize);
 
+                var metrics = Ci.WrapMetricsCollector(rc, primary);
+                var beforeBytesStored = metrics.GetMetric(BytesStoredMetric);
+
                 var contentId = primary.UploadFile(testFile);
+
+                var low = fileSize.SizeInBytes;
+                var high = low * 1.2;
+                Log("looking for: " + low + " < " + high);
+
+                Time.WaitUntil(() =>
+                {
+                    var afterBytesStored = metrics.GetMetric(BytesStoredMetric);
+                    var newBytes = Convert.ToInt64(afterBytesStored.Values.Last().Value - beforeBytesStored.Values.Last().Value);
+
+                    return high > newBytes && newBytes > low;
+                }, TimeSpan.FromMinutes(1), TimeSpan.FromSeconds(2));
 
                 var downloadedFile = secondary.DownloadContent(contentId);
 
                 testFile.AssertIsEqual(downloadedFile);
             });
         }
-        
+
         [Test]
         public void HoldMyBeerTest()
         {
             var blockExpirationTime = TimeSpan.FromMinutes(3);
             var group = AddCodex(3, o => o
-                    //.EnableMetrics()
+                    .EnableMetrics()
                     .WithBlockTTL(blockExpirationTime)
                     .WithBlockMaintenanceInterval(TimeSpan.FromMinutes(2))
                     .WithBlockMaintenanceNumber(10000)

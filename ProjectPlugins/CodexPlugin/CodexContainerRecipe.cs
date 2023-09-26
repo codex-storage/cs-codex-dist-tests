@@ -109,8 +109,6 @@ namespace CodexPlugin
             {
                 AddEnvVar("CODEX_NODENAME", config.NameOverride);
             }
-
-            AddPodLabel("codexid", Image);
         }
 
         private ByteSize GetVolumeCapacity(CodexStartupConfig config)

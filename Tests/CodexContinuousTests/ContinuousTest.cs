@@ -3,6 +3,7 @@ using Core;
 using DistTestCore;
 using FileUtils;
 using Logging;
+using MetricsPlugin;
 
 namespace ContinuousTests
 {
@@ -46,6 +47,20 @@ namespace ContinuousTests
         public virtual ITimeSet TimeSet { get { return new DefaultTimeSet(); } }
         public CancellationToken CancelToken { get; private set; } = new CancellationToken();
         public NodeRunner NodeRunner { get; private set; } = null!;
+
+        public IMetricsAccess CreateMetricsAccess(IHasMetricsScrapeTarget target)
+        {
+            return CreateMetricsAccess(target.MetricsScrapeTarget);
+        }
+
+        public IMetricsAccess CreateMetricsAccess(IMetricsScrapeTarget target)
+        {
+            if (Configuration.CodexDeployment.PrometheusContainer == null) throw new Exception("Expected prometheus to be part of Codex deployment.");
+
+            var entryPointFactory = new EntryPointFactory();
+            var entryPoint = entryPointFactory.CreateEntryPoint(Configuration.KubeConfigFile, Configuration.DataPath, Configuration.CodexDeployment.Metadata.KubeNamespace, Log);
+            return entryPoint.CreateInterface().WrapMetricsCollector(Configuration.CodexDeployment.PrometheusContainer, target);
+        }
 
         public abstract int RequiredNumberOfNodes { get; }
         public abstract TimeSpan RunTestEvery { get; }

@@ -16,6 +16,11 @@ namespace MetricsPlugin
             return Plugin(ci).DeployMetricsCollector(scrapeTargets);
         }
 
+        public static IMetricsAccess WrapMetricsCollector(this CoreInterface ci, RunningContainer metricsContainer, IHasMetricsScrapeTarget scrapeTarget)
+        {
+            return ci.WrapMetricsCollector(metricsContainer, scrapeTarget.MetricsScrapeTarget);
+        }
+
         public static IMetricsAccess WrapMetricsCollector(this CoreInterface ci, RunningContainer metricsContainer, IMetricsScrapeTarget scrapeTarget)
         {
             return Plugin(ci).WrapMetricsCollectorDeployment(metricsContainer, scrapeTarget);

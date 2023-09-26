@@ -2,7 +2,6 @@
 using GethPlugin;
 using KubernetesWorkflow;
 using Logging;
-using Nethereum.Contracts;
 using Utils;
 
 namespace CodexContractsPlugin
@@ -54,7 +53,7 @@ namespace CodexContractsPlugin
             WaitUntil(() =>
             {
                 var logHandler = new ContractsReadyLogHandler(tools.GetLog());
-                workflow.DownloadContainerLog(container, logHandler, null);
+                workflow.DownloadContainerLog(container, logHandler, 100);
                 return logHandler.Found;
             });
             Log("Contracts deployed. Extracting addresses...");
