@@ -1,5 +1,6 @@
 ﻿using CodexPlugin;
 using FileUtils;
+using Logging;
 using NUnit.Framework;
 using Utils;
 
@@ -15,16 +16,16 @@ namespace ContinuousTests.Tests
 
         private ContentId? cid;
         private TrackedFile file = null!;
+        private readonly ByteSize size = 80.MB();
 
         [TestMoment(t: Zero)]
         public void UploadTestFile()
         {
-            var size = 80.MB();
             file = FileManager.GenerateFile(size);
 
-            AssertBytesStoredMetric(size, Nodes[0], () =>
+            AssertBytesStoredMetric(Nodes[0], () =>
             {
-                cid = Nodes[0].UploadFile(file);
+                LogBytesPerMillisecond(() => cid = Nodes[0].UploadFile(file));
                 Assert.That(cid, Is.Not.Null);
             });
         }
@@ -32,15 +33,17 @@ namespace ContinuousTests.Tests
         [TestMoment(t: 10)]
         public void DownloadTestFile()
         {
-            var dl = Nodes[1].DownloadContent(cid!);
+            TrackedFile? dl = null;
+
+            LogBytesPerMillisecond(() => dl = Nodes[1].DownloadContent(cid!));
 
             file.AssertIsEqual(dl);
         }
 
-        private void AssertBytesStoredMetric(ByteSize uploadedSize, ICodexNode node, Action action)
+        private void AssertBytesStoredMetric(ICodexNode node, Action action)
         {
-            var lowExpected = uploadedSize.SizeInBytes;
-            var highExpected = uploadedSize.SizeInBytes * 1.2;
+            var lowExpected = size.SizeInBytes;
+            var highExpected = size.SizeInBytes * 1.2;
 
             var metrics = CreateMetricsAccess(node);
             var before = metrics.GetMetric(BytesStoredMetric);
@@ -56,6 +59,18 @@ namespace ContinuousTests.Tests
 
                 return highExpected > newBytes && newBytes > lowExpected;
             });
+        }
+
+        private void LogBytesPerMillisecond(Action action)
+        {
+            var sw = Stopwatch.Begin(Log);
+            action();
+            var duration = sw.End();
+            double totalMs = duration.TotalMilliseconds;
+            double totalBytes = size.SizeInBytes;
+
+            var bytesPerMs = totalBytes / totalMs;
+            Log.Log($"Bytes per millisecond: {bytesPerMs}");
         }
     }
 }

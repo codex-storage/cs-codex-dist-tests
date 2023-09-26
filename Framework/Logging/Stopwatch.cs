@@ -51,7 +51,7 @@ namespace Logging
             return new Stopwatch(log, name, debug);
         }
 
-        public void End(string msg = "", int skipFrames = 0)
+        public TimeSpan End(string msg = "", int skipFrames = 0)
         {
             var duration = DateTime.UtcNow - start;
             var entry = $"{name} {msg} ({Time.FormatDuration(duration)})";
@@ -64,6 +64,8 @@ namespace Logging
             {
                 log.Log(entry);
             }
+
+            return duration;
         }
     }
 }

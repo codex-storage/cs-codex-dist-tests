@@ -2,6 +2,7 @@
 using CodexPlugin;
 using GethPlugin;
 using KubernetesWorkflow;
+using Logging;
 using MetricsPlugin;
 using NUnit.Framework;
 using Utils;
@@ -51,6 +52,18 @@ namespace Tests.BasicTests
 
                 Thread.Sleep(TimeSpan.FromSeconds(5));
             }
+        }
+
+        private void LogBytesPerMillisecond(Action action)
+        {
+            var sw = Stopwatch.Begin(GetTestLog());
+            action();
+            var duration = sw.End();
+            double totalMs = duration.TotalMilliseconds;
+            double totalBytes = fileSize.SizeInBytes;
+
+            var bytesPerMs = totalBytes / totalMs;
+            Log($"Bytes per millisecond: {bytesPerMs}");
         }
 
         [Test]
@@ -122,7 +135,8 @@ namespace Tests.BasicTests
                 var metrics = Ci.WrapMetricsCollector(rc, primary);
                 var beforeBytesStored = metrics.GetMetric(BytesStoredMetric);
 
-                var contentId = primary.UploadFile(testFile);
+                ContentId contentId = null!;
+                LogBytesPerMillisecond(() => contentId = primary.UploadFile(testFile));
 
                 var low = fileSize.SizeInBytes;
                 var high = low * 1.2;
@@ -136,7 +150,8 @@ namespace Tests.BasicTests
                     return high > newBytes && newBytes > low;
                 }, TimeSpan.FromMinutes(1), TimeSpan.FromSeconds(2));
 
-                var downloadedFile = secondary.DownloadContent(contentId);
+                FileUtils.TrackedFile? downloadedFile = null;
+                LogBytesPerMillisecond(() => downloadedFile = secondary.DownloadContent(contentId));
 
                 testFile.AssertIsEqual(downloadedFile);
             });
