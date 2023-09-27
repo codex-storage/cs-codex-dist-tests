@@ -24,6 +24,7 @@ namespace ContinuousTests
         {
             var log = new FixtureLog(new LogConfig(config.LogPath, false), DateTime.UtcNow, "StartupChecks");
             log.Log("Starting continuous test run...");
+            IncludeDeploymentConfiguration(log);
             log.Log("Checking configuration...");
             PreflightCheck(config);
             log.Log("Contacting Codex nodes...");
@@ -32,6 +33,20 @@ namespace ContinuousTests
         }
 
         public List<BaseLogStringReplacement> LogReplacements { get; }
+
+        private void IncludeDeploymentConfiguration(ILog log)
+        {
+            log.Log("");
+            var deployment = config.CodexDeployment;
+            foreach (var container in deployment.CodexContainers)
+            {
+                log.Log($"Codex environment variables for '{container.Name}':");
+                var codexVars = container.Recipe.EnvVars;
+                foreach (var vars in codexVars) log.Log(vars.ToString());
+                log.Log("");
+            }
+            log.Log("");
+        }
 
         private void PreflightCheck(Configuration config)
         {

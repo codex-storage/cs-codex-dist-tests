@@ -49,7 +49,7 @@
             return $"(container-recipe: {Name}, image: {Image}, " +
                 $"exposedPorts: {string.Join(",", ExposedPorts.Select(p => p.Number))}, " +
                 $"internalPorts: {string.Join(",", InternalPorts.Select(p => p.Number))}, " +
-                $"envVars: {string.Join(",", EnvVars.Select(v => v.Name + ":" + v.Value))}, " +
+                $"envVars: {string.Join(",", EnvVars.Select(v => v.ToString()))}, " +
                 $"limits: {Resources}, " +
                 $"volumes: {string.Join(",", Volumes.Select(v => $"'{v.MountPath}'"))}";
         }
@@ -77,6 +77,11 @@
 
         public string Name { get; }
         public string Value { get; }
+
+        public override string ToString()
+        {
+            return $"'{Name}' = '{Value}'";
+        }
     }
 
     public class VolumeMount
