@@ -24,6 +24,9 @@ namespace ContinuousTests
         [Uniform("stop", "s", "STOPONFAIL", false, "If greater than zero, runner will stop after this many test failures and download all cluster container logs. 0 by default.")]
         public int StopOnFailure { get; set; } = 0;
 
+        [Uniform("target-duration", "td", "TARGETDURATION", false, "If greater than zero, runner will run for this many seconds before stopping.")]
+        public int TargetDurationSeconds { get; set; } = 0;
+
         [Uniform("dl-logs", "dl", "DLLOGS", false, "If true, runner will periodically download and save/append container logs to the log path.")]
         public bool DownloadContainerLogs { get; set; } = false;
 

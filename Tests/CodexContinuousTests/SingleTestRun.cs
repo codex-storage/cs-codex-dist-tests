@@ -31,7 +31,7 @@ namespace ContinuousTests
             this.handle = handle;
             this.cancelToken = cancelToken;
             testName = handle.Test.GetType().Name;
-            fixtureLog = new FixtureLog(new LogConfig(config.LogPath, true), DateTime.UtcNow, testName);
+            fixtureLog = new FixtureLog(new LogConfig(config.LogPath, false), DateTime.UtcNow, testName);
             entryPoint = entryPointFactory.CreateEntryPoint(config.KubeConfigFile, config.DataPath, config.CodexDeployment.Metadata.KubeNamespace, fixtureLog);
             ApplyLogReplacements(fixtureLog, startupChecker);
 

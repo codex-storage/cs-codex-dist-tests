@@ -1,5 +1,6 @@
 ﻿using DistTestCore.Logs;
 using Logging;
+using Utils;
 
 namespace ContinuousTests
 {
@@ -53,10 +54,24 @@ namespace ContinuousTests
             }
 
             overviewLog.Log("Finished launching test-loops.");
-            cancelToken.WaitHandle.WaitOne();
+            WaitUntilFinished(overviewLog);
             overviewLog.Log("Cancelling all test-loops...");
             taskFactory.WaitAll();
             overviewLog.Log("All tasks cancelled.");
+        }
+
+        private void WaitUntilFinished(LogSplitter overviewLog)
+        {
+            if (config.TargetDurationSeconds > 0)
+            {
+                var targetDuration = TimeSpan.FromSeconds(config.TargetDurationSeconds);
+                cancelToken.WaitHandle.WaitOne(targetDuration);
+                overviewLog.Log($"Congratulations! The targer duration has been reached! ({Time.FormatDuration(targetDuration)})");
+            }
+            else
+            {
+                cancelToken.WaitHandle.WaitOne();
+            }
         }
 
         private void ClearAllCustomNamespaces(ContinuousTest[] allTests, ILog log)

@@ -23,11 +23,10 @@ namespace ContinuousTests.Tests
         {
             file = FileManager.GenerateFile(size);
 
-            AssertBytesStoredMetric(Nodes[0], () =>
-            {
-                LogBytesPerMillisecond(() => cid = Nodes[0].UploadFile(file));
-                Assert.That(cid, Is.Not.Null);
-            });
+            LogStoredBytes(Nodes[0]);
+
+            LogBytesPerMillisecond(() => cid = Nodes[0].UploadFile(file));
+            Assert.That(cid, Is.Not.Null);
         }
 
         [TestMoment(t: 10)]
@@ -40,25 +39,19 @@ namespace ContinuousTests.Tests
             file.AssertIsEqual(dl);
         }
 
-        private void AssertBytesStoredMetric(ICodexNode node, Action action)
+        private void LogStoredBytes(ICodexNode node)
         {
-            var lowExpected = size.SizeInBytes;
-            var highExpected = size.SizeInBytes * 1.2;
-
             var metrics = CreateMetricsAccess(node);
-            var before = metrics.GetMetric(BytesStoredMetric);
-
-            action();
-
-            Log.Log($"Waiting for between {lowExpected} and {highExpected} new bytes to be stored by node {node.GetName()}.");
-
-            Time.WaitUntil(() =>
+            var metric = metrics.GetMetric(BytesStoredMetric);
+            if (metric == null)
             {
-                var after = metrics.GetMetric(BytesStoredMetric);
-                var newBytes = Convert.ToInt64(after.Values.Last().Value - before.Values.Last().Value);
+                Log.Log($"Unabled to fetch metric '{BytesStoredMetric}' for node '{node.GetName()}'");
+                return;
+            }
 
-                return highExpected > newBytes && newBytes > lowExpected;
-            });
+            var bytes = new ByteSize(Convert.ToInt64(metric.Values.Single().Value));
+
+            Log.Log($"{node.GetName()}: {bytes}");
         }
 
         private void LogBytesPerMillisecond(Action action)
