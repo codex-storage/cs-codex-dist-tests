@@ -37,18 +37,20 @@ namespace DistTestCore
 
         public static string GetTestId()
         {
-            return GetEnvVar("TESTID");
+            return GetEnvVar("TESTID", "EnvVar-TESTID-NotSet");
         }
 
         public static string GetRunId()
         {
-            return GetEnvVar("RUNID");
+            var now = DateTime.UtcNow;
+            var defaultValue = now.ToString("yyyyMMdd-hhmmss");
+            return GetEnvVar("RUNID", defaultValue);
         }
 
-        private static string GetEnvVar(string name)
+        private static string GetEnvVar(string name, string defaultValue)
         {
             var v = Environment.GetEnvironmentVariable(name);
-            if (string.IsNullOrEmpty(v)) return $"EnvVar-{name}-NotSet";
+            if (string.IsNullOrEmpty(v)) return defaultValue;
             return v;
         }
 
