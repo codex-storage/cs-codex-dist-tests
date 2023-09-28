@@ -5,13 +5,10 @@ namespace Tests
 {
     public class AutoBootstrapDistTest : CodexDistTest
     {
-        private readonly List<ICodexNode> onlineCodexNodes = new List<ICodexNode>();
-
         [SetUp]
         public void SetUpBootstrapNode()
         {
             BootstrapNode = AddCodex(s => s.WithName("BOOTSTRAP"));
-            onlineCodexNodes.Add(BootstrapNode);
         }
 
         [TearDown]
