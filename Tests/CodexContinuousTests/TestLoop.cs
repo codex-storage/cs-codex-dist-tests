@@ -28,6 +28,8 @@ namespace ContinuousTests
         }
 
         public string Name { get; }
+        public int NumberOfPasses { get; private set; }
+        public int NumberOfFailures { get; private set; }
 
         public void Begin()
         {
@@ -35,6 +37,8 @@ namespace ContinuousTests
             {
                 try
                 {
+                    NumberOfPasses = 0;
+                    NumberOfFailures = 0;
                     while (true)
                     {
                         WaitHandle.WaitAny(new[] { runFinishedHandle, cancelToken.WaitHandle });
@@ -65,7 +69,11 @@ namespace ContinuousTests
             var run = new SingleTestRun(entryPointFactory, taskFactory, config, overviewLog, handle, startupChecker, cancelToken);
 
             runFinishedHandle.Reset();
-            run.Run(runFinishedHandle);
+            run.Run(runFinishedHandle, result =>
+            {
+                if (result) NumberOfPasses++;
+                else NumberOfFailures++;
+            });
         }
     }
 }

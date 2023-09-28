@@ -20,10 +20,14 @@ namespace ContinuousTests
 
         public void Run()
         {
+            var logConfig = new LogConfig(config.LogPath, false);
+            var startTime = DateTime.UtcNow;
+
             var overviewLog = new LogSplitter(
-                new FixtureLog(new LogConfig(config.LogPath, false), DateTime.UtcNow, "Overview"),
+                new FixtureLog(logConfig, startTime, "Overview"),
                 new ConsoleLog()
             );
+            var statusLog = new StatusLog(logConfig, startTime, "ContinuousTestRun");
 
             overviewLog.Log("Initializing...");
 
@@ -54,24 +58,39 @@ namespace ContinuousTests
             }
 
             overviewLog.Log("Finished launching test-loops.");
-            WaitUntilFinished(overviewLog);
+            WaitUntilFinished(overviewLog, statusLog, startTime, testLoops);
             overviewLog.Log("Cancelling all test-loops...");
             taskFactory.WaitAll();
             overviewLog.Log("All tasks cancelled.");
         }
 
-        private void WaitUntilFinished(LogSplitter overviewLog)
+        private void WaitUntilFinished(LogSplitter overviewLog, StatusLog statusLog, DateTime startTime, TestLoop[] testLoops)
         {
+            var testDuration = Time.FormatDuration(DateTime.UtcNow - startTime);
+            var testData = FormatTestRuns(testLoops);
+
             if (config.TargetDurationSeconds > 0)
             {
                 var targetDuration = TimeSpan.FromSeconds(config.TargetDurationSeconds);
                 cancelToken.WaitHandle.WaitOne(targetDuration);
                 overviewLog.Log($"Congratulations! The targer duration has been reached! ({Time.FormatDuration(targetDuration)})");
+                statusLog.ConcludeTest("Passed", testDuration, testData);
             }
             else
             {
                 cancelToken.WaitHandle.WaitOne();
+                statusLog.ConcludeTest("Failed", testDuration, testData);
             }
+        }
+
+        private Dictionary<string, string> FormatTestRuns(TestLoop[] testLoops)
+        {
+            var result = new Dictionary<string, string>();
+            foreach (var testLoop in testLoops)
+            {
+                result.Add($"ctest-{testLoop.Name}", $"passes: {testLoop.NumberOfPasses} - failures: {testLoop.NumberOfFailures}");
+            }
+            return result;
         }
 
         private void ClearAllCustomNamespaces(ContinuousTest[] allTests, ILog log)

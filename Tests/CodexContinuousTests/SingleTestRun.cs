@@ -38,13 +38,13 @@ namespace ContinuousTests
             nodes = CreateRandomNodes();
         }
 
-        public void Run(EventWaitHandle runFinishedHandle)
+        public void Run(EventWaitHandle runFinishedHandle, Action<bool> resultHandler)
         {
             taskFactory.Run(() =>
             {
                 try
                 {
-                    RunTest();
+                    RunTest(resultHandler);
 
                     entryPoint.Decommission(
                         deleteKubernetesResources: false, // This would delete the continuous test net.
@@ -60,13 +60,14 @@ namespace ContinuousTests
             });
         }
 
-        private void RunTest()
+        private void RunTest(Action<bool> resultHandler)
         {
             try
             {
                 RunTestMoments();
 
                 if (!config.KeepPassedTestLogs) fixtureLog.Delete();
+                resultHandler(true);
             }
             catch (Exception ex)
             {
@@ -74,6 +75,7 @@ namespace ContinuousTests
                 fixtureLog.MarkAsFailed();
 
                 failureCount++;
+                resultHandler(false);
                 if (config.StopOnFailure > 0)
                 {
                     OverviewLog($"Failures: {failureCount} / {config.StopOnFailure}");
