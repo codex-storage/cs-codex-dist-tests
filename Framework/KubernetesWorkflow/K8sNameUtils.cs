@@ -13,7 +13,10 @@
                 .Replace("]", "-")
                 .Replace(",", "-");
 
-            return result.Trim('-');
+            result = result.Trim('-');
+            if (result.Length > 62) result = result.Substring(0, 62);
+
+            return result;
         }
     }
 }

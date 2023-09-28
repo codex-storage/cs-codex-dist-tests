@@ -1,6 +1,5 @@
 ﻿using ArgsUniform;
 using CodexPlugin;
-using static Org.BouncyCastle.Math.EC.ECCurve;
 
 namespace CodexNetDeployer
 {
@@ -16,7 +15,8 @@ namespace CodexNetDeployer
         public string KubeNamespace { get; set; } = string.Empty;
 
         [Uniform("codex-local-repo", "cr", "CODEXLOCALREPOPATH", false, "If set, instead of using the default Codex docker image, the local repository will be used to build an image. " +
-            "This requires the 'DOCKERUSERNAME' and 'DOCKERPASSWORD' environment variables to be set.")]
+            "This requires the 'DOCKERUSERNAME' and 'DOCKERPASSWORD' environment variables to be set. (You can omit the password to use your system default, or use a docker access token as DOCKERPASSWORD.) You can set " +
+            "'DOCKERTAG' to define the image tag. If not set, one will be generated.")]
         public string CodexLocalRepoPath { get; set; } = string.Empty;
 
         [Uniform("nodes", "n", "NODES", true, "Number of Codex nodes to be created.")]
@@ -65,35 +65,7 @@ namespace CodexNetDeployer
         [Uniform("check-connect", "cc", "CHECKCONNECT", false, "If true, deployer check ensure peer-connectivity between all deployed nodes after deployment. Default is false.")]
         public bool CheckPeerConnection { get; set; } = false;
 
-        public Configuration()
-        {
-            //        dotnet run \
-            //--kube - config =/ opt / kubeconfig.yaml \
-            //--kube -namespace=codex-continuous-tests \
-            //--nodes=5 \
-            //--validators=3 \
-            //--log-level=Trace \
-            //--storage-quota=2048 \
-            //--storage-sell=1024 \
-            //--min-price=1024 \
-            //--max-collateral=1024 \
-            //--max-duration=3600000 \
-            //--block-ttl=180 \
-            //--block-mi=120 \
-            //--block-mn=10000 \
-            //--metrics=1 \
-            //--check-connect=1
-
-            KubeNamespace = "autodockertest";
-            NumberOfCodexNodes = 3;
-            NumberOfValidators = 1;
-            StorageQuota = 2048;
-            StorageSell = 1024;
-
-            CodexLocalRepoPath = "D:/Projects/nim-codex";
-        }
-
-    public List<string> Validate()
+        public List<string> Validate()
         {
             var errors = new List<string>();
 

@@ -70,21 +70,34 @@ namespace CodexNetDeployer
         {
             var dockerPassword = Environment.GetEnvironmentVariable("DOCKERPASSWORD");
 
-            if (string.IsNullOrEmpty(dockerUsername) || string.IsNullOrEmpty(dockerPassword))
+            try
             {
-                Log("Environment variable 'DOCKERPASSWORD' not provided.");
-                Log("Trying system default...");
-                Docker("login");
+                if (string.IsNullOrEmpty(dockerUsername) || string.IsNullOrEmpty(dockerPassword))
+                {
+                    Log("Environment variable 'DOCKERPASSWORD' not provided.");
+                    Log("Trying system default...");
+                    Docker("login");
+                }
+                else
+                {
+                    Docker("login", "-u", dockerUsername, "-p", dockerPassword);
+                }
             }
-            else
+            catch
             {
-                Docker("login", "-u", dockerUsername, "-p", dockerPassword);
+                Log("Docker login failed.");
+                Log("Please check the docker username and password provided by the constructor arguments and/or");
+                Log("set by 'DOCKERUSERNAME' and 'DOCKERPASSWORD' environment variables.");
+                Log("Note: You can use a docker access token as DOCKERPASSWORD.");
+                throw;
             }
         }
 
         private string GenerateImageName()
         {
-            return $"{dockerUsername!}/nim-codex-autoimage:{Guid.NewGuid().ToString().ToLowerInvariant()}";
+            var tag = Environment.GetEnvironmentVariable("DOCKERTAG");
+            if (string.IsNullOrEmpty(tag)) return $"{dockerUsername!}/nim-codex-autoimage:{Guid.NewGuid().ToString().ToLowerInvariant()}";
+            return $"{dockerUsername}/nim-codex-autoimage:{tag}";
         }
 
         private void Docker(params string[] args)
