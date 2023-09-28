@@ -5,6 +5,14 @@ namespace DistTestCore
 {
     public static class NameUtils
     {
+        private static readonly string defaultRunId;
+
+        static NameUtils()
+        {
+            var now = DateTime.UtcNow;
+            defaultRunId = now.ToString("yyyyMMdd-hhmmss");
+        }
+
         public static string GetTestMethodName(string name = "")
         {
             if (!string.IsNullOrEmpty(name)) return name;
@@ -42,9 +50,7 @@ namespace DistTestCore
 
         public static string GetRunId()
         {
-            var now = DateTime.UtcNow;
-            var defaultValue = now.ToString("yyyyMMdd-hhmmss");
-            return GetEnvVar("RUNID", defaultValue);
+            return GetEnvVar("RUNID", defaultRunId);
         }
 
         private static string GetEnvVar(string name, string defaultValue)
