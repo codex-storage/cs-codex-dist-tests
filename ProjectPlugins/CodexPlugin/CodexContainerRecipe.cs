@@ -16,12 +16,9 @@ namespace CodexPlugin
         public static readonly TimeSpan MaxDownloadTimePerMegabyte = TimeSpan.FromSeconds(2.0);
 
         public override string AppName => "codex";
-        public override string Image { get; }
+        public override string Image => GetDockerImage();
 
-        public CodexContainerRecipe()
-        {
-            Image = GetDockerImage();
-        }
+        public static string DockerImageOverride { get; set; } = string.Empty;
 
         protected override void Initialize(StartupConfig startupConfig)
         {
@@ -122,6 +119,7 @@ namespace CodexPlugin
         {
             var image = Environment.GetEnvironmentVariable("CODEXDOCKERIMAGE");
             if (!string.IsNullOrEmpty(image)) return image;
+            if (!string.IsNullOrEmpty(DockerImageOverride)) return DockerImageOverride;
             return DefaultDockerImage;
         }
     }

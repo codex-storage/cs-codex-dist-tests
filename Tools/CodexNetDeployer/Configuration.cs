@@ -1,5 +1,6 @@
 ﻿using ArgsUniform;
 using CodexPlugin;
+using static Org.BouncyCastle.Math.EC.ECCurve;
 
 namespace CodexNetDeployer
 {
@@ -13,6 +14,10 @@ namespace CodexNetDeployer
 
         [Uniform("kube-namespace", "kn", "KUBENAMESPACE", true, "Kubernetes namespace to be used for deployment.")]
         public string KubeNamespace { get; set; } = string.Empty;
+
+        [Uniform("codex-local-repo", "cr", "CODEXLOCALREPOPATH", false, "If set, instead of using the default Codex docker image, the local repository will be used to build an image. " +
+            "This requires the 'DOCKERUSERNAME' and 'DOCKERPASSWORD' environment variables to be set.")]
+        public string CodexLocalRepoPath { get; set; } = string.Empty;
 
         [Uniform("nodes", "n", "NODES", true, "Number of Codex nodes to be created.")]
         public int? NumberOfCodexNodes { get; set; }
@@ -59,13 +64,44 @@ namespace CodexNetDeployer
 
         [Uniform("check-connect", "cc", "CHECKCONNECT", false, "If true, deployer check ensure peer-connectivity between all deployed nodes after deployment. Default is false.")]
         public bool CheckPeerConnection { get; set; } = false;
-       
-        public List<string> Validate()
+
+        public Configuration()
+        {
+            //        dotnet run \
+            //--kube - config =/ opt / kubeconfig.yaml \
+            //--kube -namespace=codex-continuous-tests \
+            //--nodes=5 \
+            //--validators=3 \
+            //--log-level=Trace \
+            //--storage-quota=2048 \
+            //--storage-sell=1024 \
+            //--min-price=1024 \
+            //--max-collateral=1024 \
+            //--max-duration=3600000 \
+            //--block-ttl=180 \
+            //--block-mi=120 \
+            //--block-mn=10000 \
+            //--metrics=1 \
+            //--check-connect=1
+
+            KubeNamespace = "autodockertest";
+            NumberOfCodexNodes = 3;
+            NumberOfValidators = 1;
+            StorageQuota = 2048;
+            StorageSell = 1024;
+
+            CodexLocalRepoPath = "D:/Projects/nim-codex";
+        }
+
+    public List<string> Validate()
         {
             var errors = new List<string>();
 
+            StringIsSet(nameof(KubeNamespace), KubeNamespace, errors);
+            StringIsSet(nameof(KubeConfigFile), KubeConfigFile, errors);
+            StringIsSet(nameof(TestsTypePodLabel), TestsTypePodLabel, errors);
+
             ForEachProperty(
-                onString: (n, v) => StringIsSet(n, v, errors),
                 onInt: (n, v) => IntIsOverZero(n, v, errors));
 
             if (NumberOfValidators > NumberOfCodexNodes)
@@ -80,12 +116,11 @@ namespace CodexNetDeployer
             return errors;
         }
 
-        private void ForEachProperty(Action<string, string> onString, Action<string, int?> onInt)
+        private void ForEachProperty(Action<string, int?> onInt)
         {
             var properties = GetType().GetProperties();
             foreach (var p in properties)
             {
-                if (p.PropertyType == typeof(string)) onString(p.Name, (string)p.GetValue(this)!);
                 if (p.PropertyType == typeof(int?)) onInt(p.Name, (int?)p.GetValue(this)!);
                 if (p.PropertyType == typeof(int)) onInt(p.Name, (int)p.GetValue(this)!);
             }

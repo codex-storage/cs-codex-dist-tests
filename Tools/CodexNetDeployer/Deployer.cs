@@ -13,11 +13,13 @@ namespace CodexNetDeployer
         private readonly Configuration config;
         private readonly PeerConnectivityChecker peerConnectivityChecker;
         private readonly EntryPoint entryPoint;
+        private readonly LocalCodexBuilder localCodexBuilder;
 
         public Deployer(Configuration config)
         {
             this.config = config;
             peerConnectivityChecker = new PeerConnectivityChecker();
+            localCodexBuilder = new LocalCodexBuilder(new ConsoleLog(), config.CodexLocalRepoPath);
 
             ProjectPlugin.Load<CodexPlugin.CodexPlugin>();
             ProjectPlugin.Load<CodexContractsPlugin.CodexContractsPlugin>();
@@ -29,6 +31,8 @@ namespace CodexNetDeployer
         public void AnnouncePlugins()
         {
             var ep = CreateEntryPoint(new ConsoleLog());
+
+            localCodexBuilder.Intialize();
 
             Log("Using plugins:" + Environment.NewLine);
             var metadata = ep.GetPluginMetadata();
@@ -44,6 +48,8 @@ namespace CodexNetDeployer
 
         public CodexDeployment Deploy()
         {
+            localCodexBuilder.Build();
+
             Log("Initializing...");
             var ci = entryPoint.CreateInterface();
 
