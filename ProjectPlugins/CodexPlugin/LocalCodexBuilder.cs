@@ -12,7 +12,7 @@ namespace CodexNetDeployer
 
         public LocalCodexBuilder(ILog log, string? repoPath, string? dockerUsername)
         {
-            this.log = log;
+            this.log = new LogPrefixer(log, "(LocalCodexBuilder) ");
             this.repoPath = repoPath;
             this.dockerUsername = dockerUsername;
         }
