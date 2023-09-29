@@ -37,6 +37,9 @@ namespace ContinuousTests
         public void RunNode(ICodexNode bootstrapNode, Action<ICodexSetup> setup, Action<ICodexNode> operation)
         {
             var entryPoint = CreateEntryPoint();
+            // We have to be sure that the transient node we start is using the same image as whatever's already in the deployed network.
+            // Therefore, we use the image of the bootstrap node.
+            CodexContainerRecipe.DockerImageOverride = bootstrapNode.Container.Recipe.Image;
 
             try
             {
