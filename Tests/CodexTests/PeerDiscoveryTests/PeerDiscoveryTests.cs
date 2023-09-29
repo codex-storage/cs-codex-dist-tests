@@ -1,4 +1,6 @@
-﻿using NUnit.Framework;
+﻿using CodexContractsPlugin;
+using GethPlugin;
+using NUnit.Framework;
 
 namespace Tests.PeerDiscoveryTests
 {
@@ -26,7 +28,9 @@ namespace Tests.PeerDiscoveryTests
         [Test]
         public void MarketplaceDoesNotInterfereWithPeerDiscovery()
         {
-            //AddCodex(2, s => s.EnableMarketplace(1000.TestTokens()));
+            var geth = Ci.StartGethNode(s => s.IsMiner());
+            var contracts = Ci.StartCodexContracts(geth);
+            AddCodex(2, s => s.EnableMarketplace(geth, contracts, 10.Eth(), 1000.TestTokens()));
 
             AssertAllNodesConnected();
         }

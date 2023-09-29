@@ -10,15 +10,19 @@ Nethereum: v4.14.0
 
 ## Tests/CodexTests and Tests/CodexLongTests
 These are test assemblies that use NUnit3 to perform tests against transient Codex nodes.
+Read more [HERE](/Tests/CodexTests/README.md)
 
 ## Tests/ContinousTests
 A console application that runs tests in an endless loop against a persistent deployment of Codex nodes.
+Read more [HERE](/Tests/CodexContinuousTests/README.md)
 
 ## Tools/CodexNetDeployer
 A console application that can deploy Codex nodes.
+Read more [HERE](/Tools/CodexNetDeployer/README.MD)
 
-## Test logs
-Because tests potentially take a long time to run, logging is in place to help you investigate failures afterwards. Should a test fail, all Codex terminal output (as well as metrics if they have been enabled) will be downloaded and stored along with a detailed, step-by-step log of the test. If something's gone wrong and you're here to discover the details, head for the logs.
+## Framework architecture
+The framework is designed to be extended by project-specific plugins. These plugins contribute functionality and abstractions to the framework. Users of the framework use these to perform tasks such as testing and deploying.
+![Architecture](/docs/FrameworkArchitecture.png)
 
 ## How to contribute a plugin
 If you want to add support for your project to the testing framework, follow the steps [HERE](/CONTRIBUTINGPLUGINS.MD)

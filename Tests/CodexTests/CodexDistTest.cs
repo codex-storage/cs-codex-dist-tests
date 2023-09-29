@@ -1,9 +1,12 @@
 ﻿using CodexContractsPlugin;
+using CodexNetDeployer;
 using CodexPlugin;
 using Core;
 using DistTestCore;
 using DistTestCore.Helpers;
+using DistTestCore.Logs;
 using GethPlugin;
+using NUnit.Framework;
 using NUnit.Framework.Constraints;
 
 namespace Tests
@@ -18,6 +21,19 @@ namespace Tests
             ProjectPlugin.Load<CodexContractsPlugin.CodexContractsPlugin>();
             ProjectPlugin.Load<GethPlugin.GethPlugin>();
             ProjectPlugin.Load<MetricsPlugin.MetricsPlugin>();
+        }
+
+        [TearDown]
+        public void TearDownCodexFixture()
+        {
+            onlineCodexNodes.Clear();
+        }
+
+        protected override void Initialize(FixtureLog fixtureLog)
+        {
+            var localBuilder = new LocalCodexBuilder(fixtureLog);
+            localBuilder.Intialize();
+            localBuilder.Build();
         }
 
         public ICodexNode AddCodex()

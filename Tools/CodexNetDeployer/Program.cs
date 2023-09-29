@@ -45,7 +45,7 @@ public class Program
     private static void PrintHelp()
     {
         var nl = Environment.NewLine;
-        Console.WriteLine("CodexNetDeployer allows you to easily deploy multiple Codex nodes in a Kubernetes cluster. " +
+        Console.WriteLine("CodexNetDeployer allows you to deploy multiple Codex nodes in a Kubernetes cluster. " +
             "The deployer will set up the required supporting services, deploy the Codex on-chain contracts, start and bootstrap the Codex instances. " +
             "All Kubernetes objects will be created in the namespace provided, allowing you to easily find, modify, and delete them afterwards." + nl);
     }

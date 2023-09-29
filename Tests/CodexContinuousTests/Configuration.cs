@@ -27,9 +27,6 @@ namespace ContinuousTests
         [Uniform("target-duration", "td", "TARGETDURATION", false, "If greater than zero, runner will run for this many seconds before stopping.")]
         public int TargetDurationSeconds { get; set; } = 0;
 
-        [Uniform("dl-logs", "dl", "DLLOGS", false, "If true, runner will periodically download and save/append container logs to the log path.")]
-        public bool DownloadContainerLogs { get; set; } = false;
-
         public CodexDeployment CodexDeployment { get; set; } = null!;
     }
 
@@ -55,10 +52,7 @@ namespace ContinuousTests
         {
             var nl = Environment.NewLine;
             Console.WriteLine("ContinuousTests will run a set of tests against a codex deployment given a codex-deployment.json file." + nl +
-                "The tests will run in an endless loop unless otherwise specified, using the test-specific timing values." + nl);
-
-            Console.WriteLine("ContinuousTests assumes you are running this tool from *inside* the Kubernetes cluster. " +
-                "If you are not running this from a container inside the cluster, add the argument '--external'." + nl);
+                "The tests will run in an endless loop unless otherwise specified." + nl);
         }
     }
 }

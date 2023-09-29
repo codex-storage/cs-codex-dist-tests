@@ -32,6 +32,8 @@ namespace DistTestCore
             statusLog = new StatusLog(logConfig, startTime);
 
             globalEntryPoint = new EntryPoint(fixtureLog, configuration.GetK8sConfiguration(new DefaultTimeSet(), TestNamespacePrefix), configuration.GetFileManagerFolder());
+
+            Initialize(fixtureLog);
         }
 
         [OneTimeSetUp]
@@ -138,6 +140,10 @@ namespace DistTestCore
         public void Measure(string name, Action action)
         {
             Stopwatch.Measure(Get().Log, name, action);
+        }
+
+        protected virtual void Initialize(FixtureLog fixtureLog)
+        {
         }
 
         protected TestLifecycle Get()
