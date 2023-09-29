@@ -19,8 +19,9 @@ The following environment variables allow you to override specific aspects of th
 ## Using a local Codex repository
 If you have a clone of the Codex git repository, and you want to run the tests using your local modifications, the following environment variable options are for you. Please note that any changes made in Codex's 'vendor' directory will be discarded during the build process.
 
-| Variable       | Description                                                                                                         |
-|----------------|---------------------------------------------------------------------------------------------------------------------|
-| CODEXREPOPATH  | Path to the Codex repository.                                                                                       |
-| DOCKERUSERNAME | Username of your Dockerhub account.                                                                                 |
-| DOCKERPASSWORD | Password OR access-token for your Dockerhub account. You can omit this variable to use your system-default account. |
+| Variable       | Description                                                                                                              |
+|----------------|--------------------------------------------------------------------------------------------------------------------------|
+| CODEXREPOPATH  | Path to the Codex repository.                                                                                            |
+| DOCKERUSERNAME | Username of your Dockerhub account.                                                                                      |
+| DOCKERPASSWORD | Password OR access-token for your Dockerhub account. You can omit this variable to use your system-default account.      |
+| DOCKERTAG      | Optional. Tag used for docker image that will be built and pushed to the Dockerhub account. Random ID used when not set. |
