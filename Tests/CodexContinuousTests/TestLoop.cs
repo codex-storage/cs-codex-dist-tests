@@ -39,7 +39,7 @@ namespace ContinuousTests
                 {
                     NumberOfPasses = 0;
                     NumberOfFailures = 0;
-                    while (true)
+                    while (!cancelToken.IsCancellationRequested)
                     {
                         WaitHandle.WaitAny(new[] { runFinishedHandle, cancelToken.WaitHandle });
 

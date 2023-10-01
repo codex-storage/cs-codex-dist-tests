@@ -73,6 +73,7 @@ namespace ContinuousTests
             {
                 var targetDuration = TimeSpan.FromSeconds(config.TargetDurationSeconds);
                 cancelToken.WaitHandle.WaitOne(targetDuration);
+                Cancellation.Cts.Cancel();
                 overviewLog.Log($"Congratulations! The targer duration has been reached! ({Time.FormatDuration(targetDuration)})");
                 statusLog.ConcludeTest("Passed", testDuration, testData);
             }

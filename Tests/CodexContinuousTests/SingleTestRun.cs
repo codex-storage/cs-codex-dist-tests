@@ -73,11 +73,9 @@ namespace ContinuousTests
             try
             {
                 foreach (var m in monitors) m.Run();
+                fixtureLog.Log("Monitor start");
 
                 RunTestMoments();
-
-                foreach (var m in monitors) m.Stop();
-                if (monitors.Any(m => m.Fault)) throw new Exception("Any faulted");
 
                 if (!config.KeepPassedTestLogs)
                 {
@@ -102,6 +100,13 @@ namespace ContinuousTests
                         Cancellation.Cts.Cancel();
                     }
                 }
+            }
+            finally
+            {
+                Thread.Sleep(1000);
+                fixtureLog.Log("Monitor stop");
+                foreach (var m in monitors) m.Stop();
+                if (monitors.Any(m => m.Fault)) throw new Exception("One or more downloaded container log is missing lines!");
             }
         }
 
@@ -143,6 +148,7 @@ namespace ContinuousTests
                     return;
                 }
             }
+            fixtureLog.Log("Test run has been cancelled.");
         }
 
         private void ThrowFailTest()
