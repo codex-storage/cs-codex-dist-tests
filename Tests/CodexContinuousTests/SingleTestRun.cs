@@ -62,11 +62,28 @@ namespace ContinuousTests
 
         private void RunTest(Action<bool> resultHandler)
         {
+            var ci = entryPoint.CreateInterface();
+            var monitors = nodes.Select(n => new ContainerLogStream(
+                stream: ci.MonitorLog(n),
+                name: n.GetName(),
+                targetFile: fixtureLog.CreateSubfile(),
+                token: cancelToken,
+                taskFactory: taskFactory)).ToArray();
+
             try
             {
+                foreach (var m in monitors) m.Run();
+
                 RunTestMoments();
 
-                if (!config.KeepPassedTestLogs) fixtureLog.Delete();
+                foreach (var m in monitors) m.Stop();
+                if (monitors.Any(m => m.Fault)) throw new Exception("Any faulted");
+
+                if (!config.KeepPassedTestLogs)
+                {
+                    fixtureLog.Delete();
+                    foreach (var m in monitors) m.DeleteFile();
+                }
                 resultHandler(true);
             }
             catch (Exception ex)
@@ -81,9 +98,7 @@ namespace ContinuousTests
                     OverviewLog($"Failures: {failureCount} / {config.StopOnFailure}");
                     if (failureCount >= config.StopOnFailure)
                     {
-                        OverviewLog($"Configured to stop after {config.StopOnFailure} failures. Downloading cluster logs...");
-                        DownloadClusterLogs();
-                        OverviewLog("Log download finished. Cancelling test runner...");
+                        OverviewLog($"Configured to stop after {config.StopOnFailure} failures.");
                         Cancellation.Cts.Cancel();
                     }
                 }
@@ -100,10 +115,8 @@ namespace ContinuousTests
             var earliestMoment = handle.GetEarliestMoment();
 
             var t = earliestMoment;
-            while (true)
+            while (!cancelToken.IsCancellationRequested)
             {
-                cancelToken.ThrowIfCancellationRequested();
-
                 RunMoment(t);
 
                 if (handle.Test.TestFailMode == TestFailMode.StopAfterFirstFailure && exceptions.Any())
@@ -139,19 +152,6 @@ namespace ContinuousTests
             Log(exceptionsMessage);
             OverviewLog($" > Test failed: " + exceptionsMessage);
             throw new Exception(exceptionsMessage);
-        }
-
-        private void DownloadClusterLogs()
-        {
-            var entryPointFactory = new EntryPointFactory();
-            var log = new NullLog();
-            log.FullFilename = Path.Combine(config.LogPath, "NODE");
-            var entryPoint = entryPointFactory.CreateEntryPoint(config.KubeConfigFile, config.DataPath, config.CodexDeployment.Metadata.KubeNamespace, log);
-
-            foreach (var container in config.CodexDeployment.CodexContainers)
-            {
-                entryPoint.CreateInterface().DownloadLog(container);
-            }
         }
 
         private string GetCombinedExceptionsMessage(Exception[] exceptions)

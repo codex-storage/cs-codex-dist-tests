@@ -36,6 +36,11 @@ namespace Core
             return logHandler.DownloadLog();
         }
 
+        public Stream MonitorLog(IHasContainer container)
+        {
+            return MonitorLog(container.Container);
+        }
+
         public Stream MonitorLog(RunningContainer container)
         {
             var workflow = entryPoint.Tools.CreateWorkflow();

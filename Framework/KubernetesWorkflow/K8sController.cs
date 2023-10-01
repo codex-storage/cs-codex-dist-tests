@@ -60,7 +60,7 @@ namespace KubernetesWorkflow
         public Stream MonitorContainerLog(RunningContainer container)
         {
             log.Debug();
-            return client.Run(c => c.ReadNamespacedPodLog(container.Pod.PodInfo.Name, K8sNamespace, container.Recipe.Name, follow: true));
+            return client.Run(c => c.ReadNamespacedPodLog(container.Pod.PodInfo.Name, K8sNamespace, container.Recipe.Name, follow: true, sinceSeconds: 1));
         }
 
         public string ExecuteCommand(RunningPod pod, string containerName, string command, params string[] args)
