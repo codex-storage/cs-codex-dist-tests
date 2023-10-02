@@ -1,4 +1,5 @@
 ﻿using KubernetesWorkflow;
+using Utils;
 
 namespace Core
 {
@@ -56,6 +57,17 @@ namespace Core
         {
             var workflow = entryPoint.Tools.CreateWorkflow();
             return workflow.ExecuteCommand(container, command, args);
+        }
+
+        public IHttp CreateHttp()
+        {
+            var address = new Address("http://localhost", 9200);
+            var baseUrl = "";
+            return entryPoint.Tools.CreateHttp(address, baseUrl, client =>
+            {
+                // -H "kbn-xsrf: reporting" -H "Content-Type: application/json" 
+                client.DefaultRequestHeaders.Add("kbn-xsrf", "reporting");
+            });
         }
     }
 

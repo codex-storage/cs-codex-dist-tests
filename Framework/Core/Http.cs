@@ -79,7 +79,7 @@ namespace Core
 
         public string HttpPostJson<TRequest>(string route, TRequest body)
         {
-            var response = PostJson<TRequest>(route, body);
+            var response = PostJson(route, body);
             return Time.Wait(response.Content.ReadAsStringAsync());
         }
 
