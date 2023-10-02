@@ -6,6 +6,7 @@ using System.Reflection;
 using CodexPlugin;
 using DistTestCore.Logs;
 using Core;
+using System.ComponentModel;
 
 namespace ContinuousTests
 {
@@ -63,24 +64,18 @@ namespace ContinuousTests
         private void RunTest(Action<bool> resultHandler)
         {
             var ci = entryPoint.CreateInterface();
-            var monitors = nodes.Select(n => new ContainerLogStream(
-                stream: ci.MonitorLog(n),
-                name: n.GetName(),
-                targetFile: fixtureLog.CreateSubfile(),
-                token: cancelToken,
-                taskFactory: taskFactory)).ToArray();
-
+            var testStart = DateTime.UtcNow;
+            
             try
             {
-                foreach (var m in monitors) m.Run();
-                fixtureLog.Log("Monitor start");
-
                 RunTestMoments();
+
+                var duration = DateTime.UtcNow - testStart;
+                OverviewLog($" > Test passed. ({Time.FormatDuration(duration)})");
 
                 if (!config.KeepPassedTestLogs)
                 {
                     fixtureLog.Delete();
-                    foreach (var m in monitors) m.DeleteFile();
                 }
                 resultHandler(true);
             }
@@ -88,6 +83,8 @@ namespace ContinuousTests
             {
                 fixtureLog.Error("Test run failed with exception: " + ex);
                 fixtureLog.MarkAsFailed();
+
+                DownloadContainerLogs(testStart);
 
                 failureCount++;
                 resultHandler(false);
@@ -101,12 +98,21 @@ namespace ContinuousTests
                     }
                 }
             }
-            finally
+        }
+
+        private void DownloadContainerLogs(DateTime testStart)
+        {
+            // The test failed just now. We can't expect the logs to be available in elastic-search immediately:
+            Thread.Sleep(TimeSpan.FromMinutes(1));
+
+            var effectiveStart = testStart.Subtract(TimeSpan.FromSeconds(10));
+            var effectiveEnd = DateTime.UtcNow.AddSeconds(30);
+            var elasticSearchLogDownloader = new ElasticSearchLogDownloader(entryPoint.Tools, fixtureLog);
+
+            foreach (var node in nodes)
             {
-                Thread.Sleep(1000);
-                fixtureLog.Log("Monitor stop");
-                foreach (var m in monitors) m.Stop();
-                if (monitors.Any(m => m.Fault)) throw new Exception("One or more downloaded container log is missing lines!");
+                var container = node.Container;
+                elasticSearchLogDownloader.Download(fixtureLog.CreateSubfile(), container, effectiveStart, effectiveEnd);
             }
         }
 
@@ -144,7 +150,6 @@ namespace ContinuousTests
                     {
                         ThrowFailTest();
                     }
-                    OverviewLog(" > Test passed.");
                     return;
                 }
             }
