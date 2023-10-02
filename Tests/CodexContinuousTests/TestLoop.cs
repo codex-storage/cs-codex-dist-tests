@@ -13,6 +13,7 @@ namespace ContinuousTests
         private readonly StartupChecker startupChecker;
         private readonly CancellationToken cancelToken;
         private readonly EventWaitHandle runFinishedHandle = new EventWaitHandle(true, EventResetMode.ManualReset);
+        private static object testLock = new object();
 
         public TestLoop(EntryPointFactory entryPointFactory, TaskFactory taskFactory, Configuration config, ILog overviewLog, Type testType, TimeSpan runsEvery, StartupChecker startupChecker, CancellationToken cancelToken)
         {
@@ -41,13 +42,19 @@ namespace ContinuousTests
                     NumberOfFailures = 0;
                     while (!cancelToken.IsCancellationRequested)
                     {
-                        WaitHandle.WaitAny(new[] { runFinishedHandle, cancelToken.WaitHandle });
+                        lock (testLock)
+                        // In the original design, multiple tests are allowed to interleave their test-moments, increasing test through-put.
+                        // Since we're still stabilizing some of the basics, this lock limits us to 1 test run at a time.
+                        {
+                            WaitHandle.WaitAny(new[] { runFinishedHandle, cancelToken.WaitHandle });
 
-                        cancelToken.ThrowIfCancellationRequested();
+                            cancelToken.ThrowIfCancellationRequested();
 
-                        StartTest();
+                            StartTest();
 
-                        cancelToken.WaitHandle.WaitOne(runsEvery);
+                            cancelToken.WaitHandle.WaitOne(runsEvery);
+                        }
+                        Thread.Sleep(100);
                     }
                 }
                 catch (OperationCanceledException)
