@@ -58,7 +58,9 @@ namespace ContinuousTests
 
         private IHttp CreateElasticSearchHttp()
         {
-            var address = new Address("http://localhost", 9200);
+            var serviceName = "elasticsearch";
+            var k8sNamespace = "monitoring";
+            var address = new Address($"http://{serviceName}.{k8sNamespace}.svc.cluster.local", 9200);
             var baseUrl = "";
             return tools.CreateHttp(address, baseUrl, client =>
             {
@@ -201,24 +203,24 @@ namespace ContinuousTests
 
             public class SearchResponse
             {
-                public SearchHits hits { get; set; }
+                public SearchHits hits { get; set; } = new SearchHits();
             }
 
             public class SearchHits
             {
-                public SearchHitEntry[] hits { get; set; }
+                public SearchHitEntry[] hits { get; set; } = Array.Empty<SearchHitEntry>();
             }
 
             public class SearchHitEntry
             {
-                public SearchHitFields fields { get; set; }
-                public long[] sort { get; set; }
+                public SearchHitFields fields { get; set; } = new SearchHitFields();
+                public long[] sort { get; set; } = Array.Empty<long>();
             }
 
             public class SearchHitFields
             {
-                public string[] @timestamp { get; set; }
-                public string[] message { get; set; }
+                public string[] @timestamp { get; set; } = Array.Empty<string>();
+                public string[] message { get; set; } = Array.Empty<string>();
             }
         }
     }
