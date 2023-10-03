@@ -210,6 +210,7 @@ namespace ContinuousTests
         {
             Log($" > Running TestMoment '{name}'");
             handle.Test.Initialize(nodes, fixtureLog, entryPoint.Tools.GetFileManager(), config, cancelToken);
+            handle.Test.Tools = entryPoint.Tools;
         }
 
         private void DecommissionTest()

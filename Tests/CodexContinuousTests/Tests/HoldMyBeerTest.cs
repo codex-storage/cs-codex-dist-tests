@@ -26,6 +26,10 @@ namespace ContinuousTests.Tests
 
             var dl = Nodes[0].DownloadContent(cid);
             file.AssertIsEqual(dl);
+
+            var targetFile = Log.CreateSubfile();
+            var downloader = new ElasticSearchLogDownloader(Tools, Log);
+            downloader.Download(targetFile, Nodes[0].Container, DateTime.UtcNow.Subtract(TimeSpan.FromMinutes(1)), DateTime.UtcNow.AddMinutes(1));
         }
     }
 }
