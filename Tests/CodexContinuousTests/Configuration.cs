@@ -27,6 +27,12 @@ namespace ContinuousTests
         [Uniform("target-duration", "td", "TARGETDURATION", false, "If greater than zero, runner will run for this many seconds before stopping.")]
         public int TargetDurationSeconds { get; set; } = 0;
 
+        [Uniform("filter", "f", "FILTER", false, "If set, runs only tests whose names contain any of the filter strings. Comma-separated. Case sensitive.")]
+        public string Filter { get; set; } = string.Empty;
+
+        [Uniform("cleanup", "cl", "CLEANUP", false, "If set, the kubernetes namespace will be deleted after the test run has finished.")]
+        public bool Cleanup { get; set; } = false;
+
         public CodexDeployment CodexDeployment { get; set; } = null!;
     }
 

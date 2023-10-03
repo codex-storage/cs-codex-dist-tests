@@ -2,6 +2,7 @@
 using Core;
 using DistTestCore.Logs;
 using Logging;
+using Newtonsoft.Json;
 
 namespace ContinuousTests
 {
@@ -45,6 +46,7 @@ namespace ContinuousTests
                 foreach (var vars in codexVars) log.Log(vars.ToString());
                 log.Log("");
             }
+            log.Log($"Deployment metadata: {JsonConvert.SerializeObject(deployment.Metadata)}");
             log.Log("");
         }
 

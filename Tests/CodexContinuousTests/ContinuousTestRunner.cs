@@ -46,7 +46,13 @@ namespace ContinuousTests
 
             ClearAllCustomNamespaces(allTests, overviewLog);
 
-            var testLoops = allTests.Select(t => new TestLoop(entryPointFactory, taskFactory, config, overviewLog, t.GetType(), t.RunTestEvery, startupChecker, cancelToken)).ToArray();
+            var filteredTests = FilterTests(allTests, overviewLog);
+            if (!filteredTests.Any())
+            {
+                overviewLog.Log("No tests selected.");
+                return;
+            }
+            var testLoops = filteredTests.Select(t => new TestLoop(entryPointFactory, taskFactory, config, overviewLog, t.GetType(), t.RunTestEvery, startupChecker, cancelToken)).ToArray();
 
             foreach (var testLoop in testLoops)
             {
@@ -62,6 +68,24 @@ namespace ContinuousTests
             overviewLog.Log("Cancelling all test-loops...");
             taskFactory.WaitAll();
             overviewLog.Log("All tasks cancelled.");
+
+            PerformCleanup(overviewLog);
+        }
+
+        private ContinuousTest[] FilterTests(ContinuousTest[] allTests, ILog log)
+        {
+            log.Log($"Available tests: {string.Join(", ", allTests.Select(r => r.Name))}");
+
+            var result = allTests.ToArray();
+            var filters = config.Filter.Split(",", StringSplitOptions.RemoveEmptyEntries);
+            if (filters.Any())
+            {
+                log.Log($"Applying filters: {string.Join(", ", filters)}");
+                result = allTests.Where(t => filters.Any(f => t.Name.Contains(f))).ToArray();
+            }
+
+            log.Log($"Selected for running: {string.Join(", ", result.Select(r => r.Name))}");
+            return result;
         }
 
         private void WaitUntilFinished(LogSplitter overviewLog, StatusLog statusLog, DateTime startTime, TestLoop[] testLoops)
@@ -106,6 +130,16 @@ namespace ContinuousTests
 
             var entryPoint = entryPointFactory.CreateEntryPoint(config.KubeConfigFile, config.DataPath, test.CustomK8sNamespace, log);
             entryPoint.Tools.CreateWorkflow().DeleteNamespacesStartingWith(test.CustomK8sNamespace);
+        }
+
+        private void PerformCleanup(ILog log)
+        {
+            if (!config.Cleanup) return;
+            log.Log("Cleaning up test namespace...");
+
+            var entryPoint = entryPointFactory.CreateEntryPoint(config.KubeConfigFile, config.DataPath, config.CodexDeployment.Metadata.KubeNamespace, log);
+            entryPoint.Decommission(deleteKubernetesResources: true, deleteTrackedFiles: true);
+            log.Log("Cleanup finished.");
         }
     }
 }
