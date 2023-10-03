@@ -168,9 +168,15 @@ namespace ContinuousTests
 
             private void ProcessQueue()
             {
+                log.Log($"queue length: {queue.Count}");
+                log.Log("lowest number: " + queue.Min(q => q.Number));
+                log.Log("highest number: " + queue.Max(q => q.Number));
+
                 while (queue.Any())
                 {
                     ulong wantedNumber = lastLogLine + 1;
+                    log.Log("looking for number: " + wantedNumber);
+
                     DeleteOldEntries(wantedNumber);
 
                     var currentEntry = queue.FirstOrDefault(e => e.Number == wantedNumber);
