@@ -75,7 +75,7 @@ namespace ContinuousTests
             private const int sizeOfPage = 2000;
             private string searchAfter = "";
             private int lastHits = 1;
-            private int lastLogLine = -1;
+            private ulong lastLogLine = 0;
 
             public LogReconstructor(LogFile targetFile, IHttp http, string queryTemplate)
             {
@@ -115,11 +115,26 @@ namespace ContinuousTests
             private void AddHitToQueue(SearchHitEntry hit)
             {
                 var message = hit.fields.message.Single();
-                var sub = message.Substring(0, 12);
-                if (int.TryParse(sub, out int number))
+                var number = ParseCountNumber(message);
+                if (number != null)
                 {
-                    queue.Add(new LogQueueEntry(message, number));
+                    queue.Add(new LogQueueEntry(message, number.Value));
                 }
+            }
+
+            private ulong? ParseCountNumber(string message)
+            {
+                if (string.IsNullOrEmpty(message)) return null;
+                var tokens = message.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                if (!tokens.Any()) return null;
+                var countToken = tokens.SingleOrDefault(t => t.StartsWith("count="));
+                if (countToken == null) return null;
+                var number = countToken.Substring(6);
+                if (ulong.TryParse(number, out ulong value))
+                {
+                    return value;
+                }
+                return null;
             }
 
             private void UpdateSearchAfter(SearchResponse response)
@@ -141,7 +156,7 @@ namespace ContinuousTests
             {
                 while (queue.Any())
                 {
-                    var wantedNumber = lastLogLine + 1;
+                    ulong wantedNumber = lastLogLine + 1;
                     DeleteOldEntries(wantedNumber);
 
                     var currentEntry = queue.FirstOrDefault(e => e.Number == wantedNumber);
@@ -167,21 +182,21 @@ namespace ContinuousTests
                 targetFile.WriteRaw(currentEntry.Message);
             }
 
-            private void DeleteOldEntries(int wantedNumber)
+            private void DeleteOldEntries(ulong wantedNumber)
             {
                 queue.RemoveAll(e => e.Number < wantedNumber);
             }
 
             public class LogQueueEntry
             {
-                public LogQueueEntry(string message, int number)
+                public LogQueueEntry(string message, ulong number)
                 {
                     Message = message;
                     Number = number;
                 }
 
                 public string Message { get; }
-                public int Number { get; }
+                public ulong Number { get; }
             }
 
             public class SearchResponse

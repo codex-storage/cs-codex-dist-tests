@@ -11,7 +11,6 @@ namespace KubernetesWorkflow
         CrashWatcher CreateCrashWatcher(RunningContainer container);
         void Stop(RunningContainers runningContainers);
         void DownloadContainerLog(RunningContainer container, ILogHandler logHandler, int? tailLines = null);
-        Stream MonitorContainerLog(RunningContainer container);
         string ExecuteCommand(RunningContainer container, string command, params string[] args);
         void DeleteNamespace();
         void DeleteNamespacesStartingWith(string namespacePrefix);
@@ -81,14 +80,6 @@ namespace KubernetesWorkflow
             K8s(controller =>
             {
                 controller.DownloadPodLog(container.Pod, container.Recipe, logHandler, tailLines);
-            });
-        }
-
-        public Stream MonitorContainerLog(RunningContainer container)
-        {
-            return K8s(controller =>
-            {
-                return controller.MonitorContainerLog(container);
             });
         }
 
