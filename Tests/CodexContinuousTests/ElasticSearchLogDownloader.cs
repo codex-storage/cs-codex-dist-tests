@@ -37,7 +37,7 @@ namespace ContinuousTests
             var queryTemplate = CreateQueryTemplate(container, startUtc, endUtc);
 
             targetFile.Write($"Downloading '{container.Name}' to '{targetFile.FullFilename}'.");
-            var reconstructor = new LogReconstructor(log, targetFile, http, queryTemplate);
+            var reconstructor = new LogReconstructor(targetFile, http, queryTemplate);
             reconstructor.DownloadFullLog();
 
             log.Log("Log download finished.");
@@ -50,13 +50,10 @@ namespace ContinuousTests
             var end = endUtc.ToString("o");
 
             var source = "{ \"sort\": [ { \"@timestamp\": { \"order\": \"asc\" } } ], \"fields\": [ { \"field\": \"@timestamp\", \"format\": \"strict_date_optional_time\" }, { \"field\": \"pod_name\" }, { \"field\": \"message\" } ], \"size\": <SIZE>, <SEARCHAFTER> \"_source\": false, \"query\": { \"bool\": { \"must\": [], \"filter\": [ { \"range\": { \"@timestamp\": { \"format\": \"strict_date_optional_time\", \"gte\": \"<STARTTIME>\", \"lte\": \"<ENDTIME>\" } } }, { \"match_phrase\": { \"pod_name\": \"<PODNAME>\" } } ] } } }";
-            var result = source
+            return source
                 .Replace("<STARTTIME>", start)
                 .Replace("<ENDTIME>", end)
                 .Replace("<PODNAME>", podName);
-
-            log.Log($"query template: '{result}'");
-            return result;
         }
 
         private IHttp CreateElasticSearchHttp()
@@ -65,8 +62,6 @@ namespace ContinuousTests
             var k8sNamespace = "monitoring";
             var address = new Address($"http://{serviceName}.{k8sNamespace}.svc.cluster.local", 9200);
             var baseUrl = "";
-
-            log.Log("elastic search: " + address.Host + ":" + address.Port);
 
             return tools.CreateHttp(address, baseUrl, client =>
             {
@@ -77,18 +72,16 @@ namespace ContinuousTests
         public class LogReconstructor
         {
             private readonly List<LogQueueEntry> queue = new List<LogQueueEntry>();
-            private readonly ILog log;
             private readonly LogFile targetFile;
             private readonly IHttp http;
             private readonly string queryTemplate;
             private const int sizeOfPage = 2000;
             private string searchAfter = "";
             private int lastHits = 1;
-            private ulong lastLogLine = 0;
+            private ulong? lastLogLine;
 
-            public LogReconstructor(ILog log, LogFile targetFile, IHttp http, string queryTemplate)
+            public LogReconstructor(LogFile targetFile, IHttp http, string queryTemplate)
             {
-                this.log = log;
                 this.targetFile = targetFile;
                 this.http = http;
                 this.queryTemplate = queryTemplate;
@@ -109,11 +102,7 @@ namespace ContinuousTests
                                 .Replace("<SIZE>", sizeOfPage.ToString())
                                 .Replace("<SEARCHAFTER>", searchAfter);
 
-                log.Log($"query with size {sizeOfPage} and searchAfter '{searchAfter}'.");
-
                 var response = http.HttpPostString<SearchResponse>("_search", query);
-
-                log.Log("number of hits: " + response.hits.hits.Length);
 
                 lastHits = response.hits.hits.Length;
                 if (lastHits > 0)
@@ -168,14 +157,14 @@ namespace ContinuousTests
 
             private void ProcessQueue()
             {
-                log.Log($"queue length: {queue.Count}");
-                log.Log("lowest number: " + queue.Min(q => q.Number));
-                log.Log("highest number: " + queue.Max(q => q.Number));
+                if (lastLogLine == null)
+                {
+                    lastLogLine = queue.Min(q => q.Number) - 1;
+                }
 
                 while (queue.Any())
                 {
-                    ulong wantedNumber = lastLogLine + 1;
-                    log.Log("looking for number: " + wantedNumber);
+                    ulong wantedNumber = lastLogLine.Value + 1;
 
                     DeleteOldEntries(wantedNumber);
 
