@@ -15,7 +15,7 @@ namespace ContinuousTests
         [Uniform("codex-deployment", "c", "CODEXDEPLOYMENT", true, "Path to codex-deployment JSON file.")]
         public string CodexDeploymentJson { get; set; } = string.Empty;
 
-        [Uniform("keep", "k", "KEEP", false, "Set to '1' to retain logs of successful tests.")]
+        [Uniform("keep", "k", "KEEP", false, "Set to 1 or 'true' to retain logs of successful tests.")]
         public bool KeepPassedTestLogs { get; set; } = false;
 
         [Uniform("kube-config", "kc", "KUBECONFIG", true, "Path to Kubeconfig file. Use 'null' (default) to use local cluster.")]
@@ -30,7 +30,7 @@ namespace ContinuousTests
         [Uniform("filter", "f", "FILTER", false, "If set, runs only tests whose names contain any of the filter strings. Comma-separated. Case sensitive.")]
         public string Filter { get; set; } = string.Empty;
 
-        [Uniform("cleanup", "cl", "CLEANUP", false, "If set, the kubernetes namespace will be deleted after the test run has finished.")]
+        [Uniform("cleanup", "cl", "CLEANUP", false, "If set to 1 or 'true', the kubernetes namespace will be deleted after the test run has finished.")]
         public bool Cleanup { get; set; } = false;
 
         public CodexDeployment CodexDeployment { get; set; } = null!;
