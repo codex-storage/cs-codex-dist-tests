@@ -643,12 +643,12 @@ namespace KubernetesWorkflow
 
         private void WaitUntilNamespaceCreated() 
         {
-            WaitUntil(() => IsTestNamespaceOnline());
+            WaitUntil(() => IsNamespaceOnline(K8sNamespace));
         }
 
         private void WaitUntilNamespaceDeleted()
         {
-            WaitUntil(() => !IsTestNamespaceOnline());
+            WaitUntil(() => !IsNamespaceOnline(K8sNamespace));
         }
 
         private void WaitUntilNamespaceDeleted(string name)
