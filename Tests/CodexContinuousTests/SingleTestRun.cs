@@ -62,17 +62,27 @@ namespace ContinuousTests
 
         private void RunTest(Action<bool> resultHandler)
         {
+            var testStart = DateTime.UtcNow;
+            
             try
             {
                 RunTestMoments();
 
-                if (!config.KeepPassedTestLogs) fixtureLog.Delete();
+                var duration = DateTime.UtcNow - testStart;
+                OverviewLog($" > Test passed. ({Time.FormatDuration(duration)})");
+
+                if (!config.KeepPassedTestLogs)
+                {
+                    fixtureLog.Delete();
+                }
                 resultHandler(true);
             }
             catch (Exception ex)
             {
                 fixtureLog.Error("Test run failed with exception: " + ex);
                 fixtureLog.MarkAsFailed();
+
+                DownloadContainerLogs(testStart);
 
                 failureCount++;
                 resultHandler(false);
@@ -81,12 +91,25 @@ namespace ContinuousTests
                     OverviewLog($"Failures: {failureCount} / {config.StopOnFailure}");
                     if (failureCount >= config.StopOnFailure)
                     {
-                        OverviewLog($"Configured to stop after {config.StopOnFailure} failures. Downloading cluster logs...");
-                        DownloadClusterLogs();
-                        OverviewLog("Log download finished. Cancelling test runner...");
+                        OverviewLog($"Configured to stop after {config.StopOnFailure} failures.");
                         Cancellation.Cts.Cancel();
                     }
                 }
+            }
+        }
+
+        private void DownloadContainerLogs(DateTime testStart)
+        {
+            // The test failed just now. We can't expect the logs to be available in elastic-search immediately:
+            Thread.Sleep(TimeSpan.FromMinutes(1));
+
+            var effectiveStart = testStart.Subtract(TimeSpan.FromSeconds(30));
+            var effectiveEnd = DateTime.UtcNow;
+            var elasticSearchLogDownloader = new ElasticSearchLogDownloader(entryPoint.Tools, fixtureLog);
+
+            foreach (var node in nodes)
+            {
+                elasticSearchLogDownloader.Download(fixtureLog.CreateSubfile(), node.Container, effectiveStart, effectiveEnd);
             }
         }
 
@@ -100,10 +123,8 @@ namespace ContinuousTests
             var earliestMoment = handle.GetEarliestMoment();
 
             var t = earliestMoment;
-            while (true)
+            while (!cancelToken.IsCancellationRequested)
             {
-                cancelToken.ThrowIfCancellationRequested();
-
                 RunMoment(t);
 
                 if (handle.Test.TestFailMode == TestFailMode.StopAfterFirstFailure && exceptions.Any())
@@ -126,10 +147,10 @@ namespace ContinuousTests
                     {
                         ThrowFailTest();
                     }
-                    OverviewLog(" > Test passed.");
                     return;
                 }
             }
+            fixtureLog.Log("Test run has been cancelled.");
         }
 
         private void ThrowFailTest()
@@ -139,19 +160,6 @@ namespace ContinuousTests
             Log(exceptionsMessage);
             OverviewLog($" > Test failed: " + exceptionsMessage);
             throw new Exception(exceptionsMessage);
-        }
-
-        private void DownloadClusterLogs()
-        {
-            var entryPointFactory = new EntryPointFactory();
-            var log = new NullLog();
-            log.FullFilename = Path.Combine(config.LogPath, "NODE");
-            var entryPoint = entryPointFactory.CreateEntryPoint(config.KubeConfigFile, config.DataPath, config.CodexDeployment.Metadata.KubeNamespace, log);
-
-            foreach (var container in config.CodexDeployment.CodexContainers)
-            {
-                entryPoint.CreateInterface().DownloadLog(container);
-            }
         }
 
         private string GetCombinedExceptionsMessage(Exception[] exceptions)

@@ -65,7 +65,7 @@ namespace ContinuousTests
 
             overviewLog.Log("Finished launching test-loops.");
             WaitUntilFinished(overviewLog, statusLog, startTime, testLoops);
-            overviewLog.Log("Cancelling all test-loops...");
+            overviewLog.Log("Stopping all test-loops...");
             taskFactory.WaitAll();
             overviewLog.Log("All tasks cancelled.");
 
@@ -96,15 +96,20 @@ namespace ContinuousTests
             if (config.TargetDurationSeconds > 0)
             {
                 var targetDuration = TimeSpan.FromSeconds(config.TargetDurationSeconds);
-                cancelToken.WaitHandle.WaitOne(targetDuration);
-                overviewLog.Log($"Congratulations! The targer duration has been reached! ({Time.FormatDuration(targetDuration)})");
-                statusLog.ConcludeTest("Passed", testDuration, testData);
+                var wasCancelled = cancelToken.WaitHandle.WaitOne(targetDuration);
+                if (!wasCancelled)
+                {
+                    Cancellation.Cts.Cancel();
+                    overviewLog.Log($"Congratulations! The targer duration has been reached! ({Time.FormatDuration(targetDuration)})");
+                    statusLog.ConcludeTest("Passed", testDuration, testData);
+                    return;
+                }
             }
             else
             {
                 cancelToken.WaitHandle.WaitOne();
-                statusLog.ConcludeTest("Failed", testDuration, testData);
             }
+            statusLog.ConcludeTest("Failed", testDuration, testData);
         }
 
         private Dictionary<string, string> FormatTestRuns(TestLoop[] testLoops)

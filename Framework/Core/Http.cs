@@ -14,6 +14,7 @@ namespace Core
         TResponse HttpPostJson<TRequest, TResponse>(string route, TRequest body);
         string HttpPostJson<TRequest>(string route, TRequest body);
         string HttpPostString(string route, string body);
+        TResponse HttpPostString<TResponse>(string route, string body);
         string HttpPostStream(string route, Stream stream);
         Stream HttpGetStream(string route);
         T TryJsonDeserialize<T>(string json);
@@ -79,7 +80,7 @@ namespace Core
 
         public string HttpPostJson<TRequest>(string route, TRequest body)
         {
-            var response = PostJson<TRequest>(route, body);
+            var response = PostJson(route, body);
             return Time.Wait(response.Content.ReadAsStringAsync());
         }
 
@@ -97,6 +98,15 @@ namespace Core
                 Log(url, str);
                 return str;
             }, $"HTTP-POST-STRING: {route}");
+        }
+
+        public TResponse HttpPostString<TResponse>(string route, string body)
+        {
+            var response = HttpPostString(route, body);
+            if (response == null) throw new Exception("Received no response.");
+            var result = JsonConvert.DeserializeObject<TResponse>(response);
+            if (result == null) throw new Exception("Failed to deserialize response");
+            return result;
         }
 
         public string HttpPostStream(string route, Stream stream)
