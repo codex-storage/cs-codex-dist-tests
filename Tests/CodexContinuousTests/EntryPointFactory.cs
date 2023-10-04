@@ -19,8 +19,8 @@ namespace ContinuousTests
             var lifecycleConfig = new KubernetesWorkflow.Configuration
             (
                 kubeConfigFile: kubeConfig,
-                operationTimeout: TimeSpan.FromSeconds(30),
-                retryDelay: TimeSpan.FromSeconds(10),
+                operationTimeout: TimeSpan.FromMinutes(2),
+                retryDelay: TimeSpan.FromSeconds(30),
                 kubernetesNamespace: customNamespace
             );
 

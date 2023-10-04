@@ -32,7 +32,7 @@ namespace KubernetesWorkflow
         public RunningPod BringOnline(ContainerRecipe[] containerRecipes, ILocation location)
         {
             log.Debug();
-            EnsureTestNamespace();
+            EnsureNamespace();
 
             var deploymentName = CreateDeployment(containerRecipes, location);
             var (serviceName, servicePortsMap) = CreateService(containerRecipes);
@@ -90,7 +90,7 @@ namespace KubernetesWorkflow
         public void DeleteNamespace()
         {
             log.Debug();
-            if (IsTestNamespaceOnline())
+            if (IsNamespaceOnline(K8sNamespace))
             {
                 client.Run(c => c.DeleteNamespace(K8sNamespace, null, null, gracePeriodSeconds: 0));
             }
@@ -134,9 +134,9 @@ namespace KubernetesWorkflow
 
         private string K8sNamespace { get; }
 
-        private void EnsureTestNamespace()
+        private void EnsureNamespace()
         {
-            if (IsTestNamespaceOnline()) return;
+            if (IsNamespaceOnline(K8sNamespace)) return;
 
             var namespaceSpec = new V1Namespace
             {
@@ -151,11 +151,6 @@ namespace KubernetesWorkflow
             WaitUntilNamespaceCreated();
 
             CreatePolicy();
-        }
-
-        private bool IsTestNamespaceOnline()
-        {
-            return IsNamespaceOnline(K8sNamespace);
         }
 
         private bool IsNamespaceOnline(string name)
