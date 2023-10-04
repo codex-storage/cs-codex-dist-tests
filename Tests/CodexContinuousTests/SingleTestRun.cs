@@ -6,7 +6,6 @@ using System.Reflection;
 using CodexPlugin;
 using DistTestCore.Logs;
 using Core;
-using System.ComponentModel;
 
 namespace ContinuousTests
 {
@@ -63,7 +62,6 @@ namespace ContinuousTests
 
         private void RunTest(Action<bool> resultHandler)
         {
-            var ci = entryPoint.CreateInterface();
             var testStart = DateTime.UtcNow;
             
             try
@@ -105,14 +103,13 @@ namespace ContinuousTests
             // The test failed just now. We can't expect the logs to be available in elastic-search immediately:
             Thread.Sleep(TimeSpan.FromMinutes(1));
 
-            var effectiveStart = testStart.Subtract(TimeSpan.FromSeconds(10));
-            var effectiveEnd = DateTime.UtcNow.AddSeconds(30);
+            var effectiveStart = testStart.Subtract(TimeSpan.FromSeconds(30));
+            var effectiveEnd = DateTime.UtcNow;
             var elasticSearchLogDownloader = new ElasticSearchLogDownloader(entryPoint.Tools, fixtureLog);
 
             foreach (var node in nodes)
             {
-                var container = node.Container;
-                elasticSearchLogDownloader.Download(fixtureLog.CreateSubfile(), container, effectiveStart, effectiveEnd);
+                elasticSearchLogDownloader.Download(fixtureLog.CreateSubfile(), node.Container, effectiveStart, effectiveEnd);
             }
         }
 
@@ -210,7 +207,6 @@ namespace ContinuousTests
         {
             Log($" > Running TestMoment '{name}'");
             handle.Test.Initialize(nodes, fixtureLog, entryPoint.Tools.GetFileManager(), config, cancelToken);
-            handle.Test.Tools = entryPoint.Tools;
         }
 
         private void DecommissionTest()

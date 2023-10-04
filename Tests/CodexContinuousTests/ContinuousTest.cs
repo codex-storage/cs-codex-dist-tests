@@ -74,8 +74,6 @@ namespace ContinuousTests
                 return GetType().Name;
             }
         }
-
-        public IPluginTools Tools { get; internal set; }
     }
 
     public enum TestFailMode
