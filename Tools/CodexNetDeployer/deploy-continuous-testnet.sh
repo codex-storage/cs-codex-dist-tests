@@ -1,6 +1,7 @@
 dotnet run \
     --kube-config=/opt/kubeconfig.yaml \
     --kube-namespace=codex-continuous-tests \
+    --deploy-file=codex-deployment.json \
     --nodes=5 \
     --validators=3 \
     --log-level=Trace \

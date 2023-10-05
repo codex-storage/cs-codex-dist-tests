@@ -35,9 +35,9 @@ public class Program
 
         var deployment = deployer.Deploy();
 
-        Console.WriteLine("Writing codex-deployment.json...");
+        Console.WriteLine($"Writing deployment file '{config.DeployFile}'...");
 
-        File.WriteAllText("codex-deployment.json", JsonConvert.SerializeObject(deployment, Formatting.Indented));
+        File.WriteAllText(config.DeployFile, JsonConvert.SerializeObject(deployment, Formatting.Indented));
 
         Console.WriteLine("Done!");
     }

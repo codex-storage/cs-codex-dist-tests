@@ -14,6 +14,9 @@ namespace CodexNetDeployer
         [Uniform("kube-namespace", "kn", "KUBENAMESPACE", true, "Kubernetes namespace to be used for deployment.")]
         public string KubeNamespace { get; set; } = string.Empty;
 
+        [Uniform("deploy-file", "df", "DEPLOYFILE", false, "Output deployment JSON file that will be written. Defaults to 'codex-deployment.json'.")]
+        public string DeployFile { get; set; } = "codex-deployment.json";
+
         [Uniform("codex-local-repo", "cr", "CODEXLOCALREPOPATH", false, "If set, instead of using the default Codex docker image, the local repository will be used to build an image. " +
             "This requires the 'DOCKERUSERNAME' and 'DOCKERPASSWORD' environment variables to be set. (You can omit the password to use your system default, or use a docker access token as DOCKERPASSWORD.) You can set " +
             "'DOCKERTAG' to define the image tag. If not set, one will be generated.")]
