@@ -33,13 +33,31 @@ public class Program
             Console.WriteLine("I think so too.");
         }
 
-        var deployment = deployer.Deploy();
+        if (config.Replication == 0)
+        {
+            var deployment = deployer.Deploy();
 
-        Console.WriteLine($"Writing deployment file '{config.DeployFile}'...");
+            Console.WriteLine($"Writing deployment file '{config.DeployFile}'...");
+            File.WriteAllText(config.DeployFile, JsonConvert.SerializeObject(deployment, Formatting.Indented));
+            Console.WriteLine("Done!");
+        }
+        else
+        {
+            var originalNamespace = config.KubeNamespace;
+            var originalDeployFile = config.DeployFile;
+            for (var i = 0; i < config.Replication; i++)
+            {
+                config.KubeNamespace = originalNamespace + "-" + i;
+                config.DeployFile = originalDeployFile.ToLowerInvariant().Replace(".json", $"-{i}.json");
 
-        File.WriteAllText(config.DeployFile, JsonConvert.SerializeObject(deployment, Formatting.Indented));
+                var deployment = deployer.Deploy();
 
-        Console.WriteLine("Done!");
+                Console.WriteLine($"Writing deployment file '{config.DeployFile}'...");
+                File.WriteAllText(config.DeployFile, JsonConvert.SerializeObject(deployment, Formatting.Indented));
+            }
+
+            Console.WriteLine("Done!");
+        }
     }
 
     private static void PrintHelp()
