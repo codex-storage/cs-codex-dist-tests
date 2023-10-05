@@ -23,9 +23,6 @@ public class Program
             return;
         }
 
-        var deployer = new Deployer(config);
-        deployer.AnnouncePlugins();
-
         if (!args.Any(a => a == "-y"))
         {
             Console.WriteLine("Does the above config look good? [y/n]");
@@ -35,6 +32,8 @@ public class Program
 
         if (config.Replication == 0)
         {
+            var deployer = new Deployer(config);
+            deployer.AnnouncePlugins();
             var deployment = deployer.Deploy();
 
             Console.WriteLine($"Writing deployment file '{config.DeployFile}'...");
@@ -50,6 +49,8 @@ public class Program
                 config.KubeNamespace = originalNamespace + "-" + i;
                 config.DeployFile = originalDeployFile.ToLowerInvariant().Replace(".json", $"-{i}.json");
 
+                var deployer = new Deployer(config);
+                deployer.AnnouncePlugins();
                 var deployment = deployer.Deploy();
 
                 Console.WriteLine($"Writing deployment file '{config.DeployFile}'...");
