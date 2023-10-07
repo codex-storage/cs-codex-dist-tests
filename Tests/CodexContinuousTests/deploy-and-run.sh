@@ -29,6 +29,8 @@ do
     screen -d -m dotnet run \
     --kube-config=/opt/kubeconfig.yaml \
     --codex-deployment=codex-deployment-$i.json \
+    --log-path=logs-$i \
+    --data-path=data-$i \
     --keep=1 \
     --stop=1 \
     --target-duration=172800 # 48 hours
