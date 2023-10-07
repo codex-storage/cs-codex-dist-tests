@@ -24,6 +24,8 @@ do
     --metrics=1 \
     --check-connect=1 \
     -y
+
+    cp codex-deployment-$i.json ../../Tests/CodexContinuousTests
 done
 echo "Starting tests..."
 cd ../../Tests/CodexContinuousTests
