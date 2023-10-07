@@ -30,7 +30,7 @@ public class Program
             Console.WriteLine("I think so too.");
         }
 
-        if (config.Replication == 0)
+        //if (config.Replication == 0)
         {
             var deployer = new Deployer(config);
             deployer.AnnouncePlugins();
@@ -40,25 +40,25 @@ public class Program
             File.WriteAllText(config.DeployFile, JsonConvert.SerializeObject(deployment, Formatting.Indented));
             Console.WriteLine("Done!");
         }
-        else
-        {
-            var originalNamespace = config.KubeNamespace;
-            var originalDeployFile = config.DeployFile;
-            for (var i = 0; i < config.Replication; i++)
-            {
-                config.KubeNamespace = originalNamespace + "-" + i;
-                config.DeployFile = originalDeployFile.ToLowerInvariant().Replace(".json", $"-{i}.json");
+        //else
+        //{
+        //    var originalNamespace = config.KubeNamespace;
+        //    var originalDeployFile = config.DeployFile;
+        //    for (var i = 0; i < config.Replication; i++)
+        //    {
+        //        config.KubeNamespace = originalNamespace + "-" + i;
+        //        config.DeployFile = originalDeployFile.ToLowerInvariant().Replace(".json", $"-{i}.json");
 
-                var deployer = new Deployer(config);
-                deployer.AnnouncePlugins();
-                var deployment = deployer.Deploy();
+        //        var deployer = new Deployer(config);
+        //        deployer.AnnouncePlugins();
+        //        var deployment = deployer.Deploy();
 
-                Console.WriteLine($"Writing deployment file '{config.DeployFile}'...");
-                File.WriteAllText(config.DeployFile, JsonConvert.SerializeObject(deployment, Formatting.Indented));
-            }
+        //        Console.WriteLine($"Writing deployment file '{config.DeployFile}'...");
+        //        File.WriteAllText(config.DeployFile, JsonConvert.SerializeObject(deployment, Formatting.Indented));
+        //    }
 
-            Console.WriteLine("Done!");
-        }
+        //    Console.WriteLine("Done!");
+        //}
     }
 
     private static void PrintHelp()

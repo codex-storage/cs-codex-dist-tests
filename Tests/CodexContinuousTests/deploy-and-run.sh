@@ -1,3 +1,5 @@
+set -e
+
 replication=10
 
 echo "Deploying..."
@@ -23,7 +25,7 @@ do
     --check-connect=1
 done
 echo "Starting tests..."
-cd ../../Tests/CodexContinousTests
+cd ../../Tests/CodexContinuousTests
 for i in {0..$replication}
 do
     screen -d -m dotnet run \

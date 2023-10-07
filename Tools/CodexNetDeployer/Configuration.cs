@@ -68,8 +68,8 @@ namespace CodexNetDeployer
         [Uniform("check-connect", "cc", "CHECKCONNECT", false, "If true, deployer check ensure peer-connectivity between all deployed nodes after deployment. Default is false.")]
         public bool CheckPeerConnection { get; set; } = false;
 
-        [Uniform("replication", "rep", "REPLICATION", false, "Number of times to repeat")]
-        public int Replication { get; set; } = 0;
+        //[Uniform("replication", "rep", "REPLICATION", false, "Number of times to repeat")]
+        //public int Replication { get; set; } = 0;
 
         public List<string> Validate()
         {
