@@ -1,4 +1,5 @@
 ﻿using CodexContractsPlugin;
+using CodexPlugin;
 using DistTestCore;
 using GethPlugin;
 using MetricsPlugin;
@@ -13,7 +14,7 @@ namespace Tests.BasicTests
         [Test]
         public void CodexLogExample()
         {
-            var primary = AddCodex();
+            var primary = AddCodex(s => s.WithLogLevel(CodexLogLevel.Trace, new CodexLogCustomTopics(CodexLogLevel.Warn, CodexLogLevel.Warn)));
 
             primary.UploadFile(GenerateTestFile(5.MB()));
 

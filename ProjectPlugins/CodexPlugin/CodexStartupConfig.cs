@@ -8,7 +8,7 @@ namespace CodexPlugin
         public string? NameOverride { get; set; }
         public ILocation Location { get; set; } = KnownLocations.UnspecifiedLocation;
         public CodexLogLevel LogLevel { get; set; }
-        public string[]? LogTopics { get; set; }
+        public CodexLogCustomTopics? CustomTopics { get; set; }
         public ByteSize? StorageQuota { get; set; }
         public bool MetricsEnabled { get; set; }
         public MarketplaceInitialConfig? MarketplaceConfig { get; set; }
@@ -22,9 +22,30 @@ namespace CodexPlugin
         public string LogLevelWithTopics()
         {
             var level = LogLevel.ToString()!.ToUpperInvariant();
-            if (LogTopics != null && LogTopics.Count() > 0)
+            if (CustomTopics != null)
             {
-                level = $"INFO;{level}: {string.Join(",", LogTopics.Where(s => !string.IsNullOrEmpty(s)))}";
+                var discV5Topics = new[]
+                {
+                    "discv5",
+                    "providers",
+                    "manager",
+                    "cache",
+                };
+                var libp2pTopics = new[]
+                {
+                    "libp2p",
+                    "multistream",
+                    "switch",
+                    "transport",
+                    "tcptransport",
+                    "semaphore",
+                    "asyncstreamwrapper",
+                    "lpstream"
+                };
+
+                level = $"{level};" +
+                    $"{CustomTopics.DiscV5.ToString()!.ToLowerInvariant()}:{string.Join(",", discV5Topics)};" +
+                    $"{CustomTopics.Libp2p.ToString()!.ToLowerInvariant()}:{string.Join(",", libp2pTopics)}";
             }
             return level;
         }
