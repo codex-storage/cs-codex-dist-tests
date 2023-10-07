@@ -4,7 +4,7 @@ replication=10
 
 echo "Deploying..."
 cd ../../Tools/CodexNetDeployer
-for i in {0..$replication}
+for i in $( seq 0 $replication)
 do
     dotnet run \
     --kube-config=/opt/kubeconfig.yaml \
@@ -22,11 +22,12 @@ do
     --block-mi=120 \
     --block-mn=10000 \
     --metrics=1 \
-    --check-connect=1
+    --check-connect=1 \
+    -y
 done
 echo "Starting tests..."
 cd ../../Tests/CodexContinuousTests
-for i in {0..$replication}
+for i in $( seq 0 $replication)
 do
     screen -d -m dotnet run \
     --kube-config=/opt/kubeconfig.yaml \
