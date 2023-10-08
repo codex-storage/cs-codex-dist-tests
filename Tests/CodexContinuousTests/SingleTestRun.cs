@@ -109,7 +109,8 @@ namespace ContinuousTests
 
             foreach (var node in nodes)
             {
-                elasticSearchLogDownloader.Download(fixtureLog.CreateSubfile(), node.Container, effectiveStart, effectiveEnd);
+                var openingLine = $"{node.Container.Name} = {node.GetDebugInfo().id}";
+                elasticSearchLogDownloader.Download(fixtureLog.CreateSubfile(), node.Container, effectiveStart, effectiveEnd, openingLine);
             }
         }
 
