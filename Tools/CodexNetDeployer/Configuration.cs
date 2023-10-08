@@ -36,6 +36,12 @@ namespace CodexNetDeployer
 
         [Uniform("log-level", "l", "LOGLEVEL", true, "Log level used by each Codex node. [Trace, Debug*, Info, Warn, Error]")]
         public CodexLogLevel CodexLogLevel { get; set; } = CodexLogLevel.Debug;
+        
+        [Uniform("log-level-libp2p", "lp2p", "LOGLEVELLIBP2P", true, "Log level for all libp2p topics. [Trace, Debug, Info, Warn*, Error]")]
+        public CodexLogLevel Libp2pLogLevel { get; set; } = CodexLogLevel.Warn;
+
+        [Uniform("log-level-discv5", "ldv5", "LOGLEVELDISCV5", true, "Log level for all discv5 topics. [Trace, Debug, Info, Warn*, Error]")]
+        public CodexLogLevel Discv5LogLevel { get; set; } = CodexLogLevel.Warn;
 
         [Uniform("test-tokens", "tt", "TESTTOKENS", true, "Initial amount of test-tokens minted for each Codex node.")]
         public int InitialTestTokens { get; set; } = int.MaxValue;
@@ -67,9 +73,6 @@ namespace CodexNetDeployer
 
         [Uniform("check-connect", "cc", "CHECKCONNECT", false, "If true, deployer check ensure peer-connectivity between all deployed nodes after deployment. Default is false.")]
         public bool CheckPeerConnection { get; set; } = false;
-
-        //[Uniform("replication", "rep", "REPLICATION", false, "Number of times to repeat")]
-        //public int Replication { get; set; } = 0;
 
         public List<string> Validate()
         {

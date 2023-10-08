@@ -36,7 +36,7 @@ namespace CodexNetDeployer
                 codexNode = ci.StartCodexNode(s =>
                 {
                     s.WithName(name);
-                    s.WithLogLevel(config.CodexLogLevel);
+                    s.WithLogLevel(config.CodexLogLevel, new CodexLogCustomTopics(config.Discv5LogLevel, config.Libp2pLogLevel));
                     s.WithStorageQuota(config.StorageQuota!.Value.MB());
                     s.EnableMarketplace(gethNode, contracts, 100.Eth(), config.InitialTestTokens.TestTokens(), validatorsLeft > 0);
                     s.EnableMetrics();
