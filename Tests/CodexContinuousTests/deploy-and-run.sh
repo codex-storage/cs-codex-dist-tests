@@ -1,6 +1,6 @@
 set -e
 
-replication=10
+replication=5
 
 echo "Deploying..."
 cd ../../Tools/CodexNetDeployer
@@ -13,14 +13,14 @@ do
     --nodes=5 \
     --validators=3 \
     --log-level=Trace \
-    --storage-quota=2048 \
+    --storage-quota=20480 \
     --storage-sell=1024 \
     --min-price=1024 \
     --max-collateral=1024 \
     --max-duration=3600000 \
-    --block-ttl=180 \
-    --block-mi=120 \
-    --block-mn=10000 \
+    --block-ttl=99999999 \
+    --block-mi=99999999 \
+    --block-mn=100 \
     --metrics=1 \
     --check-connect=1 \
     -y
@@ -38,5 +38,8 @@ do
     --data-path=data-$i \
     --keep=1 \
     --stop=1 \
+    --filter=TwoClient \
+    --cleanup=1 \
+    --full-container-logs=1 \
     --target-duration=172800 # 48 hours
 done

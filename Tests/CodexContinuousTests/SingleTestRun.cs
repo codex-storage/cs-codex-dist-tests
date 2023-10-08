@@ -104,6 +104,10 @@ namespace ContinuousTests
             Thread.Sleep(TimeSpan.FromMinutes(1));
 
             var effectiveStart = testStart.Subtract(TimeSpan.FromSeconds(30));
+            if (config.FullContainerLogs)
+            {
+                effectiveStart = config.CodexDeployment.Metadata.DeployDateTimeUtc.Subtract(TimeSpan.FromSeconds(30));
+            }
             var effectiveEnd = DateTime.UtcNow;
             var elasticSearchLogDownloader = new ElasticSearchLogDownloader(entryPoint.Tools, fixtureLog);
 

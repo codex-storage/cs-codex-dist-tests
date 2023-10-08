@@ -33,6 +33,10 @@ namespace ContinuousTests
         [Uniform("cleanup", "cl", "CLEANUP", false, "If set to 1 or 'true', the kubernetes namespace will be deleted after the test run has finished.")]
         public bool Cleanup { get; set; } = false;
 
+        [Uniform("full-container-logs", "fcl", "FULLCONTAINERLOGS", false, "If set to 1 or 'true', container logs downloaded on test failure will download from" +
+            " the timestamp of the start of the network deployment. Otherwise, logs will start from the test start timestamp.")]
+        public bool FullContainerLogs { get; set; } = false;
+
         public CodexDeployment CodexDeployment { get; set; } = null!;
     }
 
