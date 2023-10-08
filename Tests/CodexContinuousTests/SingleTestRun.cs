@@ -109,7 +109,7 @@ namespace ContinuousTests
 
             foreach (var node in nodes)
             {
-                var openingLine = $"{node.Container.Name} = {node.GetDebugInfo().id}";
+                var openingLine = $"{node.Container.Pod.PodInfo.Name} = {node.Container.Name} = {node.GetDebugInfo().id}";
                 elasticSearchLogDownloader.Download(fixtureLog.CreateSubfile(), node.Container, effectiveStart, effectiveEnd, openingLine);
             }
         }
