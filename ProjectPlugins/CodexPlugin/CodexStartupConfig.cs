@@ -40,7 +40,14 @@ namespace CodexPlugin
                     "tcptransport",
                     "semaphore",
                     "asyncstreamwrapper",
-                    "lpstream"
+                    "lpstream",
+                    "mplex",
+                    "mplexchannel",
+                    "noise",
+                    "bufferstream",
+                    "mplexcoder",
+                    "websock",
+                    "ws-session"
                 };
 
                 level = $"{level};" +
