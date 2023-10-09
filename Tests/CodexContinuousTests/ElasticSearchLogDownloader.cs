@@ -16,11 +16,11 @@ namespace ContinuousTests
             this.log = log;
         }
 
-        public void Download(LogFile targetFile, RunningContainer container, DateTime startUtc, DateTime endUtc)
+        public void Download(LogFile targetFile, RunningContainer container, DateTime startUtc, DateTime endUtc, string openingLine)
         {
             try
             {
-                DownloadLog(targetFile, container, startUtc, endUtc);
+                DownloadLog(targetFile, container, startUtc, endUtc, openingLine);
             }
             catch (Exception ex)
             {
@@ -28,10 +28,11 @@ namespace ContinuousTests
             }
         }
 
-        private void DownloadLog(LogFile targetFile, RunningContainer container, DateTime startUtc, DateTime endUtc)
+        private void DownloadLog(LogFile targetFile, RunningContainer container, DateTime startUtc, DateTime endUtc, string openingLine)
         {
             log.Log($"Downloading log (from ElasticSearch) for container '{container.Name}' within time range: " +
                 $"{startUtc.ToString("o")} - {endUtc.ToString("o")}");
+            log.Log(openingLine);
 
             var http = CreateElasticSearchHttp();
             var queryTemplate = CreateQueryTemplate(container, startUtc, endUtc);

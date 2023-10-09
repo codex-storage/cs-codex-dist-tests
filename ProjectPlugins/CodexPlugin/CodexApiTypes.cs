@@ -122,4 +122,47 @@ namespace CodexPlugin
         public string state { get; set; } = string.Empty;
         public string error { get; set; } = string.Empty;
     }
+
+    public class CodexDebugBlockExchangeResponse
+    {
+        public CodexDebugBlockExchangeResponsePeer[] peers { get; set; } = Array.Empty<CodexDebugBlockExchangeResponsePeer>();
+        public int taskQueue { get; set; }
+        public int pendingBlocks { get; set; }
+
+        public override string ToString()
+        {
+            if (peers.Length == 0 && taskQueue == 0 && pendingBlocks == 0) return "all-empty";
+
+            return $"taskqueue: {taskQueue} pendingblocks: {pendingBlocks} peers: {string.Join(",", peers.Select(p => p.ToString()))}";
+        }
+    }
+
+    public class CodexDebugBlockExchangeResponsePeer
+    {
+        public string peerid { get; set; } = string.Empty;
+        public CodexDebugBlockExchangeResponsePeerHasBlock[] hasBlocks { get; set; } = Array.Empty<CodexDebugBlockExchangeResponsePeerHasBlock>();
+        public CodexDebugBlockExchangeResponsePeerWant[] wants { get; set; } = Array.Empty<CodexDebugBlockExchangeResponsePeerWant>();
+        public int exchanged { get; set; }
+
+        public override string ToString()
+        {
+            return $"(blocks:{hasBlocks.Length} wants:{wants.Length})";
+        }
+    }
+
+    public class CodexDebugBlockExchangeResponsePeerHasBlock
+    {
+        public string cid { get; set; } = string.Empty;
+        public bool have { get; set; }
+        public string price { get; set; } = string.Empty;
+    }
+
+    public class CodexDebugBlockExchangeResponsePeerWant
+    {
+        public string block { get; set; } = string.Empty;
+        public int priority { get; set; }
+        public bool cancel { get; set; }
+        public string wantType { get; set; } = string.Empty;
+        public bool sendDontHave { get; set; }
+    }
 }

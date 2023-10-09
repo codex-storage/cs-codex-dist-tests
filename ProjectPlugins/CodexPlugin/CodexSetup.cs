@@ -11,11 +11,7 @@ namespace CodexPlugin
         ICodexSetup At(ILocation location);
         ICodexSetup WithBootstrapNode(ICodexNode node);
         ICodexSetup WithLogLevel(CodexLogLevel level);
-        /// <summary>
-        /// Sets the log level for codex. The default level is INFO and the
-        /// log level is applied only to the supplied topics.
-        /// </summary>
-        ICodexSetup WithLogLevel(CodexLogLevel level, params string[] topics);
+        ICodexSetup WithLogLevel(CodexLogLevel level, CodexLogCustomTopics customTopics);
         ICodexSetup WithStorageQuota(ByteSize storageQuota);
         ICodexSetup WithBlockTTL(TimeSpan duration);
         ICodexSetup WithBlockMaintenanceInterval(TimeSpan duration);
@@ -26,6 +22,18 @@ namespace CodexPlugin
         /// Provides an invalid proof every N proofs
         /// </summary>
         ICodexSetup WithSimulateProofFailures(uint failEveryNProofs);
+    }
+
+    public class CodexLogCustomTopics
+    {
+        public CodexLogCustomTopics(CodexLogLevel discV5, CodexLogLevel libp2p)
+        {
+            DiscV5 = discV5;
+            Libp2p = libp2p;
+        }
+
+        public CodexLogLevel DiscV5 { get; set; }
+        public CodexLogLevel Libp2p { get; set; }
     }
 
     public class CodexSetup : CodexStartupConfig, ICodexSetup
@@ -61,10 +69,10 @@ namespace CodexPlugin
             return this;
         }
 
-        public ICodexSetup WithLogLevel(CodexLogLevel level, params string[] topics)
+        public ICodexSetup WithLogLevel(CodexLogLevel level, CodexLogCustomTopics customTopics)
         {
             LogLevel = level;
-            LogTopics = topics;
+            CustomTopics = customTopics;
             return this;
         }
 

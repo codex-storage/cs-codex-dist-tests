@@ -104,12 +104,17 @@ namespace ContinuousTests
             Thread.Sleep(TimeSpan.FromMinutes(1));
 
             var effectiveStart = testStart.Subtract(TimeSpan.FromSeconds(30));
+            if (config.FullContainerLogs)
+            {
+                effectiveStart = config.CodexDeployment.Metadata.DeployDateTimeUtc.Subtract(TimeSpan.FromSeconds(30));
+            }
             var effectiveEnd = DateTime.UtcNow;
             var elasticSearchLogDownloader = new ElasticSearchLogDownloader(entryPoint.Tools, fixtureLog);
 
             foreach (var node in nodes)
             {
-                elasticSearchLogDownloader.Download(fixtureLog.CreateSubfile(), node.Container, effectiveStart, effectiveEnd);
+                var openingLine = $"{node.Container.Pod.PodInfo.Name} = {node.Container.Name} = {node.GetDebugInfo().id}";
+                elasticSearchLogDownloader.Download(fixtureLog.CreateSubfile(), node.Container, effectiveStart, effectiveEnd, openingLine);
             }
         }
 

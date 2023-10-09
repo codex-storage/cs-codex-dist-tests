@@ -36,9 +36,7 @@ public class Program
         var deployment = deployer.Deploy();
 
         Console.WriteLine($"Writing deployment file '{config.DeployFile}'...");
-
         File.WriteAllText(config.DeployFile, JsonConvert.SerializeObject(deployment, Formatting.Indented));
-
         Console.WriteLine("Done!");
     }
 

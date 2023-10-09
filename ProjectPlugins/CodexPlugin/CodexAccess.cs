@@ -44,6 +44,11 @@ namespace CodexPlugin
             return result;
         }
 
+        public CodexDebugBlockExchangeResponse GetDebugBlockExchange()
+        {
+            return Http().HttpGetJson<CodexDebugBlockExchangeResponse>("debug/blockexchange");
+        }
+
         public CodexDebugThresholdBreaches GetDebugThresholdBreaches()
         {
             return Http().HttpGetJson<CodexDebugThresholdBreaches>("debug/loop");

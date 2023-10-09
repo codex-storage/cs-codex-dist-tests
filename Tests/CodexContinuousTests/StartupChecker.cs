@@ -42,6 +42,7 @@ namespace ContinuousTests
             foreach (var container in deployment.CodexContainers)
             {
                 log.Log($"Codex environment variables for '{container.Name}':");
+                log.Log($"Pod name: {container.Pod.PodInfo.Name} - Deployment name: {container.Pod.DeploymentName}");
                 var codexVars = container.Recipe.EnvVars;
                 foreach (var vars in codexVars) log.Log(vars.ToString());
                 log.Log("");

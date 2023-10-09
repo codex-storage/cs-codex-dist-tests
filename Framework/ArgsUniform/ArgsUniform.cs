@@ -234,7 +234,7 @@ namespace ArgsUniform
         private static bool AssignBool(T result, PropertyInfo uniformProperty, object value)
         {
             var s = value.ToString();
-            if (s == "1" || s.ToLowerInvariant() == "true")
+            if (s == "1" || (s != null && s.ToLowerInvariant() == "true"))
             {
                 uniformProperty.SetValue(result, true);
             }
