@@ -7,7 +7,7 @@ using MetricsPlugin;
 using NUnit.Framework;
 using Utils;
 
-namespace Tests.BasicTests
+namespace CodexTests.BasicTests
 {
     [Ignore("Used for debugging continuous tests")]
     [TestFixture]
@@ -87,7 +87,7 @@ namespace Tests.BasicTests
                 //CreatePeerConnectionTestHelpers().AssertFullyConnected(GetAllOnlineCodexNodes());
                 //CheckRoutingTables(GetAllOnlineCodexNodes());
 
-                var node = RandomUtils.PickOneRandom(nodes.ToList());
+                var node = nodes.ToList().PickOneRandom();
                 var file = GenerateTestFile(50.MB());
                 node.UploadFile(file);
 

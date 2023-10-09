@@ -6,7 +6,7 @@ using MetricsPlugin;
 using NUnit.Framework;
 using Utils;
 
-namespace Tests.BasicTests
+namespace CodexTests.BasicTests
 {
     [TestFixture]
     public class ExampleTests : CodexDistTest
@@ -59,7 +59,7 @@ namespace Tests.BasicTests
                 .WithStorageQuota(11.GB())
                 .EnableMarketplace(geth, contracts, initialEth: 10.Eth(), initialTokens: sellerInitialBalance, isValidator: true)
                 .WithSimulateProofFailures(failEveryNProofs: 3));
-            
+
             AssertBalance(geth, contracts, seller, Is.EqualTo(sellerInitialBalance));
             seller.Marketplace.MakeStorageAvailable(
                 size: 10.GB(),
@@ -72,7 +72,7 @@ namespace Tests.BasicTests
             var buyer = AddCodex(s => s
                             .WithBootstrapNode(seller)
                             .EnableMarketplace(geth, contracts, initialEth: 10.Eth(), initialTokens: buyerInitialBalance));
-            
+
             AssertBalance(geth, contracts, buyer, Is.EqualTo(buyerInitialBalance));
 
             var contentId = buyer.UploadFile(testFile);

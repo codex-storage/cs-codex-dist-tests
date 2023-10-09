@@ -1,4 +1,5 @@
 ﻿using CodexContractsPlugin;
+using CodexTests;
 using GethPlugin;
 using NUnit.Framework;
 using Utils;

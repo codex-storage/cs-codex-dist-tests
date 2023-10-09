@@ -1,8 +1,7 @@
-﻿using DistTestCore;
-using NUnit.Framework;
+﻿using NUnit.Framework;
 using Utils;
 
-namespace Tests.BasicTests
+namespace CodexTests.BasicTests
 {
     [TestFixture]
     public class ThreeClientTest : AutoBootstrapDistTest

@@ -9,7 +9,7 @@ using GethPlugin;
 using NUnit.Framework;
 using NUnit.Framework.Constraints;
 
-namespace Tests
+namespace CodexTests
 {
     public class CodexDistTest : DistTest
     {

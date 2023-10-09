@@ -1,7 +1,7 @@
 ﻿using CodexPlugin;
 using NUnit.Framework;
 
-namespace Tests
+namespace CodexTests
 {
     public class AutoBootstrapDistTest : CodexDistTest
     {
