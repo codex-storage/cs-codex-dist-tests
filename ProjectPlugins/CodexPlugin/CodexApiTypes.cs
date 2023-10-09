@@ -139,6 +139,7 @@ namespace CodexPlugin
 
     public class CodexDebugBlockExchangeResponsePeer
     {
+        public string peerid { get; set; } = string.Empty;
         public CodexDebugBlockExchangeResponsePeerHasBlock[] hasBlocks { get; set; } = Array.Empty<CodexDebugBlockExchangeResponsePeerHasBlock>();
         public CodexDebugBlockExchangeResponsePeerWant[] wants { get; set; } = Array.Empty<CodexDebugBlockExchangeResponsePeerWant>();
         public int exchanged { get; set; }
