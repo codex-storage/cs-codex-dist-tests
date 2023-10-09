@@ -13,6 +13,7 @@ namespace CodexPlugin
         string GetName();
         CodexDebugResponse GetDebugInfo();
         CodexDebugPeerResponse GetDebugPeer(string peerId);
+        CodexDebugBlockExchangeResponse GetDebugBlockExchange();
         ContentId UploadFile(TrackedFile file);
         TrackedFile? DownloadContent(ContentId contentId, string fileLabel = "");
         void ConnectToPeer(ICodexNode node);
@@ -79,6 +80,11 @@ namespace CodexPlugin
         public CodexDebugPeerResponse GetDebugPeer(string peerId)
         {
             return CodexAccess.GetDebugPeer(peerId);
+        }
+
+        public CodexDebugBlockExchangeResponse GetDebugBlockExchange()
+        {
+            return CodexAccess.GetDebugBlockExchange();
         }
 
         public ContentId UploadFile(TrackedFile file)

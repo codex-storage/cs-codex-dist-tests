@@ -46,6 +46,10 @@ namespace CodexPlugin
                     "noise",
                     "bufferstream",
                     "mplexcoder",
+                    "secure",
+                    "chronosstream",
+                    "connection",
+                    "connmanager",
                     "websock",
                     "ws-session"
                 };

@@ -7,7 +7,8 @@ namespace CodexPlugin
     {
         private readonly MarketplaceStarter marketplaceStarter = new MarketplaceStarter();
 
-        private const string DefaultDockerImage = "codexstorage/nim-codex:latest-dist-tests";
+        //private const string DefaultDockerImage = "codexstorage/nim-codex:latest-dist-tests";
+        private const string DefaultDockerImage = "codexstorage/nim-codex:sha-1875e6b-dist-tests";
         public const string MetricsPortTag = "metrics_port";
         public const string DiscoveryPortTag = "discovery-port";
 
