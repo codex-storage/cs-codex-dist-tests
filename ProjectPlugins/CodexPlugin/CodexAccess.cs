@@ -51,7 +51,7 @@ namespace CodexPlugin
 
         public CodexDebugRepoStoreResponse[] GetDebugRepoStore()
         {
-            return Http().HttpGetJson<CodexDebugRepoStoreResponse[]>("debug/repostore");
+            return LongHttp().HttpGetJson<CodexDebugRepoStoreResponse[]>("debug/repostore");
         }
 
         public CodexDebugThresholdBreaches GetDebugThresholdBreaches()
@@ -99,6 +99,11 @@ namespace CodexPlugin
         private IHttp Http()
         {
             return tools.CreateHttp(Container.Address, baseUrl: "/api/codex/v1", CheckContainerCrashed, Container.Name);
+        }
+
+        private IHttp LongHttp()
+        {
+            return tools.CreateHttp(Container.Address, baseUrl: "/api/codex/v1", CheckContainerCrashed, new LongTimeSet(), Container.Name);
         }
 
         private void CheckContainerCrashed(HttpClient client)

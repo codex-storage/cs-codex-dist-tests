@@ -23,6 +23,7 @@ namespace Core
     public interface IHttpFactoryTool
     {
         IHttp CreateHttp(Address address, string baseUrl, Action<HttpClient> onClientCreated, string? logAlias = null);
+        IHttp CreateHttp(Address address, string baseUrl, Action<HttpClient> onClientCreated, ITimeSet timeSet, string? logAlias = null);
         IHttp CreateHttp(Address address, string baseUrl, string? logAlias = null);
     }
 
@@ -53,7 +54,12 @@ namespace Core
 
         public IHttp CreateHttp(Address address, string baseUrl, Action<HttpClient> onClientCreated, string? logAlias = null)
         {
-            return new Http(log, timeSet, address, baseUrl, onClientCreated, logAlias);
+            return CreateHttp(address, baseUrl, onClientCreated, timeSet, logAlias);
+        }
+
+        public IHttp CreateHttp(Address address, string baseUrl, Action<HttpClient> onClientCreated, ITimeSet ts, string? logAlias = null)
+        {
+            return new Http(log, ts, address, baseUrl, onClientCreated, logAlias);
         }
 
         public IHttp CreateHttp(Address address, string baseUrl, string? logAlias = null)
