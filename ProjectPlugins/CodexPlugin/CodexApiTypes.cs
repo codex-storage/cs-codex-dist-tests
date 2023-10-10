@@ -165,4 +165,9 @@ namespace CodexPlugin
         public string wantType { get; set; } = string.Empty;
         public bool sendDontHave { get; set; }
     }
+
+    public class CodexDebugRepoStoreResponse
+    {
+        public string cid { get; set; } = string.Empty; 
+    }
 }

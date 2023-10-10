@@ -38,12 +38,27 @@ namespace ContinuousTests.Tests
         {
             TrackedFile? dl = null;
 
-            LogBytesPerMillisecond(() => dl = Nodes[1].DownloadContent(cid!));
+            try
+            {
+                LogBytesPerMillisecond(() => dl = Nodes[1].DownloadContent(cid!));
 
-            file.AssertIsEqual(dl);
+                file.AssertIsEqual(dl);
+            }
+            catch
+            {
+                LogRepoStore(Nodes[0]);
+                LogRepoStore(Nodes[1]);
+                throw;
+            }
 
             LogBlockExchangeStatus(Nodes[0], "After download");
             LogBlockExchangeStatus(Nodes[1], "After download");
+        }
+
+        private void LogRepoStore(ICodexNode codexNode)
+        {
+            var response = codexNode.GetDebugRepoStore();
+            Log.Log($"{codexNode.GetName()} has {string.Join(",", response.Select(r => r.cid))}");
         }
 
         private void LogStoredBytes(ICodexNode node)

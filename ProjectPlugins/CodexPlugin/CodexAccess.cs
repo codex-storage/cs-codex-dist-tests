@@ -49,6 +49,11 @@ namespace CodexPlugin
             return Http().HttpGetJson<CodexDebugBlockExchangeResponse>("debug/blockexchange");
         }
 
+        public CodexDebugRepoStoreResponse[] GetDebugRepoStore()
+        {
+            return Http().HttpGetJson<CodexDebugRepoStoreResponse[]>("debug/repostore");
+        }
+
         public CodexDebugThresholdBreaches GetDebugThresholdBreaches()
         {
             return Http().HttpGetJson<CodexDebugThresholdBreaches>("debug/loop");
