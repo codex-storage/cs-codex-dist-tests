@@ -21,9 +21,10 @@ namespace CodexPlugin
 
     public class DeploymentMetadata
     {
-        public DeploymentMetadata(string kubeNamespace, int numberOfCodexNodes, int numberOfValidators, int storageQuotaMB, CodexLogLevel codexLogLevel, int initialTestTokens, int minPrice, int maxCollateral, int maxDuration, int blockTTL, int blockMI, int blockMN)
+        public DeploymentMetadata(DateTime startUtc, DateTime finishedUtc, string kubeNamespace, int numberOfCodexNodes, int numberOfValidators, int storageQuotaMB, CodexLogLevel codexLogLevel, int initialTestTokens, int minPrice, int maxCollateral, int maxDuration, int blockTTL, int blockMI, int blockMN)
         {
-            DeployDateTimeUtc = DateTime.UtcNow;
+            StartUtc = startUtc;
+            FinishedUtc = finishedUtc;
             KubeNamespace = kubeNamespace;
             NumberOfCodexNodes = numberOfCodexNodes;
             NumberOfValidators = numberOfValidators;
@@ -38,7 +39,8 @@ namespace CodexPlugin
             BlockMN = blockMN;
         }
 
-        public DateTime DeployDateTimeUtc { get; }
+        public DateTime StartUtc { get; }
+        public DateTime FinishedUtc { get; }
         public string KubeNamespace { get; }
         public int NumberOfCodexNodes { get; }
         public int NumberOfValidators { get; }

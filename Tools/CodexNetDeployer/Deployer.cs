@@ -51,6 +51,7 @@ namespace CodexNetDeployer
             localCodexBuilder.Build();
 
             Log("Initializing...");
+            var startUtc = DateTime.UtcNow;
             var ci = entryPoint.CreateInterface();
 
             Log("Deploying Geth instance...");
@@ -78,7 +79,7 @@ namespace CodexNetDeployer
             CheckContainerRestarts(startResults);
 
             var codexContainers = startResults.Select(s => s.CodexNode.Container).ToArray();
-            return new CodexDeployment(codexContainers, gethDeployment, metricsService, CreateMetadata());
+            return new CodexDeployment(codexContainers, gethDeployment, metricsService, CreateMetadata(startUtc));
         }
 
         private EntryPoint CreateEntryPoint(ILog log)
@@ -87,11 +88,11 @@ namespace CodexNetDeployer
 
             var configuration = new KubernetesWorkflow.Configuration(
                 kubeConfig,
-                operationTimeout: TimeSpan.FromSeconds(300),
+                operationTimeout: TimeSpan.FromMinutes(10),
                 retryDelay: TimeSpan.FromSeconds(10),
                 kubernetesNamespace: config.KubeNamespace);
 
-            var result = new EntryPoint(log, configuration, string.Empty);
+            var result = new EntryPoint(log, configuration, string.Empty, new FastHttpTimeSet());
             configuration.Hooks = new K8sHook(config.TestsTypePodLabel, result.GetPluginMetadata());
 
             return result;
@@ -147,9 +148,11 @@ namespace CodexNetDeployer
             }
         }
 
-        private DeploymentMetadata CreateMetadata()
+        private DeploymentMetadata CreateMetadata(DateTime startUtc)
         {
             return new DeploymentMetadata(
+                startUtc: startUtc,
+                finishedUtc: DateTime.UtcNow,
                 kubeNamespace: config.KubeNamespace,
                 numberOfCodexNodes: config.NumberOfCodexNodes!.Value,
                 numberOfValidators: config.NumberOfValidators!.Value,
@@ -167,6 +170,34 @@ namespace CodexNetDeployer
         private void Log(string msg)
         {
             Console.WriteLine(msg);
+        }
+    }
+
+    public class FastHttpTimeSet : ITimeSet
+    {
+        public TimeSpan HttpCallRetryDelay()
+        {
+            return TimeSpan.FromSeconds(2);
+        }
+
+        public TimeSpan HttpCallRetryTime()
+        {
+            return TimeSpan.FromSeconds(2);
+        }
+
+        public TimeSpan HttpCallTimeout()
+        {
+            return TimeSpan.FromSeconds(10);
+        }
+
+        public TimeSpan K8sOperationTimeout()
+        {
+            return TimeSpan.FromMinutes(10);
+        }
+
+        public TimeSpan WaitForK8sServiceDelay()
+        {
+            return TimeSpan.FromSeconds(30);
         }
     }
 }
