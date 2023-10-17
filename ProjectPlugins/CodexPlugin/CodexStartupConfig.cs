@@ -8,7 +8,7 @@ namespace CodexPlugin
         public string? NameOverride { get; set; }
         public ILocation Location { get; set; } = KnownLocations.UnspecifiedLocation;
         public CodexLogLevel LogLevel { get; set; }
-        public CodexLogCustomTopics? CustomTopics { get; set; }
+        public CodexLogCustomTopics? CustomTopics { get; set; } = new CodexLogCustomTopics(CodexLogLevel.Warn, CodexLogLevel.Warn);
         public ByteSize? StorageQuota { get; set; }
         public bool MetricsEnabled { get; set; }
         public MarketplaceInitialConfig? MarketplaceConfig { get; set; }

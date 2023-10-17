@@ -205,7 +205,7 @@ namespace CodexPlugin
 
                 if (DateTime.UtcNow - waitStart > timeout)
                 {
-                    FrameworkAssert.Fail($"Contract did not reach '{desiredState}' within timeout. {statusJson}");
+                    FrameworkAssert.Fail($"Contract did not reach '{desiredState}' within {Time.FormatDuration(timeout)} timeout. {statusJson}");
                 }
             }
             log.Log($"Contract '{desiredState}'.");
