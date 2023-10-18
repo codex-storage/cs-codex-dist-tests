@@ -13,7 +13,7 @@ namespace BiblioTech
         public static Task Main(string[] args)
         {
             var uniformArgs = new ArgsUniform<Configuration>(PrintHelp, args);
-            Config = uniformArgs.Parse(true);
+            Config = uniformArgs.Parse();
 
             return new Program().MainAsync();
         }
