@@ -1,9 +1,8 @@
 ﻿using ArgsUniform;
+using Core;
 using Discord;
-using Discord.Commands;
-using Discord.Net;
 using Discord.WebSocket;
-using Newtonsoft.Json;
+using Logging;
 
 namespace BiblioTech
 {
@@ -12,7 +11,7 @@ namespace BiblioTech
         private DiscordSocketClient client = null!;
 
         public static Configuration Config { get; private set; } = null!;
-        public static DeploymentFilesMonitor DeploymentFilesMonitor { get; } = new DeploymentFilesMonitor();
+        public static EndpointsFilesMonitor DeploymentFilesMonitor { get; } = new EndpointsFilesMonitor();
 
         public static Task Main(string[] args)
         {
@@ -28,12 +27,18 @@ namespace BiblioTech
             client = new DiscordSocketClient();
             client.Log += Log;
 
-            var helloWorld = new HelloWorldCommand(client);
+            ProjectPlugin.Load<CodexPlugin.CodexPlugin>();
+            var entryPoint = new EntryPoint(new ConsoleLog(), new KubernetesWorkflow.Configuration(
+                kubeConfigFile: null, // todo: readonly file
+                operationTimeout: TimeSpan.FromMinutes(5),
+                retryDelay: TimeSpan.FromSeconds(10),
+                kubernetesNamespace: "not-applicable"), "datafiles");
 
-            //var cmdService = new CommandService();
-            //var handler = new CommandHandler(client, cmdService);
-            //await handler.InstallCommandsAsync();
-            //Console.WriteLine("Command handler installed...");
+            var fileMonitor = new EndpointsFilesMonitor();
+            var monitor = new EndpointsMonitor(fileMonitor, entryPoint);
+
+            var statusCommand = new StatusCommand(client, monitor);
+            //var helloWorld = new HelloWorldCommand(client); Example for how to do arguments.
 
             await client.LoginAsync(TokenType.Bot, Config.ApplicationToken);
             await client.StartAsync();

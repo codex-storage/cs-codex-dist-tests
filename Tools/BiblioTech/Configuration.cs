@@ -7,7 +7,10 @@ namespace BiblioTech
         [Uniform("token", "t", "TOKEN", true, "Discord Application Token")]
         public string ApplicationToken { get; set; } = string.Empty;
 
-        [Uniform("deploys", "d", "DEPLOYS", false, "Path where deployment JSONs are located.")]
-        public string DeploymentsPath { get; set; } = "deploys";
+        [Uniform("server-name", "sn", "SERVERNAME", true, "Name of the Discord server")]
+        public string ServerName { get; set; } = string.Empty;
+
+        [Uniform("endpoints", "e", "ENDPOINTS", false, "Path where endpoint JSONs are located. Also accepts codex-deployment JSONs.")]
+        public string EndpointsPath { get; set; } = "endpoints";
     }
 }

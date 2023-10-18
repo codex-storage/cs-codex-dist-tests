@@ -3,4 +3,4 @@ services:
     image: thatbenbierens/codex-discordbot:initial
     environment:
       - TOKEN=tokenplz
-      - DEPLOYS=deploypath
+      - SERVERNAME=ThatBen's server

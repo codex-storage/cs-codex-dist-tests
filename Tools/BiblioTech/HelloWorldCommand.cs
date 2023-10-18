@@ -61,8 +61,5 @@ namespace BiblioTech
                 Console.WriteLine(json);
             }
         }
-
-
-
     }
 }
