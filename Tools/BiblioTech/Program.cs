@@ -1,29 +1,49 @@
-﻿using Discord;
+﻿using ArgsUniform;
+using Discord;
 using Discord.WebSocket;
 
-public class Program
+namespace BiblioTech
 {
-    public static Task Main(string[] args) => new Program().MainAsync();
-
-    private DiscordSocketClient client;
-
-    public async Task MainAsync()
+    public class Program
     {
-        client = new DiscordSocketClient();
+        private DiscordSocketClient client = null!;
 
-        client.Log += Log;
+        public static Configuration Config { get; private set; } = null!;
 
-        //  You can assign your bot token to a string, and pass that in to connect.
-        //  This is, however, insecure, particularly if you plan to have your code hosted in a public repository.
-        var token = "token";
+        public static Task Main(string[] args)
+        {
+            var uniformArgs = new ArgsUniform<Configuration>(PrintHelp, args);
+            Config = uniformArgs.Parse(true);
 
-        await client.LoginAsync(TokenType.Bot, token);
-        await client.StartAsync();
-        await Task.Delay(-1);
-    }
-    private Task Log(LogMessage msg)
-    {
-        Console.WriteLine(msg.ToString());
-        return Task.CompletedTask;
+            return new Program().MainAsync();
+        }
+
+        public async Task MainAsync()
+        {
+            Console.WriteLine("Starting Codex Discord Bot...");
+            client = new DiscordSocketClient();
+
+            client.Log += Log;
+
+            //  You can assign your bot token to a string, and pass that in to connect.
+            //  This is, however, insecure, particularly if you plan to have your code hosted in a public repository.
+            var token = "token";
+
+            await client.LoginAsync(TokenType.Bot, token);
+            await client.StartAsync();
+            Console.WriteLine("Running...");
+            await Task.Delay(-1);
+        }
+
+        private static void PrintHelp()
+        {
+            Console.WriteLine("BiblioTech - Codex Discord Bot");
+        }
+
+        private Task Log(LogMessage msg)
+        {
+            Console.WriteLine(msg.ToString());
+            return Task.CompletedTask;
+        }
     }
 }

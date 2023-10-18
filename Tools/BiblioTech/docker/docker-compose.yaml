@@ -1,0 +1,6 @@
+services:
+  bibliotech-discordbot:
+    image: thatbenbierens/codex-discordbot:initial
+    environment:
+      - TOKEN=tokenplz
+      - DEPLOYS=deploypath
