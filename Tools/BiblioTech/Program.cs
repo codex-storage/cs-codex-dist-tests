@@ -1,6 +1,9 @@
 ﻿using ArgsUniform;
 using Discord;
+using Discord.Commands;
+using Discord.Net;
 using Discord.WebSocket;
+using Newtonsoft.Json;
 
 namespace BiblioTech
 {
@@ -9,6 +12,7 @@ namespace BiblioTech
         private DiscordSocketClient client = null!;
 
         public static Configuration Config { get; private set; } = null!;
+        public static DeploymentFilesMonitor DeploymentFilesMonitor { get; } = new DeploymentFilesMonitor();
 
         public static Task Main(string[] args)
         {
@@ -22,14 +26,16 @@ namespace BiblioTech
         {
             Console.WriteLine("Starting Codex Discord Bot...");
             client = new DiscordSocketClient();
-
             client.Log += Log;
 
-            //  You can assign your bot token to a string, and pass that in to connect.
-            //  This is, however, insecure, particularly if you plan to have your code hosted in a public repository.
-            var token = "token";
+            var helloWorld = new HelloWorldCommand(client);
 
-            await client.LoginAsync(TokenType.Bot, token);
+            //var cmdService = new CommandService();
+            //var handler = new CommandHandler(client, cmdService);
+            //await handler.InstallCommandsAsync();
+            //Console.WriteLine("Command handler installed...");
+
+            await client.LoginAsync(TokenType.Bot, Config.ApplicationToken);
             await client.StartAsync();
             Console.WriteLine("Running...");
             await Task.Delay(-1);
