@@ -14,6 +14,14 @@ namespace BiblioTech
             this.client = client;
 
             client.Ready += Client_Ready;
+            client.SlashCommandExecuted += SlashCommandHandler;
+        }
+
+        private async Task SlashCommandHandler(SocketSlashCommand command)
+        {
+            var cheeseOption = command.Data.Options.SingleOrDefault(o => o.Name == "cheese");
+            var numberOption = command.Data.Options.SingleOrDefault(o => o.Name == "numberofthings");
+            await command.RespondAsync($"Dear {command.User.Username}, You executed {command.Data.Name} with cheese: {cheeseOption.Value} and number: {numberOption.Value}");
         }
 
         private async Task Client_Ready()
@@ -22,13 +30,12 @@ namespace BiblioTech
             var guild = client.Guilds.Single(g => g.Name == "ThatBen's server");
 
             // Next, lets create our slash command builder. This is like the embed builder but for slash commands.
-            var guildCommand = new SlashCommandBuilder();
-
-            // Note: Names have to be all lowercase and match the regular expression ^[\w-]{3,32}$
-            guildCommand.WithName("do-thing");
-
-            // Descriptions can have a max length of 100.
-            guildCommand.WithDescription("This command does the thing!");
+            var guildCommand = new SlashCommandBuilder()
+                .WithName("do-thing")
+                .WithDescription("This command does the thing!")
+                .AddOption("cheese", ApplicationCommandOptionType.Boolean, "whether you like cheese", isRequired: true)
+                .AddOption("numberofthings", ApplicationCommandOptionType.Number, "count them please", isRequired: true)
+                ;
 
             //// Let's do our global command
             //var globalCommand = new SlashCommandBuilder();
