@@ -10,5 +10,10 @@
 
         public string Host { get; }
         public int Port { get; }
+
+        public override string ToString()
+        {
+            return $"{Host}:{Port}";
+        }
     }
 }

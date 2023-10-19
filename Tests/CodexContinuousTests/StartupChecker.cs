@@ -87,7 +87,8 @@ namespace ContinuousTests
             {
                 cancelToken.ThrowIfCancellationRequested();
 
-                log.Log($"Checking {n.Container.Name} @ '{n.Container.Address.Host}:{n.Container.Address.Port}'...");
+                var address = n.Container.GetAddress(CodexContainerRecipe.ApiPortTag);
+                log.Log($"Checking {n.Container.Name} @ '{address}'...");
 
                 if (EnsureOnline(log, n))
                 {
@@ -95,7 +96,7 @@ namespace ContinuousTests
                 }
                 else
                 {
-                    log.Error($"No response from '{n.Container.Address.Host}'.");
+                    log.Error($"No response from '{address}'.");
                     pass = false;
                 }
             }

@@ -13,7 +13,7 @@ namespace MetricsPlugin
         public MetricsQuery(IPluginTools tools, RunningContainer runningContainer)
         {
             RunningContainer = runningContainer;
-            http = tools.CreateHttp(RunningContainer.Address, "api/v1");
+            http = tools.CreateHttp(RunningContainer.GetAddress(PrometheusContainerRecipe.PortTag), "api/v1");
             log = tools.GetLog();
         }
 

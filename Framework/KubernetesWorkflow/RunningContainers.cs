@@ -39,18 +39,14 @@ namespace KubernetesWorkflow
         public Port[] ServicePorts { get; }
         public ContainerPort[] ContainerPorts { get; }
 
-        [JsonIgnore]
-        public Address Address
+        public Address GetAddress(string portTag)
         {
-            get
+            var containerPort = ContainerPorts.Single(c => c.Port.Tag == portTag);
+            if (RunnerLocationUtils.DetermineRunnerLocation(this) == RunnerLocation.InternalToCluster)
             {
-                throw new Exception("a");
-                //if (RunnerLocationUtils.DetermineRunnerLocation(this) == RunnerLocation.InternalToCluster)
-                //{
-                //    return ClusterInternalAddress;
-                //}
-                //return ClusterExternalAddress;
+                return containerPort.InternalAddress;
             }
+            return containerPort.ExternalAddress;
         }
     }
 
