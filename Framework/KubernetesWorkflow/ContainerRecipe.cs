@@ -67,6 +67,12 @@
 
         public int Number { get; }
         public string Tag { get; }
+
+        public override string ToString()
+        {
+            if (string.IsNullOrEmpty(Tag)) return $"untagged-port={Number}";
+            return $"{Tag}={Number}";
+        }
     }
 
     public class EnvVar

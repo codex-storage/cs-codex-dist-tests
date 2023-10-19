@@ -572,10 +572,9 @@ namespace KubernetesWorkflow
             var readback = client.Run(c => c.ReadNamespacedService(serviceSpec.Metadata.Name, K8sNamespace));
             foreach (var r in containerRecipes)
             {
-                if (r.ExposedPorts.Any())
+                foreach (var port in r.ExposedPorts)
                 {
-                    var firstExposedPort = r.ExposedPorts.First();
-                    var portName = GetNameForPort(r, firstExposedPort);
+                    var portName = GetNameForPort(r, port);
 
                     var matchingServicePorts = readback.Spec.Ports.Where(p => p.Name == portName);
                     if (matchingServicePorts.Any())
