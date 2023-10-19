@@ -580,7 +580,7 @@ namespace KubernetesWorkflow
                     if (matchingServicePorts.Any())
                     {
                         // These service ports belongs to this recipe.
-                        var optionals = matchingServicePorts.Select(p => MapNodePortIfAble(p, portName));
+                        var optionals = matchingServicePorts.Select(p => MapNodePortIfAble(p, port.Tag));
                         var ports = optionals.Where(p => p != null).Select(p => p!).ToArray();
 
                         result.Add(new ContainerRecipePortMapEntry(r.Number, ports));
