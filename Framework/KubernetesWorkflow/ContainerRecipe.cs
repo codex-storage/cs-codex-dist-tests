@@ -24,6 +24,8 @@
             {
                 Name = $"ctnr{Number}";
             }
+
+            if (exposedPorts.Any(p => string.IsNullOrEmpty(p.Tag))) throw new Exception("Port tags are required for all exposed ports.");
         }
 
         public string Name { get; }

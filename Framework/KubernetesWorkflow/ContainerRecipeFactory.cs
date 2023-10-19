@@ -50,12 +50,12 @@ namespace KubernetesWorkflow
         protected int Index { get; private set; } = 0;
         protected abstract void Initialize(StartupConfig config);
 
-        protected Port AddExposedPort(string tag = "")
+        protected Port AddExposedPort(string tag)
         {
             return AddExposedPort(factory.CreatePort(tag));
         }
 
-        protected Port AddExposedPort(int number, string tag = "")
+        protected Port AddExposedPort(int number, string tag)
         {
             return AddExposedPort(factory.CreatePort(number, tag));
         }
@@ -67,7 +67,7 @@ namespace KubernetesWorkflow
             return p;
         }
 
-        protected void AddExposedPortAndVar(string name, string tag = "")
+        protected void AddExposedPortAndVar(string name, string tag)
         {
             AddEnvVar(name, AddExposedPort(tag));
         }

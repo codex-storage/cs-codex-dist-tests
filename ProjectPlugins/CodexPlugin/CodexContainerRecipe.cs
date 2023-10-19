@@ -8,8 +8,10 @@ namespace CodexPlugin
         private readonly MarketplaceStarter marketplaceStarter = new MarketplaceStarter();
 
         private const string DefaultDockerImage = "codexstorage/nim-codex:latest-dist-tests";
-        public const string MetricsPortTag = "metrics_port";
-        public const string DiscoveryPortTag = "discovery-port";
+        public const string ApiPortTag = "codex_api_port";
+        public const string ListenPortTag = "codex_listen_port";
+        public const string MetricsPortTag = "codex_metrics_port";
+        public const string DiscoveryPortTag = "codex_discovery_port";
 
         // Used by tests for time-constraint assertions.
         public static readonly TimeSpan MaxUploadTimePerMegabyte = TimeSpan.FromSeconds(2.0);
@@ -27,7 +29,7 @@ namespace CodexPlugin
 
             var config = startupConfig.Get<CodexStartupConfig>();
 
-            AddExposedPortAndVar("CODEX_API_PORT");
+            AddExposedPortAndVar("CODEX_API_PORT", ApiPortTag);
             AddEnvVar("CODEX_API_BINDADDR", "0.0.0.0");
 
             var dataDir = $"datadir{ContainerNumber}";
@@ -40,7 +42,7 @@ namespace CodexPlugin
             // This makes the node announce itself to its local (pod) IP address.
             AddEnvVar("NAT_IP_AUTO", "true");
 
-            var listenPort = AddExposedPort();
+            var listenPort = AddExposedPort(ListenPortTag);
             AddEnvVar("CODEX_LISTEN_ADDRS", $"/ip4/0.0.0.0/tcp/{listenPort.Number}");
 
             if (!string.IsNullOrEmpty(config.BootstrapSpr))
