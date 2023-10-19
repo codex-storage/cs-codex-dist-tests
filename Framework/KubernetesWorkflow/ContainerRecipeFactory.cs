@@ -132,11 +132,6 @@ namespace KubernetesWorkflow
 
         private Port AddExposedPort(Port port)
         {
-            if (exposedPorts.Any())
-            {
-                throw new NotImplementedException("Current implementation only support 1 exposed port per container recipe. " +
-                    $"Methods for determining container addresses in {nameof(StartupWorkflow)} currently rely on this constraint.");
-            }
             exposedPorts.Add(port);
             return port;
         }

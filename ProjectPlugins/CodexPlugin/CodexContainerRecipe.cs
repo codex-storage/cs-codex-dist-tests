@@ -34,13 +34,13 @@ namespace CodexPlugin
             AddEnvVar("CODEX_DATA_DIR", dataDir);
             AddVolume($"codex/{dataDir}", GetVolumeCapacity(config));
 
-            AddInternalPortAndVar("CODEX_DISC_PORT", DiscoveryPortTag);
+            AddExposedPortAndVar("CODEX_DISC_PORT", DiscoveryPortTag);
             AddEnvVar("CODEX_LOG_LEVEL", config.LogLevelWithTopics());
 
             // This makes the node announce itself to its local (pod) IP address.
             AddEnvVar("NAT_IP_AUTO", "true");
 
-            var listenPort = AddInternalPort();
+            var listenPort = AddExposedPort();
             AddEnvVar("CODEX_LISTEN_ADDRS", $"/ip4/0.0.0.0/tcp/{listenPort.Number}");
 
             if (!string.IsNullOrEmpty(config.BootstrapSpr))
