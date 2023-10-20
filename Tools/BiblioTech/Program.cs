@@ -1,4 +1,5 @@
 ﻿using ArgsUniform;
+using BiblioTech.TokenCommands;
 using Core;
 using Discord;
 using Discord.WebSocket;
@@ -11,7 +12,7 @@ namespace BiblioTech
         private DiscordSocketClient client = null!;
 
         public static Configuration Config { get; private set; } = null!;
-        public static EndpointsFilesMonitor DeploymentFilesMonitor { get; } = new EndpointsFilesMonitor();
+        public static DeploymentsFilesMonitor DeploymentFilesMonitor { get; } = new DeploymentsFilesMonitor();
 
         public static Task Main(string[] args)
         {
@@ -28,17 +29,19 @@ namespace BiblioTech
             client.Log += Log;
 
             ProjectPlugin.Load<CodexPlugin.CodexPlugin>();
+            ProjectPlugin.Load<GethPlugin.GethPlugin>();
+            ProjectPlugin.Load<CodexContractsPlugin.CodexContractsPlugin>();
+
             var entryPoint = new EntryPoint(new ConsoleLog(), new KubernetesWorkflow.Configuration(
                 kubeConfigFile: null, // todo: readonly file
                 operationTimeout: TimeSpan.FromMinutes(5),
                 retryDelay: TimeSpan.FromSeconds(10),
                 kubernetesNamespace: "not-applicable"), "datafiles");
 
-            var fileMonitor = new EndpointsFilesMonitor();
-            var monitor = new EndpointsMonitor(fileMonitor, entryPoint);
+            var monitor = new DeploymentsFilesMonitor();
 
-            var statusCommand = new StatusCommand(client, monitor);
-            //var helloWorld = new HelloWorldCommand(client); Example for how to do arguments.
+            var handler = new CommandHandler(client,
+                new GetBalanceCommand(monitor));
 
             await client.LoginAsync(TokenType.Bot, Config.ApplicationToken);
             await client.StartAsync();

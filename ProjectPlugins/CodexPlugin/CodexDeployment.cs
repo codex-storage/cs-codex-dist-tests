@@ -1,20 +1,23 @@
-﻿using GethPlugin;
+﻿using CodexContractsPlugin;
+using GethPlugin;
 using KubernetesWorkflow;
 
 namespace CodexPlugin
 {
     public class CodexDeployment
     {
-        public CodexDeployment(RunningContainer[] codexContainers, GethDeployment gethDeployment, RunningContainer? prometheusContainer, DeploymentMetadata metadata)
+        public CodexDeployment(RunningContainer[] codexContainers, GethDeployment gethDeployment, CodexContractsDeployment codexContractsDeployment, RunningContainer? prometheusContainer, DeploymentMetadata metadata)
         {
             CodexContainers = codexContainers;
             GethDeployment = gethDeployment;
+            CodexContractsDeployment = codexContractsDeployment;
             PrometheusContainer = prometheusContainer;
             Metadata = metadata;
         }
 
         public RunningContainer[] CodexContainers { get; }
         public GethDeployment GethDeployment { get; }
+        public CodexContractsDeployment CodexContractsDeployment { get; }
         public RunningContainer? PrometheusContainer { get; }
         public DeploymentMetadata Metadata { get; }
     }
