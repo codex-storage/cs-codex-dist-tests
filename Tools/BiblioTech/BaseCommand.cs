@@ -6,6 +6,7 @@ namespace BiblioTech
     public abstract class BaseCommand
     {
         public abstract string Name { get; }
+        public abstract string StartingMessage { get; }
         public abstract string Description { get; }
         public virtual CommandOption[] Options
         {
@@ -18,7 +19,17 @@ namespace BiblioTech
         public async Task SlashCommandHandler(SocketSlashCommand command)
         {
             if (command.CommandName != Name) return;
-            await Invoke(command);
+
+            try
+            {
+                await command.RespondAsync(StartingMessage);
+                await Invoke(command);
+            }
+            catch (Exception ex)
+            {
+                await command.FollowupAsync("Something failed while trying to do that...");
+                Console.WriteLine(ex);
+            }
         }
 
         protected abstract Task Invoke(SocketSlashCommand command);

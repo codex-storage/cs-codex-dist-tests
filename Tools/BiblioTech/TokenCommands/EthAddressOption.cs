@@ -6,7 +6,7 @@ namespace BiblioTech.TokenCommands
     public class EthAddressOption : CommandOption
     {
         public EthAddressOption()
-            : base(name: "EthAddress",
+            : base(name: "ethaddress",
                   description: "Ethereum address starting with '0x'.",
                   type: Discord.ApplicationCommandOptionType.String)
         {

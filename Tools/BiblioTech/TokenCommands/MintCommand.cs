@@ -18,6 +18,7 @@ namespace BiblioTech.TokenCommands
         }
 
         public override string Name => "mint";
+        public override string StartingMessage => "Minting some tokens...";
         public override string Description => "Mint some TestTokens and send some Eth to the address if its balance is low.";
         public override CommandOption[] Options => new[] { ethOption };
 
@@ -26,11 +27,11 @@ namespace BiblioTech.TokenCommands
             var addr = await ethOption.Parse(command);
             if (addr == null) return;
 
-            var report = 
+            var report =
                 ProcessEth(gethNode, addr) +
                 ProcessTestTokens(gethNode, contracts, addr);
 
-            await command.RespondAsync(report);
+            await command.FollowupAsync(report);
         }
 
         private string ProcessTestTokens(IGethNode gethNode, ICodexContracts contracts, EthAddress addr)

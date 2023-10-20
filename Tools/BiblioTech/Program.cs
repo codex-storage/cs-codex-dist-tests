@@ -44,7 +44,9 @@ namespace BiblioTech
 
             var handler = new CommandHandler(client,
                 new GetBalanceCommand(monitor, ci), 
-                new MintCommand(monitor, ci));
+                new MintCommand(monitor, ci),
+                new DeploymentsCommand(monitor)
+            );
 
             await client.LoginAsync(TokenType.Bot, Config.ApplicationToken);
             await client.StartAsync();
