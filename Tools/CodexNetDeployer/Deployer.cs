@@ -79,7 +79,7 @@ namespace CodexNetDeployer
             CheckContainerRestarts(startResults);
 
             var codexContainers = startResults.Select(s => s.CodexNode.Container).ToArray();
-            return new CodexDeployment(codexContainers, gethDeployment, metricsService, CreateMetadata(startUtc));
+            return new CodexDeployment(codexContainers, gethDeployment, contractsDeployment, metricsService, CreateMetadata(startUtc));
         }
 
         private EntryPoint CreateEntryPoint(ILog log)
