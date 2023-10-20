@@ -33,15 +33,18 @@ namespace BiblioTech
             ProjectPlugin.Load<CodexContractsPlugin.CodexContractsPlugin>();
 
             var entryPoint = new EntryPoint(new ConsoleLog(), new KubernetesWorkflow.Configuration(
-                kubeConfigFile: null, // todo: readonly file
+                kubeConfigFile: null,
                 operationTimeout: TimeSpan.FromMinutes(5),
                 retryDelay: TimeSpan.FromSeconds(10),
                 kubernetesNamespace: "not-applicable"), "datafiles");
 
             var monitor = new DeploymentsFilesMonitor();
 
+            var ci = entryPoint.CreateInterface();
+
             var handler = new CommandHandler(client,
-                new GetBalanceCommand(monitor));
+                new GetBalanceCommand(monitor, ci), 
+                new MintCommand(monitor, ci));
 
             await client.LoginAsync(TokenType.Bot, Config.ApplicationToken);
             await client.StartAsync();

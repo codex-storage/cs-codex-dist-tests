@@ -1,15 +1,19 @@
-﻿using CodexPlugin;
+﻿using CodexContractsPlugin;
+using Core;
 using Discord.WebSocket;
+using GethPlugin;
 
 namespace BiblioTech
 {
     public abstract class BaseNetCommand : BaseCommand
     {
         private readonly DeploymentsFilesMonitor monitor;
+        private readonly CoreInterface ci;
 
-        public BaseNetCommand(DeploymentsFilesMonitor monitor)
+        public BaseNetCommand(DeploymentsFilesMonitor monitor, CoreInterface ci)
         {
             this.monitor = monitor;
+            this.ci = ci;
         }
 
         protected override async Task Invoke(SocketSlashCommand command)
@@ -26,9 +30,16 @@ namespace BiblioTech
                 return;
             }
 
-            await Execute(command, deployments.Single());
+            var codexDeployment = deployments.Single();
+            var gethDeployment = codexDeployment.GethDeployment;
+            var contractsDeployment = codexDeployment.CodexContractsDeployment;
+
+            var gethNode = ci.WrapGethDeployment(gethDeployment);
+            var contracts = ci.WrapCodexContractsDeployment(contractsDeployment);
+
+            await Execute(command, gethNode, contracts);
         }
 
-        protected abstract Task Execute(SocketSlashCommand command, CodexDeployment codexDeployment);
+        protected abstract Task Execute(SocketSlashCommand command, IGethNode gethNode, ICodexContracts contracts);
     }
 }
