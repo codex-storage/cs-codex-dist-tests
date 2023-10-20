@@ -1,5 +1,6 @@
 ﻿using Core;
 using KubernetesWorkflow;
+using Utils;
 
 namespace CodexPlugin
 {
@@ -98,12 +99,17 @@ namespace CodexPlugin
 
         private IHttp Http()
         {
-            return tools.CreateHttp(Container.Address, baseUrl: "/api/codex/v1", CheckContainerCrashed, Container.Name);
+            return tools.CreateHttp(GetAddress(), baseUrl: "/api/codex/v1", CheckContainerCrashed, Container.Name);
         }
 
         private IHttp LongHttp()
         {
-            return tools.CreateHttp(Container.Address, baseUrl: "/api/codex/v1", CheckContainerCrashed, new LongTimeSet(), Container.Name);
+            return tools.CreateHttp(GetAddress(), baseUrl: "/api/codex/v1", CheckContainerCrashed, new LongTimeSet(), Container.Name);
+        }
+
+        private Address GetAddress()
+        {
+            return Container.GetAddress(CodexContainerRecipe.ApiPortTag);
         }
 
         private void CheckContainerCrashed(HttpClient client)

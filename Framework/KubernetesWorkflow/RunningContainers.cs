@@ -24,35 +24,44 @@ namespace KubernetesWorkflow
 
     public class RunningContainer
     {
-        public RunningContainer(RunningPod pod, ContainerRecipe recipe, Port[] servicePorts, string name, Address clusterExternalAddress, Address clusterInternalAddress)
+        public RunningContainer(RunningPod pod, ContainerRecipe recipe, Port[] servicePorts, string name, ContainerPort[] containerPorts)
         {
             Pod = pod;
             Recipe = recipe;
             ServicePorts = servicePorts;
             Name = name;
-            ClusterExternalAddress = clusterExternalAddress;
-            ClusterInternalAddress = clusterInternalAddress;
+            ContainerPorts = containerPorts;
         }
 
         public string Name { get; }
         public RunningPod Pod { get; }
         public ContainerRecipe Recipe { get; }
         public Port[] ServicePorts { get; }
-        public Address ClusterExternalAddress { get; }
-        public Address ClusterInternalAddress { get; }
+        public ContainerPort[] ContainerPorts { get; }
 
-        [JsonIgnore]
-        public Address Address
+        public Address GetAddress(string portTag)
         {
-            get
+            var containerPort = ContainerPorts.Single(c => c.Port.Tag == portTag);
+            if (RunnerLocationUtils.DetermineRunnerLocation(this) == RunnerLocation.InternalToCluster)
             {
-                if (RunnerLocationUtils.DetermineRunnerLocation(this) == RunnerLocation.InternalToCluster)
-                {
-                    return ClusterInternalAddress;
-                }
-                return ClusterExternalAddress;
+                return containerPort.InternalAddress;
             }
+            return containerPort.ExternalAddress;
         }
+    }
+
+    public class ContainerPort
+    {
+        public ContainerPort(Port port, Address externalAddress, Address internalAddress)
+        {
+            Port = port;
+            ExternalAddress = externalAddress;
+            InternalAddress = internalAddress;
+        }
+
+        public Port Port { get; }
+        public Address ExternalAddress { get; }
+        public Address InternalAddress { get; }
     }
 
     public static class RunningContainersExtensions
