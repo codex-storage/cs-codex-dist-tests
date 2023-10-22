@@ -21,6 +21,11 @@ namespace BiblioTech
             var uniformArgs = new ArgsUniform<Configuration>(PrintHelp, args);
             Config = uniformArgs.Parse();
 
+            if (!Directory.Exists(Config.UserDataPath))
+            {
+                Directory.CreateDirectory(Config.UserDataPath);
+            }
+
             return new Program().MainAsync();
         }
 
@@ -48,7 +53,7 @@ namespace BiblioTech
             var handler = new CommandHandler(client,
                 new ClearUserAssociationCommand(),
                 new GetBalanceCommand(monitor, ci, associateCommand), 
-                new MintCommand(monitor, ci),
+                new MintCommand(monitor, ci, associateCommand),
                 new ReportHistoryCommand(),
                 associateCommand,
                 new DeploymentsCommand(monitor)

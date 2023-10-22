@@ -11,10 +11,8 @@ namespace BiblioTech.Commands
 
         public override string Name => "set";
         public override string StartingMessage => "hold on...";
-        public override string Description => "Associates a Discord user with an Ethereum address in the TestNet. " +
-            "Warning: You can set your Ethereum address only once! Double-check before hitting enter.";
-
-        public override CommandOption[] Options => new[] { ethOption };
+        public override string Description => "Associates a Discord user with an Ethereum address.";
+        public override CommandOption[] Options => new CommandOption[] { ethOption, optionalUser };
 
         protected override async Task Invoke(SocketSlashCommand command)
         {

@@ -11,6 +11,7 @@ namespace BiblioTech.Commands
         public override string Name => "clear";
         public override string StartingMessage => "Hold on...";
         public override string Description => "Admin only. Clears current Eth address for a user, allowing them to set a new one.";
+        public override CommandOption[] Options => new[] { user };
 
         protected override async Task Invoke(SocketSlashCommand command)
         {

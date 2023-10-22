@@ -13,7 +13,7 @@ namespace BiblioTech.Commands
 
         public override string Name => "deployments";
         public override string StartingMessage => "Fetching deployments information...";
-        public override string Description => "Lists known deployments";
+        public override string Description => "Lists active TestNet deployments";
 
         protected override async Task Invoke(SocketSlashCommand command)
         {

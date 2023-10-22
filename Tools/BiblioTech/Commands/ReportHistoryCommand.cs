@@ -11,6 +11,7 @@ namespace BiblioTech.Commands
         public override string Name => "report";
         public override string StartingMessage => "Getting that data...";
         public override string Description => "Admin only. Reports bot-interaction history for a user.";
+        public override CommandOption[] Options => new[] { user };
 
         protected override async Task Invoke(SocketSlashCommand command)
         {

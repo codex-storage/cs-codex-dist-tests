@@ -7,16 +7,17 @@ namespace BiblioTech.Commands
 {
     public class MintCommand : BaseNetCommand
     {
-        private readonly string nl = Environment.NewLine;
         private readonly Ether defaultEthToSend = 10.Eth();
         private readonly TestToken defaultTestTokensToMint = 1024.TestTokens();
         private readonly UserOption optionalUser = new UserOption(
             description: "If set, mint tokens for this user. (Optional, admin-only)",
-            isRequired: true);
+            isRequired: false);
+        private readonly UserAssociateCommand userAssociateCommand;
 
-        public MintCommand(DeploymentsFilesMonitor monitor, CoreInterface ci)
+        public MintCommand(DeploymentsFilesMonitor monitor, CoreInterface ci, UserAssociateCommand userAssociateCommand)
             : base(monitor, ci)
         {
+            this.userAssociateCommand = userAssociateCommand;
         }
 
         public override string Name => "mint";
@@ -28,36 +29,57 @@ namespace BiblioTech.Commands
         {
             var userId = GetUserId(optionalUser, command);
             var addr = Program.UserRepo.GetCurrentAddressForUser(userId);
-            if (addr == null) return;
+            if (addr == null)
+            {
+                await command.FollowupAsync($"No address has been set for this user. Please use '/{userAssociateCommand.Name}' to set it first.");
+                return;
+            }
 
-            var report =
-                ProcessEth(gethNode, addr) +
-                ProcessTestTokens(gethNode, contracts, addr);
+            var report = new List<string>();
 
-            await command.FollowupAsync(report);
+            var sentEth = ProcessEth(gethNode, addr, report);
+            var mintedTokens = ProcessTokens(gethNode, contracts, addr, report);
+
+            Program.UserRepo.AddMintEventForUser(userId, addr, sentEth, mintedTokens);
+
+            await command.FollowupAsync(string.Join(Environment.NewLine, report));
         }
 
-        private string ProcessTestTokens(IGethNode gethNode, ICodexContracts contracts, EthAddress addr)
+        private TestToken ProcessTokens(IGethNode gethNode, ICodexContracts contracts, EthAddress addr, List<string> report)
         {
-            var testTokens = contracts.GetTestTokenBalance(gethNode, addr);
-            if (testTokens.Amount < 64m)
+            if (ShouldMintTestTokens(gethNode, contracts, addr))
             {
                 contracts.MintTestTokens(gethNode, addr, defaultTestTokensToMint);
-                return $"Minted {defaultTestTokensToMint}." + nl;
+                report.Add($"Minted {defaultTestTokensToMint}.");
+                return defaultTestTokensToMint;
             }
-            return "TestToken balance over threshold." + nl;
+            
+            report.Add("TestToken balance over threshold.");
+            return 0.TestTokens();
         }
 
-        private string ProcessEth(IGethNode gethNode, EthAddress addr)
+        private Ether ProcessEth(IGethNode gethNode, EthAddress addr, List<string> report)
         {
-            var eth = gethNode.GetEthBalance(addr);
-            if (eth.Eth < 1.0m)
+            if (ShouldSendEth(gethNode, addr))
             {
                 gethNode.SendEth(addr, defaultEthToSend);
-                return $"Sent {defaultEthToSend}." + nl;
+                report.Add($"Sent {defaultEthToSend}.");
+                return defaultEthToSend;
             }
+            report.Add("Eth balance is over threshold.");
+            return 0.Eth();
+        }
 
-            return "Eth balance over threshold." + nl;
+        private bool ShouldMintTestTokens(IGethNode gethNode, ICodexContracts contracts, EthAddress addr)
+        {
+            var testTokens = contracts.GetTestTokenBalance(gethNode, addr);
+            return testTokens.Amount < 64m;
+        }
+
+        private bool ShouldSendEth(IGethNode gethNode, EthAddress addr)
+        {
+            var eth = gethNode.GetEthBalance(addr);
+            return eth.Eth < 1.0m;
         }
     }
 }

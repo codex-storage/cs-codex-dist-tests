@@ -15,5 +15,8 @@ namespace BiblioTech
 
         [Uniform("userdata", "u", "USERDATA", false, "Path where user data files will be saved.")]
         public string UserDataPath { get; set; } = "userdata";
+
+        [Uniform("admin-role", "a", "ADMINROLE", true, "Name of the Discord server admin role")]
+        public string AdminRoleName { get; set; } = string.Empty;
     }
 }
