@@ -8,7 +8,8 @@ namespace BiblioTech.TokenCommands
         public EthAddressOption()
             : base(name: "ethaddress",
                   description: "Ethereum address starting with '0x'.",
-                  type: Discord.ApplicationCommandOptionType.String)
+                  type: Discord.ApplicationCommandOptionType.String,
+                  isRequired: true)
         {
         }
 

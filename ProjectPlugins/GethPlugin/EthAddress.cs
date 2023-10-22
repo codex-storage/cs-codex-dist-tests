@@ -13,5 +13,10 @@
         }
 
         public string Address { get; }
+
+        public override string ToString()
+        {
+            return Address;
+        }
     }
 }

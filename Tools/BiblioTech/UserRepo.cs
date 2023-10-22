@@ -42,6 +42,43 @@ namespace BiblioTech
             }
         }
 
+        public string[] GetInteractionReport(ulong discordId)
+        {
+            var result = new List<string>();
+
+            lock (repoLock)
+            {
+                var filename = GetFilename(discordId);
+                if (!File.Exists(filename))
+                {
+                    result.Add("User has not joined the test net.");
+                }
+                else
+                {
+                    var user = JsonConvert.DeserializeObject<User>(File.ReadAllText(filename));
+                    if (user == null)
+                    {
+                        result.Add("Failed to load user records.");
+                    }
+                    else
+                    {
+                        result.Add("User joined on " + user.CreatedUtc.ToString("o"));
+                        result.Add("Current address: " + user.CurrentAddress);
+                        foreach (var ae in user.AssociateEvents)
+                        {
+                            result.Add($"{ae.Utc.ToString("o")} - Address set to: {ae.NewAddress}");
+                        }
+                        foreach (var me in user.MintEvents)
+                        {
+                            result.Add($"{me.Utc.ToString("o")} - Minted {me.EthReceived} and {me.TestTokensMinted} to {me.UsedAddress}.");
+                        }
+                    }
+                }
+            }
+
+            return result.ToArray();
+        }
+
         private void SetUserAddress(ulong discordId, EthAddress? address)
         {
             var user = GetOrCreate(discordId);

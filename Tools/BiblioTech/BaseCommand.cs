@@ -1,5 +1,6 @@
 ﻿using Discord.WebSocket;
 using Discord;
+using BiblioTech.TokenCommands;
 
 namespace BiblioTech
 {
@@ -33,19 +34,33 @@ namespace BiblioTech
         }
 
         protected abstract Task Invoke(SocketSlashCommand command);
+
+        protected bool IsSenderAdmin(SocketSlashCommand command)
+        {
+
+        }
+
+        protected ulong GetUserId(UserOption userOption, SocketSlashCommand command)
+        {
+            var targetUser = userOption.GetOptionUserId(command);
+            if (IsSenderAdmin(command) && targetUser != null) return targetUser.Value;
+            return command.User.Id;
+        }
     }
 
     public class CommandOption
     {
-        public CommandOption(string name, string description, ApplicationCommandOptionType type)
+        public CommandOption(string name, string description, ApplicationCommandOptionType type, bool isRequired)
         {
             Name = name;
             Description = description;
             Type = type;
+            IsRequired = isRequired;
         }
 
         public string Name { get; }
         public string Description { get; }
         public ApplicationCommandOptionType Type { get; }
+        public bool IsRequired { get; }
     }
 }

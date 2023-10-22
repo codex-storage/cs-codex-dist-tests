@@ -10,7 +10,9 @@ namespace BiblioTech.TokenCommands
         private readonly string nl = Environment.NewLine;
         private readonly Ether defaultEthToSend = 10.Eth();
         private readonly TestToken defaultTestTokensToMint = 1024.TestTokens();
-        private readonly EthAddressOption ethOption = new EthAddressOption();
+        private readonly UserOption optionalUser = new UserOption(
+            description: "If set, mint tokens for this user. (Optional, admin-only)",
+            isRequired: true);
 
         public MintCommand(DeploymentsFilesMonitor monitor, CoreInterface ci)
             : base(monitor, ci)
@@ -19,12 +21,13 @@ namespace BiblioTech.TokenCommands
 
         public override string Name => "mint";
         public override string StartingMessage => "Minting some tokens...";
-        public override string Description => "Mint some TestTokens and send some Eth to the address if its balance is low.";
-        public override CommandOption[] Options => new[] { ethOption };
+        public override string Description => "Mint some TestTokens and send some Eth to the user if their balance is low.";
+        public override CommandOption[] Options => new[] { optionalUser };
 
         protected override async Task Execute(SocketSlashCommand command, IGethNode gethNode, ICodexContracts contracts)
         {
-            var addr = await ethOption.Parse(command);
+            var userId = GetUserId(optionalUser, command);
+            var addr = Program.UserRepo.GetCurrentAddressForUser(userId);
             if (addr == null) return;
 
             var report =
