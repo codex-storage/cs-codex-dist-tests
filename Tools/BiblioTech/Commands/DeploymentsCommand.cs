@@ -1,6 +1,6 @@
 ﻿using Discord.WebSocket;
 
-namespace BiblioTech
+namespace BiblioTech.Commands
 {
     public class DeploymentsCommand : BaseCommand
     {

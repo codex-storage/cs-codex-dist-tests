@@ -3,7 +3,7 @@ using Core;
 using Discord.WebSocket;
 using GethPlugin;
 
-namespace BiblioTech.TokenCommands
+namespace BiblioTech.Commands
 {
     public class MintCommand : BaseNetCommand
     {

@@ -22,6 +22,7 @@ namespace BiblioTech
         private async Task Client_Ready()
         {
             var guild = client.Guilds.Single(g => g.Name == Program.Config.ServerName);
+            Program.AdminChecker.SetGuild(guild);
 
             var builders = commands.Select(c =>
             {

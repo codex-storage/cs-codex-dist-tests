@@ -1,6 +1,6 @@
 ﻿using Discord.WebSocket;
 using Discord;
-using BiblioTech.TokenCommands;
+using BiblioTech.Commands;
 
 namespace BiblioTech
 {
@@ -37,7 +37,7 @@ namespace BiblioTech
 
         protected bool IsSenderAdmin(SocketSlashCommand command)
         {
-
+            return Program.AdminChecker.IsUserAdmin(command.User.Id);
         }
 
         protected ulong GetUserId(UserOption userOption, SocketSlashCommand command)

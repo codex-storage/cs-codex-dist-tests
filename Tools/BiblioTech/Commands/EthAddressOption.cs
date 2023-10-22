@@ -1,7 +1,7 @@
 ﻿using Discord.WebSocket;
 using GethPlugin;
 
-namespace BiblioTech.TokenCommands
+namespace BiblioTech.Commands
 {
     public class EthAddressOption : CommandOption
     {

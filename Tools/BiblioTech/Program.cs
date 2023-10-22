@@ -1,5 +1,5 @@
 ﻿using ArgsUniform;
-using BiblioTech.TokenCommands;
+using BiblioTech.Commands;
 using Core;
 using Discord;
 using Discord.WebSocket;
@@ -14,6 +14,7 @@ namespace BiblioTech
         public static Configuration Config { get; private set; } = null!;
         public static DeploymentsFilesMonitor DeploymentFilesMonitor { get; } = new DeploymentsFilesMonitor();
         public static UserRepo UserRepo { get; } = new UserRepo();
+        public static AdminChecker AdminChecker { get; } = new AdminChecker();
 
         public static Task Main(string[] args)
         {
@@ -43,9 +44,13 @@ namespace BiblioTech
 
             var ci = entryPoint.CreateInterface();
 
+            var associateCommand = new UserAssociateCommand();
             var handler = new CommandHandler(client,
-                new GetBalanceCommand(monitor, ci), 
+                new ClearUserAssociationCommand(),
+                new GetBalanceCommand(monitor, ci, associateCommand), 
                 new MintCommand(monitor, ci),
+                new ReportHistoryCommand(),
+                associateCommand,
                 new DeploymentsCommand(monitor)
             );
 

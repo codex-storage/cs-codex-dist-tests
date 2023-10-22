@@ -1,16 +1,16 @@
 ﻿using Discord.WebSocket;
 
-namespace BiblioTech.TokenCommands
+namespace BiblioTech.Commands
 {
-    public class ReportHistoryCommand : BaseCommand
+    public class ClearUserAssociationCommand : BaseCommand
     {
         private readonly UserOption user = new UserOption(
-            description: "User to report history for.",
+            description: "User to clear Eth address for.",
             isRequired: true);
 
-        public override string Name => "report";
-        public override string StartingMessage => "Getting that data...";
-        public override string Description => "Admin only. Reports bot-interaction history for a user.";
+        public override string Name => "clear";
+        public override string StartingMessage => "Hold on...";
+        public override string Description => "Admin only. Clears current Eth address for a user, allowing them to set a new one.";
 
         protected override async Task Invoke(SocketSlashCommand command)
         {
@@ -27,8 +27,8 @@ namespace BiblioTech.TokenCommands
                 return;
             }
 
-            var report = Program.UserRepo.GetInteractionReport(userId.Value);
-            await command.FollowupAsync(string.Join(Environment.NewLine, report));
+            Program.UserRepo.ClearUserAssociatedAddress(userId.Value);
+            await command.FollowupAsync("Done."); ;
         }
     }
 }

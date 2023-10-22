@@ -10,10 +10,7 @@ namespace BiblioTech
 
         public CodexDeployment[] GetDeployments()
         {
-            if (ShouldUpdate())
-            {
-                UpdateDeployments();
-            }
+            if (ShouldUpdate()) UpdateDeployments();
 
             return deployments;
         }

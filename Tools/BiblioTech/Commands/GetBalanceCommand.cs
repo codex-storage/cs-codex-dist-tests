@@ -3,13 +3,13 @@ using Core;
 using Discord.WebSocket;
 using GethPlugin;
 
-namespace BiblioTech.TokenCommands
+namespace BiblioTech.Commands
 {
     public class GetBalanceCommand : BaseNetCommand
     {
         private readonly UserAssociateCommand userAssociateCommand;
         private readonly UserOption optionalUser = new UserOption(
-            description: "If set, get balance for another user. (Optional, admin-only)", 
+            description: "If set, get balance for another user. (Optional, admin-only)",
             isRequired: false);
 
         public GetBalanceCommand(DeploymentsFilesMonitor monitor, CoreInterface ci, UserAssociateCommand userAssociateCommand)

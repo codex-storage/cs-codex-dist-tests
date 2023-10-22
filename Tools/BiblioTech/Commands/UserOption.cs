@@ -1,7 +1,7 @@
 ﻿using Discord;
 using Discord.WebSocket;
 
-namespace BiblioTech.TokenCommands
+namespace BiblioTech.Commands
 {
     public class UserOption : CommandOption
     {
