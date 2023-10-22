@@ -44,4 +44,6 @@ do
     --cleanup=1 \
     --full-container-logs=1 \
     --target-duration=172800 # 48 hours
+
+    sleep 30
 done
