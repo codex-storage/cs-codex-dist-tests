@@ -12,5 +12,8 @@ namespace BiblioTech
 
         [Uniform("endpoints", "e", "ENDPOINTS", false, "Path where endpoint JSONs are located. Also accepts codex-deployment JSONs.")]
         public string EndpointsPath { get; set; } = "endpoints";
+
+        [Uniform("userdata", "u", "USERDATA", false, "Path where user data files will be saved.")]
+        public string UserDataPath { get; set; } = "userdata";
     }
 }

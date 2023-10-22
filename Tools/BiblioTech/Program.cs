@@ -13,6 +13,7 @@ namespace BiblioTech
 
         public static Configuration Config { get; private set; } = null!;
         public static DeploymentsFilesMonitor DeploymentFilesMonitor { get; } = new DeploymentsFilesMonitor();
+        public static UserRepo UserRepo { get; } = new UserRepo();
 
         public static Task Main(string[] args)
         {

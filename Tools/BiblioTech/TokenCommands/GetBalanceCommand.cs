@@ -15,6 +15,8 @@ namespace BiblioTech.TokenCommands
         {
         }
 
+        // connect users to eth address!
+
         public override string Name => "balance";
         public override string StartingMessage => "Fetching balance...";
         public override string Description => "Shows Eth and TestToken balance of an eth address.";
