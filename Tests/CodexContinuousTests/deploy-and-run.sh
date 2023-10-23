@@ -24,7 +24,8 @@ do
     --block-ttl=99999999 \
     --block-mi=99999999 \
     --block-mn=100 \
-    --metrics=1 \
+    --metrics-endpoints=1 \
+    --metrics-scraper=1 \
     --check-connect=1 \
     -y
 

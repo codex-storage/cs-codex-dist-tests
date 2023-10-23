@@ -100,7 +100,7 @@ namespace CodexNetDeployer
 
         private RunningContainer? StartMetricsService(CoreInterface ci, List<CodexNodeStartResult> startResults)
         {
-            if (!config.Metrics) return null;
+            if (!config.MetricsScraper) return null;
 
             Log("Starting metrics service...");
 

@@ -39,9 +39,9 @@ namespace CodexNetDeployer
                     s.WithLogLevel(config.CodexLogLevel, new CodexLogCustomTopics(config.Discv5LogLevel, config.Libp2pLogLevel));
                     s.WithStorageQuota(config.StorageQuota!.Value.MB());
                     s.EnableMarketplace(gethNode, contracts, 100.Eth(), config.InitialTestTokens.TestTokens(), validatorsLeft > 0);
-                    s.EnableMetrics();
 
                     if (bootstrapNode != null) s.WithBootstrapNode(bootstrapNode);
+                    if (config.MetricsEndpoints) s.EnableMetrics();
                     if (config.BlockTTL != Configuration.SecondsIn1Day) s.WithBlockTTL(TimeSpan.FromSeconds(config.BlockTTL));
                     if (config.BlockMI != Configuration.TenMinutes) s.WithBlockMaintenanceInterval(TimeSpan.FromSeconds(config.BlockMI));
                     if (config.BlockMN != 1000) s.WithBlockMaintenanceNumber(config.BlockMN);

@@ -67,8 +67,11 @@ namespace CodexNetDeployer
         [Uniform("block-mn", "bmn", "BLOCKMN", false, "Number of blocks maintained per interval. Default is 1000 blocks.")]
         public int BlockMN { get; set; } = 1000;
 
-        [Uniform("metrics", "m", "METRICS", false, "[true, false]. Determines if metrics will be recorded. Default is false.")]
-        public bool Metrics { get; set; } = false;
+        [Uniform("metrics-endpoints", "me", "METRICSENDPOINTS", false, "[true, false]. Determines if metric endpoints will be enabled. Default is false.")]
+        public bool MetricsEndpoints { get; set; } = false;
+
+        [Uniform("metrics-scraper", "ms", "METRICSSCRAPER", false, "[true, false]. Determines if metrics scraper service will be deployed. (Required for certain tests.) Default is false.")]
+        public bool MetricsScraper { get; set; } = false;
 
         [Uniform("teststype-podlabel", "ttpl", "TESTSTYPE-PODLABEL", false, "Each kubernetes pod will be created with a label 'teststype' with value 'continuous'. " +
             "set this option to override the label value.")]
