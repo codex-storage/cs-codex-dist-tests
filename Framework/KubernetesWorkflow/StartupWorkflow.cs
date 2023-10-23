@@ -1,4 +1,5 @@
 ﻿using Logging;
+using Newtonsoft.Json;
 using Utils;
 
 namespace KubernetesWorkflow
@@ -195,17 +196,33 @@ namespace KubernetesWorkflow
 
         private void K8s(Action<K8sController> action)
         {
-            var controller = new K8sController(log, cluster, knownK8SPods, numberSource, k8sNamespace);
-            action(controller);
-            controller.Dispose();
+            try
+            {
+                var controller = new K8sController(log, cluster, knownK8SPods, numberSource, k8sNamespace);
+                action(controller);
+                controller.Dispose();
+            }
+            catch (k8s.Autorest.HttpOperationException ex)
+            {
+                log.Error(JsonConvert.SerializeObject(ex));
+                throw;
+            }
         }
 
         private T K8s<T>(Func<K8sController, T> action)
         {
-            var controller = new K8sController(log, cluster, knownK8SPods, numberSource, k8sNamespace);
-            var result = action(controller);
-            controller.Dispose();
-            return result;
+            try
+            {
+                var controller = new K8sController(log, cluster, knownK8SPods, numberSource, k8sNamespace);
+                var result = action(controller);
+                controller.Dispose();
+                return result;
+            }
+            catch (k8s.Autorest.HttpOperationException ex)
+            {
+                log.Error(JsonConvert.SerializeObject(ex));
+                throw;
+            }
         }
     }
 

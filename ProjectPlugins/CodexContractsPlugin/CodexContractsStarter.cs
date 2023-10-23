@@ -33,9 +33,9 @@ namespace CodexContractsPlugin
             {
                 return DeployContract(container, workflow, gethNode);
             }
-            catch
+            catch (Exception ex)
             {
-                Log("Failed to deploy contract.");
+                Log("Failed to deploy contract: " + ex);
                 Log("Downloading Codex SmartContracts container log...");
                 ci.DownloadLog(container);
                 throw;
