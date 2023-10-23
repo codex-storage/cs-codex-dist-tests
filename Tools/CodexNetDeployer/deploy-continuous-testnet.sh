@@ -1,4 +1,5 @@
 dotnet run \
+    --deploy-name=codex-continuous-test-deployment \
     --kube-config=/opt/kubeconfig.yaml \
     --kube-namespace=codex-continuous-tests \
     --deploy-file=codex-deployment.json \

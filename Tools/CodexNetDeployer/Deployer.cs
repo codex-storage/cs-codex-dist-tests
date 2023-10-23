@@ -79,7 +79,7 @@ namespace CodexNetDeployer
             CheckContainerRestarts(startResults);
 
             var codexContainers = startResults.Select(s => s.CodexNode.Container).ToArray();
-            return new CodexDeployment(codexContainers, gethDeployment, metricsService, CreateMetadata(startUtc));
+            return new CodexDeployment(codexContainers, gethDeployment, contractsDeployment, metricsService, CreateMetadata(startUtc));
         }
 
         private EntryPoint CreateEntryPoint(ILog log)
@@ -151,6 +151,7 @@ namespace CodexNetDeployer
         private DeploymentMetadata CreateMetadata(DateTime startUtc)
         {
             return new DeploymentMetadata(
+                name: config.DeploymentName,
                 startUtc: startUtc,
                 finishedUtc: DateTime.UtcNow,
                 kubeNamespace: config.KubeNamespace,

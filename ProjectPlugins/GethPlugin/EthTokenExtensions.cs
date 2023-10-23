@@ -28,7 +28,7 @@
 
         public override string ToString()
         {
-            return $"{Wei} Wei";
+            return $"{Eth} Eth";
         }
     }
 

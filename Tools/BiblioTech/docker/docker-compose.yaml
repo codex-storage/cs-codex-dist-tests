@@ -1,0 +1,7 @@
+services:
+  bibliotech-discordbot:
+    image: thatbenbierens/codex-discordbot:initial
+    environment:
+      - TOKEN=tokenplz
+      - SERVERNAME=ThatBen's server
+      - ADMINROLE=adminers

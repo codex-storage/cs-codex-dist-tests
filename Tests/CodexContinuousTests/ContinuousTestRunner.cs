@@ -92,6 +92,7 @@ namespace ContinuousTests
         {
             var testDuration = Time.FormatDuration(DateTime.UtcNow - startTime);
             var testData = FormatTestRuns(testLoops);
+            overviewLog.Log("Total duration: " + testDuration);
 
             if (config.TargetDurationSeconds > 0)
             {

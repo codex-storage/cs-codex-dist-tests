@@ -1,28 +1,32 @@
-﻿using GethPlugin;
+﻿using CodexContractsPlugin;
+using GethPlugin;
 using KubernetesWorkflow;
 
 namespace CodexPlugin
 {
     public class CodexDeployment
     {
-        public CodexDeployment(RunningContainer[] codexContainers, GethDeployment gethDeployment, RunningContainer? prometheusContainer, DeploymentMetadata metadata)
+        public CodexDeployment(RunningContainer[] codexContainers, GethDeployment gethDeployment, CodexContractsDeployment codexContractsDeployment, RunningContainer? prometheusContainer, DeploymentMetadata metadata)
         {
             CodexContainers = codexContainers;
             GethDeployment = gethDeployment;
+            CodexContractsDeployment = codexContractsDeployment;
             PrometheusContainer = prometheusContainer;
             Metadata = metadata;
         }
 
         public RunningContainer[] CodexContainers { get; }
         public GethDeployment GethDeployment { get; }
+        public CodexContractsDeployment CodexContractsDeployment { get; }
         public RunningContainer? PrometheusContainer { get; }
         public DeploymentMetadata Metadata { get; }
     }
 
     public class DeploymentMetadata
     {
-        public DeploymentMetadata(DateTime startUtc, DateTime finishedUtc, string kubeNamespace, int numberOfCodexNodes, int numberOfValidators, int storageQuotaMB, CodexLogLevel codexLogLevel, int initialTestTokens, int minPrice, int maxCollateral, int maxDuration, int blockTTL, int blockMI, int blockMN)
+        public DeploymentMetadata(string name, DateTime startUtc, DateTime finishedUtc, string kubeNamespace, int numberOfCodexNodes, int numberOfValidators, int storageQuotaMB, CodexLogLevel codexLogLevel, int initialTestTokens, int minPrice, int maxCollateral, int maxDuration, int blockTTL, int blockMI, int blockMN)
         {
+            Name = name;
             StartUtc = startUtc;
             FinishedUtc = finishedUtc;
             KubeNamespace = kubeNamespace;
@@ -39,6 +43,7 @@ namespace CodexPlugin
             BlockMN = blockMN;
         }
 
+        public string Name { get; }
         public DateTime StartUtc { get; }
         public DateTime FinishedUtc { get; }
         public string KubeNamespace { get; }
