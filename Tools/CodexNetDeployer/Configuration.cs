@@ -80,6 +80,18 @@ namespace CodexNetDeployer
         [Uniform("check-connect", "cc", "CHECKCONNECT", false, "If true, deployer check ensure peer-connectivity between all deployed nodes after deployment. Default is false.")]
         public bool CheckPeerConnection { get; set; } = false;
 
+        [Uniform("public-testnet", "ptn", "PUBLICTESTNET", false, "If true, deployment is created for public exposure. Default is false.")]
+        public bool IsPublicTestNet { get; set; } = false;
+
+        [Uniform("public-ip", "pip", "PUBLICIP", false, "Required if public-testnet is true. Public IP used by nodes for network annoucements.")]
+        public string PublicIP { get; set; } = string.Empty;
+
+        [Uniform("public-discports", "pdps", "PUBLICDISCPORTS", false, "Required if public-testnet is true. Comma-separated port numbers used for discovery. Number must match number of nodes.")]
+        public string PublicDiscPorts { get; set; } = string.Empty;
+
+        [Uniform("public-listenports", "plps", "PUBLICLISTENPORTS", false, "Required if public-testnet is true. Comma-separated port numbers used for listening. Number must match number of nodes.")]
+        public string PublicListenPorts { get; set; } = string.Empty;
+
         public List<string> Validate()
         {
             var errors = new List<string>();
@@ -98,6 +110,13 @@ namespace CodexNetDeployer
             if (StorageSell.HasValue && StorageQuota.HasValue && StorageSell.Value >= StorageQuota.Value)
             {
                 errors.Add("StorageSell cannot be greater than or equal to StorageQuota.");
+            }
+
+            if (IsPublicTestNet)
+            {
+                if (string.IsNullOrEmpty(PublicIP)) errors.Add("Public IP required when deploying public testnet.");
+                if (PublicDiscPorts.Split(",").Length != NumberOfCodexNodes) errors.Add("Number of public discovery-ports provided does not match number of codex nodes.");
+                if (PublicListenPorts.Split(",").Length != NumberOfCodexNodes) errors.Add("Number of public listen-ports provided does not match number of codex nodes.");
             }
 
             return errors;
