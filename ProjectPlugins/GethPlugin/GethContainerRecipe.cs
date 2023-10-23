@@ -31,11 +31,11 @@ namespace GethPlugin
             UnlockAccounts(0, 1);
 
             var httpPort = CreateApiPort(config, tag: HttpPortTag);
-            var discovery = CreateP2pPort(config, tag: DiscoveryPortTag);
+            var discovery = CreateDiscoveryPort(config);
             var authRpc = CreateP2pPort(config, tag: AuthRpcPortTag);
             var wsPort = CreateP2pPort(config, tag: WsPortTag);
 
-            var args = $"--http.addr 0.0.0.0 --http.port {httpPort.Number} --port {discovery.Number} --discovery.port {discovery.Number} {defaultArgs}";
+            var args = $"--http.addr 0.0.0.0 --http.port {httpPort.Number} --port {discovery.Number} --discovery.port {discovery.Number} {GetTestNetArgs(config)} {defaultArgs}";
 
             if (config.BootstrapNode != null)
             {
@@ -59,9 +59,23 @@ namespace GethPlugin
             AddEnvVar("UNLOCK_NUMBER", numberOfAccounts.ToString());
         }
 
+        private string GetTestNetArgs(GethStartupConfig config)
+        {
+            if (config.IsPublicTestNet == null) return string.Empty;
+
+            return $"--nat:extip:{config.IsPublicTestNet.PublicIp}";
+        }
+
+        private Port CreateDiscoveryPort(GethStartupConfig config)
+        {
+            if (config.IsPublicTestNet == null) return AddInternalPort(DiscoveryPortTag);
+
+            return AddExposedPort(config.IsPublicTestNet.DiscoveryPort, DiscoveryPortTag);
+        }
+
         private Port CreateP2pPort(GethStartupConfig config, string tag)
         {
-            if (config.IsPublicTestNet)
+            if (config.IsPublicTestNet != null)
             {
                 return AddExposedPort(tag);
             }
@@ -70,7 +84,7 @@ namespace GethPlugin
 
         private Port CreateApiPort(GethStartupConfig config, string tag)
         {
-            if (config.IsPublicTestNet)
+            if (config.IsPublicTestNet != null)
             {
                 return AddInternalPort(tag);
             }

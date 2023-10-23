@@ -17,4 +17,6 @@ dotnet run \
     --public-testnet=1 \
     --public-ip=1.2.3.4 \
     --public-discports=20010,20020,20030 \
-    --public-listenports=20011,20021,20031
+    --public-listenports=20011,20021,20031 \
+    --public-gethip=1.2.3.5 \
+    --public-gethdiscport=20040

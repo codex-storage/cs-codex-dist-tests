@@ -5,7 +5,7 @@
         IGethSetup IsMiner();
         IGethSetup WithBootstrapNode(GethBootstrapNode node);
         IGethSetup WithName(string name);
-        IGethSetup AsPublicTestNet();
+        IGethSetup AsPublicTestNet(GethTestNetConfig gethTestNetConfig);
     }
 
     public class GethStartupConfig : IGethSetup
@@ -13,7 +13,7 @@
         public bool IsMiner { get; private set; }
         public GethBootstrapNode? BootstrapNode { get; private set; }
         public string? NameOverride { get; private set; }
-        public bool IsPublicTestNet { get; private set; } = false;
+        public GethTestNetConfig? IsPublicTestNet { get; private set; }
 
         public IGethSetup WithBootstrapNode(GethBootstrapNode node)
         {
@@ -33,11 +33,23 @@
             return this;
         }
 
-        public IGethSetup AsPublicTestNet()
+        public IGethSetup AsPublicTestNet(GethTestNetConfig gethTestNetConfig)
         {
-            IsPublicTestNet = true;
+            IsPublicTestNet = gethTestNetConfig;
             return this;
         }
+    }
+
+    public class GethTestNetConfig
+    {
+        public GethTestNetConfig(string publicIp, int discoveryPort)
+        {
+            PublicIp = publicIp;
+            DiscoveryPort = discoveryPort;
+        }
+
+        public string PublicIp { get; }
+        public int DiscoveryPort { get; }
     }
 
     public class GethBootstrapNode

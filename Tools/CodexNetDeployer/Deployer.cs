@@ -104,7 +104,14 @@ namespace CodexNetDeployer
             {
                 s.IsMiner();
                 s.WithName("geth");
-                if (config.IsPublicTestNet) s.AsPublicTestNet();
+
+                if (config.IsPublicTestNet)
+                {
+                    s.AsPublicTestNet(new GethTestNetConfig(
+                        publicIp: config.PublicGethIP,
+                        discoveryPort: config.PublicGethDiscPort
+                    ));
+                }
             });
         }
 
