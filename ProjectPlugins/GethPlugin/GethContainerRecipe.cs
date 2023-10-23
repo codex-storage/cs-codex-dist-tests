@@ -63,7 +63,7 @@ namespace GethPlugin
         {
             if (config.IsPublicTestNet == null) return string.Empty;
 
-            return $"--nat:extip:{config.IsPublicTestNet.PublicIp}";
+            return $"--nat=extip:{config.IsPublicTestNet.PublicIp}";
         }
 
         private Port CreateDiscoveryPort(GethStartupConfig config)
