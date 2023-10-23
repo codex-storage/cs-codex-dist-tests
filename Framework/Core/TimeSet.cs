@@ -3,7 +3,7 @@
     public interface ITimeSet
     {
         TimeSpan HttpCallTimeout();
-        TimeSpan HttpCallRetryTime();
+        int HttpMaxNumberOfRetries();
         TimeSpan HttpCallRetryDelay();
         TimeSpan WaitForK8sServiceDelay();
         TimeSpan K8sOperationTimeout();
@@ -13,12 +13,12 @@
     {
         public TimeSpan HttpCallTimeout()
         {
-            return TimeSpan.FromMinutes(5);
+            return TimeSpan.FromMinutes(3);
         }
 
-        public TimeSpan HttpCallRetryTime()
+        public int HttpMaxNumberOfRetries()
         {
-            return TimeSpan.FromMinutes(1);
+            return 3;
         }
 
         public TimeSpan HttpCallRetryDelay()
@@ -44,9 +44,9 @@
             return TimeSpan.FromHours(2);
         }
 
-        public TimeSpan HttpCallRetryTime()
+        public int HttpMaxNumberOfRetries()
         {
-            return TimeSpan.FromHours(5);
+            return 1;
         }
 
         public TimeSpan HttpCallRetryDelay()

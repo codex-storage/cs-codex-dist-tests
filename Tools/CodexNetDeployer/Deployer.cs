@@ -180,9 +180,9 @@ namespace CodexNetDeployer
             return TimeSpan.FromSeconds(2);
         }
 
-        public TimeSpan HttpCallRetryTime()
+        public int HttpMaxNumberOfRetries()
         {
-            return TimeSpan.FromSeconds(2);
+            return 2;
         }
 
         public TimeSpan HttpCallTimeout()

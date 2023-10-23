@@ -196,7 +196,7 @@ namespace Core
 
         private T Retry<T>(Func<T> operation, string description)
         {
-            return Time.Retry(operation, timeSet.HttpCallRetryTime(), timeSet.HttpCallRetryDelay(), description);
+            return Time.Retry(operation, timeSet.HttpMaxNumberOfRetries(), timeSet.HttpCallRetryDelay(), description);
         }
 
         private HttpClient GetClient()

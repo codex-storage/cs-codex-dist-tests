@@ -46,33 +46,35 @@
 
         public static void Retry(Action action, string description)
         {
-            Retry(action, TimeSpan.FromMinutes(1), description);
+            Retry(action, 1, description);
         }
 
         public static T Retry<T>(Func<T> action, string description)
         {
-            return Retry(action, TimeSpan.FromMinutes(1), description);
+            return Retry(action, 1, description);
         }
 
-        public static void Retry(Action action, TimeSpan timeout, string description)
+        public static void Retry(Action action, int maxRetries, string description)
         {
-            Retry(action, timeout, TimeSpan.FromSeconds(1), description);
+            Retry(action, maxRetries, TimeSpan.FromSeconds(1), description);
         }
 
-        public static T Retry<T>(Func<T> action, TimeSpan timeout, string description)
+        public static T Retry<T>(Func<T> action, int maxRetries, string description)
         {
-            return Retry(action, timeout, TimeSpan.FromSeconds(1), description);
+            return Retry(action, maxRetries, TimeSpan.FromSeconds(1), description);
         }
 
-        public static void Retry(Action action, TimeSpan timeout, TimeSpan retryTime, string description)
+        public static void Retry(Action action, int maxRetries, TimeSpan retryTime, string description)
         {
             var start = DateTime.UtcNow;
+            var retries = 0;
             var exceptions = new List<Exception>();
             while (true)
             {
-                if (DateTime.UtcNow - start > timeout)
+                if (retries > maxRetries)
                 {
-                    throw new TimeoutException($"Retry '{description}' of {timeout.TotalSeconds} seconds timed out.", new AggregateException(exceptions));
+                    var duration = DateTime.UtcNow - start;
+                    throw new TimeoutException($"Retry '{description}' timed out after {maxRetries} tries over {Time.FormatDuration(duration)}.", new AggregateException(exceptions));
                 }
 
                 try
@@ -83,21 +85,24 @@
                 catch (Exception ex)
                 {
                     exceptions.Add(ex);
+                    retries++;
                 }
 
                 Sleep(retryTime);
             }
         }
 
-        public static T Retry<T>(Func<T> action, TimeSpan timeout, TimeSpan retryTime, string description)
+        public static T Retry<T>(Func<T> action, int maxRetries, TimeSpan retryTime, string description)
         {
             var start = DateTime.UtcNow;
+            var retries = 0;
             var exceptions = new List<Exception>();
             while (true)
             {
-                if (DateTime.UtcNow - start > timeout)
+                if (retries > maxRetries)
                 {
-                    throw new TimeoutException($"Retry '{description}' of {timeout.TotalSeconds} seconds timed out.", new AggregateException(exceptions));
+                    var duration = DateTime.UtcNow - start;
+                    throw new TimeoutException($"Retry '{description}' timed out after {maxRetries} tries over {Time.FormatDuration(duration)}.", new AggregateException(exceptions));
                 }
 
                 try
@@ -107,6 +112,7 @@
                 catch (Exception ex)
                 {
                     exceptions.Add(ex);
+                    retries++;
                 }
 
                 Sleep(retryTime);
