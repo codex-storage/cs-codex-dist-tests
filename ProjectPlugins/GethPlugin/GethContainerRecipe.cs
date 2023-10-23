@@ -10,6 +10,7 @@ namespace GethPlugin
         public const string HttpPortTag = "http_port";
         public const string DiscoveryPortTag = "disc_port";
         public const string WsPortTag = "ws_port";
+        public const string AuthRpcPortTag = "auth_rpc_port";
         public const string AccountsFilename = "accounts.csv";
 
         public override string AppName => "geth";
@@ -26,15 +27,15 @@ namespace GethPlugin
 
         private string CreateArgs(GethStartupConfig config)
         {
-            var discovery = AddInternalPort(tag: DiscoveryPortTag);
-
             if (config.IsMiner) AddEnvVar("ENABLE_MINER", "1");
             UnlockAccounts(0, 1);
-            var httpPort = AddExposedPort(tag: HttpPortTag);
-            var args = $"--http.addr 0.0.0.0 --http.port {httpPort.Number} --port {discovery.Number} --discovery.port {discovery.Number} {defaultArgs}";
 
-            var authRpc = AddInternalPort();
-            var wsPort = AddInternalPort(tag: WsPortTag);
+            var httpPort = CreateApiPort(config, tag: HttpPortTag);
+            var discovery = CreateP2pPort(config, tag: DiscoveryPortTag);
+            var authRpc = CreateP2pPort(config, tag: AuthRpcPortTag);
+            var wsPort = CreateP2pPort(config, tag: WsPortTag);
+
+            var args = $"--http.addr 0.0.0.0 --http.port {httpPort.Number} --port {discovery.Number} --discovery.port {discovery.Number} {defaultArgs}";
 
             if (config.BootstrapNode != null)
             {
@@ -56,6 +57,24 @@ namespace GethPlugin
 
             AddEnvVar("UNLOCK_START_INDEX", startIndex.ToString());
             AddEnvVar("UNLOCK_NUMBER", numberOfAccounts.ToString());
+        }
+
+        private Port CreateP2pPort(GethStartupConfig config, string tag)
+        {
+            if (config.IsPublicTestNet)
+            {
+                return AddExposedPort(tag);
+            }
+            return AddInternalPort(tag);
+        }
+
+        private Port CreateApiPort(GethStartupConfig config, string tag)
+        {
+            if (config.IsPublicTestNet)
+            {
+                return AddInternalPort(tag);
+            }
+            return AddExposedPort(tag);
         }
     }
 }
