@@ -18,6 +18,7 @@ namespace CodexPlugin
         public bool? EnableValidator { get; set; }
         public TimeSpan? BlockMaintenanceInterval { get; set; }
         public int? BlockMaintenanceNumber { get; set; }
+        public bool IsPublicTestNet { get; set; } = false;
 
         public string LogLevelWithTopics()
         {

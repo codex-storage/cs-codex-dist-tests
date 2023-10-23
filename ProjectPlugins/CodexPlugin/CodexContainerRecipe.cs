@@ -29,20 +29,30 @@ namespace CodexPlugin
 
             var config = startupConfig.Get<CodexStartupConfig>();
 
-            AddExposedPortAndVar("CODEX_API_PORT", ApiPortTag);
+            var apiPort = CreateApiPort(config, ApiPortTag);
+            AddEnvVar("CODEX_API_PORT", apiPort);
             AddEnvVar("CODEX_API_BINDADDR", "0.0.0.0");
 
             var dataDir = $"datadir{ContainerNumber}";
             AddEnvVar("CODEX_DATA_DIR", dataDir);
             AddVolume($"codex/{dataDir}", GetVolumeCapacity(config));
 
-            AddExposedPortAndVar("CODEX_DISC_PORT", DiscoveryPortTag);
+            var discPort = CreateP2pPort(config, DiscoveryPortTag);
+            AddEnvVar("CODEX_DISC_PORT", discPort);
             AddEnvVar("CODEX_LOG_LEVEL", config.LogLevelWithTopics());
 
-            // This makes the node announce itself to its local (pod) IP address.
-            AddEnvVar("NAT_IP_AUTO", "true");
+            if (config.IsPublicTestNet)
+            {
+                todo
+                AddEnvVar("CODEX_NAT", "required");
+            }
+            else
+            {
+                // This makes the node announce itself to its local (pod) IP address.
+                AddEnvVar("NAT_IP_AUTO", "true");
+            }
 
-            var listenPort = AddExposedPort(ListenPortTag);
+            var listenPort = CreateP2pPort(config, ListenPortTag);
             AddEnvVar("CODEX_LISTEN_ADDRS", $"/ip4/0.0.0.0/tcp/{listenPort.Number}");
 
             if (!string.IsNullOrEmpty(config.BootstrapSpr))
@@ -67,7 +77,7 @@ namespace CodexPlugin
             }
             if (config.MetricsEnabled)
             {
-                var metricsPort = AddInternalPort(MetricsPortTag);
+                var metricsPort = CreateApiPort(config, MetricsPortTag);
                 AddEnvVar("CODEX_METRICS", "true");
                 AddEnvVar("CODEX_METRICS_ADDRESS", "0.0.0.0");
                 AddEnvVar("CODEX_METRICS_PORT", metricsPort);
@@ -123,6 +133,24 @@ namespace CodexPlugin
             if (!string.IsNullOrEmpty(image)) return image;
             if (!string.IsNullOrEmpty(DockerImageOverride)) return DockerImageOverride;
             return DefaultDockerImage;
+        }
+
+        private Port CreateP2pPort(CodexStartupConfig config, string tag)
+        {
+            if (config.IsPublicTestNet)
+            {
+                return AddExposedPort(tag);
+            }
+            return AddInternalPort(tag);
+        }
+
+        private Port CreateApiPort(CodexStartupConfig config, string tag)
+        {
+            if (config.IsPublicTestNet)
+            {
+                return AddInternalPort(tag);
+            }
+            return AddExposedPort(tag);
         }
     }
 }
