@@ -2,6 +2,8 @@
 {
     public class Address
     {
+        public static readonly Address InvalidAddress = new Address(string.Empty, 0);
+
         public Address(string host, int port)
         {
             Host = host;

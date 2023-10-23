@@ -146,6 +146,16 @@ namespace KubernetesWorkflow
                     GetContainerExternalAddress(pod, servicePorts, exposedPort),
                     GetContainerInternalAddress(exposedPort)));
             }
+            foreach (var internalPort in recipe.InternalPorts)
+            {
+                if (!string.IsNullOrEmpty(internalPort.Tag))
+                {
+                    result.Add(new ContainerPort(
+                        internalPort,
+                        Address.InvalidAddress,
+                        GetContainerInternalAddress(internalPort)));
+                }
+            }
 
             return result.ToArray();
         }
@@ -159,14 +169,13 @@ namespace KubernetesWorkflow
                 servicePort.Number);
         }
 
-        private Address GetContainerInternalAddress(Port exposedPort)
+        private Address GetContainerInternalAddress(Port port)
         {
             var serviceName = "service-" + numberSource.WorkflowNumber;
-            var port = exposedPort.Number;
 
             return new Address(
                 $"http://{serviceName}.{k8sNamespace}.svc.cluster.local",
-                port);
+                port.Number);
         }
         
         private ContainerRecipe[] CreateRecipes(int numberOfContainers, ContainerRecipeFactory recipeFactory, StartupConfig startupConfig)

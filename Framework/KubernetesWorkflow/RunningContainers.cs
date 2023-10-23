@@ -46,6 +46,7 @@ namespace KubernetesWorkflow
             {
                 return containerPort.InternalAddress;
             }
+            if (containerPort.ExternalAddress == Address.InvalidAddress) throw new Exception($"Getting address by tag {portTag} resulted in an invalid address.");
             return containerPort.ExternalAddress;
         }
     }
