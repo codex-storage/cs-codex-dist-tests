@@ -20,6 +20,7 @@ namespace NethereumWorkflow
 
         public NethereumInteraction CreateWorkflow()
         {
+            log.Debug("Starting interaction to " + ip + ":" + port);
             return new NethereumInteraction(log, CreateWeb3());
         }
 

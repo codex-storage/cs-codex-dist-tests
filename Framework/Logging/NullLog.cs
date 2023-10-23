@@ -17,10 +17,6 @@
         {
         }
 
-        public override void Debug(string message = "", int skipFrames = 0)
-        {
-        }
-
         public override void Error(string message)
         {
             Console.WriteLine("Error: " + message);

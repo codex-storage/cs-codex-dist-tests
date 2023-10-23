@@ -28,6 +28,7 @@ namespace CodexContractsPlugin
 
         public void MintTestTokens(EthAddress address, decimal amount, string tokenAddress)
         {
+            log.Debug($"{amount} -> {address} (token: {tokenAddress})");
             MintTokens(address.Address, amount, tokenAddress);
         }
 
@@ -44,6 +45,7 @@ namespace CodexContractsPlugin
 
         public bool IsSynced(string marketplaceAddress, string marketplaceAbi)
         {
+            log.Debug();
             try
             {
                 return IsBlockNumberOK() && IsContractAvailable(marketplaceAddress, marketplaceAbi);

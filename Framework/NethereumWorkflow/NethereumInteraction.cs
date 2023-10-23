@@ -19,29 +19,34 @@ namespace NethereumWorkflow
 
         public void SendEth(string toAddress, decimal ethAmount)
         {
+            log.Debug();
             var receipt = Time.Wait(web3.Eth.GetEtherTransferService().TransferEtherAndWaitForReceiptAsync(toAddress, ethAmount));
             if (!receipt.Succeeded()) throw new Exception("Unable to send Eth");
         }
 
         public decimal GetEthBalance()
         {
+            log.Debug();
             return GetEthBalance(web3.TransactionManager.Account.Address);
         }
 
         public decimal GetEthBalance(string address)
         {
+            log.Debug();
             var balance = Time.Wait(web3.Eth.GetBalance.SendRequestAsync(address));
             return Web3.Convert.FromWei(balance.Value);
         }
 
         public TResult Call<TFunction, TResult>(string contractAddress, TFunction function) where TFunction : FunctionMessage, new()
         {
+            log.Debug(typeof(TFunction).ToString());
             var handler = web3.Eth.GetContractQueryHandler<TFunction>();
             return Time.Wait(handler.QueryAsync<TResult>(contractAddress, function));
         }
 
         public void SendTransaction<TFunction>(string contractAddress, TFunction function) where TFunction : FunctionMessage, new()
         {
+            log.Debug();
             var handler = web3.Eth.GetContractTransactionHandler<TFunction>();
             var receipt = Time.Wait(handler.SendRequestAndWaitForReceiptAsync(contractAddress, function));
             if (!receipt.Succeeded()) throw new Exception("Unable to perform contract transaction.");

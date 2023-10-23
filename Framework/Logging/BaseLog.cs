@@ -39,13 +39,12 @@ namespace Logging
             LogFile.Write(ApplyReplacements(message));
         }
 
-        public virtual void Debug(string message = "", int skipFrames = 0)
+        public void Debug(string message = "", int skipFrames = 0)
         {
             if (debug)
             {
                 var callerName = DebugStack.GetCallerName(skipFrames);
-                // We don't use Log because in the debug output we should not have any replacements.
-                LogFile.Write($"(debug)({callerName}) {message}");
+                Log($"(debug)({callerName}) {message}");
             }
         }
 
@@ -73,6 +72,7 @@ namespace Logging
 
         private string ApplyReplacements(string str)
         {
+            if (debug) return str;
             foreach (var replacement in replacements)
             {
                 str = replacement.Apply(str);
