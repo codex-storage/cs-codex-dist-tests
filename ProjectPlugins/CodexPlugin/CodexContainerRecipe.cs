@@ -37,14 +37,13 @@ namespace CodexPlugin
             AddEnvVar("CODEX_DATA_DIR", dataDir);
             AddVolume($"codex/{dataDir}", GetVolumeCapacity(config));
 
-            var discPort = CreateP2pPort(config, DiscoveryPortTag);
+            var discPort = CreateDiscoveryPort(config);
             AddEnvVar("CODEX_DISC_PORT", discPort);
             AddEnvVar("CODEX_LOG_LEVEL", config.LogLevelWithTopics());
 
-            if (config.IsPublicTestNet)
+            if (config.PublicTestNet != null)
             {
-                todo
-                AddEnvVar("CODEX_NAT", "required");
+                AddEnvVar("CODEX_NAT", config.PublicTestNet.PublicNatIP);
             }
             else
             {
@@ -52,7 +51,7 @@ namespace CodexPlugin
                 AddEnvVar("NAT_IP_AUTO", "true");
             }
 
-            var listenPort = CreateP2pPort(config, ListenPortTag);
+            var listenPort = CreateListenPort(config);
             AddEnvVar("CODEX_LISTEN_ADDRS", $"/ip4/0.0.0.0/tcp/{listenPort.Number}");
 
             if (!string.IsNullOrEmpty(config.BootstrapSpr))
@@ -120,6 +119,20 @@ namespace CodexPlugin
             }
         }
 
+        private Port CreateListenPort(CodexStartupConfig config)
+        {
+            if (config.PublicTestNet == null) return AddInternalPort(ListenPortTag);
+
+            return AddExposedPort(config.PublicTestNet.PublicListenPort, ListenPortTag);
+        }
+
+        private Port CreateDiscoveryPort(CodexStartupConfig config)
+        {
+            if (config.PublicTestNet == null) return AddInternalPort(DiscoveryPortTag);
+
+            return AddExposedPort(config.PublicTestNet.PublicDiscoveryPort, DiscoveryPortTag);
+        }
+
         private ByteSize GetVolumeCapacity(CodexStartupConfig config)
         {
             if (config.StorageQuota != null) return config.StorageQuota;
@@ -135,22 +148,13 @@ namespace CodexPlugin
             return DefaultDockerImage;
         }
 
-        private Port CreateP2pPort(CodexStartupConfig config, string tag)
+        private Port CreateApiPort(CodexStartupConfig config, string tag)
         {
-            if (config.IsPublicTestNet)
+            if (config.PublicTestNet == null)
             {
                 return AddExposedPort(tag);
             }
             return AddInternalPort(tag);
-        }
-
-        private Port CreateApiPort(CodexStartupConfig config, string tag)
-        {
-            if (config.IsPublicTestNet)
-            {
-                return AddInternalPort(tag);
-            }
-            return AddExposedPort(tag);
         }
     }
 }

@@ -18,7 +18,7 @@ namespace CodexPlugin
         public bool? EnableValidator { get; set; }
         public TimeSpan? BlockMaintenanceInterval { get; set; }
         public int? BlockMaintenanceNumber { get; set; }
-        public bool IsPublicTestNet { get; set; } = false;
+        public CodexTestNetConfig? PublicTestNet { get; set; }
 
         public string LogLevelWithTopics()
         {
@@ -61,5 +61,12 @@ namespace CodexPlugin
             }
             return level;
         }
+    }
+
+    public class CodexTestNetConfig
+    {
+        public string PublicNatIP { get; set; } = string.Empty;
+        public int PublicDiscoveryPort { get; set; }
+        public int PublicListenPort { get; set; }
     }
 }

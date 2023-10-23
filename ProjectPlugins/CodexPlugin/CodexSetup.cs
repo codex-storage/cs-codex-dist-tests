@@ -22,7 +22,7 @@ namespace CodexPlugin
         /// Provides an invalid proof every N proofs
         /// </summary>
         ICodexSetup WithSimulateProofFailures(uint failEveryNProofs);
-        ICodexSetup AsPublicTestNet();
+        ICodexSetup AsPublicTestNet(CodexTestNetConfig testNetConfig);
     }
 
     public class CodexLogCustomTopics
@@ -119,9 +119,9 @@ namespace CodexPlugin
             return this;
         }
 
-        public ICodexSetup AsPublicTestNet()
+        public ICodexSetup AsPublicTestNet(CodexTestNetConfig testNetConfig)
         {
-            IsPublicTestNet = true;
+            PublicTestNet = testNetConfig;
             return this;
         }
 
@@ -133,7 +133,7 @@ namespace CodexPlugin
 
         private IEnumerable<string> DescribeArgs()
         {
-            if (IsPublicTestNet) yield return "<!>Public TestNet<!>";
+            if (PublicTestNet != null) yield return $"<!>Public TestNet at {PublicTestNet.PublicNatIP}:{PublicTestNet.PublicListenPort}<!>";
             yield return $"LogLevel={LogLevelWithTopics()}";
             if (BootstrapSpr != null) yield return $"BootstrapNode={BootstrapSpr}";
             if (StorageQuota != null) yield return $"StorageQuota={StorageQuota}";
