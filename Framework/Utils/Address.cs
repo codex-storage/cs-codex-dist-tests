@@ -2,8 +2,6 @@
 {
     public class Address
     {
-        public static readonly Address InvalidAddress = new Address(string.Empty, 0);
-
         public Address(string host, int port)
         {
             Host = host;
@@ -16,6 +14,11 @@
         public override string ToString()
         {
             return $"{Host}:{Port}";
+        }
+
+        public bool IsValid()
+        {
+            return !string.IsNullOrEmpty(Host) && Port > 0;
         }
     }
 }

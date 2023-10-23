@@ -152,7 +152,7 @@ namespace KubernetesWorkflow
                 {
                     result.Add(new ContainerPort(
                         internalPort,
-                        Address.InvalidAddress,
+                        new Address(string.Empty, 0),
                         GetContainerInternalAddress(internalPort)));
                 }
             }

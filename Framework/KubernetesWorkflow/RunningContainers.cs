@@ -1,5 +1,4 @@
-﻿using Newtonsoft.Json;
-using Utils;
+﻿using Utils;
 
 namespace KubernetesWorkflow
 {
@@ -39,14 +38,19 @@ namespace KubernetesWorkflow
         public Port[] ServicePorts { get; }
         public ContainerPort[] ContainerPorts { get; }
 
+        public ContainerPort GetContainerPort(string portTag)
+        {
+            return ContainerPorts.Single(c => c.Port.Tag == portTag);
+        }
+
         public Address GetAddress(string portTag)
         {
-            var containerPort = ContainerPorts.Single(c => c.Port.Tag == portTag);
+            var containerPort = GetContainerPort(portTag);
             if (RunnerLocationUtils.DetermineRunnerLocation(this) == RunnerLocation.InternalToCluster)
             {
                 return containerPort.InternalAddress;
             }
-            if (containerPort.ExternalAddress == Address.InvalidAddress) throw new Exception($"Getting address by tag {portTag} resulted in an invalid address.");
+            if (!containerPort.ExternalAddress.IsValid()) throw new Exception($"Getting address by tag {portTag} resulted in an invalid address.");
             return containerPort.ExternalAddress;
         }
     }

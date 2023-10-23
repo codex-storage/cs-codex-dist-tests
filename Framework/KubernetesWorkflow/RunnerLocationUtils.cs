@@ -29,7 +29,7 @@ namespace KubernetesWorkflow
 
             foreach (var port in container.ContainerPorts)
             {
-                if (PingHost(Format(port.ExternalAddress)))
+                if (port.ExternalAddress.IsValid() && PingHost(Format(port.ExternalAddress)))
                 {
                     return RunnerLocation.ExternalToCluster;
                 }

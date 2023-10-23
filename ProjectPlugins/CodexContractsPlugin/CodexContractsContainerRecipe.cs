@@ -1,4 +1,5 @@
-﻿using KubernetesWorkflow;
+﻿using GethPlugin;
+using KubernetesWorkflow;
 
 namespace CodexContractsPlugin
 {
@@ -16,8 +17,10 @@ namespace CodexContractsPlugin
         {
             var config = startupConfig.Get<CodexContractsContainerConfig>();
 
+            var containerPort = config.GethNode.StartResult.Container.GetContainerPort(GethContainerRecipe.HttpPortTag);
+
             var ip = config.GethNode.StartResult.Container.Pod.PodInfo.Ip;
-            var port = config.GethNode.StartResult.HttpPort.Number;
+            var port = containerPort.InternalAddress.Port;
 
             AddEnvVar("DISTTEST_NETWORK_URL", $"http://{ip}:{port}");
             AddEnvVar("HARDHAT_NETWORK", "codexdisttestnetwork");
