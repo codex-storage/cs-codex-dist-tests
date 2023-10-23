@@ -118,8 +118,7 @@ namespace KubernetesWorkflow
                 var name = GetContainerName(r, startupConfig);
 
                 return new RunningContainer(runningPod, r, servicePorts, name,
-                    GetContainerExternalAddress(runningPod, servicePorts),
-                    GetContainerInternalAddress(r));
+                    CreateContainerPorts(runningPod, r, servicePorts));
 
             }).ToArray();
         }
@@ -137,35 +136,39 @@ namespace KubernetesWorkflow
             }
         }
 
-        private Address GetContainerExternalAddress(RunningPod pod, Port[] servicePorts)
+        private ContainerPort[] CreateContainerPorts(RunningPod pod, ContainerRecipe recipe, Port[] servicePorts)
         {
-            return new Address(
-                pod.Cluster.HostAddress,
-                GetServicePort(servicePorts));
+            var result = new List<ContainerPort>();
+            foreach (var exposedPort in recipe.ExposedPorts)
+            {
+                result.Add(new ContainerPort(
+                    exposedPort,
+                    GetContainerExternalAddress(pod, servicePorts, exposedPort),
+                    GetContainerInternalAddress(exposedPort)));
+            }
+
+            return result.ToArray();
         }
 
-        private Address GetContainerInternalAddress(ContainerRecipe recipe)
+        private static Address GetContainerExternalAddress(RunningPod pod, Port[] servicePorts, Port exposedPort)
+        {
+            var servicePort = servicePorts.Single(p => p.Tag == exposedPort.Tag);
+
+            return new Address(
+                pod.Cluster.HostAddress,
+                servicePort.Number);
+        }
+
+        private Address GetContainerInternalAddress(Port exposedPort)
         {
             var serviceName = "service-" + numberSource.WorkflowNumber;
-            var port = GetInternalPort(recipe);
+            var port = exposedPort.Number;
 
             return new Address(
                 $"http://{serviceName}.{k8sNamespace}.svc.cluster.local",
                 port);
         }
-
-        private static int GetServicePort(Port[] servicePorts)
-        {
-            if (servicePorts.Any()) return servicePorts.First().Number;
-            return 0;
-        }
-
-        private static int GetInternalPort(ContainerRecipe recipe)
-        {
-            if (recipe.ExposedPorts.Any()) return recipe.ExposedPorts.First().Number;
-            return 0;
-        }
-
+        
         private ContainerRecipe[] CreateRecipes(int numberOfContainers, ContainerRecipeFactory recipeFactory, StartupConfig startupConfig)
         {
             log.Debug();

@@ -42,21 +42,22 @@ namespace CodexTests.BasicTests
         {
             foreach (var node in nodes)
             {
-                Time.Retry(() => AssertBlockExchangeIsEmpty(node), nameof(AssertExchangeIsEmpty));
+                // API Call not available in master-line Codex image.
+                //Time.Retry(() => AssertBlockExchangeIsEmpty(node), nameof(AssertExchangeIsEmpty));
             }
         }
 
-        private void AssertBlockExchangeIsEmpty(ICodexNode node)
-        {
-            var msg = $"BlockExchange for {node.GetName()}: ";
-            var response = node.GetDebugBlockExchange();
-            foreach (var peer in response.peers)
-            {
-                var activeWants = peer.wants.Where(w => !w.cancel).ToArray();
-                Assert.That(activeWants.Length, Is.EqualTo(0), msg + "thinks a peer has active wants.");
-            }
-            Assert.That(response.taskQueue, Is.EqualTo(0), msg + "has tasks in queue.");
-            Assert.That(response.pendingBlocks, Is.EqualTo(0), msg + "has pending blocks.");
-        }
+        //private void AssertBlockExchangeIsEmpty(ICodexNode node)
+        //{
+        //    var msg = $"BlockExchange for {node.GetName()}: ";
+        //    var response = node.GetDebugBlockExchange();
+        //    foreach (var peer in response.peers)
+        //    {
+        //        var activeWants = peer.wants.Where(w => !w.cancel).ToArray();
+        //        Assert.That(activeWants.Length, Is.EqualTo(0), msg + "thinks a peer has active wants.");
+        //    }
+        //    Assert.That(response.taskQueue, Is.EqualTo(0), msg + "has tasks in queue.");
+        //    Assert.That(response.pendingBlocks, Is.EqualTo(0), msg + "has pending blocks.");
+        //}
     }
 }

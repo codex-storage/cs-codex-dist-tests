@@ -73,7 +73,7 @@ namespace GethPlugin
 
         private NethereumInteraction StartInteraction()
         {
-            var address = StartResult.Container.Address;
+            var address = StartResult.Container.GetAddress(GethContainerRecipe.HttpPortTag);
             var account = Account;
 
             var creator = new NethereumInteractionCreator(log, address.Host, address.Port, account.PrivateKey);

@@ -57,8 +57,8 @@ namespace ContinuousTests.Tests
 
         private void LogRepoStore(ICodexNode codexNode)
         {
-            var response = codexNode.GetDebugRepoStore();
-            Log.Log($"{codexNode.GetName()} has {string.Join(",", response.Select(r => r.cid))}");
+            //var response = codexNode.GetDebugRepoStore();
+            //Log.Log($"{codexNode.GetName()} has {string.Join(",", response.Select(r => r.cid))}");
         }
 
         private void LogStoredBytes(ICodexNode node)
@@ -90,8 +90,8 @@ namespace ContinuousTests.Tests
 
         private void LogBlockExchangeStatus(ICodexNode codexNode, string msg)
         {
-            var response = codexNode.GetDebugBlockExchange();
-            Log.Log($"{codexNode.GetName()} {msg}: {JsonConvert.SerializeObject(response)}");
+            //var response = codexNode.GetDebugBlockExchange();
+            //Log.Log($"{codexNode.GetName()} {msg}: {JsonConvert.SerializeObject(response)}");
         }
     }
 }

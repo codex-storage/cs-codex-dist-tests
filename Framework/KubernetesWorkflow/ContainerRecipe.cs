@@ -24,6 +24,8 @@
             {
                 Name = $"ctnr{Number}";
             }
+
+            if (exposedPorts.Any(p => string.IsNullOrEmpty(p.Tag))) throw new Exception("Port tags are required for all exposed ports.");
         }
 
         public string Name { get; }
@@ -65,6 +67,12 @@
 
         public int Number { get; }
         public string Tag { get; }
+
+        public override string ToString()
+        {
+            if (string.IsNullOrEmpty(Tag)) return $"untagged-port={Number}";
+            return $"{Tag}={Number}";
+        }
     }
 
     public class EnvVar

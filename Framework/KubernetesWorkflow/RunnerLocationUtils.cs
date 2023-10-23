@@ -16,18 +16,26 @@ namespace KubernetesWorkflow
         internal static RunnerLocation DetermineRunnerLocation(RunningContainer container)
         {
             if (knownLocation != null) return knownLocation.Value;
+            knownLocation = PingForLocation(container);
+            return knownLocation.Value;
+        }
 
+        private static RunnerLocation PingForLocation(RunningContainer container)
+        {
             if (PingHost(container.Pod.PodInfo.Ip))
             {
-                knownLocation = RunnerLocation.InternalToCluster;
-            }
-            else if (PingHost(Format(container.ClusterExternalAddress)))
-            {
-                knownLocation = RunnerLocation.ExternalToCluster;
+                return RunnerLocation.InternalToCluster;
             }
 
-            if (knownLocation == null) throw new Exception("Unable to determine location relative to kubernetes cluster.");
-            return knownLocation.Value;
+            foreach (var port in container.ContainerPorts)
+            {
+                if (PingHost(Format(port.ExternalAddress)))
+                {
+                    return RunnerLocation.ExternalToCluster;
+                }
+            }
+
+            throw new Exception("Unable to determine location relative to kubernetes cluster.");
         }
 
         private static string Format(Address host)

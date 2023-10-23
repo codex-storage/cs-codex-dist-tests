@@ -19,12 +19,10 @@
 
         public Port[] GetServicePortsForContainerRecipe(ContainerRecipe containerRecipe)
         {
-            if (PortMapEntries.Any(p => p.ContainerNumber == containerRecipe.Number))
-            {
-                return PortMapEntries.Single(p => p.ContainerNumber == containerRecipe.Number).Ports;
-            }
-
-            return Array.Empty<Port>();
+            return PortMapEntries
+                .Where(p => p.ContainerNumber == containerRecipe.Number)
+                .SelectMany(p => p.Ports)
+                .ToArray();
         }
     }
 
