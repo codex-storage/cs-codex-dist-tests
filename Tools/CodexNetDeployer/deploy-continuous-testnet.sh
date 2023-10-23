@@ -7,6 +7,7 @@ dotnet run \
     --validators=3 \
     --log-level=Trace \
     --storage-quota=2048 \
+    --make-storage-available=1 \
     --storage-sell=1024 \
     --min-price=1024 \
     --max-collateral=1024 \

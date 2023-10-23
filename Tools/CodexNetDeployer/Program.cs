@@ -26,8 +26,9 @@ public class Program
         var deployer = new Deployer(config);
         deployer.AnnouncePlugins();
 
-        if (!args.Any(a => a == "-y"))
+        if (config.IsPublicTestNet || !args.Any(a => a == "-y"))
         {
+            if (config.IsPublicTestNet) Console.WriteLine("Deployment is configured as public testnet.");
             Console.WriteLine("Does the above config look good? [y/n]");
             if (Console.ReadLine()!.ToLowerInvariant() != "y") return;
             Console.WriteLine("I think so too.");

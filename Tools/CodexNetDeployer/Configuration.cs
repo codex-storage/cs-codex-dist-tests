@@ -34,9 +34,6 @@ namespace CodexNetDeployer
         [Uniform("storage-quota", "sq", "STORAGEQUOTA", true, "Storage quota in megabytes used by each Codex node.")]
         public int? StorageQuota { get; set; }
 
-        [Uniform("storage-sell", "ss", "STORAGESELL", true, "Number of megabytes of storage quota to make available for selling.")]
-        public int? StorageSell { get; set; }
-
         [Uniform("log-level", "l", "LOGLEVEL", true, "Log level used by each Codex node. [Trace, Debug*, Info, Warn, Error]")]
         public CodexLogLevel CodexLogLevel { get; set; } = CodexLogLevel.Debug;
         
@@ -46,16 +43,22 @@ namespace CodexNetDeployer
         [Uniform("log-level-discv5", "ldv5", "LOGLEVELDISCV5", true, "Log level for all discv5 topics. [Trace, Debug, Info, Warn*, Error]")]
         public CodexLogLevel Discv5LogLevel { get; set; } = CodexLogLevel.Warn;
 
-        [Uniform("test-tokens", "tt", "TESTTOKENS", true, "Initial amount of test-tokens minted for each Codex node.")]
-        public int InitialTestTokens { get; set; } = int.MaxValue;
+        [Uniform("make-storage-available", "msa", "MAKESTORAGEAVAILABLE", true, "Is true, storage will be made available using the next configuration parameters.")]
+        public bool ShouldMakeStorageAvailable { get; set; } = false;
 
-        [Uniform("min-price", "mp", "MINPRICE", true, "Minimum price for the storage space for which contracts will be accepted.")]
+        [Uniform("storage-sell", "ss", "STORAGESELL", false, "Number of megabytes of storage quota to make available for selling.")]
+        public int? StorageSell { get; set; }
+
+        [Uniform("test-tokens", "tt", "TESTTOKENS", false, "Initial amount of test-tokens minted for each Codex node.")]
+        public int InitialTestTokens { get; set; }
+
+        [Uniform("min-price", "mp", "MINPRICE", false, "Minimum price for the storage space for which contracts will be accepted.")]
         public int MinPrice { get; set; }
 
-        [Uniform("max-collateral", "mc", "MAXCOLLATERAL", true, "Maximum collateral that will be placed for the total storage space.")]
+        [Uniform("max-collateral", "mc", "MAXCOLLATERAL", false, "Maximum collateral that will be placed for the total storage space.")]
         public int MaxCollateral { get; set; }
 
-        [Uniform("max-duration", "md", "MAXDURATION", true, "Maximum duration in seconds for contracts which will be accepted.")]
+        [Uniform("max-duration", "md", "MAXDURATION", false, "Maximum duration in seconds for contracts which will be accepted.")]
         public int MaxDuration { get; set; }
 
         [Uniform("block-ttl", "bt", "BLOCKTTL", false, "Block timeout in seconds. Default is 24 hours.")]

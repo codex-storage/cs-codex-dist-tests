@@ -6,11 +6,7 @@ dotnet run \
     --nodes=3 \
     --validators=1 \
     --log-level=Trace \
-    --storage-quota=2048 \
-    --storage-sell=1024 \
-    --min-price=1024 \
-    --max-collateral=1024 \
-    --max-duration=3600000 \
+    --make-storage-available=0 \
     --block-ttl=180 \
     --block-mi=120 \
     --block-mn=10000 \

@@ -38,7 +38,11 @@ namespace CodexNetDeployer
                     s.WithName(name);
                     s.WithLogLevel(config.CodexLogLevel, new CodexLogCustomTopics(config.Discv5LogLevel, config.Libp2pLogLevel));
                     s.WithStorageQuota(config.StorageQuota!.Value.MB());
-                    s.EnableMarketplace(gethNode, contracts, 100.Eth(), config.InitialTestTokens.TestTokens(), validatorsLeft > 0);
+
+                    if (config.ShouldMakeStorageAvailable)
+                    {
+                        s.EnableMarketplace(gethNode, contracts, 100.Eth(), config.InitialTestTokens.TestTokens(), validatorsLeft > 0);
+                    }
 
                     if (bootstrapNode != null) s.WithBootstrapNode(bootstrapNode);
                     if (config.MetricsEndpoints) s.EnableMetrics();
@@ -52,20 +56,26 @@ namespace CodexNetDeployer
                 {
                     Console.Write("Online\t");
 
-                    var response = codexNode.Marketplace.MakeStorageAvailable(
-                        size: config.StorageSell!.Value.MB(),
-                        minPriceForTotalSpace: config.MinPrice.TestTokens(),
-                        maxCollateral: config.MaxCollateral.TestTokens(),
-                        maxDuration: TimeSpan.FromSeconds(config.MaxDuration));
-
-                    if (!string.IsNullOrEmpty(response))
+                    if (config.ShouldMakeStorageAvailable)
                     {
-                        Console.Write("Storage available\tOK" + Environment.NewLine);
+                        var response = codexNode.Marketplace.MakeStorageAvailable(
+                            size: config.StorageSell!.Value.MB(),
+                            minPriceForTotalSpace: config.MinPrice.TestTokens(),
+                            maxCollateral: config.MaxCollateral.TestTokens(),
+                            maxDuration: TimeSpan.FromSeconds(config.MaxDuration));
 
-                        validatorsLeft--;
-                        if (bootstrapNode == null) bootstrapNode = codexNode;
-                        return new CodexNodeStartResult(codexNode);
+                        if (!string.IsNullOrEmpty(response))
+                        {
+                            Console.Write("Storage available\t");
+                        }
+                        else throw new Exception("Failed to make storage available.");
                     }
+                    
+                    Console.Write("OK" + Environment.NewLine);
+
+                    validatorsLeft--;
+                    if (bootstrapNode == null) bootstrapNode = codexNode;
+                    return new CodexNodeStartResult(codexNode);
                 }
             }
             catch (Exception ex)
