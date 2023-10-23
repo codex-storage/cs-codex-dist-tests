@@ -17,12 +17,9 @@ namespace CodexContractsPlugin
         {
             var config = startupConfig.Get<CodexContractsContainerConfig>();
 
-            var containerPort = config.GethNode.StartResult.Container.GetContainerPort(GethContainerRecipe.HttpPortTag);
+            var address = config.GethNode.StartResult.Container.GetAddress(GethContainerRecipe.HttpPortTag);
 
-            var ip = config.GethNode.StartResult.Container.Pod.PodInfo.Ip;
-            var port = containerPort.InternalAddress.Port;
-
-            AddEnvVar("DISTTEST_NETWORK_URL", $"http://{ip}:{port}");
+            AddEnvVar("DISTTEST_NETWORK_URL", address.ToString());
             AddEnvVar("HARDHAT_NETWORK", "codexdisttestnetwork");
             AddEnvVar("KEEP_ALIVE", "1");
         }
