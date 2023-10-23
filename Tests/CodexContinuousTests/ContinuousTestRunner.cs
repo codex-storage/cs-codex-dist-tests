@@ -1,5 +1,6 @@
 ﻿using DistTestCore.Logs;
 using Logging;
+using Newtonsoft.Json;
 using Utils;
 
 namespace ContinuousTests
@@ -40,7 +41,9 @@ namespace ContinuousTests
             startupChecker.Check();
 
             var taskFactory = new TaskFactory();
-            overviewLog.Log("Startup checks passed. Continuous tests starting...");
+            overviewLog.Log("Startup checks passed. Configuration:");
+            overviewLog.Log(JsonConvert.SerializeObject(config, Formatting.Indented));
+            overviewLog.Log("Continuous tests starting...");
             overviewLog.Log("");
             var allTests = testFactory.CreateTests();
 
