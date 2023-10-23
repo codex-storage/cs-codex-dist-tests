@@ -49,6 +49,11 @@ namespace CodexNetDeployer
                     if (config.BlockTTL != Configuration.SecondsIn1Day) s.WithBlockTTL(TimeSpan.FromSeconds(config.BlockTTL));
                     if (config.BlockMI != Configuration.TenMinutes) s.WithBlockMaintenanceInterval(TimeSpan.FromSeconds(config.BlockMI));
                     if (config.BlockMN != 1000) s.WithBlockMaintenanceNumber(config.BlockMN);
+
+                    if (config.IsPublicTestNet)
+                    {
+                        s.AsPublicTestNet(CreatePublicTestNetConfig(i));
+                    }
                 });
             
                 var debugInfo = codexNode.GetDebugInfo();
@@ -91,6 +96,19 @@ namespace CodexNetDeployer
             }
 
             return null;
+        }
+
+        private CodexTestNetConfig CreatePublicTestNetConfig(int i)
+        {
+            var discPort = config.PublicDiscPorts.Split(",")[i];
+            var listenPort = config.PublicListenPorts.Split(",")[i];
+
+            return new CodexTestNetConfig
+            {
+                PublicNatIP = config.PublicIP,
+                PublicDiscoveryPort = Convert.ToInt32(discPort),
+                PublicListenPort = Convert.ToInt32(listenPort)
+            };
         }
 
         private string GetCodexContainerName(int i)

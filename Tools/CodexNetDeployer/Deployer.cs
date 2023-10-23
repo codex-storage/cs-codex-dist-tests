@@ -55,7 +55,7 @@ namespace CodexNetDeployer
             var ci = entryPoint.CreateInterface();
 
             Log("Deploying Geth instance...");
-            var gethDeployment = ci.DeployGeth(s => s.IsMiner().WithName("geth"));
+            var gethDeployment = DeployGeth(ci);
             var gethNode = ci.WrapGethDeployment(gethDeployment);
 
             Log("Geth started. Deploying Codex contracts...");
@@ -96,6 +96,16 @@ namespace CodexNetDeployer
             configuration.Hooks = new K8sHook(config.TestsTypePodLabel, result.GetPluginMetadata());
 
             return result;
+        }
+
+        private GethDeployment DeployGeth(CoreInterface ci)
+        {
+            return ci.DeployGeth(s =>
+            {
+                s.IsMiner();
+                s.WithName("geth");
+                if (config.IsPublicTestNet) s.AsPublicTestNet();
+            });
         }
 
         private RunningContainer? StartMetricsService(CoreInterface ci, List<CodexNodeStartResult> startResults)
