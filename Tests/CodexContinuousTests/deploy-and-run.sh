@@ -9,6 +9,7 @@ cd ../../Tools/CodexNetDeployer
 for i in $( seq 0 $replication)
 do
     dotnet run \
+    --deploy-name=codex-continuous-$name-$i \
     --kube-config=/opt/kubeconfig.yaml \
     --kube-namespace=codex-continuous-$name-tests-$i \
     --deploy-file=codex-deployment-$name-$i.json \

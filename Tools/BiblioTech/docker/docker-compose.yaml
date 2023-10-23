@@ -4,3 +4,4 @@ services:
     environment:
       - TOKEN=tokenplz
       - SERVERNAME=ThatBen's server
+      - ADMINROLE=adminers

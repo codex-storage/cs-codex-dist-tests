@@ -151,6 +151,7 @@ namespace CodexNetDeployer
         private DeploymentMetadata CreateMetadata(DateTime startUtc)
         {
             return new DeploymentMetadata(
+                name: config.DeploymentName,
                 startUtc: startUtc,
                 finishedUtc: DateTime.UtcNow,
                 kubeNamespace: config.KubeNamespace,

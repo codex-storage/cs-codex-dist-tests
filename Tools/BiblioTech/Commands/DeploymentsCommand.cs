@@ -1,4 +1,5 @@
-﻿using Discord.WebSocket;
+﻿using CodexPlugin;
+using Discord.WebSocket;
 
 namespace BiblioTech.Commands
 {
@@ -25,7 +26,13 @@ namespace BiblioTech.Commands
                 return;
             }
 
-            await command.FollowupAsync($"Deployments: {string.Join(", ", deployments.Select(d => d.Metadata.StartUtc.ToString("o")))}");
+            await command.FollowupAsync($"Deployments: {string.Join(", ", deployments.Select(FormatDeployment))}");
+        }
+
+        private string FormatDeployment(CodexDeployment deployment)
+        {
+            var m = deployment.Metadata;
+            return $"{m.Name} ({m.StartUtc.ToString("o")})";
         }
     }
 }

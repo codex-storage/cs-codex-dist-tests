@@ -8,6 +8,9 @@ namespace CodexNetDeployer
         public const int SecondsIn1Day = 24 * 60 * 60;
         public const int TenMinutes = 10 * 60;
 
+        [Uniform("deploy-name", "nm", "DEPLOYNAME", false, "Name of the deployment. (optional)")]
+        public string DeploymentName { get; set; } = "unnamed";
+
         [Uniform("kube-config", "kc", "KUBECONFIG", false, "Path to Kubeconfig file. Use 'null' (default) to use local cluster.")]
         public string KubeConfigFile { get; set; } = "null";
 
