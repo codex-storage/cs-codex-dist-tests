@@ -109,9 +109,6 @@ namespace CodexNetDeployer
             StringIsSet(nameof(KubeConfigFile), KubeConfigFile, errors);
             StringIsSet(nameof(TestsTypePodLabel), TestsTypePodLabel, errors);
 
-            ForEachProperty(
-                onInt: (n, v) => IntIsOverZero(n, v, errors));
-
             if (NumberOfValidators > NumberOfCodexNodes)
             {
                 errors.Add($"{nameof(NumberOfValidators)} ({NumberOfValidators}) may not be greater than {nameof(NumberOfCodexNodes)} ({NumberOfCodexNodes}).");
@@ -119,6 +116,15 @@ namespace CodexNetDeployer
             if (StorageSell.HasValue && StorageQuota.HasValue && StorageSell.Value >= StorageQuota.Value)
             {
                 errors.Add("StorageSell cannot be greater than or equal to StorageQuota.");
+            }
+
+            if (ShouldMakeStorageAvailable)
+            {
+                IntIsOverZero(nameof(StorageSell), StorageSell, errors);
+                IntIsOverZero(nameof(InitialTestTokens), InitialTestTokens, errors);
+                IntIsOverZero(nameof(MinPrice), MinPrice, errors);
+                IntIsOverZero(nameof(MaxCollateral), MaxCollateral, errors);
+                IntIsOverZero(nameof(MaxDuration), MaxDuration, errors);
             }
 
             if (IsPublicTestNet)
@@ -130,16 +136,6 @@ namespace CodexNetDeployer
             }
 
             return errors;
-        }
-
-        private void ForEachProperty(Action<string, int?> onInt)
-        {
-            var properties = GetType().GetProperties();
-            foreach (var p in properties)
-            {
-                if (p.PropertyType == typeof(int?)) onInt(p.Name, (int?)p.GetValue(this)!);
-                if (p.PropertyType == typeof(int)) onInt(p.Name, (int)p.GetValue(this)!);
-            }
         }
 
         private static void IntIsOverZero(string variable, int? value, List<string> errors)

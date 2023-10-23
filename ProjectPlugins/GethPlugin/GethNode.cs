@@ -29,11 +29,9 @@ namespace GethPlugin
         {
             this.log = log;
             StartResult = startResult;
-            Account = startResult.AllAccounts.Accounts.First();
         }
 
         public GethDeployment StartResult { get; }
-        public GethAccount Account { get; }
         public RunningContainer Container => StartResult.Container;
 
         public Ether GetEthBalance()
@@ -74,7 +72,7 @@ namespace GethPlugin
         private NethereumInteraction StartInteraction()
         {
             var address = StartResult.Container.GetAddress(GethContainerRecipe.HttpPortTag);
-            var account = Account;
+            var account = StartResult.Account;
 
             var creator = new NethereumInteractionCreator(log, address.Host, address.Port, account.PrivateKey);
             return creator.CreateWorkflow();

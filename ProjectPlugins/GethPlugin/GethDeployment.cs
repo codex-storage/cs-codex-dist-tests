@@ -5,13 +5,13 @@ namespace GethPlugin
 {
     public class GethDeployment : IHasContainer
     {
-        public GethDeployment(RunningContainer container, Port discoveryPort, Port httpPort, Port wsPort, AllGethAccounts allAccounts, string pubKey)
+        public GethDeployment(RunningContainer container, Port discoveryPort, Port httpPort, Port wsPort, GethAccount account, string pubKey)
         {
             Container = container;
             DiscoveryPort = discoveryPort;
             HttpPort = httpPort;
             WsPort = wsPort;
-            AllAccounts = allAccounts;
+            Account = account;
             PubKey = pubKey;
         }
 
@@ -19,7 +19,7 @@ namespace GethPlugin
         public Port DiscoveryPort { get; }
         public Port HttpPort { get; }
         public Port WsPort { get; }
-        public AllGethAccounts AllAccounts { get; }
+        public GethAccount Account { get; }
         public string PubKey { get; }
     }
 }

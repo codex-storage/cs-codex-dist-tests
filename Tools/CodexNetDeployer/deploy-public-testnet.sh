@@ -6,6 +6,7 @@ dotnet run \
     --nodes=3 \
     --validators=1 \
     --log-level=Trace \
+    --storage-quota=2048 \
     --make-storage-available=0 \
     --block-ttl=180 \
     --block-mi=120 \
