@@ -45,6 +45,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CodexNetDeployer", "Tools\C
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BiblioTech", "Tools\BiblioTech\BiblioTech.csproj", "{078ABA6D-A04E-4F62-A44C-EA66F1B66548}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CodexDiscordBotPlugin", "ProjectPlugins\CodexDiscordBotPlugin\CodexDiscordBotPlugin.csproj", "{FB96A58B-F7F0-490A-9A85-72A96A018042}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -119,6 +121,10 @@ Global
 		{078ABA6D-A04E-4F62-A44C-EA66F1B66548}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{078ABA6D-A04E-4F62-A44C-EA66F1B66548}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{078ABA6D-A04E-4F62-A44C-EA66F1B66548}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FB96A58B-F7F0-490A-9A85-72A96A018042}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FB96A58B-F7F0-490A-9A85-72A96A018042}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FB96A58B-F7F0-490A-9A85-72A96A018042}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FB96A58B-F7F0-490A-9A85-72A96A018042}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -141,6 +147,7 @@ Global
 		{E849B7BA-FDCC-4CFF-998F-845ED2F1BF40} = {88C2A621-8A98-4D07-8625-7900FC8EF89E}
 		{3417D508-E2F4-4974-8988-BB124046D9E2} = {7591C5B3-D86E-4AE4-8ED2-B272D17FE7E3}
 		{078ABA6D-A04E-4F62-A44C-EA66F1B66548} = {7591C5B3-D86E-4AE4-8ED2-B272D17FE7E3}
+		{FB96A58B-F7F0-490A-9A85-72A96A018042} = {8F1F1C2A-E313-4E0C-BE40-58FB0BA91124}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {237BF0AA-9EC4-4659-AD9A-65DEB974250C}
