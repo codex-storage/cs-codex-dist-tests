@@ -13,15 +13,15 @@ namespace Core
         T HttpGetJson<T>(string route);
         TResponse HttpPostJson<TRequest, TResponse>(string route, TRequest body);
         string HttpPostJson<TRequest>(string route, TRequest body);
-        string HttpPostString(string route, string body);
         TResponse HttpPostString<TResponse>(string route, string body);
         string HttpPostStream(string route, Stream stream);
         Stream HttpGetStream(string route);
-        T TryJsonDeserialize<T>(string json);
+        T Deserialize<T>(string json);
     }
 
     internal class Http : IHttp
     {
+        private static readonly object httpLock = new object();
         private readonly ILog log;
         private readonly ITimeSet timeSet;
         private readonly Address address;
@@ -48,70 +48,60 @@ namespace Core
 
         public string HttpGetString(string route)
         {
-            return Retry(() =>
+            return LockRetry(() =>
             {
-                using var client = GetClient();
-                var url = GetUrl() + route;
-                Log(url, "");
-                var result = Time.Wait(client.GetAsync(url));
-                var str = Time.Wait(result.Content.ReadAsStringAsync());
-                Log(url, str);
-                return str; ;
+                return GetString(route);
             }, $"HTTP-GET:{route}");
         }
 
         public T HttpGetJson<T>(string route)
         {
-            var json = HttpGetString(route);
-            return TryJsonDeserialize<T>(json);
+            return LockRetry(() =>
+            {
+                var json = GetString(route);
+                return Deserialize<T>(json);
+            }, $"HTTP-GET:{route}");
         }
 
         public TResponse HttpPostJson<TRequest, TResponse>(string route, TRequest body)
         {
-            var response = PostJson(route, body);
-            var json = Time.Wait(response.Content.ReadAsStringAsync());
-            if (!response.IsSuccessStatusCode)
+            return LockRetry(() =>
             {
-                throw new HttpRequestException(json);
-            }
-            Log(GetUrl() + route, json);
-            return TryJsonDeserialize<TResponse>(json);
+                var response = PostJson(route, body);
+                var json = Time.Wait(response.Content.ReadAsStringAsync());
+                if (!response.IsSuccessStatusCode)
+                {
+                    throw new HttpRequestException(json);
+                }
+                Log(GetUrl() + route, json);
+                return Deserialize<TResponse>(json);
+            }, $"HTTP-POST-JSON: {route}");
         }
 
         public string HttpPostJson<TRequest>(string route, TRequest body)
         {
-            var response = PostJson(route, body);
-            return Time.Wait(response.Content.ReadAsStringAsync());
-        }
-
-        public string HttpPostString(string route, string body)
-        {
-            return Retry(() =>
+            return LockRetry(() =>
             {
-                using var client = GetClient();
-                var url = GetUrl() + route;
-                Log(url, body);
-                var content = new StringContent(body);
-                content.Headers.ContentType = MediaTypeHeaderValue.Parse("application/json");
-                var result = Time.Wait(client.PostAsync(url, content));
-                var str = Time.Wait(result.Content.ReadAsStringAsync());
-                Log(url, str);
-                return str;
-            }, $"HTTP-POST-STRING: {route}");
+                var response = PostJson(route, body);
+                return Time.Wait(response.Content.ReadAsStringAsync());
+            }, $"HTTP-POST-JSON: {route}");
         }
 
         public TResponse HttpPostString<TResponse>(string route, string body)
         {
-            var response = HttpPostString(route, body);
-            if (response == null) throw new Exception("Received no response.");
-            var result = JsonConvert.DeserializeObject<TResponse>(response);
-            if (result == null) throw new Exception("Failed to deserialize response");
-            return result;
+            return LockRetry(() =>
+            {
+                var response = PostJsonString(route, body);
+                if (response == null) throw new Exception("Received no response.");
+                var result = JsonConvert.DeserializeObject<TResponse>(response);
+                if (result == null) throw new Exception("Failed to deserialize response");
+                return result;
+            }, $"HTTO-POST-JSON: {route}");
         }
 
         public string HttpPostStream(string route, Stream stream)
         {
-            return Retry(() =>
+            return LockRetry(() =>
             {
                 using var client = GetClient();
                 var url = GetUrl() + route;
@@ -127,7 +117,7 @@ namespace Core
 
         public Stream HttpGetStream(string route)
         {
-            return Retry(() =>
+            return LockRetry(() =>
             {
                 var client = GetClient();
                 var url = GetUrl() + route;
@@ -136,7 +126,7 @@ namespace Core
             }, $"HTTP-GET-STREAM: {route}");
         }
 
-        public T TryJsonDeserialize<T>(string json)
+        public T Deserialize<T>(string json)
         {
             var errors = new List<string>();
             var deserialized = JsonConvert.DeserializeObject<T>(json, new JsonSerializerSettings()
@@ -154,7 +144,7 @@ namespace Core
                     }
                 }
             });
-            if (errors.Count() > 0)
+            if (errors.Count > 0)
             {
                 throw new JsonSerializationException($"Failed to deserialize JSON '{json}' with exception(s): \n{string.Join("\n", errors)}");
             }
@@ -165,16 +155,37 @@ namespace Core
             return deserialized;
         }
 
+        private string GetString(string route)
+        {
+            using var client = GetClient();
+            var url = GetUrl() + route;
+            Log(url, "");
+            var result = Time.Wait(client.GetAsync(url));
+            var str = Time.Wait(result.Content.ReadAsStringAsync());
+            Log(url, str);
+            return str;
+        }
+
         private HttpResponseMessage PostJson<TRequest>(string route, TRequest body)
         {
-            return Retry(() =>
-            {
-                using var client = GetClient();
-                var url = GetUrl() + route;
-                using var content = JsonContent.Create(body);
-                Log(url, JsonConvert.SerializeObject(body));
-                return Time.Wait(client.PostAsync(url, content));
-            }, $"HTTP-POST-JSON: {route}");
+            using var client = GetClient();
+            var url = GetUrl() + route;
+            using var content = JsonContent.Create(body);
+            Log(url, JsonConvert.SerializeObject(body));
+            return Time.Wait(client.PostAsync(url, content));
+        }
+
+        private string PostJsonString(string route, string body)
+        {
+            using var client = GetClient();
+            var url = GetUrl() + route;
+            Log(url, body);
+            var content = new StringContent(body);
+            content.Headers.ContentType = MediaTypeHeaderValue.Parse("application/json");
+            var result = Time.Wait(client.PostAsync(url, content));
+            var str = Time.Wait(result.Content.ReadAsStringAsync());
+            Log(url, str);
+            return str;
         }
 
         private string GetUrl()
@@ -194,9 +205,12 @@ namespace Core
             }
         }
 
-        private T Retry<T>(Func<T> operation, string description)
+        private T LockRetry<T>(Func<T> operation, string description)
         {
-            return Time.Retry(operation, timeSet.HttpMaxNumberOfRetries(), timeSet.HttpCallRetryDelay(), description);
+            lock (httpLock)
+            {
+                return Time.Retry(operation, timeSet.HttpMaxNumberOfRetries(), timeSet.HttpCallRetryDelay(), description);
+            }
         }
 
         private HttpClient GetClient()

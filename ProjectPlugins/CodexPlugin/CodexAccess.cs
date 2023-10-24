@@ -40,7 +40,7 @@ namespace CodexPlugin
                 };
             }
 
-            var result = http.TryJsonDeserialize<CodexDebugPeerResponse>(str);
+            var result = http.Deserialize<CodexDebugPeerResponse>(str);
             result.IsPeerFound = true;
             return result;
         }
