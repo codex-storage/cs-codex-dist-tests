@@ -28,9 +28,18 @@ namespace CodexDiscordBotPlugin
         {
         }
 
-        public RunningContainer Deploy()
+        public RunningContainer Deploy(DiscordBotStartupConfig config)
         {
-            throw new NotImplementedException();
+            var workflow = tools.CreateWorkflow();
+            var startupConfig = new StartupConfig();
+            startupConfig.NameOverride = config.Name;
+            startupConfig.Add(config);
+            var rc = workflow.Start(1, new DiscordBotContainerRecipe(), startupConfig);
+
+            // write deployment into endpoints folder.
+
+
+            return rc.Containers.Single();
         }
     }
 }
