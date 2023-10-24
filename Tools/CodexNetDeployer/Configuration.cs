@@ -101,6 +101,18 @@ namespace CodexNetDeployer
         [Uniform("public-gethdiscport", "pgdp", "PUBLICGETHDISCPORT", false, "Required if public-testnet is true. Single port number used for Geth's public discovery port.")]
         public int PublicGethDiscPort { get; set; }
 
+        [Uniform("discord-bot", "dbot", "DISCORDBOT", false, "If true, will deploy discord bot. Default is false.")]
+        public bool DeployDiscordBot { get; set; } = false;
+
+        [Uniform("dbot-token", "dbott", "DBOTTOKEN", false, "Required if discord-bot is true. Discord token used by bot.")]
+        public string DiscordBotToken { get; set; } = string.Empty;
+
+        [Uniform("dbot-servername", "dbotsn", "DBOTSERVERNAME", false, "Required if discord-bot is true. Name of the Discord server.")]
+        public string DiscordBotServerName { get; set; } = string.Empty;
+
+        [Uniform("dbot-adminrolename", "dbotarn", "DBOTADMINROLENAME", false, "Required if discord-bot is true. Name of the Discord role which will have access to admin features.")]
+        public string DiscordBotAdminRoleName { get; set; } = string.Empty;
+
         public List<string> Validate()
         {
             var errors = new List<string>();

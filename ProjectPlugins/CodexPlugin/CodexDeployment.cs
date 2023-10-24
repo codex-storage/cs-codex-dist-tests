@@ -6,12 +6,13 @@ namespace CodexPlugin
 {
     public class CodexDeployment
     {
-        public CodexDeployment(RunningContainer[] codexContainers, GethDeployment gethDeployment, CodexContractsDeployment codexContractsDeployment, RunningContainer? prometheusContainer, DeploymentMetadata metadata)
+        public CodexDeployment(RunningContainer[] codexContainers, GethDeployment gethDeployment, CodexContractsDeployment codexContractsDeployment, RunningContainer? prometheusContainer, RunningContainer? discordBotContainer, DeploymentMetadata metadata)
         {
             CodexContainers = codexContainers;
             GethDeployment = gethDeployment;
             CodexContractsDeployment = codexContractsDeployment;
             PrometheusContainer = prometheusContainer;
+            DiscordBotContainer = discordBotContainer;
             Metadata = metadata;
         }
 
@@ -19,6 +20,7 @@ namespace CodexPlugin
         public GethDeployment GethDeployment { get; }
         public CodexContractsDeployment CodexContractsDeployment { get; }
         public RunningContainer? PrometheusContainer { get; }
+        public RunningContainer? DiscordBotContainer { get; }
         public DeploymentMetadata Metadata { get; }
     }
 

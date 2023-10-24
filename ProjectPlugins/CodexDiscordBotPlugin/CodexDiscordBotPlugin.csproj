@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Framework\Core\Core.csproj" />
+    <ProjectReference Include="..\CodexPlugin\CodexPlugin.csproj" />
   </ItemGroup>
 
 </Project>

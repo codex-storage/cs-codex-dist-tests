@@ -5,7 +5,7 @@ namespace CodexDiscordBotPlugin
 {
     public static class CoreInterfaceExtensions
     {
-        public static RunningContainer DeployMetricsCollector(this CoreInterface ci, DiscordBotStartupConfig config)
+        public static RunningContainer DeployCodexDiscordBot(this CoreInterface ci, DiscordBotStartupConfig config)
         {
             return Plugin(ci).Deploy(config);
         }

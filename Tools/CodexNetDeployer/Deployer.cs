@@ -1,4 +1,5 @@
 ﻿using CodexContractsPlugin;
+using CodexDiscordBotPlugin;
 using CodexPlugin;
 using Core;
 using GethPlugin;
@@ -25,6 +26,7 @@ namespace CodexNetDeployer
             ProjectPlugin.Load<CodexContractsPlugin.CodexContractsPlugin>();
             ProjectPlugin.Load<GethPlugin.GethPlugin>();
             ProjectPlugin.Load<MetricsPlugin.MetricsPlugin>();
+            ProjectPlugin.Load<CodexDiscordBotPlugin.CodexDiscordBotPlugin>();
             entryPoint = CreateEntryPoint(new NullLog());
         }
 
@@ -79,7 +81,27 @@ namespace CodexNetDeployer
             CheckContainerRestarts(startResults);
 
             var codexContainers = startResults.Select(s => s.CodexNode.Container).ToArray();
-            return new CodexDeployment(codexContainers, gethDeployment, contractsDeployment, metricsService, CreateMetadata(startUtc));
+
+            var deployment = new CodexDeployment(codexContainers, gethDeployment, contractsDeployment, metricsService, null, CreateMetadata(startUtc));
+            var discordBotContainer = DeployDiscordBot(ci, deployment);
+
+            return new CodexDeployment(codexContainers, gethDeployment, contractsDeployment, metricsService, discordBotContainer, CreateMetadata(startUtc));
+        }
+
+        private RunningContainer? DeployDiscordBot(CoreInterface ci, CodexDeployment deployment)
+        {
+            if (!config.DeployDiscordBot) return null;
+            Log("Deploying Discord bot...");
+
+            var rc = ci.DeployCodexDiscordBot(new DiscordBotStartupConfig(
+                name: "discordbot-" + config.DeploymentName,
+                token: config.DiscordBotToken,
+                serverName: config.DiscordBotServerName,
+                adminRoleName: config.DiscordBotAdminRoleName,
+                deployment));
+
+            Log("Discord bot deployed.");
+            return rc;
         }
 
         private EntryPoint CreateEntryPoint(ILog log)
