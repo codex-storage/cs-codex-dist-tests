@@ -167,7 +167,7 @@ namespace BiblioTech.Commands
         {
             private readonly DeploymentsFilesMonitor monitor;
             private readonly StringOption stringOption = new StringOption(
-                name: "deployment name",
+                name: "name",
                 description: "Name of deployment to remove.",
                 isRequired: true);
 
