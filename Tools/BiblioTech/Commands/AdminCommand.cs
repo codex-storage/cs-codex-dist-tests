@@ -9,6 +9,7 @@ namespace BiblioTech.Commands
         private readonly ReportCommand reportCommand;
         private readonly DeployListCommand deployListCommand;
         private readonly DeployUploadCommand deployUploadCommand;
+        private readonly DeployRemoveCommand deployRemoveCommand;
 
         public override string Name => "admin";
         public override string StartingMessage => "...";
@@ -20,6 +21,7 @@ namespace BiblioTech.Commands
             reportCommand = new ReportCommand();
             deployListCommand = new DeployListCommand(monitor);
             deployUploadCommand = new DeployUploadCommand(monitor);
+            deployRemoveCommand = new DeployRemoveCommand(monitor);
         }
 
         public override CommandOption[] Options => new CommandOption[]
@@ -28,6 +30,7 @@ namespace BiblioTech.Commands
             reportCommand,
             deployListCommand,
             deployUploadCommand,
+            deployRemoveCommand
         };
 
         protected override async Task Invoke(CommandContext context)
@@ -42,6 +45,7 @@ namespace BiblioTech.Commands
             await reportCommand.CommandHandler(context);
             await deployListCommand.CommandHandler(context);
             await deployUploadCommand.CommandHandler(context);
+            await deployRemoveCommand.CommandHandler(context);
         }
 
         public class ClearUserAssociationCommand : SubCommandOption
@@ -122,7 +126,7 @@ namespace BiblioTech.Commands
             private string FormatDeployment(CodexDeployment deployment)
             {
                 var m = deployment.Metadata;
-                return $"{m.Name} ({m.StartUtc.ToString("o")})";
+                return $"'{m.Name}' ({m.StartUtc.ToString("o")})";
             }
         }
 
@@ -147,9 +151,48 @@ namespace BiblioTech.Commands
                 var file = await fileOption.Parse(context);
                 if (file == null) return;
 
-                await context.Command.FollowupAsync("Received: " + file.Size);
+                var result = await monitor.DownloadDeployment(file);
+                if (result)
+                {
+                    await context.Command.FollowupAsync("Success!");
+                }
+                else
+                {
+                    await context.Command.FollowupAsync("That didn't work.");
+                }
+            }
+        }
 
-                // todo pass to monitor, add to folder.
+        public class DeployRemoveCommand : SubCommandOption
+        {
+            private readonly DeploymentsFilesMonitor monitor;
+            private readonly StringOption stringOption = new StringOption(
+                name: "deployment name",
+                description: "Name of deployment to remove.",
+                isRequired: true);
+
+            public DeployRemoveCommand(DeploymentsFilesMonitor monitor)
+                : base("remove", "Removes a deployment file.")
+            {
+                this.monitor = monitor;
+            }
+
+            public override CommandOption[] Options => new[] { stringOption };
+
+            protected override async Task onSubCommand(CommandContext context)
+            {
+                var str = await stringOption.Parse(context);
+                if (string.IsNullOrEmpty(str)) return;
+
+                var result = monitor.DeleteDeployment(str);
+                if (result)
+                {
+                    await context.Command.FollowupAsync("Success!");
+                }
+                else
+                {
+                    await context.Command.FollowupAsync("That didn't work.");
+                }
             }
         }
     }

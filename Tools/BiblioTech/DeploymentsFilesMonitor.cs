@@ -1,4 +1,5 @@
 ﻿using CodexPlugin;
+using Discord;
 using Newtonsoft.Json;
 
 namespace BiblioTech
@@ -13,6 +14,47 @@ namespace BiblioTech
             if (ShouldUpdate()) UpdateDeployments();
 
             return deployments;
+        }
+
+        public async Task<bool> DownloadDeployment(IAttachment file)
+        {
+            using var http = new HttpClient();
+            var response = await http.GetAsync(file.Url);
+            var str = await response.Content.ReadAsStringAsync();
+            if (string.IsNullOrEmpty(str)) return false;
+
+            try
+            {
+                var deploy = JsonConvert.DeserializeObject<CodexDeployment>(str);
+                if (deploy != null)
+                {
+                    var targetFile = Path.Combine(Program.Config.EndpointsPath, Guid.NewGuid().ToString().ToLowerInvariant() + ".json");
+                    File.WriteAllText(targetFile, str);
+                    deployments = Array.Empty<CodexDeployment>();
+                    return true;
+                }
+            }
+            catch { }
+            return false;
+        }
+
+        public bool DeleteDeployment(string deploymentName)
+        {
+            var path = Program.Config.EndpointsPath;
+            if (!Directory.Exists(path)) return false;
+            var files = Directory.GetFiles(path);
+
+            foreach ( var file in files)
+            {
+                var deploy = ProcessFile(file);
+                if (deploy != null && deploy.Metadata.Name == deploymentName)
+                {
+                    File.Delete(file);
+                    deployments = Array.Empty<CodexDeployment>();
+                    return true;
+                }
+            }
+            return false;
         }
 
         private void UpdateDeployments()
