@@ -172,11 +172,6 @@ namespace KubernetesWorkflow
 
         private Address GetContainerInternalAddress(RunningPod pod, Port port)
         {
-            //var serviceName = "service-" + numberSource.WorkflowNumber;
-            //return new Address(
-            //    $"http://{serviceName}.{k8sNamespace}.svc.cluster.local",
-            //    port.Number);
-
             return new Address(
                 $"http://{pod.PodInfo.Ip}",
                 port.Number);
