@@ -4,7 +4,6 @@ namespace CodexDiscordBotPlugin
 {
     public class DiscordBotContainerRecipe : ContainerRecipeFactory
     {
-        public const string EndpointsPath = "/var/endpoints";
         public override string AppName => "discordbot-bibliotech";
         public override string Image => "thatbenbierens/codex-discordbot:initial";
 
@@ -15,8 +14,6 @@ namespace CodexDiscordBotPlugin
             AddEnvVar("TOKEN", config.Token);
             AddEnvVar("SERVERNAME", config.ServerName);
             AddEnvVar("ADMINROLE", config.AdminRoleName);
-
-            AddEnvVar("ENDPOINTS", EndpointsPath);
         }
     }
 }

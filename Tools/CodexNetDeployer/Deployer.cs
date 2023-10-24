@@ -82,13 +82,12 @@ namespace CodexNetDeployer
 
             var codexContainers = startResults.Select(s => s.CodexNode.Container).ToArray();
 
-            var deployment = new CodexDeployment(codexContainers, gethDeployment, contractsDeployment, metricsService, null, CreateMetadata(startUtc));
-            var discordBotContainer = DeployDiscordBot(ci, deployment);
+            var discordBotContainer = DeployDiscordBot(ci);
 
             return new CodexDeployment(codexContainers, gethDeployment, contractsDeployment, metricsService, discordBotContainer, CreateMetadata(startUtc));
         }
 
-        private RunningContainer? DeployDiscordBot(CoreInterface ci, CodexDeployment deployment)
+        private RunningContainer? DeployDiscordBot(CoreInterface ci)
         {
             if (!config.DeployDiscordBot) return null;
             Log("Deploying Discord bot...");
@@ -97,8 +96,7 @@ namespace CodexNetDeployer
                 name: "discordbot-" + config.DeploymentName,
                 token: config.DiscordBotToken,
                 serverName: config.DiscordBotServerName,
-                adminRoleName: config.DiscordBotAdminRoleName,
-                deployment));
+                adminRoleName: config.DiscordBotAdminRoleName));
 
             Log("Discord bot deployed.");
             return rc;
