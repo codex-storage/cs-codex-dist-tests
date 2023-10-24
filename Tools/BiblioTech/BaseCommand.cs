@@ -1,6 +1,5 @@
 ﻿using Discord.WebSocket;
-using Discord;
-using BiblioTech.Commands;
+using BiblioTech.Options;
 
 namespace BiblioTech
 {
@@ -24,7 +23,7 @@ namespace BiblioTech
             try
             {
                 await command.RespondAsync(StartingMessage);
-                await Invoke(command);
+                await Invoke(new CommandContext(command, command.Data.Options));
             }
             catch (Exception ex)
             {
@@ -33,43 +32,18 @@ namespace BiblioTech
             }
         }
 
-        protected abstract Task Invoke(SocketSlashCommand command);
+        protected abstract Task Invoke(CommandContext context);
 
         protected bool IsSenderAdmin(SocketSlashCommand command)
         {
             return Program.AdminChecker.IsUserAdmin(command.User.Id);
         }
 
-        protected ulong GetUserId(UserOption userOption, SocketSlashCommand command)
+        protected ulong GetUserId(UserOption userOption, CommandContext context)
         {
-            var targetUser = userOption.GetOptionUserId(command);
-            if (IsSenderAdmin(command) && targetUser != null) return targetUser.Value;
-            return command.User.Id;
-        }
-    }
-
-    public class CommandOption
-    {
-        public CommandOption(string name, string description, ApplicationCommandOptionType type, bool isRequired)
-        {
-            Name = name;
-            Description = description;
-            Type = type;
-            IsRequired = isRequired;
-        }
-
-        public string Name { get; }
-        public string Description { get; }
-        public ApplicationCommandOptionType Type { get; }
-        public bool IsRequired { get; }
-
-        public virtual SlashCommandOptionBuilder Build()
-        {
-            return new SlashCommandOptionBuilder()
-                .WithName(Name)
-                .WithDescription(Description)
-                .WithType(Type)
-                .WithRequired(IsRequired);
+            var targetUser = userOption.GetOptionUserId(context);
+            if (IsSenderAdmin(context.Command) && targetUser != null) return targetUser.Value;
+            return context.Command.User.Id;
         }
     }
 }

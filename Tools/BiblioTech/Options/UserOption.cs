@@ -1,7 +1,6 @@
 ﻿using Discord;
-using Discord.WebSocket;
 
-namespace BiblioTech.Commands
+namespace BiblioTech.Options
 {
     public class UserOption : CommandOption
     {
@@ -10,9 +9,9 @@ namespace BiblioTech.Commands
         {
         }
 
-        public ulong? GetOptionUserId(SocketSlashCommand command)
+        public ulong? GetOptionUserId(CommandContext context)
         {
-            var userOptionData = command.Data.Options.SingleOrDefault(o => o.Name == Name);
+            var userOptionData = context.Options.SingleOrDefault(o => o.Name == Name);
             if (userOptionData == null) return null;
             var user = userOptionData.Value as IUser;
             if (user == null) return null;

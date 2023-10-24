@@ -1,6 +1,6 @@
-﻿using CodexContractsPlugin;
+﻿using BiblioTech.Options;
+using CodexContractsPlugin;
 using Core;
-using Discord.WebSocket;
 using GethPlugin;
 
 namespace BiblioTech.Commands
@@ -23,20 +23,20 @@ namespace BiblioTech.Commands
         public override string Description => "Shows Eth and TestToken balance of an eth address.";
         public override CommandOption[] Options => new[] { optionalUser };
 
-        protected override async Task Execute(SocketSlashCommand command, IGethNode gethNode, ICodexContracts contracts)
+        protected override async Task Execute(CommandContext context, IGethNode gethNode, ICodexContracts contracts)
         {
-            var userId = GetUserId(optionalUser, command);
+            var userId = GetUserId(optionalUser, context);
             var addr = Program.UserRepo.GetCurrentAddressForUser(userId);
             if (addr == null)
             {
-                await command.FollowupAsync($"No address has been set for this user. Please use '/{userAssociateCommand.Name}' to set it first.");
+                await context.Command.FollowupAsync($"No address has been set for this user. Please use '/{userAssociateCommand.Name}' to set it first.");
                 return;
             }
 
             var eth = gethNode.GetEthBalance(addr);
             var testTokens = contracts.GetTestTokenBalance(gethNode, addr);
 
-            await command.FollowupAsync($"{command.User.Username} has {eth} and {testTokens}.");
+            await context.Command.FollowupAsync($"{context.Command.User.Username} has {eth} and {testTokens}.");
         }
     }
 }

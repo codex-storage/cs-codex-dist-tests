@@ -1,8 +1,7 @@
-﻿using Discord.WebSocket;
-using GethPlugin;
+﻿using GethPlugin;
 using Nethereum.Util;
 
-namespace BiblioTech.Commands
+namespace BiblioTech.Options
 {
     public class EthAddressOption : CommandOption
     {
@@ -14,18 +13,18 @@ namespace BiblioTech.Commands
         {
         }
 
-        public async Task<EthAddress?> Parse(SocketSlashCommand command)
+        public async Task<EthAddress?> Parse(CommandContext context)
         {
-            var ethOptionData = command.Data.Options.SingleOrDefault(o => o.Name == Name);
+            var ethOptionData = context.Options.SingleOrDefault(o => o.Name == Name);
             if (ethOptionData == null)
             {
-                await command.FollowupAsync("EthAddress option not received.");
+                await context.Command.FollowupAsync("EthAddress option not received.");
                 return null;
             }
             var ethAddressStr = ethOptionData.Value as string;
             if (string.IsNullOrEmpty(ethAddressStr))
             {
-                await command.FollowupAsync("EthAddress is null or empty.");
+                await context.Command.FollowupAsync("EthAddress is null or empty.");
                 return null;
             }
 
@@ -33,7 +32,7 @@ namespace BiblioTech.Commands
                 !AddressUtil.Current.IsValidEthereumAddressHexFormat(ethAddressStr) ||
                 !AddressUtil.Current.IsChecksumAddress(ethAddressStr))
             {
-                await command.FollowupAsync("EthAddress is not valid.");
+                await context.Command.FollowupAsync("EthAddress is not valid.");
                 return null;
             }
 

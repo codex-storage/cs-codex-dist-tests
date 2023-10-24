@@ -1,6 +1,6 @@
-﻿using CodexContractsPlugin;
+﻿using BiblioTech.Options;
+using CodexContractsPlugin;
 using Core;
-using Discord.WebSocket;
 using GethPlugin;
 
 namespace BiblioTech
@@ -16,17 +16,17 @@ namespace BiblioTech
             this.ci = ci;
         }
 
-        protected override async Task Invoke(SocketSlashCommand command)
+        protected override async Task Invoke(CommandContext context)
         {
             var deployments = monitor.GetDeployments();
             if (deployments.Length == 0)
             {
-                await command.FollowupAsync("No deployments are currently available.");
+                await context.Command.FollowupAsync("No deployments are currently available.");
                 return;
             }
             if (deployments.Length > 1) 
             {
-                await command.FollowupAsync("Multiple deployments are online. I don't know which one to pick!");
+                await context.Command.FollowupAsync("Multiple deployments are online. I don't know which one to pick!");
                 return;
             }
 
@@ -37,9 +37,9 @@ namespace BiblioTech
             var gethNode = ci.WrapGethDeployment(gethDeployment);
             var contracts = ci.WrapCodexContractsDeployment(contractsDeployment);
 
-            await Execute(command, gethNode, contracts);
+            await Execute(context, gethNode, contracts);
         }
 
-        protected abstract Task Execute(SocketSlashCommand command, IGethNode gethNode, ICodexContracts contracts);
+        protected abstract Task Execute(CommandContext context, IGethNode gethNode, ICodexContracts contracts);
     }
 }

@@ -51,13 +51,10 @@ namespace BiblioTech
 
             var associateCommand = new UserAssociateCommand();
             var handler = new CommandHandler(client,
-                //new ClearUserAssociationCommand(),
                 new GetBalanceCommand(monitor, ci, associateCommand), 
                 new MintCommand(monitor, ci, associateCommand),
-                //new ReportHistoryCommand(),
                 associateCommand,
-                //new DeploymentsCommand(monitor),
-                new AdminCommand()
+                new AdminCommand(monitor)
             );
 
             await client.LoginAsync(TokenType.Bot, Config.ApplicationToken);
