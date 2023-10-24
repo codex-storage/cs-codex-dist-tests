@@ -32,7 +32,7 @@ namespace BiblioTech
 
                 foreach (var option in c.Options)
                 {
-                    builder.AddOption(option.Name, option.Type, option.Description, isRequired: option.IsRequired);
+                    builder.AddOption(option.Build());
                 }
 
                 return builder;

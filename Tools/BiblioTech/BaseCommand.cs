@@ -62,5 +62,14 @@ namespace BiblioTech
         public string Description { get; }
         public ApplicationCommandOptionType Type { get; }
         public bool IsRequired { get; }
+
+        public virtual SlashCommandOptionBuilder Build()
+        {
+            return new SlashCommandOptionBuilder()
+                .WithName(Name)
+                .WithDescription(Description)
+                .WithType(Type)
+                .WithRequired(IsRequired);
+        }
     }
 }
