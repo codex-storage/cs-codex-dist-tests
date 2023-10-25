@@ -119,6 +119,12 @@ namespace CodexPlugin
             }
         }
 
+        private Port CreateApiPort(CodexStartupConfig config, string tag)
+        {
+            if (config.PublicTestNet == null) return AddExposedPort(tag);
+            return AddInternalPort(tag);
+        }
+
         private Port CreateListenPort(CodexStartupConfig config)
         {
             if (config.PublicTestNet == null) return AddInternalPort(ListenPortTag);
@@ -128,9 +134,9 @@ namespace CodexPlugin
 
         private Port CreateDiscoveryPort(CodexStartupConfig config)
         {
-            if (config.PublicTestNet == null) return AddInternalPort(DiscoveryPortTag);
+            if (config.PublicTestNet == null) return AddInternalPort(DiscoveryPortTag, PortProtocol.UDP);
 
-            return AddExposedPort(config.PublicTestNet.PublicDiscoveryPort, DiscoveryPortTag);
+            return AddExposedPort(config.PublicTestNet.PublicDiscoveryPort, DiscoveryPortTag, PortProtocol.UDP);
         }
 
         private ByteSize GetVolumeCapacity(CodexStartupConfig config)
@@ -146,15 +152,6 @@ namespace CodexPlugin
             if (!string.IsNullOrEmpty(image)) return image;
             if (!string.IsNullOrEmpty(DockerImageOverride)) return DockerImageOverride;
             return DefaultDockerImage;
-        }
-
-        private Port CreateApiPort(CodexStartupConfig config, string tag)
-        {
-            if (config.PublicTestNet == null)
-            {
-                return AddExposedPort(tag);
-            }
-            return AddInternalPort(tag);
         }
     }
 }

@@ -50,31 +50,31 @@ namespace KubernetesWorkflow
         protected int Index { get; private set; } = 0;
         protected abstract void Initialize(StartupConfig config);
 
-        protected Port AddExposedPort(string tag)
+        protected Port AddExposedPort(string tag, PortProtocol protocol = PortProtocol.TCP)
         {
-            return AddExposedPort(factory.CreatePort(tag));
+            return AddExposedPort(factory.CreatePort(tag, protocol));
         }
 
-        protected Port AddExposedPort(int number, string tag)
+        protected Port AddExposedPort(int number, string tag, PortProtocol protocol = PortProtocol.TCP)
         {
-            return AddExposedPort(factory.CreatePort(number, tag));
+            return AddExposedPort(factory.CreatePort(number, tag, protocol));
         }
 
-        protected Port AddInternalPort(string tag = "")
+        protected Port AddInternalPort(string tag = "", PortProtocol protocol = PortProtocol.TCP)
         {
-            var p = factory.CreatePort(tag);
+            var p = factory.CreatePort(tag, protocol);
             internalPorts.Add(p);
             return p;
         }
 
-        protected void AddExposedPortAndVar(string name, string tag)
+        protected void AddExposedPortAndVar(string name, string tag, PortProtocol protocol = PortProtocol.TCP)
         {
-            AddEnvVar(name, AddExposedPort(tag));
+            AddEnvVar(name, AddExposedPort(tag, protocol));
         }
 
-        protected void AddInternalPortAndVar(string name, string tag = "")
+        protected void AddInternalPortAndVar(string name, string tag = "", PortProtocol protocol = PortProtocol.TCP)
         {
-            AddEnvVar(name, AddInternalPort(tag));
+            AddEnvVar(name, AddInternalPort(tag, protocol));
         }
 
         protected void AddEnvVar(string name, string value)

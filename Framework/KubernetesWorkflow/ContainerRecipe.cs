@@ -59,20 +59,38 @@
 
     public class Port
     {
-        public Port(int number, string tag)
+        public Port(int number, string tag, PortProtocol protocol)
         {
             Number = number;
             Tag = tag;
+            Protocol = protocol;
         }
 
         public int Number { get; }
         public string Tag { get; }
+        public PortProtocol Protocol { get; }
+
+        public bool IsTcp()
+        {
+            return Protocol == PortProtocol.TCP;
+        }
+
+        public bool IsUdp()
+        {
+            return Protocol == PortProtocol.UDP;
+        }
 
         public override string ToString()
         {
             if (string.IsNullOrEmpty(Tag)) return $"untagged-port={Number}";
             return $"{Tag}={Number}";
         }
+    }
+
+    public enum PortProtocol
+    {
+        TCP,
+        UDP
     }
 
     public class EnvVar

@@ -506,23 +506,42 @@ namespace KubernetesWorkflow
 
         private List<V1ContainerPort> CreateContainerPorts(ContainerRecipe recipe)
         {
-            var exposedPorts = recipe.ExposedPorts.Select(p => CreateContainerPort(recipe, p));
-            var internalPorts = recipe.InternalPorts.Select(p => CreateContainerPort(recipe, p));
+            var exposedPorts = recipe.ExposedPorts.SelectMany(p => CreateContainerPort(recipe, p));
+            var internalPorts = recipe.InternalPorts.SelectMany(p => CreateContainerPort(recipe, p));
             return exposedPorts.Concat(internalPorts).ToList();
         }
 
-        private V1ContainerPort CreateContainerPort(ContainerRecipe recipe, Port port)
+        private List<V1ContainerPort> CreateContainerPort(ContainerRecipe recipe, Port port)
+        {
+            var result = new List<V1ContainerPort>();
+            if (port.IsTcp()) CreateTcpContainerPort(result, recipe, port);
+            if (port.IsUdp()) CreateUdpContainerPort(result, recipe, port);
+            return result;
+        }
+
+        private void CreateUdpContainerPort(List<V1ContainerPort> result, ContainerRecipe recipe, Port port)
+        {
+            result.Add(CreateContainerPort(recipe, port, "UDP"));
+        }
+
+        private void CreateTcpContainerPort(List<V1ContainerPort> result, ContainerRecipe recipe, Port port)
+        {
+            result.Add(CreateContainerPort(recipe, port, "TCP"));
+        }
+
+        private V1ContainerPort CreateContainerPort(ContainerRecipe recipe, Port port, string protocol)
         {
             return new V1ContainerPort
             {
                 Name = GetNameForPort(recipe, port),
-                ContainerPort = port.Number
+                ContainerPort = port.Number,
+                Protocol = protocol
             };
         }
 
         private string GetNameForPort(ContainerRecipe recipe, Port port)
         {
-            return $"p{workflowNumberSource.WorkflowNumber}-{recipe.Number}-{port.Number}";
+            return $"p{workflowNumberSource.WorkflowNumber}-{recipe.Number}-{port.Number}-{port.Protocol.ToString().ToLowerInvariant()}";
         }
 
         #endregion
@@ -575,7 +594,7 @@ namespace KubernetesWorkflow
                     if (matchingServicePorts.Any())
                     {
                         // These service ports belongs to this recipe.
-                        var optionals = matchingServicePorts.Select(p => MapNodePortIfAble(p, port.Tag));
+                        var optionals = matchingServicePorts.Select(p => MapNodePortIfAble(p, port.Tag, port.Protocol));
                         var ports = optionals.Where(p => p != null).Select(p => p!).ToArray();
 
                         result.Add(new ContainerRecipePortMapEntry(r.Number, ports));
@@ -584,10 +603,10 @@ namespace KubernetesWorkflow
             }
         }
 
-        private Port? MapNodePortIfAble(V1ServicePort p, string tag)
+        private Port? MapNodePortIfAble(V1ServicePort p, string tag, PortProtocol protocol)
         {
             if (p.NodePort == null) return null;
-            return new Port(p.NodePort.Value, tag);
+            return new Port(p.NodePort.Value, tag, protocol);
         }
 
         private void DeleteService(string serviceName)
@@ -619,16 +638,22 @@ namespace KubernetesWorkflow
             var result = new List<V1ServicePort>();
             foreach (var port in recipe.ExposedPorts)
             {
-                result.Add(new V1ServicePort
-                {
-                    Name = GetNameForPort(recipe, port),
-                    Protocol = "TCP",
-                    Port = port.Number,
-                    TargetPort = GetNameForPort(recipe, port),
-                });                
+                if (port.IsTcp()) CreateServicePort(result, recipe, port, "TCP");
+                if (port.IsUdp()) CreateServicePort(result, recipe, port, "UDP");
             }
 
             return result;
+        }
+
+        private void CreateServicePort(List<V1ServicePort> result, ContainerRecipe recipe, Port port, string protocol)
+        {
+            result.Add(new V1ServicePort
+            {
+                Name = GetNameForPort(recipe, port),
+                Protocol = "TCP",
+                Port = port.Number,
+                TargetPort = GetNameForPort(recipe, port),
+            });
         }
 
         #endregion

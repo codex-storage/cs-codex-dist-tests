@@ -7,14 +7,14 @@ namespace KubernetesWorkflow
     {
         private NumberSource portNumberSource = new NumberSource(8080);
 
-        public Port CreatePort(int number, string tag)
+        public Port CreatePort(int number, string tag, PortProtocol protocol)
         {
-            return new Port(number, tag);
+            return new Port(number, tag, protocol);
         }
 
-        public Port CreatePort(string tag)
+        public Port CreatePort(string tag, PortProtocol protocol)
         {
-            return new Port(portNumberSource.GetNextNumber(), tag);
+            return new Port(portNumberSource.GetNextNumber(), tag, protocol);
         }
 
         public EnvVar CreateEnvVar(string name, int value)

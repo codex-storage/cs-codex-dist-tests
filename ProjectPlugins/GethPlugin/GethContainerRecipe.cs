@@ -70,7 +70,7 @@ namespace GethPlugin
         {
             if (config.IsPublicTestNet == null) return AddInternalPort(DiscoveryPortTag);
 
-            return AddExposedPort(config.IsPublicTestNet.DiscoveryPort, DiscoveryPortTag);
+            return AddExposedPort(config.IsPublicTestNet.DiscoveryPort, DiscoveryPortTag, PortProtocol.UDP);
         }
 
         private Port CreateP2pPort(GethStartupConfig config, string tag)
