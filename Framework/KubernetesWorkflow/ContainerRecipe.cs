@@ -82,8 +82,8 @@
 
         public override string ToString()
         {
-            if (string.IsNullOrEmpty(Tag)) return $"untagged-port={Number}";
-            return $"{Tag}={Number}";
+            if (string.IsNullOrEmpty(Tag)) return $"untagged-port={Number}/{Protocol}";
+            return $"{Tag}={Number}/{Protocol}";
         }
     }
 

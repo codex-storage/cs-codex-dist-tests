@@ -641,7 +641,6 @@ namespace KubernetesWorkflow
                 if (port.IsTcp()) CreateServicePort(result, recipe, port, "TCP");
                 if (port.IsUdp()) CreateServicePort(result, recipe, port, "UDP");
             }
-
             return result;
         }
 
@@ -650,7 +649,7 @@ namespace KubernetesWorkflow
             result.Add(new V1ServicePort
             {
                 Name = GetNameForPort(recipe, port),
-                Protocol = "TCP",
+                Protocol = protocol,
                 Port = port.Number,
                 TargetPort = GetNameForPort(recipe, port),
             });
