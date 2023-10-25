@@ -8,11 +8,11 @@ namespace BiblioTech
     {
         private readonly object repoLock = new object();
 
-        public void AssociateUserWithAddress(ulong discordId, EthAddress address)
+        public bool AssociateUserWithAddress(ulong discordId, EthAddress address)
         {
             lock (repoLock)
             {
-                SetUserAddress(discordId, address);
+                return SetUserAddress(discordId, address);
             }
         }
 
@@ -79,12 +79,18 @@ namespace BiblioTech
             return result.ToArray();
         }
 
-        private void SetUserAddress(ulong discordId, EthAddress? address)
+        private bool SetUserAddress(ulong discordId, EthAddress? address)
         {
+            if (IsAddressUsed(address))
+            {
+                return false;
+            }
+
             var user = GetOrCreate(discordId);
             user.CurrentAddress = address;
             user.AssociateEvents.Add(new UserAssociateAddressEvent(DateTime.UtcNow, address));
             SaveUser(user);
+            return true;
         }
 
         private User GetOrCreate(ulong discordId)
@@ -102,6 +108,29 @@ namespace BiblioTech
             var newUser = new User(discordId, DateTime.UtcNow, null, new List<UserAssociateAddressEvent>(), new List<UserMintEvent>());
             SaveUser(newUser);
             return newUser;
+        }
+
+        private bool IsAddressUsed(EthAddress? address)
+        {
+            if (address == null) return false;
+
+            // If this becomes a performance problem, switch to in-memory cached list.
+            var files = Directory.GetFiles(Program.Config.UserDataPath);
+            foreach (var file in files)
+            {
+                try
+                {
+                    var user = JsonConvert.DeserializeObject<User>(File.ReadAllText(file))!;
+                    if (user.CurrentAddress != null &&
+                        user.CurrentAddress.Address == address.Address)
+                    {
+                        return true;
+                    }
+                }
+                catch { }
+            }
+
+            return false;
         }
 
         private void SaveUser(User user)

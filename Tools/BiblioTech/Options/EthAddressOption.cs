@@ -29,8 +29,8 @@ namespace BiblioTech.Options
             }
 
             if (!AddressUtil.Current.IsValidAddressLength(ethAddressStr) ||
-                !AddressUtil.Current.IsValidEthereumAddressHexFormat(ethAddressStr) ||
-                !AddressUtil.Current.IsChecksumAddress(ethAddressStr))
+                !AddressUtil.Current.IsValidEthereumAddressHexFormat(ethAddressStr))
+                // !AddressUtil.Current.IsChecksumAddress(ethAddressStr)) - this might make a good option later, but for now it might just annoy users.
             {
                 await context.Command.FollowupAsync("EthAddress is not valid.");
                 return null;

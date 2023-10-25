@@ -27,8 +27,17 @@ namespace BiblioTech.Commands
                 return;
             }
 
-            Program.UserRepo.AssociateUserWithAddress(userId, data);
-            await context.Command.FollowupAsync("Done! Thank you for joining the test net!");
+            // private commands
+
+            var result = Program.UserRepo.AssociateUserWithAddress(userId, data);
+            if (result)
+            {
+                await context.Command.FollowupAsync("Done! Thank you for joining the test net!");
+            }
+            else
+            {
+                await context.Command.FollowupAsync("That didn't work.");
+            }
         }
     }
 }
