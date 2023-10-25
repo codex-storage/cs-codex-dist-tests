@@ -17,7 +17,7 @@ namespace CodexDiscordBotPlugin
             AddEnvVar("ADMINROLE", config.AdminRoleName);
             AddEnvVar("ADMINCHANNELNAME", config.AdminChannelName);
 
-            if (config.DataPath != null)
+            if (!string.IsNullOrEmpty(config.DataPath))
             {
                 AddEnvVar("DATAPATH", config.DataPath);
                 AddVolume(config.DataPath, 1.GB());
