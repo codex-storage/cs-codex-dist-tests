@@ -113,6 +113,9 @@ namespace CodexNetDeployer
         [Uniform("dbot-adminrolename", "dbotarn", "DBOTADMINROLENAME", false, "Required if discord-bot is true. Name of the Discord role which will have access to admin features.")]
         public string DiscordBotAdminRoleName { get; set; } = string.Empty;
 
+        [Uniform("dbot-adminchannelname", "dbotacn", "DBOTADMINCHANNELNAME", false, "Required if discord-bot is true. Name of the Discord channel in which admin commands are allowed.")]
+        public string DiscordBotAdminChannelName { get; set; } = string.Empty;
+
         public List<string> Validate()
         {
             var errors = new List<string>();
@@ -145,6 +148,14 @@ namespace CodexNetDeployer
                 if (PublicDiscPorts.Split(",").Length != NumberOfCodexNodes) errors.Add("Number of public discovery-ports provided does not match number of codex nodes.");
                 if (PublicListenPorts.Split(",").Length != NumberOfCodexNodes) errors.Add("Number of public listen-ports provided does not match number of codex nodes.");
                 if (PublicGethDiscPort == 0) errors.Add("Geth public discovery port is not set.");
+            }
+
+            if (DeployDiscordBot)
+            {
+                StringIsSet(nameof(DiscordBotToken), DiscordBotToken, errors);
+                StringIsSet(nameof(DiscordBotServerName), DiscordBotServerName, errors);
+                StringIsSet(nameof(DiscordBotAdminRoleName), DiscordBotAdminRoleName, errors);
+                StringIsSet(nameof(DiscordBotAdminChannelName), DiscordBotAdminChannelName, errors);
             }
 
             return errors;

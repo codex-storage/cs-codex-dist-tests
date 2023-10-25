@@ -18,5 +18,8 @@ namespace BiblioTech
 
         [Uniform("admin-role", "a", "ADMINROLE", true, "Name of the Discord server admin role")]
         public string AdminRoleName { get; set; } = string.Empty;
+
+        [Uniform("admin-channel-name", "ac", "ADMINCHANNELNAME", true, "Name of the Discord server channel where admin commands are allowed.")]
+        public string AdminChannelName { get; set; } = "admin-channel";
     }
 }

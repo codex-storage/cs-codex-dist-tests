@@ -129,7 +129,8 @@ namespace CodexNetDeployer
                 name: "discordbot-" + config.DeploymentName,
                 token: config.DiscordBotToken,
                 serverName: config.DiscordBotServerName,
-                adminRoleName: config.DiscordBotAdminRoleName));
+                adminRoleName: config.DiscordBotAdminRoleName,
+                adminChannelName: config.DiscordBotAdminChannelName));
 
             Log("Discord bot deployed.");
             return rc;

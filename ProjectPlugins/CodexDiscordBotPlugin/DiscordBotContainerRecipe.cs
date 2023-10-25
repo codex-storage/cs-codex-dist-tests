@@ -14,6 +14,7 @@ namespace CodexDiscordBotPlugin
             AddEnvVar("TOKEN", config.Token);
             AddEnvVar("SERVERNAME", config.ServerName);
             AddEnvVar("ADMINROLE", config.AdminRoleName);
+            AddEnvVar("ADMINCHANNELNAME", config.AdminChannelName);
         }
     }
 }

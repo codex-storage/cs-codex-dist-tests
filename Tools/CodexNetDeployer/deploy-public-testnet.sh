@@ -25,4 +25,5 @@ dotnet run \
     --discord-bot=1 \
     --dbot-token=tokenhere \
     --dbot-servername=namehere \
-    --dbot-adminrolename=alsonamehere
+    --dbot-adminrolename=alsonamehere \
+    --dbot-adminchannelname=channelname

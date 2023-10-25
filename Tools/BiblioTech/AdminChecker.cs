@@ -20,6 +20,11 @@ namespace BiblioTech
             return adminIds.Contains(userId);
         }
 
+        public bool IsAdminChannel(ISocketMessageChannel channel)
+        {
+            return channel.Name == Program.Config.AdminChannelName;
+        }
+
         private bool ShouldUpdate()
         {
             return !adminIds.Any() || (DateTime.UtcNow - lastUpdate) > TimeSpan.FromMinutes(10);

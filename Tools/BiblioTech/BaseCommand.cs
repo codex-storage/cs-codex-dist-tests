@@ -39,6 +39,11 @@ namespace BiblioTech
             return Program.AdminChecker.IsUserAdmin(command.User.Id);
         }
 
+        protected bool IsInAdminChannel(SocketSlashCommand command)
+        {
+            return Program.AdminChecker.IsAdminChannel(command.Channel);
+        }
+
         protected ulong GetUserId(UserOption userOption, CommandContext context)
         {
             var targetUser = userOption.GetOptionUserId(context);

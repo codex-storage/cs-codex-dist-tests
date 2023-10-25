@@ -1,5 +1,6 @@
 ﻿using BiblioTech.Options;
 using CodexPlugin;
+using Discord.WebSocket;
 
 namespace BiblioTech.Commands
 {
@@ -38,6 +39,12 @@ namespace BiblioTech.Commands
             if (!IsSenderAdmin(context.Command))
             {
                 await context.Command.FollowupAsync("You're not an admin.");
+                return;
+            }
+
+            if (!IsInAdminChannel(context.Command))
+            {
+                await context.Command.FollowupAsync("Please use admin commands only in the admin channel.");
                 return;
             }
 
