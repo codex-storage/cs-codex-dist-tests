@@ -80,26 +80,11 @@ namespace CodexNetDeployer
             CheckPeerConnectivity(startResults);
             CheckContainerRestarts(startResults);
 
-            var codexContainers = startResults.Select(s => s.CodexNode.Container).ToArray();
+            var codexInstances = CreateCodexInstances(startResults);
 
             var discordBotContainer = DeployDiscordBot(ci);
 
-            return new CodexDeployment(codexContainers, gethDeployment, contractsDeployment, metricsService, discordBotContainer, CreateMetadata(startUtc));
-        }
-
-        private RunningContainer? DeployDiscordBot(CoreInterface ci)
-        {
-            if (!config.DeployDiscordBot) return null;
-            Log("Deploying Discord bot...");
-
-            var rc = ci.DeployCodexDiscordBot(new DiscordBotStartupConfig(
-                name: "discordbot-" + config.DeploymentName,
-                token: config.DiscordBotToken,
-                serverName: config.DiscordBotServerName,
-                adminRoleName: config.DiscordBotAdminRoleName));
-
-            Log("Discord bot deployed.");
-            return rc;
+            return new CodexDeployment(codexInstances, gethDeployment, contractsDeployment, metricsService, discordBotContainer, CreateMetadata(startUtc));
         }
 
         private EntryPoint CreateEntryPoint(ILog log)
@@ -135,6 +120,21 @@ namespace CodexNetDeployer
             });
         }
 
+        private RunningContainer? DeployDiscordBot(CoreInterface ci)
+        {
+            if (!config.DeployDiscordBot) return null;
+            Log("Deploying Discord bot...");
+
+            var rc = ci.DeployCodexDiscordBot(new DiscordBotStartupConfig(
+                name: "discordbot-" + config.DeploymentName,
+                token: config.DiscordBotToken,
+                serverName: config.DiscordBotServerName,
+                adminRoleName: config.DiscordBotAdminRoleName));
+
+            Log("Discord bot deployed.");
+            return rc;
+        }
+
         private RunningContainer? StartMetricsService(CoreInterface ci, List<CodexNodeStartResult> startResults)
         {
             if (!config.MetricsScraper) return null;
@@ -146,6 +146,16 @@ namespace CodexNetDeployer
             Log("Metrics service started.");
 
             return runningContainer;
+        }
+
+        private CodexInstance[] CreateCodexInstances(List<CodexNodeStartResult> startResults)
+        {
+            return startResults.Select(r => CreateCodexInstance(r.CodexNode)).ToArray();
+        }
+
+        private CodexInstance CreateCodexInstance(ICodexNode node)
+        {
+            return new CodexInstance(node.Container, node.GetDebugInfo());
         }
 
         private string? GetKubeConfig(string kubeConfigFile)

@@ -39,8 +39,9 @@ namespace ContinuousTests
         {
             log.Log("");
             var deployment = config.CodexDeployment;
-            foreach (var container in deployment.CodexContainers)
+            foreach (var instance in deployment.CodexInstances)
             {
+                var container = instance.Container;
                 log.Log($"Codex environment variables for '{container.Name}':");
                 log.Log($"Pod name: {container.Pod.PodInfo.Name} - Deployment name: {container.Pod.DeploymentName}");
                 var codexVars = container.Recipe.EnvVars;
@@ -81,7 +82,7 @@ namespace ContinuousTests
 
         private void CheckCodexNodes(BaseLog log, Configuration config)
         {
-            var nodes = entryPoint.CreateInterface().WrapCodexContainers(config.CodexDeployment.CodexContainers);
+            var nodes = entryPoint.CreateInterface().WrapCodexContainers(config.CodexDeployment.CodexInstances.Select(i => i.Container).ToArray());
             var pass = true;
             foreach (var n in nodes)
             {
@@ -166,9 +167,9 @@ namespace ContinuousTests
                     {
                         errors.Add($"Test '{test.Name}' requires {test.RequiredNumberOfNodes} nodes. Test must require > 0 nodes, or -1 to select all nodes.");
                     }
-                    else if (test.RequiredNumberOfNodes > config.CodexDeployment.CodexContainers.Length)
+                    else if (test.RequiredNumberOfNodes > config.CodexDeployment.CodexInstances.Length)
                     {
-                        errors.Add($"Test '{test.Name}' requires {test.RequiredNumberOfNodes} nodes. Deployment only has {config.CodexDeployment.CodexContainers.Length}");
+                        errors.Add($"Test '{test.Name}' requires {test.RequiredNumberOfNodes} nodes. Deployment only has {config.CodexDeployment.CodexInstances.Length}");
                     }
                 }
             }

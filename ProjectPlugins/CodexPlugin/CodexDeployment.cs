@@ -6,9 +6,9 @@ namespace CodexPlugin
 {
     public class CodexDeployment
     {
-        public CodexDeployment(RunningContainer[] codexContainers, GethDeployment gethDeployment, CodexContractsDeployment codexContractsDeployment, RunningContainer? prometheusContainer, RunningContainer? discordBotContainer, DeploymentMetadata metadata)
+        public CodexDeployment(CodexInstance[] codexInstances, GethDeployment gethDeployment, CodexContractsDeployment codexContractsDeployment, RunningContainer? prometheusContainer, RunningContainer? discordBotContainer, DeploymentMetadata metadata)
         {
-            CodexContainers = codexContainers;
+            CodexInstances = codexInstances;
             GethDeployment = gethDeployment;
             CodexContractsDeployment = codexContractsDeployment;
             PrometheusContainer = prometheusContainer;
@@ -16,12 +16,24 @@ namespace CodexPlugin
             Metadata = metadata;
         }
 
-        public RunningContainer[] CodexContainers { get; }
+        public CodexInstance[] CodexInstances { get; }
         public GethDeployment GethDeployment { get; }
         public CodexContractsDeployment CodexContractsDeployment { get; }
         public RunningContainer? PrometheusContainer { get; }
         public RunningContainer? DiscordBotContainer { get; }
         public DeploymentMetadata Metadata { get; }
+    }
+
+    public class CodexInstance
+    {
+        public CodexInstance(RunningContainer container, CodexDebugResponse info)
+        {
+            Container = container;
+            Info = info;
+        }
+
+        public RunningContainer Container { get; }
+        public CodexDebugResponse Info { get; }
     }
 
     public class DeploymentMetadata

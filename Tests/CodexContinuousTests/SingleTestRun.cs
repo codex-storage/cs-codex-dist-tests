@@ -247,9 +247,9 @@ namespace ContinuousTests
         private RunningContainer[] SelectRandomContainers()
         {
             var number = handle.Test.RequiredNumberOfNodes;
-            if (number == -1) return config.CodexDeployment.CodexContainers;
+            var containers = config.CodexDeployment.CodexInstances.Select(i => i.Container).ToList();
+            if (number == -1) return containers.ToArray();
 
-            var containers = config.CodexDeployment.CodexContainers.ToList();
             var result = new RunningContainer[number];
             for (var i = 0; i < number; i++)
             {
