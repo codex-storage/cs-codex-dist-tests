@@ -14,7 +14,7 @@ namespace BiblioTech.Options
             var strData = context.Options.SingleOrDefault(o => o.Name == Name);
             if (strData == null)
             {
-                await context.Command.FollowupAsync("String option not received.");
+                await context.Followup("String option not received.");
                 return null;
             }
             return strData.Value as string;

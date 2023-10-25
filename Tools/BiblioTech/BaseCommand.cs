@@ -22,12 +22,13 @@ namespace BiblioTech
 
             try
             {
-                await command.RespondAsync(StartingMessage);
+                await command.RespondAsync(StartingMessage, ephemeral: true);
                 await Invoke(new CommandContext(command, command.Data.Options));
+                await command.DeleteOriginalResponseAsync();
             }
             catch (Exception ex)
             {
-                await command.FollowupAsync("Something failed while trying to do that...");
+                await command.FollowupAsync("Something failed while trying to do that...", ephemeral: true);
                 Console.WriteLine(ex);
             }
         }

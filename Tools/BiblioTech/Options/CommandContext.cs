@@ -12,5 +12,15 @@ namespace BiblioTech.Options
 
         public SocketSlashCommand Command { get; }
         public IReadOnlyCollection<SocketSlashCommandDataOption> Options { get; }
+
+        public async Task Followup(string message)
+        {
+            await Command.FollowupAsync(message, ephemeral: true);
+        }
+
+        public async Task AdminFollowup(string message)
+        {
+            await Command.FollowupAsync(message);
+        }
     }
 }

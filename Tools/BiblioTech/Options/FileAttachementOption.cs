@@ -14,13 +14,13 @@ namespace BiblioTech.Options
             var fileOptionData = context.Options.SingleOrDefault(o => o.Name == Name);
             if (fileOptionData == null)
             {
-                await context.Command.FollowupAsync("Attachement option not received.");
+                await context.Followup("Attachement option not received.");
                 return null;
             }
             var attachement = fileOptionData.Value as IAttachment;
             if (attachement == null)
             {
-                await context.Command.FollowupAsync("Attachement is null or empty.");
+                await context.Followup("Attachement is null or empty.");
                 return null;
             }
 

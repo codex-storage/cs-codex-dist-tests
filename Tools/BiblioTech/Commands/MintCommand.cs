@@ -31,7 +31,7 @@ namespace BiblioTech.Commands
             var addr = Program.UserRepo.GetCurrentAddressForUser(userId);
             if (addr == null)
             {
-                await context.Command.FollowupAsync($"No address has been set for this user. Please use '/{userAssociateCommand.Name}' to set it first.");
+                await context.Followup($"No address has been set for this user. Please use '/{userAssociateCommand.Name}' to set it first.");
                 return;
             }
 
@@ -42,7 +42,7 @@ namespace BiblioTech.Commands
 
             Program.UserRepo.AddMintEventForUser(userId, addr, sentEth, mintedTokens);
 
-            await context.Command.FollowupAsync(string.Join(Environment.NewLine, report));
+            await context.Followup(string.Join(Environment.NewLine, report));
         }
 
         private TestToken ProcessTokens(IGethNode gethNode, ICodexContracts contracts, EthAddress addr, List<string> report)

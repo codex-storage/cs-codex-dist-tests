@@ -29,14 +29,14 @@ namespace BiblioTech.Commands
             var addr = Program.UserRepo.GetCurrentAddressForUser(userId);
             if (addr == null)
             {
-                await context.Command.FollowupAsync($"No address has been set for this user. Please use '/{userAssociateCommand.Name}' to set it first.");
+                await context.Followup($"No address has been set for this user. Please use '/{userAssociateCommand.Name}' to set it first.");
                 return;
             }
 
             var eth = gethNode.GetEthBalance(addr);
             var testTokens = contracts.GetTestTokenBalance(gethNode, addr);
 
-            await context.Command.FollowupAsync($"{context.Command.User.Username} has {eth} and {testTokens}.");
+            await context.Followup($"{context.Command.User.Username} has {eth} and {testTokens}.");
         }
     }
 }

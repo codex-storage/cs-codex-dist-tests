@@ -21,12 +21,12 @@ namespace BiblioTech
             var deployments = monitor.GetDeployments();
             if (deployments.Length == 0)
             {
-                await context.Command.FollowupAsync("No deployments are currently available.");
+                await context.Followup("No deployments are currently available.");
                 return;
             }
             if (deployments.Length > 1) 
             {
-                await context.Command.FollowupAsync("Multiple deployments are online. I don't know which one to pick!");
+                await context.Followup("Multiple deployments are online. I don't know which one to pick!");
                 return;
             }
 

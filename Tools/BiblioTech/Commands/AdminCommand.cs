@@ -1,6 +1,5 @@
 ﻿using BiblioTech.Options;
 using CodexPlugin;
-using Discord.WebSocket;
 
 namespace BiblioTech.Commands
 {
@@ -38,13 +37,13 @@ namespace BiblioTech.Commands
         {
             if (!IsSenderAdmin(context.Command))
             {
-                await context.Command.FollowupAsync("You're not an admin.");
+                await context.Followup("You're not an admin.");
                 return;
             }
 
             if (!IsInAdminChannel(context.Command))
             {
-                await context.Command.FollowupAsync("Please use admin commands only in the admin channel.");
+                await context.Followup("Please use admin commands only in the admin channel.");
                 return;
             }
 
@@ -71,12 +70,12 @@ namespace BiblioTech.Commands
                 var userId = user.GetOptionUserId(context);
                 if (userId == null)
                 {
-                    await context.Command.FollowupAsync("Failed to get user ID");
+                    await context.AdminFollowup("Failed to get user ID");
                     return;
                 }
 
                 Program.UserRepo.ClearUserAssociatedAddress(userId.Value);
-                await context.Command.FollowupAsync("Done.");
+                await context.AdminFollowup("Done.");
             }
         }
 
@@ -98,12 +97,12 @@ namespace BiblioTech.Commands
                 var userId = user.GetOptionUserId(context);
                 if (userId == null)
                 {
-                    await context.Command.FollowupAsync("Failed to get user ID");
+                    await context.AdminFollowup("Failed to get user ID");
                     return;
                 }
 
                 var report = Program.UserRepo.GetInteractionReport(userId.Value);
-                await context.Command.FollowupAsync(string.Join(Environment.NewLine, report));
+                await context.AdminFollowup(string.Join(Environment.NewLine, report));
             }
         }
 
@@ -123,11 +122,11 @@ namespace BiblioTech.Commands
 
                 if (!deployments.Any())
                 {
-                    await context.Command.FollowupAsync("No deployments available.");
+                    await context.AdminFollowup("No deployments available.");
                     return;
                 }
 
-                await context.Command.FollowupAsync($"Deployments: {string.Join(", ", deployments.Select(FormatDeployment))}");
+                await context.AdminFollowup($"Deployments: {string.Join(", ", deployments.Select(FormatDeployment))}");
             }
 
             private string FormatDeployment(CodexDeployment deployment)
@@ -161,11 +160,11 @@ namespace BiblioTech.Commands
                 var result = await monitor.DownloadDeployment(file);
                 if (result)
                 {
-                    await context.Command.FollowupAsync("Success!");
+                    await context.AdminFollowup("Success!");
                 }
                 else
                 {
-                    await context.Command.FollowupAsync("That didn't work.");
+                    await context.AdminFollowup("That didn't work.");
                 }
             }
         }
@@ -194,11 +193,11 @@ namespace BiblioTech.Commands
                 var result = monitor.DeleteDeployment(str);
                 if (result)
                 {
-                    await context.Command.FollowupAsync("Success!");
+                    await context.AdminFollowup("Success!");
                 }
                 else
                 {
-                    await context.Command.FollowupAsync("That didn't work.");
+                    await context.AdminFollowup("That didn't work.");
                 }
             }
         }

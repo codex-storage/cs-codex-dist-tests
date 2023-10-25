@@ -18,13 +18,13 @@ namespace BiblioTech.Options
             var ethOptionData = context.Options.SingleOrDefault(o => o.Name == Name);
             if (ethOptionData == null)
             {
-                await context.Command.FollowupAsync("EthAddress option not received.");
+                await context.Followup("EthAddress option not received.");
                 return null;
             }
             var ethAddressStr = ethOptionData.Value as string;
             if (string.IsNullOrEmpty(ethAddressStr))
             {
-                await context.Command.FollowupAsync("EthAddress is null or empty.");
+                await context.Followup("EthAddress is null or empty.");
                 return null;
             }
 
@@ -32,7 +32,7 @@ namespace BiblioTech.Options
                 !AddressUtil.Current.IsValidEthereumAddressHexFormat(ethAddressStr))
                 // !AddressUtil.Current.IsChecksumAddress(ethAddressStr)) - this might make a good option later, but for now it might just annoy users.
             {
-                await context.Command.FollowupAsync("EthAddress is not valid.");
+                await context.Followup("EthAddress is not valid.");
                 return null;
             }
 

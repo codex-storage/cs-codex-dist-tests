@@ -23,7 +23,7 @@ namespace BiblioTech.Commands
             var currentAddress = Program.UserRepo.GetCurrentAddressForUser(userId);
             if (currentAddress != null && !IsSenderAdmin(context.Command))
             {
-                await context.Command.FollowupAsync($"You've already set your Ethereum address to {currentAddress}.");
+                await context.Followup($"You've already set your Ethereum address to {currentAddress}.");
                 return;
             }
 
@@ -32,11 +32,11 @@ namespace BiblioTech.Commands
             var result = Program.UserRepo.AssociateUserWithAddress(userId, data);
             if (result)
             {
-                await context.Command.FollowupAsync("Done! Thank you for joining the test net!");
+                await context.Followup("Done! Thank you for joining the test net!");
             }
             else
             {
-                await context.Command.FollowupAsync("That didn't work.");
+                await context.Followup("That didn't work.");
             }
         }
     }
