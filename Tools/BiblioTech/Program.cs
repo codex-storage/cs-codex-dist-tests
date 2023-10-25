@@ -45,16 +45,14 @@ namespace BiblioTech
                 retryDelay: TimeSpan.FromSeconds(10),
                 kubernetesNamespace: "not-applicable"), "datafiles");
 
-            var monitor = new DeploymentsFilesMonitor();
-
             var ci = entryPoint.CreateInterface();
 
             var associateCommand = new UserAssociateCommand();
             var handler = new CommandHandler(client,
-                new GetBalanceCommand(monitor, ci, associateCommand), 
-                new MintCommand(monitor, ci, associateCommand),
+                new GetBalanceCommand(ci, associateCommand), 
+                new MintCommand(ci, associateCommand),
                 associateCommand,
-                new AdminCommand(monitor)
+                new AdminCommand()
             );
 
             await client.LoginAsync(TokenType.Bot, Config.ApplicationToken);

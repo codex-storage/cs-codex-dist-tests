@@ -14,8 +14,8 @@ namespace BiblioTech.Commands
             isRequired: false);
         private readonly UserAssociateCommand userAssociateCommand;
 
-        public MintCommand(DeploymentsFilesMonitor monitor, CoreInterface ci, UserAssociateCommand userAssociateCommand)
-            : base(monitor, ci)
+        public MintCommand(CoreInterface ci, UserAssociateCommand userAssociateCommand)
+            : base(ci)
         {
             this.userAssociateCommand = userAssociateCommand;
         }
@@ -27,7 +27,7 @@ namespace BiblioTech.Commands
 
         protected override async Task Execute(CommandContext context, IGethNode gethNode, ICodexContracts contracts)
         {
-            var userId = GetUserId(optionalUser, context);
+            var userId = GetUserFromCommand(optionalUser, context);
             var addr = Program.UserRepo.GetCurrentAddressForUser(userId);
             if (addr == null)
             {

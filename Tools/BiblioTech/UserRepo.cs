@@ -1,6 +1,8 @@
 ﻿using CodexContractsPlugin;
+using Discord;
 using GethPlugin;
 using Newtonsoft.Json;
+using Utils;
 
 namespace BiblioTech
 {
@@ -8,70 +10,62 @@ namespace BiblioTech
     {
         private readonly object repoLock = new object();
 
-        public bool AssociateUserWithAddress(ulong discordId, EthAddress address)
+        public bool AssociateUserWithAddress(IUser user, EthAddress address)
         {
             lock (repoLock)
             {
-                return SetUserAddress(discordId, address);
+                return SetUserAddress(user, address);
             }
         }
 
-        public void ClearUserAssociatedAddress(ulong discordId)
+        public void ClearUserAssociatedAddress(IUser user)
         {
             lock (repoLock)
             {
-                SetUserAddress(discordId, null);
+                SetUserAddress(user, null);
             }
         }
 
-        public void AddMintEventForUser(ulong discordId, EthAddress usedAddress, Ether eth, TestToken tokens)
+        public void AddMintEventForUser(IUser user, EthAddress usedAddress, Ether eth, TestToken tokens)
         {
             lock (repoLock)
             {
-                var user = GetOrCreate(discordId);
-                user.MintEvents.Add(new UserMintEvent(DateTime.UtcNow, usedAddress, eth, tokens));
-                SaveUser(user);
+                var userData = GetOrCreate(user);
+                userData.MintEvents.Add(new UserMintEvent(DateTime.UtcNow, usedAddress, eth, tokens));
+                SaveUserData(userData);
             }
         }
 
-        public EthAddress? GetCurrentAddressForUser(ulong discordId)
+        public EthAddress? GetCurrentAddressForUser(IUser user)
         {
             lock (repoLock)
             {
-                return GetOrCreate(discordId).CurrentAddress;
+                return GetOrCreate(user).CurrentAddress;
             }
         }
 
-        public string[] GetInteractionReport(ulong discordId)
+        public string[] GetInteractionReport(IUser user)
         {
             var result = new List<string>();
 
             lock (repoLock)
             {
-                var filename = GetFilename(discordId);
-                if (!File.Exists(filename))
+                var userData = GetUserData(user);
+                if (userData == null)
                 {
                     result.Add("User has not joined the test net.");
                 }
                 else
                 {
-                    var user = JsonConvert.DeserializeObject<User>(File.ReadAllText(filename));
-                    if (user == null)
+                    result.Add("User joined on " + userData.CreatedUtc.ToString("o"));
+                    result.Add("Current address: " + userData.CurrentAddress);
+                    foreach (var ae in userData.AssociateEvents)
                     {
-                        result.Add("Failed to load user records.");
+                        result.Add($"{ae.Utc.ToString("o")} - Address set to: {ae.NewAddress}");
                     }
-                    else
+                    foreach (var me in userData.MintEvents)
                     {
-                        result.Add("User joined on " + user.CreatedUtc.ToString("o"));
-                        result.Add("Current address: " + user.CurrentAddress);
-                        foreach (var ae in user.AssociateEvents)
-                        {
-                            result.Add($"{ae.Utc.ToString("o")} - Address set to: {ae.NewAddress}");
-                        }
-                        foreach (var me in user.MintEvents)
-                        {
-                            result.Add($"{me.Utc.ToString("o")} - Minted {me.EthReceived} and {me.TestTokensMinted} to {me.UsedAddress}.");
-                        }
+                        result.Add($"{me.Utc.ToString("o")} - Minted {me.EthReceived} and {me.TestTokensMinted} to {me.UsedAddress}.");
                     }
                 }
             }
@@ -79,40 +73,64 @@ namespace BiblioTech
             return result.ToArray();
         }
 
-        private bool SetUserAddress(ulong discordId, EthAddress? address)
+        public string GetUserReport(IUser user)
         {
-            if (IsAddressUsed(address))
+            var userData = GetUserData(user);
+            if (userData == null) return "User has not joined the test net.";
+            return userData.CreateOverview();
+        }
+
+        public string GetUserReport(EthAddress ethAddress)
+        {
+            var userData = GetUserDataForAddress(ethAddress);
+            if (userData == null) return "No user is using this eth address.";
+            return userData.CreateOverview();
+        }
+
+        private bool SetUserAddress(IUser user, EthAddress? address)
+        {
+            if (GetUserDataForAddress(address) != null)
             {
                 return false;
             }
 
-            var user = GetOrCreate(discordId);
-            user.CurrentAddress = address;
-            user.AssociateEvents.Add(new UserAssociateAddressEvent(DateTime.UtcNow, address));
-            SaveUser(user);
+            var userData = GetOrCreate(user);
+            userData.CurrentAddress = address;
+            userData.AssociateEvents.Add(new UserAssociateAddressEvent(DateTime.UtcNow, address));
+            SaveUserData(userData);
             return true;
         }
 
-        private User GetOrCreate(ulong discordId)
+        private UserData? GetUserData(IUser user)
         {
-            var filename = GetFilename(discordId);
+            var filename = GetFilename(user);
             if (!File.Exists(filename))
             {
-                return CreateAndSaveNewUser(discordId);
+                return null;
             }
-            return JsonConvert.DeserializeObject<User>(File.ReadAllText(filename))!;
+            return JsonConvert.DeserializeObject<UserData>(File.ReadAllText(filename))!;
         }
 
-        private User CreateAndSaveNewUser(ulong discordId)
+        private UserData GetOrCreate(IUser user)
         {
-            var newUser = new User(discordId, DateTime.UtcNow, null, new List<UserAssociateAddressEvent>(), new List<UserMintEvent>());
-            SaveUser(newUser);
+            var userData = GetUserData(user);
+            if (userData == null)
+            {
+                return CreateAndSaveNewUserData(user);
+            }
+            return userData;
+        }
+
+        private UserData CreateAndSaveNewUserData(IUser user)
+        {
+            var newUser = new UserData(user.Id, user.GlobalName, DateTime.UtcNow, null, new List<UserAssociateAddressEvent>(), new List<UserMintEvent>());
+            SaveUserData(newUser);
             return newUser;
         }
 
-        private bool IsAddressUsed(EthAddress? address)
+        private UserData? GetUserDataForAddress(EthAddress? address)
         {
-            if (address == null) return false;
+            if (address == null) return null;
 
             // If this becomes a performance problem, switch to in-memory cached list.
             var files = Directory.GetFiles(Program.Config.UserDataPath);
@@ -120,24 +138,34 @@ namespace BiblioTech
             {
                 try
                 {
-                    var user = JsonConvert.DeserializeObject<User>(File.ReadAllText(file))!;
+                    var user = JsonConvert.DeserializeObject<UserData>(File.ReadAllText(file))!;
                     if (user.CurrentAddress != null &&
                         user.CurrentAddress.Address == address.Address)
                     {
-                        return true;
+                        return user;
                     }
                 }
                 catch { }
             }
 
-            return false;
+            return null;
         }
 
-        private void SaveUser(User user)
+        private void SaveUserData(UserData userData)
         {
-            var filename = GetFilename(user.DiscordId);
+            var filename = GetFilename(userData);
             if (File.Exists(filename)) File.Delete(filename);
-            File.WriteAllText(filename, JsonConvert.SerializeObject(user));
+            File.WriteAllText(filename, JsonConvert.SerializeObject(userData));
+        }
+
+        private static string GetFilename(IUser user)
+        {
+            return GetFilename(user.Id);
+        }
+
+        private static string GetFilename(UserData userData)
+        {
+            return GetFilename(userData.DiscordId);
         }
 
         private static string GetFilename(ulong discordId)
@@ -146,11 +174,12 @@ namespace BiblioTech
         }
     }
 
-    public class User
+    public class UserData
     {
-        public User(ulong discordId, DateTime createdUtc, EthAddress? currentAddress, List<UserAssociateAddressEvent> associateEvents, List<UserMintEvent> mintEvents)
+        public UserData(ulong discordId, string name, DateTime createdUtc, EthAddress? currentAddress, List<UserAssociateAddressEvent> associateEvents, List<UserMintEvent> mintEvents)
         {
             DiscordId = discordId;
+            Name = name;
             CreatedUtc = createdUtc;
             CurrentAddress = currentAddress;
             AssociateEvents = associateEvents;
@@ -158,10 +187,21 @@ namespace BiblioTech
         }
 
         public ulong DiscordId { get; }
+        public string Name { get; }
         public DateTime CreatedUtc { get; }
         public EthAddress? CurrentAddress { get; set; }
         public List<UserAssociateAddressEvent> AssociateEvents { get; }
         public List<UserMintEvent> MintEvents { get; }
+
+        public string CreateOverview()
+        {
+            var nl = Environment.NewLine;
+            return
+                $"name: '{Name}' - id:{DiscordId}{nl}" +
+                $"joined: {CreatedUtc.ToString("o")}{nl}" +
+                $"current address: {CurrentAddress}{nl}" +
+                $"{AssociateEvents.Count + MintEvents.Count} total bot events.";
+        }
     }
 
     public class UserAssociateAddressEvent

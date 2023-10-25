@@ -12,8 +12,8 @@ namespace BiblioTech.Commands
             description: "If set, get balance for another user. (Optional, admin-only)",
             isRequired: false);
 
-        public GetBalanceCommand(DeploymentsFilesMonitor monitor, CoreInterface ci, UserAssociateCommand userAssociateCommand)
-            : base(monitor, ci)
+        public GetBalanceCommand(CoreInterface ci, UserAssociateCommand userAssociateCommand)
+            : base(ci)
         {
             this.userAssociateCommand = userAssociateCommand;
         }
@@ -25,7 +25,7 @@ namespace BiblioTech.Commands
 
         protected override async Task Execute(CommandContext context, IGethNode gethNode, ICodexContracts contracts)
         {
-            var userId = GetUserId(optionalUser, context);
+            var userId = GetUserFromCommand(optionalUser, context);
             var addr = Program.UserRepo.GetCurrentAddressForUser(userId);
             if (addr == null)
             {

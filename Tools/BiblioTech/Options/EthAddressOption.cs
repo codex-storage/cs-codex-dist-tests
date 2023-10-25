@@ -5,11 +5,11 @@ namespace BiblioTech.Options
 {
     public class EthAddressOption : CommandOption
     {
-        public EthAddressOption()
+        public EthAddressOption(bool isRequired)
             : base(name: "ethaddress",
                   description: "Ethereum address starting with '0x'.",
                   type: Discord.ApplicationCommandOptionType.String,
-                  isRequired: true)
+                  isRequired)
         {
         }
 

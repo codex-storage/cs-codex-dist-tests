@@ -1,5 +1,6 @@
 ﻿using Discord.WebSocket;
 using BiblioTech.Options;
+using Discord;
 
 namespace BiblioTech
 {
@@ -45,11 +46,11 @@ namespace BiblioTech
             return Program.AdminChecker.IsAdminChannel(command.Channel);
         }
 
-        protected ulong GetUserId(UserOption userOption, CommandContext context)
+        protected IUser GetUserFromCommand(UserOption userOption, CommandContext context)
         {
-            var targetUser = userOption.GetOptionUserId(context);
-            if (IsSenderAdmin(context.Command) && targetUser != null) return targetUser.Value;
-            return context.Command.User.Id;
+            var targetUser = userOption.GetUser(context);
+            if (IsSenderAdmin(context.Command) && targetUser != null) return targetUser;
+            return context.Command.User;
         }
     }
 }

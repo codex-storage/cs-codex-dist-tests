@@ -9,13 +9,11 @@ namespace BiblioTech.Options
         {
         }
 
-        public ulong? GetOptionUserId(CommandContext context)
+        public IUser? GetUser(CommandContext context)
         {
             var userOptionData = context.Options.SingleOrDefault(o => o.Name == Name);
             if (userOptionData == null) return null;
-            var user = userOptionData.Value as IUser;
-            if (user == null) return null;
-            return user.Id;
+            return userOptionData.Value as IUser;
         }
     }
 }

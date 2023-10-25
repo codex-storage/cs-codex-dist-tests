@@ -7,18 +7,16 @@ namespace BiblioTech
 {
     public abstract class BaseNetCommand : BaseCommand
     {
-        private readonly DeploymentsFilesMonitor monitor;
         private readonly CoreInterface ci;
 
-        public BaseNetCommand(DeploymentsFilesMonitor monitor, CoreInterface ci)
+        public BaseNetCommand(CoreInterface ci)
         {
-            this.monitor = monitor;
             this.ci = ci;
         }
 
         protected override async Task Invoke(CommandContext context)
         {
-            var deployments = monitor.GetDeployments();
+            var deployments = Program.DeploymentFilesMonitor.GetDeployments();
             if (deployments.Length == 0)
             {
                 await context.Followup("No deployments are currently available.");

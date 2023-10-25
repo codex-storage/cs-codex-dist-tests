@@ -5,24 +5,16 @@ namespace BiblioTech.Commands
 {
     public class AdminCommand : BaseCommand
     {
-        private readonly ClearUserAssociationCommand clearCommand;
-        private readonly ReportCommand reportCommand;
-        private readonly DeployListCommand deployListCommand;
-        private readonly DeployUploadCommand deployUploadCommand;
-        private readonly DeployRemoveCommand deployRemoveCommand;
+        private readonly ClearUserAssociationCommand clearCommand = new ClearUserAssociationCommand();
+        private readonly ReportCommand reportCommand = new ReportCommand();
+        private readonly DeployListCommand deployListCommand = new DeployListCommand();
+        private readonly DeployUploadCommand deployUploadCommand = new DeployUploadCommand();
+        private readonly DeployRemoveCommand deployRemoveCommand = new DeployRemoveCommand();
+        private readonly WhoIsCommand whoIsCommand = new WhoIsCommand();
 
         public override string Name => "admin";
         public override string StartingMessage => "...";
         public override string Description => "Admins only.";
-
-        public AdminCommand(DeploymentsFilesMonitor monitor)
-        {
-            clearCommand = new ClearUserAssociationCommand();
-            reportCommand = new ReportCommand();
-            deployListCommand = new DeployListCommand(monitor);
-            deployUploadCommand = new DeployUploadCommand(monitor);
-            deployRemoveCommand = new DeployRemoveCommand(monitor);
-        }
 
         public override CommandOption[] Options => new CommandOption[]
         {
@@ -30,7 +22,8 @@ namespace BiblioTech.Commands
             reportCommand,
             deployListCommand,
             deployUploadCommand,
-            deployRemoveCommand
+            deployRemoveCommand,
+            whoIsCommand,
         };
 
         protected override async Task Invoke(CommandContext context)
@@ -52,36 +45,37 @@ namespace BiblioTech.Commands
             await deployListCommand.CommandHandler(context);
             await deployUploadCommand.CommandHandler(context);
             await deployRemoveCommand.CommandHandler(context);
+            await whoIsCommand.CommandHandler(context);
         }
 
         public class ClearUserAssociationCommand : SubCommandOption
         {
-            private readonly UserOption user = new UserOption("User to clear Eth address for.", true);
+            private readonly UserOption userOption = new UserOption("User to clear Eth address for.", true);
 
             public ClearUserAssociationCommand()
                 : base("clear", "Admin only. Clears current Eth address for a user, allowing them to set a new one.")
             {
             }
 
-            public override CommandOption[] Options => new[] { user };
+            public override CommandOption[] Options => new[] { userOption };
 
             protected override async Task onSubCommand(CommandContext context)
             {
-                var userId = user.GetOptionUserId(context);
-                if (userId == null)
+                var user = userOption.GetUser(context);
+                if (user == null)
                 {
                     await context.AdminFollowup("Failed to get user ID");
                     return;
                 }
 
-                Program.UserRepo.ClearUserAssociatedAddress(userId.Value);
+                Program.UserRepo.ClearUserAssociatedAddress(user);
                 await context.AdminFollowup("Done.");
             }
         }
 
         public class ReportCommand : SubCommandOption
         {
-            private readonly UserOption user = new UserOption(
+            private readonly UserOption userOption = new UserOption(
                 description: "User to report history for.",
                 isRequired: true);
 
@@ -90,35 +84,32 @@ namespace BiblioTech.Commands
             {
             }
 
-            public override CommandOption[] Options => new[] { user };
+            public override CommandOption[] Options => new[] { userOption };
 
             protected override async Task onSubCommand(CommandContext context)
             {
-                var userId = user.GetOptionUserId(context);
-                if (userId == null)
+                var user = userOption.GetUser(context);
+                if (user == null)
                 {
                     await context.AdminFollowup("Failed to get user ID");
                     return;
                 }
 
-                var report = Program.UserRepo.GetInteractionReport(userId.Value);
+                var report = Program.UserRepo.GetInteractionReport(user);
                 await context.AdminFollowup(string.Join(Environment.NewLine, report));
             }
         }
 
         public class DeployListCommand : SubCommandOption
         {
-            private readonly DeploymentsFilesMonitor monitor;
-
-            public DeployListCommand(DeploymentsFilesMonitor monitor)
+            public DeployListCommand()
                 : base("list", "Lists current deployments.")
             {
-                this.monitor = monitor;
             }
 
             protected override async Task onSubCommand(CommandContext context)
             {
-                var deployments = monitor.GetDeployments();
+                var deployments = Program.DeploymentFilesMonitor.GetDeployments();
 
                 if (!deployments.Any())
                 {
@@ -138,16 +129,14 @@ namespace BiblioTech.Commands
 
         public class DeployUploadCommand : SubCommandOption
         {
-            private readonly DeploymentsFilesMonitor monitor;
             private readonly FileAttachementOption fileOption = new FileAttachementOption(
                 name: "json",
                 description: "Codex-deployment json to add.",
                 isRequired: true);
 
-            public DeployUploadCommand(DeploymentsFilesMonitor monitor)
+            public DeployUploadCommand()
                 : base("add", "Upload a new deployment JSON file.")
             {
-                this.monitor = monitor;
             }
 
             public override CommandOption[] Options => new[] { fileOption };
@@ -157,7 +146,7 @@ namespace BiblioTech.Commands
                 var file = await fileOption.Parse(context);
                 if (file == null) return;
 
-                var result = await monitor.DownloadDeployment(file);
+                var result = await Program.DeploymentFilesMonitor.DownloadDeployment(file);
                 if (result)
                 {
                     await context.AdminFollowup("Success!");
@@ -171,16 +160,14 @@ namespace BiblioTech.Commands
 
         public class DeployRemoveCommand : SubCommandOption
         {
-            private readonly DeploymentsFilesMonitor monitor;
             private readonly StringOption stringOption = new StringOption(
                 name: "name",
                 description: "Name of deployment to remove.",
                 isRequired: true);
 
-            public DeployRemoveCommand(DeploymentsFilesMonitor monitor)
+            public DeployRemoveCommand()
                 : base("remove", "Removes a deployment file.")
             {
-                this.monitor = monitor;
             }
 
             public override CommandOption[] Options => new[] { stringOption };
@@ -190,7 +177,7 @@ namespace BiblioTech.Commands
                 var str = await stringOption.Parse(context);
                 if (string.IsNullOrEmpty(str)) return;
 
-                var result = monitor.DeleteDeployment(str);
+                var result = Program.DeploymentFilesMonitor.DeleteDeployment(str);
                 if (result)
                 {
                     await context.AdminFollowup("Success!");
@@ -198,6 +185,39 @@ namespace BiblioTech.Commands
                 else
                 {
                     await context.AdminFollowup("That didn't work.");
+                }
+            }
+        }
+
+        public class WhoIsCommand : SubCommandOption
+        {
+            private readonly UserOption userOption = new UserOption("User", isRequired: false);
+            private readonly EthAddressOption ethAddressOption = new EthAddressOption(isRequired: false);
+
+            public WhoIsCommand()
+                : base(name: "whois",
+                      description: "Fetches info about a user or ethAddress in the testnet.")
+            {
+            }
+
+            public override CommandOption[] Options => new CommandOption[]
+            {
+                userOption,
+                ethAddressOption
+            };
+
+            protected override async Task onSubCommand(CommandContext context)
+            {
+                var user = userOption.GetUser(context);
+                var ethAddr = await ethAddressOption.Parse(context);
+
+                if (user != null)
+                {
+                    await context.AdminFollowup(Program.UserRepo.GetUserReport(user));
+                }
+                if (ethAddr != null)
+                {
+                    await context.AdminFollowup(Program.UserRepo.GetUserReport(ethAddr));
                 }
             }
         }

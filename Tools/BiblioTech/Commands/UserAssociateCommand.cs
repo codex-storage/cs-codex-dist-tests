@@ -4,7 +4,7 @@ namespace BiblioTech.Commands
 {
     public class UserAssociateCommand : BaseCommand
     {
-        private readonly EthAddressOption ethOption = new EthAddressOption();
+        private readonly EthAddressOption ethOption = new EthAddressOption(isRequired: false);
         private readonly UserOption optionalUser = new UserOption(
             description: "If set, associates Ethereum address for another user. (Optional, admin-only)",
             isRequired: false);
@@ -16,11 +16,11 @@ namespace BiblioTech.Commands
 
         protected override async Task Invoke(CommandContext context)
         {
-            var userId = GetUserId(optionalUser, context);
+            var user = GetUserFromCommand(optionalUser, context);
             var data = await ethOption.Parse(context);
             if (data == null) return;
 
-            var currentAddress = Program.UserRepo.GetCurrentAddressForUser(userId);
+            var currentAddress = Program.UserRepo.GetCurrentAddressForUser(user);
             if (currentAddress != null && !IsSenderAdmin(context.Command))
             {
                 await context.Followup($"You've already set your Ethereum address to {currentAddress}.");
@@ -29,7 +29,7 @@ namespace BiblioTech.Commands
 
             // private commands
 
-            var result = Program.UserRepo.AssociateUserWithAddress(userId, data);
+            var result = Program.UserRepo.AssociateUserWithAddress(user, data);
             if (result)
             {
                 await context.Followup("Done! Thank you for joining the test net!");
