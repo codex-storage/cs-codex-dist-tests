@@ -31,7 +31,8 @@ public class Program
             if (config.IsPublicTestNet) Console.WriteLine("Deployment is configured as public testnet.");
             Console.WriteLine("Does the above config look good? [y/n]");
             if (Console.ReadLine()!.ToLowerInvariant() != "y") return;
-            Console.WriteLine("I think so too.");
+            if (config.IsPublicTestNet) Console.WriteLine("You better be right about that, cause it's going live right now.");
+            else Console.WriteLine("I think so too.");
         }
 
         var deployment = deployer.Deploy();
