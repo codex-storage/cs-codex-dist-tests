@@ -20,4 +20,9 @@ dotnet run \
     --public-discports=20010,20020,20030 \
     --public-listenports=20011,20021,20031 \
     --public-gethip=1.2.3.5 \
-    --public-gethdiscport=20040
+    --public-gethdiscport=20040 \
+\
+    --discord-bot=1 \
+    --dbot-token=tokenhere \
+    --dbot-servername=namehere \
+    --dbot-adminrolename=alsonamehere
