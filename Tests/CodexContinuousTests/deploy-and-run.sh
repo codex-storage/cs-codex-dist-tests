@@ -38,7 +38,7 @@ do
     screen -d -m dotnet run \
     --kube-config=/opt/kubeconfig.yaml \
     --codex-deployment=codex-deployment-$name-$i.json \
-    --log-path=logs-$name-$i \
+    --log-path=/var/log/codex-continuous-tests/logs-$name-$i \
     --data-path=data-$name-$i \
     --keep=1 \
     --stop=1 \
