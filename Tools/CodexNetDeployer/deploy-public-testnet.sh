@@ -26,4 +26,5 @@ dotnet run \
     --dbot-token=tokenhere \
     --dbot-servername=namehere \
     --dbot-adminrolename=alsonamehere \
-    --dbot-adminchannelname=channelname
+    --dbot-adminchannelname=channelname \
+    --dbot-datapath=/var/botdata

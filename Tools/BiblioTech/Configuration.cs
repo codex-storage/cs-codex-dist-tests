@@ -10,16 +10,29 @@ namespace BiblioTech
         [Uniform("server-name", "sn", "SERVERNAME", true, "Name of the Discord server")]
         public string ServerName { get; set; } = string.Empty;
 
-        [Uniform("endpoints", "e", "ENDPOINTS", false, "Path where endpoint JSONs are located. Also accepts codex-deployment JSONs.")]
-        public string EndpointsPath { get; set; } = "endpoints";
-
-        [Uniform("userdata", "u", "USERDATA", false, "Path where user data files will be saved.")]
-        public string UserDataPath { get; set; } = "userdata";
-
+        [Uniform("datapath", "dp", "DATAPATH", false, "Root path where all data files will be saved.")]
+        public string DataPath { get; set; } = "datapath";
+        
         [Uniform("admin-role", "a", "ADMINROLE", true, "Name of the Discord server admin role")]
         public string AdminRoleName { get; set; } = string.Empty;
 
         [Uniform("admin-channel-name", "ac", "ADMINCHANNELNAME", true, "Name of the Discord server channel where admin commands are allowed.")]
         public string AdminChannelName { get; set; } = "admin-channel";
+
+        public string EndpointsPath
+        {
+            get
+            {
+                return Path.Combine(DataPath, "endpoints");
+            }
+        }
+
+        public string UserDataPath
+        {
+            get
+            {
+                return Path.Combine(DataPath, "users");
+            }
+        }
     }
 }

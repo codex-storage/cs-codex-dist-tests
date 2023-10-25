@@ -21,10 +21,9 @@ namespace BiblioTech
             var uniformArgs = new ArgsUniform<Configuration>(PrintHelp, args);
             Config = uniformArgs.Parse();
 
-            if (!Directory.Exists(Config.UserDataPath))
-            {
-                Directory.CreateDirectory(Config.UserDataPath);
-            }
+            EnsurePath(Config.DataPath);
+            EnsurePath(Config.UserDataPath);
+            EnsurePath(Config.EndpointsPath);
 
             return new Program().MainAsync();
         }
@@ -70,6 +69,12 @@ namespace BiblioTech
         {
             Console.WriteLine(msg.ToString());
             return Task.CompletedTask;
+        }
+
+        private static void EnsurePath(string path)
+        {
+            if (Directory.Exists(path)) return;
+            Directory.CreateDirectory(path);
         }
     }
 }

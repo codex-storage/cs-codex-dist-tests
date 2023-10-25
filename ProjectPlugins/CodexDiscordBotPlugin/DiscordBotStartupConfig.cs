@@ -16,5 +16,6 @@
         public string ServerName { get; }
         public string AdminRoleName { get; }
         public string AdminChannelName { get; }
+        public string? DataPath { get; set; }
     }
 }

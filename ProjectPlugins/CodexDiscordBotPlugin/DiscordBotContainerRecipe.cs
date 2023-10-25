@@ -1,4 +1,5 @@
 ﻿using KubernetesWorkflow;
+using Utils;
 
 namespace CodexDiscordBotPlugin
 {
@@ -15,6 +16,12 @@ namespace CodexDiscordBotPlugin
             AddEnvVar("SERVERNAME", config.ServerName);
             AddEnvVar("ADMINROLE", config.AdminRoleName);
             AddEnvVar("ADMINCHANNELNAME", config.AdminChannelName);
+
+            if (config.DataPath != null)
+            {
+                AddEnvVar("DATAPATH", config.DataPath);
+                AddVolume(config.DataPath, 1.GB());
+            }
         }
     }
 }
