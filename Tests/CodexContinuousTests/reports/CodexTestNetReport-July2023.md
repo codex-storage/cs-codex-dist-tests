@@ -11,7 +11,7 @@ Report for: 07-2023
 (Faulted: Tests fail with such frequency that the information gathered does not justify the cost of leaving the test-net running.)
 
 ## Deployment Configuration
-Continous Test-net is deployed to the kubernetes cluster with the following configuration:
+Continuous Test-net is deployed to the kubernetes cluster with the following configuration:
 
 5x Codex Nodes:
 - Log-level: Trace

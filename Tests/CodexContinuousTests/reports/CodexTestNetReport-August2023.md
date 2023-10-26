@@ -13,7 +13,7 @@ Report for: 08-2023
 (Stopped: The number of tests that can successfully run on the test-net is not high enough to justify the cost of leaving it running.)
 
 ## Deployment Configuration
-Continous Test-net is deployed to the kubernetes cluster with the following configuration:
+Continuous Test-net is deployed to the kubernetes cluster with the following configuration:
 
 5x Codex Nodes:
 - Log-level: Trace

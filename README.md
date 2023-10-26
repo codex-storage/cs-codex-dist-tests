@@ -12,7 +12,7 @@ Nethereum: v4.14.0
 These are test assemblies that use NUnit3 to perform tests against transient Codex nodes.
 Read more [HERE](/Tests/CodexTests/README.md)
 
-## Tests/ContinousTests
+## Tests/ContinuousTests
 A console application that runs tests in an endless loop against a persistent deployment of Codex nodes.
 Read more [HERE](/Tests/CodexContinuousTests/README.md)
 
