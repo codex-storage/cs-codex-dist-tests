@@ -44,6 +44,7 @@ namespace CodexPlugin
             if (config.PublicTestNet != null)
             {
                 AddEnvVar("CODEX_NAT", config.PublicTestNet.PublicNatIP);
+                AddEnvVar("NAT_IP_AUTO", "false");
             }
             else
             {
