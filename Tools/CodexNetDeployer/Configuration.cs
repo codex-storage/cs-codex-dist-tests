@@ -101,6 +101,9 @@ namespace CodexNetDeployer
         [Uniform("public-gethdiscport", "pgdp", "PUBLICGETHDISCPORT", false, "Required if public-testnet is true. Single port number used for Geth's public discovery port.")]
         public int PublicGethDiscPort { get; set; }
 
+        [Uniform("public-gethlistenport", "pglp", "PUBLICGETHLISTENPORT", false, "Required if public-testnet is true. Single port number used for Geth's public listen port.")]
+        public int PublicGethListenPort { get; set; }
+
         [Uniform("discord-bot", "dbot", "DISCORDBOT", false, "If true, will deploy discord bot. Default is false.")]
         public bool DeployDiscordBot { get; set; } = false;
 
@@ -151,6 +154,7 @@ namespace CodexNetDeployer
                 if (PublicDiscPorts.Split(",").Length != NumberOfCodexNodes) errors.Add("Number of public discovery-ports provided does not match number of codex nodes.");
                 if (PublicListenPorts.Split(",").Length != NumberOfCodexNodes) errors.Add("Number of public listen-ports provided does not match number of codex nodes.");
                 if (PublicGethDiscPort == 0) errors.Add("Geth public discovery port is not set.");
+                if (PublicGethListenPort == 0) errors.Add("Geth public listen port is not set.");
             }
 
             if (DeployDiscordBot)

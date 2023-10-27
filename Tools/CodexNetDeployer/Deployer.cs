@@ -114,7 +114,8 @@ namespace CodexNetDeployer
                 {
                     s.AsPublicTestNet(new GethTestNetConfig(
                         publicIp: config.PublicGethIP,
-                        discoveryPort: config.PublicGethDiscPort
+                        discoveryPort: config.PublicGethDiscPort,
+                        listenPort: config.PublicGethListenPort
                     ));
                 }
             });

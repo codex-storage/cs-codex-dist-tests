@@ -42,14 +42,16 @@
 
     public class GethTestNetConfig
     {
-        public GethTestNetConfig(string publicIp, int discoveryPort)
+        public GethTestNetConfig(string publicIp, int discoveryPort, int listenPort)
         {
             PublicIp = publicIp;
             DiscoveryPort = discoveryPort;
+            ListenPort = listenPort;
         }
 
         public string PublicIp { get; }
         public int DiscoveryPort { get; }
+        public int ListenPort { get; }
     }
 
     public class GethBootstrapNode

@@ -31,7 +31,10 @@ namespace CodexContractsPlugin
 
             try
             {
-                return DeployContract(container, workflow, gethNode);
+                var result = DeployContract(container, workflow, gethNode);
+                workflow.Stop(containers);
+                Log("Container stopped.");
+                return result;
             }
             catch (Exception ex)
             {

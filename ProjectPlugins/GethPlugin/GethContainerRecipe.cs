@@ -9,6 +9,7 @@ namespace GethPlugin
 
         public const string HttpPortTag = "http_port";
         public const string DiscoveryPortTag = "disc_port";
+        public const string ListenPortTag = "listen_port";
         public const string WsPortTag = "ws_port";
         public const string AuthRpcPortTag = "auth_rpc_port";
         public const string AccountsFilename = "accounts.csv";
@@ -32,10 +33,11 @@ namespace GethPlugin
 
             var httpPort = CreateApiPort(config, tag: HttpPortTag);
             var discovery = CreateDiscoveryPort(config);
+            var listen = CreateListenPort(config);
             var authRpc = CreateP2pPort(config, tag: AuthRpcPortTag);
             var wsPort = CreateP2pPort(config, tag: WsPortTag);
 
-            var args = $"--http.addr 0.0.0.0 --http.port {httpPort.Number} --port {discovery.Number} --discovery.port {discovery.Number} {GetTestNetArgs(config)} {defaultArgs}";
+            var args = $"--http.addr 0.0.0.0 --http.port {httpPort.Number} --port {listen.Number} --discovery.port {discovery.Number} {GetTestNetArgs(config)} {defaultArgs}";
 
             if (config.BootstrapNode != null)
             {
@@ -71,6 +73,13 @@ namespace GethPlugin
             if (config.IsPublicTestNet == null) return AddInternalPort(DiscoveryPortTag);
 
             return AddExposedPort(config.IsPublicTestNet.DiscoveryPort, DiscoveryPortTag, PortProtocol.UDP);
+        }
+
+        private Port CreateListenPort(GethStartupConfig config)
+        {
+            if (config.IsPublicTestNet == null) return AddInternalPort(ListenPortTag);
+
+            return AddExposedPort(config.IsPublicTestNet.ListenPort, ListenPortTag);
         }
 
         private Port CreateP2pPort(GethStartupConfig config, string tag)
