@@ -155,6 +155,11 @@ namespace CodexNetDeployer
 
         private CodexInstance[] CreateCodexInstances(List<CodexNodeStartResult> startResults)
         {
+            // When freshly started, the Codex nodes are announcing themselves by an incorrect IP address.
+            // Only after fully initialized do they update to the provided NAT address.
+            // Therefore, we wait:
+            Thread.Sleep(TimeSpan.FromSeconds(5));
+
             return startResults.Select(r => CreateCodexInstance(r.CodexNode)).ToArray();
         }
 
