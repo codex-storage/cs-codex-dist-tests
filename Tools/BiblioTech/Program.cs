@@ -51,7 +51,7 @@ namespace BiblioTech
                 new GetBalanceCommand(ci, associateCommand), 
                 new MintCommand(ci, associateCommand),
                 associateCommand,
-                new AdminCommand()
+                new AdminCommand(ci)
             );
 
             await client.LoginAsync(TokenType.Bot, Config.ApplicationToken);

@@ -1,5 +1,7 @@
 ﻿using BiblioTech.Options;
 using CodexPlugin;
+using Core;
+using Newtonsoft.Json;
 
 namespace BiblioTech.Commands
 {
@@ -11,6 +13,12 @@ namespace BiblioTech.Commands
         private readonly DeployUploadCommand deployUploadCommand = new DeployUploadCommand();
         private readonly DeployRemoveCommand deployRemoveCommand = new DeployRemoveCommand();
         private readonly WhoIsCommand whoIsCommand = new WhoIsCommand();
+        private readonly NetInfoCommand netInfoCommand;
+
+        public AdminCommand(CoreInterface ci)
+        {
+            netInfoCommand = new NetInfoCommand(ci);
+        }
 
         public override string Name => "admin";
         public override string StartingMessage => "...";
@@ -24,6 +32,7 @@ namespace BiblioTech.Commands
             deployUploadCommand,
             deployRemoveCommand,
             whoIsCommand,
+            netInfoCommand
         };
 
         protected override async Task Invoke(CommandContext context)
@@ -218,6 +227,50 @@ namespace BiblioTech.Commands
                 if (ethAddr != null)
                 {
                     await context.AdminFollowup(Program.UserRepo.GetUserReport(ethAddr));
+                }
+            }
+        }
+
+        public class NetInfoCommand : SubCommandOption
+        {
+            private readonly CoreInterface ci;
+
+            public NetInfoCommand(CoreInterface ci)
+                : base(name: "netinfo",
+                      description: "Fetches info endpoints of codex nodes.")
+            {
+                this.ci = ci;
+            }
+
+            protected override async Task onSubCommand(CommandContext context)
+            {
+                var deployment = Program.DeploymentFilesMonitor.GetDeployments().SingleOrDefault();
+                if (deployment == null)
+                {
+                    await context.AdminFollowup("No deployment found.");
+                    return;
+                }
+
+                try
+                {
+                    var group = ci.WrapCodexContainers(deployment.CodexInstances.Select(i => i.Container).ToArray());
+                    foreach (var node in group)
+                    {
+                        try
+                        {
+                            var info = node.GetDebugInfo();
+                            var json = JsonConvert.SerializeObject(info);
+                            await context.AdminFollowup($"Node '{node.GetName()}' responded with '{json}'");
+                        }
+                        catch (Exception ex)
+                        {
+                            await context.AdminFollowup($"Node '{node.GetName()}' failed to respond with exception: " + ex);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    await context.AdminFollowup("Failed to wrap nodes with exception: " + ex);
                 }
             }
         }
