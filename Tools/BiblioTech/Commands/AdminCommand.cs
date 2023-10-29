@@ -14,10 +14,12 @@ namespace BiblioTech.Commands
         private readonly DeployRemoveCommand deployRemoveCommand = new DeployRemoveCommand();
         private readonly WhoIsCommand whoIsCommand = new WhoIsCommand();
         private readonly NetInfoCommand netInfoCommand;
+        private readonly DebugPeerCommand debugPeerCommand;
 
         public AdminCommand(CoreInterface ci)
         {
             netInfoCommand = new NetInfoCommand(ci);
+            debugPeerCommand = new DebugPeerCommand(ci);
         }
 
         public override string Name => "admin";
@@ -32,7 +34,8 @@ namespace BiblioTech.Commands
             deployUploadCommand,
             deployRemoveCommand,
             whoIsCommand,
-            netInfoCommand
+            netInfoCommand,
+            debugPeerCommand
         };
 
         protected override async Task Invoke(CommandContext context)
@@ -56,6 +59,7 @@ namespace BiblioTech.Commands
             await deployRemoveCommand.CommandHandler(context);
             await whoIsCommand.CommandHandler(context);
             await netInfoCommand.CommandHandler(context);
+            await debugPeerCommand.CommandHandler(context);
         }
 
         public class ClearUserAssociationCommand : SubCommandOption
@@ -232,18 +236,17 @@ namespace BiblioTech.Commands
             }
         }
 
-        public class NetInfoCommand : SubCommandOption
+        public abstract class AdminDeploymentCommand : SubCommandOption
         {
             private readonly CoreInterface ci;
 
-            public NetInfoCommand(CoreInterface ci)
-                : base(name: "netinfo",
-                      description: "Fetches info endpoints of codex nodes.")
+            public AdminDeploymentCommand(CoreInterface ci, string name, string description)
+                : base(name, description)
             {
                 this.ci = ci;
             }
 
-            protected override async Task onSubCommand(CommandContext context)
+            protected async Task OnDeployment(CommandContext context, Func<ICodexNodeGroup, Task> action)
             {
                 var deployment = Program.DeploymentFilesMonitor.GetDeployments().SingleOrDefault();
                 if (deployment == null)
@@ -255,6 +258,27 @@ namespace BiblioTech.Commands
                 try
                 {
                     var group = ci.WrapCodexContainers(deployment.CodexInstances.Select(i => i.Container).ToArray());
+                    await action(group);
+                }
+                catch (Exception ex)
+                {
+                    await context.AdminFollowup("Failed to wrap nodes with exception: " + ex);
+                }
+            }
+        }
+
+        public class NetInfoCommand : AdminDeploymentCommand
+        {
+            public NetInfoCommand(CoreInterface ci)
+                : base(ci, name: "netinfo",
+                      description: "Fetches info endpoints of codex nodes.")
+            {
+            }
+
+            protected override async Task onSubCommand(CommandContext context)
+            {
+                await OnDeployment(context, async group =>
+                {
                     await context.AdminFollowup($"{group.Count()} Codex nodes.");
                     foreach (var node in group)
                     {
@@ -271,11 +295,46 @@ namespace BiblioTech.Commands
                             await context.AdminFollowup($"Node '{node.GetName()}' failed to respond with exception: " + ex);
                         }
                     }
-                }
-                catch (Exception ex)
+                });
+            }
+        }
+
+        public class DebugPeerCommand : AdminDeploymentCommand
+        {
+            private readonly StringOption peerIdOption = new StringOption("peerid", "id of peer to try and reach.", true);
+
+            public DebugPeerCommand(CoreInterface ci)
+                : base(ci, name: "debugpeer",
+                      description: "Calls debug/peer on each codex node.")
+            {
+            }
+
+            public override CommandOption[] Options => new[] { peerIdOption };
+
+            protected override async Task onSubCommand(CommandContext context)
+            {
+                var peerId = await peerIdOption.Parse(context);
+                if (string.IsNullOrEmpty(peerId)) return;
+
+                await OnDeployment(context, async group =>
                 {
-                    await context.AdminFollowup("Failed to wrap nodes with exception: " + ex);
-                }
+                    await context.AdminFollowup($"Calling debug/peer for '{peerId}' on {group.Count()} Codex nodes.");
+                    foreach (var node in group)
+                    {
+                        try
+                        {
+                            var info = node.GetDebugPeer(peerId);
+                            var nl = Environment.NewLine;
+                            var json = JsonConvert.SerializeObject(info, Formatting.Indented);
+                            var jsonInsert = $"{nl}```{nl}{json}{nl}```{nl}";
+                            await context.AdminFollowup($"Node '{node.GetName()}' responded with {jsonInsert}");
+                        }
+                        catch (Exception ex)
+                        {
+                            await context.AdminFollowup($"Node '{node.GetName()}' failed to respond with exception: " + ex);
+                        }
+                    }
+                });
             }
         }
     }
