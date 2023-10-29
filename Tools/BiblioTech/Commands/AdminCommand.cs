@@ -261,8 +261,10 @@ namespace BiblioTech.Commands
                         try
                         {
                             var info = node.GetDebugInfo();
-                            var json = JsonConvert.SerializeObject(info);
-                            await context.AdminFollowup($"Node '{node.GetName()}' responded with '{json}'");
+                            var nl = Environment.NewLine;
+                            var json = JsonConvert.SerializeObject(info, Formatting.Indented);
+                            var jsonInsert = $"{nl}```{nl}{json}{nl}```{nl}";
+                            await context.AdminFollowup($"Node '{node.GetName()}' responded with {jsonInsert}");
                         }
                         catch (Exception ex)
                         {
