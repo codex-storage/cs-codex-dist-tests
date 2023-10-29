@@ -55,6 +55,7 @@ namespace BiblioTech.Commands
             await deployUploadCommand.CommandHandler(context);
             await deployRemoveCommand.CommandHandler(context);
             await whoIsCommand.CommandHandler(context);
+            await netInfoCommand.CommandHandler(context);
         }
 
         public class ClearUserAssociationCommand : SubCommandOption
@@ -254,6 +255,7 @@ namespace BiblioTech.Commands
                 try
                 {
                     var group = ci.WrapCodexContainers(deployment.CodexInstances.Select(i => i.Container).ToArray());
+                    await context.AdminFollowup($"{group.Count()} Codex nodes.");
                     foreach (var node in group)
                     {
                         try
