@@ -52,7 +52,7 @@ namespace CodexPlugin
             foreach (var node in result)
             {
                 mconfig.GethNode.SendEth(node, mconfig.InitialEth);
-                mconfig.CodexContracts.MintTestTokens(mconfig.GethNode, node, mconfig.InitialTokens);
+                mconfig.CodexContracts.MintTestTokens(node, mconfig.InitialTokens);
             }
         }
 

@@ -77,9 +77,9 @@ namespace CodexTests
             return onlineCodexNodes;
         }
 
-        public void AssertBalance(IGethNode gethNode, ICodexContracts contracts, ICodexNode codexNode, Constraint constraint, string msg = "")
+        public void AssertBalance(ICodexContracts contracts, ICodexNode codexNode, Constraint constraint, string msg = "")
         {
-            AssertHelpers.RetryAssert(constraint, () => contracts.GetTestTokenBalance(gethNode, codexNode), nameof(AssertBalance) + msg);
+            AssertHelpers.RetryAssert(constraint, () => contracts.GetTestTokenBalance(codexNode), nameof(AssertBalance) + msg);
         }
 
         protected virtual void OnCodexSetup(ICodexSetup setup)

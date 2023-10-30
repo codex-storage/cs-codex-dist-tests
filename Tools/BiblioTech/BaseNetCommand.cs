@@ -33,7 +33,7 @@ namespace BiblioTech
             var contractsDeployment = codexDeployment.CodexContractsDeployment;
 
             var gethNode = ci.WrapGethDeployment(gethDeployment);
-            var contracts = ci.WrapCodexContractsDeployment(contractsDeployment);
+            var contracts = ci.WrapCodexContractsDeployment(gethNode, contractsDeployment);
 
             await Execute(context, gethNode, contracts);
         }

@@ -60,7 +60,7 @@ namespace CodexTests.BasicTests
                 .EnableMarketplace(geth, contracts, initialEth: 10.Eth(), initialTokens: sellerInitialBalance, isValidator: true)
                 .WithSimulateProofFailures(failEveryNProofs: 3));
 
-            AssertBalance(geth, contracts, seller, Is.EqualTo(sellerInitialBalance));
+            AssertBalance(contracts, seller, Is.EqualTo(sellerInitialBalance));
             seller.Marketplace.MakeStorageAvailable(
                 size: 10.GB(),
                 minPriceForTotalSpace: 1.TestTokens(),
@@ -73,7 +73,7 @@ namespace CodexTests.BasicTests
                             .WithBootstrapNode(seller)
                             .EnableMarketplace(geth, contracts, initialEth: 10.Eth(), initialTokens: buyerInitialBalance));
 
-            AssertBalance(geth, contracts, buyer, Is.EqualTo(buyerInitialBalance));
+            AssertBalance(contracts, buyer, Is.EqualTo(buyerInitialBalance));
 
             var contentId = buyer.UploadFile(testFile);
             var purchaseContract = buyer.Marketplace.RequestStorage(contentId,
@@ -85,12 +85,12 @@ namespace CodexTests.BasicTests
 
             purchaseContract.WaitForStorageContractStarted(fileSize);
 
-            AssertBalance(geth, contracts, seller, Is.LessThan(sellerInitialBalance), "Collateral was not placed.");
+            AssertBalance(contracts, seller, Is.LessThan(sellerInitialBalance), "Collateral was not placed.");
 
             purchaseContract.WaitForStorageContractFinished();
 
-            AssertBalance(geth, contracts, seller, Is.GreaterThan(sellerInitialBalance), "Seller was not paid for storage.");
-            AssertBalance(geth, contracts, buyer, Is.LessThan(buyerInitialBalance), "Buyer was not charged for storage.");
+            AssertBalance(contracts, seller, Is.GreaterThan(sellerInitialBalance), "Seller was not paid for storage.");
+            AssertBalance(contracts, buyer, Is.LessThan(buyerInitialBalance), "Buyer was not charged for storage.");
         }
     }
 }

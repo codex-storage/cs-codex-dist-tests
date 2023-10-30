@@ -35,10 +35,10 @@ namespace CodexContractsPlugin
             return starter.Deploy(ci, gethNode);
         }
 
-        public ICodexContracts WrapDeploy(CodexContractsDeployment deployment)
+        public ICodexContracts WrapDeploy(IGethNode gethNode, CodexContractsDeployment deployment)
         {
             deployment = SerializeGate.Gate(deployment);
-            return starter.Wrap(deployment);
+            return starter.Wrap(gethNode, deployment);
         }
     }
 }

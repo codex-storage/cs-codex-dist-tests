@@ -45,9 +45,9 @@ namespace CodexContractsPlugin
             }
         }
 
-        public ICodexContracts Wrap(CodexContractsDeployment deployment)
+        public ICodexContracts Wrap(IGethNode gethNode, CodexContractsDeployment deployment)
         {
-            return new CodexContractsAccess(tools.GetLog(), deployment);
+            return new CodexContractsAccess(tools.GetLog(), gethNode, deployment);
         }
 
         private CodexContractsDeployment DeployContract(RunningContainer container, IStartupWorkflow workflow, IGethNode gethNode)

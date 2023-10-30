@@ -10,15 +10,15 @@ namespace CodexContractsPlugin
             return Plugin(ci).DeployContracts(ci, gethNode);
         }
 
-        public static ICodexContracts WrapCodexContractsDeployment(this CoreInterface ci, CodexContractsDeployment deployment)
+        public static ICodexContracts WrapCodexContractsDeployment(this CoreInterface ci, IGethNode gethNode, CodexContractsDeployment deployment)
         {
-            return Plugin(ci).WrapDeploy(deployment);
+            return Plugin(ci).WrapDeploy(gethNode, deployment);
         }
 
         public static ICodexContracts StartCodexContracts(this CoreInterface ci, IGethNode gethNode)
         {
             var deployment = DeployCodexContracts(ci, gethNode);
-            return WrapCodexContractsDeployment(ci, deployment);
+            return WrapCodexContractsDeployment(ci, gethNode, deployment);
         }
 
         private static CodexContractsPlugin Plugin(CoreInterface ci)

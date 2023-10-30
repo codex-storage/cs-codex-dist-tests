@@ -38,18 +38,18 @@ namespace BiblioTech.Commands
             var report = new List<string>();
 
             var sentEth = ProcessEth(gethNode, addr, report);
-            var mintedTokens = ProcessTokens(gethNode, contracts, addr, report);
+            var mintedTokens = ProcessTokens(contracts, addr, report);
 
             Program.UserRepo.AddMintEventForUser(userId, addr, sentEth, mintedTokens);
 
             await context.Followup(string.Join(Environment.NewLine, report));
         }
 
-        private TestToken ProcessTokens(IGethNode gethNode, ICodexContracts contracts, EthAddress addr, List<string> report)
+        private TestToken ProcessTokens(ICodexContracts contracts, EthAddress addr, List<string> report)
         {
-            if (ShouldMintTestTokens(gethNode, contracts, addr))
+            if (ShouldMintTestTokens(contracts, addr))
             {
-                contracts.MintTestTokens(gethNode, addr, defaultTestTokensToMint);
+                contracts.MintTestTokens(addr, defaultTestTokensToMint);
                 report.Add($"Minted {defaultTestTokensToMint}.");
                 return defaultTestTokensToMint;
             }
@@ -70,9 +70,9 @@ namespace BiblioTech.Commands
             return 0.Eth();
         }
 
-        private bool ShouldMintTestTokens(IGethNode gethNode, ICodexContracts contracts, EthAddress addr)
+        private bool ShouldMintTestTokens(ICodexContracts contracts, EthAddress addr)
         {
-            var testTokens = contracts.GetTestTokenBalance(gethNode, addr);
+            var testTokens = contracts.GetTestTokenBalance(addr);
             return testTokens.Amount < 64m;
         }
 

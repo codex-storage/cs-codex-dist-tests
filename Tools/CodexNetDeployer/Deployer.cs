@@ -62,7 +62,7 @@ namespace CodexNetDeployer
 
             Log("Geth started. Deploying Codex contracts...");
             var contractsDeployment = ci.DeployCodexContracts(gethNode);
-            var contracts = ci.WrapCodexContractsDeployment(contractsDeployment);
+            var contracts = ci.WrapCodexContractsDeployment(gethNode, contractsDeployment);
             Log("Codex contracts deployed.");
 
             Log("Starting Codex nodes...");
