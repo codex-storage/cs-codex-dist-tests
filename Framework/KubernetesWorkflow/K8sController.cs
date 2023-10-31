@@ -9,15 +9,14 @@ namespace KubernetesWorkflow
     {
         private readonly ILog log;
         private readonly K8sCluster cluster;
-        private readonly KnownK8sPods knownPods;
         private readonly WorkflowNumberSource workflowNumberSource;
         private readonly K8sClient client;
+        private const string podLabelKey = "pod-uuid";
 
-        public K8sController(ILog log, K8sCluster cluster, KnownK8sPods knownPods, WorkflowNumberSource workflowNumberSource, string k8sNamespace)
+        public K8sController(ILog log, K8sCluster cluster, WorkflowNumberSource workflowNumberSource, string k8sNamespace)
         {
             this.log = log;
             this.cluster = cluster;
-            this.knownPods = knownPods;
             this.workflowNumberSource = workflowNumberSource;
             client = new K8sClient(cluster.GetK8sClientConfig());
 
@@ -34,9 +33,13 @@ namespace KubernetesWorkflow
             log.Debug();
             EnsureNamespace();
 
-            var deploymentName = CreateDeployment(containerRecipes, location);
+            var podLabel = K8sNameUtils.Format(Guid.NewGuid().ToString());
+            var deploymentName = CreateDeployment(containerRecipes, location, podLabel);
             var (serviceName, servicePortsMap) = CreateService(containerRecipes);
-            var podInfo = FetchNewPod();
+
+            var pods = client.Run(c => c.ListNamespacedPod(K8sNamespace));
+            var pod = pods.Items.Single(p => p.Labels().Any(l => l.Key == podLabelKey && l.Value == podLabel));
+            var podInfo = CreatePodInfo(pod);
 
             return new RunningPod(cluster, podInfo, deploymentName, serviceName, servicePortsMap.ToArray());
         }
@@ -299,7 +302,7 @@ namespace KubernetesWorkflow
 
         #region Deployment management
 
-        private string CreateDeployment(ContainerRecipe[] containerRecipes, ILocation location)
+        private string CreateDeployment(ContainerRecipe[] containerRecipes, ILocation location, string podLabel)
         {
             var deploymentSpec = new V1Deployment
             {
@@ -316,7 +319,7 @@ namespace KubernetesWorkflow
                     {
                         Metadata = new V1ObjectMeta
                         {
-                            Labels = GetSelector(containerRecipes),
+                            Labels = GetSelector(containerRecipes, podLabel),
                             Annotations = GetAnnotations(containerRecipes)
                         },
                         Spec = new V1PodSpec
@@ -361,6 +364,13 @@ namespace KubernetesWorkflow
         private IDictionary<string, string> GetSelector(ContainerRecipe[] containerRecipes)
         {
             return containerRecipes.First().PodLabels.GetLabels();
+        }
+
+        private IDictionary<string, string> GetSelector(ContainerRecipe[] containerRecipes, string podLabel)
+        {
+            var labels = containerRecipes.First().PodLabels.Clone();
+            labels.Add(podLabelKey, podLabel);
+            return labels.GetLabels();
         }
 
         private IDictionary<string, string> GetRunnerNamespaceSelector()
@@ -751,22 +761,15 @@ namespace KubernetesWorkflow
             return new CrashWatcher(log, cluster.GetK8sClientConfig(), K8sNamespace, container);
         }
 
-        private PodInfo FetchNewPod()
+        private PodInfo CreatePodInfo(V1Pod pod)
         {
-            var pods = client.Run(c => c.ListNamespacedPod(K8sNamespace)).Items;
-
-            var newPods = pods.Where(p => !knownPods.Contains(p.Name())).ToArray();
-            if (newPods.Length != 1) throw new InvalidOperationException("Expected only 1 pod to be created. Test infra failure.");
-
-            var newPod = newPods.Single();
-            var name = newPod.Name();
-            var ip = newPod.Status.PodIP;
-            var k8sNodeName = newPod.Spec.NodeName;
+            var name = pod.Name();
+            var ip = pod.Status.PodIP;
+            var k8sNodeName = pod.Spec.NodeName;
 
             if (string.IsNullOrEmpty(name)) throw new InvalidOperationException("Invalid pod name received. Test infra failure.");
             if (string.IsNullOrEmpty(ip)) throw new InvalidOperationException("Invalid pod IP received. Test infra failure.");
 
-            knownPods.Add(name);
             return new PodInfo(name, ip, k8sNodeName);
         }
     }

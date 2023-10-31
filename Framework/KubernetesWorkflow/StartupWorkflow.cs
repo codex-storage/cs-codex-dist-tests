@@ -22,17 +22,15 @@ namespace KubernetesWorkflow
         private readonly ILog log;
         private readonly WorkflowNumberSource numberSource;
         private readonly K8sCluster cluster;
-        private readonly KnownK8sPods knownK8SPods;
         private readonly string k8sNamespace;
         private readonly RecipeComponentFactory componentFactory = new RecipeComponentFactory();
         private readonly LocationProvider locationProvider;
 
-        internal StartupWorkflow(ILog log, WorkflowNumberSource numberSource, K8sCluster cluster, KnownK8sPods knownK8SPods, string k8sNamespace)
+        internal StartupWorkflow(ILog log, WorkflowNumberSource numberSource, K8sCluster cluster, string k8sNamespace)
         {
             this.log = log;
             this.numberSource = numberSource;
             this.cluster = cluster;
-            this.knownK8SPods = knownK8SPods;
             this.k8sNamespace = k8sNamespace;
 
             locationProvider = new LocationProvider(log, K8s);
@@ -196,7 +194,7 @@ namespace KubernetesWorkflow
         {
             try
             {
-                var controller = new K8sController(log, cluster, knownK8SPods, numberSource, k8sNamespace);
+                var controller = new K8sController(log, cluster, numberSource, k8sNamespace);
                 action(controller);
                 controller.Dispose();
             }
@@ -211,7 +209,7 @@ namespace KubernetesWorkflow
         {
             try
             {
-                var controller = new K8sController(log, cluster, knownK8SPods, numberSource, k8sNamespace);
+                var controller = new K8sController(log, cluster, numberSource, k8sNamespace);
                 var result = action(controller);
                 controller.Dispose();
                 return result;
