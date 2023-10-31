@@ -47,6 +47,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BiblioTech", "Tools\BiblioT
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CodexDiscordBotPlugin", "ProjectPlugins\CodexDiscordBotPlugin\CodexDiscordBotPlugin.csproj", "{FB96A58B-F7F0-490A-9A85-72A96A018042}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestClusterStarter", "Tools\TestClusterStarter\TestClusterStarter.csproj", "{3E38A906-C2FC-43DC-8CA2-FC07C79CF3CA}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DeployAndRunPlugin", "ProjectPlugins\DeployAndRunPlugin\DeployAndRunPlugin.csproj", "{1CC5AF82-8924-4C7E-BFF1-3125D86E53FB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -125,6 +129,14 @@ Global
 		{FB96A58B-F7F0-490A-9A85-72A96A018042}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FB96A58B-F7F0-490A-9A85-72A96A018042}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{FB96A58B-F7F0-490A-9A85-72A96A018042}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3E38A906-C2FC-43DC-8CA2-FC07C79CF3CA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3E38A906-C2FC-43DC-8CA2-FC07C79CF3CA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3E38A906-C2FC-43DC-8CA2-FC07C79CF3CA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3E38A906-C2FC-43DC-8CA2-FC07C79CF3CA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1CC5AF82-8924-4C7E-BFF1-3125D86E53FB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1CC5AF82-8924-4C7E-BFF1-3125D86E53FB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1CC5AF82-8924-4C7E-BFF1-3125D86E53FB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1CC5AF82-8924-4C7E-BFF1-3125D86E53FB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -148,6 +160,8 @@ Global
 		{3417D508-E2F4-4974-8988-BB124046D9E2} = {7591C5B3-D86E-4AE4-8ED2-B272D17FE7E3}
 		{078ABA6D-A04E-4F62-A44C-EA66F1B66548} = {7591C5B3-D86E-4AE4-8ED2-B272D17FE7E3}
 		{FB96A58B-F7F0-490A-9A85-72A96A018042} = {8F1F1C2A-E313-4E0C-BE40-58FB0BA91124}
+		{3E38A906-C2FC-43DC-8CA2-FC07C79CF3CA} = {7591C5B3-D86E-4AE4-8ED2-B272D17FE7E3}
+		{1CC5AF82-8924-4C7E-BFF1-3125D86E53FB} = {8F1F1C2A-E313-4E0C-BE40-58FB0BA91124}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {237BF0AA-9EC4-4659-AD9A-65DEB974250C}
