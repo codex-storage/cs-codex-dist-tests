@@ -27,7 +27,7 @@ public class Program
         }
         var specs = JsonConvert.DeserializeObject<ClusterTestSetup>(File.ReadAllText(SpecsFile))!;
 
-        var kConfig = new KubernetesWorkflow.Configuration(config.KubeConfigFile, TimeSpan.FromMinutes(1), TimeSpan.FromSeconds(10), "codex-continuous-test-runners");
+        var kConfig = new KubernetesWorkflow.Configuration(config.KubeConfigFile, TimeSpan.FromMinutes(1), TimeSpan.FromSeconds(10), kubernetesNamespace: "default");
         var entryPoint = new EntryPoint(new ConsoleLog(), kConfig, "datafolder");
         var ci = entryPoint.CreateInterface();
 

@@ -28,7 +28,8 @@ namespace DeployAndRunPlugin
             startupConfig.NameOverride = "dnr-" + config.Name;
             startupConfig.Add(config);
 
-            var containers = workflow.Start(1, new DeployAndRunContainerRecipe(), startupConfig);
+            var location = workflow.GetAvailableLocations().Get("fixed-s-4vcpu-16gb-amd-yz8rd");
+            var containers = workflow.Start(1, location, new DeployAndRunContainerRecipe(), startupConfig);
             return containers.Containers.Single();
         }
     }

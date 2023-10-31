@@ -458,31 +458,44 @@ namespace KubernetesWorkflow
 
         private V1Volume CreateVolume(VolumeMount v)
         {
-            var resourcesRequests = new Dictionary<string, ResourceQuantity>();
-            if (v.ResourceQuantity != null)
-            {
-                resourcesRequests.Add("storage", new ResourceQuantity(v.ResourceQuantity));
-            }
-
             client.Run(c => c.CreateNamespacedPersistentVolumeClaim(new V1PersistentVolumeClaim
             {
                 ApiVersion = "v1",
                 Metadata = new V1ObjectMeta
                 {
-                    Name = v.VolumeName
+                    Name = v.VolumeName,
                 },
                 Spec = new V1PersistentVolumeClaimSpec
                 {
+                    
                     AccessModes = new List<string>
                     {
                         "ReadWriteOnce"
                     },
-                    Resources = new V1ResourceRequirements
-                    {
-                        Requests = resourcesRequests
-                    }
-                }
+                    Resources = CreateVolumeResourceRequirements(v),
+                },
             }, K8sNamespace));
+
+            if (!string.IsNullOrEmpty(v.HostPath))
+            {
+                return new V1Volume
+                {
+                    Name = v.VolumeName,
+                    HostPath = new V1HostPathVolumeSource
+                    {
+                        Path = v.HostPath
+                    }
+                };
+            }
+
+            if (!string.IsNullOrEmpty(v.Secret))
+            {
+                return new V1Volume
+                {
+                    Name = v.VolumeName,
+                    Secret = CreateVolumeSecret(v)
+                };
+            }
 
             return new V1Volume
             {
@@ -490,6 +503,27 @@ namespace KubernetesWorkflow
                 PersistentVolumeClaim = new V1PersistentVolumeClaimVolumeSource
                 {
                     ClaimName = v.VolumeName
+                }
+            };
+        }
+
+        private V1SecretVolumeSource CreateVolumeSecret(VolumeMount v)
+        {
+            if (string.IsNullOrWhiteSpace(v.Secret)) return null!;
+            return new V1SecretVolumeSource
+            {
+                SecretName = v.Secret
+            };
+        }
+
+        private V1ResourceRequirements CreateVolumeResourceRequirements(VolumeMount v)
+        {
+            if (v.ResourceQuantity == null) return null!;
+            return new V1ResourceRequirements
+            {
+                Requests = new Dictionary<string, ResourceQuantity>()
+                {
+                    {"storage", new ResourceQuantity(v.ResourceQuantity) }
                 }
             };
         }

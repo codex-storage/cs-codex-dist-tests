@@ -21,7 +21,11 @@ namespace DeployAndRunPlugin
             AddEnvVar("DNR_FILTER", setup.Filter);
             AddEnvVar("DNR_DURATION", setup.Duration.TotalSeconds.ToString());
 
-            AddVolume(name: "kubeconfig", mountPath: "/opt/kubeconfig.yaml", subPath: "kubeconfig.yaml");
+            AddEnvVar("KUBECONFIG", "/opt/kubeconfig.yaml");
+            AddEnvVar("LOGPATH", "/var/log/codex-continuous-tests");
+
+            AddVolume(name: "kubeconfig", mountPath: "/opt/kubeconfig.yaml", subPath: "kubeconfig.yaml", secret: "codex-dist-tests-app-kubeconfig");
+            AddVolume(name: "logs", mountPath: "/var/log/codex-continuous-tests", hostPath: "/var/log/codex-continuous-tests");
         }
     }
 

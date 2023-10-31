@@ -97,9 +97,10 @@ namespace KubernetesWorkflow
             podAnnotations.Add(name, value);
         }
 
-        protected void AddVolume(string name, string mountPath, string subPath)
+        protected void AddVolume(string name, string mountPath, string? subPath = null, string? secret = null, string? hostPath = null)
         {
-            volumeMounts.Add(new VolumeMount(name, mountPath, subPath));
+            var size = 10.MB().ToSuffixNotation();
+            volumeMounts.Add(new VolumeMount(name, mountPath, subPath, size, secret, hostPath));
         }
 
         protected void AddVolume(string mountPath, ByteSize volumeSize)
