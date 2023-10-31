@@ -93,7 +93,7 @@ namespace Core
             {
                 var response = PostJsonString(route, body);
                 if (response == null) throw new Exception("Received no response.");
-                var result = JsonConvert.DeserializeObject<TResponse>(response);
+                var result = Deserialize<TResponse>(response);
                 if (result == null) throw new Exception("Failed to deserialize response");
                 return result;
             }, $"HTTO-POST-JSON: {route}");
