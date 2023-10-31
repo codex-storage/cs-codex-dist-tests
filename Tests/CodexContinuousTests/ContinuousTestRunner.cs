@@ -53,22 +53,25 @@ namespace ContinuousTests
             if (!filteredTests.Any())
             {
                 overviewLog.Log("No tests selected.");
-                return;
+                Cancellation.Cts.Cancel();
             }
-            var testLoops = filteredTests.Select(t => new TestLoop(entryPointFactory, taskFactory, config, overviewLog, t.GetType(), t.RunTestEvery, startupChecker, cancelToken)).ToArray();
-
-            foreach (var testLoop in testLoops)
+            else
             {
-                if (cancelToken.IsCancellationRequested) break;
+                var testLoops = filteredTests.Select(t => new TestLoop(entryPointFactory, taskFactory, config, overviewLog, t.GetType(), t.RunTestEvery, startupChecker, cancelToken)).ToArray();
 
-                overviewLog.Log("Launching test-loop for " + testLoop.Name);
-                testLoop.Begin();
-                Thread.Sleep(TimeSpan.FromSeconds(5));
+                foreach (var testLoop in testLoops)
+                {
+                    if (cancelToken.IsCancellationRequested) break;
+
+                    overviewLog.Log("Launching test-loop for " + testLoop.Name);
+                    testLoop.Begin();
+                    Thread.Sleep(TimeSpan.FromSeconds(5));
+                }
+
+                overviewLog.Log("Finished launching test-loops.");
+                WaitUntilFinished(overviewLog, statusLog, startTime, testLoops);
+                overviewLog.Log("Stopping all test-loops...");
             }
-
-            overviewLog.Log("Finished launching test-loops.");
-            WaitUntilFinished(overviewLog, statusLog, startTime, testLoops);
-            overviewLog.Log("Stopping all test-loops...");
             taskFactory.WaitAll();
             overviewLog.Log("All tasks cancelled.");
 
