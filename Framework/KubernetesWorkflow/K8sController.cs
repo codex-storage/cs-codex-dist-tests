@@ -37,11 +37,24 @@ namespace KubernetesWorkflow
             var deploymentName = CreateDeployment(containerRecipes, location, podLabel);
             var (serviceName, servicePortsMap) = CreateService(containerRecipes);
 
-            var pods = client.Run(c => c.ListNamespacedPod(K8sNamespace));
-            var pod = pods.Items.Single(p => p.Labels().Any(l => l.Key == podLabelKey && l.Value == podLabel));
+            var pod = FindPodByLabel(podLabel);
             var podInfo = CreatePodInfo(pod);
 
             return new RunningPod(cluster, podInfo, deploymentName, serviceName, servicePortsMap.ToArray());
+        }
+
+        private V1Pod FindPodByLabel(string podLabel)
+        {
+            var pods = client.Run(c => c.ListNamespacedPod(K8sNamespace));
+            foreach (var pod in pods.Items)
+            {
+                var label = pod.GetLabel(podLabelKey);
+                if (label == podLabel)
+                {
+                    return pod;
+                }
+            }
+            throw new Exception("Unable to find pod by label.");
         }
 
         public void Stop(RunningPod pod)
@@ -468,23 +481,7 @@ namespace KubernetesWorkflow
 
         private V1Volume CreateVolume(VolumeMount v)
         {
-            client.Run(c => c.CreateNamespacedPersistentVolumeClaim(new V1PersistentVolumeClaim
-            {
-                ApiVersion = "v1",
-                Metadata = new V1ObjectMeta
-                {
-                    Name = v.VolumeName,
-                },
-                Spec = new V1PersistentVolumeClaimSpec
-                {
-                    
-                    AccessModes = new List<string>
-                    {
-                        "ReadWriteOnce"
-                    },
-                    Resources = CreateVolumeResourceRequirements(v),
-                },
-            }, K8sNamespace));
+            CreatePersistentVolumeClaimIfNeeded(v);
 
             if (!string.IsNullOrEmpty(v.HostPath))
             {
@@ -515,6 +512,30 @@ namespace KubernetesWorkflow
                     ClaimName = v.VolumeName
                 }
             };
+        }
+
+        private void CreatePersistentVolumeClaimIfNeeded(VolumeMount v)
+        {
+            var pvcs = client.Run(c => c.ListNamespacedPersistentVolumeClaim(K8sNamespace));
+            if (pvcs != null && pvcs.Items.Any(i => i.Name() != v.VolumeName)) return;
+
+            client.Run(c => c.CreateNamespacedPersistentVolumeClaim(new V1PersistentVolumeClaim
+            {
+                ApiVersion = "v1",
+                Metadata = new V1ObjectMeta
+                {
+                    Name = v.VolumeName,
+                },
+                Spec = new V1PersistentVolumeClaimSpec
+                {
+
+                    AccessModes = new List<string>
+                {
+                    "ReadWriteOnce"
+                },
+                    Resources = CreateVolumeResourceRequirements(v),
+                },
+            }, K8sNamespace));
         }
 
         private V1SecretVolumeSource CreateVolumeSecret(VolumeMount v)
