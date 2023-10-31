@@ -112,15 +112,17 @@
 
     public class VolumeMount
     {
-        public VolumeMount(string volumeName, string mountPath, string resourceQuantity)
+        public VolumeMount(string volumeName, string mountPath, string? subPath = null, string? resourceQuantity = null)
         {
             VolumeName = volumeName;
             MountPath = mountPath;
+            SubPath = subPath;
             ResourceQuantity = resourceQuantity;
         }
 
         public string VolumeName { get; }
         public string MountPath { get; }
-        public string ResourceQuantity { get; }
+        public string? SubPath { get; }
+        public string? ResourceQuantity { get; }
     }
 }

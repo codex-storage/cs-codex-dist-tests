@@ -20,6 +20,8 @@ namespace DeployAndRunPlugin
             AddEnvVar("DNR_NAME", setup.Name);
             AddEnvVar("DNR_FILTER", setup.Filter);
             AddEnvVar("DNR_DURATION", setup.Duration.TotalSeconds.ToString());
+
+            AddVolume(name: "kubeconfig", mountPath: "/opt/kubeconfig.yaml", subPath: "kubeconfig.yaml");
         }
     }
 

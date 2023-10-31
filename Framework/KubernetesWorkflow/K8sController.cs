@@ -441,7 +441,8 @@ namespace KubernetesWorkflow
             return new V1VolumeMount
             {
                 Name = v.VolumeName,
-                MountPath = v.MountPath
+                MountPath = v.MountPath,
+                SubPath = v.SubPath,
             };
         }
 
@@ -457,6 +458,12 @@ namespace KubernetesWorkflow
 
         private V1Volume CreateVolume(VolumeMount v)
         {
+            var resourcesRequests = new Dictionary<string, ResourceQuantity>();
+            if (v.ResourceQuantity != null)
+            {
+                resourcesRequests.Add("storage", new ResourceQuantity(v.ResourceQuantity));
+            }
+
             client.Run(c => c.CreateNamespacedPersistentVolumeClaim(new V1PersistentVolumeClaim
             {
                 ApiVersion = "v1",
@@ -472,10 +479,7 @@ namespace KubernetesWorkflow
                     },
                     Resources = new V1ResourceRequirements
                     {
-                        Requests = new Dictionary<string, ResourceQuantity>
-                        {
-                            {"storage", new ResourceQuantity(v.ResourceQuantity) }
-                        }
+                        Requests = resourcesRequests
                     }
                 }
             }, K8sNamespace));
