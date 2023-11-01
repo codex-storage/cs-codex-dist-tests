@@ -50,3 +50,6 @@ do
 
     sleep 30
 done
+
+echo "Done! Sleeping indefinitely..."
+while true; do sleep 1d; done
