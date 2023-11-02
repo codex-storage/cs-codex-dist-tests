@@ -6,14 +6,16 @@ namespace BiblioTech
 {
     public class DeploymentsFilesMonitor
     {
-        private DateTime lastUpdate = DateTime.MinValue;
-        private CodexDeployment[] deployments = Array.Empty<CodexDeployment>();
+        private readonly List<CodexDeployment> deployments = new List<CodexDeployment>();
+
+        public DeploymentsFilesMonitor()
+        {
+            LoadDeployments();
+        }
 
         public CodexDeployment[] GetDeployments()
         {
-            if (ShouldUpdate()) UpdateDeployments();
-
-            return deployments;
+            return deployments.ToArray();
         }
 
         public async Task<bool> DownloadDeployment(IAttachment file)
@@ -30,7 +32,7 @@ namespace BiblioTech
                 {
                     var targetFile = Path.Combine(Program.Config.EndpointsPath, Guid.NewGuid().ToString().ToLowerInvariant() + ".json");
                     File.WriteAllText(targetFile, str);
-                    deployments = Array.Empty<CodexDeployment>();
+                    deployments.Add(deploy);
                     return true;
                 }
             }
@@ -44,22 +46,21 @@ namespace BiblioTech
             if (!Directory.Exists(path)) return false;
             var files = Directory.GetFiles(path);
 
-            foreach ( var file in files)
+            foreach (var file in files)
             {
                 var deploy = ProcessFile(file);
                 if (deploy != null && deploy.Metadata.Name == deploymentName)
                 {
                     File.Delete(file);
-                    deployments = Array.Empty<CodexDeployment>();
+                    deployments.Remove(deploy);
                     return true;
                 }
             }
             return false;
         }
 
-        private void UpdateDeployments()
+        private void LoadDeployments()
         {
-            lastUpdate = DateTime.UtcNow;
             var path = Program.Config.EndpointsPath;
             if (!Directory.Exists(path))
             {
@@ -69,7 +70,7 @@ namespace BiblioTech
             }
 
             var files = Directory.GetFiles(path);
-            deployments = files.Select(ProcessFile).Where(d => d != null).Cast<CodexDeployment>().ToArray();
+            deployments.AddRange(files.Select(ProcessFile).Where(d => d != null).Cast<CodexDeployment>());
         }
 
         private CodexDeployment? ProcessFile(string filename)
@@ -83,11 +84,6 @@ namespace BiblioTech
             {
                 return null;
             }
-        }
-
-        private bool ShouldUpdate()
-        {
-            return !deployments.Any() || (DateTime.UtcNow - lastUpdate) > TimeSpan.FromMinutes(10);
         }
     }
 }

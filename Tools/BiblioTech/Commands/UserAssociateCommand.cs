@@ -10,7 +10,7 @@ namespace BiblioTech.Commands
             isRequired: false);
 
         public override string Name => "set";
-        public override string StartingMessage => "hold on...";
+        public override string StartingMessage => RandomBusyMessage.Get();
         public override string Description => "Associates a Discord user with an Ethereum address.";
         public override CommandOption[] Options => new CommandOption[] { ethOption, optionalUser };
 

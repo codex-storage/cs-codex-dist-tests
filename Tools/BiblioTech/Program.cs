@@ -50,6 +50,7 @@ namespace BiblioTech
             var handler = new CommandHandler(client,
                 new GetBalanceCommand(ci, associateCommand), 
                 new MintCommand(ci, associateCommand),
+                new SprCommand(ci),
                 associateCommand,
                 new AdminCommand(ci)
             );

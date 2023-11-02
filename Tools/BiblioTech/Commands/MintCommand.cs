@@ -5,7 +5,7 @@ using GethPlugin;
 
 namespace BiblioTech.Commands
 {
-    public class MintCommand : BaseNetCommand
+    public class MintCommand : BaseGethCommand
     {
         private readonly Ether defaultEthToSend = 10.Eth();
         private readonly TestToken defaultTestTokensToMint = 1024.TestTokens();
@@ -21,7 +21,7 @@ namespace BiblioTech.Commands
         }
 
         public override string Name => "mint";
-        public override string StartingMessage => "Minting some tokens...";
+        public override string StartingMessage => RandomBusyMessage.Get();
         public override string Description => "Mint some TestTokens and send some Eth to the user if their balance is low.";
         public override CommandOption[] Options => new[] { optionalUser };
 
