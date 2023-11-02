@@ -517,7 +517,7 @@ namespace KubernetesWorkflow
         private void CreatePersistentVolumeClaimIfNeeded(VolumeMount v)
         {
             var pvcs = client.Run(c => c.ListNamespacedPersistentVolumeClaim(K8sNamespace));
-            if (pvcs != null && pvcs.Items.Any(i => i.Name() != v.VolumeName)) return;
+            if (pvcs != null && pvcs.Items.Any(i => i.Name() == v.VolumeName)) return;
 
             client.Run(c => c.CreateNamespacedPersistentVolumeClaim(new V1PersistentVolumeClaim
             {
@@ -528,11 +528,10 @@ namespace KubernetesWorkflow
                 },
                 Spec = new V1PersistentVolumeClaimSpec
                 {
-
                     AccessModes = new List<string>
-                {
-                    "ReadWriteOnce"
-                },
+                    {
+                        "ReadWriteOnce"
+                    },
                     Resources = CreateVolumeResourceRequirements(v),
                 },
             }, K8sNamespace));
