@@ -8,7 +8,7 @@ namespace BiblioTech
     {
         private readonly List<CodexDeployment> deployments = new List<CodexDeployment>();
 
-        public DeploymentsFilesMonitor()
+        public void Initialize()
         {
             LoadDeployments();
         }

@@ -21,6 +21,8 @@ namespace BiblioTech
             var uniformArgs = new ArgsUniform<Configuration>(PrintHelp, args);
             Config = uniformArgs.Parse();
 
+            DeploymentFilesMonitor.Initialize();
+
             EnsurePath(Config.DataPath);
             EnsurePath(Config.UserDataPath);
             EnsurePath(Config.EndpointsPath);
