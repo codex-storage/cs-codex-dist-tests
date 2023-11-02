@@ -23,15 +23,21 @@ namespace BiblioTech
 
             try
             {
-                await command.RespondAsync(StartingMessage, ephemeral: true);
-                await Invoke(new CommandContext(command, command.Data.Options));
-                await command.DeleteOriginalResponseAsync();
+                var context = new CommandContext(command, command.Data.Options);
+                await command.RespondAsync(StartingMessage, ephemeral: IsEphemeral(context));
+                await Invoke(context);
             }
             catch (Exception ex)
             {
                 await command.FollowupAsync("Something failed while trying to do that...", ephemeral: true);
                 Console.WriteLine(ex);
             }
+        }
+
+        private bool IsEphemeral(CommandContext context)
+        {
+            if (IsSenderAdmin(context.Command) && IsInAdminChannel(context.Command)) return false;
+            return true;
         }
 
         protected abstract Task Invoke(CommandContext context);

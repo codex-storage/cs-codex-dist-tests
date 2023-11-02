@@ -46,7 +46,10 @@ namespace BiblioTech
 
         public string[] GetInteractionReport(IUser user)
         {
-            var result = new List<string>();
+            var result = new List<string>
+            {
+                $"User report create on {DateTime.UtcNow.ToString("o")}"
+            };
 
             lock (repoLock)
             {
