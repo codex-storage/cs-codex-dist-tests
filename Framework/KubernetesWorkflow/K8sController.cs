@@ -564,7 +564,7 @@ namespace KubernetesWorkflow
             var serviceSpec = new V1Service
             {
                 ApiVersion = "v1",
-                Metadata = CreateServiceMetadata(),
+                Metadata = CreateServiceMetadata(containerRecipes),
                 Spec = new V1ServiceSpec
                 {
                     Type = "NodePort",
@@ -614,11 +614,18 @@ namespace KubernetesWorkflow
             client.Run(c => c.DeleteNamespacedService(serviceName, K8sNamespace));
         }
 
-        private V1ObjectMeta CreateServiceMetadata()
+        private V1ObjectMeta CreateServiceMetadata(ContainerRecipe[] containerRecipes)
         {
+            var exposedRecipe = containerRecipes.FirstOrDefault(c => c.ExposedPorts.Any());
+            var name = "service-" + workflowNumberSource.WorkflowNumber;
+            if (exposedRecipe != null)
+            {
+                name = K8sNameUtils.Format(exposedRecipe.Name) + "-" + workflowNumberSource.WorkflowNumber;
+            }
+
             return new V1ObjectMeta
             {
-                Name = "service-" + workflowNumberSource.WorkflowNumber,
+                Name = name,
                 NamespaceProperty = K8sNamespace
             };
         }
