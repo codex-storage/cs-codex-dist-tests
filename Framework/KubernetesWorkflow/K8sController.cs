@@ -9,15 +9,14 @@ namespace KubernetesWorkflow
     {
         private readonly ILog log;
         private readonly K8sCluster cluster;
-        private readonly KnownK8sPods knownPods;
         private readonly WorkflowNumberSource workflowNumberSource;
         private readonly K8sClient client;
+        private const string podLabelKey = "pod-uuid";
 
-        public K8sController(ILog log, K8sCluster cluster, KnownK8sPods knownPods, WorkflowNumberSource workflowNumberSource, string k8sNamespace)
+        public K8sController(ILog log, K8sCluster cluster, WorkflowNumberSource workflowNumberSource, string k8sNamespace)
         {
             this.log = log;
             this.cluster = cluster;
-            this.knownPods = knownPods;
             this.workflowNumberSource = workflowNumberSource;
             client = new K8sClient(cluster.GetK8sClientConfig());
 
@@ -34,11 +33,28 @@ namespace KubernetesWorkflow
             log.Debug();
             EnsureNamespace();
 
-            var deploymentName = CreateDeployment(containerRecipes, location);
+            var podLabel = K8sNameUtils.Format(Guid.NewGuid().ToString());
+            var deploymentName = CreateDeployment(containerRecipes, location, podLabel);
             var (serviceName, servicePortsMap) = CreateService(containerRecipes);
-            var podInfo = FetchNewPod();
+
+            var pod = FindPodByLabel(podLabel);
+            var podInfo = CreatePodInfo(pod);
 
             return new RunningPod(cluster, podInfo, deploymentName, serviceName, servicePortsMap.ToArray());
+        }
+
+        private V1Pod FindPodByLabel(string podLabel)
+        {
+            var pods = client.Run(c => c.ListNamespacedPod(K8sNamespace));
+            foreach (var pod in pods.Items)
+            {
+                var label = pod.GetLabel(podLabelKey);
+                if (label == podLabel)
+                {
+                    return pod;
+                }
+            }
+            throw new Exception("Unable to find pod by label.");
         }
 
         public void Stop(RunningPod pod)
@@ -299,7 +315,7 @@ namespace KubernetesWorkflow
 
         #region Deployment management
 
-        private string CreateDeployment(ContainerRecipe[] containerRecipes, ILocation location)
+        private string CreateDeployment(ContainerRecipe[] containerRecipes, ILocation location, string podLabel)
         {
             var deploymentSpec = new V1Deployment
             {
@@ -316,7 +332,7 @@ namespace KubernetesWorkflow
                     {
                         Metadata = new V1ObjectMeta
                         {
-                            Labels = GetSelector(containerRecipes),
+                            Labels = GetSelector(containerRecipes, podLabel),
                             Annotations = GetAnnotations(containerRecipes)
                         },
                         Spec = new V1PodSpec
@@ -361,6 +377,13 @@ namespace KubernetesWorkflow
         private IDictionary<string, string> GetSelector(ContainerRecipe[] containerRecipes)
         {
             return containerRecipes.First().PodLabels.GetLabels();
+        }
+
+        private IDictionary<string, string> GetSelector(ContainerRecipe[] containerRecipes, string podLabel)
+        {
+            var labels = containerRecipes.First().PodLabels.Clone();
+            labels.Add(podLabelKey, podLabel);
+            return labels.GetLabels();
         }
 
         private IDictionary<string, string> GetRunnerNamespaceSelector()
@@ -441,7 +464,8 @@ namespace KubernetesWorkflow
             return new V1VolumeMount
             {
                 Name = v.VolumeName,
-                MountPath = v.MountPath
+                MountPath = v.MountPath,
+                SubPath = v.SubPath,
             };
         }
 
@@ -457,28 +481,28 @@ namespace KubernetesWorkflow
 
         private V1Volume CreateVolume(VolumeMount v)
         {
-            client.Run(c => c.CreateNamespacedPersistentVolumeClaim(new V1PersistentVolumeClaim
+            CreatePersistentVolumeClaimIfNeeded(v);
+
+            if (!string.IsNullOrEmpty(v.HostPath))
             {
-                ApiVersion = "v1",
-                Metadata = new V1ObjectMeta
+                return new V1Volume
                 {
-                    Name = v.VolumeName
-                },
-                Spec = new V1PersistentVolumeClaimSpec
-                {
-                    AccessModes = new List<string>
+                    Name = v.VolumeName,
+                    HostPath = new V1HostPathVolumeSource
                     {
-                        "ReadWriteOnce"
-                    },
-                    Resources = new V1ResourceRequirements
-                    {
-                        Requests = new Dictionary<string, ResourceQuantity>
-                        {
-                            {"storage", new ResourceQuantity(v.ResourceQuantity) }
-                        }
+                        Path = v.HostPath
                     }
-                }
-            }, K8sNamespace));
+                };
+            }
+
+            if (!string.IsNullOrEmpty(v.Secret))
+            {
+                return new V1Volume
+                {
+                    Name = v.VolumeName,
+                    Secret = CreateVolumeSecret(v)
+                };
+            }
 
             return new V1Volume
             {
@@ -486,6 +510,50 @@ namespace KubernetesWorkflow
                 PersistentVolumeClaim = new V1PersistentVolumeClaimVolumeSource
                 {
                     ClaimName = v.VolumeName
+                }
+            };
+        }
+
+        private void CreatePersistentVolumeClaimIfNeeded(VolumeMount v)
+        {
+            var pvcs = client.Run(c => c.ListNamespacedPersistentVolumeClaim(K8sNamespace));
+            if (pvcs != null && pvcs.Items.Any(i => i.Name() == v.VolumeName)) return;
+
+            client.Run(c => c.CreateNamespacedPersistentVolumeClaim(new V1PersistentVolumeClaim
+            {
+                ApiVersion = "v1",
+                Metadata = new V1ObjectMeta
+                {
+                    Name = v.VolumeName,
+                },
+                Spec = new V1PersistentVolumeClaimSpec
+                {
+                    AccessModes = new List<string>
+                    {
+                        "ReadWriteOnce"
+                    },
+                    Resources = CreateVolumeResourceRequirements(v),
+                },
+            }, K8sNamespace));
+        }
+
+        private V1SecretVolumeSource CreateVolumeSecret(VolumeMount v)
+        {
+            if (string.IsNullOrWhiteSpace(v.Secret)) return null!;
+            return new V1SecretVolumeSource
+            {
+                SecretName = v.Secret
+            };
+        }
+
+        private V1ResourceRequirements CreateVolumeResourceRequirements(VolumeMount v)
+        {
+            if (v.ResourceQuantity == null) return null!;
+            return new V1ResourceRequirements
+            {
+                Requests = new Dictionary<string, ResourceQuantity>()
+                {
+                    {"storage", new ResourceQuantity(v.ResourceQuantity) }
                 }
             };
         }
@@ -720,22 +788,15 @@ namespace KubernetesWorkflow
             return new CrashWatcher(log, cluster.GetK8sClientConfig(), K8sNamespace, container);
         }
 
-        private PodInfo FetchNewPod()
+        private PodInfo CreatePodInfo(V1Pod pod)
         {
-            var pods = client.Run(c => c.ListNamespacedPod(K8sNamespace)).Items;
-
-            var newPods = pods.Where(p => !knownPods.Contains(p.Name())).ToArray();
-            if (newPods.Length != 1) throw new InvalidOperationException("Expected only 1 pod to be created. Test infra failure.");
-
-            var newPod = newPods.Single();
-            var name = newPod.Name();
-            var ip = newPod.Status.PodIP;
-            var k8sNodeName = newPod.Spec.NodeName;
+            var name = pod.Name();
+            var ip = pod.Status.PodIP;
+            var k8sNodeName = pod.Spec.NodeName;
 
             if (string.IsNullOrEmpty(name)) throw new InvalidOperationException("Invalid pod name received. Test infra failure.");
             if (string.IsNullOrEmpty(ip)) throw new InvalidOperationException("Invalid pod IP received. Test infra failure.");
 
-            knownPods.Add(name);
             return new PodInfo(name, ip, k8sNodeName);
         }
     }

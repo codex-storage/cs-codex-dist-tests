@@ -1,8 +1,9 @@
 set -e
 
-replication=5
-name=testnamehere
-filter=TwoClient
+replication=$DNR_REP
+name=$DNR_NAME
+filter=$DNR_FILTER
+duration=$DNR_DURATION
 
 echo "Deploying..."
 cd ../../Tools/CodexNetDeployer
@@ -45,7 +46,10 @@ do
     --filter=$filter \
     --cleanup=1 \
     --full-container-logs=1 \
-    --target-duration=172800 # 48 hours
+    --target-duration=$duration
 
     sleep 30
 done
+
+echo "Done! Sleeping indefinitely..."
+while true; do sleep 1d; done
