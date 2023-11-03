@@ -5,7 +5,7 @@ using GethPlugin;
 
 namespace BiblioTech.Commands
 {
-    public class GetBalanceCommand : BaseNetCommand
+    public class GetBalanceCommand : BaseGethCommand
     {
         private readonly UserAssociateCommand userAssociateCommand;
         private readonly UserOption optionalUser = new UserOption(
@@ -19,7 +19,7 @@ namespace BiblioTech.Commands
         }
 
         public override string Name => "balance";
-        public override string StartingMessage => "Fetching balance...";
+        public override string StartingMessage => RandomBusyMessage.Get();
         public override string Description => "Shows Eth and TestToken balance of an eth address.";
         public override CommandOption[] Options => new[] { optionalUser };
 

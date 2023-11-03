@@ -78,12 +78,12 @@ namespace BiblioTech.Commands
                 var user = userOption.GetUser(context);
                 if (user == null)
                 {
-                    await context.AdminFollowup("Failed to get user ID");
+                    await context.Followup("Failed to get user ID");
                     return;
                 }
 
                 Program.UserRepo.ClearUserAssociatedAddress(user);
-                await context.AdminFollowup("Done.");
+                await context.Followup("Done.");
             }
         }
 
@@ -105,12 +105,20 @@ namespace BiblioTech.Commands
                 var user = userOption.GetUser(context);
                 if (user == null)
                 {
-                    await context.AdminFollowup("Failed to get user ID");
+                    await context.Followup("Failed to get user ID");
                     return;
                 }
 
-                var report = Program.UserRepo.GetInteractionReport(user);
-                await context.AdminFollowup(string.Join(Environment.NewLine, report));
+                var report = string.Join(Environment.NewLine, Program.UserRepo.GetInteractionReport(user));
+                if (report.Length > 1900)
+                {
+                    var filename = $"user-{user.Username}.log";
+                    await context.FollowupWithAttachement(filename, report);
+                }
+                else
+                {
+                    await context.Followup(report);
+                }
             }
         }
 
@@ -127,11 +135,12 @@ namespace BiblioTech.Commands
 
                 if (!deployments.Any())
                 {
-                    await context.AdminFollowup("No deployments available.");
+                    await context.Followup("No deployments available.");
                     return;
                 }
 
-                await context.AdminFollowup($"Deployments: {string.Join(", ", deployments.Select(FormatDeployment))}");
+                var nl = Environment.NewLine;
+                await context.Followup($"Deployments:{nl}{string.Join(nl, deployments.Select(FormatDeployment))}");
             }
 
             private string FormatDeployment(CodexDeployment deployment)
@@ -163,11 +172,11 @@ namespace BiblioTech.Commands
                 var result = await Program.DeploymentFilesMonitor.DownloadDeployment(file);
                 if (result)
                 {
-                    await context.AdminFollowup("Success!");
+                    await context.Followup("Success!");
                 }
                 else
                 {
-                    await context.AdminFollowup("That didn't work.");
+                    await context.Followup("That didn't work.");
                 }
             }
         }
@@ -194,11 +203,11 @@ namespace BiblioTech.Commands
                 var result = Program.DeploymentFilesMonitor.DeleteDeployment(str);
                 if (result)
                 {
-                    await context.AdminFollowup("Success!");
+                    await context.Followup("Success!");
                 }
                 else
                 {
-                    await context.AdminFollowup("That didn't work.");
+                    await context.Followup("That didn't work.");
                 }
             }
         }
@@ -227,11 +236,11 @@ namespace BiblioTech.Commands
 
                 if (user != null)
                 {
-                    await context.AdminFollowup(Program.UserRepo.GetUserReport(user));
+                    await context.Followup(Program.UserRepo.GetUserReport(user));
                 }
                 if (ethAddr != null)
                 {
-                    await context.AdminFollowup(Program.UserRepo.GetUserReport(ethAddr));
+                    await context.Followup(Program.UserRepo.GetUserReport(ethAddr));
                 }
             }
         }
@@ -246,23 +255,23 @@ namespace BiblioTech.Commands
                 this.ci = ci;
             }
 
-            protected async Task OnDeployment(CommandContext context, Func<ICodexNodeGroup, Task> action)
+            protected async Task OnDeployment(CommandContext context, Func<ICodexNodeGroup, string, Task> action)
             {
                 var deployment = Program.DeploymentFilesMonitor.GetDeployments().SingleOrDefault();
                 if (deployment == null)
                 {
-                    await context.AdminFollowup("No deployment found.");
+                    await context.Followup("No deployment found.");
                     return;
                 }
 
                 try
                 {
                     var group = ci.WrapCodexContainers(deployment.CodexInstances.Select(i => i.Container).ToArray());
-                    await action(group);
+                    await action(group, deployment.Metadata.Name);
                 }
                 catch (Exception ex)
                 {
-                    await context.AdminFollowup("Failed to wrap nodes with exception: " + ex);
+                    await context.Followup("Failed to wrap nodes with exception: " + ex);
                 }
             }
         }
@@ -277,24 +286,31 @@ namespace BiblioTech.Commands
 
             protected override async Task onSubCommand(CommandContext context)
             {
-                await OnDeployment(context, async group =>
+                await OnDeployment(context, async (group, name) =>
                 {
-                    await context.AdminFollowup($"{group.Count()} Codex nodes.");
+                    var nl = Environment.NewLine;
+                    var content = new List<string>
+                    {
+                        $"{DateTime.UtcNow.ToString("o")} - {group.Count()} Codex nodes."
+                    };
+
                     foreach (var node in group)
                     {
                         try
                         {
                             var info = node.GetDebugInfo();
-                            var nl = Environment.NewLine;
                             var json = JsonConvert.SerializeObject(info, Formatting.Indented);
                             var jsonInsert = $"{nl}```{nl}{json}{nl}```{nl}";
-                            await context.AdminFollowup($"Node '{node.GetName()}' responded with {jsonInsert}");
+                            content.Add($"Node '{node.GetName()}' responded with {jsonInsert}");
                         }
                         catch (Exception ex)
                         {
-                            await context.AdminFollowup($"Node '{node.GetName()}' failed to respond with exception: " + ex);
+                            content.Add($"Node '{node.GetName()}' failed to respond with exception: " + ex);
                         }
                     }
+
+                    var filename = $"netinfo-{NoWhitespaces(name)}.log";
+                    await context.FollowupWithAttachement(filename, string.Join(nl, content.ToArray()));
                 });
             }
         }
@@ -316,9 +332,9 @@ namespace BiblioTech.Commands
                 var peerId = await peerIdOption.Parse(context);
                 if (string.IsNullOrEmpty(peerId)) return;
 
-                await OnDeployment(context, async group =>
+                await OnDeployment(context, async (group, name) =>
                 {
-                    await context.AdminFollowup($"Calling debug/peer for '{peerId}' on {group.Count()} Codex nodes.");
+                    await context.Followup($"Calling debug/peer for '{peerId}' on {group.Count()} Codex nodes.");
                     foreach (var node in group)
                     {
                         try
@@ -327,15 +343,20 @@ namespace BiblioTech.Commands
                             var nl = Environment.NewLine;
                             var json = JsonConvert.SerializeObject(info, Formatting.Indented);
                             var jsonInsert = $"{nl}```{nl}{json}{nl}```{nl}";
-                            await context.AdminFollowup($"Node '{node.GetName()}' responded with {jsonInsert}");
+                            await context.Followup($"Node '{node.GetName()}' responded with {jsonInsert}");
                         }
                         catch (Exception ex)
                         {
-                            await context.AdminFollowup($"Node '{node.GetName()}' failed to respond with exception: " + ex);
+                            await context.Followup($"Node '{node.GetName()}' failed to respond with exception: " + ex);
                         }
                     }
                 });
             }
+        }
+
+        private static string NoWhitespaces(string s)
+        {
+            return s.Replace(" ", "-");
         }
     }
 }

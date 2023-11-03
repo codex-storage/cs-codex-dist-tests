@@ -15,12 +15,19 @@ namespace BiblioTech.Options
 
         public async Task Followup(string message)
         {
-            await Command.FollowupAsync(message, ephemeral: true);
+            await Command.ModifyOriginalResponseAsync(m =>
+            {
+                m.Content = message;
+            });
         }
 
-        public async Task AdminFollowup(string message)
+        public async Task FollowupWithAttachement(string filename, string content)
         {
-            await Command.FollowupAsync(message);
+            using var fileStream = new MemoryStream();
+            using var streamWriter = new StreamWriter(fileStream);
+            await streamWriter.WriteAsync(content);
+
+            await Command.FollowupWithFileAsync(fileStream, filename);
         }
     }
 }
