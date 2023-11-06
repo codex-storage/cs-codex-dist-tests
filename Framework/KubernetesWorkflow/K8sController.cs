@@ -647,7 +647,7 @@ namespace KubernetesWorkflow
 
         private RunningService? CreateInternalService(ContainerRecipe[] recipes)
         {
-            return CreateService(recipes, r => r.InternalPorts, "ClusterIP", "int");
+            return CreateService(recipes, r => r.InternalPorts.Concat(r.ExposedPorts).ToArray(), "ClusterIP", "int");
         }
 
         private RunningService? CreateExternalService(ContainerRecipe[] recipes)

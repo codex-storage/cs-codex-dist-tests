@@ -48,13 +48,18 @@ namespace KubernetesWorkflow
 
         public Address GetAddress(string portTag)
         {
-            var containerAddress = Addresses.Single(a => a.PortTag == portTag);
-            if (containerAddress.IsInteral && RunningContainers.StartResult.RunnerLocation == RunnerLocation.ExternalToCluster)
+            var addresses = Addresses.Where(a => a.PortTag == portTag).ToArray();
+            if (!addresses.Any()) throw new Exception("No addresses found for portTag: " + portTag);
+
+            var location = RunningContainers.StartResult.RunnerLocation;
+            if (location == RunnerLocation.InternalToCluster)
             {
-                throw new Exception("Attempt to access a container address created from an Internal port, " +
-                    "while runner is located external to the cluster.");
+                return addresses.Single(a => a.IsInteral).Address;
             }
-            return containerAddress.Address;
+            else
+            {
+                return addresses.Single(a => !a.IsInteral).Address;
+            }
         }
 
         public Address GetInternalAddress(string portTag)
