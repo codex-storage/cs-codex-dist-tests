@@ -1,12 +1,11 @@
 ﻿using KubernetesWorkflow;
-using Utils;
 
 namespace MetricsPlugin
 {
     public interface IMetricsScrapeTarget
     {
-        string Name { get; }
-        Address Address { get; }
+        RunningContainer Container { get; }
+        string MetricsPortTag { get; }
     }
 
     public interface IHasMetricsScrapeTarget
@@ -21,23 +20,13 @@ namespace MetricsPlugin
 
     public class MetricsScrapeTarget : IMetricsScrapeTarget
     {
-        public MetricsScrapeTarget(Address address, string name)
+        public MetricsScrapeTarget(RunningContainer container, string metricsPortTag)
         {
-            Address = address;
-            Name = name;
+            Container = container;
+            MetricsPortTag = metricsPortTag;
         }
 
-        public MetricsScrapeTarget(string ip, int port, string name)
-            : this(new Address("http://" + ip, port), name)
-        {
-        }
-
-        public MetricsScrapeTarget(RunningContainer container, string portTag)
-            : this(container.GetAddress(portTag), container.Name)
-        {
-        }
-
-        public string Name { get; }
-        public Address Address { get; }
+        public RunningContainer Container { get; }
+        public string MetricsPortTag { get; }
     }
 }

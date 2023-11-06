@@ -44,7 +44,7 @@ namespace MetricsPlugin
             tools.GetLog().Log(msg);
         }
 
-        private static string GeneratePrometheusConfig(IMetricsScrapeTarget[] targets)
+        private string GeneratePrometheusConfig(IMetricsScrapeTarget[] targets)
         {
             var config = "";
             config += "global:\n";
@@ -59,11 +59,26 @@ namespace MetricsPlugin
 
             foreach (var target in targets)
             {
-                config += $"          - '{target.Address.Host}:{target.Address.Port}'\n";
+                config += $"          - '{FormatTarget(target)}'\n";
             }
 
             var bytes = Encoding.ASCII.GetBytes(config);
             return Convert.ToBase64String(bytes);
+        }
+
+        private string FormatTarget(IMetricsScrapeTarget target)
+        {
+            return ScrapeTargetHelper.FormatTarget(target);
+        }
+    }
+
+    public static class ScrapeTargetHelper
+    {
+        public static string FormatTarget(IMetricsScrapeTarget target)
+        {
+            var a = target.Container.GetAddress(target.MetricsPortTag);
+            var host = a.Host.Replace("http://", "").Replace("https://", "");
+            return $"{host}:{a.Port}";
         }
     }
 }

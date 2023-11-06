@@ -122,7 +122,7 @@ namespace MetricsPlugin
 
         private string GetInstanceNameForNode(IMetricsScrapeTarget target)
         {
-            return target.Address.ToString();
+            return ScrapeTargetHelper.FormatTarget(target);
         }
 
         private string GetInstanceStringForNode(IMetricsScrapeTarget target)
@@ -148,7 +148,7 @@ namespace MetricsPlugin
 
         private void Log(IMetricsScrapeTarget target, string metricName, Metrics result)
         {
-            Log($"{target.Name} '{metricName}' = {result}");
+            Log($"{target.Container.Name} '{metricName}' = {result}");
         }
 
         private void Log(string metricName, Metrics result)
@@ -158,7 +158,7 @@ namespace MetricsPlugin
 
         private void Log(IMetricsScrapeTarget target, Metrics result)
         {
-            Log($"{target.Name} => {result}");
+            Log($"{target.Container.Name} => {result}");
         }
 
         private void Log(string msg)

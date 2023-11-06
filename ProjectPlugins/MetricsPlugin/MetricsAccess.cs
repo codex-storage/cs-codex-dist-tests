@@ -21,7 +21,7 @@ namespace MetricsPlugin
         {
             this.query = query;
             this.target = target;
-            TargetName = target.Name;
+            TargetName = target.Container.Name;
         }
 
         public string TargetName { get; }
