@@ -48,7 +48,7 @@ namespace KubernetesWorkflow
         private RunnerLocation DetermineRunnerLocation(RunningDeployment deployment)
         {
             var podInfo = GetPodInfo(deployment);
-            return RunnerLocationUtils.DetermineRunnerLocation(podInfo, cluster);
+            return RunnerLocationUtils.DetermineRunnerLocation(log, podInfo, cluster);
         }
 
         public PodInfo GetPodInfo(RunningDeployment deployment)

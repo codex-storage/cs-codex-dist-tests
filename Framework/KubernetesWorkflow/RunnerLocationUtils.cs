@@ -1,4 +1,5 @@
-﻿using System.Net.NetworkInformation;
+﻿using Logging;
+using System.Net.NetworkInformation;
 using Utils;
 
 namespace KubernetesWorkflow
@@ -13,10 +14,11 @@ namespace KubernetesWorkflow
     {
         private static RunnerLocation? knownLocation = null;
 
-        internal static RunnerLocation DetermineRunnerLocation(PodInfo info, K8sCluster cluster)
+        internal static RunnerLocation DetermineRunnerLocation(ILog log, PodInfo info, K8sCluster cluster)
         {
             if (knownLocation != null) return knownLocation.Value;
             knownLocation = PingForLocation(info, cluster);
+            log.Log("Runner location set to: " + knownLocation);
             return knownLocation.Value;
         }
 
