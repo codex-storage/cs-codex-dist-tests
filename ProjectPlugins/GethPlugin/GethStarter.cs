@@ -38,7 +38,7 @@ namespace GethPlugin
 
             Log($"Geth node started.");
 
-            return new GethDeployment(container, discoveryPort, httpPort, wsPort, account, pubKey);
+            return new GethDeployment(containers, discoveryPort, httpPort, wsPort, account, pubKey);
         }
 
         public IGethNode WrapGethContainer(GethDeployment startResult)

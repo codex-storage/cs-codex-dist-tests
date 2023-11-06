@@ -79,7 +79,7 @@ namespace KubernetesWorkflow
 
         public string ExecuteCommand(RunningContainer container, string command, params string[] args)
         {
-            var containerName = container.Name;
+            var containerName = container.Recipe.Name;
             var cmdAndArgs = $"{containerName}: {command} ({string.Join(",", args)})";
             log.Debug(cmdAndArgs);
 

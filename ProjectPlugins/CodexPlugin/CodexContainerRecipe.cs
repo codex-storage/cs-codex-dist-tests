@@ -95,10 +95,10 @@ namespace CodexPlugin
             {
                 var mconfig = config.MarketplaceConfig;
                 var gethStart = mconfig.GethNode.StartResult;
-                var wsAddress = gethStart.Container.GetAddress(GethContainerRecipe.WsPortTag);
+                var wsAddress = gethStart.Container.GetInternalAddress(GethContainerRecipe.WsPortTag);
                 var marketplaceAddress = mconfig.CodexContracts.Deployment.MarketplaceAddress;
 
-                AddEnvVar("CODEX_ETH_PROVIDER", $"ws://{wsAddress.Host}:{wsAddress.Port}");
+                AddEnvVar("CODEX_ETH_PROVIDER", $"{wsAddress.Host.Replace("http://", "ws://")}:{wsAddress.Port}");
                 AddEnvVar("CODEX_MARKETPLACE_ADDRESS", marketplaceAddress);
                 AddEnvVar("CODEX_PERSISTENCE", "true");
 

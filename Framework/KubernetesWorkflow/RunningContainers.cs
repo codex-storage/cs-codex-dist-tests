@@ -56,6 +56,13 @@ namespace KubernetesWorkflow
             }
             return containerAddress.Address;
         }
+
+        public Address GetInternalAddress(string portTag)
+        {
+            var containerAddress = Addresses.Single(a => a.PortTag == portTag);
+            if (!containerAddress.IsInteral) throw new Exception(portTag + " refers to an external port");
+            return containerAddress.Address;
+        }
     }
 
     public class ContainerAddress
