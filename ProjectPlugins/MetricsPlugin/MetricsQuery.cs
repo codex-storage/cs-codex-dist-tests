@@ -122,7 +122,7 @@ namespace MetricsPlugin
 
         private string GetInstanceNameForNode(IMetricsScrapeTarget target)
         {
-            return $"{target.Ip}:{target.Port}";
+            return target.Address.ToString();
         }
 
         private string GetInstanceStringForNode(IMetricsScrapeTarget target)

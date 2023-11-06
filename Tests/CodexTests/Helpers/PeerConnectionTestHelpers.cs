@@ -59,7 +59,8 @@ namespace DistTestCore.Helpers
             if (peer == null) return $"peerId: {node.peerId} is not known.";
 
             var container = peer.Node.Container;
-            var ip = container.Pod.PodInfo.Ip;
+            var podInfo = peer.Node.GetPodInfo();
+            var ip = podInfo.Ip;
             var discPort = container.Recipe.GetPortByTag(CodexContainerRecipe.DiscoveryPortTag)!;
             return $"{ip}:{discPort.Number}";
         }

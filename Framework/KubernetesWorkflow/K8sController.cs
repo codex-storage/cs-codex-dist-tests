@@ -11,7 +11,7 @@ namespace KubernetesWorkflow
         private readonly K8sCluster cluster;
         private readonly WorkflowNumberSource workflowNumberSource;
         private readonly K8sClient client;
-        private const string podLabelKey = "pod-uuid";
+        public const string PodLabelKey = "pod-uuid";
 
         public K8sController(ILog log, K8sCluster cluster, WorkflowNumberSource workflowNumberSource, string k8sNamespace)
         {
@@ -28,57 +28,63 @@ namespace KubernetesWorkflow
             client.Dispose();
         }
 
-        public RunningPod BringOnline(ContainerRecipe[] containerRecipes, ILocation location)
+        public StartResult BringOnline(ContainerRecipe[] containerRecipes, ILocation location)
         {
             log.Debug();
             EnsureNamespace();
 
             var podLabel = K8sNameUtils.Format(Guid.NewGuid().ToString());
-            var deploymentName = CreateDeployment(containerRecipes, location, podLabel);
-            var (serviceName, servicePortsMap) = CreateService(containerRecipes);
+            var deployment = CreateDeployment(containerRecipes, location, podLabel);
+            var internalService = CreateInternalService(containerRecipes);
+            var externalService = CreateExternalService(containerRecipes);
+            var runnerLocation = DetermineRunnerLocation(deployment);
 
-            var pod = FindPodByLabel(podLabel);
-            var podInfo = CreatePodInfo(pod);
-
-            return new RunningPod(cluster, podInfo, deploymentName, serviceName, servicePortsMap.ToArray());
-        }
-
-        private V1Pod FindPodByLabel(string podLabel)
-        {
-            var pods = client.Run(c => c.ListNamespacedPod(K8sNamespace));
-            foreach (var pod in pods.Items)
+            return new StartResult(cluster, containerRecipes, deployment, internalService, externalService)
             {
-                var label = pod.GetLabel(podLabelKey);
-                if (label == podLabel)
-                {
-                    return pod;
-                }
-            }
-            throw new Exception("Unable to find pod by label.");
+                RunnerLocation = runnerLocation
+            };
         }
 
-        public void Stop(RunningPod pod)
+        private RunnerLocation DetermineRunnerLocation(RunningDeployment deployment)
         {
-            log.Debug();
-            if (!string.IsNullOrEmpty(pod.ServiceName)) DeleteService(pod.ServiceName);
-            DeleteDeployment(pod.DeploymentName);
-            WaitUntilDeploymentOffline(pod.DeploymentName);
-            WaitUntilPodOffline(pod.PodInfo.Name);
+            var podInfo = GetPodInfo(deployment);
+            return RunnerLocationUtils.DetermineRunnerLocation(podInfo, cluster);
         }
 
-        public void DownloadPodLog(RunningPod pod, ContainerRecipe recipe, ILogHandler logHandler, int? tailLines)
+        public PodInfo GetPodInfo(RunningDeployment deployment)
+        {
+            var pod = GetPodForDeployment(deployment);
+            return CreatePodInfo(pod);
+        }
+
+        public void Stop(StartResult startResult)
         {
             log.Debug();
-            using var stream = client.Run(c => c.ReadNamespacedPodLog(pod.PodInfo.Name, K8sNamespace, recipe.Name, tailLines: tailLines));
+            if (startResult.InternalService != null) DeleteService(startResult.InternalService);
+            if (startResult.ExternalService != null) DeleteService(startResult.ExternalService);
+            DeleteDeployment(startResult.Deployment);
+            WaitUntilPodsForDeploymentAreOffline(startResult.Deployment);
+        }
+
+        public void DownloadPodLog(RunningContainer container, ILogHandler logHandler, int? tailLines)
+        {
+            log.Debug();
+
+            var podName = GetPodName(container);
+            var recipeName = container.Recipe.Name;
+
+            using var stream = client.Run(c => c.ReadNamespacedPodLog(podName, K8sNamespace, recipeName, tailLines: tailLines));
             logHandler.Log(stream);
         }
 
-        public string ExecuteCommand(RunningPod pod, string containerName, string command, params string[] args)
+        public string ExecuteCommand(RunningContainer container, string command, params string[] args)
         {
+            var containerName = container.Name;
             var cmdAndArgs = $"{containerName}: {command} ({string.Join(",", args)})";
             log.Debug(cmdAndArgs);
 
-            var runner = new CommandRunner(client, K8sNamespace, pod, containerName, command, args);
+            var podName = GetPodName(container);
+            var runner = new CommandRunner(client, K8sNamespace, podName, containerName, command, args);
             runner.Run();
             var result = runner.GetStdOut();
 
@@ -315,7 +321,7 @@ namespace KubernetesWorkflow
 
         #region Deployment management
 
-        private string CreateDeployment(ContainerRecipe[] containerRecipes, ILocation location, string podLabel)
+        private RunningDeployment CreateDeployment(ContainerRecipe[] containerRecipes, ILocation location, string podLabel)
         {
             var deploymentSpec = new V1Deployment
             {
@@ -348,13 +354,14 @@ namespace KubernetesWorkflow
             client.Run(c => c.CreateNamespacedDeployment(deploymentSpec, K8sNamespace));
             WaitUntilDeploymentOnline(deploymentSpec.Metadata.Name);
 
-            return deploymentSpec.Metadata.Name;
+            var name = deploymentSpec.Metadata.Name;
+            return new RunningDeployment(name, podLabel);
         }
 
-        private void DeleteDeployment(string deploymentName)
+        private void DeleteDeployment(RunningDeployment deployment)
         {
-            client.Run(c => c.DeleteNamespacedDeployment(deploymentName, K8sNamespace));
-            WaitUntilDeploymentOffline(deploymentName);
+            client.Run(c => c.DeleteNamespacedDeployment(deployment.Name, K8sNamespace));
+            WaitUntilDeploymentOffline(deployment.Name);
         }
 
         private IDictionary<string, string> CreateNodeSelector(ILocation location)
@@ -382,7 +389,7 @@ namespace KubernetesWorkflow
         private IDictionary<string, string> GetSelector(ContainerRecipe[] containerRecipes, string podLabel)
         {
             var labels = containerRecipes.First().PodLabels.Clone();
-            labels.Add(podLabelKey, podLabel);
+            labels.Add(PodLabelKey, podLabel);
             return labels.GetLabels();
         }
 
@@ -609,113 +616,140 @@ namespace KubernetesWorkflow
 
         private string GetNameForPort(ContainerRecipe recipe, Port port)
         {
-            return $"p{workflowNumberSource.WorkflowNumber}-{recipe.Number}-{port.Number}-{port.Protocol.ToString().ToLowerInvariant()}";
+            var inputs = new[]
+            {
+                $"p{workflowNumberSource.WorkflowNumber}",
+                recipe.Number.ToString(),
+                port.Number.ToString(),
+                port.Protocol.ToString().ToLowerInvariant()
+            };
+
+            return K8sNameUtils.FormatPortName(string.Join(",", inputs));
+        }
+
+        private string GetPodName(RunningContainer container)
+        {
+            return GetPodForDeployment(container.RunningContainers.StartResult.Deployment).Metadata.Name;
+        }
+
+        private V1Pod GetPodForDeployment(RunningDeployment deployment)
+        {
+            var allPods = client.Run(c => c.ListNamespacedPod(K8sNamespace));
+            var pods = allPods.Items.Where(p => p.GetLabel(PodLabelKey) == deployment.PodLabel).ToArray();
+
+            if (pods.Length != 1) throw new Exception("Expected to find only 1 pod by podLabel.");
+            return pods[0];
         }
 
         #endregion
 
         #region Service management
 
-        private (string, List<ContainerRecipePortMapEntry>) CreateService(ContainerRecipe[] containerRecipes)
+        private RunningService? CreateInternalService(ContainerRecipe[] recipes)
         {
-            var result = new List<ContainerRecipePortMapEntry>();
+            return CreateService(recipes, r => r.InternalPorts, "ClusterIP", "int");
+        }
 
-            var ports = CreateServicePorts(containerRecipes);
+        private RunningService? CreateExternalService(ContainerRecipe[] recipes)
+        {
+            return CreateService(recipes, r => r.ExposedPorts, "NodePort", "ext");
+        }
 
-            if (!ports.Any())
-            {
-                // None of these container-recipes wish to expose anything via a service port.
-                // So, we don't have to create a service.
-                return (string.Empty, result);
-            }
+        private RunningService? CreateService(ContainerRecipe[] recipes, Func<ContainerRecipe, Port[]> portSelector, string serviceType, string namePostfix)
+        {
+            var ports = CreateServicePorts(recipes, portSelector);
+            if (!ports.Any()) return null;
 
             var serviceSpec = new V1Service
             {
                 ApiVersion = "v1",
-                Metadata = CreateServiceMetadata(containerRecipes),
+                Metadata = CreateServiceMetadata(recipes, namePostfix),
                 Spec = new V1ServiceSpec
                 {
-                    Type = "NodePort",
-                    Selector = GetSelector(containerRecipes),
-                    Ports = ports
+                    Type = serviceType,
+                    Selector = GetSelector(recipes),
+                    Ports = ports,
                 }
             };
 
             client.Run(c => c.CreateNamespacedService(serviceSpec, K8sNamespace));
 
-            ReadBackServiceAndMapPorts(serviceSpec, containerRecipes, result);
+            var result = ReadBackServiceAndMapPorts(serviceSpec, recipes);
+            var name = serviceSpec.Metadata.Name;
 
-            return (serviceSpec.Metadata.Name, result);
+            return new RunningService(name, result);
         }
 
-        private void ReadBackServiceAndMapPorts(V1Service serviceSpec, ContainerRecipe[] containerRecipes, List<ContainerRecipePortMapEntry> result)
+        private List<ContainerRecipePortMapEntry> ReadBackServiceAndMapPorts(V1Service serviceSpec, ContainerRecipe[] containerRecipes)
         {
-            // For each container-recipe, we need to figure out which service-ports it was assigned by K8s.
+            var result = new List<ContainerRecipePortMapEntry>();
+
+            // For each container-recipe-port, we need to figure out which service-ports it was assigned by K8s.
             var readback = client.Run(c => c.ReadNamespacedService(serviceSpec.Metadata.Name, K8sNamespace));
             foreach (var r in containerRecipes)
             {
-                foreach (var port in r.ExposedPorts)
+                var recipePorts = r.ExposedPorts.Concat(r.InternalPorts).ToArray();
+                foreach (var port in recipePorts)
                 {
                     var portName = GetNameForPort(r, port);
 
                     var matchingServicePorts = readback.Spec.Ports.Where(p => p.Name == portName);
-                    if (matchingServicePorts.Any())
-                    {
-                        // These service ports belongs to this recipe.
-                        var optionals = matchingServicePorts.Select(p => MapNodePortIfAble(p, port.Tag, port.Protocol));
-                        var ports = optionals.Where(p => p != null).Select(p => p!).ToArray();
+                    var ports = matchingServicePorts.Select(p => MapPortIfAble(p, port.Tag, port.Protocol)).ToArray();
 
+                    if (ports.Any())
+                    {
                         result.Add(new ContainerRecipePortMapEntry(r.Number, ports));
+                        log.Debug($"Service Readback: {portName} found: {string.Join(",", ports.Select(p => p.ToString()))}");
                     }
                 }
             }
+
+            return result;
         }
 
-        private Port? MapNodePortIfAble(V1ServicePort p, string tag, PortProtocol protocol)
+        private Port MapPortIfAble(V1ServicePort p, string tag, PortProtocol protocol)
         {
-            if (p.NodePort == null) return null;
-            return new Port(p.NodePort.Value, tag, protocol);
+            if (p.NodePort != null) return new Port(p.NodePort.Value, tag, protocol);
+            if (p.Port > 0) return new Port(p.Port, tag, protocol);
+            throw new Exception("Unable to map port.");
         }
 
-        private void DeleteService(string serviceName)
+        private void DeleteService(RunningService service)
         {
-            client.Run(c => c.DeleteNamespacedService(serviceName, K8sNamespace));
+            client.Run(c => c.DeleteNamespacedService(service.Name, K8sNamespace));
         }
 
-        private V1ObjectMeta CreateServiceMetadata(ContainerRecipe[] containerRecipes)
+        private V1ObjectMeta CreateServiceMetadata(ContainerRecipe[] containerRecipes, string namePostfix)
         {
-            var exposedRecipe = containerRecipes.FirstOrDefault(c => c.ExposedPorts.Any());
-            var name = "service-" + workflowNumberSource.WorkflowNumber;
-            if (exposedRecipe != null)
-            {
-                name = K8sNameUtils.Format(exposedRecipe.Name) + "-" + workflowNumberSource.WorkflowNumber;
-            }
-
+            var recipeName = containerRecipes.First().Name;
+            var name = K8sNameUtils.Format($"{recipeName}-{workflowNumberSource.WorkflowNumber}-{namePostfix}");
+            log.Debug("Creating service: " + name);
             return new V1ObjectMeta
             {
                 Name = name,
-                NamespaceProperty = K8sNamespace
+                NamespaceProperty = K8sNamespace,
             };
         }
 
-        private List<V1ServicePort> CreateServicePorts(ContainerRecipe[] recipes)
+        private List<V1ServicePort> CreateServicePorts(ContainerRecipe[] recipes, Func<ContainerRecipe, Port[]> portSelector)
         {
             var result = new List<V1ServicePort>();
             foreach (var recipe in recipes)
             {
-                result.AddRange(CreateServicePorts(recipe));
+                var ports = portSelector(recipe);
+                foreach (var port in ports)
+                {
+                    result.AddRange(CreateServicePorts(recipe, port));
+                }
             }
             return result;
         }
 
-        private List<V1ServicePort> CreateServicePorts(ContainerRecipe recipe)
+        private List<V1ServicePort> CreateServicePorts(ContainerRecipe recipe, Port recipePort)
         {
             var result = new List<V1ServicePort>();
-            foreach (var port in recipe.ExposedPorts)
-            {
-                if (port.IsTcp()) CreateServicePort(result, recipe, port, "TCP");
-                if (port.IsUdp()) CreateServicePort(result, recipe, port, "UDP");
-            }
+            if (recipePort.IsTcp()) CreateServicePort(result, recipe, recipePort, "TCP");
+            if (recipePort.IsUdp()) CreateServicePort(result, recipe, recipePort, "UDP");
             return result;
         }
 
@@ -726,7 +760,7 @@ namespace KubernetesWorkflow
                 Name = GetNameForPort(recipe, port),
                 Protocol = protocol,
                 Port = port.Number,
-                TargetPort = GetNameForPort(recipe, port),
+                TargetPort = GetNameForPort(recipe, port)
             });
         }
 
@@ -758,13 +792,12 @@ namespace KubernetesWorkflow
             });
         }
 
-        private void WaitUntilPodOffline(string podName)
+        private void WaitUntilPodsForDeploymentAreOffline(RunningDeployment deployment)
         {
             WaitUntil(() =>
             {
-                var pods = client.Run(c => c.ListNamespacedPod(K8sNamespace)).Items;
-                var pod = pods.SingleOrDefault(p => p.Metadata.Name == podName);
-                return pod == null;
+                var pods = FindPodsByLabel(deployment.PodLabel);
+                return !pods.Any();
             });
         }
 
@@ -785,7 +818,17 @@ namespace KubernetesWorkflow
 
         public CrashWatcher CreateCrashWatcher(RunningContainer container)
         {
-            return new CrashWatcher(log, cluster.GetK8sClientConfig(), K8sNamespace, container);
+            var containerName = container.Name;
+            var podName = GetPodName(container);
+            var recipeName = container.Recipe.Name;
+
+            return new CrashWatcher(log, cluster.GetK8sClientConfig(), containerName, podName, recipeName, K8sNamespace);
+        }
+
+        private V1Pod[] FindPodsByLabel(string podLabel)
+        {
+            var pods = client.Run(c => c.ListNamespacedPod(K8sNamespace));
+            return pods.Items.Where(p => p.GetLabel(PodLabelKey) == podLabel).ToArray();
         }
 
         private PodInfo CreatePodInfo(V1Pod pod)

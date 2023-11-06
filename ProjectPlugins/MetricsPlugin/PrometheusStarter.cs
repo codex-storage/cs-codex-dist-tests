@@ -59,7 +59,7 @@ namespace MetricsPlugin
 
             foreach (var target in targets)
             {
-                config += $"          - '{target.Ip}:{target.Port}'\n";
+                config += $"          - '{target.Address.Host}:{target.Address.Port}'\n";
             }
 
             var bytes = Encoding.ASCII.GetBytes(config);

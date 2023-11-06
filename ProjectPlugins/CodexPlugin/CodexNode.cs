@@ -22,6 +22,7 @@ namespace CodexPlugin
         CodexDebugVersionResponse Version { get; }
         IMarketplaceAccess Marketplace { get; }
         CrashWatcher CrashWatcher { get; }
+        PodInfo GetPodInfo();
         void Stop();
     }
 
@@ -52,9 +53,7 @@ namespace CodexPlugin
         {
             get
             {
-                var port = CodexAccess.Container.Recipe.GetPortByTag(CodexContainerRecipe.MetricsPortTag);
-                if (port == null) throw new Exception("Metrics is not available for this Codex node. Please start it with the option '.EnableMetrics()' to enable it.");
-                return new MetricsScrapeTarget(CodexAccess.Container, port);
+                return new MetricsScrapeTarget(CodexAccess.Container, CodexContainerRecipe.MetricsPortTag);
             }
         }
         public EthAddress EthAddress 
@@ -134,6 +133,11 @@ namespace CodexPlugin
             Log($"Successfully connected to peer {peer.GetName()}.");
         }
 
+        public PodInfo GetPodInfo()
+        {
+            return CodexAccess.GetPodInfo();
+        }
+
         public void Stop()
         {
             if (Group.Count() > 1) throw new InvalidOperationException("Codex-nodes that are part of a group cannot be " +
@@ -166,7 +170,10 @@ namespace CodexPlugin
 
             // The peer we want to connect is in a different pod.
             // We must replace the default IP with the pod IP in the multiAddress.
-            return multiAddress.Replace("0.0.0.0", peer.CodexAccess.Container.Pod.PodInfo.Ip);
+            var workflow = tools.CreateWorkflow();
+            var podInfo = workflow.GetPodInfo(peer.Container);
+
+            return multiAddress.Replace("0.0.0.0", podInfo.Ip);
         }
 
         private void DownloadToFile(string contentId, TrackedFile file)

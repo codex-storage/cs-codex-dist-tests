@@ -97,6 +97,12 @@ namespace CodexPlugin
             return Container.Name;
         }
 
+        public PodInfo GetPodInfo()
+        {
+            var workflow = tools.CreateWorkflow();
+            return workflow.GetPodInfo(Container);
+        }
+
         private IHttp Http()
         {
             return tools.CreateHttp(GetAddress(), baseUrl: "/api/codex/v1", CheckContainerCrashed, Container.Name);

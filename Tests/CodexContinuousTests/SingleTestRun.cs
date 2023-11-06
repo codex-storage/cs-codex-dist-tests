@@ -111,9 +111,11 @@ namespace ContinuousTests
             var effectiveEnd = DateTime.UtcNow;
             var elasticSearchLogDownloader = new ElasticSearchLogDownloader(entryPoint.Tools, fixtureLog);
 
+            var workflow = entryPoint.Tools.CreateWorkflow();
             foreach (var node in nodes)
             {
-                var openingLine = $"{node.Container.Pod.PodInfo.Name} = {node.Container.Name} = {node.GetDebugInfo().id}";
+                var podInfo = workflow.GetPodInfo(node.Container);
+                var openingLine = $"{podInfo.Name} = {node.Container.Name} = {node.GetDebugInfo().id}";
                 elasticSearchLogDownloader.Download(fixtureLog.CreateSubfile(), node.Container, effectiveStart, effectiveEnd, openingLine);
             }
         }
@@ -244,13 +246,13 @@ namespace ContinuousTests
             return entryPoint.CreateInterface().WrapCodexContainers(containers).ToArray();
         }
 
-        private RunningContainer[] SelectRandomContainers()
+        private RunningContainers[] SelectRandomContainers()
         {
             var number = handle.Test.RequiredNumberOfNodes;
-            var containers = config.CodexDeployment.CodexInstances.Select(i => i.Container).ToList();
+            var containers = config.CodexDeployment.CodexInstances.Select(i => i.Containers).ToList();
             if (number == -1) return containers.ToArray();
 
-            var result = new RunningContainer[number];
+            var result = new RunningContainers[number];
             for (var i = 0; i < number; i++)
             {
                 result[i] = containers.PickOneRandom();

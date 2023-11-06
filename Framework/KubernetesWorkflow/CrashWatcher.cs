@@ -7,19 +7,23 @@ namespace KubernetesWorkflow
     {
         private readonly ILog log;
         private readonly KubernetesClientConfiguration config;
+        private readonly string containerName;
+        private readonly string podName;
+        private readonly string recipeName;
         private readonly string k8sNamespace;
-        private readonly RunningContainer container;
         private ILogHandler? logHandler;
         private CancellationTokenSource cts;
         private Task? worker;
         private Exception? workerException;
 
-        public CrashWatcher(ILog log, KubernetesClientConfiguration config, string k8sNamespace, RunningContainer container)
+        public CrashWatcher(ILog log, KubernetesClientConfiguration config, string containerName, string podName, string recipeName, string k8sNamespace)
         {
             this.log = log;
             this.config = config;
+            this.containerName = containerName;
+            this.podName = podName;
+            this.recipeName = recipeName;
             this.k8sNamespace = k8sNamespace;
-            this.container = container;
             cts = new CancellationTokenSource();
         }
 
@@ -46,7 +50,7 @@ namespace KubernetesWorkflow
         public bool HasContainerCrashed()
         {
             using var client = new Kubernetes(config);
-            return HasContainerBeenRestarted(client, container.Pod.PodInfo.Name);
+            return HasContainerBeenRestarted(client);
         }
 
         private void Worker()
@@ -66,29 +70,26 @@ namespace KubernetesWorkflow
             using var client = new Kubernetes(config);
             while (!token.IsCancellationRequested)
             {
-                token.WaitHandle.WaitOne(TimeSpan.FromSeconds(1));
+                token.WaitHandle.WaitOne(TimeSpan.FromSeconds(10));
 
-                var pod = container.Pod;
-                var recipe = container.Recipe;
-                var podName = pod.PodInfo.Name;
-                if (HasContainerBeenRestarted(client, podName))
+                if (HasContainerBeenRestarted(client))
                 {
-                    DownloadCrashedContainerLogs(client, podName, recipe);
+                    DownloadCrashedContainerLogs(client);
                     return;
                 }
             }
         }
 
-        private bool HasContainerBeenRestarted(Kubernetes client, string podName)
+        private bool HasContainerBeenRestarted(Kubernetes client)
         {
             var podInfo = client.ReadNamespacedPod(podName, k8sNamespace);
             return podInfo.Status.ContainerStatuses.Any(c => c.RestartCount > 0);
         }
 
-        private void DownloadCrashedContainerLogs(Kubernetes client, string podName, ContainerRecipe recipe)
+        private void DownloadCrashedContainerLogs(Kubernetes client)
         {
-            log.Log("Pod crash detected for " + container.Name);
-            using var stream = client.ReadNamespacedPodLog(podName, k8sNamespace, recipe.Name, previous: true);
+            log.Log("Pod crash detected for " + containerName);
+            using var stream = client.ReadNamespacedPodLog(podName, k8sNamespace, recipeName, previous: true);
             logHandler!.Log(stream);
         }
     }

@@ -1,4 +1,5 @@
-﻿using KubernetesWorkflow;
+﻿using GethPlugin;
+using KubernetesWorkflow;
 using Utils;
 
 namespace CodexPlugin
@@ -94,11 +95,10 @@ namespace CodexPlugin
             {
                 var mconfig = config.MarketplaceConfig;
                 var gethStart = mconfig.GethNode.StartResult;
-                var ip = gethStart.Container.Pod.PodInfo.Ip;
-                var port = gethStart.WsPort.Number;
+                var wsAddress = gethStart.Container.GetAddress(GethContainerRecipe.WsPortTag);
                 var marketplaceAddress = mconfig.CodexContracts.Deployment.MarketplaceAddress;
 
-                AddEnvVar("CODEX_ETH_PROVIDER", $"ws://{ip}:{port}");
+                AddEnvVar("CODEX_ETH_PROVIDER", $"ws://{wsAddress.Host}:{wsAddress.Port}");
                 AddEnvVar("CODEX_MARKETPLACE_ADDRESS", marketplaceAddress);
                 AddEnvVar("CODEX_PERSISTENCE", "true");
 

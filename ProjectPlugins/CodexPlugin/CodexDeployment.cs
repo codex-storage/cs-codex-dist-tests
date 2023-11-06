@@ -26,13 +26,13 @@ namespace CodexPlugin
 
     public class CodexInstance
     {
-        public CodexInstance(RunningContainer container, CodexDebugResponse info)
+        public CodexInstance(RunningContainers containers, CodexDebugResponse info)
         {
-            Container = container;
+            Containers = containers;
             Info = info;
         }
 
-        public RunningContainer Container { get; }
+        public RunningContainers Containers { get; }
         public CodexDebugResponse Info { get; }
     }
 

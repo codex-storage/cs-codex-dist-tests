@@ -64,6 +64,11 @@
             Number = number;
             Tag = tag;
             Protocol = protocol;
+
+            if (string.IsNullOrWhiteSpace(Tag))
+            {
+                throw new Exception("A unique port tag is required");
+            }
         }
 
         public int Number { get; }

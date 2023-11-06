@@ -1,19 +1,28 @@
-﻿using Utils;
+﻿using Newtonsoft.Json;
+using Utils;
 
 namespace KubernetesWorkflow
 {
     public class RunningContainers
     {
-        public RunningContainers(StartupConfig startupConfig, RunningPod runningPod, RunningContainer[] containers)
+        public RunningContainers(StartupConfig startupConfig, StartResult startResult, RunningContainer[] containers)
         {
             StartupConfig = startupConfig;
-            RunningPod = runningPod;
+            StartResult = startResult;
             Containers = containers;
+
+            foreach (var c in containers) c.RunningContainers = this;
         }
 
         public StartupConfig StartupConfig { get; }
-        public RunningPod RunningPod { get; }
+        public StartResult StartResult { get; }
         public RunningContainer[] Containers { get; }
+
+        [JsonIgnore]
+        public string Name
+        {
+            get { return $"{Containers.Length}x '{Containers.First().Name}'"; }
+        }
 
         public string Describe()
         {
@@ -23,50 +32,49 @@ namespace KubernetesWorkflow
 
     public class RunningContainer
     {
-        public RunningContainer(RunningPod pod, ContainerRecipe recipe, Port[] servicePorts, string name, ContainerPort[] containerPorts)
+        public RunningContainer(string name, ContainerRecipe recipe, ContainerAddress[] addresses)
         {
-            Pod = pod;
-            Recipe = recipe;
-            ServicePorts = servicePorts;
             Name = name;
-            ContainerPorts = containerPorts;
+            Recipe = recipe;
+            Addresses = addresses;
         }
 
         public string Name { get; }
-        public RunningPod Pod { get; }
         public ContainerRecipe Recipe { get; }
-        public Port[] ServicePorts { get; }
-        public ContainerPort[] ContainerPorts { get; }
+        public ContainerAddress[] Addresses { get; }
 
-        public ContainerPort GetContainerPort(string portTag)
-        {
-            return ContainerPorts.Single(c => c.Port.Tag == portTag);
-        }
+        [JsonIgnore]
+        public RunningContainers RunningContainers { get; internal set; } = null!;
 
         public Address GetAddress(string portTag)
         {
-            var containerPort = GetContainerPort(portTag);
-            if (RunnerLocationUtils.DetermineRunnerLocation(this) == RunnerLocation.InternalToCluster)
+            var containerAddress = Addresses.Single(a => a.PortTag == portTag);
+            if (containerAddress.IsInteral && RunningContainers.StartResult.RunnerLocation == RunnerLocation.ExternalToCluster)
             {
-                return containerPort.InternalAddress;
+                throw new Exception("Attempt to access a container address created from an Internal port, " +
+                    "while runner is located external to the cluster.");
             }
-            if (!containerPort.ExternalAddress.IsValid()) throw new Exception($"Getting address by tag {portTag} resulted in an invalid address.");
-            return containerPort.ExternalAddress;
+            return containerAddress.Address;
         }
     }
 
-    public class ContainerPort
+    public class ContainerAddress
     {
-        public ContainerPort(Port port, Address externalAddress, Address internalAddress)
+        public ContainerAddress(string portTag, Address address, bool isInteral)
         {
-            Port = port;
-            ExternalAddress = externalAddress;
-            InternalAddress = internalAddress;
+            PortTag = portTag;
+            Address = address;
+            IsInteral = isInteral;
         }
 
-        public Port Port { get; }
-        public Address ExternalAddress { get; }
-        public Address InternalAddress { get; }
+        public string PortTag { get; }
+        public Address Address { get; }
+        public bool IsInteral { get; }
+
+        public override string ToString()
+        {
+            return $"{PortTag} -> '{Address}'";
+        }
     }
 
     public static class RunningContainersExtensions

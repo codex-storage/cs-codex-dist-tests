@@ -133,6 +133,8 @@ namespace BiblioTech.Commands
             {
                 var deployments = Program.DeploymentFilesMonitor.GetDeployments();
 
+                //todo shows old deployments
+
                 if (!deployments.Any())
                 {
                     await context.Followup("No deployments available.");
@@ -266,7 +268,7 @@ namespace BiblioTech.Commands
 
                 try
                 {
-                    var group = ci.WrapCodexContainers(deployment.CodexInstances.Select(i => i.Container).ToArray());
+                    var group = ci.WrapCodexContainers(deployment.CodexInstances.Select(i => i.Containers).ToArray());
                     await action(group, deployment.Metadata.Name);
                 }
                 catch (Exception ex)

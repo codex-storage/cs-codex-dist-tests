@@ -15,7 +15,7 @@ namespace BiblioTech
 
         protected override async Task ExecuteDeploymentCommand(CommandContext context, CodexDeployment codexDeployment)
         {
-            var codexContainers = codexDeployment.CodexInstances.Select(c => c.Container).ToArray();
+            var codexContainers = codexDeployment.CodexInstances.Select(c => c.Containers).ToArray();
 
             var group = ci.WrapCodexContainers(codexContainers);
 

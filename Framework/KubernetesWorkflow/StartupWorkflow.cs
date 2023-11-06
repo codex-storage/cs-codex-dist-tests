@@ -9,8 +9,10 @@ namespace KubernetesWorkflow
         IKnownLocations GetAvailableLocations();
         RunningContainers Start(int numberOfContainers, ContainerRecipeFactory recipeFactory, StartupConfig startupConfig);
         RunningContainers Start(int numberOfContainers, ILocation location, ContainerRecipeFactory recipeFactory, StartupConfig startupConfig);
+        PodInfo GetPodInfo(RunningContainer container);
+        PodInfo GetPodInfo(RunningContainers containers);
         CrashWatcher CreateCrashWatcher(RunningContainer container);
-        void Stop(RunningContainers runningContainers);
+        void Stop(RunningContainers containers);
         void DownloadContainerLog(RunningContainer container, ILogHandler logHandler, int? tailLines = null);
         string ExecuteCommand(RunningContainer container, string command, params string[] args);
         void DeleteNamespace();
@@ -51,13 +53,23 @@ namespace KubernetesWorkflow
             return K8s(controller =>
             {
                 var recipes = CreateRecipes(numberOfContainers, recipeFactory, startupConfig);
-                var runningPod = controller.BringOnline(recipes, location);
-                var containers = CreateContainers(runningPod, recipes, startupConfig);
+                var startResult = controller.BringOnline(recipes, location);
+                var containers = CreateContainers(startResult, recipes, startupConfig);
 
-                var rc = new RunningContainers(startupConfig, runningPod, containers);
+                var rc = new RunningContainers(startupConfig, startResult, containers);
                 cluster.Configuration.Hooks.OnContainersStarted(rc);
                 return rc;
             });
+        }
+
+        public PodInfo GetPodInfo(RunningContainer container)
+        {
+            return K8s(c => c.GetPodInfo(container.RunningContainers.StartResult.Deployment));
+        }
+
+        public PodInfo GetPodInfo(RunningContainers containers)
+        {
+            return K8s(c => c.GetPodInfo(containers.StartResult.Deployment));
         }
 
         public CrashWatcher CreateCrashWatcher(RunningContainer container)
@@ -69,7 +81,7 @@ namespace KubernetesWorkflow
         {
             K8s(controller =>
             {
-                controller.Stop(runningContainers.RunningPod);
+                controller.Stop(runningContainers.StartResult);
                 cluster.Configuration.Hooks.OnContainersStopped(runningContainers);
             });
         }
@@ -78,7 +90,7 @@ namespace KubernetesWorkflow
         {
             K8s(controller =>
             {
-                controller.DownloadPodLog(container.Pod, container.Recipe, logHandler, tailLines);
+                controller.DownloadPodLog(container, logHandler, tailLines);
             });
         }
 
@@ -86,7 +98,7 @@ namespace KubernetesWorkflow
         {
             return K8s(controller =>
             {
-                return controller.ExecuteCommand(container.Pod, container.Recipe.Name, command, args);
+                return controller.ExecuteCommand(container, command, args);
             });
         }
 
@@ -106,18 +118,16 @@ namespace KubernetesWorkflow
             });
         }
 
-        private RunningContainer[] CreateContainers(RunningPod runningPod, ContainerRecipe[] recipes, StartupConfig startupConfig)
+        private RunningContainer[] CreateContainers(StartResult startResult, ContainerRecipe[] recipes, StartupConfig startupConfig)
         {
             log.Debug();
             return recipes.Select(r =>
             {
-                var servicePorts = runningPod.GetServicePortsForContainerRecipe(r);
-                log.Debug($"{r} -> service ports: {string.Join(",", servicePorts.Select(p => p.Number))}");
-
                 var name = GetContainerName(r, startupConfig);
+                var addresses = CreateContainerAddresses(startResult, r);
+                log.Debug($"{r}={name} -> container addresses: {string.Join(Environment.NewLine, addresses.Select(a => a.ToString()))}");
 
-                return new RunningContainer(runningPod, r, servicePorts, name,
-                    CreateContainerPorts(runningPod, r, servicePorts));
+                return new RunningContainer(name, r, addresses);
 
             }).ToArray();
         }
@@ -135,43 +145,36 @@ namespace KubernetesWorkflow
             }
         }
 
-        private ContainerPort[] CreateContainerPorts(RunningPod pod, ContainerRecipe recipe, Port[] servicePorts)
+        private ContainerAddress[] CreateContainerAddresses(StartResult startResult, ContainerRecipe recipe)
         {
-            var result = new List<ContainerPort>();
+            var result = new List<ContainerAddress>();
             foreach (var exposedPort in recipe.ExposedPorts)
             {
-                result.Add(new ContainerPort(
-                    exposedPort,
-                    GetContainerExternalAddress(pod, servicePorts, exposedPort),
-                    GetContainerInternalAddress(pod, exposedPort)));
+                result.Add(new ContainerAddress(exposedPort.Tag, GetContainerExternalAddress(startResult, recipe, exposedPort.Tag), false));
             }
             foreach (var internalPort in recipe.InternalPorts)
             {
-                if (!string.IsNullOrEmpty(internalPort.Tag))
-                {
-                    result.Add(new ContainerPort(
-                        internalPort,
-                        new Address(string.Empty, 0),
-                        GetContainerInternalAddress(pod, internalPort)));
-                }
+                result.Add(new ContainerAddress(internalPort.Tag, GetContainerInternalAddress(startResult, recipe, internalPort.Tag), true));
             }
 
             return result.ToArray();
         }
 
-        private static Address GetContainerExternalAddress(RunningPod pod, Port[] servicePorts, Port exposedPort)
+        private static Address GetContainerExternalAddress(StartResult startResult, ContainerRecipe recipe, string tag)
         {
-            var servicePort = servicePorts.Single(p => p.Tag == exposedPort.Tag);
+            var port = startResult.GetServicePorts(recipe, tag);
 
             return new Address(
-                pod.Cluster.HostAddress,
-                servicePort.Number);
+                startResult.Cluster.HostAddress,
+                port.Number);
         }
 
-        private Address GetContainerInternalAddress(RunningPod pod, Port port)
+        private Address GetContainerInternalAddress(StartResult startResult, ContainerRecipe recipe, string tag)
         {
+            var serviceName = startResult.InternalService!.Name;
+            var port = startResult.GetServicePorts(recipe, tag);
             return new Address(
-                $"http://{pod.PodInfo.Ip}",
+                $"http://{serviceName}",
                 port.Number);
         }
         
@@ -182,12 +185,26 @@ namespace KubernetesWorkflow
             for (var i = 0; i < numberOfContainers; i++)
             {
                 var recipe = recipeFactory.CreateRecipe(i, numberSource.GetContainerNumber(), componentFactory, startupConfig);
+                CheckPorts(recipe);
+
                 if (cluster.Configuration.AddAppPodLabel) recipe.PodLabels.Add("app", recipeFactory.AppName);
                 cluster.Configuration.Hooks.OnContainerRecipeCreated(recipe);
                 result.Add(recipe);
             }
 
             return result.ToArray();
+        }
+
+        private void CheckPorts(ContainerRecipe recipe)
+        {
+            var allTags =
+                recipe.ExposedPorts.Concat(recipe.InternalPorts)
+                .Select(p => K8sNameUtils.Format(p.Tag)).ToArray();
+
+            if (allTags.Length != allTags.Distinct().Count())
+            {
+                throw new Exception("Duplicate port tags found in recipe for " + recipe.Name);
+            }
         }
 
         private void K8s(Action<K8sController> action)

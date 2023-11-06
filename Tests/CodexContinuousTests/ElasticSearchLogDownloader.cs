@@ -46,7 +46,9 @@ namespace ContinuousTests
 
         private string CreateQueryTemplate(RunningContainer container, DateTime startUtc, DateTime endUtc)
         {
-            var podName = container.Pod.PodInfo.Name;
+            var workflow = tools.CreateWorkflow();
+            var podInfo = workflow.GetPodInfo(container);
+            var podName = podInfo.Name;
             var start = startUtc.ToString("o");
             var end = endUtc.ToString("o");
 

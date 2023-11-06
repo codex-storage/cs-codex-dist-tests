@@ -39,14 +39,18 @@ namespace ContinuousTests
         {
             log.Log("");
             var deployment = config.CodexDeployment;
+            var workflow = entryPoint.Tools.CreateWorkflow();
             foreach (var instance in deployment.CodexInstances)
             {
-                var container = instance.Container;
-                log.Log($"Codex environment variables for '{container.Name}':");
-                log.Log($"Pod name: {container.Pod.PodInfo.Name} - Deployment name: {container.Pod.DeploymentName}");
-                var codexVars = container.Recipe.EnvVars;
-                foreach (var vars in codexVars) log.Log(vars.ToString());
-                log.Log("");
+                foreach (var container in instance.Containers.Containers)
+                {
+                    var podInfo = workflow.GetPodInfo(container);
+                    log.Log($"Codex environment variables for '{container.Name}':");
+                    log.Log($"Pod name: {podInfo.Name} - Deployment name: {instance.Containers.StartResult.Deployment.Name}");
+                    var codexVars = container.Recipe.EnvVars;
+                    foreach (var vars in codexVars) log.Log(vars.ToString());
+                    log.Log("");
+                }
             }
             log.Log($"Deployment metadata: {JsonConvert.SerializeObject(deployment.Metadata)}");
             log.Log("");
@@ -82,7 +86,7 @@ namespace ContinuousTests
 
         private void CheckCodexNodes(BaseLog log, Configuration config)
         {
-            var nodes = entryPoint.CreateInterface().WrapCodexContainers(config.CodexDeployment.CodexInstances.Select(i => i.Container).ToArray());
+            var nodes = entryPoint.CreateInterface().WrapCodexContainers(config.CodexDeployment.CodexInstances.Select(i => i.Containers).ToArray());
             var pass = true;
             foreach (var n in nodes)
             {

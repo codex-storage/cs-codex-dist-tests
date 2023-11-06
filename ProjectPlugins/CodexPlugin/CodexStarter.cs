@@ -24,8 +24,12 @@ namespace CodexPlugin
 
             var containers = StartCodexContainers(startupConfig, codexSetup.NumberOfNodes, codexSetup.Location);
 
-            var podInfos = string.Join(", ", containers.Containers().Select(c => $"Container: '{c.Name}' runs at '{c.Pod.PodInfo.K8SNodeName}'={c.Pod.PodInfo.Ip}"));
-            Log($"Started {codexSetup.NumberOfNodes} nodes of image '{containers.Containers().First().Recipe.Image}'. ({podInfos})");
+            foreach (var rc in containers)
+            {
+                var podInfo = GetPodInfo(rc);
+                var podInfos = string.Join(", ", rc.Containers.Select(c => $"Container: '{c.Name}' runs at '{podInfo.K8SNodeName}'={podInfo.Ip}"));
+                Log($"Started {codexSetup.NumberOfNodes} nodes of image '{containers.Containers().First().Recipe.Image}'. ({podInfos})");
+            }
             LogSeparator();
 
             return containers;
@@ -78,6 +82,12 @@ namespace CodexPlugin
                 result.Add(workflow.Start(1, location, recipe, startupConfig));
             }
             return result.ToArray();
+        }
+
+        private PodInfo GetPodInfo(RunningContainers rc)
+        {
+            var workflow = pluginTools.CreateWorkflow();
+            return workflow.GetPodInfo(rc);
         }
 
         private CodexNodeGroup CreateCodexGroup(CoreInterface coreInterface, RunningContainers[] runningContainers, CodexNodeFactory codexNodeFactory)

@@ -13,34 +13,31 @@ namespace KubernetesWorkflow
     {
         private static RunnerLocation? knownLocation = null;
 
-        internal static RunnerLocation DetermineRunnerLocation(RunningContainer container)
+        internal static RunnerLocation DetermineRunnerLocation(PodInfo info, K8sCluster cluster)
         {
             if (knownLocation != null) return knownLocation.Value;
-            knownLocation = PingForLocation(container);
+            knownLocation = PingForLocation(info, cluster);
             return knownLocation.Value;
         }
 
-        private static RunnerLocation PingForLocation(RunningContainer container)
+        private static RunnerLocation PingForLocation(PodInfo podInfo, K8sCluster cluster)
         {
-            if (PingHost(container.Pod.PodInfo.Ip))
+            if (PingHost(podInfo.Ip))
             {
                 return RunnerLocation.InternalToCluster;
             }
 
-            foreach (var port in container.ContainerPorts)
+            if (PingHost(Format(cluster.HostAddress)))
             {
-                if (port.ExternalAddress.IsValid() && PingHost(Format(port.ExternalAddress)))
-                {
-                    return RunnerLocation.ExternalToCluster;
-                }
+                return RunnerLocation.ExternalToCluster;
             }
 
             throw new Exception("Unable to determine location relative to kubernetes cluster.");
         }
 
-        private static string Format(Address host)
+        private static string Format(string host)
         {
-            return host.Host
+            return host
                 .Replace("http://", "")
                 .Replace("https://", "");
         }
