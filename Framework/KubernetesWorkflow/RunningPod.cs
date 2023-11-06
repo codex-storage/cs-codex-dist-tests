@@ -29,7 +29,7 @@ namespace KubernetesWorkflow
         [JsonIgnore]
         internal RunnerLocation RunnerLocation { get; set; }
 
-        public Port GetServicePorts(ContainerRecipe recipe, string tag)
+        public Port GetInternalServicePorts(ContainerRecipe recipe, string tag)
         {
             if (InternalService != null)
             {
@@ -37,13 +37,18 @@ namespace KubernetesWorkflow
                 if (p != null) return p;
             }
 
+            throw new Exception($"Unable to find internal port by tag '{tag}' for recipe '{recipe.Name}'.");
+        }
+
+        public Port GetExternalServicePorts(ContainerRecipe recipe, string tag)
+        {
             if (ExternalService != null)
             {
                 var p = ExternalService.GetServicePortForRecipeAndTag(recipe, tag);
                 if (p != null) return p;
             }
 
-            throw new Exception($"Unable to find port by tag '{tag}' for recipe '{recipe.Name}'.");
+            throw new Exception($"Unable to find external port by tag '{tag}' for recipe '{recipe.Name}'.");
         }
 
         public Port[] GetServicePortsForContainer(ContainerRecipe recipe)

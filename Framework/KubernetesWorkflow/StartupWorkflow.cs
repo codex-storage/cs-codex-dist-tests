@@ -151,6 +151,7 @@ namespace KubernetesWorkflow
             foreach (var exposedPort in recipe.ExposedPorts)
             {
                 result.Add(new ContainerAddress(exposedPort.Tag, GetContainerExternalAddress(startResult, recipe, exposedPort.Tag), false));
+                result.Add(new ContainerAddress(exposedPort.Tag, GetContainerInternalAddress(startResult, recipe, exposedPort.Tag), true));
             }
             foreach (var internalPort in recipe.InternalPorts)
             {
@@ -162,7 +163,7 @@ namespace KubernetesWorkflow
 
         private static Address GetContainerExternalAddress(StartResult startResult, ContainerRecipe recipe, string tag)
         {
-            var port = startResult.GetServicePorts(recipe, tag);
+            var port = startResult.GetExternalServicePorts(recipe, tag);
 
             return new Address(
                 startResult.Cluster.HostAddress,
@@ -172,7 +173,7 @@ namespace KubernetesWorkflow
         private Address GetContainerInternalAddress(StartResult startResult, ContainerRecipe recipe, string tag)
         {
             var serviceName = startResult.InternalService!.Name;
-            var port = startResult.GetServicePorts(recipe, tag);
+            var port = startResult.GetInternalServicePorts(recipe, tag);
             return new Address(
                 $"http://{serviceName}",
                 port.Number);
