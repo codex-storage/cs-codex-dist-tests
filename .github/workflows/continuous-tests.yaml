@@ -1,4 +1,4 @@
-name: Run Dist Tests
+name: Run Continuous Tests
 
 
 on:
@@ -11,7 +11,7 @@ on:
   #     - '**/*.md'
   #     - '.gitignore'
   #     - 'docker/**'
-  #     - '!docker/dist-tests-job.yaml'
+  #     - '!docker/continuous-tests-job.yaml'
   workflow_dispatch:
     inputs:
       branch:
@@ -23,15 +23,27 @@ on:
         required: false
         type: string
       nameprefix:
-        description: Runner prefix (codex-dist-tests)
+        description: Runner name prefix (codex-continuous-tests)
         required: false
         type: string
       namespace:
         description: Runner namespace (default)
         required: false
         type: string
-      command:
-        description: Runner command (dotnet test Tests)
+      tests_target_duration:
+        description: Runner target duration (172800s=48h)
+        required: false
+        type: string
+      tests_filter:
+        description: Runner tests filter ("")
+        required: false
+        type: string
+      tests_cleanup:
+        description: Runner tests cleanup (true)
+        required: false
+        type: string
+      deployment_namespace:
+        description: Deployment namespace (codex-continuous-tests)
         required: false
         type: string
 
@@ -39,10 +51,13 @@ on:
 env:
   BRANCH: ${{ github.ref_name }}
   SOURCE: ${{ format('{0}/{1}', github.server_url, github.repository) }}
-  NAMEPREFIX: codex-dist-tests
+  NAMEPREFIX: codex-continuous-tests
   NAMESPACE: default
-  COMMAND: dotnet test Tests/CodexTests
-  JOB_MANIFEST: docker/dist-tests-job.yaml
+  DEPLOYMENT_NAMESPACE: codex-continuous-tests
+  TESTS_TARGET_DURATION: 172800
+  TESTS_FILTER: ""
+  TESTS_CLEANUP: true
+  JOB_MANIFEST: docker/continuous-tests-job.yaml
   KUBE_CONFIG: ${{ secrets.KUBE_CONFIG }}
   KUBE_VERSION: v1.28.2
 
@@ -61,11 +76,12 @@ jobs:
           [[ -n "${{ github.event.inputs.source }}" ]] && echo "SOURCE=${{ github.event.inputs.source }}" >>"$GITHUB_ENV" || echo "SOURCE=${{ env.SOURCE }}" >>"$GITHUB_ENV"
           [[ -n "${{ github.event.inputs.nameprefix }}" ]] && echo "NAMEPREFIX=${{ github.event.inputs.nameprefix }}" >>"$GITHUB_ENV" || echo "NAMEPREFIX=${{ env.NAMEPREFIX }}" >>"$GITHUB_ENV"
           [[ -n "${{ github.event.inputs.namespace }}" ]] && echo "NAMESPACE=${{ github.event.inputs.namespace }}" >>"$GITHUB_ENV" || echo "NAMESPACE=${{ env.NAMESPACE }}" >>"$GITHUB_ENV"
-          [[ -n "${{ github.event.inputs.command }}" ]] && COMMAND="${{ github.event.inputs.command }}" || COMMAND="${{ env.COMMAND }}"
-          echo "COMMAND=$(jq -c 'split(" ")' <<< '"'$COMMAND'"')" >>"$GITHUB_ENV"
+          [[ -n "${{ github.event.inputs.tests_target_duration }}" ]] && echo "TESTS_TARGET_DURATION=${{ github.event.inputs.tests_target_duration }}" >>"$GITHUB_ENV" || echo "TESTS_TARGET_DURATION=${{ env.TESTS_TARGET_DURATION }}" >>"$GITHUB_ENV"
+          [[ -n "${{ github.event.inputs.tests_filter }}" ]] && echo "TESTS_FILTER=${{ github.event.inputs.tests_filter }}" >>"$GITHUB_ENV" || echo "TESTS_FILTERS=${{ env.TESTS_FILTERS }}" >>"$GITHUB_ENV"
+          [[ -n "${{ github.event.inputs.tests_cleanup }}" ]] && echo "TESTS_CLEANUP=${{ github.event.inputs.tests_cleanup }}" >>"$GITHUB_ENV" || echo "TESTS_CLEANUP=${{ env.TESTS_CLEANUP }}" >>"$GITHUB_ENV"
+          [[ -n "${{ github.event.inputs.deployment_namespace }}" ]] && echo "DEPLOYMENT_NAMESPACE=${{ github.event.inputs.deployment_namespace }}" >>"$GITHUB_ENV" || echo "DEPLOYMENT_NAMESPACE=${{ env.DEPLOYMENT_NAMESPACE }}" >>"$GITHUB_ENV"
           echo "RUNID=$(date +%Y%m%d-%H%M%S)" >> $GITHUB_ENV
           echo "TESTID=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
-
       - name: Kubectl - Install ${{ env.KUBE_VERSION }}
         uses: azure/setup-kubectl@v3
         with:
@@ -75,7 +91,6 @@ jobs:
         run: |
           mkdir -p "${HOME}"/.kube
           echo "${{ env.KUBE_CONFIG }}" | base64 -d > "${HOME}"/.kube/config
-
       - name: Kubectl - Create Job
         run: |
           envsubst < ${{ env.JOB_MANIFEST }} | kubectl apply -f -
