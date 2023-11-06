@@ -9,7 +9,7 @@ namespace ContinuousTests.Tests
 {
     public class TwoClientTest : ContinuousTest
     {
-        private const string BytesStoredMetric = "codexRepostoreBytesUsed";
+        private const string BytesStoredMetric = "codex_repostore_bytes_used";
 
         public override int RequiredNumberOfNodes => 2;
         public override TimeSpan RunTestEvery => TimeSpan.FromMinutes(2);
