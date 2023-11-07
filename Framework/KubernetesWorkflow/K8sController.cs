@@ -38,15 +38,9 @@ namespace KubernetesWorkflow
             var internalService = CreateInternalService(containerRecipes);
             var externalService = CreateExternalService(containerRecipes);
 
-            var result = new StartResult(cluster, containerRecipes, deployment, internalService, externalService);
-            result.RunnerLocation = DetermineRunnerLocation(deployment);
-            return result;
-        }
+            DetermineRunnerLocation(deployment);
 
-        private RunnerLocation DetermineRunnerLocation(RunningDeployment deployment)
-        {
-            var podInfo = GetPodInfo(deployment);
-            return RunnerLocationUtils.DetermineRunnerLocation(log, podInfo, cluster);
+            return new StartResult(cluster, containerRecipes, deployment, internalService, externalService);
         }
 
         public PodInfo GetPodInfo(RunningDeployment deployment)
@@ -839,6 +833,13 @@ namespace KubernetesWorkflow
             if (string.IsNullOrEmpty(ip)) throw new InvalidOperationException("Invalid pod IP received. Test infra failure.");
 
             return new PodInfo(name, ip, k8sNodeName);
+        }
+
+        private void DetermineRunnerLocation(RunningDeployment deployment)
+        {
+            if (RunnerLocationUtils.IsKnown()) return;
+            var podInfo = GetPodInfo(deployment);
+            RunnerLocationUtils.DetermineRunnerLocation(log, podInfo, cluster);
         }
     }
 }

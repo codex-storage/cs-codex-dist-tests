@@ -52,21 +52,7 @@ namespace KubernetesWorkflow
             var addresses = Addresses.Where(a => a.PortTag == portTag).ToArray();
             if (!addresses.Any()) throw new Exception("No addresses found for portTag: " + portTag);
 
-            var location = RunningContainers.StartResult.RunnerLocation;
-            ContainerAddress select = null!;
-            if (location == RunnerLocation.InternalToCluster)
-            {
-                select = addresses.Single(a => a.IsInteral);
-            }
-            else if (location == RunnerLocation.ExternalToCluster)
-            {
-                select = addresses.Single(a => !a.IsInteral);
-            }
-            else
-            {
-                throw new Exception("Running location not known.");
-            }
-
+            var select = SelectAddress(addresses);
             log.Log($"Container '{Name}' selected for tag '{portTag}' address: '{select}'");
             return select.Address;
         }
@@ -75,6 +61,20 @@ namespace KubernetesWorkflow
         {
             var containerAddress = Addresses.Single(a => a.PortTag == portTag && a.IsInteral);
             return containerAddress.Address;
+        }
+
+        private ContainerAddress SelectAddress(ContainerAddress[] addresses)
+        {
+            var location = RunnerLocationUtils.GetRunnerLocation();
+            if (location == RunnerLocation.InternalToCluster)
+            {
+                return addresses.Single(a => a.IsInteral);
+            }
+            if (location == RunnerLocation.ExternalToCluster)
+            {
+                return addresses.Single(a => !a.IsInteral);
+            }
+            throw new Exception("Running location not known.");
         }
     }
 

@@ -26,9 +26,6 @@ namespace KubernetesWorkflow
         public RunningService? InternalService { get; }
         public RunningService? ExternalService { get; }
 
-        [JsonIgnore]
-        internal RunnerLocation RunnerLocation { get; set; }
-
         public Port GetInternalServicePorts(ContainerRecipe recipe, string tag)
         {
             if (InternalService != null)
