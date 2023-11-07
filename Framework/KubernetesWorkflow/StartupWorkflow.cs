@@ -172,10 +172,11 @@ namespace KubernetesWorkflow
 
         private Address GetContainerInternalAddress(StartResult startResult, ContainerRecipe recipe, string tag)
         {
+            var namespaceName = startResult.Cluster.Configuration.KubernetesNamespace;
             var serviceName = startResult.InternalService!.Name;
             var port = startResult.GetInternalServicePorts(recipe, tag);
             return new Address(
-                $"http://{serviceName}",
+                $"http://{namespaceName}/{serviceName}",
                 port.Number);
         }
         
