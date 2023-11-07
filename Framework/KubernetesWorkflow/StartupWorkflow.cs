@@ -175,8 +175,9 @@ namespace KubernetesWorkflow
             var namespaceName = startResult.Cluster.Configuration.KubernetesNamespace;
             var serviceName = startResult.InternalService!.Name;
             var port = startResult.GetInternalServicePorts(recipe, tag);
+
             return new Address(
-                $"http://{namespaceName}/{serviceName}",
+                $"http://{serviceName}.{namespaceName}.svc.cluster.local",
                 port.Number);
         }
         
