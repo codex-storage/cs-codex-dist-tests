@@ -46,17 +46,22 @@ namespace ContinuousTests
 
         private string CreateQueryTemplate(RunningContainer container, DateTime startUtc, DateTime endUtc)
         {
-            var workflow = tools.CreateWorkflow();
-            var podInfo = workflow.GetPodInfo(container);
-            var podName = podInfo.Name;
             var start = startUtc.ToString("o");
             var end = endUtc.ToString("o");
 
-            var source = "{ \"sort\": [ { \"@timestamp\": { \"order\": \"asc\" } } ], \"fields\": [ { \"field\": \"@timestamp\", \"format\": \"strict_date_optional_time\" }, { \"field\": \"pod_name\" }, { \"field\": \"message\" } ], \"size\": <SIZE>, <SEARCHAFTER> \"_source\": false, \"query\": { \"bool\": { \"must\": [], \"filter\": [ { \"range\": { \"@timestamp\": { \"format\": \"strict_date_optional_time\", \"gte\": \"<STARTTIME>\", \"lte\": \"<ENDTIME>\" } } }, { \"match_phrase\": { \"pod_name\": \"<PODNAME>\" } } ] } } }";
+            var containerName = container.RunningContainers.StartResult.Deployment.Name;
+            var namespaceName = container.RunningContainers.StartResult.Cluster.Configuration.KubernetesNamespace;
+
+            //container_name : codex3-5 - deploymentName as stored in pod
+            // pod_namespace : codex - continuous - nolimits - tests - 1
+
+            //var source = "{ \"sort\": [ { \"@timestamp\": { \"order\": \"asc\" } } ], \"fields\": [ { \"field\": \"@timestamp\", \"format\": \"strict_date_optional_time\" }, { \"field\": \"pod_name\" }, { \"field\": \"message\" } ], \"size\": <SIZE>, <SEARCHAFTER> \"_source\": false, \"query\": { \"bool\": { \"must\": [], \"filter\": [ { \"range\": { \"@timestamp\": { \"format\": \"strict_date_optional_time\", \"gte\": \"<STARTTIME>\", \"lte\": \"<ENDTIME>\" } } }, { \"match_phrase\": { \"pod_name\": \"<PODNAME>\" } } ] } } }";
+            var source = "{ \"sort\": [ { \"@timestamp\": { \"order\": \"asc\" } } ], \"fields\": [ { \"field\": \"@timestamp\", \"format\": \"strict_date_optional_time\" }, { \"field\": \"message\" } ], \"size\": <SIZE>, <SEARCHAFTER> \"_source\": false, \"query\": { \"bool\": { \"must\": [], \"filter\": [ { \"range\": { \"@timestamp\": { \"format\": \"strict_date_optional_time\", \"gte\": \"<STARTTIME>\", \"lte\": \"<ENDTIME>\" } } }, { \"match_phrase\": { \"container_name\": \"<CONTAINERNAME>\" } }, { \"match_phrase\": { \"pod_namespace\": \"<NAMESPACENAME>\" } } ] } } }";
             return source
                 .Replace("<STARTTIME>", start)
                 .Replace("<ENDTIME>", end)
-                .Replace("<PODNAME>", podName);
+                .Replace("<CONTAINERNAME>", containerName)
+                .Replace("<NAMESPACENAME>", namespaceName);
         }
 
         private IHttp CreateElasticSearchHttp()

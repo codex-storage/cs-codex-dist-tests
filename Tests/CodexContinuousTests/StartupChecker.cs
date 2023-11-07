@@ -46,7 +46,8 @@ namespace ContinuousTests
                 {
                     var podInfo = workflow.GetPodInfo(container);
                     log.Log($"Codex environment variables for '{container.Name}':");
-                    log.Log($"Pod name: {podInfo.Name} - Deployment name: {instance.Containers.StartResult.Deployment.Name}");
+                    log.Log($"Namespace: {container.RunningContainers.StartResult.Cluster.Configuration.KubernetesNamespace} - " +
+                        $"Pod name: {podInfo.Name} - Deployment name: {instance.Containers.StartResult.Deployment.Name}");
                     var codexVars = container.Recipe.EnvVars;
                     foreach (var vars in codexVars) log.Log(vars.ToString());
                     log.Log("");

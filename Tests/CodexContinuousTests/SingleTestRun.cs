@@ -111,11 +111,12 @@ namespace ContinuousTests
             var effectiveEnd = DateTime.UtcNow;
             var elasticSearchLogDownloader = new ElasticSearchLogDownloader(entryPoint.Tools, fixtureLog);
 
-            var workflow = entryPoint.Tools.CreateWorkflow();
             foreach (var node in nodes)
             {
-                var podInfo = workflow.GetPodInfo(node.Container);
-                var openingLine = $"{podInfo.Name} = {node.Container.Name} = {node.GetDebugInfo().id}";
+                var container = node.Container;
+                var deploymentName = container.RunningContainers.StartResult.Deployment.Name;
+                var namespaceName = container.RunningContainers.StartResult.Cluster.Configuration.KubernetesNamespace;
+                var openingLine = $"{namespaceName} - {deploymentName} = {node.Container.Name} = {node.GetDebugInfo().id}";
                 elasticSearchLogDownloader.Download(fixtureLog.CreateSubfile(), node.Container, effectiveStart, effectiveEnd, openingLine);
             }
         }
