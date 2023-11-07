@@ -37,12 +37,10 @@ namespace KubernetesWorkflow
             var deployment = CreateDeployment(containerRecipes, location, podLabel);
             var internalService = CreateInternalService(containerRecipes);
             var externalService = CreateExternalService(containerRecipes);
-            var runnerLocation = DetermineRunnerLocation(deployment);
 
-            return new StartResult(cluster, containerRecipes, deployment, internalService, externalService)
-            {
-                RunnerLocation = runnerLocation
-            };
+            var result = new StartResult(cluster, containerRecipes, deployment, internalService, externalService);
+            result.RunnerLocation = DetermineRunnerLocation(deployment);
+            return result;
         }
 
         private RunnerLocation DetermineRunnerLocation(RunningDeployment deployment)
