@@ -1,25 +1,25 @@
 ﻿using Logging;
 using System.Net.NetworkInformation;
-using Utils;
 
 namespace KubernetesWorkflow
 {
     internal enum RunnerLocation
     {
+        Unknown,
         ExternalToCluster,
         InternalToCluster,
     }
 
     internal static class RunnerLocationUtils
     {
-        private static RunnerLocation? knownLocation = null;
+        private static RunnerLocation knownLocation = RunnerLocation.Unknown;
 
         internal static RunnerLocation DetermineRunnerLocation(ILog log, PodInfo info, K8sCluster cluster)
         {
-            if (knownLocation != null) return knownLocation.Value;
+            if (knownLocation != RunnerLocation.Unknown) return knownLocation;
             knownLocation = PingForLocation(info, cluster);
             log.Log("Runner location set to: " + knownLocation);
-            return knownLocation.Value;
+            return knownLocation;
         }
 
         private static RunnerLocation PingForLocation(PodInfo podInfo, K8sCluster cluster)

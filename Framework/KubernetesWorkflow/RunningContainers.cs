@@ -58,9 +58,13 @@ namespace KubernetesWorkflow
             {
                 select = addresses.Single(a => a.IsInteral);
             }
-            else
+            else if (location == RunnerLocation.ExternalToCluster)
             {
                 select = addresses.Single(a => !a.IsInteral);
+            }
+            else
+            {
+                throw new Exception("Running location not known.");
             }
 
             log.Log($"Container '{Name}' selected for tag '{portTag}' address: '{select}'");
