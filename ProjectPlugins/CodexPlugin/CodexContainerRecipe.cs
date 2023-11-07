@@ -26,7 +26,7 @@ namespace CodexPlugin
 
         protected override void Initialize(StartupConfig startupConfig)
         {
-            SetResourcesRequest(milliCPUs: 100, memory: 100.MB());
+            SetResourcesRequest(milliCPUs: 100, memory: 12.GB());
             //SetResourceLimits(milliCPUs: 4000, memory: 12.GB());
 
             SetSchedulingAffinity(notIn: "false");
