@@ -22,17 +22,17 @@ spec:
         imagePullPolicy: Always
         env:
         - name: KUBECONFIG
-          value: /opt/kubeconfig.yaml
+          value: "/opt/kubeconfig.yaml"
         - name: LOGPATH
-          value: /var/log/codex-dist-tests
+          value: "/var/log/codex-dist-tests"
         - name: NAMESPACE
-          value: ${NAMESPACE}
+          value: "${NAMESPACE}"
         - name: BRANCH
-          value: ${BRANCH}
+          value: "${BRANCH}"
         - name: SOURCE
-          value: ${SOURCE}
+          value: "${SOURCE}"
         - name: RUNID
-          value: ${RUNID}
+          value: "${RUNID}"
         - name: TESTID
           value: "${TESTID}"
         volumeMounts:

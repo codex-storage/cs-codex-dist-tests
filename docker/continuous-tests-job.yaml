@@ -1,0 +1,67 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: ${NAMEPREFIX}-${RUNID}
+  namespace: ${NAMESPACE}
+  labels:
+    name: ${NAMEPREFIX}-${RUNID}
+    runid: ${RUNID}
+spec:
+  backoffLimit: 0
+  template:
+    metadata:
+      name: ${NAMEPREFIX}
+      labels:
+        app: continuous-tests-runner
+        name: ${NAMEPREFIX}-${RUNID}
+        runid: ${RUNID}
+    spec:
+      priorityClassName: system-node-critical
+      nodeSelector:
+        doks.digitalocean.com/node-pool: "fixed-s-4vcpu-16gb-amd"
+      containers:
+      - name: ${NAMEPREFIX}-runner
+        image: codexstorage/cs-codex-dist-tests:latest
+        imagePullPolicy: Always
+        resources:
+          requests:
+            memory: "2Gi"
+        env:
+        - name: KUBECONFIG
+          value: "/opt/kubeconfig.yaml"
+        - name: LOGPATH
+          value: "/var/log/codex-continuous-tests"
+        - name: NAMESPACE
+          value: "${NAMESPACE}"
+        - name: BRANCH
+          value: "${BRANCH}"
+        - name: SOURCE
+          value: "${SOURCE}"
+        - name: RUNID
+          value: "${RUNID}"
+        - name: TESTID
+          value: "${TESTID}"
+        - name: DEPLOYMENT_NAMESPACE
+          value: "${DEPLOYMENT_NAMESPACE}"
+        - name: TESTS_TYPE
+          value: "continuous-tests"
+        - name: TESTS_TARGET_DURATION
+          value: "${TESTS_TARGET_DURATION}"
+        - name: TESTS_FILTER
+          value: "${TESTS_FILTER}"
+        - name: TESTS_CLEANUP
+          value: "${TESTS_CLEANUP}"
+        volumeMounts:
+        - name: kubeconfig
+          mountPath: /opt/kubeconfig.yaml
+          subPath: kubeconfig.yaml
+        - name: logs
+          mountPath: /var/log/codex-continuous-tests
+      restartPolicy: Never
+      volumes:
+        - name: kubeconfig
+          secret:
+            secretName: codex-dist-tests-app-kubeconfig
+        - name: logs
+          hostPath:
+            path: /var/log/codex-continuous-tests
