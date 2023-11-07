@@ -13,7 +13,7 @@ dotnet run \
     --block-mn=10000 \
     --metrics-endpoints=1 \
     --metrics-scraper=0 \
-    --check-connect=1 \
+    --check-connect=0 \
 \
     --public-testnet=1 \
     --public-ip=1.2.3.4 \

@@ -31,12 +31,12 @@ namespace MetricsPlugin
         {
         }
 
-        public RunningContainer DeployMetricsCollector(IMetricsScrapeTarget[] scrapeTargets)
+        public RunningContainers DeployMetricsCollector(IMetricsScrapeTarget[] scrapeTargets)
         {
             return starter.CollectMetricsFor(scrapeTargets);
         }
 
-        public IMetricsAccess WrapMetricsCollectorDeployment(RunningContainer runningContainer, IMetricsScrapeTarget target)
+        public IMetricsAccess WrapMetricsCollectorDeployment(RunningContainers runningContainer, IMetricsScrapeTarget target)
         {
             runningContainer = SerializeGate.Gate(runningContainer);
             return starter.CreateAccessForTarget(runningContainer, target);

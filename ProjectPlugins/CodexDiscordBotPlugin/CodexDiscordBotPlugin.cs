@@ -28,19 +28,18 @@ namespace CodexDiscordBotPlugin
         {
         }
 
-        public RunningContainer Deploy(DiscordBotStartupConfig config)
+        public RunningContainers Deploy(DiscordBotStartupConfig config)
         {
             var workflow = tools.CreateWorkflow();
             return StartContainer(workflow, config);
         }
 
-        private RunningContainer StartContainer(IStartupWorkflow workflow, DiscordBotStartupConfig config)
+        private RunningContainers StartContainer(IStartupWorkflow workflow, DiscordBotStartupConfig config)
         {
             var startupConfig = new StartupConfig();
             startupConfig.NameOverride = config.Name;
             startupConfig.Add(config);
-            var rc = workflow.Start(1, new DiscordBotContainerRecipe(), startupConfig);
-            return rc.Containers.Single();
+            return workflow.Start(1, new DiscordBotContainerRecipe(), startupConfig);
         }
     }
 }

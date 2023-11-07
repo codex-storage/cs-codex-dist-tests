@@ -121,7 +121,7 @@ namespace CodexNetDeployer
             });
         }
 
-        private RunningContainer? DeployDiscordBot(CoreInterface ci)
+        private RunningContainers? DeployDiscordBot(CoreInterface ci)
         {
             if (!config.DeployDiscordBot) return null;
             Log("Deploying Discord bot...");
@@ -140,7 +140,7 @@ namespace CodexNetDeployer
             return rc;
         }
 
-        private RunningContainer? StartMetricsService(CoreInterface ci, List<CodexNodeStartResult> startResults)
+        private RunningContainers? StartMetricsService(CoreInterface ci, List<CodexNodeStartResult> startResults)
         {
             if (!config.MetricsScraper) return null;
 

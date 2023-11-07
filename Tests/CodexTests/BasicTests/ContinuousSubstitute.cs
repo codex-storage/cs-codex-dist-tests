@@ -126,7 +126,7 @@ namespace CodexTests.BasicTests
 
         private const string BytesStoredMetric = "codexRepostoreBytesUsed";
 
-        private void PerformTest(ICodexNode primary, ICodexNode secondary, RunningContainer rc)
+        private void PerformTest(ICodexNode primary, ICodexNode secondary, RunningContainers rc)
         {
             ScopedTestFiles(() =>
             {
