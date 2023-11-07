@@ -14,22 +14,28 @@ namespace KubernetesWorkflow
     {
         private static RunnerLocation location = RunnerLocation.Unknown;
 
-        internal static void DetermineRunnerLocation(ILog log, PodInfo info, K8sCluster cluster)
-        {
-            if (location != RunnerLocation.Unknown) return;
-            location = PingForLocation(info, cluster);
-            log.Log("Runner location set to: " + location);
-        }
-
-        internal static bool IsKnown()
-        {
-            return location != RunnerLocation.Unknown;
-        }
-
         internal static RunnerLocation GetRunnerLocation()
         {
+            DetermineRunnerLocation();
             if (location == RunnerLocation.Unknown) throw new Exception("Runner location is unknown.");
             return location;
+        }
+
+        private static void DetermineRunnerLocation()//ILog log, PodInfo info, K8sCluster cluster)
+        {
+            if (location != RunnerLocation.Unknown) return;
+
+            var port = Environment.GetEnvironmentVariable("KUBERNETES_PORT");
+            var host = Environment.GetEnvironmentVariable("KUBERNETES_SERVICE_HOST");
+
+            if (string.IsNullOrEmpty(port) || string.IsNullOrEmpty(host))
+            {
+                location = RunnerLocation.ExternalToCluster;
+            }
+            else
+            {
+                location = RunnerLocation.InternalToCluster;
+            }
         }
 
         private static RunnerLocation PingForLocation(PodInfo podInfo, K8sCluster cluster)
