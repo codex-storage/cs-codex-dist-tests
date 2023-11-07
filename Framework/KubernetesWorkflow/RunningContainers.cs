@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using Logging;
+using Newtonsoft.Json;
 using Utils;
 
 namespace KubernetesWorkflow
@@ -46,20 +47,24 @@ namespace KubernetesWorkflow
         [JsonIgnore]
         public RunningContainers RunningContainers { get; internal set; } = null!;
 
-        public Address GetAddress(string portTag)
+        public Address GetAddress(ILog log, string portTag)
         {
             var addresses = Addresses.Where(a => a.PortTag == portTag).ToArray();
             if (!addresses.Any()) throw new Exception("No addresses found for portTag: " + portTag);
 
             var location = RunningContainers.StartResult.RunnerLocation;
+            ContainerAddress select = null!;
             if (location == RunnerLocation.InternalToCluster)
             {
-                return addresses.Single(a => a.IsInteral).Address;
+                select = addresses.Single(a => a.IsInteral);
             }
             else
             {
-                return addresses.Single(a => !a.IsInteral).Address;
+                select = addresses.Single(a => !a.IsInteral);
             }
+
+            log.Log($"Container '{Name}' selected for tag '{portTag}' address: '{select}'");
+            return select.Address;
         }
 
         public Address GetInternalAddress(string portTag)
@@ -84,7 +89,8 @@ namespace KubernetesWorkflow
 
         public override string ToString()
         {
-            return $"{PortTag} -> '{Address}'";
+            var indicator = IsInteral ? "int" : "ext";
+            return $"{indicator} {PortTag} -> '{Address}'";
         }
     }
 

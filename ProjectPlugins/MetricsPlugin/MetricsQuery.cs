@@ -13,8 +13,8 @@ namespace MetricsPlugin
         public MetricsQuery(IPluginTools tools, RunningContainer runningContainer)
         {
             RunningContainer = runningContainer;
-            http = tools.CreateHttp(RunningContainer.GetAddress(PrometheusContainerRecipe.PortTag), "api/v1");
             log = tools.GetLog();
+            http = tools.CreateHttp(RunningContainer.GetAddress(log, PrometheusContainerRecipe.PortTag), "api/v1");
         }
 
         public RunningContainer RunningContainer { get; }
@@ -122,7 +122,7 @@ namespace MetricsPlugin
 
         private string GetInstanceNameForNode(IMetricsScrapeTarget target)
         {
-            return ScrapeTargetHelper.FormatTarget(target);
+            return ScrapeTargetHelper.FormatTarget(log, target);
         }
 
         private string GetInstanceStringForNode(IMetricsScrapeTarget target)

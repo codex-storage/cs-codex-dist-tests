@@ -14,7 +14,7 @@ namespace DistTestCore
         {
             kubeConfigFile = GetNullableEnvVarOrDefault("KUBECONFIG", null);
             logPath = GetEnvVarOrDefault("LOGPATH", "CodexTestLogs");
-            logDebug = GetEnvVarOrDefault("LOGDEBUG", "false").ToLowerInvariant() == "true";
+            logDebug = true;// GetEnvVarOrDefault("LOGDEBUG", "false").ToLowerInvariant() == "true";
             dataFilesPath = GetEnvVarOrDefault("DATAFILEPATH", "TestDataFiles");
         }
 

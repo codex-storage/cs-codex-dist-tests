@@ -115,7 +115,7 @@ namespace CodexPlugin
 
         private Address GetAddress()
         {
-            return Container.GetAddress(CodexContainerRecipe.ApiPortTag);
+            return Container.GetAddress(tools.GetLog(), CodexContainerRecipe.ApiPortTag);
         }
 
         private void CheckContainerCrashed(HttpClient client)
