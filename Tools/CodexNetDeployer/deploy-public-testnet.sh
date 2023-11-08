@@ -17,11 +17,11 @@ dotnet run \
 \
     --public-testnet=1 \
     --public-ip=1.2.3.4 \
-    --public-discports=20010,20020,20030 \
-    --public-listenports=20011,20021,20031 \
+    --public-discports=30010,30020,30030 \
+    --public-listenports=30011,30021,30031 \
     --public-gethip=1.2.3.5 \
-    --public-gethdiscport=20040 \
-    --public-gethlistenport=20041 \
+    --public-gethdiscport=30040 \
+    --public-gethlistenport=30041 \
 \
     --discord-bot=1 \
     --dbot-token=tokenhere \
