@@ -23,7 +23,7 @@ namespace ContinuousTests
 
         public void Check()
         {
-            var log = new FixtureLog(new LogConfig(config.LogPath, false), DateTime.UtcNow, "StartupChecks");
+            var log = new FixtureLog(new LogConfig(config.LogPath), DateTime.UtcNow, "StartupChecks");
             log.Log("Starting continuous test run...");
             IncludeDeploymentConfiguration(log);
             log.Log("Checking configuration...");

@@ -13,16 +13,21 @@ namespace Logging
 
     public abstract class BaseLog : ILog
     {
+        public static bool EnableDebugLogging { get; set; } = false;
+
         private readonly NumberSource subfileNumberSource = new NumberSource(0);
-        private readonly bool debug;
         private readonly List<BaseLogStringReplacement> replacements = new List<BaseLogStringReplacement>();
         private LogFile? logFile;
 
-        protected BaseLog(bool debug)
+        public BaseLog()
         {
-            this.debug = debug;
+            IsDebug =
+                EnableDebugLogging ||
+                !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("LOGDEBUG")) ||
+                !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("DEBUGLOG"));
         }
 
+        protected bool IsDebug { get; private set; }
         protected abstract string GetFullName();
 
         public LogFile LogFile 
@@ -41,7 +46,7 @@ namespace Logging
 
         public void Debug(string message = "", int skipFrames = 0)
         {
-            if (debug)
+            if (IsDebug)
             {
                 var callerName = DebugStack.GetCallerName(skipFrames);
                 Log($"(debug)({callerName}) {message}");
@@ -72,7 +77,7 @@ namespace Logging
 
         private string ApplyReplacements(string str)
         {
-            if (debug) return str;
+            if (IsDebug) return str;
             foreach (var replacement in replacements)
             {
                 str = replacement.Apply(str);

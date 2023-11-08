@@ -2,13 +2,11 @@
 {
     public class LogConfig
     {
-        public LogConfig(string logRoot, bool debugEnabled)
+        public LogConfig(string logRoot)
         {
             LogRoot = logRoot;
-            DebugEnabled = debugEnabled;
         }
         
         public string LogRoot { get; }
-        public bool DebugEnabled { get; }
     }
 }

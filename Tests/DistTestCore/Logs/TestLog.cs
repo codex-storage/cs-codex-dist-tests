@@ -5,8 +5,7 @@
         private readonly string methodName;
         private readonly string fullName;
 
-        public TestLog(string folder, bool debug, string name = "")
-            : base(debug)
+        public TestLog(string folder, string name = "")
         {
             methodName = NameUtils.GetTestMethodName(name);
             fullName = Path.Combine(folder, methodName);

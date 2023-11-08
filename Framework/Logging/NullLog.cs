@@ -2,10 +2,6 @@
 {
     public class NullLog : BaseLog
     {
-        public NullLog() : base(false)
-        {
-        }
-
         public string FullFilename { get; set; } = "NULL";
 
         protected override string GetFullName()
@@ -15,11 +11,12 @@
 
         public override void Log(string message)
         {
+            if (IsDebug) base.Log(message);
         }
 
         public override void Error(string message)
         {
-            Console.WriteLine("Error: " + message);
+            base.Error(message);
         }
 
         public override void AddStringReplace(string from, string to)

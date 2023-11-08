@@ -21,7 +21,7 @@ namespace ContinuousTests
 
         public void Run()
         {
-            var logConfig = new LogConfig(config.LogPath, false);
+            var logConfig = new LogConfig(config.LogPath);
             var startTime = DateTime.UtcNow;
 
             var overviewLog = new LogSplitter(

@@ -6,11 +6,6 @@ namespace DistTestCore.Logs
     {
         private bool hasFailed;
 
-        public BaseTestLog(bool debug)
-            : base(debug)
-        {
-        }
-
         public void WriteLogTag()
         {
             var runId = NameUtils.GetRunId();

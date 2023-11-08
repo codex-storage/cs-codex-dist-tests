@@ -18,7 +18,7 @@ namespace CodexContractsPlugin
         {
             var config = startupConfig.Get<CodexContractsContainerConfig>();
 
-            var address = config.GethNode.StartResult.Container.GetAddress(new ConsoleLog(), GethContainerRecipe.HttpPortTag);
+            var address = config.GethNode.StartResult.Container.GetAddress(new NullLog(), GethContainerRecipe.HttpPortTag);
 
             AddEnvVar("DISTTEST_NETWORK_URL", address.ToString());
             AddEnvVar("HARDHAT_NETWORK", "codexdisttestnetwork");
