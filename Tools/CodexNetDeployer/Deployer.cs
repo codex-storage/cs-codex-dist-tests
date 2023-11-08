@@ -131,7 +131,8 @@ namespace CodexNetDeployer
                 token: config.DiscordBotToken,
                 serverName: config.DiscordBotServerName,
                 adminRoleName: config.DiscordBotAdminRoleName,
-                adminChannelName: config.DiscordBotAdminChannelName)
+                adminChannelName: config.DiscordBotAdminChannelName,
+                kubeNamespace: config.KubeNamespace)
             {
                 DataPath = config.DiscordBotDataPath
             });

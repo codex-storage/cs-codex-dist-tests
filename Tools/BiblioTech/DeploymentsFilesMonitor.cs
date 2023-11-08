@@ -28,7 +28,7 @@ namespace BiblioTech
             try
             {
                 var deploy = JsonConvert.DeserializeObject<CodexDeployment>(str);
-                if (deploy != null)
+                if (IsDeploymentOk(deploy))
                 {
                     var targetFile = Path.Combine(Program.Config.EndpointsPath, Guid.NewGuid().ToString().ToLowerInvariant() + ".json");
                     File.WriteAllText(targetFile, str);
@@ -57,6 +57,17 @@ namespace BiblioTech
                 }
             }
             return false;
+        }
+
+        private bool IsDeploymentOk(CodexDeployment? deploy)
+        {
+            if (deploy == null) return false;
+            if (deploy.CodexInstances == null) return false;
+            if (!deploy.CodexInstances.Any()) return false;
+            if (!deploy.CodexInstances.All(i => i.Containers != null && i.Info != null)) return false;
+            if (deploy.GethDeployment == null) return false;
+            if (deploy.GethDeployment.Containers == null) return false;
+            return true;
         }
 
         private void LoadDeployments()

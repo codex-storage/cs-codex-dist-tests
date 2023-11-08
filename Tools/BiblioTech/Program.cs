@@ -41,10 +41,10 @@ namespace BiblioTech
             ProjectPlugin.Load<CodexContractsPlugin.CodexContractsPlugin>();
 
             var entryPoint = new EntryPoint(new ConsoleLog(), new KubernetesWorkflow.Configuration(
-                kubeConfigFile: null,
+                kubeConfigFile: Config.KubeConfigFile,
                 operationTimeout: TimeSpan.FromMinutes(5),
                 retryDelay: TimeSpan.FromSeconds(10),
-                kubernetesNamespace: "not-applicable"), "datafiles");
+                kubernetesNamespace: Config.KubeNamespace), "datafiles");
 
             var ci = entryPoint.CreateInterface();
 

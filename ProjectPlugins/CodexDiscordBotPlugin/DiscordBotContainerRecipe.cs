@@ -16,12 +16,16 @@ namespace CodexDiscordBotPlugin
             AddEnvVar("SERVERNAME", config.ServerName);
             AddEnvVar("ADMINROLE", config.AdminRoleName);
             AddEnvVar("ADMINCHANNELNAME", config.AdminChannelName);
+            AddEnvVar("KUBECONFIG", "/opt/kubeconfig.yaml");
+            AddEnvVar("KUBENAMESPACE", config.KubeNamespace);
 
             if (!string.IsNullOrEmpty(config.DataPath))
             {
                 AddEnvVar("DATAPATH", config.DataPath);
                 AddVolume(config.DataPath, 1.GB());
             }
+
+            AddVolume(name: "kubeconfig", mountPath: "/opt/kubeconfig.yaml", subPath: "kubeconfig.yaml", secret: "codex-dist-tests-app-kubeconfig");
         }
     }
 }
