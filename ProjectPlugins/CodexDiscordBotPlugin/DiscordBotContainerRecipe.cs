@@ -25,7 +25,7 @@ namespace CodexDiscordBotPlugin
                 AddVolume(config.DataPath, 1.GB());
             }
 
-            AddVolume(name: "kubeconfig", mountPath: "/opt/kubeconfig.yaml", subPath: "kubeconfig.yaml", secret: "codex-dist-tests-app-kubeconfig");
+            AddVolume(name: "kubeconfig", mountPath: "/opt/kubeconfig.yaml", subPath: "kubeconfig.yaml", secret: "discordbot-sa-kubeconfig");
         }
     }
 }
