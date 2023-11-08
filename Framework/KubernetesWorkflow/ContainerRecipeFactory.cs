@@ -121,10 +121,12 @@ namespace KubernetesWorkflow
             SetResourcesRequest(new ContainerResourceSet(milliCPUs, memory));
         }
 
-        protected void SetResourceLimits(int milliCPUs, ByteSize memory)
-        {
-            SetResourceLimits(new ContainerResourceSet(milliCPUs, memory));
-        }
+        // Disabled following a possible bug in the k8s cluster that will throttle containers much more than is
+        // called for if they have resource limits defined.
+        //protected void SetResourceLimits(int milliCPUs, ByteSize memory)
+        //{
+        //    SetResourceLimits(new ContainerResourceSet(milliCPUs, memory));
+        //}
 
         protected void SetResourcesRequest(ContainerResourceSet requests)
         {

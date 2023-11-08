@@ -1,7 +1,12 @@
 dotnet run \
-    --kube-config=/opt/kubeconfig.yaml \
-    --codex-deployment=codex-deployment.json \
-    --log-path=/var/log/codex-continuous-tests/logs \
-    --keep=1 \
-    --stop=10 \
-    --target-duration=172800 # 48 hours
+    --project "${TESTS_PATH:-Tests/CodexContinuousTests}" \
+    --kube-config="${KUBECONFIG:-/opt/kubeconfig.yaml}" \
+    --codex-deployment="${TESTS_CODEX_DEPLOYMENT:-codex-deployment.json}" \
+    --filter="${TESTS_FILTER:-}" \
+    --data-path="${TESTS_DATA_PATH:-data}" \
+    --log-path="${LOGPATH:-/var/log/codex-continuous-tests}" \
+    --full-container-logs=1 \
+    --keep=${TESTS_KEEP:-1} \
+    --stop=${TESTS_STOP:-10} \
+    --target-duration=${TESTS_TARGET_DURATION:-172800} \
+    --cleanup="${TESTS_CLEANUP:-false}"

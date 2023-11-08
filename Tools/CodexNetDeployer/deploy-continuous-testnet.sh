@@ -1,20 +1,21 @@
 dotnet run \
-    --deploy-name=codex-continuous-test-deployment \
-    --kube-config=/opt/kubeconfig.yaml \
-    --kube-namespace=codex-continuous-tests \
-    --deploy-file=codex-deployment.json \
-    --nodes=5 \
-    --validators=3 \
-    --log-level=Trace \
-    --storage-quota=2048 \
-    --make-storage-available=1 \
-    --storage-sell=1024 \
-    --min-price=1024 \
-    --max-collateral=1024 \
-    --max-duration=3600000 \
-    --block-ttl=180 \
-    --block-mi=120 \
-    --block-mn=10000 \
-    --metrics-endpoints=1 \
-    --metrics-scraper=1 \
-    --check-connect=1
+    --project "${DEPLOYMENT_CODEXNETDEPLOYER_PATH:-Tools/CodexNetDeployer}" \
+    --deploy-name="${DEPLOYMENT_NAME:-codex-continuous-test-deployment}" \
+    --kube-config="${KUBECONFIG:-/opt/kubeconfig.yaml}" \
+    --kube-namespace="${DEPLOYMENT_NAMESPACE:-codex-continuous-tests}" \
+    --deploy-file="${DEPLOYMENT_FILE:-codex-deployment.json}" \
+    --nodes=${DEPLOYMENT_NODES:-5} \
+    --validators=${DEPLOYMENT_VALIDATORS:-3} \
+    --log-level="${CODEX_LOG_LEVEL:-Trace}" \
+    --storage-quota=${CODEX_STORAGE_QUOTA:-2048} \
+    --storage-sell=${CODEX_STORAGE_SELL:-1024} \
+    --min-price=${CODEX_MIN_PRICE:-1024} \
+    --max-collateral=${CODEX_MAX_COLLATERAL:-1024} \
+    --max-duration=${CODEX_MAX_DURATION:-3600000} \
+    --block-ttl=${CODEX_BLOCK_TTL:-180} \
+    --block-mi=${CODEX_BLOCK_MI:-120} \
+    --block-mn=${CODEX_BLOCK_MN:-10000} \
+    --metrics-endpoints=${CODEX_METRICS:-1} \
+    --metrics-scraper=${CODEX_METRICS:-1} \
+    --check-connect=${DEPLOYMENT_CHECK_CONNECT:-1} \
+    -y
