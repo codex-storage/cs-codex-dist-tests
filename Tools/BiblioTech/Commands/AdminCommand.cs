@@ -110,15 +110,7 @@ namespace BiblioTech.Commands
                 }
 
                 var report = string.Join(Environment.NewLine, Program.UserRepo.GetInteractionReport(user));
-                if (report.Length > 1900)
-                {
-                    var filename = $"user-{user.Username}.log";
-                    await context.FollowupWithAttachement(filename, report);
-                }
-                else
-                {
-                    await context.Followup(report);
-                }
+                await context.Followup(report);
             }
         }
 
@@ -293,7 +285,8 @@ namespace BiblioTech.Commands
                     var nl = Environment.NewLine;
                     var content = new List<string>
                     {
-                        $"{DateTime.UtcNow.ToString("o")} - {group.Count()} Codex nodes."
+                        $"{DateTime.UtcNow.ToString("o")} - {group.Count()} Codex nodes.",
+                        $"Deployment name: '{name}'"
                     };
 
                     foreach (var node in group)
@@ -311,8 +304,7 @@ namespace BiblioTech.Commands
                         }
                     }
 
-                    var filename = $"netinfo-{NoWhitespaces(name)}.log";
-                    await context.FollowupWithAttachement(filename, string.Join(nl, content.ToArray()));
+                    await context.Followup(string.Join(nl, content));
                 });
             }
         }
@@ -336,29 +328,32 @@ namespace BiblioTech.Commands
 
                 await OnDeployment(context, async (group, name) =>
                 {
-                    await context.Followup($"Calling debug/peer for '{peerId}' on {group.Count()} Codex nodes.");
+                    var nl = Environment.NewLine;
+                    var content = new List<string>
+                    {
+                        $"{DateTime.UtcNow.ToString("o")} - {group.Count()} Codex nodes.",
+                        $"Deployment name: '{name}'"
+                    };
+
+                    content.Add($"Calling debug/peer for '{peerId}' on {group.Count()} Codex nodes.");
                     foreach (var node in group)
                     {
                         try
                         {
                             var info = node.GetDebugPeer(peerId);
-                            var nl = Environment.NewLine;
                             var json = JsonConvert.SerializeObject(info, Formatting.Indented);
                             var jsonInsert = $"{nl}```{nl}{json}{nl}```{nl}";
-                            await context.Followup($"Node '{node.GetName()}' responded with {jsonInsert}");
+                            content.Add($"Node '{node.GetName()}' responded with {jsonInsert}");
                         }
                         catch (Exception ex)
                         {
-                            await context.Followup($"Node '{node.GetName()}' failed to respond with exception: " + ex);
+                            content.Add($"Node '{node.GetName()}' failed to respond with exception: " + ex);
                         }
                     }
+
+                    await context.Followup(string.Join(nl, content));
                 });
             }
-        }
-
-        private static string NoWhitespaces(string s)
-        {
-            return s.Replace(" ", "-");
         }
     }
 }

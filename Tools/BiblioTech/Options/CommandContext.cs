@@ -15,13 +15,19 @@ namespace BiblioTech.Options
 
         public async Task Followup(string message)
         {
+            if (message.Length > 1900)
+            {
+                await FollowupWithAttachement("codexdiscordbot_file.txt", message);
+                return;
+            }
+
             await Command.ModifyOriginalResponseAsync(m =>
             {
                 m.Content = message;
             });
         }
 
-        public async Task FollowupWithAttachement(string filename, string content)
+        private async Task FollowupWithAttachement(string filename, string content)
         {
             using var fileStream = new MemoryStream();
             using var streamWriter = new StreamWriter(fileStream);

@@ -50,7 +50,7 @@ namespace BiblioTech.Commands
 
             var i = random.Next(0, sprCache.Count);
             var spr = sprCache[i];
-            await context.Followup($"Your SPR: '{spr}'");
+            await context.Followup($"Your SPR: `{spr}`");
         }
 
         private bool ShouldUpdate()
