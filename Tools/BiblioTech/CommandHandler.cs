@@ -30,6 +30,11 @@ namespace BiblioTech
                     .WithName(c.Name)
                     .WithDescription(c.Description);
 
+                if (c.IsAdminCommand)
+                {
+                    builder.WithDefaultMemberPermissions(GuildPermission.Administrator);
+                }
+
                 foreach (var option in c.Options)
                 {
                     builder.AddOption(option.Build());
