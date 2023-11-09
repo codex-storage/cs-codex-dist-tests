@@ -10,7 +10,6 @@ namespace BiblioTech
         public abstract string StartingMessage { get; }
         public abstract string Description { get; }
         public virtual CommandOption[] Options => Array.Empty<CommandOption>();
-        public virtual bool IsAdminCommand => false;
 
         public async Task SlashCommandHandler(SocketSlashCommand command)
         {

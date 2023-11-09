@@ -25,7 +25,6 @@ namespace BiblioTech.Commands
         public override string Name => "admin";
         public override string StartingMessage => "...";
         public override string Description => "Admins only.";
-        public override bool IsAdminCommand => true;
 
         public override CommandOption[] Options => new CommandOption[]
         {
