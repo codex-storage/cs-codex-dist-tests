@@ -1,5 +1,6 @@
 ﻿using Logging;
 using Newtonsoft.Json;
+using Utils;
 
 namespace DistTestCore.Logs
 {
@@ -15,6 +16,11 @@ namespace DistTestCore.Logs
             fixtureName = NameUtils.GetRawFixtureName();
         }
 
+        public void ConcludeTest(string resultStatus, TimeSpan testDuration, Dictionary<string, string> data)
+        {
+            ConcludeTest(resultStatus, Time.FormatDuration(testDuration), data);
+        }
+
         public void ConcludeTest(string resultStatus, string testDuration, Dictionary<string, string> data)
         {
             data.Add("timestamp", DateTime.UtcNow.ToString("o"));
@@ -23,7 +29,7 @@ namespace DistTestCore.Logs
             data.Add("testid", NameUtils.GetTestId());
             data.Add("category", NameUtils.GetCategoryName());
             data.Add("fixturename", fixtureName);
-            data.Add("testname", NameUtils.GetTestMethodName());
+            if (!data.ContainsKey("testname")) data.Add("testname", NameUtils.GetTestMethodName());
             data.Add("testduration", testDuration);
             Write(data);
         }

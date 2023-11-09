@@ -57,7 +57,7 @@ namespace ContinuousTests
             }
             else
             {
-                var testLoops = filteredTests.Select(t => new TestLoop(entryPointFactory, taskFactory, config, overviewLog, t.GetType(), t.RunTestEvery, startupChecker, cancelToken)).ToArray();
+                var testLoops = filteredTests.Select(t => new TestLoop(entryPointFactory, taskFactory, config, overviewLog, statusLog, t.GetType(), t.RunTestEvery, startupChecker, cancelToken)).ToArray();
 
                 foreach (var testLoop in testLoops)
                 {
@@ -124,7 +124,8 @@ namespace ContinuousTests
             var result = new Dictionary<string, string>();
             foreach (var testLoop in testLoops)
             {
-                result.Add($"ctest-{testLoop.Name}", $"passes: {testLoop.NumberOfPasses} - failures: {testLoop.NumberOfFailures}");
+                result.Add("testname", testLoop.Name);
+                result.Add($"summary", $"passes: {testLoop.NumberOfPasses} - failures: {testLoop.NumberOfFailures}");
             }
             return result;
         }

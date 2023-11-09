@@ -16,6 +16,7 @@ namespace ContinuousTests
         private readonly TaskFactory taskFactory;
         private readonly Configuration config;
         private readonly ILog overviewLog;
+        private readonly StatusLog statusLog;
         private readonly TestHandle handle;
         private readonly CancellationToken cancelToken;
         private readonly ICodexNode[] nodes;
@@ -23,11 +24,12 @@ namespace ContinuousTests
         private readonly string testName;
         private static int failureCount = 0;
 
-        public SingleTestRun(EntryPointFactory entryPointFactory, TaskFactory taskFactory, Configuration config, ILog overviewLog, TestHandle handle, StartupChecker startupChecker, CancellationToken cancelToken)
+        public SingleTestRun(EntryPointFactory entryPointFactory, TaskFactory taskFactory, Configuration config, ILog overviewLog, StatusLog statusLog, TestHandle handle, StartupChecker startupChecker, CancellationToken cancelToken)
         {
             this.taskFactory = taskFactory;
             this.config = config;
             this.overviewLog = overviewLog;
+            this.statusLog = statusLog;
             this.handle = handle;
             this.cancelToken = cancelToken;
             testName = handle.Test.GetType().Name;
@@ -63,13 +65,15 @@ namespace ContinuousTests
         private void RunTest(Action<bool> resultHandler)
         {
             var testStart = DateTime.UtcNow;
-            
+            TimeSpan duration = TimeSpan.Zero;
+
             try
             {
                 RunTestMoments();
+                duration = DateTime.UtcNow - testStart;
 
-                var duration = DateTime.UtcNow - testStart;
                 OverviewLog($" > Test passed. ({Time.FormatDuration(duration)})");
+                UpdateStatusLogPassed(testStart, duration);
 
                 if (!config.KeepPassedTestLogs)
                 {
@@ -81,6 +85,7 @@ namespace ContinuousTests
             {
                 fixtureLog.Error("Test run failed with exception: " + ex);
                 fixtureLog.MarkAsFailed();
+                UpdateStatusLogFailed(testStart, duration, ex.ToString());
 
                 DownloadContainerLogs(testStart);
 
@@ -168,6 +173,26 @@ namespace ContinuousTests
             Log(exceptionsMessage);
             OverviewLog($" > Test failed: " + exceptionsMessage);
             throw new Exception(exceptionsMessage);
+        }
+
+        private void UpdateStatusLogFailed(DateTime testStart, TimeSpan duration, string error)
+        {
+            statusLog.ConcludeTest("Failed", duration, CreateStatusLogData(testStart, error));
+        }
+
+        private void UpdateStatusLogPassed(DateTime testStart, TimeSpan duration)
+        {
+            statusLog.ConcludeTest("Passed", duration, CreateStatusLogData(testStart, "OK"));
+        }
+
+        private Dictionary<string, string> CreateStatusLogData(DateTime testStart, string message)
+        {
+            return new Dictionary<string, string>
+            {
+                { "teststart", testStart.ToString("o") },
+                { "testname", testName },
+                { "message", message }
+            };
         }
 
         private string GetCombinedExceptionsMessage(Exception[] exceptions)

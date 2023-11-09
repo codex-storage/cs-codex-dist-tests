@@ -1,4 +1,5 @@
-﻿using Logging;
+﻿using DistTestCore.Logs;
+using Logging;
 
 namespace ContinuousTests
 {
@@ -8,6 +9,7 @@ namespace ContinuousTests
         private readonly TaskFactory taskFactory;
         private readonly Configuration config;
         private readonly ILog overviewLog;
+        private readonly StatusLog statusLog;
         private readonly Type testType;
         private readonly TimeSpan runsEvery;
         private readonly StartupChecker startupChecker;
@@ -15,12 +17,13 @@ namespace ContinuousTests
         private readonly EventWaitHandle runFinishedHandle = new EventWaitHandle(true, EventResetMode.ManualReset);
         private static object testLock = new object();
 
-        public TestLoop(EntryPointFactory entryPointFactory, TaskFactory taskFactory, Configuration config, ILog overviewLog, Type testType, TimeSpan runsEvery, StartupChecker startupChecker, CancellationToken cancelToken)
+        public TestLoop(EntryPointFactory entryPointFactory, TaskFactory taskFactory, Configuration config, ILog overviewLog, StatusLog statusLog, Type testType, TimeSpan runsEvery, StartupChecker startupChecker, CancellationToken cancelToken)
         {
             this.entryPointFactory = entryPointFactory;
             this.taskFactory = taskFactory;
             this.config = config;
             this.overviewLog = overviewLog;
+            this.statusLog = statusLog;
             this.testType = testType;
             this.runsEvery = runsEvery;
             this.startupChecker = startupChecker;
@@ -73,7 +76,7 @@ namespace ContinuousTests
         {
             var test = (ContinuousTest)Activator.CreateInstance(testType)!;
             var handle = new TestHandle(test);
-            var run = new SingleTestRun(entryPointFactory, taskFactory, config, overviewLog, handle, startupChecker, cancelToken);
+            var run = new SingleTestRun(entryPointFactory, taskFactory, config, overviewLog, statusLog, handle, startupChecker, cancelToken);
 
             runFinishedHandle.Reset();
             run.Run(runFinishedHandle, result =>
