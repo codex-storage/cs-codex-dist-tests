@@ -32,6 +32,7 @@ namespace BiblioTech
 
                 if (c.IsAdminCommand)
                 {
+                    builder.WithDefaultPermission(false);
                     builder.WithDefaultMemberPermissions(GuildPermission.Administrator);
                 }
 
