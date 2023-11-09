@@ -44,8 +44,8 @@ if [ -z "$mode" ] || [ "$mode" == "deploy" ]; then
         --kube-config="$kubeconfig" \
         --kube-namespace=codex-continuous-tests-"$name-$i" \
         --deploy-file=codex-deployment-"$name-$i".json \
-        --nodes=5 \
-        --validators=3 \
+        --nodes=2 \
+        --validators=1 \
         --log-level=Trace \
         --storage-quota=20480 \
         --storage-sell=1024 \
