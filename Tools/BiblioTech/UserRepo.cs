@@ -76,17 +76,17 @@ namespace BiblioTech
             return result.ToArray();
         }
 
-        public string GetUserReport(IUser user)
+        public string[] GetUserReport(IUser user)
         {
             var userData = GetUserData(user);
-            if (userData == null) return "User has not joined the test net.";
+            if (userData == null) return new[] { "User has not joined the test net." };
             return userData.CreateOverview();
         }
 
-        public string GetUserReport(EthAddress ethAddress)
+        public string[] GetUserReport(EthAddress ethAddress)
         {
             var userData = GetUserDataForAddress(ethAddress);
-            if (userData == null) return "No user is using this eth address.";
+            if (userData == null) return new[] { "No user is using this eth address." };
             return userData.CreateOverview();
         }
 
@@ -196,14 +196,15 @@ namespace BiblioTech
         public List<UserAssociateAddressEvent> AssociateEvents { get; }
         public List<UserMintEvent> MintEvents { get; }
 
-        public string CreateOverview()
+        public string[] CreateOverview()
         {
-            var nl = Environment.NewLine;
-            return
-                $"name: '{Name}' - id:{DiscordId}{nl}" +
-                $"joined: {CreatedUtc.ToString("o")}{nl}" +
-                $"current address: {CurrentAddress}{nl}" +
-                $"{AssociateEvents.Count + MintEvents.Count} total bot events.";
+            return new[]
+            {
+                $"name: '{Name}' - id:{DiscordId}",
+                $"joined: {CreatedUtc.ToString("o")}",
+                $"current address: {CurrentAddress}",
+                $"{AssociateEvents.Count + MintEvents.Count} total bot events."
+            };
         }
     }
 

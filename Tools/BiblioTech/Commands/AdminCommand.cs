@@ -109,7 +109,7 @@ namespace BiblioTech.Commands
                     return;
                 }
 
-                var report = string.Join(Environment.NewLine, Program.UserRepo.GetInteractionReport(user));
+                var report = Program.UserRepo.GetInteractionReport(user);
                 await context.Followup(report);
             }
         }
@@ -134,7 +134,7 @@ namespace BiblioTech.Commands
                 }
 
                 var nl = Environment.NewLine;
-                await context.Followup($"Deployments:{nl}{string.Join(nl, deployments.Select(FormatDeployment))}");
+                await context.Followup(deployments.Select(FormatDeployment).ToArray());
             }
 
             private string FormatDeployment(CodexDeployment deployment)
@@ -249,23 +249,31 @@ namespace BiblioTech.Commands
                 this.ci = ci;
             }
 
-            protected async Task OnDeployment(CommandContext context, Func<ICodexNodeGroup, string, Task> action)
+            protected async Task<T?> OnDeployment<T>(CommandContext context, Func<ICodexNodeGroup, string, T> action)
             {
                 var deployment = Program.DeploymentFilesMonitor.GetDeployments().SingleOrDefault();
                 if (deployment == null)
                 {
                     await context.Followup("No deployment found.");
-                    return;
+                    return default;
                 }
 
                 try
                 {
                     var group = ci.WrapCodexContainers(deployment.CodexInstances.Select(i => i.Containers).ToArray());
-                    await action(group, deployment.Metadata.Name);
+                    var result = action(group, deployment.Metadata.Name);
+                    return result;
                 }
                 catch (Exception ex)
                 {
-                    await context.Followup("Failed to wrap nodes with exception: " + ex);
+                    var message = new[]
+                    {
+                        "Failed to wrap nodes with exception: "
+                    };
+                    var exceptionMessage = ex.ToString().Split(Environment.NewLine);
+
+                    await context.Followup(message.Concat(exceptionMessage).ToArray());
+                    return default;
                 }
             }
         }
@@ -280,32 +288,40 @@ namespace BiblioTech.Commands
 
             protected override async Task onSubCommand(CommandContext context)
             {
-                await OnDeployment(context, async (group, name) =>
+                var report = await OnDeployment(context, CreateNetInfoReport);
+                if (report != null && report.Any())
                 {
-                    var nl = Environment.NewLine;
-                    var content = new List<string>
-                    {
-                        $"{DateTime.UtcNow.ToString("o")} - {group.Count()} Codex nodes.",
-                        $"Deployment name: '{name}'"
-                    };
+                    await context.Followup(report);
+                }
+            }
 
-                    foreach (var node in group)
+            private string[] CreateNetInfoReport(ICodexNodeGroup group, string name)
+            {
+                var content = new List<string>
+                {
+                    $"{DateTime.UtcNow.ToString("o")} - {group.Count()} Codex nodes.",
+                    $"Deployment name: '{name}'."
+                };
+
+                foreach (var node in group)
+                {
+                    try
                     {
-                        try
-                        {
-                            var info = node.GetDebugInfo();
-                            var json = JsonConvert.SerializeObject(info, Formatting.Indented);
-                            var jsonInsert = $"{nl}```{nl}{json}{nl}```{nl}";
-                            content.Add($"Node '{node.GetName()}' responded with {jsonInsert}");
-                        }
-                        catch (Exception ex)
-                        {
-                            content.Add($"Node '{node.GetName()}' failed to respond with exception: " + ex);
-                        }
+                        var info = node.GetDebugInfo();
+                        var json = JsonConvert.SerializeObject(info, Formatting.Indented);
+                        var jsonLines = json.Split(Environment.NewLine);
+                        content.Add($"Node '{node.GetName()}' responded with:");
+                        content.Add("---");
+                        content.AddRange(jsonLines);
+                        content.Add("---");
                     }
+                    catch (Exception ex)
+                    {
+                        content.Add($"Node '{node.GetName()}' failed to respond with exception: " + ex);
+                    }
+                }
 
-                    await context.Followup(string.Join(nl, content));
-                });
+                return content.ToArray();
             }
         }
 
@@ -326,33 +342,41 @@ namespace BiblioTech.Commands
                 var peerId = await peerIdOption.Parse(context);
                 if (string.IsNullOrEmpty(peerId)) return;
 
-                await OnDeployment(context, async (group, name) =>
+                var report = await OnDeployment(context, (group, name) => CreateDebugPeerReport(group, name, peerId));
+                if (report != null && report.Any())
                 {
-                    var nl = Environment.NewLine;
-                    var content = new List<string>
-                    {
-                        $"{DateTime.UtcNow.ToString("o")} - {group.Count()} Codex nodes.",
-                        $"Deployment name: '{name}'"
-                    };
+                    await context.Followup(report);
+                }
+            }
 
-                    content.Add($"Calling debug/peer for '{peerId}' on {group.Count()} Codex nodes.");
-                    foreach (var node in group)
+            private string[] CreateDebugPeerReport(ICodexNodeGroup group, string name, string peerId)
+            {
+                var content = new List<string>
+                {
+                    $"{DateTime.UtcNow.ToString("o")} - {group.Count()} Codex nodes.",
+                    $"Deployment name: '{name}'.",
+                    $"Calling debug/peer for '{peerId}'."
+                };
+
+                foreach (var node in group)
+                {
+                    try
                     {
-                        try
-                        {
-                            var info = node.GetDebugPeer(peerId);
-                            var json = JsonConvert.SerializeObject(info, Formatting.Indented);
-                            var jsonInsert = $"{nl}```{nl}{json}{nl}```{nl}";
-                            content.Add($"Node '{node.GetName()}' responded with {jsonInsert}");
-                        }
-                        catch (Exception ex)
-                        {
-                            content.Add($"Node '{node.GetName()}' failed to respond with exception: " + ex);
-                        }
+                        var info = node.GetDebugPeer(peerId);
+                        var json = JsonConvert.SerializeObject(info, Formatting.Indented);
+                        var jsonLines = json.Split(Environment.NewLine);
+                        content.Add($"Node '{node.GetName()}' responded with:");
+                        content.Add("---");
+                        content.AddRange(jsonLines);
+                        content.Add("---");
                     }
+                    catch (Exception ex)
+                    {
+                        content.Add($"Node '{node.GetName()}' failed to respond with exception: " + ex);
+                    }
+                }
 
-                    await context.Followup(string.Join(nl, content));
-                });
+                return content.ToArray();
             }
         }
     }

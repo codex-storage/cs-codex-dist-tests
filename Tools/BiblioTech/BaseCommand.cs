@@ -29,7 +29,15 @@ namespace BiblioTech
             }
             catch (Exception ex)
             {
-                await command.FollowupAsync("Something failed while trying to do that...", ephemeral: true);
+                if (IsInAdminChannel(command))
+                {
+                    var msg = "Failed with exception: " + ex;
+                    await command.FollowupAsync(msg.Substring(0, Math.Min(1900, msg.Length)));
+                }
+                else
+                {
+                    await command.FollowupAsync("Something failed while trying to do that...", ephemeral: true);
+                }
                 Console.WriteLine(ex);
             }
         }
