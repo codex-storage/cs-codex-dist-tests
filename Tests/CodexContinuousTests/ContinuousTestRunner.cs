@@ -28,7 +28,7 @@ namespace ContinuousTests
                 new FixtureLog(logConfig, startTime, "Overview"),
                 new ConsoleLog()
             );
-            var statusLog = new StatusLog(logConfig, startTime, "ContinuousTestRun");
+            var statusLog = new StatusLog(logConfig, startTime, "continuous-tests", "ContinuousTestRun");
 
             overviewLog.Log("Initializing...");
 

@@ -8,11 +8,13 @@ namespace DistTestCore.Logs
         private readonly object fileLock = new object();
         private readonly string fullName;
         private readonly string fixtureName;
+        private readonly string testType;
 
-        public StatusLog(LogConfig config, DateTime start, string name = "")
+        public StatusLog(LogConfig config, DateTime start, string testType, string name = "")
         {
             fullName = NameUtils.GetFixtureFullName(config, start, name) + "_STATUS.log";
             fixtureName = NameUtils.GetRawFixtureName();
+            this.testType = testType;
         }
 
         public void ConcludeTest(string resultStatus, string testDuration, Dictionary<string, string> data)
@@ -20,10 +22,11 @@ namespace DistTestCore.Logs
             data.Add("timestamp", DateTime.UtcNow.ToString("o"));
             data.Add("runid", NameUtils.GetRunId());
             data.Add("status", resultStatus);
-            data.Add("testid", NameUtils.GetTestId());
             data.Add("category", NameUtils.GetCategoryName());
             data.Add("fixturename", fixtureName);
+            data.Add("testid", NameUtils.GetTestId());
             data.Add("testname", NameUtils.GetTestMethodName());
+            data.Add("testtype", testType);
             data.Add("testduration", testDuration);
             Write(data);
         }
