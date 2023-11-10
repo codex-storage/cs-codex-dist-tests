@@ -18,6 +18,7 @@ namespace CodexPlugin
         //CodexDebugRepoStoreResponse[] GetDebugRepoStore();
         ContentId UploadFile(TrackedFile file);
         TrackedFile? DownloadContent(ContentId contentId, string fileLabel = "");
+        CodexLocalData[] LocalFiles();
         void ConnectToPeer(ICodexNode node);
         CodexDebugVersionResponse Version { get; }
         IMarketplaceAccess Marketplace { get; }
@@ -121,6 +122,11 @@ namespace CodexPlugin
             return file;
         }
 
+        public CodexLocalData[] LocalFiles()
+        {
+            return CodexAccess.LocalFiles().Select(l => new CodexLocalData(new ContentId(l.cid), l.manifest)).ToArray();
+        }
+
         public void ConnectToPeer(ICodexNode node)
         {
             var peer = (CodexNode)node;
@@ -205,5 +211,15 @@ namespace CodexPlugin
         }
 
         public string Id { get; }
+
+        public override bool Equals(object? obj)
+        {
+            return obj is ContentId id && Id == id.Id;
+        }
+
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(Id);
+        }
     }
 }

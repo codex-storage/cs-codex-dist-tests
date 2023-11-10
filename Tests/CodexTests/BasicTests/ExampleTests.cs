@@ -16,7 +16,10 @@ namespace CodexTests.BasicTests
         {
             var primary = AddCodex(s => s.WithLogLevel(CodexLogLevel.Trace, new CodexLogCustomTopics(CodexLogLevel.Warn, CodexLogLevel.Warn)));
 
-            primary.UploadFile(GenerateTestFile(5.MB()));
+            var cid = primary.UploadFile(GenerateTestFile(5.MB()));
+
+            var content = primary.LocalFiles();
+            CollectionAssert.Contains(content.Select(c => c.Cid), cid);
 
             var log = Ci.DownloadLog(primary);
 
