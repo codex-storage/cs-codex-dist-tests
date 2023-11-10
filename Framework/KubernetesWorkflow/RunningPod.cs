@@ -75,15 +75,6 @@ namespace KubernetesWorkflow
 
         public string Name { get; }
         public string PodLabel { get; }
-
-        public V1Pod GetPod(K8sClient client, string k8sNamespace)
-        {
-            var allPods = client.Run(c => c.ListNamespacedPod(k8sNamespace));
-            var pods = allPods.Items.Where(p => p.GetLabel(K8sController.PodLabelKey) == PodLabel).ToArray();
-
-            if (pods.Length != 1) throw new Exception("Expected to find only 1 pod by podLabel.");
-            return pods[0];
-        }
     }
 
     public class RunningService
