@@ -170,4 +170,30 @@ namespace CodexPlugin
     {
         public string cid { get; set; } = string.Empty; 
     }
+
+    public class CodexLocalData
+    {
+        public CodexLocalData(ContentId cid, CodexLocalDataManifestResponse manifest)
+        {
+            Cid = cid;
+            Manifest = manifest;
+        }
+
+        public ContentId Cid { get; }
+        public CodexLocalDataManifestResponse Manifest { get; }
+    }
+
+    public class CodexLocalDataResponse
+    {
+        public string cid { get; set; } = string.Empty;
+        public CodexLocalDataManifestResponse manifest { get; set; } = new();
+    }
+
+    public class CodexLocalDataManifestResponse
+    {
+        public string rootHash { get; set; } = string.Empty;
+        public int originalBytes { get; set; }
+        public int blockSize { get; set; }
+        public bool @protected { get; set; }
+    }
 }
