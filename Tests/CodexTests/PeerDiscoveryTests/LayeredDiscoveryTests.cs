@@ -1,8 +1,7 @@
 ﻿using CodexPlugin;
-using CodexTests;
 using NUnit.Framework;
 
-namespace Tests.PeerDiscoveryTests
+namespace CodexTests.PeerDiscoveryTests
 {
     [TestFixture]
     public class LayeredDiscoveryTests : CodexDistTest

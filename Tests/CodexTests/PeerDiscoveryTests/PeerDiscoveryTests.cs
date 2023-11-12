@@ -1,9 +1,8 @@
 ﻿using CodexContractsPlugin;
-using CodexTests;
 using GethPlugin;
 using NUnit.Framework;
 
-namespace Tests.PeerDiscoveryTests
+namespace CodexTests.PeerDiscoveryTests
 {
     [TestFixture]
     public class PeerDiscoveryTests : AutoBootstrapDistTest

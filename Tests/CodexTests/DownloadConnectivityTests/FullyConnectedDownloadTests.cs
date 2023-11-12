@@ -1,10 +1,9 @@
 ﻿using CodexContractsPlugin;
-using CodexTests;
 using GethPlugin;
 using NUnit.Framework;
 using Utils;
 
-namespace Tests.DownloadConnectivityTests
+namespace CodexTests.DownloadConnectivityTests
 {
     [TestFixture]
     public class FullyConnectedDownloadTests : AutoBootstrapDistTest
