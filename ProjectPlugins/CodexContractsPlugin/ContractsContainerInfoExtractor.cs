@@ -1,4 +1,5 @@
 ﻿using KubernetesWorkflow;
+using KubernetesWorkflow.Types;
 using Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;

@@ -1,7 +1,7 @@
 ﻿using CodexContractsPlugin;
 using CodexPlugin;
 using GethPlugin;
-using KubernetesWorkflow;
+using KubernetesWorkflow.Types;
 using Logging;
 using MetricsPlugin;
 using NUnit.Framework;

@@ -1,4 +1,5 @@
 ﻿using KubernetesWorkflow;
+using KubernetesWorkflow.Types;
 
 namespace Core
 {

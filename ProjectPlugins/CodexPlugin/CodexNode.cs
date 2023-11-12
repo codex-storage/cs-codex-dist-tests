@@ -2,6 +2,7 @@
 using FileUtils;
 using GethPlugin;
 using KubernetesWorkflow;
+using KubernetesWorkflow.Types;
 using Logging;
 using MetricsPlugin;
 using Utils;

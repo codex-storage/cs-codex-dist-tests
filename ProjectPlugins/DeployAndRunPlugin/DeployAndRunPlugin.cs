@@ -1,5 +1,6 @@
 ﻿using Core;
 using KubernetesWorkflow;
+using KubernetesWorkflow.Types;
 
 namespace DeployAndRunPlugin
 {

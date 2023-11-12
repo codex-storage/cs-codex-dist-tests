@@ -1,9 +1,9 @@
-﻿using KubernetesWorkflow;
-using NUnit.Framework;
+﻿using NUnit.Framework;
 using Logging;
 using Utils;
 using Core;
 using CodexPlugin;
+using KubernetesWorkflow.Types;
 
 namespace ContinuousTests
 {

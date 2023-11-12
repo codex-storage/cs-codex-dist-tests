@@ -1,4 +1,4 @@
-﻿namespace KubernetesWorkflow
+﻿namespace KubernetesWorkflow.Recipe
 {
     public class ContainerRecipe
     {

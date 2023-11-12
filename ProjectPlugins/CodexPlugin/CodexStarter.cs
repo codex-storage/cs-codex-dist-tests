@@ -1,5 +1,6 @@
 ﻿using Core;
 using KubernetesWorkflow;
+using KubernetesWorkflow.Types;
 using Logging;
 
 namespace CodexPlugin
