@@ -1,5 +1,6 @@
 ﻿using CodexPlugin;
 using NUnit.Framework;
+using Utils;
 
 namespace CodexTests.PeerDiscoveryTests
 {
@@ -19,22 +20,32 @@ namespace CodexTests.PeerDiscoveryTests
 
         private void AssertRoutingTable()
         {
+            Time.Retry(CheckRoutingTable, 3, nameof(CheckRoutingTable));
+        }
+
+        private void CheckRoutingTable()
+        {
             var all = GetAllOnlineCodexNodes();
-            var allNodeIds = all.Select(n => n.GetDebugInfo().table.localNode.nodeId).ToArray();
+            var allResponses = all.Select(n => n.GetDebugInfo()).ToArray();
 
-            var errors = all.Select(n => AreAllPresent(n, allNodeIds)).Where(s => !string.IsNullOrEmpty(s)).ToArray();
-
+            var errors = new List<string>();
+            foreach (var response in allResponses)
+            {
+                var error = AreAllPresent(response, allResponses);
+                if (!string.IsNullOrEmpty(error)) errors.Add(error);
+            }
+            
             if (errors.Any())
             {
                 Assert.Fail(string.Join(Environment.NewLine, errors));
             }
         }
 
-        private string AreAllPresent(ICodexNode n, string[] allNodesIds)
+        private string AreAllPresent(CodexDebugResponse info, CodexDebugResponse[] allResponses)
         {
-            var info = n.GetDebugInfo();
             var knownIds = info.table.nodes.Select(n => n.nodeId).ToArray();
-            var expectedIds = allNodesIds.Where(id => id != info.table.localNode.nodeId).ToArray();
+            var allOthers = GetAllOtherResponses(info, allResponses);
+            var expectedIds = allOthers.Select(i => i.table.localNode.nodeId).ToArray();
 
             if (!expectedIds.All(ex => knownIds.Contains(ex)))
             {
@@ -42,6 +53,11 @@ namespace CodexTests.PeerDiscoveryTests
             }
 
             return string.Empty;
+        }
+
+        private CodexDebugResponse[] GetAllOtherResponses(CodexDebugResponse exclude, CodexDebugResponse[] allResponses)
+        {
+            return allResponses.Where(r => r.id != exclude.id).ToArray();
         }
     }
 }
