@@ -14,16 +14,16 @@ on:
   #     - '!docker/dist-tests-job.yaml'
   workflow_dispatch:
     inputs:
-      branch:
-        description: Branch (master)
-        required: false
-        type: string
       source:
         description: Repository with tests (current)
         required: false
         type: string
+      branch:
+        description: Branch with tests (master)
+        required: false
+        type: string
       nameprefix:
-        description: Runner prefix (codex-dist-tests)
+        description: Runner name prefix (d-tests-runner)
         required: false
         type: string
       namespace:
@@ -31,7 +31,7 @@ on:
         required: false
         type: string
       command:
-        description: Runner command (dotnet test Tests)
+        description: Command (dotnet test Tests/CodexTests)
         required: false
         type: string
 
@@ -39,7 +39,7 @@ on:
 env:
   BRANCH: ${{ github.ref_name }}
   SOURCE: ${{ format('{0}/{1}', github.server_url, github.repository) }}
-  NAMEPREFIX: codex-dist-tests
+  NAMEPREFIX: d-tests-runner
   NAMESPACE: default
   COMMAND: dotnet test Tests/CodexTests
   JOB_MANIFEST: docker/dist-tests-job.yaml
@@ -79,3 +79,14 @@ jobs:
       - name: Kubectl - Create Job
         run: |
           envsubst < ${{ env.JOB_MANIFEST }} | kubectl apply -f -
+
+      - name: Tests Identification
+        run: |
+          echo "----"
+          echo "Repository: ${{ env.SOURCE }}"
+          echo "Branch: ${{ env.BRANCH }}"
+          echo "Runner Pod: ${{ env.NAMEPREFIX }}-${{ env.RUNID }}"
+          echo "Runner namespace: ${{ env.NAMESPACE }}"
+          echo "----"
+          echo "Command: `jq -r '. | join(" ")' <<< '${{ env.COMMAND }}'`"
+          echo "----"
