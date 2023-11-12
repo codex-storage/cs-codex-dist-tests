@@ -88,5 +88,6 @@ jobs:
           echo "Runner Pod: ${{ env.NAMEPREFIX }}-${{ env.RUNID }}"
           echo "Runner namespace: ${{ env.NAMESPACE }}"
           echo "----"
-          echo "Command: `jq -r '. | join(" ")' <<< '${{ env.COMMAND }}'`"
+          echo "Tests runid: ${{ env.RUNID }}"
+          echo "Tests command: `jq -r '. | join(" ")' <<< '${{ env.COMMAND }}'`"
           echo "----"
