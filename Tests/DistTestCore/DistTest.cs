@@ -58,6 +58,7 @@ namespace DistTestCore
                 throw;
             }
 
+            fixtureLog.Log("Test framework revision: " + GitInfo.GetStatus());
             fixtureLog.Log("Global setup cleanup successful");
         }
 

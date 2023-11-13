@@ -187,12 +187,11 @@ namespace ContinuousTests
 
         private Dictionary<string, string> CreateStatusLogData(DateTime testStart, string message)
         {
-            return new Dictionary<string, string>
-            {
-                { "teststart", testStart.ToString("o") },
-                { "testname", testName },
-                { "message", message }
-            };
+            var result = entryPoint.GetPluginMetadata();
+            result.Add("teststart", testStart.ToString("o"));
+            result.Add("testname", testName);
+            result.Add("message", message);
+            return result;
         }
 
         private string GetCombinedExceptionsMessage(Exception[] exceptions)
