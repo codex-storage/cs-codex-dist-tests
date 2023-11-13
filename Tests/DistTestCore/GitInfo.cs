@@ -20,23 +20,9 @@ namespace DistTestCore
             if (path == null) return "unknown";
 
             using var repo = new Repository(path);
-            var isModified = repo.RetrieveStatus().Any(IsModified);
             var sha = repo.Head.Tip.Sha.Substring(0, 7);
 
-            return K8sNameUtils.Format(sha + (isModified ? "_modified" : "_clean"));
-        }
-
-        private static bool IsModified(StatusEntry e)
-        {
-            return e.State == FileStatus.ModifiedInIndex ||
-                e.State == FileStatus.NewInIndex ||
-                e.State == FileStatus.RenamedInIndex ||
-                e.State == FileStatus.DeletedFromIndex ||
-
-                e.State == FileStatus.ModifiedInWorkdir ||
-                e.State == FileStatus.NewInWorkdir ||
-                e.State == FileStatus.RenamedInWorkdir ||
-                e.State == FileStatus.DeletedFromWorkdir;
+            return K8sNameUtils.Format(sha);
         }
 
         private static string? FindGitPath()
