@@ -30,7 +30,7 @@ spec:
         - name: KUBECONFIG
           value: "/opt/kubeconfig.yaml"
         - name: LOGPATH
-          value: "/var/log/codex-continuous-tests"
+          value: "/var/log/codex-continuous-tests/${DEPLOYMENT_NAMESPACE}"
         - name: NAMESPACE
           value: "${NAMESPACE}"
         - name: BRANCH
