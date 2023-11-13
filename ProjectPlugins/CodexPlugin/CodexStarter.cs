@@ -66,6 +66,12 @@ namespace CodexPlugin
             return recipe.Image;
         }
 
+        public string GetCodexRevision()
+        {
+            if (versionResponse != null) return versionResponse.revision;
+            return "unknown";
+        }
+
         private StartupConfig CreateStartupConfig(CodexSetup codexSetup)
         {
             var startupConfig = new StartupConfig();

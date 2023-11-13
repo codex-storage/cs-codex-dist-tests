@@ -19,12 +19,13 @@ namespace CodexPlugin
 
         public void Announce()
         {
-            tools.GetLog().Log($"Loaded with Codex ID: '{codexStarter.GetCodexId()}'");
+            tools.GetLog().Log($"Loaded with Codex ID: '{codexStarter.GetCodexId()}' - Revision: {codexStarter.GetCodexRevision()}");
         }
 
         public void AddMetadata(IAddMetadata metadata)
         {
             metadata.Add("codexid", codexStarter.GetCodexId());
+            metadata.Add("codexrevision", codexStarter.GetCodexRevision());
         }
 
         public void Decommission()
