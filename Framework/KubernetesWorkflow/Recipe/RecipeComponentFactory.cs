@@ -6,7 +6,7 @@ namespace KubernetesWorkflow.Recipe
     public class RecipeComponentFactory
     {
         private NumberSource internalNumberSource = new NumberSource(8080);
-        private NumberSource externalNumberSource = new NumberSource(30000);
+        private static NumberSource externalNumberSource = new NumberSource(30000);
 
         public Port CreatePort(int number, string tag, PortProtocol protocol)
         {
