@@ -1,6 +1,7 @@
 ﻿using Core;
 using GethPlugin;
 using KubernetesWorkflow;
+using KubernetesWorkflow.Types;
 
 namespace CodexPlugin
 {

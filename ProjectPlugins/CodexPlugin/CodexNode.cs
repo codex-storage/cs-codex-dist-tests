@@ -2,6 +2,7 @@
 using FileUtils;
 using GethPlugin;
 using KubernetesWorkflow;
+using KubernetesWorkflow.Types;
 using Logging;
 using MetricsPlugin;
 using Utils;
@@ -18,6 +19,7 @@ namespace CodexPlugin
         //CodexDebugRepoStoreResponse[] GetDebugRepoStore();
         ContentId UploadFile(TrackedFile file);
         TrackedFile? DownloadContent(ContentId contentId, string fileLabel = "");
+        CodexLocalData[] LocalFiles();
         void ConnectToPeer(ICodexNode node);
         CodexDebugVersionResponse Version { get; }
         IMarketplaceAccess Marketplace { get; }
@@ -121,6 +123,11 @@ namespace CodexPlugin
             return file;
         }
 
+        public CodexLocalData[] LocalFiles()
+        {
+            return CodexAccess.LocalFiles().Select(l => new CodexLocalData(new ContentId(l.cid), l.manifest)).ToArray();
+        }
+
         public void ConnectToPeer(ICodexNode node)
         {
             var peer = (CodexNode)node;
@@ -158,8 +165,9 @@ namespace CodexPlugin
                 throw new Exception($"Invalid version information received from Codex node {GetName()}: {debugInfo.codex}");
             }
 
-            //lifecycle.Log.AddStringReplace(nodePeerId, nodeName);
-            //lifecycle.Log.AddStringReplace(debugInfo.table.localNode.nodeId, nodeName);
+            var log = tools.GetLog();
+            log.AddStringReplace(nodePeerId, nodeName);
+            log.AddStringReplace(debugInfo.table.localNode.nodeId, nodeName);
             Version = debugInfo.codex;
         }
 
@@ -205,5 +213,15 @@ namespace CodexPlugin
         }
 
         public string Id { get; }
+
+        public override bool Equals(object? obj)
+        {
+            return obj is ContentId id && Id == id.Id;
+        }
+
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(Id);
+        }
     }
 }

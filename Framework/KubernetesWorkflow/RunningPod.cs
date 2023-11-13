@@ -1,5 +1,7 @@
 ﻿using k8s;
 using k8s.Models;
+using KubernetesWorkflow.Recipe;
+using KubernetesWorkflow.Types;
 using Newtonsoft.Json;
 
 namespace KubernetesWorkflow
@@ -63,77 +65,5 @@ namespace KubernetesWorkflow
 
             return Array.Empty<Port>();
         }
-    }
-
-    public class RunningDeployment
-    {
-        public RunningDeployment(string name, string podLabel)
-        {
-            Name = name;
-            PodLabel = podLabel;
-        }
-
-        public string Name { get; }
-        public string PodLabel { get; }
-
-        public V1Pod GetPod(K8sClient client, string k8sNamespace)
-        {
-            var allPods = client.Run(c => c.ListNamespacedPod(k8sNamespace));
-            var pods = allPods.Items.Where(p => p.GetLabel(K8sController.PodLabelKey) == PodLabel).ToArray();
-
-            if (pods.Length != 1) throw new Exception("Expected to find only 1 pod by podLabel.");
-            return pods[0];
-        }
-    }
-
-    public class RunningService
-    {
-        public RunningService(string name, List<ContainerRecipePortMapEntry> result)
-        {
-            Name = name;
-            Result = result;
-        }
-
-        public string Name { get; }
-        public List<ContainerRecipePortMapEntry> Result { get; }
-
-        public Port? GetServicePortForRecipeAndTag(ContainerRecipe recipe, string tag)
-        {
-            return GetServicePortsForRecipe(recipe).SingleOrDefault(p => p.Tag == tag);
-        }
-
-        public Port[] GetServicePortsForRecipe(ContainerRecipe recipe)
-        {
-            return Result
-                .Where(p => p.RecipeNumber == recipe.Number)
-                .SelectMany(p => p.Ports)
-                .ToArray();
-        }
-    }
-
-    public class ContainerRecipePortMapEntry
-    {
-        public ContainerRecipePortMapEntry(int recipeNumber, Port[] ports)
-        {
-            RecipeNumber = recipeNumber;
-            Ports = ports;
-        }
-
-        public int RecipeNumber { get; }
-        public Port[] Ports { get; }
-    }
-
-    public class PodInfo
-    {
-        public PodInfo(string name, string ip, string k8sNodeName)
-        {
-            Name = name;
-            Ip = ip;
-            K8SNodeName = k8sNodeName;
-        }
-
-        public string Name { get; }
-        public string Ip { get; }
-        public string K8SNodeName { get; }
     }
 }

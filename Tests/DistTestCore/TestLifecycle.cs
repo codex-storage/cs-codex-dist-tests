@@ -2,6 +2,8 @@
 using DistTestCore.Logs;
 using FileUtils;
 using KubernetesWorkflow;
+using KubernetesWorkflow.Recipe;
+using KubernetesWorkflow.Types;
 using Utils;
 
 namespace DistTestCore
@@ -80,6 +82,7 @@ namespace DistTestCore
             recipe.PodLabels.Add("category", NameUtils.GetCategoryName());
             recipe.PodLabels.Add("fixturename", NameUtils.GetRawFixtureName());
             recipe.PodLabels.Add("testname", NameUtils.GetTestMethodName());
+            recipe.PodLabels.Add("testframeworkrevision", GitInfo.GetStatus());
 
             foreach (var pair in metadata)
             {

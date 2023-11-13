@@ -1,8 +1,8 @@
 ﻿using CodexPlugin;
 using Logging;
-using static DistTestCore.Helpers.FullConnectivityHelper;
+using static CodexTests.Helpers.FullConnectivityHelper;
 
-namespace DistTestCore.Helpers
+namespace CodexTests.Helpers
 {
     public class PeerConnectionTestHelpers : IFullConnectivityImplementation
     {

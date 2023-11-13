@@ -1,4 +1,5 @@
-﻿using DistTestCore.Logs;
+﻿using DistTestCore;
+using DistTestCore.Logs;
 using Logging;
 using Newtonsoft.Json;
 using Utils;
@@ -28,7 +29,7 @@ namespace ContinuousTests
                 new FixtureLog(logConfig, startTime, "Overview"),
                 new ConsoleLog()
             );
-            var statusLog = new StatusLog(logConfig, startTime, "ContinuousTestRun");
+            var statusLog = new StatusLog(logConfig, startTime, "continuous-tests", "ContinuousTestRun");
 
             overviewLog.Log("Initializing...");
 
@@ -43,6 +44,7 @@ namespace ContinuousTests
             var taskFactory = new TaskFactory();
             overviewLog.Log("Startup checks passed. Configuration:");
             overviewLog.Log(JsonConvert.SerializeObject(config, Formatting.Indented));
+            overviewLog.Log("Test framework revision: " + GitInfo.GetStatus());
             overviewLog.Log("Continuous tests starting...");
             overviewLog.Log("");
             var allTests = testFactory.CreateTests();
@@ -57,7 +59,7 @@ namespace ContinuousTests
             }
             else
             {
-                var testLoops = filteredTests.Select(t => new TestLoop(entryPointFactory, taskFactory, config, overviewLog, t.GetType(), t.RunTestEvery, startupChecker, cancelToken)).ToArray();
+                var testLoops = filteredTests.Select(t => new TestLoop(entryPointFactory, taskFactory, config, overviewLog, statusLog, t.GetType(), t.RunTestEvery, startupChecker, cancelToken)).ToArray();
 
                 foreach (var testLoop in testLoops)
                 {
@@ -109,6 +111,7 @@ namespace ContinuousTests
                     Cancellation.Cts.Cancel();
                     overviewLog.Log($"Congratulations! The targer duration has been reached! ({Time.FormatDuration(targetDuration)})");
                     statusLog.ConcludeTest("Passed", testDuration, testData);
+                    Environment.ExitCode = 0;
                     return;
                 }
             }
@@ -117,6 +120,7 @@ namespace ContinuousTests
                 cancelToken.WaitHandle.WaitOne();
             }
             statusLog.ConcludeTest("Failed", testDuration, testData);
+            Environment.ExitCode = 1;
         }
 
         private Dictionary<string, string> FormatTestRuns(TestLoop[] testLoops)
@@ -124,7 +128,8 @@ namespace ContinuousTests
             var result = new Dictionary<string, string>();
             foreach (var testLoop in testLoops)
             {
-                result.Add($"ctest-{testLoop.Name}", $"passes: {testLoop.NumberOfPasses} - failures: {testLoop.NumberOfFailures}");
+                result.Add("testname", testLoop.Name);
+                result.Add($"summary", $"passes: {testLoop.NumberOfPasses} - failures: {testLoop.NumberOfFailures}");
             }
             return result;
         }

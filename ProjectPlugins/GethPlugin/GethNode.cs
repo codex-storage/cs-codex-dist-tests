@@ -1,5 +1,5 @@
 ﻿using Core;
-using KubernetesWorkflow;
+using KubernetesWorkflow.Types;
 using Logging;
 using Nethereum.Contracts;
 using NethereumWorkflow;

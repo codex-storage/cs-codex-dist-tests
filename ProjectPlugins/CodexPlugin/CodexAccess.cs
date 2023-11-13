@@ -1,5 +1,6 @@
 ﻿using Core;
 using KubernetesWorkflow;
+using KubernetesWorkflow.Types;
 using Utils;
 
 namespace CodexPlugin
@@ -62,14 +63,17 @@ namespace CodexPlugin
 
         public string UploadFile(FileStream fileStream)
         {
-            // private const string UploadFailedMessage = "Unable to store block";
-
-            return Http().HttpPostStream("upload", fileStream);
+            return Http().HttpPostStream("data", fileStream);
         }
 
         public Stream DownloadFile(string contentId)
         {
-            return Http().HttpGetStream("download/" + contentId);
+            return Http().HttpGetStream("data/" + contentId);
+        }
+
+        public CodexLocalDataResponse[] LocalFiles()
+        {
+            return Http().HttpGetJson<CodexLocalDataResponse[]>("local");
         }
 
         public CodexSalesAvailabilityResponse SalesAvailability(CodexSalesAvailabilityRequest request)

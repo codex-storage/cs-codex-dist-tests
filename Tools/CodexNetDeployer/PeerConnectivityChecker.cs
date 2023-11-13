@@ -1,4 +1,4 @@
-﻿using DistTestCore.Helpers;
+﻿using CodexTests.Helpers;
 using Logging;
 
 namespace CodexNetDeployer

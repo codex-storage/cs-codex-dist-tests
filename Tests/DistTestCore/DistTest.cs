@@ -29,7 +29,7 @@ namespace DistTestCore
             var logConfig = configuration.GetLogConfig();
             var startTime = DateTime.UtcNow;
             fixtureLog = new FixtureLog(logConfig, startTime);
-            statusLog = new StatusLog(logConfig, startTime);
+            statusLog = new StatusLog(logConfig, startTime, "dist-tests");
 
             globalEntryPoint = new EntryPoint(fixtureLog, configuration.GetK8sConfiguration(new DefaultTimeSet(), TestNamespacePrefix), configuration.GetFileManagerFolder());
 
@@ -58,6 +58,7 @@ namespace DistTestCore
                 throw;
             }
 
+            fixtureLog.Log("Test framework revision: " + GitInfo.GetStatus());
             fixtureLog.Log("Global setup cleanup successful");
         }
 

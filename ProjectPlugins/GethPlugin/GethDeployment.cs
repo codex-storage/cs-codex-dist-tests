@@ -1,5 +1,6 @@
 ﻿using Core;
-using KubernetesWorkflow;
+using KubernetesWorkflow.Recipe;
+using KubernetesWorkflow.Types;
 using Newtonsoft.Json;
 
 namespace GethPlugin

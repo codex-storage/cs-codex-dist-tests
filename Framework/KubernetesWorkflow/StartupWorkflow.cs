@@ -1,4 +1,6 @@
-﻿using Logging;
+﻿using KubernetesWorkflow.Recipe;
+using KubernetesWorkflow.Types;
+using Logging;
 using Newtonsoft.Json;
 using Utils;
 
@@ -240,26 +242,5 @@ namespace KubernetesWorkflow
                 throw;
             }
         }
-    }
-
-    public interface ILogHandler
-    {
-        void Log(Stream log);
-    }
-
-    public abstract class LogHandler : ILogHandler
-    {
-        public void Log(Stream log)
-        {
-            using var reader = new StreamReader(log);
-            var line = reader.ReadLine();
-            while (line != null)
-            {
-                ProcessLine(line);
-                line = reader.ReadLine();
-            }
-        }
-
-        protected abstract void ProcessLine(string line);
     }
 }
