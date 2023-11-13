@@ -222,7 +222,7 @@ namespace KubernetesWorkflow
             }
             catch (k8s.Autorest.HttpOperationException ex)
             {
-                log.Error(JsonConvert.SerializeObject(ex));
+                log.Error(JsonConvert.SerializeObject(ex.Response));
                 throw;
             }
         }
@@ -238,7 +238,7 @@ namespace KubernetesWorkflow
             }
             catch (k8s.Autorest.HttpOperationException ex)
             {
-                log.Error(JsonConvert.SerializeObject(ex));
+                log.Error(JsonConvert.SerializeObject(ex.Response));
                 throw;
             }
         }
