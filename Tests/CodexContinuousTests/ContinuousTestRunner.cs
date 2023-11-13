@@ -109,6 +109,7 @@ namespace ContinuousTests
                     Cancellation.Cts.Cancel();
                     overviewLog.Log($"Congratulations! The targer duration has been reached! ({Time.FormatDuration(targetDuration)})");
                     statusLog.ConcludeTest("Passed", testDuration, testData);
+                    Environment.ExitCode = 0;
                     return;
                 }
             }
@@ -117,6 +118,7 @@ namespace ContinuousTests
                 cancelToken.WaitHandle.WaitOne();
             }
             statusLog.ConcludeTest("Failed", testDuration, testData);
+            Environment.ExitCode = 1;
         }
 
         private Dictionary<string, string> FormatTestRuns(TestLoop[] testLoops)
