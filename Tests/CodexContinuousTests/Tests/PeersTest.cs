@@ -1,8 +1,9 @@
 ﻿using CodexPlugin;
-using DistTestCore.Helpers;
+using CodexTests.Helpers;
+using ContinuousTests;
 using NUnit.Framework;
 
-namespace ContinuousTests.Tests
+namespace CodexContinuousTests.Tests
 {
     public class PeersTest : ContinuousTest
     {

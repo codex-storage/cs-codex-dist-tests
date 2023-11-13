@@ -1,5 +1,7 @@
 ﻿using DistTestCore;
 using KubernetesWorkflow;
+using KubernetesWorkflow.Recipe;
+using KubernetesWorkflow.Types;
 
 namespace CodexNetDeployer
 {

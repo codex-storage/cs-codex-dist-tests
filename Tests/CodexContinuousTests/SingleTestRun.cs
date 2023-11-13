@@ -1,11 +1,11 @@
 ﻿using Logging;
 using Utils;
-using KubernetesWorkflow;
 using NUnit.Framework.Internal;
 using System.Reflection;
 using CodexPlugin;
 using DistTestCore.Logs;
 using Core;
+using KubernetesWorkflow.Types;
 
 namespace ContinuousTests
 {

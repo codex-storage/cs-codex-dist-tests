@@ -1,5 +1,7 @@
 ﻿using k8s;
 using k8s.Models;
+using KubernetesWorkflow.Recipe;
+using KubernetesWorkflow.Types;
 using Logging;
 using Utils;
 
@@ -624,10 +626,27 @@ namespace KubernetesWorkflow
 
         private V1Pod GetPodForDeployment(RunningDeployment deployment)
         {
+            return Time.Retry(() => GetPodForDeplomentInternal(deployment),
+                maxRetries: 2,
+                retryTime: TimeSpan.FromSeconds(10),
+                description: "Find pod by label for deployment.");
+        }
+
+        private V1Pod GetPodForDeplomentInternal(RunningDeployment deployment)
+        {
             var allPods = client.Run(c => c.ListNamespacedPod(K8sNamespace));
             var pods = allPods.Items.Where(p => p.GetLabel(PodLabelKey) == deployment.PodLabel).ToArray();
 
-            if (pods.Length != 1) throw new Exception("Expected to find only 1 pod by podLabel.");
+            if (pods.Length != 1)
+            {
+                var allLabels = allPods.Items.Select(p =>
+                {
+                    var labels = string.Join(",", p.Labels().Select(l => $"{l.Key}={l.Value}"));
+                    return $"pod:'{p.Name()}' has labels: [{labels}]";
+                });
+                throw new Exception($"Expected to find 1 pod by podLabel '{deployment.PodLabel}'. Found: {pods.Length}. " +
+                    $"Total number of pods: {allPods.Items.Count}. Their labels: {string.Join(Environment.NewLine, allLabels)}");
+            }
             return pods[0];
         }
 

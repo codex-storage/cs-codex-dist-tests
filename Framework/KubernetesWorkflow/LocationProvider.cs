@@ -1,4 +1,5 @@
-﻿using Logging;
+﻿using KubernetesWorkflow.Types;
+using Logging;
 
 namespace KubernetesWorkflow
 {

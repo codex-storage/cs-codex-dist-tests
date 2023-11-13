@@ -1,7 +1,7 @@
 ﻿using System.Globalization;
 using Utils;
 
-namespace KubernetesWorkflow
+namespace KubernetesWorkflow.Recipe
 {
     public class RecipeComponentFactory
     {

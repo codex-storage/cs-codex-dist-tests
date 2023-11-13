@@ -76,12 +76,7 @@ namespace CodexPlugin
 
         public string peerId { get; set; } = string.Empty;
         public long seqNo { get; set; }
-        public CodexDebugPeerAddressResponse[] addresses { get; set; } = Array.Empty<CodexDebugPeerAddressResponse>();
-    }
-
-    public class CodexDebugPeerAddressResponse
-    {
-        public string address { get; set; } = string.Empty;
+        public string[] addresses { get; set; } = Array.Empty<string>();
     }
 
     public class CodexDebugThresholdBreaches

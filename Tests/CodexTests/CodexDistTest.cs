@@ -1,11 +1,11 @@
 ﻿using CodexContractsPlugin;
 using CodexNetDeployer;
 using CodexPlugin;
+using CodexTests.Helpers;
 using Core;
 using DistTestCore;
 using DistTestCore.Helpers;
 using DistTestCore.Logs;
-using GethPlugin;
 using NUnit.Framework;
 using NUnit.Framework.Constraints;
 

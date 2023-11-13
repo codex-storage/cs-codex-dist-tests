@@ -2,7 +2,7 @@
 using Logging;
 using NUnit.Framework;
 
-namespace DistTestCore.Helpers
+namespace CodexTests.Helpers
 {
     public interface IFullConnectivityImplementation
     {

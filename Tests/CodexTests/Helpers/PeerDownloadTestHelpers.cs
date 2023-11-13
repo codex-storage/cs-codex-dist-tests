@@ -2,9 +2,9 @@
 using FileUtils;
 using Logging;
 using Utils;
-using static DistTestCore.Helpers.FullConnectivityHelper;
+using static CodexTests.Helpers.FullConnectivityHelper;
 
-namespace DistTestCore.Helpers
+namespace CodexTests.Helpers
 {
     public class PeerDownloadTestHelpers : IFullConnectivityImplementation
     {

@@ -1,6 +1,6 @@
 ﻿using Utils;
 
-namespace KubernetesWorkflow
+namespace KubernetesWorkflow.Recipe
 {
     public class ContainerResources
     {

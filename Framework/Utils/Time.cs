@@ -56,12 +56,12 @@
 
         public static void Retry(Action action, int maxRetries, string description)
         {
-            Retry(action, maxRetries, TimeSpan.FromSeconds(1), description);
+            Retry(action, maxRetries, TimeSpan.FromSeconds(5), description);
         }
 
         public static T Retry<T>(Func<T> action, int maxRetries, string description)
         {
-            return Retry(action, maxRetries, TimeSpan.FromSeconds(1), description);
+            return Retry(action, maxRetries, TimeSpan.FromSeconds(5), description);
         }
 
         public static void Retry(Action action, int maxRetries, TimeSpan retryTime, string description)

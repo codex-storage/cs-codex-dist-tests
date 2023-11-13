@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json.Linq;
 
-namespace KubernetesWorkflow
+namespace KubernetesWorkflow.Recipe
 {
     public class ContainerAdditionals
     {
@@ -20,7 +20,7 @@ namespace KubernetesWorkflow
         {
             var typeName = GetTypeName(typeof(T));
             var userData = Additionals.SingleOrDefault(a => a.Type == typeName);
-            if (userData == null) return default(T);
+            if (userData == null) return default;
             var jobject = (JObject)userData.UserData;
             return jobject.ToObject<T>();
         }

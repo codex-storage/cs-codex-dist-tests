@@ -2,6 +2,7 @@
 using FileUtils;
 using GethPlugin;
 using KubernetesWorkflow;
+using KubernetesWorkflow.Types;
 using Logging;
 using MetricsPlugin;
 using Utils;
@@ -164,8 +165,9 @@ namespace CodexPlugin
                 throw new Exception($"Invalid version information received from Codex node {GetName()}: {debugInfo.codex}");
             }
 
-            //lifecycle.Log.AddStringReplace(nodePeerId, nodeName);
-            //lifecycle.Log.AddStringReplace(debugInfo.table.localNode.nodeId, nodeName);
+            var log = tools.GetLog();
+            log.AddStringReplace(nodePeerId, nodeName);
+            log.AddStringReplace(debugInfo.table.localNode.nodeId, nodeName);
             Version = debugInfo.codex;
         }
 
