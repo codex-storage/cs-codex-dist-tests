@@ -84,6 +84,31 @@ namespace KubernetesWorkflow
             return result;
         }
 
+        public int[] GetUsedExternalPorts()
+        {
+            return client.Run(c =>
+            {
+                var result = new List<int>();
+
+                var services = c.ListServiceForAllNamespaces();
+                var nodePorts = services.Items.Where(s => s.Spec.Type == "NodePort").ToArray();
+                if (!nodePorts.Any()) return result.ToArray();
+
+                foreach (var service in nodePorts)
+                {
+                    foreach (var port in service.Spec.Ports)
+                    {
+                        if (port.NodePort.HasValue)
+                        {
+                            result.Add(port.NodePort.Value);
+                        }
+                    }
+                }
+
+                return result.ToArray();
+            });
+        }
+
         public void DeleteAllNamespacesStartingWith(string prefix)
         {
             log.Debug();

@@ -54,12 +54,19 @@ namespace KubernetesWorkflow
         {
             return K8s(controller =>
             {
+                componentFactory.Update(controller);
+
                 var recipes = CreateRecipes(numberOfContainers, recipeFactory, startupConfig);
                 var startResult = controller.BringOnline(recipes, location);
                 var containers = CreateContainers(startResult, recipes, startupConfig);
 
                 var rc = new RunningContainers(startupConfig, startResult, containers);
                 cluster.Configuration.Hooks.OnContainersStarted(rc);
+
+                if (startResult.ExternalService != null)
+                {
+                    componentFactory.Update(controller);
+                }
                 return rc;
             });
         }
