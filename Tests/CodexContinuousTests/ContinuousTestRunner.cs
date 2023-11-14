@@ -98,7 +98,7 @@ namespace ContinuousTests
 
         private void WaitUntilFinished(LogSplitter overviewLog, StatusLog statusLog, DateTime startTime, TestLoop[] testLoops)
         {
-            var testDuration = Time.FormatDuration(DateTime.UtcNow - startTime);
+            var testDuration = (DateTime.UtcNow - startTime).TotalSeconds.ToString();
             var testData = FormatTestRuns(testLoops);
             overviewLog.Log("Total duration: " + testDuration);
 

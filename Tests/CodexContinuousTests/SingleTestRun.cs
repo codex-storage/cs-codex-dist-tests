@@ -191,6 +191,12 @@ namespace ContinuousTests
             result.Add("teststart", testStart.ToString("o"));
             result.Add("testname", testName);
             result.Add("message", message);
+            result.Add("involvedpods", string.Join(",", nodes.Select(n => n.GetName())));
+
+            var error = message.Split(Environment.NewLine).First();
+            if (error.Contains(":")) error = error.Substring(1 + error.LastIndexOf(":"));
+            result.Add("error", error);
+
             return result;
         }
 
