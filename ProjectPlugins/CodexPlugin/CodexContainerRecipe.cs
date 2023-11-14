@@ -9,7 +9,7 @@ namespace CodexPlugin
     {
         private readonly MarketplaceStarter marketplaceStarter = new MarketplaceStarter();
 
-        private const string DefaultDockerImage = "codexstorage/nim-codex:latest-dist-tests";
+        private const string DefaultDockerImage = "codexstorage/nim-codex:sha-0f33ef8-dist-tests";
         public const string ApiPortTag = "codex_api_port";
         public const string ListenPortTag = "codex_listen_port";
         public const string MetricsPortTag = "codex_metrics_port";
@@ -26,7 +26,7 @@ namespace CodexPlugin
 
         protected override void Initialize(StartupConfig startupConfig)
         {
-            SetResourcesRequest(milliCPUs: 100, memory: 100.MB());
+            // SetResourcesRequest(milliCPUs: 100, memory: 100.MB());
             //SetResourceLimits(milliCPUs: 4000, memory: 12.GB());
 
             var config = startupConfig.Get<CodexStartupConfig>();
