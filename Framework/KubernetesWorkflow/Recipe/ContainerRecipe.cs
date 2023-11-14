@@ -2,12 +2,13 @@
 {
     public class ContainerRecipe
     {
-        public ContainerRecipe(int number, string? nameOverride, string image, ContainerResources resources, Port[] exposedPorts, Port[] internalPorts, EnvVar[] envVars, PodLabels podLabels, PodAnnotations podAnnotations, VolumeMount[] volumes, ContainerAdditionals additionals)
+        public ContainerRecipe(int number, string? nameOverride, string image, ContainerResources resources, SchedulingAffinity schedulingAffinity, Port[] exposedPorts, Port[] internalPorts, EnvVar[] envVars, PodLabels podLabels, PodAnnotations podAnnotations, VolumeMount[] volumes, ContainerAdditionals additionals)
         {
             Number = number;
             NameOverride = nameOverride;
             Image = image;
             Resources = resources;
+            SchedulingAffinity = schedulingAffinity;
             ExposedPorts = exposedPorts;
             InternalPorts = internalPorts;
             EnvVars = envVars;
@@ -32,6 +33,7 @@
         public int Number { get; }
         public string? NameOverride { get; }
         public ContainerResources Resources { get; }
+        public SchedulingAffinity SchedulingAffinity { get; }
         public string Image { get; }
         public Port[] ExposedPorts { get; }
         public Port[] InternalPorts { get; }
@@ -53,6 +55,7 @@
                 $"internalPorts: {string.Join(",", InternalPorts.Select(p => p.Number))}, " +
                 $"envVars: {string.Join(",", EnvVars.Select(v => v.ToString()))}, " +
                 $"limits: {Resources}, " +
+                $"affinity: {SchedulingAffinity}, " +
                 $"volumes: {string.Join(",", Volumes.Select(v => $"'{v.MountPath}'"))}";
         }
     }

@@ -13,6 +13,7 @@ namespace KubernetesWorkflow.Recipe
         private readonly List<object> additionals = new List<object>();
         private RecipeComponentFactory factory = null!;
         private ContainerResources resources = new ContainerResources();
+        private SchedulingAffinity schedulingAffinity = new SchedulingAffinity();
 
         public ContainerRecipe CreateRecipe(int index, int containerNumber, RecipeComponentFactory factory, StartupConfig config)
         {
@@ -22,7 +23,7 @@ namespace KubernetesWorkflow.Recipe
 
             Initialize(config);
 
-            var recipe = new ContainerRecipe(containerNumber, config.NameOverride, Image, resources,
+            var recipe = new ContainerRecipe(containerNumber, config.NameOverride, Image, resources, schedulingAffinity,
                 exposedPorts.ToArray(),
                 internalPorts.ToArray(),
                 envVars.ToArray(),
@@ -40,6 +41,7 @@ namespace KubernetesWorkflow.Recipe
             additionals.Clear();
             this.factory = null!;
             resources = new ContainerResources();
+            schedulingAffinity = new SchedulingAffinity();
 
             return recipe;
         }
@@ -119,6 +121,11 @@ namespace KubernetesWorkflow.Recipe
         protected void SetResourcesRequest(int milliCPUs, ByteSize memory)
         {
             SetResourcesRequest(new ContainerResourceSet(milliCPUs, memory));
+        }
+
+        protected void SetSchedulingAffinity(string notIn)
+        {
+            schedulingAffinity = new SchedulingAffinity(notIn);
         }
 
         // Disabled following a possible bug in the k8s cluster that will throttle containers much more than is

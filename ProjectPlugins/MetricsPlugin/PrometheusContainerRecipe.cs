@@ -14,6 +14,8 @@ namespace MetricsPlugin
         {
             var config = startupConfig.Get<PrometheusStartupConfig>();
 
+            SetSchedulingAffinity(notIn: "tests-runners");
+
             AddExposedPortAndVar("PROM_PORT", PortTag);
             AddEnvVar("PROM_CONFIG", config.PrometheusConfigBase64);
         }

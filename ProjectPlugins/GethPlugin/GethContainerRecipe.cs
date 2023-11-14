@@ -24,6 +24,8 @@ namespace GethPlugin
 
             var args = CreateArgs(config);
 
+            SetSchedulingAffinity(notIn: "tests-runners");
+
             AddEnvVar("GETH_ARGS", args);
         }
 
