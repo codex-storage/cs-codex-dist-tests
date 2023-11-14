@@ -15,8 +15,15 @@ public class Program
 
             Cancellation.Cts.Cancel();
         };
-        
-        runner.Run();
+
+        try
+        {
+            runner.Run();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.ToString());
+        }
         Console.WriteLine("Done.");
     }
 }

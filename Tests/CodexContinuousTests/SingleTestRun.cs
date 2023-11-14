@@ -59,7 +59,7 @@ namespace ContinuousTests
                     overviewLog.Error("Test infra failure: SingleTestRun failed with " + ex);
                     Environment.Exit(-1);
                 }
-            });
+            }, nameof(SingleTestRun));
         }
 
         private void RunTest(Action<bool> resultHandler)
