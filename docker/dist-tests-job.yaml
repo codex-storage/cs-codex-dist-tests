@@ -16,10 +16,16 @@ spec:
         name: ${NAMEPREFIX}-${RUNID}
         run-id: ${RUNID}
     spec:
+      priorityClassName: system-node-critical
+      nodeSelector:
+        workload-type: "tests-runners"
       containers:
       - name: ${NAMEPREFIX}-runner
         image: codexstorage/cs-codex-dist-tests:latest
         imagePullPolicy: Always
+        resources:
+          requests:
+            memory: "1Gi"
         env:
         - name: KUBECONFIG
           value: "/opt/kubeconfig.yaml"

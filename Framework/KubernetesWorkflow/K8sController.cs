@@ -360,6 +360,7 @@ namespace KubernetesWorkflow
                         },
                         Spec = new V1PodSpec
                         {
+                            Affinity = CreatePodAffinity(containerRecipes),
                             NodeSelector = CreateNodeSelector(location),
                             Containers = CreateDeploymentContainers(containerRecipes),
                             Volumes = CreateVolumes(containerRecipes)
@@ -389,6 +390,42 @@ namespace KubernetesWorkflow
             return new Dictionary<string, string>
             {
                 { nodeLabel.Key, nodeLabel.Value }
+            };
+        }
+
+        private V1Affinity? CreatePodAffinity(ContainerRecipe[] recipes)
+        {
+            var notIns = recipes
+                .Select(r => r.SchedulingAffinity.NotIn)
+                .Where(n => !string.IsNullOrEmpty(n))
+                .Distinct()
+                .ToList();
+
+            if (!notIns.Any()) return null;
+
+            return new V1Affinity
+            {
+                NodeAffinity = new V1NodeAffinity
+                {
+                    RequiredDuringSchedulingIgnoredDuringExecution = new V1NodeSelector
+                    {
+                        NodeSelectorTerms = new List<V1NodeSelectorTerm>
+                        { 
+                            new V1NodeSelectorTerm
+                            {
+                                MatchExpressions = new List<V1NodeSelectorRequirement>
+                                {
+                                    new V1NodeSelectorRequirement
+                                    {
+                                        Key = "workload-type",
+                                        OperatorProperty = "NotIn",
+                                        Values = notIns
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             };
         }
 
