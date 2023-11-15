@@ -16,10 +16,8 @@ dotnet run \
     --check-connect=0 \
 \
     --public-testnet=1 \
-    --public-ip=1.2.3.4 \
     --public-discports=30010,30020,30030 \
     --public-listenports=30011,30021,30031 \
-    --public-gethip=1.2.3.5 \
     --public-gethdiscport=30040 \
     --public-gethlistenport=30041 \
 \

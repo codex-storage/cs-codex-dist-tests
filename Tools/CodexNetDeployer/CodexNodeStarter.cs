@@ -105,7 +105,6 @@ namespace CodexNetDeployer
 
             return new CodexTestNetConfig
             {
-                PublicNatIP = config.PublicIP,
                 PublicDiscoveryPort = Convert.ToInt32(discPort),
                 PublicListenPort = Convert.ToInt32(listenPort)
             };

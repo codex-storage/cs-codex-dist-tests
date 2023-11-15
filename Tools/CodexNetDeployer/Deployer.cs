@@ -113,7 +113,6 @@ namespace CodexNetDeployer
                 if (config.IsPublicTestNet)
                 {
                     s.AsPublicTestNet(new GethTestNetConfig(
-                        publicIp: config.PublicGethIP,
                         discoveryPort: config.PublicGethDiscPort,
                         listenPort: config.PublicGethListenPort
                     ));

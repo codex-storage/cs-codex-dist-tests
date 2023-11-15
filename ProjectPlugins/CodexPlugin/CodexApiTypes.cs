@@ -5,9 +5,10 @@ namespace CodexPlugin
     public class CodexDebugResponse
     {
         public string id { get; set; } = string.Empty;
-        public string[] addrs { get; set; } = new string[0];
+        public string[] addrs { get; set; } = Array.Empty<string>();
         public string repo { get; set; } = string.Empty;
         public string spr { get; set; } = string.Empty;
+        public string[] announceAddresses { get; set; } = Array.Empty<string>();
         public EnginePeerResponse[] enginePeers { get; set; } = Array.Empty<EnginePeerResponse>();
         public SwitchPeerResponse[] switchPeers { get; set; } = Array.Empty<SwitchPeerResponse>();
         public CodexDebugVersionResponse codex { get; set; } = new();

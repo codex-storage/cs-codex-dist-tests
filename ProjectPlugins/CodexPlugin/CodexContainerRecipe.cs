@@ -47,13 +47,15 @@ namespace CodexPlugin
 
             if (config.PublicTestNet != null)
             {
-                AddEnvVar("CODEX_NAT", config.PublicTestNet.PublicNatIP);
+                // This makes the node announce itself to its public IP address.
                 AddEnvVar("NAT_IP_AUTO", "false");
+                AddEnvVar("NAT_PUBLIC_IP_AUTO", "true");
             }
             else
             {
                 // This makes the node announce itself to its local (pod) IP address.
                 AddEnvVar("NAT_IP_AUTO", "true");
+                AddEnvVar("NAT_PUBLIC_IP_AUTO", "false");
             }
 
             var listenPort = CreateListenPort(config);
