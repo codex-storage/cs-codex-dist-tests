@@ -4,7 +4,7 @@ dotnet run \
     --kube-config="${KUBECONFIG:-/opt/kubeconfig.yaml}" \
     --kube-namespace="${DEPLOYMENT_NAMESPACE:-codex-continuous-tests}" \
     --deploy-file="${DEPLOYMENT_FILE:-codex-deployment.json}" \
-    --nodes=${DEPLOYMENT_NODES:-5} \
+    --nodes=${DEPLOYMENT_NODES:-7} \
     --validators=${DEPLOYMENT_VALIDATORS:-3} \
     --log-level="${CODEX_LOG_LEVEL:-Trace}" \
     --storage-quota=${CODEX_STORAGE_QUOTA:-300000} \
