@@ -24,8 +24,8 @@ namespace ContinuousTests
         [Uniform("stop", "s", "STOPONFAIL", false, "If greater than zero, runner will stop after this many test failures and download all cluster container logs. 0 by default.")]
         public int StopOnFailure { get; set; } = 0;
 
-        [Uniform("target-duration", "td", "TARGETDURATION", false, "If greater than zero, runner will run for this many seconds before stopping.")]
-        public int TargetDurationSeconds { get; set; } = 0;
+        [Uniform("target-duration", "td", "TARGETDURATION", false, "If set, runner will run for this length of time before stopping. Supports seconds, or '1d2h3m4s' format.")]
+        public string TargetDurationSeconds { get; set; } = string.Empty;
 
         [Uniform("filter", "f", "FILTER", false, "If set, runs only tests whose names contain any of the filter strings. Comma-separated. Case sensitive.")]
         public string Filter { get; set; } = string.Empty;
