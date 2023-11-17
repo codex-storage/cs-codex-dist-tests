@@ -23,6 +23,35 @@
             return result;
         }
         
+        public static TimeSpan ParseTimespan(string span)
+        {
+            span = span.Replace(" ", "").Replace(",", "");
+            var result = TimeSpan.Zero;
+            var number = "";
+            foreach (var c in span)
+            {
+                if (char.IsNumber(c)) number += c;
+                else
+                {
+                    var value = Convert.ToInt32(number);
+                    number = "";
+
+                    if (c == 'd') result += TimeSpan.FromDays(value);
+                    else if (c == 'h') result += TimeSpan.FromHours(value);
+                    else if (c == 'm') result += TimeSpan.FromMinutes(value);
+                    else if (c == 's') result += TimeSpan.FromSeconds(value);
+                    else throw new Exception("Unknown time modifier: " + c);
+                }
+            }
+
+            if (!string.IsNullOrEmpty(number))
+            {
+                var value = Convert.ToInt32(number);
+                result += TimeSpan.FromSeconds(value);
+            }
+            return result;
+        }
+
         public static void WaitUntil(Func<bool> predicate)
         {
             WaitUntil(predicate, TimeSpan.FromMinutes(1), TimeSpan.FromSeconds(1));

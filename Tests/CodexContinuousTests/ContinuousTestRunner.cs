@@ -102,9 +102,9 @@ namespace ContinuousTests
             var testData = FormatTestRuns(testLoops);
             overviewLog.Log("Total duration: " + testDuration);
 
-            if (config.TargetDurationSeconds > 0)
+            if (!string.IsNullOrEmpty(config.TargetDurationSeconds))
             {
-                var targetDuration = TimeSpan.FromSeconds(config.TargetDurationSeconds);
+                var targetDuration = Time.ParseTimespan(config.TargetDurationSeconds);
                 var wasCancelled = cancelToken.WaitHandle.WaitOne(targetDuration);
                 if (!wasCancelled)
                 {
