@@ -2,16 +2,6 @@ name: Run Dist Tests
 
 
 on:
-  # push:
-  #   branches:
-  #     - master
-  #   tags:
-  #     - 'v*.*.*'
-  #   paths-ignore:
-  #     - '**/*.md'
-  #     - '.gitignore'
-  #     - 'docker/**'
-  #     - '!docker/dist-tests-job.yaml'
   workflow_dispatch:
     inputs:
       source:
@@ -37,8 +27,8 @@ on:
 
 
 env:
-  BRANCH: ${{ github.ref_name }}
   SOURCE: ${{ format('{0}/{1}', github.server_url, github.repository) }}
+  BRANCH: ${{ github.ref_name }}
   NAMEPREFIX: d-tests-runner
   NAMESPACE: default
   COMMAND: dotnet test Tests/CodexTests
@@ -57,14 +47,14 @@ jobs:
 
       - name: Variables
         run: |
-          [[ -n "${{ github.event.inputs.branch }}" ]] && echo "BRANCH=${{ github.event.inputs.branch }}" >>"$GITHUB_ENV" || echo "BRANCH=${{ env.BRANCH }}" >>"$GITHUB_ENV"
-          [[ -n "${{ github.event.inputs.source }}" ]] && echo "SOURCE=${{ github.event.inputs.source }}" >>"$GITHUB_ENV" || echo "SOURCE=${{ env.SOURCE }}" >>"$GITHUB_ENV"
-          [[ -n "${{ github.event.inputs.nameprefix }}" ]] && echo "NAMEPREFIX=${{ github.event.inputs.nameprefix }}" >>"$GITHUB_ENV" || echo "NAMEPREFIX=${{ env.NAMEPREFIX }}" >>"$GITHUB_ENV"
-          [[ -n "${{ github.event.inputs.namespace }}" ]] && echo "NAMESPACE=${{ github.event.inputs.namespace }}" >>"$GITHUB_ENV" || echo "NAMESPACE=${{ env.NAMESPACE }}" >>"$GITHUB_ENV"
-          [[ -n "${{ github.event.inputs.command }}" ]] && COMMAND="${{ github.event.inputs.command }}" || COMMAND="${{ env.COMMAND }}"
           echo "COMMAND=$(jq -c 'split(" ")' <<< '"'$COMMAND'"')" >>"$GITHUB_ENV"
           echo "RUNID=$(date +%Y%m%d-%H%M%S)" >> $GITHUB_ENV
           echo "TESTID=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+          [[ -n "${{ inputs.branch }}" ]] && echo "BRANCH=${{ inputs.branch }}" >>"$GITHUB_ENV" || echo "BRANCH=${{ env.BRANCH }}" >>"$GITHUB_ENV"
+          [[ -n "${{ inputs.source }}" ]] && echo "SOURCE=${{ inputs.source }}" >>"$GITHUB_ENV" || echo "SOURCE=${{ env.SOURCE }}" >>"$GITHUB_ENV"
+          [[ -n "${{ inputs.nameprefix }}" ]] && echo "NAMEPREFIX=${{ inputs.nameprefix }}" >>"$GITHUB_ENV" || echo "NAMEPREFIX=${{ env.NAMEPREFIX }}" >>"$GITHUB_ENV"
+          [[ -n "${{ inputs.namespace }}" ]] && echo "NAMESPACE=${{ inputs.namespace }}" >>"$GITHUB_ENV" || echo "NAMESPACE=${{ env.NAMESPACE }}" >>"$GITHUB_ENV"
+          [[ -n "${{ inputs.command }}" ]] && COMMAND="${{ inputs.command }}" || COMMAND="${{ env.COMMAND }}"
 
       - name: Kubectl - Install ${{ env.KUBE_VERSION }}
         uses: azure/setup-kubectl@v3
@@ -85,7 +75,7 @@ jobs:
           echo "----"
           echo "Repository: ${{ env.SOURCE }}"
           echo "Branch: ${{ env.BRANCH }}"
-          echo "Runner Pod: ${{ env.NAMEPREFIX }}-${{ env.RUNID }}"
+          echo "Runner job: ${{ env.NAMEPREFIX }}-${{ env.RUNID }}"
           echo "Runner namespace: ${{ env.NAMESPACE }}"
           echo "----"
           echo "Tests runid: ${{ env.RUNID }}"
