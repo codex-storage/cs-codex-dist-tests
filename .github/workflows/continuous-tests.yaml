@@ -2,16 +2,6 @@ name: Run Continuous Tests
 
 
 on:
-  # push:
-  #   branches:
-  #     - master
-  #   tags:
-  #     - 'v*.*.*'
-  #   paths-ignore:
-  #     - '**/*.md'
-  #     - '.gitignore'
-  #     - 'docker/**'
-  #     - '!docker/continuous-tests-job.yaml'
   workflow_dispatch:
     inputs:
       source:
@@ -23,15 +13,11 @@ on:
         required: false
         type: string
       nameprefix:
-        description: Runner name prefix (c-tests-runner)
-        required: false
-        type: string
-      namespace:
-        description: Runner namespace (default)
+        description: Resources prefix (c-tests)
         required: false
         type: string
       tests_target_duration:
-        description: Runner target duration (172800 = 48h)
+        description: Runner target duration (2d)
         required: false
         type: string
       tests_filter:
@@ -40,24 +26,42 @@ on:
         type: string
       tests_cleanup:
         description: Runner tests cleanup
-        type: choice
-        options:
-        - true
-        - false
+        type: boolean
         default: true
-      deployment_namespace:
-        description: Deployment namespace (c-tests-$runid)
+  workflow_call:
+    inputs:
+      source:
+        description: Repository with tests (current)
         required: false
         type: string
+      branch:
+        description: Branch with tests (master)
+        required: false
+        type: string
+      nameprefix:
+        description: Resources prefix (c-tests)
+        required: false
+        type: string
+      tests_target_duration:
+        description: Runner target duration (2d)
+        required: false
+        type: string
+      tests_filter:
+        description: Runner tests filter ("")
+        required: false
+        type: string
+      tests_cleanup:
+        description: Runner tests cleanup
+        required: false
+        type: boolean
 
 
 env:
-  BRANCH: ${{ github.ref_name }}
   SOURCE: ${{ format('{0}/{1}', github.server_url, github.repository) }}
-  NAMEPREFIX: c-tests-runner
+  BRANCH: ${{ github.ref_name }}
+  NAMEPREFIX: c-tests
   NAMESPACE: default
-  DEPLOYMENT_NAMESPACE: c-tests
-  TESTS_TARGET_DURATION: 172800
+  TESTS_TARGET_DURATION: 2d
   TESTS_FILTER: ""
   TESTS_CLEANUP: true
   JOB_MANIFEST: docker/continuous-tests-job.yaml
@@ -78,14 +82,14 @@ jobs:
           RUNID=$(date +%Y%m%d-%H%M%S)
           echo "RUNID=${RUNID}" >> $GITHUB_ENV
           echo "TESTID=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
-          [[ -n "${{ github.event.inputs.source }}" ]] && echo "SOURCE=${{ github.event.inputs.source }}" >>"$GITHUB_ENV" || echo "SOURCE=${{ env.SOURCE }}" >>"$GITHUB_ENV"
-          [[ -n "${{ github.event.inputs.branch }}" ]] && echo "BRANCH=${{ github.event.inputs.branch }}" >>"$GITHUB_ENV" || echo "BRANCH=${{ env.BRANCH }}" >>"$GITHUB_ENV"
-          [[ -n "${{ github.event.inputs.nameprefix }}" ]] && echo "NAMEPREFIX=${{ github.event.inputs.nameprefix }}" >>"$GITHUB_ENV" || echo "NAMEPREFIX=${{ env.NAMEPREFIX }}" >>"$GITHUB_ENV"
-          [[ -n "${{ github.event.inputs.namespace }}" ]] && echo "NAMESPACE=${{ github.event.inputs.namespace }}" >>"$GITHUB_ENV" || echo "NAMESPACE=${{ env.NAMESPACE }}" >>"$GITHUB_ENV"
-          [[ -n "${{ github.event.inputs.tests_target_duration }}" ]] && echo "TESTS_TARGET_DURATION=${{ github.event.inputs.tests_target_duration }}" >>"$GITHUB_ENV" || echo "TESTS_TARGET_DURATION=${{ env.TESTS_TARGET_DURATION }}" >>"$GITHUB_ENV"
-          [[ -n "${{ github.event.inputs.tests_filter }}" ]] && echo "TESTS_FILTER=${{ github.event.inputs.tests_filter }}" >>"$GITHUB_ENV" || echo "TESTS_FILTERS=${{ env.TESTS_FILTERS }}" >>"$GITHUB_ENV"
-          [[ -n "${{ github.event.inputs.tests_cleanup }}" ]] && echo "TESTS_CLEANUP=${{ github.event.inputs.tests_cleanup }}" >>"$GITHUB_ENV" || echo "TESTS_CLEANUP=${{ env.TESTS_CLEANUP }}" >>"$GITHUB_ENV"
-          [[ -n "${{ github.event.inputs.deployment_namespace }}" ]] && echo "DEPLOYMENT_NAMESPACE=${{ github.event.inputs.deployment_namespace }}" >>"$GITHUB_ENV" || echo "DEPLOYMENT_NAMESPACE=${{ env.DEPLOYMENT_NAMESPACE }}-${RUNID}" >>"$GITHUB_ENV"
+          [[ -n "${{ inputs.source }}" ]] && echo "SOURCE=${{ inputs.source }}" >>"$GITHUB_ENV" || echo "SOURCE=${{ env.SOURCE }}" >>"$GITHUB_ENV"
+          [[ -n "${{ inputs.branch }}" ]] && echo "BRANCH=${{ inputs.branch }}" >>"$GITHUB_ENV" || echo "BRANCH=${{ env.BRANCH }}" >>"$GITHUB_ENV"
+          [[ -n "${{ inputs.nameprefix }}" ]] && echo "NAMEPREFIX=${{ inputs.nameprefix }}-${RUNID}" >>"$GITHUB_ENV" || echo "NAMEPREFIX=${{ env.NAMEPREFIX }}-${RUNID}" >>"$GITHUB_ENV"
+          [[ -n "${{ inputs.nameprefix }}" ]] && echo "DEPLOYMENT_NAMESPACE=${{ inputs.nameprefix }}-${RUNID}" >>"$GITHUB_ENV" || echo "DEPLOYMENT_NAMESPACE=${{ env.NAMEPREFIX }}-${RUNID}" >>"$GITHUB_ENV"
+          [[ -n "${{ inputs.namespace }}" ]] && echo "NAMESPACE=${{ inputs.namespace }}" >>"$GITHUB_ENV" || echo "NAMESPACE=${{ env.NAMESPACE }}" >>"$GITHUB_ENV"
+          [[ -n "${{ inputs.tests_target_duration }}" ]] && echo "TESTS_TARGET_DURATION=${{ inputs.tests_target_duration }}" >>"$GITHUB_ENV" || echo "TESTS_TARGET_DURATION=${{ env.TESTS_TARGET_DURATION }}" >>"$GITHUB_ENV"
+          [[ -n "${{ inputs.tests_filter }}" ]] && echo "TESTS_FILTER=${{ inputs.tests_filter }}" >>"$GITHUB_ENV" || echo "TESTS_FILTERS=${{ env.TESTS_FILTERS }}" >>"$GITHUB_ENV"
+          [[ -n "${{ inputs.tests_cleanup }}" ]] && echo "TESTS_CLEANUP=${{ inputs.tests_cleanup }}" >>"$GITHUB_ENV" || echo "TESTS_CLEANUP=${{ env.TESTS_CLEANUP }}" >>"$GITHUB_ENV"
 
       - name: Kubectl - Install ${{ env.KUBE_VERSION }}
         uses: azure/setup-kubectl@v3
@@ -106,7 +110,8 @@ jobs:
           echo "----"
           echo "Repository: ${{ env.SOURCE }}"
           echo "Branch: ${{ env.BRANCH }}"
-          echo "Runner Pod: ${{ env.NAMEPREFIX }}-${{ env.RUNID }}"
+          echo "Runner job: ${{ env.NAMEPREFIX }}"
+          echo "Runner pod: `kubectl get pod --selector job-name=${{ env.NAMEPREFIX }} -ojsonpath='{.items[0].metadata.name}'`"
           echo "Runner namespace: ${{ env.NAMESPACE }}"
           echo "----"
           echo "Tests runid: ${{ env.RUNID }}"
@@ -115,3 +120,30 @@ jobs:
           echo "Tests filter: ${{ env.TESTS_FILTER }}"
           echo "Tests cleanup: ${{ env.TESTS_CLEANUP }}"
           echo "----"
+
+      - name: Show Runner logs
+        if: false
+        run: |
+          # Variables
+          # We need more than 300 seconds because Auto Scaler may take 3 minutes to tun a node 
+          duration=600
+          namespace="${{ env.NAMESPACE }}"
+          pod=$(kubectl get pod --selector job-name=${{ env.NAMEPREFIX }} -o jsonpath="{.items[0].metadata.name}")
+
+          # Check Pod status
+          WAIT=120
+          SECONDS=0
+          sleep=1
+          while (( SECONDS < WAIT )); do
+            phase=$(kubectl get pod ${pod} -n ${namespace} -o jsonpath="{.status.phase}")
+            [[ "${phase}" == "Running" ]] && { echo "Pod $pod is in $phase state - Get the logs"; break; } || { echo "Pod $pod is in $phase state - Retry in $sleep seconds / $((WAIT - SECONDS))"; }
+            sleep $sleep
+          done
+
+          # Get logs
+          timeout $duration \
+            kubectl logs $pod \
+              -n $namespace \
+              -f \
+              --tail=-1 \
+              --timestamps || true
