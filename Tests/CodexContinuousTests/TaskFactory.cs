@@ -5,11 +5,23 @@
         private readonly object taskLock = new();
         private readonly List<Task> activeTasks = new List<Task>();
 
-        public void Run(Action action)
+        public void Run(Action action, string name)
         {
             lock (taskLock)
             {
-                activeTasks.Add(Task.Run(action).ContinueWith(CleanupTask, null));
+                activeTasks.Add(Task.Run(() => CatchException(action, name)).ContinueWith(CleanupTask, null));
+            }
+        }
+
+        private void CatchException(Action action, string name)
+        {
+            try
+            {
+                action();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Exception in task '{name}': " + ex);
             }
         }
 

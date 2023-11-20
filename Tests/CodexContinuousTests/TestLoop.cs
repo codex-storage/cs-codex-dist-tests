@@ -69,7 +69,7 @@ namespace ContinuousTests
                     overviewLog.Error("Test infra failure: TestLoop failed with " + ex);
                     Environment.Exit(-1);
                 }
-            });
+            }, nameof(TestLoop));
         }
 
         private void StartTest()

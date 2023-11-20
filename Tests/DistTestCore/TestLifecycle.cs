@@ -58,10 +58,9 @@ namespace DistTestCore
             return entryPoint.GetPluginMetadata();
         }
 
-        public string GetTestDuration()
+        public TimeSpan GetTestDuration()
         {
-            var testDuration = DateTime.UtcNow - testStart;
-            return Time.FormatDuration(testDuration);
+            return DateTime.UtcNow - testStart;
         }
 
         public void OnContainersStarted(RunningContainers rc)

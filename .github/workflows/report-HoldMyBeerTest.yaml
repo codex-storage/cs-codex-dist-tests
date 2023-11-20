@@ -1,0 +1,20 @@
+name: Report - HoldMyBeerTest
+
+
+on:
+  schedule:
+    - cron: '30 */49 * * *'
+  workflow_dispatch:
+
+jobs:
+  run_tests:
+    name: Call runner
+    uses: ./.github/workflows/continuous-tests.yaml
+    with:
+      source: ${{ format('{0}/{1}', github.server_url, github.repository) }}
+      branch: master
+      nameprefix: c-tests-report-holdmybeertest
+      tests_target_duration: 48h
+      tests_filter: HoldMyBeerTest
+      tests_cleanup: true
+    secrets: inherit

@@ -1,6 +1,6 @@
 ﻿using Logging;
 using Newtonsoft.Json;
-using Utils;
+using System.Globalization;
 
 namespace DistTestCore.Logs
 {
@@ -20,7 +20,7 @@ namespace DistTestCore.Logs
 
         public void ConcludeTest(string resultStatus, TimeSpan testDuration, Dictionary<string, string> data)
         {
-            ConcludeTest(resultStatus, Time.FormatDuration(testDuration), data);
+            ConcludeTest(resultStatus, testDuration.TotalSeconds.ToString(CultureInfo.InvariantCulture), data);
         }
 
         public void ConcludeTest(string resultStatus, string testDuration, Dictionary<string, string> data)

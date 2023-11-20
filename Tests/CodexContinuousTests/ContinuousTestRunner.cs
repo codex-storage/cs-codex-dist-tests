@@ -98,13 +98,13 @@ namespace ContinuousTests
 
         private void WaitUntilFinished(LogSplitter overviewLog, StatusLog statusLog, DateTime startTime, TestLoop[] testLoops)
         {
-            var testDuration = Time.FormatDuration(DateTime.UtcNow - startTime);
+            var testDuration = (DateTime.UtcNow - startTime).TotalSeconds.ToString();
             var testData = FormatTestRuns(testLoops);
             overviewLog.Log("Total duration: " + testDuration);
 
-            if (config.TargetDurationSeconds > 0)
+            if (!string.IsNullOrEmpty(config.TargetDurationSeconds))
             {
-                var targetDuration = TimeSpan.FromSeconds(config.TargetDurationSeconds);
+                var targetDuration = Time.ParseTimespan(config.TargetDurationSeconds);
                 var wasCancelled = cancelToken.WaitHandle.WaitOne(targetDuration);
                 if (!wasCancelled)
                 {
