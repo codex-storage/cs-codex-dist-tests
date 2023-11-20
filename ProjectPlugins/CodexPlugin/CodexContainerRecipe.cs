@@ -49,13 +49,12 @@ namespace CodexPlugin
             {
                 // This makes the node announce itself to its public IP address.
                 AddEnvVar("NAT_IP_AUTO", "false");
-                AddEnvVar("NAT_PUBLIC_IP_AUTO", "true");
+                AddEnvVar("NAT_PUBLIC_IP_AUTO", "https://ipinfo.io/ip");
             }
             else
             {
                 // This makes the node announce itself to its local (pod) IP address.
                 AddEnvVar("NAT_IP_AUTO", "true");
-                AddEnvVar("NAT_PUBLIC_IP_AUTO", "false");
             }
 
             var listenPort = CreateListenPort(config);
