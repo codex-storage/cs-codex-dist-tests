@@ -19,6 +19,7 @@ namespace GethPlugin
         void SendTransaction<TFunction>(string contractAddress, TFunction function) where TFunction : FunctionMessage, new();
         decimal? GetSyncedBlockNumber();
         bool IsContractAvailable(string abi, string contractAddress);
+        GethBootstrapNode GetBootstrapRecord();
     }
 
     public class GethNode : IGethNode
@@ -67,6 +68,17 @@ namespace GethPlugin
         public void SendTransaction<TFunction>(string contractAddress, TFunction function) where TFunction : FunctionMessage, new()
         {
             StartInteraction().SendTransaction(contractAddress, function);
+        }
+
+        public GethBootstrapNode GetBootstrapRecord()
+        {
+            var address = StartResult.Container.GetInternalAddress(GethContainerRecipe.ListenPortTag);
+
+            return new GethBootstrapNode(
+                publicKey: StartResult.PubKey,
+                ipAddress: address.Host.Replace("http://", ""),
+                port: address.Port
+            );
         }
 
         private NethereumInteraction StartInteraction()

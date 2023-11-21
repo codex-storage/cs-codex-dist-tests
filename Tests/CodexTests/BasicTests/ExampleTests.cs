@@ -95,5 +95,22 @@ namespace CodexTests.BasicTests
             AssertBalance(contracts, seller, Is.GreaterThan(sellerInitialBalance), "Seller was not paid for storage.");
             AssertBalance(contracts, buyer, Is.LessThan(buyerInitialBalance), "Buyer was not charged for storage.");
         }
+
+        [Test]
+        public void GethBootstrapTest()
+        {
+            var boot = Ci.StartGethNode(s => s.WithName("boot").IsMiner());
+            var disconnected = Ci.StartGethNode(s => s.WithName("disconnected"));
+            var follow = Ci.StartGethNode(s => s.WithBootstrapNode(boot).WithName("follow"));
+
+            Thread.Sleep(12000);
+
+            var bootN = boot.GetSyncedBlockNumber();
+            var discN = disconnected.GetSyncedBlockNumber();
+            var followN = follow.GetSyncedBlockNumber();
+
+            Assert.That(bootN, Is.EqualTo(followN));
+            Assert.That(discN, Is.LessThan(bootN));
+        }
     }
 }

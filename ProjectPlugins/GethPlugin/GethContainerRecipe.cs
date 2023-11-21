@@ -31,8 +31,11 @@ namespace GethPlugin
 
         private string CreateArgs(GethStartupConfig config)
         {
-            if (config.IsMiner) AddEnvVar("ENABLE_MINER", "1");
-            UnlockAccounts(0, 1);
+            if (config.IsMiner)
+            {
+                AddEnvVar("ENABLE_MINER", "1");
+                UnlockAccounts(0, 1);
+            }
 
             var httpPort = CreateApiPort(config, tag: HttpPortTag);
             var discovery = CreateDiscoveryPort(config);
@@ -47,16 +50,12 @@ namespace GethPlugin
                 var bootPubKey = config.BootstrapNode.PublicKey;
                 var bootIp = config.BootstrapNode.IpAddress;
                 var bootPort = config.BootstrapNode.Port;
-                var bootstrapArg = $" --bootnodes enode://{bootPubKey}@{bootIp}:{bootPort} --nat=extip:{bootIp}";
+                var bootstrapArg = $" --bootnodes enode://{bootPubKey}@{bootIp}:{bootPort}";
                 args += bootstrapArg;
             }
             if (config.IsPublicTestNet != null)
             {
-                AddEnvVar("NAT_PUBLIC_IP_AUTO", "true");
-            }
-            else
-            {
-                AddEnvVar("NAT_PUBLIC_IP_AUTO", "false");
+                AddEnvVar("NAT_PUBLIC_IP_AUTO", "https://ipinfo.io/ip");
             }
 
             return args + $" --authrpc.port {authRpc.Number} --ws --ws.addr 0.0.0.0 --ws.port {wsPort.Number}";
@@ -65,7 +64,7 @@ namespace GethPlugin
         private void UnlockAccounts(int startIndex, int numberOfAccounts)
         {
             if (startIndex < 0) throw new ArgumentException();
-            if (numberOfAccounts < 1) throw new ArgumentException();
+            if (numberOfAccounts < 0) throw new ArgumentException();
             if (startIndex + numberOfAccounts > 1000) throw new ArgumentException("Out of accounts!");
 
             AddEnvVar("UNLOCK_START_INDEX", startIndex.ToString());

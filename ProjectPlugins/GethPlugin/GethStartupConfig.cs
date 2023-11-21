@@ -3,6 +3,7 @@
     public interface IGethSetup
     {
         IGethSetup IsMiner();
+        IGethSetup WithBootstrapNode(IGethNode node);
         IGethSetup WithBootstrapNode(GethBootstrapNode node);
         IGethSetup WithName(string name);
         IGethSetup AsPublicTestNet(GethTestNetConfig gethTestNetConfig);
@@ -14,6 +15,11 @@
         public GethBootstrapNode? BootstrapNode { get; private set; }
         public string? NameOverride { get; private set; }
         public GethTestNetConfig? IsPublicTestNet { get; private set; }
+
+        public IGethSetup WithBootstrapNode(IGethNode node)
+        {
+            return WithBootstrapNode(node.GetBootstrapRecord());
+        }
 
         public IGethSetup WithBootstrapNode(GethBootstrapNode node)
         {
