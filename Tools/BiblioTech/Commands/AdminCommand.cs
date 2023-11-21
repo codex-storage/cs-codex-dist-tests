@@ -15,11 +15,17 @@ namespace BiblioTech.Commands
         private readonly WhoIsCommand whoIsCommand = new WhoIsCommand();
         private readonly NetInfoCommand netInfoCommand;
         private readonly DebugPeerCommand debugPeerCommand;
+        private readonly AddSprCommand addSprCommand;
+        private readonly ClearSprsCommand clearSprsCommand;
+        private readonly GetSprCommand getSprCommand;
 
-        public AdminCommand(CoreInterface ci)
+        public AdminCommand(CoreInterface ci, SprCommand sprCommand)
         {
             netInfoCommand = new NetInfoCommand(ci);
             debugPeerCommand = new DebugPeerCommand(ci);
+            addSprCommand = new AddSprCommand(sprCommand);
+            clearSprsCommand = new ClearSprsCommand(sprCommand);
+            getSprCommand = new GetSprCommand(sprCommand);
         }
 
         public override string Name => "admin";
@@ -35,7 +41,10 @@ namespace BiblioTech.Commands
             deployRemoveCommand,
             whoIsCommand,
             netInfoCommand,
-            debugPeerCommand
+            debugPeerCommand,
+            addSprCommand,
+            clearSprsCommand,
+            getSprCommand
         };
 
         protected override async Task Invoke(CommandContext context)
@@ -60,6 +69,9 @@ namespace BiblioTech.Commands
             await whoIsCommand.CommandHandler(context);
             await netInfoCommand.CommandHandler(context);
             await debugPeerCommand.CommandHandler(context);
+            await addSprCommand.CommandHandler(context);
+            await clearSprsCommand.CommandHandler(context);
+            await deployUploadCommand.CommandHandler(context);
         }
 
         public class ClearUserAssociationCommand : SubCommandOption
@@ -377,6 +389,78 @@ namespace BiblioTech.Commands
                 }
 
                 return content.ToArray();
+            }
+        }
+    
+        public class AddSprCommand : SubCommandOption
+        {
+            private readonly SprCommand sprCommand;
+            private readonly StringOption stringOption = new StringOption("spr", "Codex SPR", true);
+
+            public AddSprCommand(SprCommand sprCommand)
+                : base(name: "addspr",
+               description: "Adds a Codex SPR, to be given to users with '/boot'.")
+            {
+                this.sprCommand = sprCommand;
+            }
+
+            public override CommandOption[] Options => new[] { stringOption };
+
+            protected override async Task onSubCommand(CommandContext context)
+            {
+                var spr = await stringOption.Parse(context);
+
+                if (!string.IsNullOrEmpty(spr) )
+                {
+                    sprCommand.Add(spr);
+                    await context.Followup("A-OK!");
+                }
+                else
+                {
+                    await context.Followup("SPR is null or empty.");
+                }
+            }
+        }
+
+        public class ClearSprsCommand : SubCommandOption
+        {
+            private readonly SprCommand sprCommand;
+            private readonly StringOption stringOption = new StringOption("areyousure", "set to 'true' if you are.", true);
+
+            public ClearSprsCommand(SprCommand sprCommand)
+                : base(name: "clearsprs",
+               description: "Clears all Codex SPRs in the bot. Users won't be able to use '/boot' till new ones are added.")
+            {
+                this.sprCommand = sprCommand;
+            }
+
+            public override CommandOption[] Options => new[] { stringOption };
+
+            protected override async Task onSubCommand(CommandContext context)
+            {
+                var areyousure = await stringOption.Parse(context);
+
+                if (areyousure != "true") return;
+
+                sprCommand.Clear();
+                await context.Followup("Cleared all SPRs.");
+            }
+        }
+
+        public class GetSprCommand: SubCommandOption
+        {
+            private readonly SprCommand sprCommand;
+
+            public GetSprCommand(SprCommand sprCommand)
+                : base(name: "getsprs",
+               description: "Shows all Codex SPRs in the bot.")
+            {
+                this.sprCommand = sprCommand;
+            }
+
+            protected override async Task onSubCommand(CommandContext context)
+            {
+                await context.Followup("SPRs: " + string.Join(", ", sprCommand.Get().Select(s => $"'{s}'")));
             }
         }
     }

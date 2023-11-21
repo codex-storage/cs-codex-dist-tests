@@ -1,61 +1,48 @@
 ﻿using BiblioTech.Options;
-using CodexPlugin;
-using Core;
 
 namespace BiblioTech.Commands
 {
-    public class SprCommand : BaseCodexCommand
+    public class SprCommand : BaseCommand
     {
         private readonly Random random = new Random();
-        private readonly List<string> sprCache = new List<string>();
-        private DateTime lastUpdate = DateTime.MinValue;
-
-        public SprCommand(CoreInterface ci) : base(ci)
-        {
-        }
+        private readonly List<string> knownSprs = new List<string>();
 
         public override string Name => "boot";
         public override string StartingMessage => RandomBusyMessage.Get();
         public override string Description => "Gets an SPR. (Signed peer record, used for bootstrapping.)";
 
-        protected override async Task<bool> OnInvoke(CommandContext context)
+        protected override async Task Invoke(CommandContext context)
         {
-            if (ShouldUpdate())
-            {
-                return true;
-            }
-
             await ReplyWithRandomSpr(context);
-            return false;
         }
 
-        protected override async Task Execute(CommandContext context, ICodexNodeGroup codexGroup)
+        public void Add(string spr)
         {
-            lastUpdate = DateTime.UtcNow;
-            sprCache.Clear();
+            if (knownSprs.Contains(spr)) return;
+            knownSprs.Add(spr);
+        }
 
-            var infos = codexGroup.Select(c => c.GetDebugInfo()).ToArray();
-            sprCache.AddRange(infos.Select(i => i.spr));
+        public void Clear()
+        {
+            knownSprs.Clear();
+        }
 
-            await ReplyWithRandomSpr(context);
+        public string[] Get()
+        {
+            return knownSprs.ToArray();
         }
 
         private async Task ReplyWithRandomSpr(CommandContext context)
         {
-            if (!sprCache.Any())
+            if (!knownSprs.Any())
             {
                 await context.Followup("I'm sorry, no SPRs are available... :c");
                 return;
             }
 
-            var i = random.Next(0, sprCache.Count);
-            var spr = sprCache[i];
+            var i = random.Next(0, knownSprs.Count);
+            var spr = knownSprs[i];
             await context.Followup($"Your SPR: `{spr}`");
-        }
-
-        private bool ShouldUpdate()
-        {
-            return (DateTime.UtcNow - lastUpdate) > TimeSpan.FromMinutes(10);
         }
     }
 }

@@ -49,12 +49,13 @@ namespace BiblioTech
             var ci = entryPoint.CreateInterface();
 
             var associateCommand = new UserAssociateCommand();
+            var sprCommand = new SprCommand();
             var handler = new CommandHandler(client,
                 new GetBalanceCommand(ci, associateCommand), 
                 new MintCommand(ci, associateCommand),
-                new SprCommand(ci),
+                sprCommand,
                 associateCommand,
-                new AdminCommand(ci)
+                new AdminCommand(ci, sprCommand)
             );
 
             await client.LoginAsync(TokenType.Bot, Config.ApplicationToken);
