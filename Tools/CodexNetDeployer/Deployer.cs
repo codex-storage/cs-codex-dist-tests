@@ -142,7 +142,7 @@ namespace CodexNetDeployer
 
         private RunningContainers? StartMetricsService(CoreInterface ci, List<CodexNodeStartResult> startResults)
         {
-            if (!config.MetricsScraper) return null;
+            if (!config.MetricsScraper || !startResults.Any()) return null;
 
             Log("Starting metrics service...");
 
@@ -176,7 +176,7 @@ namespace CodexNetDeployer
 
         private void CheckPeerConnectivity(List<CodexNodeStartResult> codexContainers)
         {
-            if (!config.CheckPeerConnection) return;
+            if (!config.CheckPeerConnection || !codexContainers.Any()) return;
 
             Log("Starting peer connectivity check for deployed nodes...");
             peerConnectivityChecker.CheckConnectivity(codexContainers);
