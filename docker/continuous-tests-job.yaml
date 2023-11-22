@@ -39,6 +39,8 @@ spec:
           value: "${SOURCE}"
         - name: RUNID
           value: "${RUNID}"
+        - name: CODEXDOCKERIMAGE
+          value: "${CODEXDOCKERIMAGE}"
         - name: TESTID
           value: "${TESTID}"
         - name: DEPLOYMENT_NAMESPACE
