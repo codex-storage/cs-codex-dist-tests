@@ -12,6 +12,10 @@ on:
         description: Branch with tests (master)
         required: false
         type: string
+      codexdockerimage:
+        description: Codex Docker image (codexstorage/nim-codex:latest-dist-tests)
+        required: false
+        type: string
       nameprefix:
         description: Resources prefix (c-tests)
         required: false
@@ -38,6 +42,10 @@ on:
         description: Branch with tests (master)
         required: false
         type: string
+      codexdockerimage:
+        description: Codex Docker tag (codexstorage/nim-codex:latest-dist-tests)
+        required: false
+        type: string
       nameprefix:
         description: Resources prefix (c-tests)
         required: false
@@ -59,6 +67,7 @@ on:
 env:
   SOURCE: ${{ format('{0}/{1}', github.server_url, github.repository) }}
   BRANCH: ${{ github.ref_name }}
+  CODEXDOCKERIMAGE: codexstorage/nim-codex:latest-dist-tests
   NAMEPREFIX: c-tests
   NAMESPACE: default
   TESTS_TARGET_DURATION: 2d
@@ -84,6 +93,7 @@ jobs:
           echo "TESTID=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
           [[ -n "${{ inputs.source }}" ]] && echo "SOURCE=${{ inputs.source }}" >>"$GITHUB_ENV" || echo "SOURCE=${{ env.SOURCE }}" >>"$GITHUB_ENV"
           [[ -n "${{ inputs.branch }}" ]] && echo "BRANCH=${{ inputs.branch }}" >>"$GITHUB_ENV" || echo "BRANCH=${{ env.BRANCH }}" >>"$GITHUB_ENV"
+          [[ -n "${{ inputs.codexdockerimage }}" ]] && echo "CODEXDOCKERIMAGE=${{ inputs.codexdockerimage }}" >>"$GITHUB_ENV" || echo "CODEXDOCKERIMAGE=${{ env.CODEXDOCKERIMAGE }}" >>"$GITHUB_ENV"
           [[ -n "${{ inputs.nameprefix }}" ]] && echo "NAMEPREFIX=${{ inputs.nameprefix }}-${RUNID}" >>"$GITHUB_ENV" || echo "NAMEPREFIX=${{ env.NAMEPREFIX }}-${RUNID}" >>"$GITHUB_ENV"
           [[ -n "${{ inputs.nameprefix }}" ]] && echo "DEPLOYMENT_NAMESPACE=${{ inputs.nameprefix }}-${RUNID}" >>"$GITHUB_ENV" || echo "DEPLOYMENT_NAMESPACE=${{ env.NAMEPREFIX }}-${RUNID}" >>"$GITHUB_ENV"
           [[ -n "${{ inputs.namespace }}" ]] && echo "NAMESPACE=${{ inputs.namespace }}" >>"$GITHUB_ENV" || echo "NAMESPACE=${{ env.NAMESPACE }}" >>"$GITHUB_ENV"
@@ -115,6 +125,7 @@ jobs:
           echo "Runner namespace: ${{ env.NAMESPACE }}"
           echo "----"
           echo "Tests runid: ${{ env.RUNID }}"
+          echo "Tests codexdockerimage: ${{ env.CODEXDOCKERIMAGE }}"
           echo "Tests namespace: ${{ env.DEPLOYMENT_NAMESPACE }}"
           echo "Tests duration: ${{ env.TESTS_TARGET_DURATION }}"
           echo "Tests filter: ${{ env.TESTS_FILTER }}"
