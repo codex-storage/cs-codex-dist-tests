@@ -68,7 +68,7 @@ namespace CodexPlugin
 
         public Stream DownloadFile(string contentId)
         {
-            return Http().HttpGetStream("data/" + contentId);
+            return Http().HttpGetStream("data/" + contentId + "/network");
         }
 
         public CodexLocalDataResponse[] LocalFiles()
