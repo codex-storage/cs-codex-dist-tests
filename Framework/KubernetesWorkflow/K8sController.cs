@@ -335,6 +335,7 @@ namespace KubernetesWorkflow
                         },
                         Spec = new V1PodSpec
                         {
+                            PriorityClassName = GetPriorityClassName(containerRecipes),
                             Affinity = CreatePodAffinity(containerRecipes),
                             NodeSelector = CreateNodeSelector(location),
                             Containers = CreateDeploymentContainers(containerRecipes),
@@ -408,6 +409,15 @@ namespace KubernetesWorkflow
         {
             var l = (Location)location;
             return l.NodeLabel;
+        }
+
+        private string GetPriorityClassName(ContainerRecipe[] containerRecipes)
+        {
+            if (containerRecipes.Any(c => c.SetCriticalPriority))
+            {
+                return "system-node-critical";
+            }
+            return null!;
         }
 
         private IDictionary<string, string> GetSelector(ContainerRecipe[] containerRecipes)

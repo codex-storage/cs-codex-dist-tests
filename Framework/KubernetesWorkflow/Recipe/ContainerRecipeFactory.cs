@@ -14,6 +14,7 @@ namespace KubernetesWorkflow.Recipe
         private RecipeComponentFactory factory = null!;
         private ContainerResources resources = new ContainerResources();
         private SchedulingAffinity schedulingAffinity = new SchedulingAffinity();
+        private bool setCriticalPriority;
 
         public ContainerRecipe CreateRecipe(int index, int containerNumber, RecipeComponentFactory factory, StartupConfig config)
         {
@@ -23,7 +24,7 @@ namespace KubernetesWorkflow.Recipe
 
             Initialize(config);
 
-            var recipe = new ContainerRecipe(containerNumber, config.NameOverride, Image, resources, schedulingAffinity,
+            var recipe = new ContainerRecipe(containerNumber, config.NameOverride, Image, resources, schedulingAffinity, setCriticalPriority,
                 exposedPorts.ToArray(),
                 internalPorts.ToArray(),
                 envVars.ToArray(),
@@ -42,6 +43,7 @@ namespace KubernetesWorkflow.Recipe
             this.factory = null!;
             resources = new ContainerResources();
             schedulingAffinity = new SchedulingAffinity();
+            setCriticalPriority = false;
 
             return recipe;
         }
@@ -126,6 +128,11 @@ namespace KubernetesWorkflow.Recipe
         protected void SetSchedulingAffinity(string notIn)
         {
             schedulingAffinity = new SchedulingAffinity(notIn);
+        }
+
+        protected void SetSystemCriticalPriority()
+        {
+            setCriticalPriority = true;
         }
 
         // Disabled following a possible bug in the k8s cluster that will throttle containers much more than is

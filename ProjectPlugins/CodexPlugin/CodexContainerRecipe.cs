@@ -30,6 +30,7 @@ namespace CodexPlugin
             //SetResourceLimits(milliCPUs: 4000, memory: 12.GB());
 
             SetSchedulingAffinity(notIn: "tests-runners");
+            SetSystemCriticalPriority();
 
             var config = startupConfig.Get<CodexStartupConfig>();
 
