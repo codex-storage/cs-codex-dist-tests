@@ -10,6 +10,7 @@ namespace CodexPlugin
     {
         string MakeStorageAvailable(ByteSize size, TestToken minPriceForTotalSpace, TestToken maxCollateral, TimeSpan maxDuration);
         StoragePurchaseContract RequestStorage(ContentId contentId, TestToken pricePerSlotPerSecond, TestToken requiredCollateral, uint minRequiredNumberOfNodes, int proofProbability, TimeSpan duration);
+        StoragePurchaseContract RequestStorage(ContentId contentId, TestToken pricePerSlotPerSecond, TestToken requiredCollateral, uint minRequiredNumberOfNodes, int proofProbability, TimeSpan duration, TimeSpan expiry);
     }
 
     public class MarketplaceAccess : IMarketplaceAccess
@@ -25,13 +26,20 @@ namespace CodexPlugin
 
         public StoragePurchaseContract RequestStorage(ContentId contentId, TestToken pricePerSlotPerSecond, TestToken requiredCollateral, uint minRequiredNumberOfNodes, int proofProbability, TimeSpan duration)
         {
+            return RequestStorage(contentId, pricePerSlotPerSecond, requiredCollateral, minRequiredNumberOfNodes, proofProbability, duration, TimeSpan.FromMinutes(5));
+        }
+
+        public StoragePurchaseContract RequestStorage(ContentId contentId, TestToken pricePerSlotPerSecond, TestToken requiredCollateral, uint minRequiredNumberOfNodes, int proofProbability, TimeSpan duration, TimeSpan expiry)
+        {
+            var expireUtc = DateTimeOffset.UtcNow.ToUnixTimeSeconds() + expiry.TotalSeconds;
+
             var request = new CodexSalesRequestStorageRequest
             {
                 duration = ToDecInt(duration.TotalSeconds),
                 proofProbability = ToDecInt(proofProbability),
                 reward = ToDecInt(pricePerSlotPerSecond),
                 collateral = ToDecInt(requiredCollateral),
-                expiry = null,
+                expiry = ToDecInt(expireUtc),
                 nodes = minRequiredNumberOfNodes,
                 tolerance = null,
             };
@@ -41,11 +49,14 @@ namespace CodexPlugin
                 $"requiredCollateral: {requiredCollateral}, " +
                 $"minRequiredNumberOfNodes: {minRequiredNumberOfNodes}, " +
                 $"proofProbability: {proofProbability}, " +
+                $"expiry: {Time.FormatDuration(expiry)}, " +
                 $"duration: {Time.FormatDuration(duration)})");
 
             var response = codexAccess.RequestStorage(request, contentId.Id);
 
-            if (response == "Purchasing not available")
+            if (response == "Purchasing not available" || 
+                response == "Expiry required" ||
+                response == "Expiry needs to be in future")
             {
                 throw new InvalidOperationException(response);
             }
@@ -102,6 +113,12 @@ namespace CodexPlugin
         {
             Unavailable();
             return null!;
+        }
+
+        public StoragePurchaseContract RequestStorage(ContentId contentId, TestToken pricePerSlotPerSecond, TestToken requiredCollateral, uint minRequiredNumberOfNodes, int proofProbability, TimeSpan duration, TimeSpan expiry)
+        {
+            Unavailable();
+            throw new NotImplementedException();
         }
 
         public string MakeStorageAvailable(ByteSize size, TestToken minPricePerBytePerSecond, TestToken maxCollateral, TimeSpan duration)
