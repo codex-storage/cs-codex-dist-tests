@@ -664,7 +664,8 @@ namespace KubernetesWorkflow
         private V1Pod GetPodForDeployment(RunningDeployment deployment)
         {
             return Time.Retry(() => GetPodForDeplomentInternal(deployment),
-                maxRetries: 2,
+                // We will wait up to 1 minute, k8s might be moving pods around.
+                maxRetries: 6,
                 retryTime: TimeSpan.FromSeconds(10),
                 description: "Find pod by label for deployment.");
         }
