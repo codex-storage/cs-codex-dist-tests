@@ -73,7 +73,7 @@ namespace CodexPlugin
 
         public CodexLocalDataResponse[] LocalFiles()
         {
-            return Http().HttpGetJson<CodexLocalDataResponse[]>("local");
+            return Http().HttpGetJson<CodexLocalDataResponse[]>("data");
         }
 
         public CodexSalesAvailabilityResponse SalesAvailability(CodexSalesAvailabilityRequest request)
