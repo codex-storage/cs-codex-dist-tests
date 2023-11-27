@@ -21,7 +21,7 @@ namespace CodexContractsPlugin
 
             var address = config.GethNode.StartResult.Container.GetAddress(new NullLog(), GethContainerRecipe.HttpPortTag);
 
-            SetSchedulingAffinity(notIn: "tests-runners");
+            SetSchedulingAffinity(notIn: "false");
 
             AddEnvVar("DISTTEST_NETWORK_URL", address.ToString());
             AddEnvVar("HARDHAT_NETWORK", "codexdisttestnetwork");
