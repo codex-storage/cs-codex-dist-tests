@@ -393,7 +393,7 @@ namespace KubernetesWorkflow
                                 {
                                     new V1NodeSelectorRequirement
                                     {
-                                        Key = "workload-type",
+                                        Key = "allow-tests-pods",
                                         OperatorProperty = "NotIn",
                                         Values = notIns
                                     }

@@ -24,7 +24,7 @@ namespace GethPlugin
 
             var args = CreateArgs(config);
 
-            SetSchedulingAffinity(notIn: "tests-runners");
+            SetSchedulingAffinity(notIn: "false");
             SetSystemCriticalPriority();
 
             AddEnvVar("GETH_ARGS", args);
