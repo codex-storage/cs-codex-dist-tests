@@ -18,7 +18,7 @@ spec:
     spec:
       priorityClassName: system-node-critical
       nodeSelector:
-        workload-type: "tests-runners"
+        workload-type: "tests-runners-ci"
       containers:
       - name: ${NAMEPREFIX}-runner
         image: codexstorage/cs-codex-dist-tests:latest
