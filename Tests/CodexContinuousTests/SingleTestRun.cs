@@ -197,6 +197,11 @@ namespace ContinuousTests
             if (error.Contains(":")) error = error.Substring(1 + error.LastIndexOf(":"));
             result.Add("error", error);
 
+            var upload = nodes.Select(n => n.TransferSpeeds.GetUploadSpeed()).ToList()!.OptionalAverage();
+            var download = nodes.Select(n => n.TransferSpeeds.GetDownloadSpeed()).ToList()!.OptionalAverage();
+            if (upload != null) result.Add("avgupload", upload.ToString());
+            if (download != null) result.Add("avgdownload", download.ToString());
+
             return result;
         }
 

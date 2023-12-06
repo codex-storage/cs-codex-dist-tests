@@ -51,6 +51,11 @@
         public BytesPerSecond(long sizeInBytes) : base(sizeInBytes)
         {
         }
+
+        public override string ToString()
+        {
+            return base.ToString() + "/s";
+        }
     }
 
     public static class ByteSizeIntExtensions

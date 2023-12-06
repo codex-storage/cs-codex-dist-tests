@@ -4,8 +4,8 @@ namespace CodexPlugin
 {
     public interface ITransferSpeeds
     {
-        BytesPerSecond GetUploadSpeed();
-        BytesPerSecond GetDownloadSpeed();
+        BytesPerSecond? GetUploadSpeed();
+        BytesPerSecond? GetDownloadSpeed();
     }
 
     public class TransferSpeeds : ITransferSpeeds
@@ -23,14 +23,16 @@ namespace CodexPlugin
             downloads.Add(Convert(bytes, duration));
         }
 
-        public BytesPerSecond GetUploadSpeed()
+        public BytesPerSecond? GetUploadSpeed()
         {
-            return Average(uploads);
+            if (!uploads.Any()) return null;
+            return uploads.Average();
         }
 
-        public BytesPerSecond GetDownloadSpeed()
+        public BytesPerSecond? GetDownloadSpeed()
         {
-            return Average(downloads);
+            if (!downloads.Any()) return null;
+            return downloads.Average();
         }
 
         private static BytesPerSecond Convert(ByteSize size, TimeSpan duration)
@@ -40,13 +42,26 @@ namespace CodexPlugin
 
             return new BytesPerSecond(System.Convert.ToInt64(Math.Round(bytes / seconds)));
         }
+    }
 
-        private static BytesPerSecond Average(List<BytesPerSecond> list)
+    public static class ListExtensions
+    {
+        public static BytesPerSecond Average(this List<BytesPerSecond> list)
         {
             double sum = list.Sum(i => i.SizeInBytes);
             double num = list.Count;
 
-            return new BytesPerSecond(System.Convert.ToInt64(Math.Round(sum / num)));
+            return new BytesPerSecond(Convert.ToInt64(Math.Round(sum / num)));
+        }
+
+        public static BytesPerSecond? OptionalAverage(this List<BytesPerSecond?>? list)
+        {
+            if (list == null || !list.Any() || !list.Any(i => i != null)) return null;
+            var values = list.Where(i => i != null).Cast<BytesPerSecond>().ToArray();
+            double sum = values.Sum(i => i.SizeInBytes);
+            double num = values.Length;
+
+            return new BytesPerSecond(Convert.ToInt64(Math.Round(sum / num)));
         }
     }
 }
