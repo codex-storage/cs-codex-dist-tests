@@ -26,7 +26,7 @@ namespace CodexPlugin
 
         public StoragePurchaseContract RequestStorage(ContentId contentId, TestToken pricePerSlotPerSecond, TestToken requiredCollateral, uint minRequiredNumberOfNodes, int proofProbability, TimeSpan duration)
         {
-            return RequestStorage(contentId, pricePerSlotPerSecond, requiredCollateral, minRequiredNumberOfNodes, proofProbability, duration, TimeSpan.FromMinutes(5));
+            return RequestStorage(contentId, pricePerSlotPerSecond, requiredCollateral, minRequiredNumberOfNodes, proofProbability, duration, duration / 2);
         }
 
         public StoragePurchaseContract RequestStorage(ContentId contentId, TestToken pricePerSlotPerSecond, TestToken requiredCollateral, uint minRequiredNumberOfNodes, int proofProbability, TimeSpan duration, TimeSpan expiry)
