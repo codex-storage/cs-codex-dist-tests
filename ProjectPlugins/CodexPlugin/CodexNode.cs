@@ -25,6 +25,7 @@ namespace CodexPlugin
         IMarketplaceAccess Marketplace { get; }
         CrashWatcher CrashWatcher { get; }
         PodInfo GetPodInfo();
+        ITransferSpeeds TransferSpeeds { get; }
         void Stop();
     }
 
@@ -34,6 +35,7 @@ namespace CodexPlugin
         private const string UploadFailedMessage = "Unable to store block";
         private readonly IPluginTools tools;
         private readonly EthAddress? ethAddress;
+        private readonly TransferSpeeds transferSpeeds;
 
         public CodexNode(IPluginTools tools, CodexAccess codexAccess, CodexNodeGroup group, IMarketplaceAccess marketplaceAccess, EthAddress? ethAddress)
         {
@@ -43,6 +45,7 @@ namespace CodexPlugin
             Group = group;
             Marketplace = marketplaceAccess;
             Version = new CodexDebugVersionResponse();
+            transferSpeeds = new TransferSpeeds();
         }
 
         public RunningContainer Container { get { return CodexAccess.Container; } }
@@ -51,6 +54,7 @@ namespace CodexPlugin
         public CodexNodeGroup Group { get; }
         public IMarketplaceAccess Marketplace { get; }
         public CodexDebugVersionResponse Version { get; private set; }
+        public ITransferSpeeds TransferSpeeds { get => transferSpeeds; }
         public IMetricsScrapeTarget MetricsScrapeTarget
         {
             get
@@ -101,10 +105,13 @@ namespace CodexPlugin
 
             var logMessage = $"Uploading file {file.Describe()}...";
             Log(logMessage);
-            var response = Stopwatch.Measure(tools.GetLog(), logMessage, () =>
+            var measurement = Stopwatch.Measure(tools.GetLog(), logMessage, () =>
             {
                 return CodexAccess.UploadFile(fileStream);
             });
+
+            var response = measurement.Value;
+            transferSpeeds.AddUploadSample(file.GetFilesize(), measurement.Duration);
 
             if (string.IsNullOrEmpty(response)) FrameworkAssert.Fail("Received empty response.");
             if (response.StartsWith(UploadFailedMessage)) FrameworkAssert.Fail("Node failed to store block.");
@@ -118,7 +125,8 @@ namespace CodexPlugin
             var logMessage = $"Downloading for contentId: '{contentId.Id}'...";
             Log(logMessage);
             var file = tools.GetFileManager().CreateEmptyFile(fileLabel);
-            Stopwatch.Measure(tools.GetLog(), logMessage, () => DownloadToFile(contentId.Id, file));
+            var measurement = Stopwatch.Measure(tools.GetLog(), logMessage, () => DownloadToFile(contentId.Id, file));
+            transferSpeeds.AddDownloadSample(file.GetFilesize(), measurement);
             Log($"Downloaded file {file.Describe()} to '{file.Filename}'.");
             return file;
         }

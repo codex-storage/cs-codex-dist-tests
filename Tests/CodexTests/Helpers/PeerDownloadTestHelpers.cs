@@ -9,7 +9,6 @@ namespace CodexTests.Helpers
     public class PeerDownloadTestHelpers : IFullConnectivityImplementation
     {
         private readonly FullConnectivityHelper helper;
-        private readonly ILog log;
         private readonly IFileManager fileManager;
         private ByteSize testFileSize;
 
@@ -17,7 +16,6 @@ namespace CodexTests.Helpers
         {
             helper = new FullConnectivityHelper(log, this);
             testFileSize = 1.MB();
-            this.log = log;
             this.fileManager = fileManager;
         }
 
@@ -45,11 +43,11 @@ namespace CodexTests.Helpers
         private PeerConnectionState CheckConnectivity(Entry from, Entry to)
         {
             var expectedFile = GenerateTestFile(from.Node, to.Node);
-            var contentId = Stopwatch.Measure(log, "Upload", () => from.Node.UploadFile(expectedFile));
+            var contentId = from.Node.UploadFile(expectedFile);
 
             try
             {
-                var downloadedFile = Stopwatch.Measure(log, "Download", () => DownloadFile(to.Node, contentId, expectedFile.Label + "_downloaded"));
+                var downloadedFile = DownloadFile(to.Node, contentId, expectedFile.Label + "_downloaded");
                 expectedFile.AssertIsEqual(downloadedFile);
                 return PeerConnectionState.Connection;
             }

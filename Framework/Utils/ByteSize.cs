@@ -46,6 +46,13 @@
         }
     }
 
+    public class BytesPerSecond : ByteSize
+    {
+        public BytesPerSecond(long sizeInBytes) : base(sizeInBytes)
+        {
+        }
+    }
+
     public static class ByteSizeIntExtensions
     {
         private const long Kilo = 1024;
