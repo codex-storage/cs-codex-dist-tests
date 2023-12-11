@@ -12,6 +12,10 @@ on:
         description: Branch with tests (master)
         required: false
         type: string
+      codexdockerimage:
+        description: Codex Docker image (codexstorage/nim-codex:latest-dist-tests)
+        required: false
+        type: string
       nameprefix:
         description: Resources prefix (c-tests)
         required: false
@@ -26,6 +30,7 @@ on:
         type: string
       tests_cleanup:
         description: Runner tests cleanup
+        required: false
         type: boolean
         default: true
   workflow_call:
@@ -38,6 +43,10 @@ on:
         description: Branch with tests (master)
         required: false
         type: string
+      codexdockerimage:
+        description: Codex Docker image (codexstorage/nim-codex:latest-dist-tests)
+        required: false
+        type: string
       nameprefix:
         description: Resources prefix (c-tests)
         required: false
@@ -54,11 +63,18 @@ on:
         description: Runner tests cleanup
         required: false
         type: boolean
+        default: true
+      workflow_source:
+        description: Workflow source
+        required: false
+        type: string
+        default: ''
 
 
 env:
   SOURCE: ${{ format('{0}/{1}', github.server_url, github.repository) }}
   BRANCH: ${{ github.ref_name }}
+  CODEXDOCKERIMAGE: codexstorage/nim-codex:latest-dist-tests
   NAMEPREFIX: c-tests
   NAMESPACE: default
   TESTS_TARGET_DURATION: 2d
@@ -71,11 +87,13 @@ env:
 
 jobs:
   run_tests:
-    name: Run Tests
+    name: Run Continuous Tests ${{ inputs.tests_filter }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+        with:
+          repository: ${{ inputs.workflow_source }}
 
       - name: Variables
         run: |
@@ -84,8 +102,10 @@ jobs:
           echo "TESTID=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
           [[ -n "${{ inputs.source }}" ]] && echo "SOURCE=${{ inputs.source }}" >>"$GITHUB_ENV" || echo "SOURCE=${{ env.SOURCE }}" >>"$GITHUB_ENV"
           [[ -n "${{ inputs.branch }}" ]] && echo "BRANCH=${{ inputs.branch }}" >>"$GITHUB_ENV" || echo "BRANCH=${{ env.BRANCH }}" >>"$GITHUB_ENV"
-          [[ -n "${{ inputs.nameprefix }}" ]] && echo "NAMEPREFIX=${{ inputs.nameprefix }}-${RUNID}" >>"$GITHUB_ENV" || echo "NAMEPREFIX=${{ env.NAMEPREFIX }}-${RUNID}" >>"$GITHUB_ENV"
-          [[ -n "${{ inputs.nameprefix }}" ]] && echo "DEPLOYMENT_NAMESPACE=${{ inputs.nameprefix }}-${RUNID}" >>"$GITHUB_ENV" || echo "DEPLOYMENT_NAMESPACE=${{ env.NAMEPREFIX }}-${RUNID}" >>"$GITHUB_ENV"
+          [[ -n "${{ inputs.codexdockerimage }}" ]] && echo "CODEXDOCKERIMAGE=${{ inputs.codexdockerimage }}" >>"$GITHUB_ENV" || echo "CODEXDOCKERIMAGE=${{ env.CODEXDOCKERIMAGE }}" >>"$GITHUB_ENV"
+          [[ -n "${{ inputs.nameprefix }}" ]] && NAMEPREFIX="`awk '{ print tolower($0) }' <<< ${{ inputs.nameprefix }}`" || NAMEPREFIX="`awk '{ print tolower($0) }' <<< ${{ env.NAMEPREFIX }}`"
+          echo "NAMEPREFIX=${NAMEPREFIX}-${RUNID}" >>"$GITHUB_ENV"
+          echo "DEPLOYMENT_NAMESPACE=${NAMEPREFIX}-${RUNID}" >>"$GITHUB_ENV"
           [[ -n "${{ inputs.namespace }}" ]] && echo "NAMESPACE=${{ inputs.namespace }}" >>"$GITHUB_ENV" || echo "NAMESPACE=${{ env.NAMESPACE }}" >>"$GITHUB_ENV"
           [[ -n "${{ inputs.tests_target_duration }}" ]] && echo "TESTS_TARGET_DURATION=${{ inputs.tests_target_duration }}" >>"$GITHUB_ENV" || echo "TESTS_TARGET_DURATION=${{ env.TESTS_TARGET_DURATION }}" >>"$GITHUB_ENV"
           [[ -n "${{ inputs.tests_filter }}" ]] && echo "TESTS_FILTER=${{ inputs.tests_filter }}" >>"$GITHUB_ENV" || echo "TESTS_FILTERS=${{ env.TESTS_FILTERS }}" >>"$GITHUB_ENV"
@@ -115,6 +135,7 @@ jobs:
           echo "Runner namespace: ${{ env.NAMESPACE }}"
           echo "----"
           echo "Tests runid: ${{ env.RUNID }}"
+          echo "Tests codexdockerimage: ${{ env.CODEXDOCKERIMAGE }}"
           echo "Tests namespace: ${{ env.DEPLOYMENT_NAMESPACE }}"
           echo "Tests duration: ${{ env.TESTS_TARGET_DURATION }}"
           echo "Tests filter: ${{ env.TESTS_FILTER }}"

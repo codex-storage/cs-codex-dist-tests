@@ -68,12 +68,12 @@ namespace CodexPlugin
 
         public Stream DownloadFile(string contentId)
         {
-            return Http().HttpGetStream("data/" + contentId);
+            return Http().HttpGetStream("data/" + contentId + "/network");
         }
 
         public CodexLocalDataResponse[] LocalFiles()
         {
-            return Http().HttpGetJson<CodexLocalDataResponse[]>("local");
+            return Http().HttpGetJson<CodexLocalDataResponse[]>("data");
         }
 
         public CodexSalesAvailabilityResponse SalesAvailability(CodexSalesAvailabilityRequest request)

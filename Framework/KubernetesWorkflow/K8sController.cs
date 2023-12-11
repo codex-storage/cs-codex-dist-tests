@@ -360,6 +360,7 @@ namespace KubernetesWorkflow
                         },
                         Spec = new V1PodSpec
                         {
+                            PriorityClassName = GetPriorityClassName(containerRecipes),
                             Affinity = CreatePodAffinity(containerRecipes),
                             NodeSelector = CreateNodeSelector(location),
                             Containers = CreateDeploymentContainers(containerRecipes),
@@ -417,7 +418,7 @@ namespace KubernetesWorkflow
                                 {
                                     new V1NodeSelectorRequirement
                                     {
-                                        Key = "workload-type",
+                                        Key = "allow-tests-pods",
                                         OperatorProperty = "NotIn",
                                         Values = notIns
                                     }
@@ -433,6 +434,15 @@ namespace KubernetesWorkflow
         {
             var l = (Location)location;
             return l.NodeLabel;
+        }
+
+        private string GetPriorityClassName(ContainerRecipe[] containerRecipes)
+        {
+            if (containerRecipes.Any(c => c.SetCriticalPriority))
+            {
+                return "system-node-critical";
+            }
+            return null!;
         }
 
         private IDictionary<string, string> GetSelector(ContainerRecipe[] containerRecipes)
@@ -689,7 +699,8 @@ namespace KubernetesWorkflow
         private V1Pod GetPodForDeployment(RunningDeployment deployment)
         {
             return Time.Retry(() => GetPodForDeplomentInternal(deployment),
-                maxRetries: 2,
+                // We will wait up to 1 minute, k8s might be moving pods around.
+                maxRetries: 6,
                 retryTime: TimeSpan.FromSeconds(10),
                 description: "Find pod by label for deployment.");
         }

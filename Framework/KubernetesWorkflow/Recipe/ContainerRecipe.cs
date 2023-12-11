@@ -2,13 +2,14 @@
 {
     public class ContainerRecipe
     {
-        public ContainerRecipe(int number, string? nameOverride, string image, ContainerResources resources, SchedulingAffinity schedulingAffinity, Port[] exposedPorts, Port[] internalPorts, EnvVar[] envVars, PodLabels podLabels, PodAnnotations podAnnotations, VolumeMount[] volumes, ContainerAdditionals additionals)
+        public ContainerRecipe(int number, string? nameOverride, string image, ContainerResources resources, SchedulingAffinity schedulingAffinity, bool setCriticalPriority, Port[] exposedPorts, Port[] internalPorts, EnvVar[] envVars, PodLabels podLabels, PodAnnotations podAnnotations, VolumeMount[] volumes, ContainerAdditionals additionals)
         {
             Number = number;
             NameOverride = nameOverride;
             Image = image;
             Resources = resources;
             SchedulingAffinity = schedulingAffinity;
+            SetCriticalPriority = setCriticalPriority;
             ExposedPorts = exposedPorts;
             InternalPorts = internalPorts;
             EnvVars = envVars;
@@ -34,6 +35,7 @@
         public string? NameOverride { get; }
         public ContainerResources Resources { get; }
         public SchedulingAffinity SchedulingAffinity { get; }
+        public bool SetCriticalPriority { get; }
         public string Image { get; }
         public Port[] ExposedPorts { get; }
         public Port[] InternalPorts { get; }

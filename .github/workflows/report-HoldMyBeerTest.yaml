@@ -3,7 +3,7 @@ name: Report - HoldMyBeerTest
 
 on:
   schedule:
-    - cron: '30 */49 * * *'
+    - cron: '30 * */2 * *'
   workflow_dispatch:
 
 jobs:

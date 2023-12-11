@@ -147,6 +147,18 @@ namespace DistTestCore
         {
         }
 
+        protected virtual void LifecycleStart(TestLifecycle lifecycle)
+        {
+        }
+
+        protected virtual void LifecycleStop(TestLifecycle lifecycle)
+        {
+        }
+
+        protected virtual void CollectStatusLogData(TestLifecycle lifecycle, Dictionary<string, string> data)
+        {
+        }
+
         protected TestLifecycle Get()
         {
             lock (lifecycleLock)
@@ -166,6 +178,7 @@ namespace DistTestCore
                     var testNamespace = TestNamespacePrefix + Guid.NewGuid().ToString();
                     var lifecycle = new TestLifecycle(fixtureLog.CreateTestLog(), configuration, GetTimeSet(), testNamespace);
                     lifecycles.Add(testName, lifecycle);
+                    LifecycleStart(lifecycle);
                 }
             });
         }
@@ -175,13 +188,16 @@ namespace DistTestCore
             var lifecycle = Get();
             var testResult = GetTestResult();
             var testDuration = lifecycle.GetTestDuration();
+            var data = lifecycle.GetPluginMetadata();
+            CollectStatusLogData(lifecycle, data);
             fixtureLog.Log($"{GetCurrentTestName()} = {testResult} ({testDuration})");
-            statusLog.ConcludeTest(testResult, testDuration, lifecycle.GetPluginMetadata());
+            statusLog.ConcludeTest(testResult, testDuration, data);
             Stopwatch.Measure(fixtureLog, $"Teardown for {GetCurrentTestName()}", () =>
             {
                 WriteEndTestLog(lifecycle.Log);
 
                 IncludeLogsOnTestFailure(lifecycle);
+                LifecycleStop(lifecycle);
                 lifecycle.DeleteAllResources();
                 lifecycle = null!;
             });

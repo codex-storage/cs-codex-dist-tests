@@ -7,6 +7,7 @@ metadata:
     name: ${NAMEPREFIX}
     runid: ${RUNID}
 spec:
+  ttlSecondsAfterFinished: 86400
   backoffLimit: 0
   template:
     metadata:
@@ -18,7 +19,7 @@ spec:
     spec:
       priorityClassName: system-node-critical
       nodeSelector:
-        workload-type: "tests-runners"
+        workload-type: "tests-runners-ci"
       containers:
       - name: ${NAMEPREFIX}-runner
         image: codexstorage/cs-codex-dist-tests:latest
@@ -39,6 +40,8 @@ spec:
           value: "${SOURCE}"
         - name: RUNID
           value: "${RUNID}"
+        - name: CODEXDOCKERIMAGE
+          value: "${CODEXDOCKERIMAGE}"
         - name: TESTID
           value: "${TESTID}"
         - name: DEPLOYMENT_NAMESPACE

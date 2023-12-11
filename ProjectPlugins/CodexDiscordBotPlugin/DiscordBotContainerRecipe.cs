@@ -13,7 +13,7 @@ namespace CodexDiscordBotPlugin
         {
             var config = startupConfig.Get<DiscordBotStartupConfig>();
 
-            SetSchedulingAffinity(notIn: "tests-runners");
+            SetSchedulingAffinity(notIn: "false");
 
             AddEnvVar("TOKEN", config.Token);
             AddEnvVar("SERVERNAME", config.ServerName);

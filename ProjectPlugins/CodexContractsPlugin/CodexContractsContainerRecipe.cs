@@ -7,7 +7,7 @@ namespace CodexContractsPlugin
 {
     public class CodexContractsContainerRecipe : ContainerRecipeFactory
     {
-        public static string DockerImage { get; } = "codexstorage/codex-contracts-eth:sha-1854dfb-dist-tests";
+        public static string DockerImage { get; } = "codexstorage/codex-contracts-eth:latest-dist-tests";
 
         public const string MarketplaceAddressFilename = "/hardhat/deployments/codexdisttestnetwork/Marketplace.json";
         public const string MarketplaceArtifactFilename = "/hardhat/artifacts/contracts/Marketplace.sol/Marketplace.json";
@@ -21,7 +21,7 @@ namespace CodexContractsPlugin
 
             var address = config.GethNode.StartResult.Container.GetAddress(new NullLog(), GethContainerRecipe.HttpPortTag);
 
-            SetSchedulingAffinity(notIn: "tests-runners");
+            SetSchedulingAffinity(notIn: "false");
 
             AddEnvVar("DISTTEST_NETWORK_URL", address.ToString());
             AddEnvVar("HARDHAT_NETWORK", "codexdisttestnetwork");
