@@ -27,8 +27,6 @@ namespace BiblioTech.Commands
                 return;
             }
 
-            // private commands
-
             var result = Program.UserRepo.AssociateUserWithAddress(user, data);
             if (result)
             {

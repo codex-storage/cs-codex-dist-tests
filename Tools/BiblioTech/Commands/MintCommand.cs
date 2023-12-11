@@ -1,6 +1,5 @@
 ﻿using BiblioTech.Options;
 using CodexContractsPlugin;
-using Core;
 using GethPlugin;
 
 namespace BiblioTech.Commands
@@ -14,8 +13,7 @@ namespace BiblioTech.Commands
             isRequired: false);
         private readonly UserAssociateCommand userAssociateCommand;
 
-        public MintCommand(CoreInterface ci, UserAssociateCommand userAssociateCommand)
-            : base(ci)
+        public MintCommand(UserAssociateCommand userAssociateCommand)
         {
             this.userAssociateCommand = userAssociateCommand;
         }

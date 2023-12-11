@@ -44,7 +44,7 @@ namespace GethPlugin
         public IGethNode WrapGethContainer(GethDeployment startResult)
         {
             startResult = SerializeGate.Gate(startResult);
-            return new GethNode(tools.GetLog(), startResult);
+            return new DeploymentGethNode(tools.GetLog(), startResult);
         }
 
         private void Log(string msg)
