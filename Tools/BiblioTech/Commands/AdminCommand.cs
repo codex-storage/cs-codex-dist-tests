@@ -1,7 +1,4 @@
 ﻿using BiblioTech.Options;
-using CodexPlugin;
-using Core;
-using Newtonsoft.Json;
 
 namespace BiblioTech.Commands
 {
@@ -54,6 +51,7 @@ namespace BiblioTech.Commands
             await whoIsCommand.CommandHandler(context);
             await addSprCommand.CommandHandler(context);
             await clearSprsCommand.CommandHandler(context);
+            await getSprCommand.CommandHandler(context);
         }
 
         public class ClearUserAssociationCommand : SubCommandOption
