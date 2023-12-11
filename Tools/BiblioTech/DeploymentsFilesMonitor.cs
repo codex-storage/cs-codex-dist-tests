@@ -1,6 +1,7 @@
 ﻿using CodexPlugin;
 using Discord;
 using Newtonsoft.Json;
+using System.Diagnostics.CodeAnalysis;
 
 namespace BiblioTech
 {
@@ -28,11 +29,12 @@ namespace BiblioTech
             try
             {
                 var deploy = JsonConvert.DeserializeObject<CodexDeployment>(str);
-                if (IsDeploymentOk(deploy))
+                var names = deployments.Select(d => d.Metadata.Name).ToArray();
+                if (deploy != null && IsDeploymentOk(deploy) && !names.Contains(deploy.Metadata.Name))
                 {
                     var targetFile = Path.Combine(Program.Config.EndpointsPath, Guid.NewGuid().ToString().ToLowerInvariant() + ".json");
                     File.WriteAllText(targetFile, str);
-                    deployments.Add(deploy);
+                    LoadDeployments();
                     return true;
                 }
             }
@@ -52,7 +54,7 @@ namespace BiblioTech
                 if (deploy != null && deploy.Metadata.Name == deploymentName)
                 {
                     File.Delete(file);
-                    deployments.Remove(deploy);
+                    LoadDeployments();
                     return true;
                 }
             }
@@ -69,6 +71,7 @@ namespace BiblioTech
 
         private void LoadDeployments()
         {
+            deployments.Clear();
             var path = Program.Config.EndpointsPath;
             if (!Directory.Exists(path))
             {
@@ -78,7 +81,11 @@ namespace BiblioTech
             }
 
             var files = Directory.GetFiles(path);
-            deployments.AddRange(files.Select(ProcessFile).Where(d => d != null).Cast<CodexDeployment>());
+            deployments.AddRange(files
+                .Select(ProcessFile)
+                .Where(d => d != null)
+                .Cast<CodexDeployment>()
+                .Distinct(new DeploymentNameEqual()));
         }
 
         private CodexDeployment? ProcessFile(string filename)
@@ -92,6 +99,21 @@ namespace BiblioTech
             {
                 return null;
             }
+        }
+    }
+
+    internal class DeploymentNameEqual : IEqualityComparer<CodexDeployment>
+    {
+        public bool Equals(CodexDeployment? x, CodexDeployment? y)
+        {
+            if (x == null && y == null) return true;
+            if (x == null || y == null) return false;
+            return x.Metadata.Name == y.Metadata.Name;
+        }
+
+        public int GetHashCode([DisallowNull] CodexDeployment obj)
+        {
+            return obj.Metadata.Name.GetHashCode();
         }
     }
 }
