@@ -144,8 +144,11 @@ namespace CodexNetDeployer
 
             if (IsPublicTestNet)
             {
-                if (PublicDiscPorts.Split(",").Length != NumberOfCodexNodes) errors.Add("Number of public discovery-ports provided does not match number of codex nodes.");
-                if (PublicListenPorts.Split(",").Length != NumberOfCodexNodes) errors.Add("Number of public listen-ports provided does not match number of codex nodes.");
+                if (NumberOfCodexNodes > 0)
+                {
+                    if (PublicDiscPorts.Split(",").Length != NumberOfCodexNodes) errors.Add("Number of public discovery-ports provided does not match number of codex nodes.");
+                    if (PublicListenPorts.Split(",").Length != NumberOfCodexNodes) errors.Add("Number of public listen-ports provided does not match number of codex nodes.");
+                }
                 if (PublicGethDiscPort == 0) errors.Add("Geth public discovery port is not set.");
                 if (PublicGethListenPort == 0) errors.Add("Geth public listen port is not set.");
             }
