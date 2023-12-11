@@ -56,7 +56,7 @@ namespace GethPlugin
             }
             if (config.IsPublicTestNet != null)
             {
-                AddEnvVar("NAT_PUBLIC_IP_AUTO", "https://ipinfo.io/ip");
+                AddEnvVar("NAT_PUBLIC_IP_AUTO", PublicIpService.Address);
             }
 
             return args + $" --authrpc.port {authRpc.Number} --ws --ws.addr 0.0.0.0 --ws.port {wsPort.Number}";
