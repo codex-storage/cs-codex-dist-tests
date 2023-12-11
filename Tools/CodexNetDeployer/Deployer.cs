@@ -82,7 +82,7 @@ namespace CodexNetDeployer
 
             var codexInstances = CreateCodexInstances(startResults);
 
-            var discordBotContainer = DeployDiscordBot(ci);
+            var discordBotContainer = DeployDiscordBot(ci, gethDeployment, contractsDeployment);
 
             return new CodexDeployment(codexInstances, gethDeployment, contractsDeployment, metricsService, discordBotContainer, CreateMetadata(startUtc));
         }
@@ -120,10 +120,20 @@ namespace CodexNetDeployer
             });
         }
 
-        private RunningContainers? DeployDiscordBot(CoreInterface ci)
+        private RunningContainers? DeployDiscordBot(CoreInterface ci, GethDeployment gethDeployment, CodexContractsDeployment contractsDeployment)
         {
             if (!config.DeployDiscordBot) return null;
             Log("Deploying Discord bot...");
+
+            var addr = gethDeployment.Container.GetInternalAddress(GethContainerRecipe.HttpPortTag);
+            var info = new DiscordBotGethInfo(
+                host: addr.Host,
+                port: addr.Port,
+                privKey: gethDeployment.Account.PrivateKey,
+                marketplaceAddress: contractsDeployment.MarketplaceAddress,
+                tokenAddress: contractsDeployment.TokenAddress,
+                abi: contractsDeployment.Abi
+            );
 
             var rc = ci.DeployCodexDiscordBot(new DiscordBotStartupConfig(
                 name: "discordbot-" + config.DeploymentName,
@@ -131,7 +141,8 @@ namespace CodexNetDeployer
                 serverName: config.DiscordBotServerName,
                 adminRoleName: config.DiscordBotAdminRoleName,
                 adminChannelName: config.DiscordBotAdminChannelName,
-                kubeNamespace: config.KubeNamespace)
+                kubeNamespace: config.KubeNamespace,
+                gethInfo: info)
             {
                 DataPath = config.DiscordBotDataPath
             });
