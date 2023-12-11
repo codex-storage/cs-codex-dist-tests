@@ -136,9 +136,6 @@ namespace BiblioTech.Commands
             protected override async Task onSubCommand(CommandContext context)
             {
                 var deployments = Program.DeploymentFilesMonitor.GetDeployments();
-
-                //todo shows old deployments
-
                 if (!deployments.Any())
                 {
                     await context.Followup("No deployments available.");
@@ -267,6 +264,11 @@ namespace BiblioTech.Commands
                 if (deployment == null)
                 {
                     await context.Followup("No deployment found.");
+                    return default;
+                }
+                if (deployment.CodexInstances == null || !deployment.CodexInstances.Any())
+                {
+                    await context.Followup("No codex instances were deployed.");
                     return default;
                 }
 
