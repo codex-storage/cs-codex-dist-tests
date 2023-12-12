@@ -94,6 +94,8 @@ namespace CodexTests.BasicTests
 
             AssertBalance(contracts, seller, Is.GreaterThan(sellerInitialBalance), "Seller was not paid for storage.");
             AssertBalance(contracts, buyer, Is.LessThan(buyerInitialBalance), "Buyer was not charged for storage.");
+
+            CheckLogForErrors(seller, buyer);
         }
     }
 }

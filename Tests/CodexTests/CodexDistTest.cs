@@ -85,6 +85,19 @@ namespace CodexTests
             AssertHelpers.RetryAssert(constraint, () => contracts.GetTestTokenBalance(codexNode), nameof(AssertBalance) + msg);
         }
 
+        public void CheckLogForErrors(params ICodexNode[] nodes)
+        {
+            foreach (var node in nodes) CheckLogForErrors(node);
+        }
+
+        public void CheckLogForErrors(ICodexNode node)
+        {
+            var log = Ci.DownloadLog(node);
+
+            log.AssertLogDoesNotContain("Block validation failed");
+            log.AssertLogDoesNotContain("ERR ");
+        }
+
         protected virtual void OnCodexSetup(ICodexSetup setup)
         {
         }

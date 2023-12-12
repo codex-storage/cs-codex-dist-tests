@@ -1,12 +1,11 @@
 ﻿using CodexPlugin;
-using DistTestCore;
 using NUnit.Framework;
 using Utils;
 
 namespace CodexTests.BasicTests
 {
     [TestFixture]
-    public class TwoClientTests : DistTest
+    public class TwoClientTests : CodexDistTest
     {
         [Test]
         public void TwoClientTest()
@@ -51,6 +50,7 @@ namespace CodexTests.BasicTests
             var downloadedFile = secondary.DownloadContent(contentId);
 
             testFile.AssertIsEqual(downloadedFile);
+            CheckLogForErrors(primary, secondary);
         }
     }
 }

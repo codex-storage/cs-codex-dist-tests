@@ -6,7 +6,7 @@ using Utils;
 namespace CodexTests.BasicTests
 {
     [TestFixture]
-    public class OneClientTests : DistTest
+    public class OneClientTests : CodexDistTest
     {
         [Test]
         public void OneClientTest()
