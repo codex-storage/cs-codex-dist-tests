@@ -19,13 +19,14 @@ namespace GethPlugin
         void SendTransaction<TFunction>(string contractAddress, TFunction function) where TFunction : FunctionMessage, new();
         decimal? GetSyncedBlockNumber();
         bool IsContractAvailable(string abi, string contractAddress);
+        GethBootstrapNode GetBootstrapRecord();
     }
 
-    public class GethNode : IGethNode
+    public class DeploymentGethNode : BaseGethNode, IGethNode
     {
         private readonly ILog log;
 
-        public GethNode(ILog log, GethDeployment startResult)
+        public DeploymentGethNode(ILog log, GethDeployment startResult)
         {
             this.log = log;
             StartResult = startResult;
@@ -34,6 +35,59 @@ namespace GethPlugin
         public GethDeployment StartResult { get; }
         public RunningContainer Container => StartResult.Container;
 
+        public GethBootstrapNode GetBootstrapRecord()
+        {
+            var address = StartResult.Container.GetInternalAddress(GethContainerRecipe.ListenPortTag);
+
+            return new GethBootstrapNode(
+                publicKey: StartResult.PubKey,
+                ipAddress: address.Host.Replace("http://", ""),
+                port: address.Port
+            );
+        }
+
+        protected override NethereumInteraction StartInteraction()
+        {
+            var address = StartResult.Container.GetAddress(log, GethContainerRecipe.HttpPortTag);
+            var account = StartResult.Account;
+
+            var creator = new NethereumInteractionCreator(log, address.Host, address.Port, account.PrivateKey);
+            return creator.CreateWorkflow();
+        }
+    }
+
+    public class CustomGethNode : BaseGethNode, IGethNode
+    {
+        private readonly ILog log;
+        private readonly string gethHost;
+        private readonly int gethPort;
+        private readonly string privateKey;
+
+        public GethDeployment StartResult => throw new NotImplementedException();
+        public RunningContainer Container => throw new NotImplementedException();
+
+        public CustomGethNode(ILog log, string gethHost, int gethPort, string privateKey)
+        {
+            this.log = log;
+            this.gethHost = gethHost;
+            this.gethPort = gethPort;
+            this.privateKey = privateKey;
+        }
+
+        public GethBootstrapNode GetBootstrapRecord()
+        {
+            throw new NotImplementedException();
+        }
+
+        protected override NethereumInteraction StartInteraction()
+        {
+            var creator = new NethereumInteractionCreator(log, gethHost, gethPort, privateKey);
+            return creator.CreateWorkflow();
+        }
+    }
+
+    public abstract class BaseGethNode
+    {
         public Ether GetEthBalance()
         {
             return StartInteraction().GetEthBalance().Eth();
@@ -69,15 +123,6 @@ namespace GethPlugin
             StartInteraction().SendTransaction(contractAddress, function);
         }
 
-        private NethereumInteraction StartInteraction()
-        {
-            var address = StartResult.Container.GetAddress(log, GethContainerRecipe.HttpPortTag);
-            var account = StartResult.Account;
-
-            var creator = new NethereumInteractionCreator(log, address.Host, address.Port, account.PrivateKey);
-            return creator.CreateWorkflow();
-        }
-
         public decimal? GetSyncedBlockNumber()
         {
             return StartInteraction().GetSyncedBlockNumber();
@@ -87,5 +132,7 @@ namespace GethPlugin
         {
             return StartInteraction().IsContractAvailable(abi, contractAddress);
         }
+
+        protected abstract NethereumInteraction StartInteraction();
     }
 }

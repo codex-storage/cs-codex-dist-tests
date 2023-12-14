@@ -1,9 +1,7 @@
 ﻿using ArgsUniform;
 using BiblioTech.Commands;
-using Core;
 using Discord;
 using Discord.WebSocket;
-using Logging;
 
 namespace BiblioTech
 {
@@ -12,7 +10,6 @@ namespace BiblioTech
         private DiscordSocketClient client = null!;
 
         public static Configuration Config { get; private set; } = null!;
-        public static DeploymentsFilesMonitor DeploymentFilesMonitor { get; } = new DeploymentsFilesMonitor();
         public static UserRepo UserRepo { get; } = new UserRepo();
         public static AdminChecker AdminChecker { get; } = new AdminChecker();
 
@@ -20,8 +17,6 @@ namespace BiblioTech
         {
             var uniformArgs = new ArgsUniform<Configuration>(PrintHelp, args);
             Config = uniformArgs.Parse();
-
-            DeploymentFilesMonitor.Initialize();
 
             EnsurePath(Config.DataPath);
             EnsurePath(Config.UserDataPath);
@@ -36,25 +31,14 @@ namespace BiblioTech
             client = new DiscordSocketClient();
             client.Log += Log;
 
-            ProjectPlugin.Load<CodexPlugin.CodexPlugin>();
-            ProjectPlugin.Load<GethPlugin.GethPlugin>();
-            ProjectPlugin.Load<CodexContractsPlugin.CodexContractsPlugin>();
-
-            var entryPoint = new EntryPoint(new ConsoleLog(), new KubernetesWorkflow.Configuration(
-                kubeConfigFile: null,
-                operationTimeout: TimeSpan.FromMinutes(5),
-                retryDelay: TimeSpan.FromSeconds(10),
-                kubernetesNamespace: "not-applicable"), "datafiles");
-
-            var ci = entryPoint.CreateInterface();
-
             var associateCommand = new UserAssociateCommand();
+            var sprCommand = new SprCommand();
             var handler = new CommandHandler(client,
-                new GetBalanceCommand(ci, associateCommand), 
-                new MintCommand(ci, associateCommand),
-                new SprCommand(ci),
+                new GetBalanceCommand(associateCommand), 
+                new MintCommand(associateCommand),
+                sprCommand,
                 associateCommand,
-                new AdminCommand(ci)
+                new AdminCommand(sprCommand)
             );
 
             await client.LoginAsync(TokenType.Bot, Config.ApplicationToken);

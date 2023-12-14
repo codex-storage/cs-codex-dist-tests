@@ -1,7 +1,4 @@
 ﻿using BiblioTech.Options;
-using CodexPlugin;
-using Core;
-using Newtonsoft.Json;
 
 namespace BiblioTech.Commands
 {
@@ -9,17 +6,16 @@ namespace BiblioTech.Commands
     {
         private readonly ClearUserAssociationCommand clearCommand = new ClearUserAssociationCommand();
         private readonly ReportCommand reportCommand = new ReportCommand();
-        private readonly DeployListCommand deployListCommand = new DeployListCommand();
-        private readonly DeployUploadCommand deployUploadCommand = new DeployUploadCommand();
-        private readonly DeployRemoveCommand deployRemoveCommand = new DeployRemoveCommand();
         private readonly WhoIsCommand whoIsCommand = new WhoIsCommand();
-        private readonly NetInfoCommand netInfoCommand;
-        private readonly DebugPeerCommand debugPeerCommand;
+        private readonly AddSprCommand addSprCommand;
+        private readonly ClearSprsCommand clearSprsCommand;
+        private readonly GetSprCommand getSprCommand;
 
-        public AdminCommand(CoreInterface ci)
+        public AdminCommand(SprCommand sprCommand)
         {
-            netInfoCommand = new NetInfoCommand(ci);
-            debugPeerCommand = new DebugPeerCommand(ci);
+            addSprCommand = new AddSprCommand(sprCommand);
+            clearSprsCommand = new ClearSprsCommand(sprCommand);
+            getSprCommand = new GetSprCommand(sprCommand);
         }
 
         public override string Name => "admin";
@@ -30,12 +26,10 @@ namespace BiblioTech.Commands
         {
             clearCommand,
             reportCommand,
-            deployListCommand,
-            deployUploadCommand,
-            deployRemoveCommand,
             whoIsCommand,
-            netInfoCommand,
-            debugPeerCommand
+            addSprCommand,
+            clearSprsCommand,
+            getSprCommand
         };
 
         protected override async Task Invoke(CommandContext context)
@@ -54,12 +48,10 @@ namespace BiblioTech.Commands
 
             await clearCommand.CommandHandler(context);
             await reportCommand.CommandHandler(context);
-            await deployListCommand.CommandHandler(context);
-            await deployUploadCommand.CommandHandler(context);
-            await deployRemoveCommand.CommandHandler(context);
             await whoIsCommand.CommandHandler(context);
-            await netInfoCommand.CommandHandler(context);
-            await debugPeerCommand.CommandHandler(context);
+            await addSprCommand.CommandHandler(context);
+            await clearSprsCommand.CommandHandler(context);
+            await getSprCommand.CommandHandler(context);
         }
 
         public class ClearUserAssociationCommand : SubCommandOption
@@ -109,108 +101,8 @@ namespace BiblioTech.Commands
                     return;
                 }
 
-                var report = string.Join(Environment.NewLine, Program.UserRepo.GetInteractionReport(user));
-                if (report.Length > 1900)
-                {
-                    var filename = $"user-{user.Username}.log";
-                    await context.FollowupWithAttachement(filename, report);
-                }
-                else
-                {
-                    await context.Followup(report);
-                }
-            }
-        }
-
-        public class DeployListCommand : SubCommandOption
-        {
-            public DeployListCommand()
-                : base("list", "Lists current deployments.")
-            {
-            }
-
-            protected override async Task onSubCommand(CommandContext context)
-            {
-                var deployments = Program.DeploymentFilesMonitor.GetDeployments();
-
-                //todo shows old deployments
-
-                if (!deployments.Any())
-                {
-                    await context.Followup("No deployments available.");
-                    return;
-                }
-
-                var nl = Environment.NewLine;
-                await context.Followup($"Deployments:{nl}{string.Join(nl, deployments.Select(FormatDeployment))}");
-            }
-
-            private string FormatDeployment(CodexDeployment deployment)
-            {
-                var m = deployment.Metadata;
-                return $"'{m.Name}' ({m.StartUtc.ToString("o")})";
-            }
-        }
-
-        public class DeployUploadCommand : SubCommandOption
-        {
-            private readonly FileAttachementOption fileOption = new FileAttachementOption(
-                name: "json",
-                description: "Codex-deployment json to add.",
-                isRequired: true);
-
-            public DeployUploadCommand()
-                : base("add", "Upload a new deployment JSON file.")
-            {
-            }
-
-            public override CommandOption[] Options => new[] { fileOption };
-
-            protected override async Task onSubCommand(CommandContext context)
-            {
-                var file = await fileOption.Parse(context);
-                if (file == null) return;
-
-                var result = await Program.DeploymentFilesMonitor.DownloadDeployment(file);
-                if (result)
-                {
-                    await context.Followup("Success!");
-                }
-                else
-                {
-                    await context.Followup("That didn't work.");
-                }
-            }
-        }
-
-        public class DeployRemoveCommand : SubCommandOption
-        {
-            private readonly StringOption stringOption = new StringOption(
-                name: "name",
-                description: "Name of deployment to remove.",
-                isRequired: true);
-
-            public DeployRemoveCommand()
-                : base("remove", "Removes a deployment file.")
-            {
-            }
-
-            public override CommandOption[] Options => new[] { stringOption };
-
-            protected override async Task onSubCommand(CommandContext context)
-            {
-                var str = await stringOption.Parse(context);
-                if (string.IsNullOrEmpty(str)) return;
-
-                var result = Program.DeploymentFilesMonitor.DeleteDeployment(str);
-                if (result)
-                {
-                    await context.Followup("Success!");
-                }
-                else
-                {
-                    await context.Followup("That didn't work.");
-                }
+                var report = Program.UserRepo.GetInteractionReport(user);
+                await context.Followup(report);
             }
         }
 
@@ -247,118 +139,76 @@ namespace BiblioTech.Commands
             }
         }
 
-        public abstract class AdminDeploymentCommand : SubCommandOption
+        public class AddSprCommand : SubCommandOption
         {
-            private readonly CoreInterface ci;
+            private readonly SprCommand sprCommand;
+            private readonly StringOption stringOption = new StringOption("spr", "Codex SPR", true);
 
-            public AdminDeploymentCommand(CoreInterface ci, string name, string description)
-                : base(name, description)
+            public AddSprCommand(SprCommand sprCommand)
+                : base(name: "addspr",
+               description: "Adds a Codex SPR, to be given to users with '/boot'.")
             {
-                this.ci = ci;
+                this.sprCommand = sprCommand;
             }
 
-            protected async Task OnDeployment(CommandContext context, Func<ICodexNodeGroup, string, Task> action)
-            {
-                var deployment = Program.DeploymentFilesMonitor.GetDeployments().SingleOrDefault();
-                if (deployment == null)
-                {
-                    await context.Followup("No deployment found.");
-                    return;
-                }
+            public override CommandOption[] Options => new[] { stringOption };
 
-                try
+            protected override async Task onSubCommand(CommandContext context)
+            {
+                var spr = await stringOption.Parse(context);
+
+                if (!string.IsNullOrEmpty(spr) )
                 {
-                    var group = ci.WrapCodexContainers(deployment.CodexInstances.Select(i => i.Containers).ToArray());
-                    await action(group, deployment.Metadata.Name);
+                    sprCommand.Add(spr);
+                    await context.Followup("A-OK!");
                 }
-                catch (Exception ex)
+                else
                 {
-                    await context.Followup("Failed to wrap nodes with exception: " + ex);
+                    await context.Followup("SPR is null or empty.");
                 }
             }
         }
 
-        public class NetInfoCommand : AdminDeploymentCommand
+        public class ClearSprsCommand : SubCommandOption
         {
-            public NetInfoCommand(CoreInterface ci)
-                : base(ci, name: "netinfo",
-                      description: "Fetches info endpoints of codex nodes.")
+            private readonly SprCommand sprCommand;
+            private readonly StringOption stringOption = new StringOption("areyousure", "set to 'true' if you are.", true);
+
+            public ClearSprsCommand(SprCommand sprCommand)
+                : base(name: "clearsprs",
+               description: "Clears all Codex SPRs in the bot. Users won't be able to use '/boot' till new ones are added.")
             {
+                this.sprCommand = sprCommand;
+            }
+
+            public override CommandOption[] Options => new[] { stringOption };
+
+            protected override async Task onSubCommand(CommandContext context)
+            {
+                var areyousure = await stringOption.Parse(context);
+
+                if (areyousure != "true") return;
+
+                sprCommand.Clear();
+                await context.Followup("Cleared all SPRs.");
+            }
+        }
+
+        public class GetSprCommand: SubCommandOption
+        {
+            private readonly SprCommand sprCommand;
+
+            public GetSprCommand(SprCommand sprCommand)
+                : base(name: "getsprs",
+               description: "Shows all Codex SPRs in the bot.")
+            {
+                this.sprCommand = sprCommand;
             }
 
             protected override async Task onSubCommand(CommandContext context)
             {
-                await OnDeployment(context, async (group, name) =>
-                {
-                    var nl = Environment.NewLine;
-                    var content = new List<string>
-                    {
-                        $"{DateTime.UtcNow.ToString("o")} - {group.Count()} Codex nodes."
-                    };
-
-                    foreach (var node in group)
-                    {
-                        try
-                        {
-                            var info = node.GetDebugInfo();
-                            var json = JsonConvert.SerializeObject(info, Formatting.Indented);
-                            var jsonInsert = $"{nl}```{nl}{json}{nl}```{nl}";
-                            content.Add($"Node '{node.GetName()}' responded with {jsonInsert}");
-                        }
-                        catch (Exception ex)
-                        {
-                            content.Add($"Node '{node.GetName()}' failed to respond with exception: " + ex);
-                        }
-                    }
-
-                    var filename = $"netinfo-{NoWhitespaces(name)}.log";
-                    await context.FollowupWithAttachement(filename, string.Join(nl, content.ToArray()));
-                });
+                await context.Followup("SPRs: " + string.Join(", ", sprCommand.Get().Select(s => $"'{s}'")));
             }
-        }
-
-        public class DebugPeerCommand : AdminDeploymentCommand
-        {
-            private readonly StringOption peerIdOption = new StringOption("peerid", "id of peer to try and reach.", true);
-
-            public DebugPeerCommand(CoreInterface ci)
-                : base(ci, name: "debugpeer",
-                      description: "Calls debug/peer on each codex node.")
-            {
-            }
-
-            public override CommandOption[] Options => new[] { peerIdOption };
-
-            protected override async Task onSubCommand(CommandContext context)
-            {
-                var peerId = await peerIdOption.Parse(context);
-                if (string.IsNullOrEmpty(peerId)) return;
-
-                await OnDeployment(context, async (group, name) =>
-                {
-                    await context.Followup($"Calling debug/peer for '{peerId}' on {group.Count()} Codex nodes.");
-                    foreach (var node in group)
-                    {
-                        try
-                        {
-                            var info = node.GetDebugPeer(peerId);
-                            var nl = Environment.NewLine;
-                            var json = JsonConvert.SerializeObject(info, Formatting.Indented);
-                            var jsonInsert = $"{nl}```{nl}{json}{nl}```{nl}";
-                            await context.Followup($"Node '{node.GetName()}' responded with {jsonInsert}");
-                        }
-                        catch (Exception ex)
-                        {
-                            await context.Followup($"Node '{node.GetName()}' failed to respond with exception: " + ex);
-                        }
-                    }
-                });
-            }
-        }
-
-        private static string NoWhitespaces(string s)
-        {
-            return s.Replace(" ", "-");
         }
     }
 }

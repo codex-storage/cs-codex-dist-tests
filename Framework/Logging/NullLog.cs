@@ -16,6 +16,7 @@
 
         public override void Error(string message)
         {
+            Console.WriteLine("Error: " + message);
             base.Error(message);
         }
 

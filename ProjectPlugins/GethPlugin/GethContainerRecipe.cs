@@ -32,8 +32,11 @@ namespace GethPlugin
 
         private string CreateArgs(GethStartupConfig config)
         {
-            if (config.IsMiner) AddEnvVar("ENABLE_MINER", "1");
-            UnlockAccounts(0, 1);
+            if (config.IsMiner)
+            {
+                AddEnvVar("ENABLE_MINER", "1");
+                UnlockAccounts(0, 1);
+            }
 
             var httpPort = CreateApiPort(config, tag: HttpPortTag);
             var discovery = CreateDiscoveryPort(config);
@@ -41,15 +44,19 @@ namespace GethPlugin
             var authRpc = CreateP2pPort(config, tag: AuthRpcPortTag);
             var wsPort = CreateP2pPort(config, tag: WsPortTag);
 
-            var args = $"--http.addr 0.0.0.0 --http.port {httpPort.Number} --port {listen.Number} --discovery.port {discovery.Number} {GetTestNetArgs(config)} {defaultArgs}";
+            var args = $"--http.addr 0.0.0.0 --http.port {httpPort.Number} --port {listen.Number} --discovery.port {discovery.Number} {defaultArgs}";
 
             if (config.BootstrapNode != null)
             {
                 var bootPubKey = config.BootstrapNode.PublicKey;
                 var bootIp = config.BootstrapNode.IpAddress;
                 var bootPort = config.BootstrapNode.Port;
-                var bootstrapArg = $" --bootnodes enode://{bootPubKey}@{bootIp}:{bootPort} --nat=extip:{bootIp}";
+                var bootstrapArg = $" --bootnodes enode://{bootPubKey}@{bootIp}:{bootPort}";
                 args += bootstrapArg;
+            }
+            if (config.IsPublicTestNet != null)
+            {
+                AddEnvVar("NAT_PUBLIC_IP_AUTO", PublicIpService.Address);
             }
 
             return args + $" --authrpc.port {authRpc.Number} --ws --ws.addr 0.0.0.0 --ws.port {wsPort.Number}";
@@ -58,18 +65,11 @@ namespace GethPlugin
         private void UnlockAccounts(int startIndex, int numberOfAccounts)
         {
             if (startIndex < 0) throw new ArgumentException();
-            if (numberOfAccounts < 1) throw new ArgumentException();
+            if (numberOfAccounts < 0) throw new ArgumentException();
             if (startIndex + numberOfAccounts > 1000) throw new ArgumentException("Out of accounts!");
 
             AddEnvVar("UNLOCK_START_INDEX", startIndex.ToString());
             AddEnvVar("UNLOCK_NUMBER", numberOfAccounts.ToString());
-        }
-
-        private string GetTestNetArgs(GethStartupConfig config)
-        {
-            if (config.IsPublicTestNet == null) return string.Empty;
-
-            return $"--nat=extip:{config.IsPublicTestNet.PublicIp}";
         }
 
         private Port CreateDiscoveryPort(GethStartupConfig config)

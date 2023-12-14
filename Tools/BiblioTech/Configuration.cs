@@ -19,6 +19,12 @@ namespace BiblioTech
         [Uniform("admin-channel-name", "ac", "ADMINCHANNELNAME", true, "Name of the Discord server channel where admin commands are allowed.")]
         public string AdminChannelName { get; set; } = "admin-channel";
 
+        [Uniform("kube-config", "kc", "KUBECONFIG", true, "Path to Kubeconfig file. Use a Kubeconfig with read-only access.")]
+        public string KubeConfigFile { get; set; } = "null";
+
+        [Uniform("kube-namespace", "kn", "KUBENAMESPACE", true, "Kubernetes namespace.")]
+        public string KubeNamespace { get; set; } = string.Empty;
+
         public string EndpointsPath
         {
             get

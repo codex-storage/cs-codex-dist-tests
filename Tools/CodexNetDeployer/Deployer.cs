@@ -82,7 +82,7 @@ namespace CodexNetDeployer
 
             var codexInstances = CreateCodexInstances(startResults);
 
-            var discordBotContainer = DeployDiscordBot(ci);
+            var discordBotContainer = DeployDiscordBot(ci, gethDeployment, contractsDeployment);
 
             return new CodexDeployment(codexInstances, gethDeployment, contractsDeployment, metricsService, discordBotContainer, CreateMetadata(startUtc));
         }
@@ -113,7 +113,6 @@ namespace CodexNetDeployer
                 if (config.IsPublicTestNet)
                 {
                     s.AsPublicTestNet(new GethTestNetConfig(
-                        publicIp: config.PublicGethIP,
                         discoveryPort: config.PublicGethDiscPort,
                         listenPort: config.PublicGethListenPort
                     ));
@@ -121,17 +120,29 @@ namespace CodexNetDeployer
             });
         }
 
-        private RunningContainers? DeployDiscordBot(CoreInterface ci)
+        private RunningContainers? DeployDiscordBot(CoreInterface ci, GethDeployment gethDeployment, CodexContractsDeployment contractsDeployment)
         {
             if (!config.DeployDiscordBot) return null;
             Log("Deploying Discord bot...");
+
+            var addr = gethDeployment.Container.GetInternalAddress(GethContainerRecipe.HttpPortTag);
+            var info = new DiscordBotGethInfo(
+                host: addr.Host,
+                port: addr.Port,
+                privKey: gethDeployment.Account.PrivateKey,
+                marketplaceAddress: contractsDeployment.MarketplaceAddress,
+                tokenAddress: contractsDeployment.TokenAddress,
+                abi: contractsDeployment.Abi
+            );
 
             var rc = ci.DeployCodexDiscordBot(new DiscordBotStartupConfig(
                 name: "discordbot-" + config.DeploymentName,
                 token: config.DiscordBotToken,
                 serverName: config.DiscordBotServerName,
                 adminRoleName: config.DiscordBotAdminRoleName,
-                adminChannelName: config.DiscordBotAdminChannelName)
+                adminChannelName: config.DiscordBotAdminChannelName,
+                kubeNamespace: config.KubeNamespace,
+                gethInfo: info)
             {
                 DataPath = config.DiscordBotDataPath
             });
@@ -142,7 +153,7 @@ namespace CodexNetDeployer
 
         private RunningContainers? StartMetricsService(CoreInterface ci, List<CodexNodeStartResult> startResults)
         {
-            if (!config.MetricsScraper) return null;
+            if (!config.MetricsScraper || !startResults.Any()) return null;
 
             Log("Starting metrics service...");
 
@@ -176,7 +187,7 @@ namespace CodexNetDeployer
 
         private void CheckPeerConnectivity(List<CodexNodeStartResult> codexContainers)
         {
-            if (!config.CheckPeerConnection) return;
+            if (!config.CheckPeerConnection || !codexContainers.Any()) return;
 
             Log("Starting peer connectivity check for deployed nodes...");
             peerConnectivityChecker.CheckConnectivity(codexContainers);

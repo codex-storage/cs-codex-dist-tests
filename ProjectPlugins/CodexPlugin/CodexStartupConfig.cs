@@ -65,7 +65,6 @@ namespace CodexPlugin
 
     public class CodexTestNetConfig
     {
-        public string PublicNatIP { get; set; } = string.Empty;
         public int PublicDiscoveryPort { get; set; }
         public int PublicListenPort { get; set; }
     }

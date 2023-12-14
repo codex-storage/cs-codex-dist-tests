@@ -133,7 +133,7 @@ namespace CodexPlugin
 
         private IEnumerable<string> DescribeArgs()
         {
-            if (PublicTestNet != null) yield return $"<!>Public TestNet at {PublicTestNet.PublicNatIP}:{PublicTestNet.PublicListenPort}<!>";
+            if (PublicTestNet != null) yield return $"<!>Public TestNet with listenPort: {PublicTestNet.PublicListenPort}<!>";
             yield return $"LogLevel={LogLevelWithTopics()}";
             if (BootstrapSpr != null) yield return $"BootstrapNode={BootstrapSpr}";
             if (StorageQuota != null) yield return $"StorageQuota={StorageQuota}";

@@ -18,6 +18,8 @@ namespace MetricsPlugin
 
         public RunningContainers CollectMetricsFor(IMetricsScrapeTarget[] targets)
         {
+            if (!targets.Any()) throw new ArgumentException(nameof(targets) + " must not be empty.");
+
             Log($"Starting metrics server for {targets.Length} targets...");
             var startupConfig = new StartupConfig();
             startupConfig.Add(new PrometheusStartupConfig(GeneratePrometheusConfig(targets)));

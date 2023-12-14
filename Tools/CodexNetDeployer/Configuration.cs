@@ -86,17 +86,11 @@ namespace CodexNetDeployer
         [Uniform("public-testnet", "ptn", "PUBLICTESTNET", false, "If true, deployment is created for public exposure. Default is false.")]
         public bool IsPublicTestNet { get; set; } = false;
 
-        [Uniform("public-ip", "pip", "PUBLICIP", false, "Required if public-testnet is true. Public IP address used by nodes for network annoucements.")]
-        public string PublicIP { get; set; } = string.Empty;
-
         [Uniform("public-discports", "pdps", "PUBLICDISCPORTS", false, "Required if public-testnet is true. Comma-separated port numbers used for discovery. Number must match number of nodes.")]
         public string PublicDiscPorts { get; set; } = string.Empty;
 
         [Uniform("public-listenports", "plps", "PUBLICLISTENPORTS", false, "Required if public-testnet is true. Comma-separated port numbers used for listening. Number must match number of nodes.")]
         public string PublicListenPorts { get; set; } = string.Empty;
-
-        [Uniform("public-gethip", "pgdp", "PUBLICGETHIP", false, "Required if public-testnet is true. Geth's public IP address.")]
-        public string PublicGethIP { get; set; } = string.Empty;
 
         [Uniform("public-gethdiscport", "pgdp", "PUBLICGETHDISCPORT", false, "Required if public-testnet is true. Single port number used for Geth's public discovery port.")]
         public int PublicGethDiscPort { get; set; }
@@ -150,9 +144,11 @@ namespace CodexNetDeployer
 
             if (IsPublicTestNet)
             {
-                if (string.IsNullOrEmpty(PublicIP)) errors.Add("Public IP required when deploying public testnet.");
-                if (PublicDiscPorts.Split(",").Length != NumberOfCodexNodes) errors.Add("Number of public discovery-ports provided does not match number of codex nodes.");
-                if (PublicListenPorts.Split(",").Length != NumberOfCodexNodes) errors.Add("Number of public listen-ports provided does not match number of codex nodes.");
+                if (NumberOfCodexNodes > 0)
+                {
+                    if (PublicDiscPorts.Split(",").Length != NumberOfCodexNodes) errors.Add("Number of public discovery-ports provided does not match number of codex nodes.");
+                    if (PublicListenPorts.Split(",").Length != NumberOfCodexNodes) errors.Add("Number of public listen-ports provided does not match number of codex nodes.");
+                }
                 if (PublicGethDiscPort == 0) errors.Add("Geth public discovery port is not set.");
                 if (PublicGethListenPort == 0) errors.Add("Geth public listen port is not set.");
             }

@@ -55,7 +55,9 @@ namespace Logging
 
         public virtual void Error(string message)
         {
-            Log($"[ERROR] {message}");
+            var msg = $"[ERROR] {message}";
+            Console.WriteLine(msg);
+            Log(msg);
         }
 
         public virtual void AddStringReplace(string from, string to)

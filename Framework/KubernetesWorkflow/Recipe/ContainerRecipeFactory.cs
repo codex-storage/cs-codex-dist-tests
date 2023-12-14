@@ -56,17 +56,17 @@ namespace KubernetesWorkflow.Recipe
 
         protected Port AddExposedPort(string tag, PortProtocol protocol = PortProtocol.TCP)
         {
-            return AddExposedPort(factory.CreatePort(tag, protocol));
+            return AddExposedPort(factory.CreateExternalPort(tag, protocol));
         }
 
         protected Port AddExposedPort(int number, string tag, PortProtocol protocol = PortProtocol.TCP)
         {
-            return AddExposedPort(factory.CreatePort(number, tag, protocol));
+            return AddExposedPort(factory.CreateExternalPort(number, tag, protocol));
         }
 
         protected Port AddInternalPort(string tag = "", PortProtocol protocol = PortProtocol.TCP)
         {
-            var p = factory.CreatePort(tag, protocol);
+            var p = factory.CreateInternalPort(tag, protocol);
             internalPorts.Add(p);
             return p;
         }

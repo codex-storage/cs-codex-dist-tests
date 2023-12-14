@@ -1,5 +1,6 @@
 ﻿using BiblioTech.Options;
 using CodexContractsPlugin;
+using CodexPlugin;
 using Core;
 using GethPlugin;
 
@@ -12,8 +13,7 @@ namespace BiblioTech.Commands
             description: "If set, get balance for another user. (Optional, admin-only)",
             isRequired: false);
 
-        public GetBalanceCommand(CoreInterface ci, UserAssociateCommand userAssociateCommand)
-            : base(ci)
+        public GetBalanceCommand(UserAssociateCommand userAssociateCommand)
         {
             this.userAssociateCommand = userAssociateCommand;
         }

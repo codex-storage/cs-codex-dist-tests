@@ -19,12 +19,24 @@ namespace CodexDiscordBotPlugin
             AddEnvVar("SERVERNAME", config.ServerName);
             AddEnvVar("ADMINROLE", config.AdminRoleName);
             AddEnvVar("ADMINCHANNELNAME", config.AdminChannelName);
+            AddEnvVar("KUBECONFIG", "/opt/kubeconfig.yaml");
+            AddEnvVar("KUBENAMESPACE", config.KubeNamespace);
+
+            var gethInfo = config.GethInfo;
+            AddEnvVar("GETH_HOST", gethInfo.Host);
+            AddEnvVar("GETH_HTTP_PORT", gethInfo.Port.ToString());
+            AddEnvVar("GETH_PRIVATE_KEY", gethInfo.PrivKey);
+            AddEnvVar("CODEXCONTRACTS_MARKETPLACEADDRESS", gethInfo.MarketplaceAddress);
+            AddEnvVar("CODEXCONTRACTS_TOKENADDRESS", gethInfo.TokenAddress);
+            AddEnvVar("CODEXCONTRACTS_ABI", gethInfo.Abi);
 
             if (!string.IsNullOrEmpty(config.DataPath))
             {
                 AddEnvVar("DATAPATH", config.DataPath);
                 AddVolume(config.DataPath, 1.GB());
             }
+
+            AddVolume(name: "kubeconfig", mountPath: "/opt/kubeconfig.yaml", subPath: "kubeconfig.yaml", secret: "discordbot-sa-kubeconfig");
         }
     }
 }
