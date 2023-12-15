@@ -43,29 +43,29 @@ namespace BiblioTech.Commands
             await context.Followup(string.Join(Environment.NewLine, report));
         }
 
-        private TestToken ProcessTokens(ICodexContracts contracts, EthAddress addr, List<string> report)
+        private Transaction<TestToken>? ProcessTokens(ICodexContracts contracts, EthAddress addr, List<string> report)
         {
             if (ShouldMintTestTokens(contracts, addr))
             {
                 var transaction = contracts.MintTestTokens(addr, defaultTestTokensToMint);
                 report.Add($"Minted {defaultTestTokensToMint}. ({FormatTransactionLink(transaction)})");
-                return defaultTestTokensToMint;
+                return new Transaction<TestToken>(defaultTestTokensToMint, transaction);
             }
             
             report.Add("TestToken balance over threshold. (No TestTokens minted.)");
-            return 0.TestTokens();
+            return null;
         }
 
-        private Ether ProcessEth(IGethNode gethNode, EthAddress addr, List<string> report)
+        private Transaction<Ether>? ProcessEth(IGethNode gethNode, EthAddress addr, List<string> report)
         {
             if (ShouldSendEth(gethNode, addr))
             {
                 var transaction = gethNode.SendEth(addr, defaultEthToSend);
                 report.Add($"Sent {defaultEthToSend}. ({FormatTransactionLink(transaction)})");
-                return defaultEthToSend;
+                return new Transaction<Ether>(defaultEthToSend, transaction);
             }
             report.Add("Eth balance is over threshold. (No Eth sent.)");
-            return 0.Eth();
+            return null;
         }
 
         private bool ShouldMintTestTokens(ICodexContracts contracts, EthAddress addr)

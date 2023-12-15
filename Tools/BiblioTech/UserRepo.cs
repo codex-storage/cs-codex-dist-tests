@@ -25,7 +25,7 @@ namespace BiblioTech
             }
         }
 
-        public void AddMintEventForUser(IUser user, EthAddress usedAddress, Ether eth, TestToken tokens)
+        public void AddMintEventForUser(IUser user, EthAddress usedAddress, Transaction<Ether>? eth, Transaction<TestToken>? tokens)
         {
             lock (repoLock)
             {
@@ -67,7 +67,14 @@ namespace BiblioTech
                     }
                     foreach (var me in userData.MintEvents)
                     {
-                        result.Add($"{me.Utc.ToString("o")} - Minted {me.EthReceived} and {me.TestTokensMinted} to {me.UsedAddress}.");
+                        if (me.EthReceived != null)
+                        {
+                            result.Add($"{me.Utc.ToString("o")} - Sent {me.EthReceived.TokenAmount} to {me.UsedAddress}. ({me.EthReceived.TransactionHash})");
+                        }
+                        if (me.TestTokensMinted != null)
+                        {
+                            result.Add($"{me.Utc.ToString("o")} - Minted {me.TestTokensMinted.TokenAmount} to {me.UsedAddress}. ({me.TestTokensMinted.TransactionHash})");
+                        }
                     }
                 }
             }
@@ -221,7 +228,7 @@ namespace BiblioTech
 
     public class UserMintEvent
     {
-        public UserMintEvent(DateTime utc, EthAddress usedAddress, Ether ethReceived, TestToken testTokensMinted)
+        public UserMintEvent(DateTime utc, EthAddress usedAddress, Transaction<Ether>? ethReceived, Transaction<TestToken>? testTokensMinted)
         {
             Utc = utc;
             UsedAddress = usedAddress;
@@ -231,7 +238,7 @@ namespace BiblioTech
 
         public DateTime Utc { get; }
         public EthAddress UsedAddress { get; }
-        public Ether EthReceived { get; }
-        public TestToken TestTokensMinted { get; }
+        public Transaction<Ether>? EthReceived { get; }
+        public Transaction<TestToken>? TestTokensMinted { get; }
     }
 }
