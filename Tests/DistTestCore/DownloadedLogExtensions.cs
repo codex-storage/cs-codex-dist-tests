@@ -10,9 +10,17 @@ namespace DistTestCore
             Assert.That(log.DoesLogContain(expectedString), $"Did not find '{expectedString}' in log.");
         }
 
-        public static void AssertLogDoesNotContain(this IDownloadedLog log, string unexpectedString)
+        public static void AssertLogDoesNotContain(this IDownloadedLog log, params string[] unexpectedStrings)
         {
-            Assert.That(!log.DoesLogContain(unexpectedString), $"Did find '{unexpectedString}' in log.");
+            var errors = new List<string>();
+            foreach (var str in unexpectedStrings)
+            {
+                if (log.DoesLogContain(str))
+                {
+                    errors.Add($"Did find '{str}' in log.");
+                }
+            }
+            CollectionAssert.IsEmpty(errors);
         }
     }
 }
