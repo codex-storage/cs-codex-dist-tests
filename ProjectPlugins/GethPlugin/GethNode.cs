@@ -13,10 +13,10 @@ namespace GethPlugin
         Ether GetEthBalance();
         Ether GetEthBalance(IHasEthAddress address);
         Ether GetEthBalance(EthAddress address);
-        void SendEth(IHasEthAddress account, Ether eth);
-        void SendEth(EthAddress account, Ether eth);
+        string SendEth(IHasEthAddress account, Ether eth);
+        string SendEth(EthAddress account, Ether eth);
         TResult Call<TFunction, TResult>(string contractAddress, TFunction function) where TFunction : FunctionMessage, new();
-        void SendTransaction<TFunction>(string contractAddress, TFunction function) where TFunction : FunctionMessage, new();
+        string SendTransaction<TFunction>(string contractAddress, TFunction function) where TFunction : FunctionMessage, new();
         decimal? GetSyncedBlockNumber();
         bool IsContractAvailable(string abi, string contractAddress);
         GethBootstrapNode GetBootstrapRecord();
@@ -103,14 +103,14 @@ namespace GethPlugin
             return StartInteraction().GetEthBalance(address.Address).Eth();
         }
 
-        public void SendEth(IHasEthAddress owner, Ether eth)
+        public string SendEth(IHasEthAddress owner, Ether eth)
         {
-            SendEth(owner.EthAddress, eth);
+            return SendEth(owner.EthAddress, eth);
         }
 
-        public void SendEth(EthAddress account, Ether eth)
+        public string SendEth(EthAddress account, Ether eth)
         {
-            StartInteraction().SendEth(account.Address, eth.Eth);
+            return StartInteraction().SendEth(account.Address, eth.Eth);
         }
 
         public TResult Call<TFunction, TResult>(string contractAddress, TFunction function) where TFunction : FunctionMessage, new()
@@ -118,9 +118,9 @@ namespace GethPlugin
             return StartInteraction().Call<TFunction, TResult>(contractAddress, function);
         }
 
-        public void SendTransaction<TFunction>(string contractAddress, TFunction function) where TFunction : FunctionMessage, new()
+        public string SendTransaction<TFunction>(string contractAddress, TFunction function) where TFunction : FunctionMessage, new()
         {
-            StartInteraction().SendTransaction(contractAddress, function);
+            return StartInteraction().SendTransaction(contractAddress, function);
         }
 
         public decimal? GetSyncedBlockNumber()

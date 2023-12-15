@@ -47,12 +47,12 @@ namespace BiblioTech.Commands
         {
             if (ShouldMintTestTokens(contracts, addr))
             {
-                contracts.MintTestTokens(addr, defaultTestTokensToMint);
-                report.Add($"Minted {defaultTestTokensToMint}.");
+                var transaction = contracts.MintTestTokens(addr, defaultTestTokensToMint);
+                report.Add($"Minted {defaultTestTokensToMint}. ({FormatTransactionLink(transaction)})");
                 return defaultTestTokensToMint;
             }
             
-            report.Add("TestToken balance over threshold.");
+            report.Add("TestToken balance over threshold. (No TestTokens minted.)");
             return 0.TestTokens();
         }
 
@@ -60,11 +60,11 @@ namespace BiblioTech.Commands
         {
             if (ShouldSendEth(gethNode, addr))
             {
-                gethNode.SendEth(addr, defaultEthToSend);
-                report.Add($"Sent {defaultEthToSend}.");
+                var transaction = gethNode.SendEth(addr, defaultEthToSend);
+                report.Add($"Sent {defaultEthToSend}. ({FormatTransactionLink(transaction)})");
                 return defaultEthToSend;
             }
-            report.Add("Eth balance is over threshold.");
+            report.Add("Eth balance is over threshold. (No Eth sent.)");
             return 0.Eth();
         }
 
@@ -78,6 +78,11 @@ namespace BiblioTech.Commands
         {
             var eth = gethNode.GetEthBalance(addr);
             return eth.Eth < 1.0m;
+        }
+
+        private string FormatTransactionLink(string transaction)
+        {
+            return $"https://explorer.testnet.codex.storage/tx/{transaction}";
         }
     }
 }
