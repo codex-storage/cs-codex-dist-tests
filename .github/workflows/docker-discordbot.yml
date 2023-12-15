@@ -1,0 +1,28 @@
+name: Docker - Discord Bot
+
+
+on:
+  push:
+    branches:
+      - master
+    tags:
+      - 'v*.*.*'
+    paths:
+      - Tools/BiblioTech
+      - '!Tools/BiblioTech/docker/docker-compose.yaml'
+      - Framework
+      - ProjectPlugins
+      - .github/workflows/docker-discordbot.yml
+      - .github/workflows/docker-reusable.yml
+  workflow_dispatch:
+
+
+jobs:
+  build-and-push:
+    name: Build and Push
+    uses: ./.github/workflows/docker-reusable.yml
+    with:
+      docker_file: Tools/BiblioTech/docker/Dockerfile
+      docker_repo: codexstorage/codex-discordbot
+    secrets: inherit
+
