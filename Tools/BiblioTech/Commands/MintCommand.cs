@@ -48,7 +48,7 @@ namespace BiblioTech.Commands
             if (ShouldMintTestTokens(contracts, addr))
             {
                 var transaction = contracts.MintTestTokens(addr, defaultTestTokensToMint);
-                report.Add($"Minted {defaultTestTokensToMint}. ({FormatTransactionLink(transaction)})");
+                report.Add($"Minted {defaultTestTokensToMint} {FormatTransactionLink(transaction)}");
                 return new Transaction<TestToken>(defaultTestTokensToMint, transaction);
             }
             
@@ -61,7 +61,7 @@ namespace BiblioTech.Commands
             if (ShouldSendEth(gethNode, addr))
             {
                 var transaction = gethNode.SendEth(addr, defaultEthToSend);
-                report.Add($"Sent {defaultEthToSend}. ({FormatTransactionLink(transaction)})");
+                report.Add($"Sent {defaultEthToSend} {FormatTransactionLink(transaction)}");
                 return new Transaction<Ether>(defaultEthToSend, transaction);
             }
             report.Add("Eth balance is over threshold. (No Eth sent.)");
@@ -82,7 +82,8 @@ namespace BiblioTech.Commands
 
         private string FormatTransactionLink(string transaction)
         {
-            return $"https://explorer.testnet.codex.storage/tx/{transaction}";
+            var url = $"https://explorer.testnet.codex.storage/tx/{transaction}";
+            return $"- [View on block explorer]({url}){Environment.NewLine}Transaction ID - `{transaction}`";
         }
     }
 }

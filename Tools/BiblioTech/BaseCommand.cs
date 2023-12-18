@@ -17,22 +17,24 @@ namespace BiblioTech
 
             try
             {
+                Program.Log.Log($"Responding to '{Name}'");
                 var context = new CommandContext(command, command.Data.Options);
                 await command.RespondAsync(StartingMessage, ephemeral: IsEphemeral(context));
                 await Invoke(context);
             }
             catch (Exception ex)
             {
+                var msg = "Failed with exception: " + ex;
                 if (IsInAdminChannel(command))
                 {
-                    var msg = "Failed with exception: " + ex;
                     await command.FollowupAsync(msg.Substring(0, Math.Min(1900, msg.Length)));
                 }
                 else
                 {
                     await command.FollowupAsync("Something failed while trying to do that...", ephemeral: true);
+                    await Program.AdminChecker.GetAdminChannel().SendMessageAsync(msg);
                 }
-                Console.WriteLine(ex);
+                Program.Log.Error(msg);
             }
         }
 
