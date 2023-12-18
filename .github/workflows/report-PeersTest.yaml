@@ -3,17 +3,17 @@ name: Report - PeersTest
 
 on:
   schedule:
-    - cron: '30 * */2 * *'
+    - cron: '30 1 */2 * *'
   workflow_dispatch:
 
 jobs:
   run_tests:
     name: Call runner
-    uses: ./.github/workflows/continuous-tests.yaml
+    uses: ./.github/workflows/run-continuous-tests.yaml
     with:
       source: ${{ format('{0}/{1}', github.server_url, github.repository) }}
       branch: master
-      nameprefix: c-tests-report-peerstest
+      nameprefix: c-tests-report-peerstest-48h
       tests_target_duration: 48h
       tests_filter: PeersTest
       tests_cleanup: true
