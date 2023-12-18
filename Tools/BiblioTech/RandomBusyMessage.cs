@@ -19,7 +19,7 @@
 
         public static string Get()
         {
-            return messages[random.Next(messages.Length)];
+            return "Hold on: " + messages[random.Next(messages.Length)];
         }
     }
 }

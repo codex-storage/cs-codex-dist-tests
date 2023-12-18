@@ -1,4 +1,5 @@
-﻿using Discord.WebSocket;
+﻿using Discord;
+using Discord.WebSocket;
 
 namespace BiblioTech
 {
@@ -7,6 +8,7 @@ namespace BiblioTech
         private SocketGuild guild = null!;
         private ulong[] adminIds = Array.Empty<ulong>();
         private DateTime lastUpdate = DateTime.MinValue;
+        private ISocketMessageChannel adminChannel = null!;
 
         public void SetGuild(SocketGuild guild)
         {
@@ -20,9 +22,19 @@ namespace BiblioTech
             return adminIds.Contains(userId);
         }
 
-        public bool IsAdminChannel(ISocketMessageChannel channel)
+        public bool IsAdminChannel(IChannel channel)
         {
             return channel.Name == Program.Config.AdminChannelName;
+        }
+
+        public ISocketMessageChannel GetAdminChannel()
+        {
+            return adminChannel;
+        }
+
+        public void SetAdminChannel(ISocketMessageChannel adminChannel)
+        {
+            this.adminChannel = adminChannel;
         }
 
         private bool ShouldUpdate()

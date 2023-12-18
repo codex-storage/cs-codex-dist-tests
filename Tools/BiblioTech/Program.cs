@@ -2,6 +2,7 @@
 using BiblioTech.Commands;
 using Discord;
 using Discord.WebSocket;
+using Logging;
 
 namespace BiblioTech
 {
@@ -11,12 +12,18 @@ namespace BiblioTech
 
         public static Configuration Config { get; private set; } = null!;
         public static UserRepo UserRepo { get; } = new UserRepo();
-        public static AdminChecker AdminChecker { get; } = new AdminChecker();
+        public static AdminChecker AdminChecker { get; private set; } = null!;
+        public static ILog Log { get; private set; } = null!;
 
         public static Task Main(string[] args)
         {
             var uniformArgs = new ArgsUniform<Configuration>(PrintHelp, args);
             Config = uniformArgs.Parse();
+
+            Log = new LogSplitter(
+                new FileLog(Path.Combine(Config.LogPath, "discordbot.log")),
+                new ConsoleLog()
+            );
 
             EnsurePath(Config.DataPath);
             EnsurePath(Config.UserDataPath);
@@ -27,9 +34,9 @@ namespace BiblioTech
 
         public async Task MainAsync()
         {
-            Console.WriteLine("Starting Codex Discord Bot...");
+            Log.Log("Starting Codex Discord Bot...");
             client = new DiscordSocketClient();
-            client.Log += Log;
+            client.Log += ClientLog;
 
             var associateCommand = new UserAssociateCommand();
             var sprCommand = new SprCommand();
@@ -43,18 +50,21 @@ namespace BiblioTech
 
             await client.LoginAsync(TokenType.Bot, Config.ApplicationToken);
             await client.StartAsync();
-            Console.WriteLine("Running...");
+
+            AdminChecker = new AdminChecker();
+
+            Log.Log("Running...");
             await Task.Delay(-1);
         }
 
         private static void PrintHelp()
         {
-            Console.WriteLine("BiblioTech - Codex Discord Bot");
+            Log.Log("BiblioTech - Codex Discord Bot");
         }
 
-        private Task Log(LogMessage msg)
+        private Task ClientLog(LogMessage msg)
         {
-            Console.WriteLine(msg.ToString());
+            Log.Log("DiscordClient: " + msg.ToString());
             return Task.CompletedTask;
         }
 

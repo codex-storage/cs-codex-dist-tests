@@ -43,29 +43,29 @@ namespace BiblioTech.Commands
             await context.Followup(string.Join(Environment.NewLine, report));
         }
 
-        private TestToken ProcessTokens(ICodexContracts contracts, EthAddress addr, List<string> report)
+        private Transaction<TestToken>? ProcessTokens(ICodexContracts contracts, EthAddress addr, List<string> report)
         {
             if (ShouldMintTestTokens(contracts, addr))
             {
-                contracts.MintTestTokens(addr, defaultTestTokensToMint);
-                report.Add($"Minted {defaultTestTokensToMint}.");
-                return defaultTestTokensToMint;
+                var transaction = contracts.MintTestTokens(addr, defaultTestTokensToMint);
+                report.Add($"Minted {defaultTestTokensToMint} {FormatTransactionLink(transaction)}");
+                return new Transaction<TestToken>(defaultTestTokensToMint, transaction);
             }
             
-            report.Add("TestToken balance over threshold.");
-            return 0.TestTokens();
+            report.Add("TestToken balance over threshold. (No TestTokens minted.)");
+            return null;
         }
 
-        private Ether ProcessEth(IGethNode gethNode, EthAddress addr, List<string> report)
+        private Transaction<Ether>? ProcessEth(IGethNode gethNode, EthAddress addr, List<string> report)
         {
             if (ShouldSendEth(gethNode, addr))
             {
-                gethNode.SendEth(addr, defaultEthToSend);
-                report.Add($"Sent {defaultEthToSend}.");
-                return defaultEthToSend;
+                var transaction = gethNode.SendEth(addr, defaultEthToSend);
+                report.Add($"Sent {defaultEthToSend} {FormatTransactionLink(transaction)}");
+                return new Transaction<Ether>(defaultEthToSend, transaction);
             }
-            report.Add("Eth balance is over threshold.");
-            return 0.Eth();
+            report.Add("Eth balance is over threshold. (No Eth sent.)");
+            return null;
         }
 
         private bool ShouldMintTestTokens(ICodexContracts contracts, EthAddress addr)
@@ -78,6 +78,12 @@ namespace BiblioTech.Commands
         {
             var eth = gethNode.GetEthBalance(addr);
             return eth.Eth < 1.0m;
+        }
+
+        private string FormatTransactionLink(string transaction)
+        {
+            var url = $"https://explorer.testnet.codex.storage/tx/{transaction}";
+            return $"- [View on block explorer]({url}){Environment.NewLine}Transaction ID - `{transaction}`";
         }
     }
 }

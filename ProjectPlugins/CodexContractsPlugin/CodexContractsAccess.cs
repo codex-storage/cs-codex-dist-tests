@@ -7,8 +7,8 @@ namespace CodexContractsPlugin
     {
         CodexContractsDeployment Deployment { get; }
 
-        void MintTestTokens(IHasEthAddress owner, TestToken testTokens);
-        void MintTestTokens(EthAddress ethAddress, TestToken testTokens);
+        string MintTestTokens(IHasEthAddress owner, TestToken testTokens);
+        string MintTestTokens(EthAddress ethAddress, TestToken testTokens);
         TestToken GetTestTokenBalance(IHasEthAddress owner);
         TestToken GetTestTokenBalance(EthAddress ethAddress);
     }
@@ -27,15 +27,15 @@ namespace CodexContractsPlugin
 
         public CodexContractsDeployment Deployment { get; }
 
-        public void MintTestTokens(IHasEthAddress owner, TestToken testTokens)
+        public string MintTestTokens(IHasEthAddress owner, TestToken testTokens)
         {
-            MintTestTokens(owner.EthAddress, testTokens);
+            return MintTestTokens(owner.EthAddress, testTokens);
         }
 
-        public void MintTestTokens(EthAddress ethAddress, TestToken testTokens)
+        public string MintTestTokens(EthAddress ethAddress, TestToken testTokens)
         {
             var interaction = new ContractInteractions(log, gethNode);
-            interaction.MintTestTokens(ethAddress, testTokens.Amount, Deployment.TokenAddress);
+            return interaction.MintTestTokens(ethAddress, testTokens.Amount, Deployment.TokenAddress);
         }
 
         public TestToken GetTestTokenBalance(IHasEthAddress owner)

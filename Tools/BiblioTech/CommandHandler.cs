@@ -23,18 +23,26 @@ namespace BiblioTech
         {
             var guild = client.Guilds.Single(g => g.Name == Program.Config.ServerName);
             Program.AdminChecker.SetGuild(guild);
+            Program.Log.Log($"Initializing for guild: '{guild.Name}'");
+
+            var adminChannels = guild.TextChannels.Where(Program.AdminChecker.IsAdminChannel).ToArray();
+            if (adminChannels == null || !adminChannels.Any()) throw new Exception("No admin message channel");
+            Program.AdminChecker.SetAdminChannel(adminChannels.First());
 
             var builders = commands.Select(c =>
             {
+                var msg = $"Building command '{c.Name}' with options: ";
                 var builder = new SlashCommandBuilder()
                     .WithName(c.Name)
                     .WithDescription(c.Description);
 
                 foreach (var option in c.Options)
                 {
+                    msg += option.Name + " ";
                     builder.AddOption(option.Build());
                 }
 
+                Program.Log.Log(msg);
                 return builder;
             });
 
@@ -48,7 +56,7 @@ namespace BiblioTech
             catch (HttpException exception)
             {
                 var json = JsonConvert.SerializeObject(exception.Errors, Formatting.Indented);
-                Console.WriteLine(json);
+                Program.Log.Error(json);
             }
         }
 

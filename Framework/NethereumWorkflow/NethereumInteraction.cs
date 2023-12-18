@@ -17,11 +17,12 @@ namespace NethereumWorkflow
             this.web3 = web3;
         }
 
-        public void SendEth(string toAddress, decimal ethAmount)
+        public string SendEth(string toAddress, decimal ethAmount)
         {
             log.Debug();
             var receipt = Time.Wait(web3.Eth.GetEtherTransferService().TransferEtherAndWaitForReceiptAsync(toAddress, ethAmount));
             if (!receipt.Succeeded()) throw new Exception("Unable to send Eth");
+            return receipt.TransactionHash;
         }
 
         public decimal GetEthBalance()
@@ -44,12 +45,13 @@ namespace NethereumWorkflow
             return Time.Wait(handler.QueryAsync<TResult>(contractAddress, function));
         }
 
-        public void SendTransaction<TFunction>(string contractAddress, TFunction function) where TFunction : FunctionMessage, new()
+        public string SendTransaction<TFunction>(string contractAddress, TFunction function) where TFunction : FunctionMessage, new()
         {
             log.Debug();
             var handler = web3.Eth.GetContractTransactionHandler<TFunction>();
             var receipt = Time.Wait(handler.SendRequestAndWaitForReceiptAsync(contractAddress, function));
             if (!receipt.Succeeded()) throw new Exception("Unable to perform contract transaction.");
+            return receipt.TransactionHash;
         }
 
         public decimal? GetSyncedBlockNumber()
