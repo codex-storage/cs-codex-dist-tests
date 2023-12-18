@@ -8,10 +8,10 @@ on:
     tags:
       - 'v*.*.*'
     paths:
-      - Tools/BiblioTech
+      - 'Tools/BiblioTech/**'
       - '!Tools/BiblioTech/docker/docker-compose.yaml'
-      - Framework
-      - ProjectPlugins
+      - 'Framework/**'
+      - 'ProjectPlugins/**'
       - .github/workflows/docker-discordbot.yml
       - .github/workflows/docker-reusable.yml
   workflow_dispatch:
