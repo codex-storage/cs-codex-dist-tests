@@ -1,6 +1,7 @@
 ﻿using Core;
 using KubernetesWorkflow.Types;
 using Logging;
+using Nethereum.ABI.FunctionEncoding.Attributes;
 using Nethereum.Contracts;
 using NethereumWorkflow;
 
@@ -20,6 +21,9 @@ namespace GethPlugin
         decimal? GetSyncedBlockNumber();
         bool IsContractAvailable(string abi, string contractAddress);
         GethBootstrapNode GetBootstrapRecord();
+        List<EventLog<TEvent>> GetEvents<TEvent>(string address) where TEvent : IEventDTO, new();
+        List<EventLog<TEvent>> GetEvents<TEvent>(string address, ulong fromBlockNumber, ulong toBlockNumber) where TEvent : IEventDTO, new();
+        List<EventLog<TEvent>> GetEvents<TEvent>(string address, DateTime from, DateTime to) where TEvent : IEventDTO, new();
     }
 
     public class DeploymentGethNode : BaseGethNode, IGethNode
@@ -131,6 +135,19 @@ namespace GethPlugin
         public bool IsContractAvailable(string abi, string contractAddress)
         {
             return StartInteraction().IsContractAvailable(abi, contractAddress);
+        }
+
+        public List<EventLog<TEvent>> GetEvents<TEvent>(string address) where TEvent : IEventDTO, new()
+        {
+            StartInteraction().GetEvent();
+        }
+
+        public List<EventLog<TEvent>> GetEvents<TEvent>(string address, ulong fromBlockNumber, ulong toBlockNumber) where TEvent : IEventDTO, new()
+        {
+        }
+
+        public List<EventLog<TEvent>> GetEvents<TEvent>(string address, DateTime from, DateTime to) where TEvent : IEventDTO, new()
+        {
         }
 
         protected abstract NethereumInteraction StartInteraction();

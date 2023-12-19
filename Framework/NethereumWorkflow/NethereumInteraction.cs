@@ -1,4 +1,5 @@
 ﻿using Logging;
+using Nethereum.ABI.FunctionEncoding.Attributes;
 using Nethereum.Contracts;
 using Nethereum.RPC.Eth.DTOs;
 using Nethereum.Web3;
@@ -76,6 +77,27 @@ namespace NethereumWorkflow
             {
                 return false;
             }
+        }
+
+        public List<EventLog<TEvent>> GetEvent<TEvent>(string address, DateTime from, DateTime to) where TEvent : IEventDTO, new()
+        {
+            if (from >= to) throw new Exception("Time range is invalid.");
+
+            var blockTimeFinder = new BlockTimeFinder(web3);
+
+            var fromBlock = blockTimeFinder.GetLowestBlockNumberAfter(from);
+            var toBlock = blockTimeFinder.GetHighestBlockNumberBefore(to);
+
+            return GetEvent<TEvent>(address, fromBlock, toBlock);
+        }
+
+        public List<EventLog<TEvent>> GetEvent<TEvent>(string address, ulong fromBlockNumber, ulong toBlockNumber) where TEvent : IEventDTO, new()
+        {
+            var eventHandler = web3.Eth.GetEvent<TEvent>(address);
+            var from = new BlockParameter(fromBlockNumber);
+            var to = new BlockParameter(toBlockNumber);
+            var blockFilter = Time.Wait(eventHandler.CreateFilterBlockRangeAsync(from, to));
+            return Time.Wait(eventHandler.GetAllChangesAsync(blockFilter));
         }
     }
 }
