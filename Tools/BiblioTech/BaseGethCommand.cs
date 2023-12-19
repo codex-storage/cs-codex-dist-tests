@@ -59,12 +59,10 @@ namespace BiblioTech
     {
         protected override async Task Invoke(CommandContext context)
         {
-            var log = new ConsoleLog();
-
             if (!string.IsNullOrEmpty(GethInput.LoadError))
             {
                 var msg = "Geth input incorrect: " + GethInput.LoadError;
-                log.Error(msg);
+                Program.Log.Error(msg);
                 if (IsInAdminChannel(context.Command))
                 {
                     await context.Followup(msg);
@@ -82,8 +80,14 @@ namespace BiblioTech
                 tokenAddress: GethInput.TokenAddress
             );
 
-            var gethNode = new CustomGethNode(log, GethInput.GethHost, GethInput.GethPort, GethInput.PrivateKey);
-            var contracts = new CodexContractsAccess(log, gethNode, contractsDeployment);
+            var gethNode = new CustomGethNode(Program.Log, GethInput.GethHost, GethInput.GethPort, GethInput.PrivateKey);
+            var contracts = new CodexContractsAccess(Program.Log, gethNode, contractsDeployment);
+
+            if (!contracts.IsDeployed())
+            {
+                await context.Followup("I'm sorry, the Codex SmartContracts are not currently deployed.");
+                return;
+            }
 
             await Execute(context, gethNode, contracts);
         }

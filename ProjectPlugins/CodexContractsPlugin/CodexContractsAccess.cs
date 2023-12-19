@@ -7,6 +7,7 @@ namespace CodexContractsPlugin
     {
         CodexContractsDeployment Deployment { get; }
 
+        bool IsDeployed();
         string MintTestTokens(IHasEthAddress owner, TestToken testTokens);
         string MintTestTokens(EthAddress ethAddress, TestToken testTokens);
         TestToken GetTestTokenBalance(IHasEthAddress owner);
@@ -26,6 +27,12 @@ namespace CodexContractsPlugin
         }
 
         public CodexContractsDeployment Deployment { get; }
+
+        public bool IsDeployed()
+        {
+            var interaction = new ContractInteractions(log, gethNode);
+            return !string.IsNullOrEmpty(interaction.GetTokenName(Deployment.TokenAddress));
+        }
 
         public string MintTestTokens(IHasEthAddress owner, TestToken testTokens)
         {

@@ -26,6 +26,22 @@ namespace CodexContractsPlugin
             return gethNode.Call<GetTokenFunction, string>(marketplaceAddress, function);
         }
 
+        public string GetTokenName(string tokenAddress)
+        {
+            try
+            {
+                log.Debug(tokenAddress);
+                var function = new GetTokenNameFunction();
+
+                return gethNode.Call<GetTokenNameFunction, string>(tokenAddress, function);
+            }
+            catch (Exception ex)
+            {
+                log.Log("Failed to get token name: " + ex);
+                return string.Empty;
+            }
+        }
+
         public string MintTestTokens(EthAddress address, decimal amount, string tokenAddress)
         {
             log.Debug($"{amount} -> {address} (token: {tokenAddress})");
@@ -84,6 +100,11 @@ namespace CodexContractsPlugin
 
     [Function("token", "address")]
     public class GetTokenFunction : FunctionMessage
+    {
+    }
+
+    [Function("name", "string")]
+    public class GetTokenNameFunction : FunctionMessage
     {
     }
 
