@@ -79,7 +79,7 @@ namespace NethereumWorkflow
             }
         }
 
-        public List<EventLog<TEvent>> GetEvent<TEvent>(string address, DateTime from, DateTime to) where TEvent : IEventDTO, new()
+        public List<EventLog<TEvent>> GetEvents<TEvent>(string address, DateTime from, DateTime to) where TEvent : IEventDTO, new()
         {
             if (from >= to) throw new Exception("Time range is invalid.");
 
@@ -88,10 +88,10 @@ namespace NethereumWorkflow
             var fromBlock = blockTimeFinder.GetLowestBlockNumberAfter(from);
             var toBlock = blockTimeFinder.GetHighestBlockNumberBefore(to);
 
-            return GetEvent<TEvent>(address, fromBlock, toBlock);
+            return GetEvents<TEvent>(address, fromBlock, toBlock);
         }
 
-        public List<EventLog<TEvent>> GetEvent<TEvent>(string address, ulong fromBlockNumber, ulong toBlockNumber) where TEvent : IEventDTO, new()
+        public List<EventLog<TEvent>> GetEvents<TEvent>(string address, ulong fromBlockNumber, ulong toBlockNumber) where TEvent : IEventDTO, new()
         {
             var eventHandler = web3.Eth.GetEvent<TEvent>(address);
             var from = new BlockParameter(fromBlockNumber);

@@ -21,7 +21,6 @@ namespace GethPlugin
         decimal? GetSyncedBlockNumber();
         bool IsContractAvailable(string abi, string contractAddress);
         GethBootstrapNode GetBootstrapRecord();
-        List<EventLog<TEvent>> GetEvents<TEvent>(string address) where TEvent : IEventDTO, new();
         List<EventLog<TEvent>> GetEvents<TEvent>(string address, ulong fromBlockNumber, ulong toBlockNumber) where TEvent : IEventDTO, new();
         List<EventLog<TEvent>> GetEvents<TEvent>(string address, DateTime from, DateTime to) where TEvent : IEventDTO, new();
     }
@@ -137,17 +136,14 @@ namespace GethPlugin
             return StartInteraction().IsContractAvailable(abi, contractAddress);
         }
 
-        public List<EventLog<TEvent>> GetEvents<TEvent>(string address) where TEvent : IEventDTO, new()
-        {
-            StartInteraction().GetEvent();
-        }
-
         public List<EventLog<TEvent>> GetEvents<TEvent>(string address, ulong fromBlockNumber, ulong toBlockNumber) where TEvent : IEventDTO, new()
         {
+            return StartInteraction().GetEvents<TEvent>(address, fromBlockNumber, toBlockNumber);
         }
 
         public List<EventLog<TEvent>> GetEvents<TEvent>(string address, DateTime from, DateTime to) where TEvent : IEventDTO, new()
         {
+            return StartInteraction().GetEvents<TEvent>(address, from, to);
         }
 
         protected abstract NethereumInteraction StartInteraction();
