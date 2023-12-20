@@ -1,34 +1,18 @@
 ﻿using Logging;
 using Nethereum.RPC.Eth.DTOs;
 using Nethereum.Web3;
+using Org.BouncyCastle.Asn1.X509;
 using Utils;
 
 namespace NethereumWorkflow
 {
-    public class BlockTimeFinder
+    public partial class BlockTimeFinder
     {
-        private class BlockTimeEntry
-        {
-            public BlockTimeEntry(ulong blockNumber, DateTime utc)
-            {
-                BlockNumber = blockNumber;
-                Utc = utc;
-            }
-
-            public ulong BlockNumber { get; }
-            public DateTime Utc { get; }
-
-            public override string ToString()
-            {
-                return $"[{BlockNumber}] @ {Utc.ToString("o")}";
-            }
-        }
-
         private const ulong FetchRange = 6;
         private const int MaxEntries = 1024;
+        private static readonly Dictionary<ulong, BlockTimeEntry> entries = new Dictionary<ulong, BlockTimeEntry>();
         private readonly Web3 web3;
         private readonly ILog log;
-        private static readonly Dictionary<ulong, BlockTimeEntry> entries = new Dictionary<ulong, BlockTimeEntry>();
         
         public BlockTimeFinder(Web3 web3, ILog log)
         {
@@ -45,16 +29,9 @@ namespace NethereumWorkflow
             var closestBefore = FindClosestBeforeEntry(moment);
             var closestAfter = FindClosestAfterEntry(moment);
 
-            if (closestBefore == null || closestAfter == null)
-            {
-                FetchBlocksAround(moment);
-                return GetHighestBlockNumberBefore(moment);
-            }
-
-            log.Log("Closest before: " + closestBefore);
-            log.Log("Closest after: " + closestAfter);
-
-            if (closestBefore.Utc < moment &&
+            if (closestBefore != null &&
+                closestAfter != null &&
+                closestBefore.Utc < moment &&
                 closestAfter.Utc > moment &&
                 closestBefore.BlockNumber + 1 == closestAfter.BlockNumber)
             {
@@ -75,16 +52,9 @@ namespace NethereumWorkflow
             var closestBefore = FindClosestBeforeEntry(moment);
             var closestAfter = FindClosestAfterEntry(moment);
 
-            if (closestBefore == null || closestAfter == null)
-            {
-                FetchBlocksAround(moment);
-                return GetLowestBlockNumberAfter(moment);
-            }
-
-            log.Log("Closest before: " + closestBefore);
-            log.Log("Closest after: " + closestAfter);
-
-            if (closestBefore.Utc < moment &&
+            if (closestBefore != null &&
+                closestAfter != null &&
+                closestBefore.Utc < moment &&
                 closestAfter.Utc > moment &&
                 closestBefore.BlockNumber + 1 == closestAfter.BlockNumber)
             {
@@ -98,12 +68,52 @@ namespace NethereumWorkflow
 
         private void FetchBlocksAround(DateTime moment)
         {
-            log.Log("Fetching...");
-
             var timePerBlock = EstimateTimePerBlock();
             EnsureRecentBlockIfNecessary(moment, timePerBlock);
 
             var max = entries.Keys.Max();
+            var blockDifference = CalculateBlockDifference(moment, timePerBlock, max);
+
+            FetchUp(max, blockDifference);
+            FetchDown(max, blockDifference);
+        }
+
+        private void FetchDown(ulong max, ulong blockDifference)
+        {
+            var target = max - blockDifference - 1;
+            var fetchDown = FetchRange;
+            while (fetchDown > 0)
+            {
+                if (!entries.ContainsKey(target))
+                {
+                    var newBlock = AddBlockNumber(target);
+                    if (newBlock == null) return;
+                    fetchDown--;
+                }
+                target--;
+                if (target <= 0) return;
+            }
+        }
+
+        private void FetchUp(ulong max, ulong blockDifference)
+        {
+            var target = max - blockDifference;
+            var fetchUp = FetchRange;
+            while (fetchUp > 0)
+            {
+                if (!entries.ContainsKey(target))
+                {
+                    var newBlock = AddBlockNumber(target);
+                    if (newBlock == null) return;
+                    fetchUp--;
+                }
+                target++;
+                if (target >= max) return;
+            }
+        }
+
+        private ulong CalculateBlockDifference(DateTime moment, TimeSpan timePerBlock, ulong max)
+        {
             var latest = entries[max];
             var timeDifference = latest.Utc - moment;
             double secondsDifference = Math.Abs(timeDifference.TotalSeconds);
@@ -112,36 +122,7 @@ namespace NethereumWorkflow
             double numberOfBlocksDifference = secondsDifference / secondsPerBlock;
             var blockDifference = Convert.ToUInt64(numberOfBlocksDifference);
             if (blockDifference < 1) blockDifference = 1;
-
-            var fetchUp = FetchRange;
-            var fetchDown = FetchRange;
-            var target = max - blockDifference;
-            log.Log("up - target: " + target);
-            while (fetchUp > 0)
-            {
-                if (!entries.ContainsKey(target))
-                {
-                    var newBlock = AddBlockNumber(target);
-                    if (newBlock != null) fetchUp--;
-                    else fetchUp = 0;
-                }
-                target++;
-                //if (target >= max) fetchUp = 0;
-            }
-
-            target = max - blockDifference - 1;
-            log.Log("down - target: " + target);
-            while (fetchDown > 0)
-            {
-                if (!entries.ContainsKey(target))
-                {
-                    var newBlock = AddBlockNumber(target);
-                    if (newBlock != null) fetchDown--;
-                    else fetchDown = 0;
-                }
-                target--;
-                //if (target <= 0) fetchDown = 0;
-            }
+            return blockDifference;
         }
 
         private void EnsureRecentBlockIfNecessary(DateTime moment, TimeSpan timePerBlock)
@@ -158,6 +139,8 @@ namespace NethereumWorkflow
                     if (maxRetry == 0) throw new Exception("Unable to fetch recent block after 10x tries.");
                     Thread.Sleep(timePerBlock);
                 }
+                max = entries.Keys.Max();
+                latest = entries[max];
             }
         }
 
@@ -191,7 +174,11 @@ namespace NethereumWorkflow
         {
             var min = entries.Keys.Min();
             var max = entries.Keys.Max();
+            var clippedMin = Math.Max(max - 100, min);
             var minTime = entries[min].Utc;
+            var clippedMinBlock = AddBlockNumber(clippedMin);
+            if (clippedMinBlock != null) minTime = clippedMinBlock.Utc;
+
             var maxTime = entries[max].Utc;
             var elapsedTime = maxTime - minTime;
 
