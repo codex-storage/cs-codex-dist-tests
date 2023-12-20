@@ -9,7 +9,7 @@
     {
         public EthAddress(string address)
         {
-            Address = address;
+            Address = address.ToLowerInvariant();
         }
 
         public string Address { get; }

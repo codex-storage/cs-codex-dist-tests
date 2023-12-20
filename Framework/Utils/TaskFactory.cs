@@ -1,4 +1,4 @@
-﻿namespace ContinuousTests
+﻿namespace Utils
 {
     public class TaskFactory
     {

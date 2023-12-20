@@ -19,6 +19,10 @@ namespace BiblioTech
         [Uniform("admin-channel-name", "ac", "ADMINCHANNELNAME", true, "Name of the Discord server channel where admin commands are allowed.")]
         public string AdminChannelName { get; set; } = "admin-channel";
 
+        [Uniform("rewards-channel-name", "ac", "REWARDSCHANNELNAME", false, "Name of the Discord server channel where participation rewards will be announced.")]
+        public string RewardsChannelName { get; set; } = "";
+
+
         public string EndpointsPath
         {
             get

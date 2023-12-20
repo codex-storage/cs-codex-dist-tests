@@ -3,6 +3,7 @@ using DistTestCore.Logs;
 using Logging;
 using Newtonsoft.Json;
 using Utils;
+using TaskFactory = Utils.TaskFactory;
 
 namespace ContinuousTests
 {

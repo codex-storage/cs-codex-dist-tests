@@ -96,6 +96,29 @@ namespace BiblioTech
             return userData.CreateOverview();
         }
 
+        public UserData? GetUserDataForAddress(EthAddress? address)
+        {
+            if (address == null) return null;
+
+            // If this becomes a performance problem, switch to in-memory cached list.
+            var files = Directory.GetFiles(Program.Config.UserDataPath);
+            foreach (var file in files)
+            {
+                try
+                {
+                    var user = JsonConvert.DeserializeObject<UserData>(File.ReadAllText(file))!;
+                    if (user.CurrentAddress != null &&
+                        user.CurrentAddress.Address == address.Address)
+                    {
+                        return user;
+                    }
+                }
+                catch { }
+            }
+
+            return null;
+        }
+
         private bool SetUserAddress(IUser user, EthAddress? address)
         {
             if (GetUserDataForAddress(address) != null)
@@ -132,32 +155,9 @@ namespace BiblioTech
 
         private UserData CreateAndSaveNewUserData(IUser user)
         {
-            var newUser = new UserData(user.Id, user.GlobalName, DateTime.UtcNow, null, new List<UserAssociateAddressEvent>(), new List<UserMintEvent>());
+            var newUser = new UserData(user.Id, user.GlobalName, DateTime.UtcNow, null, new List<UserAssociateAddressEvent>(), new List<UserMintEvent>(), true);
             SaveUserData(newUser);
             return newUser;
-        }
-
-        private UserData? GetUserDataForAddress(EthAddress? address)
-        {
-            if (address == null) return null;
-
-            // If this becomes a performance problem, switch to in-memory cached list.
-            var files = Directory.GetFiles(Program.Config.UserDataPath);
-            foreach (var file in files)
-            {
-                try
-                {
-                    var user = JsonConvert.DeserializeObject<UserData>(File.ReadAllText(file))!;
-                    if (user.CurrentAddress != null &&
-                        user.CurrentAddress.Address == address.Address)
-                    {
-                        return user;
-                    }
-                }
-                catch { }
-            }
-
-            return null;
         }
 
         private void SaveUserData(UserData userData)
@@ -185,7 +185,7 @@ namespace BiblioTech
 
     public class UserData
     {
-        public UserData(ulong discordId, string name, DateTime createdUtc, EthAddress? currentAddress, List<UserAssociateAddressEvent> associateEvents, List<UserMintEvent> mintEvents)
+        public UserData(ulong discordId, string name, DateTime createdUtc, EthAddress? currentAddress, List<UserAssociateAddressEvent> associateEvents, List<UserMintEvent> mintEvents, bool notificationsEnabled)
         {
             DiscordId = discordId;
             Name = name;
@@ -193,6 +193,7 @@ namespace BiblioTech
             CurrentAddress = currentAddress;
             AssociateEvents = associateEvents;
             MintEvents = mintEvents;
+            NotificationsEnabled = notificationsEnabled;
         }
 
         public ulong DiscordId { get; }
@@ -201,6 +202,7 @@ namespace BiblioTech
         public EthAddress? CurrentAddress { get; set; }
         public List<UserAssociateAddressEvent> AssociateEvents { get; }
         public List<UserMintEvent> MintEvents { get; }
+        public bool NotificationsEnabled { get; }
 
         public string[] CreateOverview()
         {
