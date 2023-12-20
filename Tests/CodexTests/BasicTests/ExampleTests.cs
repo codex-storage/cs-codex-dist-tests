@@ -91,10 +91,13 @@ namespace CodexTests.BasicTests
             var requests = contracts.GetStorageRequests(GetTestRunTimeRange());
             Assert.That(requests.Length, Is.EqualTo(1));
             var request = requests.Single();
-            Assert.That(request.Client, Is.EqualTo(buyer.EthAddress.Address));
+            Assert.That(request.ClientAddress, Is.EqualTo(buyer.EthAddress));
             Assert.That(request.Ask.Slots, Is.EqualTo(1));
 
             AssertBalance(contracts, seller, Is.LessThan(sellerInitialBalance), "Collateral was not placed.");
+
+            var slotHost = contracts.GetSlotHost(request, 0);
+            Assert.That(slotHost, Is.EqualTo(seller.EthAddress));
 
             purchaseContract.WaitForStorageContractFinished();
 

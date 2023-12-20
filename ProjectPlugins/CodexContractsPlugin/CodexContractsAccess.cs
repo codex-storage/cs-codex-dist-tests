@@ -1,6 +1,9 @@
 ﻿using CodexContractsPlugin.Marketplace;
 using GethPlugin;
 using Logging;
+using Nethereum.ABI;
+using Nethereum.Util;
+using NethereumWorkflow;
 using Utils;
 
 namespace CodexContractsPlugin
@@ -16,6 +19,7 @@ namespace CodexContractsPlugin
         TestToken GetTestTokenBalance(EthAddress ethAddress);
 
         Request[] GetStorageRequests(TimeRange range);
+        EthAddress GetSlotHost(Request storageRequest, decimal slotIndex);
     }
 
     public class CodexContractsAccess : ICodexContracts
@@ -62,10 +66,33 @@ namespace CodexContractsPlugin
         {
             var events = gethNode.GetEvents<StorageRequestedEventDTO>(Deployment.MarketplaceAddress, timeRange);
             var i = StartInteraction();
+
             return events
-                    .Select(e => i.GetRequest(Deployment.MarketplaceAddress, e.Event.RequestId))
-                    .Select(r => r.ReturnValue1)
+                    .Select(e =>
+                    {
+                        var requestEvent = i.GetRequest(Deployment.MarketplaceAddress, e.Event.RequestId);
+                        var request = requestEvent.ReturnValue1;
+                        request.RequestId = e.Event.RequestId;
+                        return request;
+                    })
                     .ToArray();
+        }
+
+        public EthAddress GetSlotHost(Request storageRequest, decimal slotIndex)
+        {
+            var encoder = new ABIEncode();
+            var encoded = encoder.GetABIEncoded(
+                new ABIValue("bytes32", storageRequest.RequestId),
+                new ABIValue("uint256", slotIndex.ToBig())
+            );
+
+            var hashed = Sha3Keccack.Current.CalculateHash(encoded);
+
+            var func = new GetHostFunction
+            {
+                SlotId = hashed
+            };
+            return new EthAddress(gethNode.Call<GetHostFunction, string>(Deployment.MarketplaceAddress, func));
         }
 
         private ContractInteractions StartInteraction()
