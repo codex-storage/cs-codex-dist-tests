@@ -3,6 +3,7 @@ using CodexPlugin;
 using DistTestCore;
 using GethPlugin;
 using MetricsPlugin;
+using Nethereum.Hex.HexConvertors.Extensions;
 using NUnit.Framework;
 using Utils;
 
@@ -95,6 +96,13 @@ namespace CodexTests.BasicTests
             Assert.That(request.Ask.Slots, Is.EqualTo(1));
 
             AssertBalance(contracts, seller, Is.LessThan(sellerInitialBalance), "Collateral was not placed.");
+
+            var filledSlotEvents = contracts.GetSlotFilledEvents(GetTestRunTimeRange());
+            Assert.That(filledSlotEvents.Length, Is.EqualTo(1));
+            var filledSlotEvent = filledSlotEvents.Single();
+            Assert.That(filledSlotEvent.SlotIndex.IsZero);
+            Assert.That(filledSlotEvent.RequestId.ToHex(), Is.EqualTo(request.RequestId.ToHex()));
+            Assert.That(filledSlotEvent.Host, Is.EqualTo(seller.EthAddress));
 
             var slotHost = contracts.GetSlotHost(request, 0);
             Assert.That(slotHost, Is.EqualTo(seller.EthAddress));

@@ -3,6 +3,7 @@ using KubernetesWorkflow.Types;
 using Logging;
 using Nethereum.ABI.FunctionEncoding.Attributes;
 using Nethereum.Contracts;
+using Nethereum.RPC.Eth.DTOs;
 using NethereumWorkflow;
 using Utils;
 
@@ -19,6 +20,7 @@ namespace GethPlugin
         string SendEth(EthAddress account, Ether eth);
         TResult Call<TFunction, TResult>(string contractAddress, TFunction function) where TFunction : FunctionMessage, new();
         string SendTransaction<TFunction>(string contractAddress, TFunction function) where TFunction : FunctionMessage, new();
+        Transaction GetTransaction(string transactionHash);
         decimal? GetSyncedBlockNumber();
         bool IsContractAvailable(string abi, string contractAddress);
         GethBootstrapNode GetBootstrapRecord();
@@ -125,6 +127,11 @@ namespace GethPlugin
         public string SendTransaction<TFunction>(string contractAddress, TFunction function) where TFunction : FunctionMessage, new()
         {
             return StartInteraction().SendTransaction(contractAddress, function);
+        }
+
+        public Transaction GetTransaction(string transactionHash)
+        {
+            return StartInteraction().GetTransaction(transactionHash);
         }
 
         public decimal? GetSyncedBlockNumber()

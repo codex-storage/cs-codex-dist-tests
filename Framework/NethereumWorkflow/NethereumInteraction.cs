@@ -3,6 +3,7 @@ using Nethereum.ABI.FunctionEncoding.Attributes;
 using Nethereum.Contracts;
 using Nethereum.RPC.Eth.DTOs;
 using Nethereum.Web3;
+using System.Runtime.CompilerServices;
 using Utils;
 
 namespace NethereumWorkflow
@@ -53,6 +54,12 @@ namespace NethereumWorkflow
             var receipt = Time.Wait(handler.SendRequestAndWaitForReceiptAsync(contractAddress, function));
             if (!receipt.Succeeded()) throw new Exception("Unable to perform contract transaction.");
             return receipt.TransactionHash;
+        }
+
+        public Transaction GetTransaction(string transactionHash)
+        {
+            log.Debug();
+            return Time.Wait(web3.Eth.Transactions.GetTransactionByHash.SendRequestAsync(transactionHash));
         }
 
         public decimal? GetSyncedBlockNumber()
