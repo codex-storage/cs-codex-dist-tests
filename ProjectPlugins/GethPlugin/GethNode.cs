@@ -4,6 +4,7 @@ using Logging;
 using Nethereum.ABI.FunctionEncoding.Attributes;
 using Nethereum.Contracts;
 using NethereumWorkflow;
+using Utils;
 
 namespace GethPlugin
 {
@@ -22,7 +23,7 @@ namespace GethPlugin
         bool IsContractAvailable(string abi, string contractAddress);
         GethBootstrapNode GetBootstrapRecord();
         List<EventLog<TEvent>> GetEvents<TEvent>(string address, ulong fromBlockNumber, ulong toBlockNumber) where TEvent : IEventDTO, new();
-        List<EventLog<TEvent>> GetEvents<TEvent>(string address, DateTime from, DateTime to) where TEvent : IEventDTO, new();
+        List<EventLog<TEvent>> GetEvents<TEvent>(string address, TimeRange timeRange) where TEvent : IEventDTO, new();
     }
 
     public class DeploymentGethNode : BaseGethNode, IGethNode
@@ -141,9 +142,9 @@ namespace GethPlugin
             return StartInteraction().GetEvents<TEvent>(address, fromBlockNumber, toBlockNumber);
         }
 
-        public List<EventLog<TEvent>> GetEvents<TEvent>(string address, DateTime from, DateTime to) where TEvent : IEventDTO, new()
+        public List<EventLog<TEvent>> GetEvents<TEvent>(string address, TimeRange timeRange) where TEvent : IEventDTO, new()
         {
-            return StartInteraction().GetEvents<TEvent>(address, from, to);
+            return StartInteraction().GetEvents<TEvent>(address, timeRange);
         }
 
         protected abstract NethereumInteraction StartInteraction();

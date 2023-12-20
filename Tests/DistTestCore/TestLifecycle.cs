@@ -11,7 +11,6 @@ namespace DistTestCore
     public class TestLifecycle : IK8sHooks
     {
         private const string TestsType = "dist-tests";
-        private readonly DateTime testStart;
         private readonly EntryPoint entryPoint;
         private readonly Dictionary<string, string> metadata;
         private readonly List<RunningContainers> runningContainers = new List<RunningContainers>();
@@ -21,7 +20,7 @@ namespace DistTestCore
             Log = log;
             Configuration = configuration;
             TimeSet = timeSet;
-            testStart = DateTime.UtcNow;
+            TestStart = DateTime.UtcNow;
 
             entryPoint = new EntryPoint(log, configuration.GetK8sConfiguration(timeSet, this, testNamespace), configuration.GetFileManagerFolder(), timeSet);
             metadata = entryPoint.GetPluginMetadata();
@@ -30,6 +29,7 @@ namespace DistTestCore
             log.WriteLogTag();
         }
 
+        public DateTime TestStart { get; }
         public TestLog Log { get; }
         public Configuration Configuration { get; }
         public ITimeSet TimeSet { get; }
@@ -60,7 +60,7 @@ namespace DistTestCore
 
         public TimeSpan GetTestDuration()
         {
-            return DateTime.UtcNow - testStart;
+            return DateTime.UtcNow - TestStart;
         }
 
         public void OnContainersStarted(RunningContainers rc)

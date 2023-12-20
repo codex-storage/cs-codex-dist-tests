@@ -1,5 +1,6 @@
 ﻿using GethPlugin;
 using Logging;
+using Utils;
 
 namespace CodexContractsPlugin
 {
@@ -12,6 +13,8 @@ namespace CodexContractsPlugin
         string MintTestTokens(EthAddress ethAddress, TestToken testTokens);
         TestToken GetTestTokenBalance(IHasEthAddress owner);
         TestToken GetTestTokenBalance(EthAddress ethAddress);
+
+        void GetStorageRequests(TimeRange range);
     }
 
     public class CodexContractsAccess : ICodexContracts
@@ -30,8 +33,7 @@ namespace CodexContractsPlugin
 
         public bool IsDeployed()
         {
-            var interaction = new ContractInteractions(log, gethNode);
-            return !string.IsNullOrEmpty(interaction.GetTokenName(Deployment.TokenAddress));
+            return !string.IsNullOrEmpty(StartInteraction().GetTokenName(Deployment.TokenAddress));
         }
 
         public string MintTestTokens(IHasEthAddress owner, TestToken testTokens)
@@ -41,8 +43,7 @@ namespace CodexContractsPlugin
 
         public string MintTestTokens(EthAddress ethAddress, TestToken testTokens)
         {
-            var interaction = new ContractInteractions(log, gethNode);
-            return interaction.MintTestTokens(ethAddress, testTokens.Amount, Deployment.TokenAddress);
+            return StartInteraction().MintTestTokens(ethAddress, testTokens.Amount, Deployment.TokenAddress);
         }
 
         public TestToken GetTestTokenBalance(IHasEthAddress owner)
@@ -52,9 +53,19 @@ namespace CodexContractsPlugin
 
         public TestToken GetTestTokenBalance(EthAddress ethAddress)
         {
-            var interaction = new ContractInteractions(log, gethNode);
-            var balance = interaction.GetBalance(Deployment.TokenAddress, ethAddress.Address);
+            var balance = StartInteraction().GetBalance(Deployment.TokenAddress, ethAddress.Address);
             return balance.TestTokens();
+        }
+
+        public void GetStorageRequests(TimeRange timeRange)
+        {
+            var events = gethNode.GetEvents<Marketplace.StorageRequestedEventDTO>(Deployment.MarketplaceAddress, timeRange);
+            var iii = 0;
+        }
+
+        private ContractInteractions StartInteraction()
+        {
+            return new ContractInteractions(log, gethNode);
         }
     }
 }
