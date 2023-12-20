@@ -1,7 +1,6 @@
 ﻿using Logging;
 using Nethereum.RPC.Eth.DTOs;
 using Nethereum.Web3;
-using Org.BouncyCastle.Asn1.X509;
 using Utils;
 
 namespace NethereumWorkflow

@@ -1,7 +1,9 @@
-﻿using GethPlugin;
+﻿using CodexContractsPlugin.Marketplace;
+using GethPlugin;
 using Logging;
 using Nethereum.ABI.FunctionEncoding.Attributes;
 using Nethereum.Contracts;
+using Nethereum.Hex.HexConvertors.Extensions;
 using NethereumWorkflow;
 using System.Numerics;
 
@@ -57,6 +59,17 @@ namespace CodexContractsPlugin
             };
 
             return gethNode.Call<GetTokenBalanceFunction, BigInteger>(tokenAddress, function).ToDecimal();
+        }
+
+        public GetRequestOutputDTO GetRequest(string marketplaceAddress, byte[] requestId)
+        {
+
+            log.Debug($"({marketplaceAddress}) {requestId.ToHex(true)}");
+            var func = new GetRequestFunction
+            {
+                RequestId = requestId
+            };
+            return gethNode.Call<GetRequestFunction, GetRequestOutputDTO>(marketplaceAddress, func);
         }
 
         public bool IsSynced(string marketplaceAddress, string marketplaceAbi)

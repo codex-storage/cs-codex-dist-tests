@@ -1,4 +1,5 @@
-﻿using GethPlugin;
+﻿using CodexContractsPlugin.Marketplace;
+using GethPlugin;
 using Logging;
 using Utils;
 
@@ -14,7 +15,7 @@ namespace CodexContractsPlugin
         TestToken GetTestTokenBalance(IHasEthAddress owner);
         TestToken GetTestTokenBalance(EthAddress ethAddress);
 
-        void GetStorageRequests(TimeRange range);
+        Request[] GetStorageRequests(TimeRange range);
     }
 
     public class CodexContractsAccess : ICodexContracts
@@ -57,10 +58,14 @@ namespace CodexContractsPlugin
             return balance.TestTokens();
         }
 
-        public void GetStorageRequests(TimeRange timeRange)
+        public Request[] GetStorageRequests(TimeRange timeRange)
         {
-            var events = gethNode.GetEvents<Marketplace.StorageRequestedEventDTO>(Deployment.MarketplaceAddress, timeRange);
-            var iii = 0;
+            var events = gethNode.GetEvents<StorageRequestedEventDTO>(Deployment.MarketplaceAddress, timeRange);
+            var i = StartInteraction();
+            return events
+                    .Select(e => i.GetRequest(Deployment.MarketplaceAddress, e.Event.RequestId))
+                    .Select(r => r.ReturnValue1)
+                    .ToArray();
         }
 
         private ContractInteractions StartInteraction()

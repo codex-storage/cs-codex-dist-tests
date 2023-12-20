@@ -88,6 +88,12 @@ namespace CodexTests.BasicTests
 
             purchaseContract.WaitForStorageContractStarted(fileSize);
 
+            var requests = contracts.GetStorageRequests(GetTestRunTimeRange());
+            Assert.That(requests.Length, Is.EqualTo(1));
+            var request = requests.Single();
+            Assert.That(request.Client, Is.EqualTo(buyer.EthAddress.Address));
+            Assert.That(request.Ask.Slots, Is.EqualTo(1));
+
             AssertBalance(contracts, seller, Is.LessThan(sellerInitialBalance), "Collateral was not placed.");
 
             purchaseContract.WaitForStorageContractFinished();
@@ -96,8 +102,6 @@ namespace CodexTests.BasicTests
             AssertBalance(contracts, buyer, Is.LessThan(buyerInitialBalance), "Buyer was not charged for storage.");
 
             //CheckLogForErrors(seller, buyer);
-
-            contracts.GetStorageRequests(new TimeRange(Get().TestStart, DateTime.UtcNow));
         }
 
         [Test]

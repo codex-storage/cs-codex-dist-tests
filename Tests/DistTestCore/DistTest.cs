@@ -143,6 +143,11 @@ namespace DistTestCore
             Stopwatch.Measure(Get().Log, name, action);
         }
 
+        protected TimeRange GetTestRunTimeRange()
+        {
+            return new TimeRange(Get().TestStart, DateTime.UtcNow);
+        }
+
         protected virtual void Initialize(FixtureLog fixtureLog)
         {
         }
