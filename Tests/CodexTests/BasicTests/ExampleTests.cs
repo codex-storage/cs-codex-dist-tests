@@ -60,6 +60,7 @@ namespace CodexTests.BasicTests
             var contracts = Ci.StartCodexContracts(geth);
 
             var seller = AddCodex(s => s
+                .WithLogLevel(CodexLogLevel.Trace, new CodexLogCustomTopics(CodexLogLevel.Error, CodexLogLevel.Error, CodexLogLevel.Warn))
                 .WithStorageQuota(11.GB())
                 .EnableMarketplace(geth, contracts, initialEth: 10.Eth(), initialTokens: sellerInitialBalance, isValidator: true)
                 .WithSimulateProofFailures(failEveryNProofs: 3));

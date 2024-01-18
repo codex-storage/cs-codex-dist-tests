@@ -52,7 +52,11 @@ namespace CodexPlugin
                     "connection",
                     "connmanager",
                     "websock",
-                    "ws-session"
+                    "ws-session",
+                    "dialer",
+                    "muxedupgrade",
+                    "upgrade",
+                    "identify"
                 };
                 var blockExchangeTopics = new[]
                 {
@@ -60,7 +64,9 @@ namespace CodexPlugin
                     "pendingblocks",
                     "peerctxstore",
                     "discoveryengine",
-                    "repostore"
+                    "blockexcengine",
+                    "blockexcnetwork",
+                    "blockexcnetworkpeer"
                 };
 
                 level = $"{level};" +
