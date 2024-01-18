@@ -27,6 +27,13 @@ namespace CodexPlugin
 
     public class CodexLogCustomTopics
     {
+        public CodexLogCustomTopics(CodexLogLevel discV5, CodexLogLevel libp2p, CodexLogLevel blockExchange)
+        {
+            DiscV5 = discV5;
+            Libp2p = libp2p;
+            BlockExchange = blockExchange;
+        }
+
         public CodexLogCustomTopics(CodexLogLevel discV5, CodexLogLevel libp2p)
         {
             DiscV5 = discV5;
@@ -35,6 +42,7 @@ namespace CodexPlugin
 
         public CodexLogLevel DiscV5 { get; set; }
         public CodexLogLevel Libp2p { get; set; }
+        public CodexLogLevel? BlockExchange { get; }
     }
 
     public class CodexSetup : CodexStartupConfig, ICodexSetup

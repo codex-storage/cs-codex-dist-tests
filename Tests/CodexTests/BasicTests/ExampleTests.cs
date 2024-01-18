@@ -112,6 +112,11 @@ namespace CodexTests.BasicTests
             AssertBalance(contracts, seller, Is.GreaterThan(sellerInitialBalance), "Seller was not paid for storage.");
             AssertBalance(contracts, buyer, Is.LessThan(buyerInitialBalance), "Buyer was not charged for storage.");
 
+            var log = Ci.DownloadLog(seller);
+            log.AssertLogContains("Received a request to store a slot!");
+            log.AssertLogContains("Received proof challenge");
+            log.AssertLogContains("Collecting input for proof");
+
             //CheckLogForErrors(seller, buyer);
         }
 

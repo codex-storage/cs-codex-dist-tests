@@ -54,10 +54,23 @@ namespace CodexPlugin
                     "websock",
                     "ws-session"
                 };
+                var blockExchangeTopics = new[]
+                {
+                    "codex",
+                    "pendingblocks",
+                    "peerctxstore",
+                    "discoveryengine",
+                    "repostore"
+                };
 
                 level = $"{level};" +
                     $"{CustomTopics.DiscV5.ToString()!.ToLowerInvariant()}:{string.Join(",", discV5Topics)};" +
                     $"{CustomTopics.Libp2p.ToString()!.ToLowerInvariant()}:{string.Join(",", libp2pTopics)}";
+
+                if (CustomTopics.BlockExchange != null)
+                {
+                    level += $";{CustomTopics.BlockExchange.ToString()!.ToLowerInvariant()}:{string.Join(",", blockExchangeTopics)}";
+                }
             }
             return level;
         }
