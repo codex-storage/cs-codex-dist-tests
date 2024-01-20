@@ -1,6 +1,5 @@
 ﻿using ArgsUniform;
 using BiblioTech.Commands;
-using BiblioTech.Rewards;
 using Discord;
 using Discord.WebSocket;
 using Logging;

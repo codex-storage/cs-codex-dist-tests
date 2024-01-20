@@ -26,7 +26,7 @@ namespace BiblioTech
             Program.AdminChecker.SetGuild(guild);
             Program.Log.Log($"Initializing for guild: '{guild.Name}'");
 
-            var roleController = new RoleController(guild);
+            var roleController = new RoleController(client);
             var rewardsApi = new RewardsApi(roleController);
 
             var adminChannels = guild.TextChannels.Where(Program.AdminChecker.IsAdminChannel).ToArray();

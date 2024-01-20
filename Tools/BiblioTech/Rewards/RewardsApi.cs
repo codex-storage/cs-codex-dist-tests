@@ -74,6 +74,7 @@ namespace BiblioTech.Rewards
 
         private void ProcessRewards(GiveRewards rewards)
         {
+            Program.Log.Log("Processing: " + JsonConvert.SerializeObject(rewards));
             foreach (var reward in rewards.Rewards) ProcessReward(reward);
         }
 
@@ -85,7 +86,7 @@ namespace BiblioTech.Rewards
         private void GiveRoleToUser(ulong rewardId, string userAddress)
         {
             var userData = Program.UserRepo.GetUserDataForAddress(new GethPlugin.EthAddress(userAddress));
-            if (userData == null) return;
+            if (userData == null) { Program.Log.Log("no userdata"); return; }
 
             roleController.GiveRole(rewardId, userData);
         }
