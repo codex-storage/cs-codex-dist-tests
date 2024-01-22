@@ -1,5 +1,4 @@
 ﻿using ArgsUniform;
-using GethConnector;
 using Logging;
 using Utils;
 
@@ -67,6 +66,8 @@ namespace TestNetRewarder
             {
                 Log.Error("Exception processing time segment: " + ex);
             }
+
+            await Task.Delay(1);
         }
 
         private static void PrintHelp()

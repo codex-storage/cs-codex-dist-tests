@@ -21,9 +21,20 @@ namespace CodexContractsPlugin
 
         Request[] GetStorageRequests(TimeRange timeRange);
         EthAddress GetSlotHost(Request storageRequest, decimal slotIndex);
+        RequestState GetRequestState(Request request);
         RequestFulfilledEventDTO[] GetRequestFulfilledEvents(TimeRange timeRange);
+        RequestCancelledEventDTO[] GetRequestCancelledEvents(TimeRange timeRange);
         SlotFilledEventDTO[] GetSlotFilledEvents(TimeRange timeRange);
         SlotFreedEventDTO[] GetSlotFreedEvents(TimeRange timeRange);
+    }
+
+    public enum RequestState
+    {
+        New,
+        Started,
+        Cancelled,
+        Finished,
+        Failed
     }
 
     public class CodexContractsAccess : ICodexContracts
@@ -93,6 +104,17 @@ namespace CodexContractsPlugin
             }).ToArray();
         }
 
+        public RequestCancelledEventDTO[] GetRequestCancelledEvents(TimeRange timeRange)
+        {
+            var events = gethNode.GetEvents<RequestCancelledEventDTO>(Deployment.MarketplaceAddress, timeRange);
+            return events.Select(e =>
+            {
+                var result = e.Event;
+                result.BlockNumber = e.Log.BlockNumber.ToUlong();
+                return result;
+            }).ToArray();
+        }
+
         public SlotFilledEventDTO[] GetSlotFilledEvents(TimeRange timeRange)
         {
             var events = gethNode.GetEvents<SlotFilledEventDTO>(Deployment.MarketplaceAddress, timeRange);
@@ -131,6 +153,15 @@ namespace CodexContractsPlugin
                 SlotId = hashed
             };
             return new EthAddress(gethNode.Call<GetHostFunction, string>(Deployment.MarketplaceAddress, func));
+        }
+
+        public RequestState GetRequestState(Request request)
+        {
+            var func = new RequestStateFunction
+            {
+                RequestId = request.RequestId
+            };
+            return gethNode.Call<RequestStateFunction, RequestState>(Deployment.MarketplaceAddress, func);
         }
 
         private EthAddress GetEthAddressFromTransaction(string transactionHash)

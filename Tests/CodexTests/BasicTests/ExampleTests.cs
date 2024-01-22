@@ -93,6 +93,7 @@ namespace CodexTests.BasicTests
             var requests = contracts.GetStorageRequests(GetTestRunTimeRange());
             Assert.That(requests.Length, Is.EqualTo(1));
             var request = requests.Single();
+            Assert.That(contracts.GetRequestState(request), Is.EqualTo(RequestState.Started));
             Assert.That(request.ClientAddress, Is.EqualTo(buyer.EthAddress));
             Assert.That(request.Ask.Slots, Is.EqualTo(1));
 
@@ -115,6 +116,7 @@ namespace CodexTests.BasicTests
 
             AssertBalance(contracts, seller, Is.GreaterThan(sellerInitialBalance), "Seller was not paid for storage.");
             AssertBalance(contracts, buyer, Is.LessThan(buyerInitialBalance), "Buyer was not charged for storage.");
+            Assert.That(contracts.GetRequestState(request), Is.EqualTo(RequestState.Finished));
 
             var log = Ci.DownloadLog(seller);
             log.AssertLogContains("Received a request to store a slot!");

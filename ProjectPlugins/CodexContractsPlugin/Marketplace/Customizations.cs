@@ -16,6 +16,11 @@ namespace CodexContractsPlugin.Marketplace
         public ulong BlockNumber { get; set; }
     }
 
+    public partial class RequestCancelledEventDTO
+    {
+        public ulong BlockNumber { get; set; }
+    }
+
     public partial class SlotFilledEventDTO
     {
         public ulong BlockNumber { get; set; }
