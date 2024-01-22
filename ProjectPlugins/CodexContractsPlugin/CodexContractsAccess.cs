@@ -19,9 +19,9 @@ namespace CodexContractsPlugin
         TestToken GetTestTokenBalance(IHasEthAddress owner);
         TestToken GetTestTokenBalance(EthAddress ethAddress);
 
-        Request[] GetStorageRequests(TimeRange range);
+        Request[] GetStorageRequests(TimeRange timeRange);
         EthAddress GetSlotHost(Request storageRequest, decimal slotIndex);
-        // add 'RequestFulfilled' to see request is started.
+        RequestFulfilledEventDTO[] GetRequestFulfilledEvents(TimeRange timeRange);
         SlotFilledEventDTO[] GetSlotFilledEvents(TimeRange timeRange);
         SlotFreedEventDTO[] GetSlotFreedEvents(TimeRange timeRange);
     }
@@ -80,6 +80,17 @@ namespace CodexContractsPlugin
                         return result;
                     })
                     .ToArray();
+        }
+
+        public RequestFulfilledEventDTO[] GetRequestFulfilledEvents(TimeRange timeRange)
+        {
+            var events = gethNode.GetEvents<RequestFulfilledEventDTO>(Deployment.MarketplaceAddress, timeRange);
+            return events.Select(e =>
+            {
+                var result = e.Event;
+                result.BlockNumber = e.Log.BlockNumber.ToUlong();
+                return result;
+            }).ToArray();
         }
 
         public SlotFilledEventDTO[] GetSlotFilledEvents(TimeRange timeRange)

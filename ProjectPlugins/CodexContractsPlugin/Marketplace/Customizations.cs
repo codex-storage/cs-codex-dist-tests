@@ -11,6 +11,11 @@ namespace CodexContractsPlugin.Marketplace
         public EthAddress ClientAddress { get { return new EthAddress(Client); } }
     }
 
+    public partial class RequestFulfilledEventDTO
+    {
+        public ulong BlockNumber { get; set; }
+    }
+
     public partial class SlotFilledEventDTO
     {
         public ulong BlockNumber { get; set; }

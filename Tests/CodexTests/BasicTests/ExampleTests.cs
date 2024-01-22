@@ -98,6 +98,9 @@ namespace CodexTests.BasicTests
 
             AssertBalance(contracts, seller, Is.LessThan(sellerInitialBalance), "Collateral was not placed.");
 
+            var requestFulfilledEvents = contracts.GetRequestFulfilledEvents(GetTestRunTimeRange());
+            Assert.That(requestFulfilledEvents.Length, Is.EqualTo(1));
+            CollectionAssert.AreEqual(request.RequestId, requestFulfilledEvents[0].RequestId);
             var filledSlotEvents = contracts.GetSlotFilledEvents(GetTestRunTimeRange());
             Assert.That(filledSlotEvents.Length, Is.EqualTo(1));
             var filledSlotEvent = filledSlotEvents.Single();
