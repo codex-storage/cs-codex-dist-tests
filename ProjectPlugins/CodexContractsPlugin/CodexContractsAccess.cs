@@ -21,6 +21,7 @@ namespace CodexContractsPlugin
 
         Request[] GetStorageRequests(TimeRange range);
         EthAddress GetSlotHost(Request storageRequest, decimal slotIndex);
+        // add 'RequestFulfilled' to see request is started.
         SlotFilledEventDTO[] GetSlotFilledEvents(TimeRange timeRange);
         SlotFreedEventDTO[] GetSlotFreedEvents(TimeRange timeRange);
     }
