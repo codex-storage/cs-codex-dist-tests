@@ -25,6 +25,14 @@ namespace BiblioTech
             }
         }
 
+        public void SetUserNotificationPreference(IUser user, bool enableNotifications)
+        {
+            lock (repoLock)
+            {
+                SetUserNotification(user, enableNotifications);
+            }
+        }
+
         public void AddMintEventForUser(IUser user, EthAddress usedAddress, Transaction<Ether>? eth, Transaction<TestToken>? tokens)
         {
             lock (repoLock)
@@ -133,6 +141,14 @@ namespace BiblioTech
             return true;
         }
 
+        private void SetUserNotification(IUser user, bool notifyEnabled)
+        {
+            var userData = GetUserData(user);
+            if (userData == null) return;
+            userData.NotificationsEnabled = notifyEnabled;
+            SaveUserData(userData);
+        }
+
         private UserData? GetUserData(IUser user)
         {
             var filename = GetFilename(user);
@@ -202,7 +218,7 @@ namespace BiblioTech
         public EthAddress? CurrentAddress { get; set; }
         public List<UserAssociateAddressEvent> AssociateEvents { get; }
         public List<UserMintEvent> MintEvents { get; }
-        public bool NotificationsEnabled { get; }
+        public bool NotificationsEnabled { get; set; }
 
         public string[] CreateOverview()
         {

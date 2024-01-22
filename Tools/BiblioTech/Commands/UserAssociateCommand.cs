@@ -4,6 +4,12 @@ namespace BiblioTech.Commands
 {
     public class UserAssociateCommand : BaseCommand
     {
+        public UserAssociateCommand(NotifyCommand notifyCommand)
+        {
+            this.notifyCommand = notifyCommand;
+        }
+        
+        private readonly NotifyCommand notifyCommand;
         private readonly EthAddressOption ethOption = new EthAddressOption(isRequired: false);
         private readonly UserOption optionalUser = new UserOption(
             description: "If set, associates Ethereum address for another user. (Optional, admin-only)",
@@ -30,7 +36,12 @@ namespace BiblioTech.Commands
             var result = Program.UserRepo.AssociateUserWithAddress(user, data);
             if (result)
             {
-                await context.Followup("Done! Thank you for joining the test net!");
+                await context.Followup(new string[]
+                {
+                    "Done! Thank you for joining the test net!",
+                    "By default, the bot will @-mention you with test-net reward related notifications.",
+                    $"You can enable/disable this behavior with the '/{notifyCommand.Name}' command."
+                });
             }
             else
             {

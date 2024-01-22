@@ -6,7 +6,7 @@ namespace BiblioTech.Rewards
 {
     public interface IDiscordRoleController
     {
-        void GiveRole(ulong roleId, UserData userData);
+        Task GiveRewards(GiveRewardsCommand rewards);
     }
 
     public class RewardsApi
@@ -49,7 +49,7 @@ namespace BiblioTech.Rewards
                         var context = wait.Result;
                         try
                         {
-                            HandleConnection(context);
+                            HandleConnection(context).Wait();
                         }
                         catch (Exception ex)
                         {
@@ -63,32 +63,50 @@ namespace BiblioTech.Rewards
             }
         }
 
-        private void HandleConnection(HttpListenerContext context)
+        private async Task HandleConnection(HttpListenerContext context)
         {
-            var reader = new StreamReader(context.Request.InputStream);
+            using var reader = new StreamReader(context.Request.InputStream);
             var content = reader.ReadToEnd();
 
-            var rewards = JsonConvert.DeserializeObject<GiveRewards>(content);
-            if (rewards != null) ProcessRewards(rewards);
+            if (content == "Ping")
+            {
+                using var writer = new StreamWriter(context.Response.OutputStream);
+                writer.Write("Pong");
+                return;
+            }
+
+            if (!content.StartsWith("{")) return;
+            var rewards = JsonConvert.DeserializeObject<GiveRewardsCommand>(content);
+            if (rewards != null)
+            {
+                AttachUsers(rewards);
+                await ProcessRewards(rewards);
+            }
         }
 
-        private void ProcessRewards(GiveRewards rewards)
+        private void AttachUsers(GiveRewardsCommand rewards)
         {
-            Program.Log.Log("Processing: " + JsonConvert.SerializeObject(rewards));
-            foreach (var reward in rewards.Rewards) ProcessReward(reward);
+            foreach (var reward in rewards.Rewards) 
+            {
+                reward.Users = reward.UserAddresses.Select(GetUserFromAddress).Where(u => u != null).Cast<UserData>().ToArray();
+            }
         }
 
-        private void ProcessReward(Reward reward)
+        private UserData? GetUserFromAddress(string address)
         {
-            foreach (var userAddress in reward.UserAddresses) GiveRoleToUser(reward.RewardId, userAddress);
+            try
+            {
+                return Program.UserRepo.GetUserDataForAddress(new GethPlugin.EthAddress(address));
+            }
+            catch
+            {
+                return null;
+            }
         }
 
-        private void GiveRoleToUser(ulong rewardId, string userAddress)
+        private async Task ProcessRewards(GiveRewardsCommand rewards)
         {
-            var userData = Program.UserRepo.GetUserDataForAddress(new GethPlugin.EthAddress(userAddress));
-            if (userData == null) { Program.Log.Log("no userdata"); return; }
-
-            roleController.GiveRole(rewardId, userData);
+            await roleController.GiveRewards(rewards);
         }
     }
 }
