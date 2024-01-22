@@ -8,4 +8,6 @@ export CODEX_BLOCK_MI=9999999
 export DEPLOYMENT_NODES=5
 export DEPLOYMENT_VALIDATORS=3
 
-. ./deploy-continuous-testnet.sh
+REL_PATH=$(dirname "${BASH_SOURCE[0]}")
+
+. "${REL_PATH}/deploy-continuous-testnet.sh"
