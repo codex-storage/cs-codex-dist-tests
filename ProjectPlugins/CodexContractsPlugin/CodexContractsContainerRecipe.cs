@@ -7,7 +7,7 @@ namespace CodexContractsPlugin
 {
     public class CodexContractsContainerRecipe : ContainerRecipeFactory
     {
-        public static string DockerImage { get; } = "codexstorage/codex-contracts-eth:latest-dist-tests";
+        public static string DockerImage { get; } = "codexstorage/codex-contracts-eth:sha-b5f3399-dist-tests";
 
         public const string MarketplaceAddressFilename = "/hardhat/deployments/codexdisttestnetwork/Marketplace.json";
         public const string MarketplaceArtifactFilename = "/hardhat/artifacts/contracts/Marketplace.sol/Marketplace.json";
