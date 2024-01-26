@@ -85,7 +85,7 @@ namespace CodexContractsPlugin
 
         private void WaitUntil(Func<bool> predicate)
         {
-            Time.WaitUntil(predicate, TimeSpan.FromMinutes(3), TimeSpan.FromSeconds(2));
+            Time.WaitUntil(predicate, TimeSpan.FromMinutes(5), TimeSpan.FromSeconds(2));
         }
 
         private StartupConfig CreateStartupConfig(IGethNode gethNode)
