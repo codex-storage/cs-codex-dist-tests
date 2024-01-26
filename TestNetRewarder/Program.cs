@@ -1,7 +1,4 @@
 ﻿using ArgsUniform;
-using CodexContractsPlugin.Marketplace;
-using CodexContractsPlugin;
-using GethPlugin;
 using Logging;
 using Utils;
 
@@ -12,6 +9,7 @@ namespace TestNetRewarder
         public static Configuration Config { get; private set; } = null!;
         public static ILog Log { get; private set; } = null!;
         public static CancellationToken CancellationToken { get; private set; }
+        public static BotClient BotClient { get; private set; } = null!;
 
         public static Task Main(string[] args)
         {
@@ -27,6 +25,8 @@ namespace TestNetRewarder
                 new ConsoleLog()
             );
 
+            BotClient = new BotClient(Config, Log);
+
             EnsurePath(Config.DataPath);
             EnsurePath(Config.LogPath);
 
@@ -40,35 +40,27 @@ namespace TestNetRewarder
          
             while (!CancellationToken.IsCancellationRequested)
             {
+                await EnsureBotOnline();
                 await segmenter.WaitForNextSegment(ProcessTimeSegment);
                 await Task.Delay(1000, CancellationToken);
             }
         }
 
-        private async Task ProcessTimeSegment(TimeRange range)
+        private async Task EnsureBotOnline()
         {
-            try
+            var start = DateTime.UtcNow;
+            while (! await BotClient.IsOnline() && !CancellationToken.IsCancellationRequested)
             {
-                var connector = GethConnector.GethConnector.Initialize(Log);
-                if (connector == null) return;
+                await Task.Delay(5000);
 
-                //Request[] GetStorageRequests(TimeRange timeRange);
-                //EthAddress GetSlotHost(Request storageRequest, decimal slotIndex);
-                //RequestState GetRequestState(Request request);
-                //RequestFulfilledEventDTO[] GetRequestFulfilledEvents(TimeRange timeRange);
-                //RequestCancelledEventDTO[] GetRequestCancelledEvents(TimeRange timeRange);
-                //SlotFilledEventDTO[] GetSlotFilledEvents(TimeRange timeRange);
-                //SlotFreedEventDTO[] GetSlotFreedEvents(TimeRange timeRange);
-
-
-
+                var elapsed = DateTime.UtcNow - start;
+                if (elapsed.TotalMinutes > 10)
+                {
+                    var msg = "Unable to connect to bot for " + Time.FormatDuration(elapsed);
+                    Log.Error(msg);
+                    throw new Exception(msg);
+                }
             }
-            catch (Exception ex)
-            {
-                Log.Error("Exception processing time segment: " + ex);
-            }
-
-            await Task.Delay(1);
         }
 
         private static void PrintHelp()

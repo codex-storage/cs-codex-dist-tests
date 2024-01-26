@@ -22,7 +22,7 @@ namespace TestNetRewarder
         private readonly ByteSize minSize;
         private readonly TimeSpan minDuration;
 
-        public FinishedSlot(ByteSize minSize, TimeSpan minDuration)
+        public FinishedSlotCheck(ByteSize minSize, TimeSpan minDuration)
         {
             this.minSize = minSize;
             this.minDuration = minDuration;
@@ -66,7 +66,7 @@ namespace TestNetRewarder
         private readonly ByteSize minSlotSize;
         private readonly TimeSpan minDuration;
 
-        public StartedContract(ulong minNumberOfHosts, ByteSize minSlotSize, TimeSpan minDuration)
+        public StartedContractCheck(ulong minNumberOfHosts, ByteSize minSlotSize, TimeSpan minDuration)
         {
             this.minNumberOfHosts = minNumberOfHosts;
             this.minSlotSize = minSlotSize;
