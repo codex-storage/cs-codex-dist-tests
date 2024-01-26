@@ -25,6 +25,20 @@ namespace NethereumWorkflow
             AssertMomentIsInPast(moment);
             Initialize();
 
+            return GetHighestBlockBefore(moment);
+        }
+
+        public ulong GetLowestBlockNumberAfter(DateTime moment)
+        {
+            log.Log("Looking for lowest block after " + moment.ToString("o"));
+            AssertMomentIsInPast(moment);
+            Initialize();
+
+            return GetLowestBlockAfter(moment);
+        }
+
+        private ulong GetHighestBlockBefore(DateTime moment)
+        {
             var closestBefore = FindClosestBeforeEntry(moment);
             var closestAfter = FindClosestAfterEntry(moment);
 
@@ -39,15 +53,11 @@ namespace NethereumWorkflow
             }
 
             FetchBlocksAround(moment);
-            return GetHighestBlockNumberBefore(moment);
+            return GetHighestBlockBefore(moment);
         }
 
-        public ulong GetLowestBlockNumberAfter(DateTime moment)
+        private ulong GetLowestBlockAfter(DateTime moment)
         {
-            log.Log("Looking for lowest block after " + moment.ToString("o"));
-            AssertMomentIsInPast(moment);
-            Initialize();
-
             var closestBefore = FindClosestBeforeEntry(moment);
             var closestAfter = FindClosestAfterEntry(moment);
 
@@ -62,12 +72,14 @@ namespace NethereumWorkflow
             }
 
             FetchBlocksAround(moment);
-            return GetLowestBlockNumberAfter(moment);
+            return GetLowestBlockAfter(moment);
         }
 
         private void FetchBlocksAround(DateTime moment)
         {
             var timePerBlock = EstimateTimePerBlock();
+            log.Debug("Fetching blocks around " + moment.ToString("o") + " timePerBlock: " + timePerBlock.TotalSeconds);
+
             EnsureRecentBlockIfNecessary(moment, timePerBlock);
 
             var max = entries.Keys.Max();
@@ -157,14 +169,19 @@ namespace NethereumWorkflow
 
             if (entries.Count > MaxEntries)
             {
+                log.Debug("Entries cleared!");
                 entries.Clear();
                 Initialize();
             }
 
             var time = GetTimestampFromBlock(blockNumber);
-            if (time == null) return null;
+            if (time == null)
+            {
+                log.Log("Failed to get block for number: " + blockNumber);
+                return null;
+            }
             var entry = new BlockTimeEntry(blockNumber, time.Value);
-            log.Log("Found block " + entry.BlockNumber + " at " + entry.Utc.ToString("o"));
+            log.Debug("Found block " + entry.BlockNumber + " at " + entry.Utc.ToString("o"));
             entries.Add(blockNumber, entry);
             return entry;
         }
@@ -185,7 +202,9 @@ namespace NethereumWorkflow
             double numberOfBlocks = max - min;
             double secondsPerBlock = elapsedSeconds / numberOfBlocks;
 
-            return TimeSpan.FromSeconds(secondsPerBlock);
+            var result = TimeSpan.FromSeconds(secondsPerBlock);
+            if (result.TotalSeconds < 1.0) result = TimeSpan.FromSeconds(1.0);
+            return result;
         }
 
         private void Initialize()
@@ -211,9 +230,17 @@ namespace NethereumWorkflow
 
         private DateTime? GetTimestampFromBlock(ulong blockNumber)
         {
-            var block = Time.Wait(web3.Eth.Blocks.GetBlockWithTransactionsByNumber.SendRequestAsync(new BlockParameter(blockNumber)));
-            if (block == null) return null;
-            return DateTimeOffset.FromUnixTimeSeconds(Convert.ToInt64(block.Timestamp.ToDecimal())).UtcDateTime;
+            try
+            {
+                var block = Time.Wait(web3.Eth.Blocks.GetBlockWithTransactionsByNumber.SendRequestAsync(new BlockParameter(blockNumber)));
+                if (block == null) return null;
+                return DateTimeOffset.FromUnixTimeSeconds(Convert.ToInt64(block.Timestamp.ToDecimal())).UtcDateTime;
+            }
+            catch (Exception ex)
+            {
+                int i = 0;
+                throw;
+            }
         }
 
         private BlockTimeEntry? FindClosestBeforeEntry(DateTime moment)
