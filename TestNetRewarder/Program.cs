@@ -1,4 +1,7 @@
 ﻿using ArgsUniform;
+using CodexContractsPlugin.Marketplace;
+using CodexContractsPlugin;
+using GethPlugin;
 using Logging;
 using Utils;
 
@@ -49,18 +52,16 @@ namespace TestNetRewarder
                 var connector = GethConnector.GethConnector.Initialize(Log);
                 if (connector == null) return;
 
-                var newRequests = connector.CodexContracts.GetStorageRequests(range);
-                foreach (var request in newRequests)
-                {
-                    for (ulong i = 0; i < request.Ask.Slots; i++)
-                    {
-                        var host = connector.CodexContracts.GetSlotHost(request, i);
-                    }
-                }
-                var newSlotsFilled  = connector.CodexContracts.GetSlotFilledEvents(range);
-                var newSlotsFreed = connector.CodexContracts.GetSlotFreedEvents(range);
-                
-                // can we get them all?
+                //Request[] GetStorageRequests(TimeRange timeRange);
+                //EthAddress GetSlotHost(Request storageRequest, decimal slotIndex);
+                //RequestState GetRequestState(Request request);
+                //RequestFulfilledEventDTO[] GetRequestFulfilledEvents(TimeRange timeRange);
+                //RequestCancelledEventDTO[] GetRequestCancelledEvents(TimeRange timeRange);
+                //SlotFilledEventDTO[] GetSlotFilledEvents(TimeRange timeRange);
+                //SlotFreedEventDTO[] GetSlotFreedEvents(TimeRange timeRange);
+
+
+
             }
             catch (Exception ex)
             {

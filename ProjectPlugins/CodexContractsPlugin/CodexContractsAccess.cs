@@ -20,7 +20,7 @@ namespace CodexContractsPlugin
         TestToken GetTestTokenBalance(EthAddress ethAddress);
 
         Request[] GetStorageRequests(TimeRange timeRange);
-        EthAddress GetSlotHost(Request storageRequest, decimal slotIndex);
+        EthAddress? GetSlotHost(Request storageRequest, decimal slotIndex);
         RequestState GetRequestState(Request request);
         RequestFulfilledEventDTO[] GetRequestFulfilledEvents(TimeRange timeRange);
         RequestCancelledEventDTO[] GetRequestCancelledEvents(TimeRange timeRange);
@@ -138,7 +138,7 @@ namespace CodexContractsPlugin
             }).ToArray();
         }
 
-        public EthAddress GetSlotHost(Request storageRequest, decimal slotIndex)
+        public EthAddress? GetSlotHost(Request storageRequest, decimal slotIndex)
         {
             var encoder = new ABIEncode();
             var encoded = encoder.GetABIEncoded(
@@ -152,7 +152,9 @@ namespace CodexContractsPlugin
             {
                 SlotId = hashed
             };
-            return new EthAddress(gethNode.Call<GetHostFunction, string>(Deployment.MarketplaceAddress, func));
+            var address = gethNode.Call<GetHostFunction, string>(Deployment.MarketplaceAddress, func);
+            if (string.IsNullOrEmpty(address)) return null;
+            return new EthAddress(address);
         }
 
         public RequestState GetRequestState(Request request)
