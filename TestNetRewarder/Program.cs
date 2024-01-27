@@ -10,6 +10,7 @@ namespace TestNetRewarder
         public static ILog Log { get; private set; } = null!;
         public static CancellationToken CancellationToken { get; private set; }
         public static BotClient BotClient { get; private set; } = null!;
+        private static Processor processor = null!;
 
         public static Task Main(string[] args)
         {
@@ -26,6 +27,7 @@ namespace TestNetRewarder
             );
 
             BotClient = new BotClient(Config, Log);
+            processor = new Processor(Log);
 
             EnsurePath(Config.DataPath);
             EnsurePath(Config.LogPath);
@@ -35,18 +37,30 @@ namespace TestNetRewarder
 
         public async Task MainAsync()
         {
+            EnsureGethOnline();
+
             Log.Log("Starting TestNet Rewarder...");
             var segmenter = new TimeSegmenter(Log, Config);
          
             while (!CancellationToken.IsCancellationRequested)
             {
                 await EnsureBotOnline();
-                await segmenter.WaitForNextSegment(ProcessTimeSegment);
+                await segmenter.WaitForNextSegment(processor.ProcessTimeSegment);
                 await Task.Delay(1000, CancellationToken);
             }
         }
 
-        private async Task EnsureBotOnline()
+        private static void EnsureGethOnline()
+        {
+            Log.Log("Checking Geth...");
+            var gc = GethConnector.GethConnector.Initialize(Log);
+            if (gc == null) throw new Exception("Geth input incorrect");
+
+            var blockNumber = gc.GethNode.GetSyncedBlockNumber();
+            if (blockNumber == null || blockNumber < 1) throw new Exception("Geth connection failed.");
+        }
+
+        private static async Task EnsureBotOnline()
         {
             var start = DateTime.UtcNow;
             while (! await BotClient.IsOnline() && !CancellationToken.IsCancellationRequested)
