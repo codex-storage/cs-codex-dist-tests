@@ -1,4 +1,5 @@
-﻿using BiblioTech.Rewards;
+﻿using DiscordRewards;
+using GethPlugin;
 using Logging;
 using Newtonsoft.Json;
 using Utils;
@@ -60,15 +61,38 @@ namespace TestNetRewarder
 
         private void ProcessReward(List<RewardUsersCommand> outgoingRewards, RewardConfig reward, ChainState chainState)
         {
-            var winningAddresses = reward.Check.Check(chainState);
+            var winningAddresses = PerformCheck(reward, chainState);
             if (winningAddresses.Any())
             {
                 outgoingRewards.Add(new RewardUsersCommand
                 {
-                    RewardId = reward.RewardId,
+                    RewardId = reward.RoleId,
                     UserAddresses = winningAddresses.Select(a => a.Address).ToArray()
                 });
             }
+        }
+
+        private EthAddress[] PerformCheck(RewardConfig reward, ChainState chainState)
+        {
+            var check = GetCheck(reward.CheckConfig);
+            return check.Check(chainState);
+        }
+
+        private ICheck GetCheck(CheckConfig config)
+        {
+            switch (config.Type)
+            {
+                case CheckType.FilledSlot:
+                    return new FilledAnySlotCheck();
+                case CheckType.FinishedSlot:
+                    return new FinishedSlotCheck(config.MinSlotSize, config.MinDuration);
+                case CheckType.PostedContract:
+                    return new PostedContractCheck(config.MinNumberOfHosts, config.MinSlotSize, config.MinDuration);
+                case CheckType.StartedContract:
+                    return new StartedContractCheck(config.MinNumberOfHosts, config.MinSlotSize, config.MinDuration);
+            }
+
+            throw new Exception("Unknown check type: " + config.Type);
         }
     }
 }

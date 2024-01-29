@@ -1,4 +1,5 @@
-﻿using GethPlugin;
+﻿using CodexContractsPlugin.Marketplace;
+using GethPlugin;
 using NethereumWorkflow;
 using Utils;
 
@@ -54,9 +55,44 @@ namespace TestNetRewarder
 
     public class PostedContractCheck : ICheck
     {
+        private readonly ulong minNumberOfHosts;
+        private readonly ByteSize minSlotSize;
+        private readonly TimeSpan minDuration;
+
+        public PostedContractCheck(ulong minNumberOfHosts, ByteSize minSlotSize, TimeSpan minDuration)
+        {
+            this.minNumberOfHosts = minNumberOfHosts;
+            this.minSlotSize = minSlotSize;
+            this.minDuration = minDuration;
+        }
+
         public EthAddress[] Check(ChainState state)
         {
-            return state.NewRequests.Select(r => r.ClientAddress).ToArray();
+            return state.NewRequests
+                .Where(r =>
+                    MeetsNumSlotsRequirement(r) &&
+                    MeetsSizeRequirement(r) &&
+                    MeetsDurationRequirement(r))
+                .Select(r => r.ClientAddress)
+                .ToArray();
+        }
+
+        private bool MeetsNumSlotsRequirement(Request r)
+        {
+            return r.Ask.Slots >= minNumberOfHosts;
+        }
+
+        private bool MeetsSizeRequirement(Request r)
+        {
+            var slotSize = r.Ask.SlotSize.ToDecimal();
+            decimal min = minSlotSize.SizeInBytes;
+            return slotSize >= min;
+        }
+
+        private bool MeetsDurationRequirement(Request r)
+        {
+            var duration = TimeSpan.FromSeconds((double)r.Ask.Duration);
+            return duration >= minDuration;
         }
     }
 

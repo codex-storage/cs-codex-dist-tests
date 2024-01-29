@@ -7,8 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Framework\Logging\Logging.csproj" />
-    <ProjectReference Include="..\ProjectPlugins\CodexContractsPlugin\CodexContractsPlugin.csproj" />
+    <ProjectReference Include="..\..\Framework\Utils\Utils.csproj" />
   </ItemGroup>
 
 </Project>

@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using DiscordRewards;
+using Newtonsoft.Json;
 using System.Net;
 using TaskFactory = Utils.TaskFactory;
 
@@ -79,28 +80,7 @@ namespace BiblioTech.Rewards
             var rewards = JsonConvert.DeserializeObject<GiveRewardsCommand>(content);
             if (rewards != null)
             {
-                AttachUsers(rewards);
                 await ProcessRewards(rewards);
-            }
-        }
-
-        private void AttachUsers(GiveRewardsCommand rewards)
-        {
-            foreach (var reward in rewards.Rewards) 
-            {
-                reward.Users = reward.UserAddresses.Select(GetUserFromAddress).Where(u => u != null).Cast<UserData>().ToArray();
-            }
-        }
-
-        private UserData? GetUserFromAddress(string address)
-        {
-            try
-            {
-                return Program.UserRepo.GetUserDataForAddress(new GethPlugin.EthAddress(address));
-            }
-            catch
-            {
-                return null;
             }
         }
 

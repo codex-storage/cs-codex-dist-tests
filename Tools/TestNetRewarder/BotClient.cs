@@ -1,4 +1,4 @@
-﻿using BiblioTech.Rewards;
+﻿using DiscordRewards;
 using Logging;
 using Newtonsoft.Json;
 

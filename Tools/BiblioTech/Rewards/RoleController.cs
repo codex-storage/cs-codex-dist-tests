@@ -1,14 +1,14 @@
 ﻿using Discord;
 using Discord.WebSocket;
+using DiscordRewards;
 
 namespace BiblioTech.Rewards
 {
     public class RoleController : IDiscordRoleController
     {
-        public const string UsernameTag = "<USER>";
         private readonly DiscordSocketClient client;
         private readonly SocketTextChannel? rewardsChannel;
-        private readonly RewardsRepo repo = new RewardsRepo();
+        private readonly RewardRepo repo = new RewardRepo();
 
         public RoleController(DiscordSocketClient client)
         {
@@ -30,7 +30,7 @@ namespace BiblioTech.Rewards
                 LookUpAllRoles(guild, rewards),
                 rewardsChannel);
 
-            await context.ProcessGiveRewardsCommand(rewards);
+            await context.ProcessGiveRewardsCommand(LookUpUsers(rewards));
         }
 
         private async Task<Dictionary<ulong, IGuildUser>> LoadAllUsers(SocketGuild guild)
@@ -47,19 +47,19 @@ namespace BiblioTech.Rewards
             return result;
         }
 
-        private Dictionary<ulong, RoleRewardConfig> LookUpAllRoles(SocketGuild guild, GiveRewardsCommand rewards)
+        private Dictionary<ulong, RoleReward> LookUpAllRoles(SocketGuild guild, GiveRewardsCommand rewards)
         {
-            var result = new Dictionary<ulong, RoleRewardConfig>();
+            var result = new Dictionary<ulong, RoleReward>();
             foreach (var r in rewards.Rewards)
             {
-                var role = repo.Rewards.SingleOrDefault(rr => rr.RoleId == r.RewardId);
-                if (role == null)
+                if (!result.ContainsKey(r.RewardId))
                 {
-                    Program.Log.Log($"No RoleReward is configured for reward with id '{r.RewardId}'.");
-                }
-                else
-                {
-                    if (role.SocketRole == null)
+                    var rewardConfig = repo.Rewards.SingleOrDefault(rr => rr.RoleId == r.RewardId);
+                    if (rewardConfig == null)
+                    {
+                        Program.Log.Log($"No Reward is configured for id '{r.RewardId}'.");
+                    }
+                    else
                     {
                         var socketRole = guild.GetRole(r.RewardId);
                         if (socketRole == null)
@@ -68,14 +68,41 @@ namespace BiblioTech.Rewards
                         }
                         else
                         {
-                            role.SocketRole = socketRole;
+                            result.Add(r.RewardId, new RoleReward(socketRole, rewardConfig));
                         }
                     }
-                    result.Add(role.RoleId, role);
                 }
             }
 
             return result;
+        }
+
+        private UserReward[] LookUpUsers(GiveRewardsCommand rewards)
+        {
+            return rewards.Rewards.Select(LookUpUserData).ToArray();
+        }
+
+        private UserReward LookUpUserData(RewardUsersCommand command)
+        {
+            return new UserReward(command,
+                command.UserAddresses
+                    .Select(LookUpUserDataForAddress)
+                    .Where(d => d != null)
+                    .Cast<UserData>()
+                    .ToArray());
+        }
+
+        private UserData? LookUpUserDataForAddress(string address)
+        {
+            try
+            {
+                return Program.UserRepo.GetUserDataForAddress(new GethPlugin.EthAddress(address));
+            }
+            catch (Exception ex)
+            {
+                Program.Log.Error("Error during UserData lookup: " + ex);
+                return null;
+            }
         }
 
         private SocketGuild GetGuild()
@@ -84,32 +111,56 @@ namespace BiblioTech.Rewards
         }
     }
 
+    public class RoleReward
+    {
+        public RoleReward(SocketRole socketRole, RewardConfig reward)
+        {
+            SocketRole = socketRole;
+            Reward = reward;
+        }
+
+        public SocketRole SocketRole { get; }
+        public RewardConfig Reward { get; }
+    }
+
+    public class UserReward
+    {
+        public UserReward(RewardUsersCommand rewardCommand, UserData[] users)
+        {
+            RewardCommand = rewardCommand;
+            Users = users;
+        }
+
+        public RewardUsersCommand RewardCommand { get; }
+        public UserData[] Users { get; }
+    }
+
     public class RewardContext
     {
         private readonly Dictionary<ulong, IGuildUser> users;
-        private readonly Dictionary<ulong, RoleRewardConfig> roles;
+        private readonly Dictionary<ulong, RoleReward> roles;
         private readonly SocketTextChannel? rewardsChannel;
 
-        public RewardContext(Dictionary<ulong, IGuildUser> users, Dictionary<ulong, RoleRewardConfig> roles, SocketTextChannel? rewardsChannel)
+        public RewardContext(Dictionary<ulong, IGuildUser> users, Dictionary<ulong, RoleReward> roles, SocketTextChannel? rewardsChannel)
         {
             this.users = users;
             this.roles = roles;
             this.rewardsChannel = rewardsChannel;
         }
 
-        public async Task ProcessGiveRewardsCommand(GiveRewardsCommand rewards)
+        public async Task ProcessGiveRewardsCommand(UserReward[] rewards)
         {
-            foreach (var rewardCommand in rewards.Rewards)
+            foreach (var rewardCommand in rewards)
             {
-                if (roles.ContainsKey(rewardCommand.RewardId))
+                if (roles.ContainsKey(rewardCommand.RewardCommand.RewardId))
                 {
-                    var role = roles[rewardCommand.RewardId];
+                    var role = roles[rewardCommand.RewardCommand.RewardId];
                     await ProcessRewardCommand(role, rewardCommand);
                 }
             }
         }
 
-        private async Task ProcessRewardCommand(RoleRewardConfig role, RewardUsersCommand reward)
+        private async Task ProcessRewardCommand(RoleReward role, UserReward reward)
         {
             foreach (var user in reward.Users)
             {
@@ -117,7 +168,7 @@ namespace BiblioTech.Rewards
             }
         }
 
-        private async Task GiveReward(RoleRewardConfig role, UserData user)
+        private async Task GiveReward(RoleReward role, UserData user)
         {
             if (!users.ContainsKey(user.DiscordId))
             {
@@ -128,9 +179,9 @@ namespace BiblioTech.Rewards
             var guildUser = users[user.DiscordId];
 
             var alreadyHas = guildUser.RoleIds.ToArray();
-            if (alreadyHas.Any(r => r == role.RoleId)) return;
+            if (alreadyHas.Any(r => r == role.Reward.RoleId)) return;
 
-            await GiveRole(guildUser, role.SocketRole!);
+            await GiveRole(guildUser, role.SocketRole);
             await SendNotification(role, user, guildUser);
             await Task.Delay(1000);
         }
@@ -148,33 +199,20 @@ namespace BiblioTech.Rewards
             }
         }
 
-        private async Task SendNotification(RoleRewardConfig reward, UserData userData, IGuildUser user)
+        private async Task SendNotification(RoleReward reward, UserData userData, IGuildUser user)
         {
             try
             {
                 if (userData.NotificationsEnabled && rewardsChannel != null)
                 {
-                    var msg = reward.Message.Replace(RoleController.UsernameTag, $"<@{user.Id}>");
+                    var msg = reward.Reward.Message.Replace(RewardConfig.UsernameTag, $"<@{user.Id}>");
                     await rewardsChannel.SendMessageAsync(msg);
                 }
             }
             catch (Exception ex)
             {
-                Program.Log.Error($"Failed to notify user '{user.DisplayName}' about role '{reward.SocketRole!.Name}': {ex}");
+                Program.Log.Error($"Failed to notify user '{user.DisplayName}' about role '{reward.SocketRole.Name}': {ex}");
             }
         }
-    }
-
-    public class RoleRewardConfig
-    {
-        public RoleRewardConfig(ulong roleId, string message)
-        {
-            RoleId = roleId;
-            Message = message;
-        }
-
-        public ulong RoleId { get; }
-        public string Message { get; }
-        public SocketRole? SocketRole { get; set; }
     }
 }

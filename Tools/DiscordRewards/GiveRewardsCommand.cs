@@ -1,6 +1,4 @@
-﻿using Newtonsoft.Json;
-
-namespace BiblioTech.Rewards
+﻿namespace DiscordRewards
 {
     public class GiveRewardsCommand
     {
@@ -11,8 +9,5 @@ namespace BiblioTech.Rewards
     {
         public ulong RewardId { get; set; }
         public string[] UserAddresses { get; set; } = Array.Empty<string>();
-
-        [JsonIgnore]
-        public UserData[] Users { get; set; } = Array.Empty<UserData>();
     }
 }
