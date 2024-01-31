@@ -23,6 +23,26 @@
         public string? DataPath { get; set; }
     }
 
+    public class RewarderBotStartupConfig
+    {
+        public RewarderBotStartupConfig(string discordBotHost, int discordBotPort, TimeSpan interval, DateTime historyStartUtc, DiscordBotGethInfo gethInfo, string? dataPath)
+        {
+            DiscordBotHost = discordBotHost;
+            DiscordBotPort = discordBotPort;
+            Interval = interval;
+            HistoryStartUtc = historyStartUtc;
+            GethInfo = gethInfo;
+            DataPath = dataPath;
+        }
+
+        public string DiscordBotHost { get; }
+        public int DiscordBotPort { get; }
+        public TimeSpan Interval { get; }
+        public DateTime HistoryStartUtc { get; }
+        public DiscordBotGethInfo GethInfo { get; }
+        public string? DataPath { get; set; }
+    }
+
     public class DiscordBotGethInfo
     {
         public DiscordBotGethInfo(string host, int port, string privKey, string marketplaceAddress, string tokenAddress, string abi)
