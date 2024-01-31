@@ -6,6 +6,7 @@ using CodexPlugin;
 using DistTestCore.Logs;
 using Core;
 using KubernetesWorkflow.Types;
+using TaskFactory = Utils.TaskFactory;
 
 namespace ContinuousTests
 {

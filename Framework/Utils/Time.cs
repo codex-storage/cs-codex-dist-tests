@@ -13,6 +13,11 @@
             return task.Result;
         }
 
+        public static void Wait(Task task)
+        {
+            task.Wait();
+        }
+
         public static string FormatDuration(TimeSpan d)
         {
             var result = "";

@@ -1,7 +1,9 @@
 ﻿using Logging;
+using Nethereum.ABI.FunctionEncoding.Attributes;
 using Nethereum.Contracts;
 using Nethereum.RPC.Eth.DTOs;
 using Nethereum.Web3;
+using System.Runtime.CompilerServices;
 using Utils;
 
 namespace NethereumWorkflow
@@ -54,6 +56,12 @@ namespace NethereumWorkflow
             return receipt.TransactionHash;
         }
 
+        public Transaction GetTransaction(string transactionHash)
+        {
+            log.Debug();
+            return Time.Wait(web3.Eth.Transactions.GetTransactionByHash.SendRequestAsync(transactionHash));
+        }
+
         public decimal? GetSyncedBlockNumber()
         {
             log.Debug();
@@ -76,6 +84,25 @@ namespace NethereumWorkflow
             {
                 return false;
             }
+        }
+
+        public List<EventLog<TEvent>> GetEvents<TEvent>(string address, TimeRange timeRange) where TEvent : IEventDTO, new()
+        {
+            var blockTimeFinder = new BlockTimeFinder(web3, log);
+
+            var fromBlock = blockTimeFinder.GetLowestBlockNumberAfter(timeRange.From);
+            var toBlock = blockTimeFinder.GetHighestBlockNumberBefore(timeRange.To);
+
+            return GetEvents<TEvent>(address, fromBlock, toBlock);
+        }
+
+        public List<EventLog<TEvent>> GetEvents<TEvent>(string address, ulong fromBlockNumber, ulong toBlockNumber) where TEvent : IEventDTO, new()
+        {
+            var eventHandler = web3.Eth.GetEvent<TEvent>(address);
+            var from = new BlockParameter(fromBlockNumber);
+            var to = new BlockParameter(toBlockNumber);
+            var blockFilter = Time.Wait(eventHandler.CreateFilterBlockRangeAsync(from, to));
+            return Time.Wait(eventHandler.GetAllChangesAsync(blockFilter));
         }
     }
 }

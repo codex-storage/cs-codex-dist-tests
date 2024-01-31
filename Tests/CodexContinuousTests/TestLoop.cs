@@ -1,5 +1,6 @@
 ﻿using DistTestCore.Logs;
 using Logging;
+using TaskFactory = Utils.TaskFactory;
 
 namespace ContinuousTests
 {

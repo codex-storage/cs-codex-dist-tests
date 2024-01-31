@@ -1,8 +1,11 @@
 ﻿using Core;
 using KubernetesWorkflow.Types;
 using Logging;
+using Nethereum.ABI.FunctionEncoding.Attributes;
 using Nethereum.Contracts;
+using Nethereum.RPC.Eth.DTOs;
 using NethereumWorkflow;
+using Utils;
 
 namespace GethPlugin
 {
@@ -17,9 +20,12 @@ namespace GethPlugin
         string SendEth(EthAddress account, Ether eth);
         TResult Call<TFunction, TResult>(string contractAddress, TFunction function) where TFunction : FunctionMessage, new();
         string SendTransaction<TFunction>(string contractAddress, TFunction function) where TFunction : FunctionMessage, new();
+        Transaction GetTransaction(string transactionHash);
         decimal? GetSyncedBlockNumber();
         bool IsContractAvailable(string abi, string contractAddress);
         GethBootstrapNode GetBootstrapRecord();
+        List<EventLog<TEvent>> GetEvents<TEvent>(string address, ulong fromBlockNumber, ulong toBlockNumber) where TEvent : IEventDTO, new();
+        List<EventLog<TEvent>> GetEvents<TEvent>(string address, TimeRange timeRange) where TEvent : IEventDTO, new();
     }
 
     public class DeploymentGethNode : BaseGethNode, IGethNode
@@ -123,6 +129,11 @@ namespace GethPlugin
             return StartInteraction().SendTransaction(contractAddress, function);
         }
 
+        public Transaction GetTransaction(string transactionHash)
+        {
+            return StartInteraction().GetTransaction(transactionHash);
+        }
+
         public decimal? GetSyncedBlockNumber()
         {
             return StartInteraction().GetSyncedBlockNumber();
@@ -131,6 +142,16 @@ namespace GethPlugin
         public bool IsContractAvailable(string abi, string contractAddress)
         {
             return StartInteraction().IsContractAvailable(abi, contractAddress);
+        }
+
+        public List<EventLog<TEvent>> GetEvents<TEvent>(string address, ulong fromBlockNumber, ulong toBlockNumber) where TEvent : IEventDTO, new()
+        {
+            return StartInteraction().GetEvents<TEvent>(address, fromBlockNumber, toBlockNumber);
+        }
+
+        public List<EventLog<TEvent>> GetEvents<TEvent>(string address, TimeRange timeRange) where TEvent : IEventDTO, new()
+        {
+            return StartInteraction().GetEvents<TEvent>(address, timeRange);
         }
 
         protected abstract NethereumInteraction StartInteraction();

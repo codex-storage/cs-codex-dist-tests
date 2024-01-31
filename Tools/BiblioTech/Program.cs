@@ -21,7 +21,7 @@ namespace BiblioTech
             Config = uniformArgs.Parse();
 
             Log = new LogSplitter(
-                new FileLog(Path.Combine(Config.LogPath, "discordbot.log")),
+                new FileLog(Path.Combine(Config.LogPath, "discordbot")),
                 new ConsoleLog()
             );
 
@@ -38,13 +38,15 @@ namespace BiblioTech
             client = new DiscordSocketClient();
             client.Log += ClientLog;
 
-            var associateCommand = new UserAssociateCommand();
+            var notifyCommand = new NotifyCommand();
+            var associateCommand = new UserAssociateCommand(notifyCommand);
             var sprCommand = new SprCommand();
             var handler = new CommandHandler(client,
                 new GetBalanceCommand(associateCommand), 
                 new MintCommand(associateCommand),
                 sprCommand,
                 associateCommand,
+                notifyCommand,
                 new AdminCommand(sprCommand)
             );
 

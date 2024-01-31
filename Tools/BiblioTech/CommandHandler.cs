@@ -2,6 +2,7 @@
 using Discord.WebSocket;
 using Discord;
 using Newtonsoft.Json;
+using BiblioTech.Rewards;
 
 namespace BiblioTech
 {
@@ -24,6 +25,9 @@ namespace BiblioTech
             var guild = client.Guilds.Single(g => g.Name == Program.Config.ServerName);
             Program.AdminChecker.SetGuild(guild);
             Program.Log.Log($"Initializing for guild: '{guild.Name}'");
+
+            var roleController = new RoleController(client);
+            var rewardsApi = new RewardsApi(roleController);
 
             var adminChannels = guild.TextChannels.Where(Program.AdminChecker.IsAdminChannel).ToArray();
             if (adminChannels == null || !adminChannels.Any()) throw new Exception("No admin message channel");
@@ -58,6 +62,8 @@ namespace BiblioTech
                 var json = JsonConvert.SerializeObject(exception.Errors, Formatting.Indented);
                 Program.Log.Error(json);
             }
+
+            rewardsApi.Start();
         }
 
         private async Task SlashCommandHandler(SocketSlashCommand command)

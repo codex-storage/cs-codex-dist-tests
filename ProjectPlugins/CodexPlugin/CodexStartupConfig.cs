@@ -52,12 +52,31 @@ namespace CodexPlugin
                     "connection",
                     "connmanager",
                     "websock",
-                    "ws-session"
+                    "ws-session",
+                    "dialer",
+                    "muxedupgrade",
+                    "upgrade",
+                    "identify"
+                };
+                var blockExchangeTopics = new[]
+                {
+                    "codex",
+                    "pendingblocks",
+                    "peerctxstore",
+                    "discoveryengine",
+                    "blockexcengine",
+                    "blockexcnetwork",
+                    "blockexcnetworkpeer"
                 };
 
                 level = $"{level};" +
                     $"{CustomTopics.DiscV5.ToString()!.ToLowerInvariant()}:{string.Join(",", discV5Topics)};" +
                     $"{CustomTopics.Libp2p.ToString()!.ToLowerInvariant()}:{string.Join(",", libp2pTopics)}";
+
+                if (CustomTopics.BlockExchange != null)
+                {
+                    level += $";{CustomTopics.BlockExchange.ToString()!.ToLowerInvariant()}:{string.Join(",", blockExchangeTopics)}";
+                }
             }
             return level;
         }

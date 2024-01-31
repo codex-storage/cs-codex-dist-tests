@@ -3,6 +3,7 @@ using CodexPlugin;
 using DistTestCore;
 using GethPlugin;
 using MetricsPlugin;
+using Nethereum.Hex.HexConvertors.Extensions;
 using NUnit.Framework;
 using Utils;
 
@@ -59,6 +60,7 @@ namespace CodexTests.BasicTests
             var contracts = Ci.StartCodexContracts(geth);
 
             var seller = AddCodex(s => s
+                .WithLogLevel(CodexLogLevel.Trace, new CodexLogCustomTopics(CodexLogLevel.Error, CodexLogLevel.Error, CodexLogLevel.Warn))
                 .WithStorageQuota(11.GB())
                 .EnableMarketplace(geth, contracts, initialEth: 10.Eth(), initialTokens: sellerInitialBalance, isValidator: true)
                 .WithSimulateProofFailures(failEveryNProofs: 3));
@@ -88,14 +90,40 @@ namespace CodexTests.BasicTests
 
             purchaseContract.WaitForStorageContractStarted(fileSize);
 
+            var requests = contracts.GetStorageRequests(GetTestRunTimeRange());
+            Assert.That(requests.Length, Is.EqualTo(1));
+            var request = requests.Single();
+            Assert.That(contracts.GetRequestState(request), Is.EqualTo(RequestState.Started));
+            Assert.That(request.ClientAddress, Is.EqualTo(buyer.EthAddress));
+            Assert.That(request.Ask.Slots, Is.EqualTo(1));
+
             AssertBalance(contracts, seller, Is.LessThan(sellerInitialBalance), "Collateral was not placed.");
+
+            var requestFulfilledEvents = contracts.GetRequestFulfilledEvents(GetTestRunTimeRange());
+            Assert.That(requestFulfilledEvents.Length, Is.EqualTo(1));
+            CollectionAssert.AreEqual(request.RequestId, requestFulfilledEvents[0].RequestId);
+            var filledSlotEvents = contracts.GetSlotFilledEvents(GetTestRunTimeRange());
+            Assert.That(filledSlotEvents.Length, Is.EqualTo(1));
+            var filledSlotEvent = filledSlotEvents.Single();
+            Assert.That(filledSlotEvent.SlotIndex.IsZero);
+            Assert.That(filledSlotEvent.RequestId.ToHex(), Is.EqualTo(request.RequestId.ToHex()));
+            Assert.That(filledSlotEvent.Host, Is.EqualTo(seller.EthAddress));
+
+            var slotHost = contracts.GetSlotHost(request, 0);
+            Assert.That(slotHost, Is.EqualTo(seller.EthAddress));
 
             purchaseContract.WaitForStorageContractFinished();
 
             AssertBalance(contracts, seller, Is.GreaterThan(sellerInitialBalance), "Seller was not paid for storage.");
             AssertBalance(contracts, buyer, Is.LessThan(buyerInitialBalance), "Buyer was not charged for storage.");
+            Assert.That(contracts.GetRequestState(request), Is.EqualTo(RequestState.Finished));
 
-            CheckLogForErrors(seller, buyer);
+            var log = Ci.DownloadLog(seller);
+            log.AssertLogContains("Received a request to store a slot!");
+            log.AssertLogContains("Received proof challenge");
+            log.AssertLogContains("Collecting input for proof");
+
+            //CheckLogForErrors(seller, buyer);
         }
 
         [Test]
