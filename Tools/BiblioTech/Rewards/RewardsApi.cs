@@ -25,9 +25,11 @@ namespace BiblioTech.Rewards
         public void Start()
         {
             cts = new CancellationTokenSource();
-            listener.Prefixes.Add($"http://*:31080/");
+            var uri = $"http://*:{Program.Config.RewardApiPort}/";
+            listener.Prefixes.Add(uri);
             listener.Start();
             taskFactory.Run(ConnectionDispatcher, nameof(ConnectionDispatcher));
+            Program.Log.Log($"Reward API listening on '{uri}'");
         }
 
         public void Stop()
