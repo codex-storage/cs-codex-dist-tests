@@ -6,8 +6,12 @@ namespace CodexPlugin
 {
     public class CodexDeployment
     {
-        public CodexDeployment(CodexInstance[] codexInstances, GethDeployment gethDeployment, CodexContractsDeployment codexContractsDeployment, RunningContainers? prometheusContainer, RunningContainers? discordBotContainer, DeploymentMetadata metadata)
+        public CodexDeployment(CodexInstance[] codexInstances, GethDeployment gethDeployment,
+            CodexContractsDeployment codexContractsDeployment, RunningContainers? prometheusContainer,
+            RunningContainers? discordBotContainer, DeploymentMetadata metadata,
+            String? id = null)
         {
+            Id = id ?? DateTime.UtcNow.ToString("yyyyMMdd-hhmmss");
             CodexInstances = codexInstances;
             GethDeployment = gethDeployment;
             CodexContractsDeployment = codexContractsDeployment;
@@ -16,6 +20,7 @@ namespace CodexPlugin
             Metadata = metadata;
         }
 
+        public String Id { get; }
         public CodexInstance[] CodexInstances { get; }
         public GethDeployment GethDeployment { get; }
         public CodexContractsDeployment CodexContractsDeployment { get; }
@@ -38,7 +43,10 @@ namespace CodexPlugin
 
     public class DeploymentMetadata
     {
-        public DeploymentMetadata(string name, DateTime startUtc, DateTime finishedUtc, string kubeNamespace, int numberOfCodexNodes, int numberOfValidators, int storageQuotaMB, CodexLogLevel codexLogLevel, int initialTestTokens, int minPrice, int maxCollateral, int maxDuration, int blockTTL, int blockMI, int blockMN)
+        public DeploymentMetadata(string name, DateTime startUtc, DateTime finishedUtc, string kubeNamespace,
+            int numberOfCodexNodes, int numberOfValidators, int storageQuotaMB, CodexLogLevel codexLogLevel,
+            int initialTestTokens, int minPrice, int maxCollateral, int maxDuration, int blockTTL, int blockMI,
+            int blockMN)
         {
             Name = name;
             StartUtc = startUtc;

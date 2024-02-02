@@ -3,8 +3,12 @@ using NUnit.Framework;
 
 namespace CodexTests
 {
-    public class AutoBootstrapDistTest : CodexDistTest
+    public class AutoBootstrapDistTest : CodexDistTest 
     {
+        public AutoBootstrapDistTest(string deployId) : base(deployId)
+        {
+        }
+        
         [SetUp]
         public void SetUpBootstrapNode()
         {
@@ -23,5 +27,6 @@ namespace CodexTests
         }
 
         protected ICodexNode? BootstrapNode { get; private set; }
+        
     }
 }

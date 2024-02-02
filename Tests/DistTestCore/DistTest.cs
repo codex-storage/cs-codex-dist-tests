@@ -20,18 +20,20 @@ namespace DistTestCore
         private readonly object lifecycleLock = new object();
         private readonly EntryPoint globalEntryPoint;
         private readonly Dictionary<string, TestLifecycle> lifecycles = new Dictionary<string, TestLifecycle>();
+        private readonly string deployId;
         
-        public DistTest()
+        public DistTest(String deployId)
         {
             var assemblies = AppDomain.CurrentDomain.GetAssemblies();
             testAssemblies = assemblies.Where(a => a.FullName!.ToLowerInvariant().Contains("test")).ToArray();
 
             var logConfig = configuration.GetLogConfig();
             var startTime = DateTime.UtcNow;
-            fixtureLog = new FixtureLog(logConfig, startTime);
-            statusLog = new StatusLog(logConfig, startTime, "dist-tests");
+            fixtureLog = new FixtureLog(logConfig, startTime, deployId);
+            statusLog = new StatusLog(logConfig, startTime, "dist-tests", deployId);
 
             globalEntryPoint = new EntryPoint(fixtureLog, configuration.GetK8sConfiguration(new DefaultTimeSet(), TestNamespacePrefix), configuration.GetFileManagerFolder());
+            this.deployId = deployId;
 
             Initialize(fixtureLog);
         }
@@ -181,7 +183,7 @@ namespace DistTestCore
                 lock (lifecycleLock)
                 {
                     var testNamespace = TestNamespacePrefix + Guid.NewGuid().ToString();
-                    var lifecycle = new TestLifecycle(fixtureLog.CreateTestLog(), configuration, GetTimeSet(), testNamespace);
+                    var lifecycle = new TestLifecycle(fixtureLog.CreateTestLog(), configuration, GetTimeSet(), testNamespace, deployId);
                     lifecycles.Add(testName, lifecycle);
                     LifecycleStart(lifecycle);
                 }

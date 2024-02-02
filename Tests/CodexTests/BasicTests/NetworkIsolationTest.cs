@@ -43,5 +43,9 @@ namespace CodexTests.BasicTests
             Assert.Fail("Connection could be established between two Codex nodes running in different namespaces. " +
                 "This may cause cross-test interference. Network isolation policy should be applied. Test infra failure.");
         }
+
+        public NetworkIsolationTest(string deployId) : base(deployId)
+        {
+        }
     }
 }

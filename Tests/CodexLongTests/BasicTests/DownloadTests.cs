@@ -38,5 +38,9 @@ namespace CodexLongTests.BasicTests
                 testFile.AssertIsEqual(task.Result);
             }
         }
+
+        public DownloadTests(string deployId) : base(deployId)
+        {
+        }
     }
 }

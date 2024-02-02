@@ -6,16 +6,18 @@ namespace DistTestCore.Logs
 {
     public class StatusLog
     {
-        private readonly object fileLock = new object();
+        private readonly object fileLock = new();
+        private readonly string deployId;
         private readonly string fullName;
         private readonly string fixtureName;
         private readonly string testType;
 
-        public StatusLog(LogConfig config, DateTime start, string testType, string name = "")
+        public StatusLog(LogConfig config, DateTime start, string testType, string deployId, string name = "")
         {
             fullName = NameUtils.GetFixtureFullName(config, start, name) + "_STATUS.log";
             fixtureName = NameUtils.GetRawFixtureName();
             this.testType = testType;
+            this.deployId = deployId;
         }
 
         public void ConcludeTest(string resultStatus, TimeSpan testDuration, Dictionary<string, string> data)
@@ -26,7 +28,7 @@ namespace DistTestCore.Logs
         public void ConcludeTest(string resultStatus, string testDuration, Dictionary<string, string> data)
         {
             data.Add("timestamp", DateTime.UtcNow.ToString("o"));
-            data.Add("runid", NameUtils.GetRunId());
+            data.Add("deployid", deployId);
             data.Add("status", resultStatus);
             data.Add("category", NameUtils.GetCategoryName());
             data.Add("fixturename", fixtureName);

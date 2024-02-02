@@ -59,5 +59,8 @@ namespace CodexTests.BasicTests
         //    Assert.That(response.taskQueue, Is.EqualTo(0), msg + "has tasks in queue.");
         //    Assert.That(response.pendingBlocks, Is.EqualTo(0), msg + "has pending blocks.");
         //}
+        public BlockExchangeTests(string deployId) : base(deployId)
+        {
+        }
     }
 }

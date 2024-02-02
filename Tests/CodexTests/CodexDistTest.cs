@@ -10,11 +10,11 @@ using NUnit.Framework.Constraints;
 
 namespace CodexTests
 {
-    public class CodexDistTest : DistTest
+    public class  CodexDistTest : DistTest
     {
         private readonly Dictionary<TestLifecycle, List<ICodexNode>> onlineCodexNodes = new Dictionary<TestLifecycle, List<ICodexNode>>();
 
-        public CodexDistTest()
+        public CodexDistTest(String deployId) : base(deployId)
         {
             ProjectPlugin.Load<CodexPlugin.CodexPlugin>();
             ProjectPlugin.Load<CodexContractsPlugin.CodexContractsPlugin>();

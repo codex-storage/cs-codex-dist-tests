@@ -38,5 +38,9 @@ namespace CodexTests.BasicTests
 
             testFile.AssertIsEqual(downloadedFile);
         }
+
+        public OneClientTests(string deployId) : base(deployId)
+        {
+        }
     }
 }

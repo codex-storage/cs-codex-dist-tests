@@ -45,6 +45,7 @@ namespace CodexNetDeployer
                 Console.CursorLeft = longestKey + 5;
                 Console.WriteLine($"= {entry.Value}");
             }
+
             Log("");
         }
 
@@ -84,7 +85,8 @@ namespace CodexNetDeployer
 
             var discordBotContainer = DeployDiscordBot(ci, gethDeployment, contractsDeployment);
 
-            return new CodexDeployment(codexInstances, gethDeployment, contractsDeployment, metricsService, discordBotContainer, CreateMetadata(startUtc));
+            return new CodexDeployment(codexInstances, gethDeployment, contractsDeployment, metricsService,
+                discordBotContainer, CreateMetadata(startUtc));
         }
 
         private EntryPoint CreateEntryPoint(ILog log)
@@ -120,7 +122,8 @@ namespace CodexNetDeployer
             });
         }
 
-        private RunningContainers? DeployDiscordBot(CoreInterface ci, GethDeployment gethDeployment, CodexContractsDeployment contractsDeployment)
+        private RunningContainers? DeployDiscordBot(CoreInterface ci, GethDeployment gethDeployment,
+            CodexContractsDeployment contractsDeployment)
         {
             if (!config.DeployDiscordBot) return null;
             Log("Deploying Discord bot...");
@@ -201,7 +204,8 @@ namespace CodexNetDeployer
             foreach (var startResult in startResults)
             {
                 var watcher = startResult.CodexNode.CrashWatcher;
-                if (watcher == null) throw new Exception("Expected each CodexNode container to be created with a crash-watcher.");
+                if (watcher == null)
+                    throw new Exception("Expected each CodexNode container to be created with a crash-watcher.");
                 if (watcher.HasContainerCrashed()) crashes.Add(startResult.CodexNode.Container);
             }
 
@@ -211,7 +215,8 @@ namespace CodexNetDeployer
             }
             else
             {
-                Log($"Check failed. The following containers have crashed: {string.Join(",", crashes.Select(c => c.Name))}");
+                Log(
+                    $"Check failed. The following containers have crashed: {string.Join(",", crashes.Select(c => c.Name))}");
                 throw new Exception("Deployment failed: One or more containers crashed.");
             }
         }

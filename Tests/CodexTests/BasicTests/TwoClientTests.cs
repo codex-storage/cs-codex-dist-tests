@@ -52,5 +52,9 @@ namespace CodexTests.BasicTests
             testFile.AssertIsEqual(downloadedFile);
             CheckLogForErrors(primary, secondary);
         }
+
+        public TwoClientTests(string deployId) : base(deployId)
+        {
+        }
     }
 }
