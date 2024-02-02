@@ -3,7 +3,7 @@ using NUnit.Framework;
 
 namespace CodexTests
 {
-    public class AutoBootstrapDistTest : CodexDistTest 
+    public class AutoBootstrapDistTest : CodexDistTest
     {
         [SetUp]
         public void SetUpBootstrapNode()
