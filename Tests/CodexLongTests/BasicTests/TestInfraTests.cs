@@ -27,9 +27,5 @@ namespace CodexLongTests.BasicTests
                 Assert.That(!string.IsNullOrEmpty(n.GetDebugInfo().id));
             }
         }
-
-        public TestInfraTests(string deployId) : base(deployId)
-        {
-        }
     }
 }

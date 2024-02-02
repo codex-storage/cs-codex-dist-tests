@@ -14,7 +14,7 @@ namespace CodexTests
     {
         private readonly Dictionary<TestLifecycle, List<ICodexNode>> onlineCodexNodes = new Dictionary<TestLifecycle, List<ICodexNode>>();
 
-        public CodexDistTest(String deployId) : base(deployId)
+        public CodexDistTest()
         {
             ProjectPlugin.Load<CodexPlugin.CodexPlugin>();
             ProjectPlugin.Load<CodexContractsPlugin.CodexContractsPlugin>();

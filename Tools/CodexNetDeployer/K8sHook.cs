@@ -8,11 +8,13 @@ namespace CodexNetDeployer
     public class K8sHook : IK8sHooks
     {
         private readonly string testsTypeLabel;
+        private readonly string deployId;
         private readonly Dictionary<string, string> metadata;
 
-        public K8sHook(string testsTypeLabel, Dictionary<string, string> metadata)
+        public K8sHook(string testsTypeLabel, string deployId, Dictionary<string, string> metadata)
         {
             this.testsTypeLabel = testsTypeLabel;
+            this.deployId = deployId;
             this.metadata = metadata;
         }
 
@@ -27,7 +29,7 @@ namespace CodexNetDeployer
         public void OnContainerRecipeCreated(ContainerRecipe recipe)
         {
             recipe.PodLabels.Add("tests-type", testsTypeLabel);
-            recipe.PodLabels.Add("runid", NameUtils.GetRunId());
+            recipe.PodLabels.Add("runid", deployId);
             recipe.PodLabels.Add("testid", NameUtils.GetTestId());
 
             foreach (var pair in metadata)

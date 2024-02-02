@@ -9,9 +9,9 @@ namespace CodexPlugin
         public CodexDeployment(CodexInstance[] codexInstances, GethDeployment gethDeployment,
             CodexContractsDeployment codexContractsDeployment, RunningContainers? prometheusContainer,
             RunningContainers? discordBotContainer, DeploymentMetadata metadata,
-            String? id = null)
+            String id)
         {
-            Id = id ?? DateTime.UtcNow.ToString("yyyyMMdd-hhmmss");
+            Id = id;
             CodexInstances = codexInstances;
             GethDeployment = gethDeployment;
             CodexContractsDeployment = codexContractsDeployment;

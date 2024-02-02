@@ -72,9 +72,5 @@ namespace CodexLongTests.BasicTests
             Assert.That(downloadTimePerMB, Is.LessThan(CodexContainerRecipe.MaxDownloadTimePerMegabyte),
                 "MaxDownloadTimePerMegabyte performance threshold breached.");
         }
-
-        public LargeFileTests(string deployId) : base(deployId)
-        {
-        }
     }
 }

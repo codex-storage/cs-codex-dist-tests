@@ -22,10 +22,12 @@ namespace DistTestCore
         private readonly Dictionary<string, TestLifecycle> lifecycles = new Dictionary<string, TestLifecycle>();
         private readonly string deployId;
         
-        public DistTest(String deployId)
+        public DistTest()
         {
             var assemblies = AppDomain.CurrentDomain.GetAssemblies();
             testAssemblies = assemblies.Where(a => a.FullName!.ToLowerInvariant().Contains("test")).ToArray();
+            
+            deployId = DateTime.UtcNow.ToString("yyyyMMdd-hhmmss");
 
             var logConfig = configuration.GetLogConfig();
             var startTime = DateTime.UtcNow;
@@ -33,7 +35,6 @@ namespace DistTestCore
             statusLog = new StatusLog(logConfig, startTime, "dist-tests", deployId);
 
             globalEntryPoint = new EntryPoint(fixtureLog, configuration.GetK8sConfiguration(new DefaultTimeSet(), TestNamespacePrefix), configuration.GetFileManagerFolder());
-            this.deployId = deployId;
 
             Initialize(fixtureLog);
         }

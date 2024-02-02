@@ -41,9 +41,5 @@ namespace CodexTests.DownloadConnectivityTests
         {
             CreatePeerDownloadTestHelpers().AssertFullDownloadInterconnectivity(GetAllOnlineCodexNodes(), sizeMBs.MB());
         }
-
-        public FullyConnectedDownloadTests(string deployId) : base(deployId)
-        {
-        }
     }
 }

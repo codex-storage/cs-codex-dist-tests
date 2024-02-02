@@ -45,9 +45,5 @@ namespace CodexLongTests.BasicTests
                 testfiles[i].AssertIsEqual(downloads[i].Result);
             }
         }
-
-        public UploadTests(string deployId) : base(deployId)
-        {
-        }
     }
 }

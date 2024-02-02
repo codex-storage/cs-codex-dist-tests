@@ -142,9 +142,5 @@ namespace CodexTests.BasicTests
             Assert.That(bootN, Is.EqualTo(followN));
             Assert.That(discN, Is.LessThan(bootN));
         }
-
-        public ExampleTests(string deployId) : base(deployId)
-        {
-        }
     }
 }

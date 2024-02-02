@@ -48,9 +48,5 @@ namespace CodexTests.PeerDiscoveryTests
         {
             CreatePeerConnectionTestHelpers().AssertFullyConnected(GetAllOnlineCodexNodes());
         }
-
-        public LayeredDiscoveryTests(string deployId) : base(deployId)
-        {
-        }
     }
 }

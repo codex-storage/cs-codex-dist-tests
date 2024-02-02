@@ -89,9 +89,5 @@ namespace CodexTests.PeerDiscoveryTests
         {
             return allResponses.Where(r => r.id != exclude.id).ToArray();
         }
-
-        public PeerDiscoveryTests(string deployId) : base(deployId)
-        {
-        }
     }
 }

@@ -5,10 +5,6 @@ namespace CodexTests
 {
     public class AutoBootstrapDistTest : CodexDistTest 
     {
-        public AutoBootstrapDistTest(string deployId) : base(deployId)
-        {
-        }
-        
         [SetUp]
         public void SetUpBootstrapNode()
         {

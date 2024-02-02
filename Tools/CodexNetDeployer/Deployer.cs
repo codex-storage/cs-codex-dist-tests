@@ -86,7 +86,7 @@ namespace CodexNetDeployer
             var discordBotContainer = DeployDiscordBot(ci, gethDeployment, contractsDeployment);
 
             return new CodexDeployment(codexInstances, gethDeployment, contractsDeployment, metricsService,
-                discordBotContainer, CreateMetadata(startUtc));
+                discordBotContainer, CreateMetadata(startUtc), config.DeployId);
         }
 
         private EntryPoint CreateEntryPoint(ILog log)
@@ -100,7 +100,7 @@ namespace CodexNetDeployer
                 kubernetesNamespace: config.KubeNamespace);
 
             var result = new EntryPoint(log, configuration, string.Empty, new FastHttpTimeSet());
-            configuration.Hooks = new K8sHook(config.TestsTypePodLabel, result.GetPluginMetadata());
+            configuration.Hooks = new K8sHook(config.TestsTypePodLabel, config.DeployId, result.GetPluginMetadata());
 
             return result;
         }

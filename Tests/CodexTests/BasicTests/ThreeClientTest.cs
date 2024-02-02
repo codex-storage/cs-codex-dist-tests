@@ -20,9 +20,5 @@ namespace CodexTests.BasicTests
 
             testFile.AssertIsEqual(downloadedFile);
         }
-
-        public ThreeClientTest(string deployId) : base(deployId)
-        {
-        }
     }
 }
