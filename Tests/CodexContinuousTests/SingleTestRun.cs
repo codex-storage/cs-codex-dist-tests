@@ -25,7 +25,9 @@ namespace ContinuousTests
         private readonly string testName;
         private static int failureCount = 0;
 
-        public SingleTestRun(EntryPointFactory entryPointFactory, TaskFactory taskFactory, Configuration config, ILog overviewLog, StatusLog statusLog, TestHandle handle, StartupChecker startupChecker, CancellationToken cancelToken)
+        public SingleTestRun(EntryPointFactory entryPointFactory,
+            TaskFactory taskFactory, Configuration config, ILog overviewLog, StatusLog statusLog, TestHandle handle,
+            StartupChecker startupChecker, CancellationToken cancelToken, string deployId)
         {
             this.taskFactory = taskFactory;
             this.config = config;
@@ -34,8 +36,9 @@ namespace ContinuousTests
             this.handle = handle;
             this.cancelToken = cancelToken;
             testName = handle.Test.GetType().Name;
-            fixtureLog = new FixtureLog(new LogConfig(config.LogPath), DateTime.UtcNow, testName);
-            entryPoint = entryPointFactory.CreateEntryPoint(config.KubeConfigFile, config.DataPath, config.CodexDeployment.Metadata.KubeNamespace, fixtureLog);
+            fixtureLog = new FixtureLog(new LogConfig(config.LogPath), DateTime.UtcNow, deployId, testName);
+            entryPoint = entryPointFactory.CreateEntryPoint(config.KubeConfigFile, config.DataPath,
+                config.CodexDeployment.Metadata.KubeNamespace, fixtureLog);
             ApplyLogReplacements(fixtureLog, startupChecker);
 
             nodes = CreateRandomNodes();
@@ -80,6 +83,7 @@ namespace ContinuousTests
                 {
                     fixtureLog.Delete();
                 }
+
                 resultHandler(true);
             }
             catch (Exception ex)
@@ -114,6 +118,7 @@ namespace ContinuousTests
             {
                 effectiveStart = config.CodexDeployment.Metadata.StartUtc.Subtract(TimeSpan.FromSeconds(30));
             }
+
             var effectiveEnd = DateTime.UtcNow;
             var elasticSearchLogDownloader = new ElasticSearchLogDownloader(entryPoint.Tools, fixtureLog);
 
@@ -122,14 +127,17 @@ namespace ContinuousTests
                 var container = node.Container;
                 var deploymentName = container.RunningContainers.StartResult.Deployment.Name;
                 var namespaceName = container.RunningContainers.StartResult.Cluster.Configuration.KubernetesNamespace;
-                var openingLine = $"{namespaceName} - {deploymentName} = {node.Container.Name} = {node.GetDebugInfo().id}";
-                elasticSearchLogDownloader.Download(fixtureLog.CreateSubfile(), node.Container, effectiveStart, effectiveEnd, openingLine);
+                var openingLine =
+                    $"{namespaceName} - {deploymentName} = {node.Container.Name} = {node.GetDebugInfo().id}";
+                elasticSearchLogDownloader.Download(fixtureLog.CreateSubfile(), node.Container, effectiveStart,
+                    effectiveEnd, openingLine);
             }
         }
 
         private void ApplyLogReplacements(FixtureLog fixtureLog, StartupChecker startupChecker)
         {
-            foreach (var replacement in startupChecker.LogReplacements) fixtureLog.AddStringReplace(replacement.From, replacement.To);
+            foreach (var replacement in startupChecker.LogReplacements)
+                fixtureLog.AddStringReplace(replacement.From, replacement.To);
         }
 
         private void RunTestMoments()
@@ -161,9 +169,11 @@ namespace ContinuousTests
                     {
                         ThrowFailTest();
                     }
+
                     return;
                 }
             }
+
             fixtureLog.Log("Test run has been cancelled.");
         }
 
@@ -222,6 +232,7 @@ namespace ContinuousTests
             {
                 return UnpackException(a.InnerExceptions.First());
             }
+
             if (exception is TargetInvocationException t)
             {
                 return UnpackException(t.InnerException!);
@@ -294,6 +305,7 @@ namespace ContinuousTests
             {
                 result[i] = containers.PickOneRandom();
             }
+
             return result;
         }
     }

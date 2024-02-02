@@ -78,7 +78,7 @@ namespace DistTestCore
         public void OnContainerRecipeCreated(ContainerRecipe recipe)
         {
             recipe.PodLabels.Add("tests-type", TestsType);
-            recipe.PodLabels.Add("deployid", deployId);
+            recipe.PodLabels.Add("runid", deployId);
             recipe.PodLabels.Add("testid", NameUtils.GetTestId());
             recipe.PodLabels.Add("category", NameUtils.GetCategoryName());
             recipe.PodLabels.Add("fixturename", NameUtils.GetRawFixtureName());

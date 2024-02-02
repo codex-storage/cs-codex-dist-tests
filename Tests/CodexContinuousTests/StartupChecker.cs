@@ -23,7 +23,8 @@ namespace ContinuousTests
 
         public void Check()
         {
-            var log = new FixtureLog(new LogConfig(config.LogPath), DateTime.UtcNow, "StartupChecks");
+            var log = new FixtureLog(new LogConfig(config.LogPath), DateTime.UtcNow, config.CodexDeployment.Id,
+                "StartupChecks");
             log.Log("Starting continuous test run...");
             IncludeDeploymentConfiguration(log);
             log.Log("Checking configuration...");
@@ -46,13 +47,15 @@ namespace ContinuousTests
                 {
                     var podInfo = workflow.GetPodInfo(container);
                     log.Log($"Codex environment variables for '{container.Name}':");
-                    log.Log($"Namespace: {container.RunningContainers.StartResult.Cluster.Configuration.KubernetesNamespace} - " +
+                    log.Log(
+                        $"Namespace: {container.RunningContainers.StartResult.Cluster.Configuration.KubernetesNamespace} - " +
                         $"Pod name: {podInfo.Name} - Deployment name: {instance.Containers.StartResult.Deployment.Name}");
                     var codexVars = container.Recipe.EnvVars;
                     foreach (var vars in codexVars) log.Log(vars.ToString());
                     log.Log("");
                 }
             }
+
             log.Log($"Deployment metadata: {JsonConvert.SerializeObject(deployment.Metadata)}");
             log.Log("");
         }
@@ -64,6 +67,7 @@ namespace ContinuousTests
             {
                 throw new Exception("Unable to find any tests.");
             }
+
             foreach (var test in tests)
             {
                 cancelToken.ThrowIfCancellationRequested();
@@ -87,7 +91,8 @@ namespace ContinuousTests
 
         private void CheckCodexNodes(BaseLog log, Configuration config)
         {
-            var nodes = entryPoint.CreateInterface().WrapCodexContainers(config.CodexDeployment.CodexInstances.Select(i => i.Containers).ToArray());
+            var nodes = entryPoint.CreateInterface()
+                .WrapCodexContainers(config.CodexDeployment.CodexInstances.Select(i => i.Containers).ToArray());
             var pass = true;
             foreach (var n in nodes)
             {
@@ -106,6 +111,7 @@ namespace ContinuousTests
                     pass = false;
                 }
             }
+
             if (!pass)
             {
                 throw new Exception("Not all codex nodes responded.");
@@ -126,6 +132,7 @@ namespace ContinuousTests
             {
                 return false;
             }
+
             return true;
         }
 
@@ -145,7 +152,8 @@ namespace ContinuousTests
                 propertyName: nameof(ContinuousTest.CustomK8sNamespace));
         }
 
-        private void DuplicatesCheck(ContinuousTest[] tests, List<string> errors, Func<ContinuousTest, bool> considerCondition, Func<ContinuousTest, object> getValue, string propertyName)
+        private void DuplicatesCheck(ContinuousTest[] tests, List<string> errors,
+            Func<ContinuousTest, bool> considerCondition, Func<ContinuousTest, object> getValue, string propertyName)
         {
             foreach (var test in tests)
             {
@@ -155,7 +163,8 @@ namespace ContinuousTests
                     if (duplicates.Any())
                     {
                         duplicates.Add(test);
-                        errors.Add($"Tests '{string.Join(",", duplicates.Select(d => d.Name))}' have the same '{propertyName}'. These must be unique.");
+                        errors.Add(
+                            $"Tests '{string.Join(",", duplicates.Select(d => d.Name))}' have the same '{propertyName}'. These must be unique.");
                         return;
                     }
                 }
@@ -170,11 +179,13 @@ namespace ContinuousTests
                 {
                     if (test.RequiredNumberOfNodes < 1)
                     {
-                        errors.Add($"Test '{test.Name}' requires {test.RequiredNumberOfNodes} nodes. Test must require > 0 nodes, or -1 to select all nodes.");
+                        errors.Add(
+                            $"Test '{test.Name}' requires {test.RequiredNumberOfNodes} nodes. Test must require > 0 nodes, or -1 to select all nodes.");
                     }
                     else if (test.RequiredNumberOfNodes > config.CodexDeployment.CodexInstances.Length)
                     {
-                        errors.Add($"Test '{test.Name}' requires {test.RequiredNumberOfNodes} nodes. Deployment only has {config.CodexDeployment.CodexInstances.Length}");
+                        errors.Add(
+                            $"Test '{test.Name}' requires {test.RequiredNumberOfNodes} nodes. Deployment only has {config.CodexDeployment.CodexInstances.Length}");
                     }
                 }
             }
