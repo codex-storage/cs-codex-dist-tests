@@ -39,7 +39,12 @@ namespace DistTestCore
         {
             return GetEnvVar("TESTID", "EnvVar-TESTID-NotSet");
         }
-        
+
+        public static string MakeDeployId()
+        {
+            return DateTime.UtcNow.ToString("yyyyMMdd-hhmmss");
+        }
+
         private static string GetEnvVar(string name, string defaultValue)
         {
             var v = Environment.GetEnvironmentVariable(name);

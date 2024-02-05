@@ -27,7 +27,7 @@ namespace DistTestCore
             var assemblies = AppDomain.CurrentDomain.GetAssemblies();
             testAssemblies = assemblies.Where(a => a.FullName!.ToLowerInvariant().Contains("test")).ToArray();
             
-            deployId = DateTime.UtcNow.ToString("yyyyMMdd-hhmmss");
+            deployId = NameUtils.MakeDeployId();
 
             var logConfig = configuration.GetLogConfig();
             var startTime = DateTime.UtcNow;
