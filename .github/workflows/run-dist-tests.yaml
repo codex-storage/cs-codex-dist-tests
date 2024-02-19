@@ -43,7 +43,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Variables
         run: |
@@ -57,7 +57,7 @@ jobs:
           [[ -n "${{ inputs.command }}" ]] && COMMAND="${{ inputs.command }}" || COMMAND="${{ env.COMMAND }}"
 
       - name: Kubectl - Install ${{ env.KUBE_VERSION }}
-        uses: azure/setup-kubectl@v3
+        uses: azure/setup-kubectl@v4
         with:
           version: ${{ env.KUBE_VERSION }}
 
