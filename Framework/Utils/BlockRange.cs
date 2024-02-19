@@ -18,5 +18,10 @@
 
         public ulong From { get; }
         public ulong To { get; }
+
+        public override string ToString()
+        {
+            return $"[{From} - {To}]";
+        }
     }
 }

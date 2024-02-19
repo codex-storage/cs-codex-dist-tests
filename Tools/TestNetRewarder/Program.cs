@@ -47,7 +47,7 @@ namespace TestNetRewarder
             {
                 await EnsureBotOnline();
                 await segmenter.WaitForNextSegment(processor.ProcessTimeSegment);
-                await Task.Delay(1000, CancellationToken);
+                await Task.Delay(100, CancellationToken);
             }
         }
 

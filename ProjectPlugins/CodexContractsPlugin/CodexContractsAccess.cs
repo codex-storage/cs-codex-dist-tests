@@ -19,13 +19,13 @@ namespace CodexContractsPlugin
         TestToken GetTestTokenBalance(IHasEthAddress owner);
         TestToken GetTestTokenBalance(EthAddress ethAddress);
 
-        Request[] GetStorageRequests(TimeRange timeRange);
+        Request[] GetStorageRequests(BlockRange blockRange);
         EthAddress? GetSlotHost(Request storageRequest, decimal slotIndex);
         RequestState GetRequestState(Request request);
-        RequestFulfilledEventDTO[] GetRequestFulfilledEvents(TimeRange timeRange);
-        RequestCancelledEventDTO[] GetRequestCancelledEvents(TimeRange timeRange);
-        SlotFilledEventDTO[] GetSlotFilledEvents(TimeRange timeRange);
-        SlotFreedEventDTO[] GetSlotFreedEvents(TimeRange timeRange);
+        RequestFulfilledEventDTO[] GetRequestFulfilledEvents(BlockRange blockRange);
+        RequestCancelledEventDTO[] GetRequestCancelledEvents(BlockRange blockRange);
+        SlotFilledEventDTO[] GetSlotFilledEvents(BlockRange blockRange);
+        SlotFreedEventDTO[] GetSlotFreedEvents(BlockRange blockRange);
     }
 
     public enum RequestState
@@ -77,9 +77,9 @@ namespace CodexContractsPlugin
             return balance.TestTokens();
         }
 
-        public Request[] GetStorageRequests(TimeRange timeRange)
+        public Request[] GetStorageRequests(BlockRange blockRange)
         {
-            var events = gethNode.GetEvents<StorageRequestedEventDTO>(Deployment.MarketplaceAddress, timeRange);
+            var events = gethNode.GetEvents<StorageRequestedEventDTO>(Deployment.MarketplaceAddress, blockRange);
             var i = StartInteraction();
             return events
                     .Select(e =>
@@ -93,9 +93,9 @@ namespace CodexContractsPlugin
                     .ToArray();
         }
 
-        public RequestFulfilledEventDTO[] GetRequestFulfilledEvents(TimeRange timeRange)
+        public RequestFulfilledEventDTO[] GetRequestFulfilledEvents(BlockRange blockRange)
         {
-            var events = gethNode.GetEvents<RequestFulfilledEventDTO>(Deployment.MarketplaceAddress, timeRange);
+            var events = gethNode.GetEvents<RequestFulfilledEventDTO>(Deployment.MarketplaceAddress, blockRange);
             return events.Select(e =>
             {
                 var result = e.Event;
@@ -104,9 +104,9 @@ namespace CodexContractsPlugin
             }).ToArray();
         }
 
-        public RequestCancelledEventDTO[] GetRequestCancelledEvents(TimeRange timeRange)
+        public RequestCancelledEventDTO[] GetRequestCancelledEvents(BlockRange blockRange)
         {
-            var events = gethNode.GetEvents<RequestCancelledEventDTO>(Deployment.MarketplaceAddress, timeRange);
+            var events = gethNode.GetEvents<RequestCancelledEventDTO>(Deployment.MarketplaceAddress, blockRange);
             return events.Select(e =>
             {
                 var result = e.Event;
@@ -115,9 +115,9 @@ namespace CodexContractsPlugin
             }).ToArray();
         }
 
-        public SlotFilledEventDTO[] GetSlotFilledEvents(TimeRange timeRange)
+        public SlotFilledEventDTO[] GetSlotFilledEvents(BlockRange blockRange)
         {
-            var events = gethNode.GetEvents<SlotFilledEventDTO>(Deployment.MarketplaceAddress, timeRange);
+            var events = gethNode.GetEvents<SlotFilledEventDTO>(Deployment.MarketplaceAddress, blockRange);
             return events.Select(e =>
             {
                 var result = e.Event;
@@ -127,9 +127,9 @@ namespace CodexContractsPlugin
             }).ToArray();
         }
 
-        public SlotFreedEventDTO[] GetSlotFreedEvents(TimeRange timeRange)
+        public SlotFreedEventDTO[] GetSlotFreedEvents(BlockRange blockRange)
         {
-            var events = gethNode.GetEvents<SlotFreedEventDTO>(Deployment.MarketplaceAddress, timeRange);
+            var events = gethNode.GetEvents<SlotFreedEventDTO>(Deployment.MarketplaceAddress, blockRange);
             return events.Select(e =>
             {
                 var result = e.Event;

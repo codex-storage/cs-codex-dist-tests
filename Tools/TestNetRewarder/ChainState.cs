@@ -1,6 +1,6 @@
 ﻿using CodexContractsPlugin;
 using CodexContractsPlugin.Marketplace;
-using Utils;
+using BlockRange = Utils.BlockRange;
 
 namespace TestNetRewarder
 {
@@ -8,18 +8,18 @@ namespace TestNetRewarder
     {
         private readonly HistoricState historicState;
 
-        public ChainState(HistoricState historicState, ICodexContracts contracts, TimeRange timeRange)
+        public ChainState(HistoricState historicState, ICodexContracts contracts, BlockRange blockRange)
         {
-            NewRequests = contracts.GetStorageRequests(timeRange);
+            NewRequests = contracts.GetStorageRequests(blockRange);
             historicState.ProcessNewRequests(NewRequests);
             historicState.UpdateStorageRequests(contracts);
 
             StartedRequests = historicState.StorageRequests.Where(r => r.RecentlyStarted).ToArray();
             FinishedRequests = historicState.StorageRequests.Where(r => r.RecentlyFininshed).ToArray();
-            RequestFulfilledEvents = contracts.GetRequestFulfilledEvents(timeRange);
-            RequestCancelledEvents = contracts.GetRequestCancelledEvents(timeRange);
-            SlotFilledEvents = contracts.GetSlotFilledEvents(timeRange);
-            SlotFreedEvents = contracts.GetSlotFreedEvents(timeRange);
+            RequestFulfilledEvents = contracts.GetRequestFulfilledEvents(blockRange);
+            RequestCancelledEvents = contracts.GetRequestCancelledEvents(blockRange);
+            SlotFilledEvents = contracts.GetSlotFilledEvents(blockRange);
+            SlotFreedEvents = contracts.GetSlotFreedEvents(blockRange);
             this.historicState = historicState;
         }
 

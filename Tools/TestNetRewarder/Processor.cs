@@ -11,20 +11,28 @@ namespace TestNetRewarder
         private static readonly HistoricState historicState = new HistoricState();
         private static readonly RewardRepo rewardRepo = new RewardRepo();
         private readonly ILog log;
+        private BlockRange? lastBlockRange;
 
         public Processor(ILog log)
         {
             this.log = log;
         }
 
-        public async Task ProcessTimeSegment(TimeRange range)
+        public async Task ProcessTimeSegment(TimeRange timeRange)
         {
             try
             {
                 var connector = GethConnector.GethConnector.Initialize(log);
                 if (connector == null) return;
 
-                var chainState = new ChainState(historicState, connector.CodexContracts, range);
+                var blockRange = connector.GethNode.ConvertTimeRangeToBlockRange(timeRange);
+                if (!IsNewBlockRange(blockRange))
+                {
+                    log.Log($"Block range {blockRange} was previously processed. Skipping...");
+                    return;
+                }
+
+                var chainState = new ChainState(historicState, connector.CodexContracts, blockRange);
                 await ProcessTimeSegment(chainState);
 
             }
@@ -32,6 +40,19 @@ namespace TestNetRewarder
             {
                 log.Error("Exception processing time segment: " + ex);
             }
+        }
+
+        private bool IsNewBlockRange(BlockRange blockRange)
+        {
+            if (lastBlockRange == null ||
+                lastBlockRange.From != blockRange.From || 
+                lastBlockRange.To != blockRange.To)
+            {
+                lastBlockRange = blockRange;
+                return true;
+            }
+
+            return false;
         }
 
         private async Task ProcessTimeSegment(ChainState chainState)
@@ -58,13 +79,17 @@ namespace TestNetRewarder
                 Rewards = outgoingRewards.ToArray()
             };
 
-            log.Debug("Sending rewards: " + JsonConvert.SerializeObject(cmd));
+            log.Log("Sending rewards: " + JsonConvert.SerializeObject(cmd));
             return await Program.BotClient.SendRewards(cmd);
         }
 
         private void ProcessReward(List<RewardUsersCommand> outgoingRewards, RewardConfig reward, ChainState chainState)
         {
             var winningAddresses = PerformCheck(reward, chainState);
+            foreach (var win in winningAddresses)
+            {
+                log.Log($"Address '{win.Address}' wins '{reward.Message}'");
+            }
             if (winningAddresses.Any())
             {
                 outgoingRewards.Add(new RewardUsersCommand

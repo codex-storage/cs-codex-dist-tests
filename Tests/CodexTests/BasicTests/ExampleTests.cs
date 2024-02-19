@@ -89,7 +89,9 @@ namespace CodexTests.BasicTests
 
             purchaseContract.WaitForStorageContractStarted(fileSize);
 
-            var requests = contracts.GetStorageRequests(GetTestRunTimeRange());
+            var blockRange = geth.ConvertTimeRangeToBlockRange(GetTestRunTimeRange());
+
+            var requests = contracts.GetStorageRequests(blockRange);
             Assert.That(requests.Length, Is.EqualTo(1));
             var request = requests.Single();
             Assert.That(contracts.GetRequestState(request), Is.EqualTo(RequestState.Started));
@@ -98,10 +100,10 @@ namespace CodexTests.BasicTests
 
             AssertBalance(contracts, seller, Is.LessThan(sellerInitialBalance), "Collateral was not placed.");
 
-            var requestFulfilledEvents = contracts.GetRequestFulfilledEvents(GetTestRunTimeRange());
+            var requestFulfilledEvents = contracts.GetRequestFulfilledEvents(blockRange);
             Assert.That(requestFulfilledEvents.Length, Is.EqualTo(1));
             CollectionAssert.AreEqual(request.RequestId, requestFulfilledEvents[0].RequestId);
-            var filledSlotEvents = contracts.GetSlotFilledEvents(GetTestRunTimeRange());
+            var filledSlotEvents = contracts.GetSlotFilledEvents(blockRange);
             Assert.That(filledSlotEvents.Length, Is.EqualTo(1));
             var filledSlotEvent = filledSlotEvents.Single();
             Assert.That(filledSlotEvent.SlotIndex.IsZero);
@@ -124,6 +126,5 @@ namespace CodexTests.BasicTests
 
             //CheckLogForErrors(seller, buyer);
         }
-
     }
 }
