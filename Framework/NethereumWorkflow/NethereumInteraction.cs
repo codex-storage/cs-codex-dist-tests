@@ -3,7 +3,6 @@ using Nethereum.ABI.FunctionEncoding.Attributes;
 using Nethereum.Contracts;
 using Nethereum.RPC.Eth.DTOs;
 using Nethereum.Web3;
-using System.Runtime.CompilerServices;
 using Utils;
 
 namespace NethereumWorkflow
@@ -90,14 +89,18 @@ namespace NethereumWorkflow
         {
             var blockTimeFinder = new BlockTimeFinder(web3, log);
 
-            var fromBlock = blockTimeFinder.GetLowestBlockNumberAfter(timeRange.From);
-            var toBlock = blockTimeFinder.GetHighestBlockNumberBefore(timeRange.To);
+            var lowest = blockTimeFinder.GetLowestBlockNumberAfter(timeRange.From);
+            var highest = blockTimeFinder.GetHighestBlockNumberBefore(timeRange.To);
+
+            var fromBlock = Math.Min(lowest, highest);
+            var toBlock = Math.Max(lowest, highest);
 
             return GetEvents<TEvent>(address, fromBlock, toBlock);
         }
 
         public List<EventLog<TEvent>> GetEvents<TEvent>(string address, ulong fromBlockNumber, ulong toBlockNumber) where TEvent : IEventDTO, new()
         {
+            log.Debug($"Getting events of type [{typeof(TEvent).Name}] in block range [{fromBlockNumber} - {toBlockNumber}]");
             var eventHandler = web3.Eth.GetEvent<TEvent>(address);
             var from = new BlockParameter(fromBlockNumber);
             var to = new BlockParameter(toBlockNumber);

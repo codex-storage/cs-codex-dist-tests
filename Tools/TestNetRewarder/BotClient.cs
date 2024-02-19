@@ -1,4 +1,5 @@
-﻿using DiscordRewards;
+﻿using CodexContractsPlugin.Marketplace;
+using DiscordRewards;
 using Logging;
 using Newtonsoft.Json;
 
@@ -17,13 +18,30 @@ namespace TestNetRewarder
 
         public async Task<bool> IsOnline()
         {
-            return await HttpPost("Ping") == "Ping";
+            var result = await HttpGet();
+            log.Log("Is DiscordBot online: " + result);
+            return result == "Pong";
         }
 
-        public async Task SendRewards(GiveRewardsCommand command)
+        public async Task<bool> SendRewards(GiveRewardsCommand command)
         {
-            if (command == null || command.Rewards == null || !command.Rewards.Any()) return;
-            await HttpPost(JsonConvert.SerializeObject(command));
+            if (command == null || command.Rewards == null || !command.Rewards.Any()) return false;
+            return await HttpPost(JsonConvert.SerializeObject(command)) == "OK";
+        }
+
+        private async Task<string> HttpGet()
+        {
+            try
+            {
+                var client = new HttpClient();
+                var response = await client.GetAsync(GetUrl());
+                return await response.Content.ReadAsStringAsync();
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex.ToString());
+                return string.Empty;
+            }
         }
 
         private async Task<string> HttpPost(string content)
@@ -43,7 +61,7 @@ namespace TestNetRewarder
 
         private string GetUrl()
         {
-            return $"{configuration.DiscordHost}:{configuration.DiscordPort}";
+            return $"{configuration.DiscordHost}:{configuration.DiscordPort}/api/reward";
         }
     }
 }

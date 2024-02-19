@@ -44,11 +44,14 @@ namespace TestNetRewarder
 
             if (outgoingRewards.Any())
             {
-                await SendRewardsCommand(outgoingRewards);
+                if (!await SendRewardsCommand(outgoingRewards))
+                {
+                    log.Error("Failed to send reward command.");
+                }
             }
         }
 
-        private async Task SendRewardsCommand(List<RewardUsersCommand> outgoingRewards)
+        private async Task<bool> SendRewardsCommand(List<RewardUsersCommand> outgoingRewards)
         {
             var cmd = new GiveRewardsCommand
             {
@@ -56,7 +59,7 @@ namespace TestNetRewarder
             };
 
             log.Debug("Sending rewards: " + JsonConvert.SerializeObject(cmd));
-            await Program.BotClient.SendRewards(cmd);
+            return await Program.BotClient.SendRewards(cmd);
         }
 
         private void ProcessReward(List<RewardUsersCommand> outgoingRewards, RewardConfig reward, ChainState chainState)

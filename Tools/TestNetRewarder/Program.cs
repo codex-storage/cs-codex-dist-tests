@@ -59,6 +59,7 @@ namespace TestNetRewarder
 
             var blockNumber = gc.GethNode.GetSyncedBlockNumber();
             if (blockNumber == null || blockNumber < 1) throw new Exception("Geth connection failed.");
+            Log.Log("Geth OK. Block number: " + blockNumber);
         }
 
         private static async Task EnsureBotOnline()

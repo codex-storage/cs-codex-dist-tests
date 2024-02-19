@@ -52,7 +52,13 @@ namespace NethereumWorkflow
                 return closestBefore.BlockNumber;
             }
 
-            FetchBlocksAround(moment);
+            var newBlocks = FetchBlocksAround(moment);
+            if (newBlocks == 0)
+            {
+                log.Log("Didn't find any new blocks.");
+                if (closestBefore != null) return closestBefore.BlockNumber;
+                throw new Exception("Failed to find highest before.");
+            }
             return GetHighestBlockBefore(moment);
         }
 
@@ -71,11 +77,17 @@ namespace NethereumWorkflow
                 return closestAfter.BlockNumber;
             }
 
-            FetchBlocksAround(moment);
+            var newBlocks = FetchBlocksAround(moment);
+            if (newBlocks == 0)
+            {
+                log.Log("Didn't find any new blocks.");
+                if (closestAfter != null) return closestAfter.BlockNumber;
+                throw new Exception("Failed to find lowest before.");
+            }
             return GetLowestBlockAfter(moment);
         }
 
-        private void FetchBlocksAround(DateTime moment)
+        private int FetchBlocksAround(DateTime moment)
         {
             var timePerBlock = EstimateTimePerBlock();
             log.Debug("Fetching blocks around " + moment.ToString("o") + " timePerBlock: " + timePerBlock.TotalSeconds);
@@ -85,42 +97,55 @@ namespace NethereumWorkflow
             var max = entries.Keys.Max();
             var blockDifference = CalculateBlockDifference(moment, timePerBlock, max);
 
-            FetchUp(max, blockDifference);
-            FetchDown(max, blockDifference);
+            return
+                FetchUp(max, blockDifference) +
+                FetchDown(max, blockDifference);
         }
 
-        private void FetchDown(ulong max, ulong blockDifference)
+        private int FetchDown(ulong max, ulong blockDifference)
         {
-            var target = max - blockDifference - 1;
+            var target = GetTarget(max, blockDifference);
             var fetchDown = FetchRange;
+            var newBlocks = 0;
             while (fetchDown > 0)
             {
                 if (!entries.ContainsKey(target))
                 {
-                    var newBlock = AddBlockNumber(target);
-                    if (newBlock == null) return;
+                    var newBlock = AddBlockNumber("FD" + fetchDown, target);
+                    if (newBlock == null) return newBlocks;
+                    newBlocks++;
                     fetchDown--;
                 }
                 target--;
-                if (target <= 0) return;
+                if (target <= 0) return newBlocks;
             }
+            return newBlocks;
         }
 
-        private void FetchUp(ulong max, ulong blockDifference)
+        private int FetchUp(ulong max, ulong blockDifference)
         {
-            var target = max - blockDifference;
+            var target = GetTarget(max, blockDifference);
             var fetchUp = FetchRange;
+            var newBlocks = 0;
             while (fetchUp > 0)
             {
                 if (!entries.ContainsKey(target))
                 {
-                    var newBlock = AddBlockNumber(target);
-                    if (newBlock == null) return;
+                    var newBlock = AddBlockNumber("FU" + fetchUp, target);
+                    if (newBlock == null) return newBlocks;
+                    newBlocks++;
                     fetchUp--;
                 }
                 target++;
-                if (target >= max) return;
+                if (target >= max) return newBlocks;
             }
+            return newBlocks;
+        }
+
+        private ulong GetTarget(ulong max, ulong blockDifference)
+        {
+            if (max <= blockDifference) return 1;
+            return max - blockDifference;
         }
 
         private ulong CalculateBlockDifference(DateTime moment, TimeSpan timePerBlock, ulong max)
@@ -155,13 +180,14 @@ namespace NethereumWorkflow
             }
         }
 
-        private BlockTimeEntry? AddBlockNumber(decimal blockNumber)
+        private BlockTimeEntry? AddBlockNumber(string a, decimal blockNumber)
         {
-            return AddBlockNumber(Convert.ToUInt64(blockNumber));
+            return AddBlockNumber(a, Convert.ToUInt64(blockNumber));
         }
 
-        private BlockTimeEntry? AddBlockNumber(ulong blockNumber)
+        private BlockTimeEntry? AddBlockNumber(string a, ulong blockNumber)
         {
+            log.Log(a + " - Adding blockNumber: " + blockNumber);
             if (entries.ContainsKey(blockNumber))
             {
                 return entries[blockNumber];
@@ -190,9 +216,10 @@ namespace NethereumWorkflow
         {
             var min = entries.Keys.Min();
             var max = entries.Keys.Max();
+            log.Log("min/max: " + min + " / " + max);
             var clippedMin = Math.Max(max - 100, min);
             var minTime = entries[min].Utc;
-            var clippedMinBlock = AddBlockNumber(clippedMin);
+            var clippedMinBlock = AddBlockNumber("EST", clippedMin);
             if (clippedMinBlock != null) minTime = clippedMinBlock.Utc;
 
             var maxTime = entries[max].Utc;
@@ -212,7 +239,7 @@ namespace NethereumWorkflow
             if (!entries.Any())
             {
                 AddCurrentBlock();
-                AddBlockNumber(entries.Single().Key - 1);
+                AddBlockNumber("INIT", entries.Single().Key - 1);
             }
         }
 
@@ -225,7 +252,7 @@ namespace NethereumWorkflow
         {
             var number = Time.Wait(web3.Eth.Blocks.GetBlockNumber.SendRequestAsync());
             var blockNumber = number.ToDecimal();
-            return AddBlockNumber(blockNumber);
+            return AddBlockNumber("CUR", blockNumber);
         }
 
         private DateTime? GetTimestampFromBlock(ulong blockNumber)
@@ -238,7 +265,7 @@ namespace NethereumWorkflow
             }
             catch (Exception ex)
             {
-                int i = 0;
+                log.Error(nameof(GetTimestampFromBlock) + " Exception: " + ex);
                 throw;
             }
         }

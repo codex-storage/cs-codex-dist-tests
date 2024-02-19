@@ -4,13 +4,13 @@ using DiscordRewards;
 
 namespace BiblioTech.Rewards
 {
-    public class RoleController : IDiscordRoleController
+    public class RoleDriver : IDiscordRoleDriver
     {
         private readonly DiscordSocketClient client;
         private readonly SocketTextChannel? rewardsChannel;
         private readonly RewardRepo repo = new RewardRepo();
 
-        public RoleController(DiscordSocketClient client)
+        public RoleDriver(DiscordSocketClient client)
         {
             this.client = client;
 
@@ -107,7 +107,13 @@ namespace BiblioTech.Rewards
 
         private SocketGuild GetGuild()
         {
-            return client.Guilds.Single(g => g.Name == Program.Config.ServerName);
+            var guild = client.Guilds.SingleOrDefault(g => g.Name == Program.Config.ServerName);
+            if (guild == null)
+            {
+                throw new Exception($"Unable to find guild by name: '{Program.Config.ServerName}'. " +
+                    $"Known guilds: [{string.Join(",", client.Guilds.Select(g => g.Name))}]");
+            }
+            return guild;
         }
     }
 
