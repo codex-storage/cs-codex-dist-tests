@@ -58,9 +58,6 @@ namespace BiblioTech.Rewards
                         {
                             Program.Log.Error("Exception during HTTP handler: " + ex);
                         }
-                        // Whatever happens, everything's always OK.
-                        context.Response.StatusCode = 200;
-                        context.Response.OutputStream.Close();
                     }, nameof(HandleConnection));
                 }
             }

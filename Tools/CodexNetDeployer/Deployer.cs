@@ -142,7 +142,8 @@ namespace CodexNetDeployer
                 adminRoleName: config.DiscordBotAdminRoleName,
                 adminChannelName: config.DiscordBotAdminChannelName,
                 kubeNamespace: config.KubeNamespace,
-                gethInfo: info)
+                gethInfo: info,
+                rewardChannelName: config.DiscordBotRewardChannelName)
             {
                 DataPath = config.DiscordBotDataPath
             });

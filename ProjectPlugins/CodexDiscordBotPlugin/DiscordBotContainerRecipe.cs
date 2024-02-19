@@ -9,6 +9,8 @@ namespace CodexDiscordBotPlugin
         public override string AppName => "discordbot-bibliotech";
         public override string Image => "thatbenbierens/codex-discordbot:initial";
 
+        public static string RewardsPort = "bot_rewards_port";
+
         protected override void Initialize(StartupConfig startupConfig)
         {
             var config = startupConfig.Get<DiscordBotStartupConfig>();
@@ -19,6 +21,7 @@ namespace CodexDiscordBotPlugin
             AddEnvVar("SERVERNAME", config.ServerName);
             AddEnvVar("ADMINROLE", config.AdminRoleName);
             AddEnvVar("ADMINCHANNELNAME", config.AdminChannelName);
+            AddEnvVar("REWARDSCHANNELNAME", config.RewardChannelName);
             AddEnvVar("KUBECONFIG", "/opt/kubeconfig.yaml");
             AddEnvVar("KUBENAMESPACE", config.KubeNamespace);
 
@@ -29,6 +32,8 @@ namespace CodexDiscordBotPlugin
             AddEnvVar("CODEXCONTRACTS_MARKETPLACEADDRESS", gethInfo.MarketplaceAddress);
             AddEnvVar("CODEXCONTRACTS_TOKENADDRESS", gethInfo.TokenAddress);
             AddEnvVar("CODEXCONTRACTS_ABI", gethInfo.Abi);
+
+            AddInternalPortAndVar("REWARDAPIPORT", RewardsPort);
 
             if (!string.IsNullOrEmpty(config.DataPath))
             {
