@@ -2,6 +2,7 @@
 using DiscordRewards;
 using Logging;
 using Newtonsoft.Json;
+using System.Net.Http.Json;
 
 namespace TestNetRewarder
 {
@@ -26,7 +27,9 @@ namespace TestNetRewarder
         public async Task<bool> SendRewards(GiveRewardsCommand command)
         {
             if (command == null || command.Rewards == null || !command.Rewards.Any()) return false;
-            return await HttpPost(JsonConvert.SerializeObject(command)) == "OK";
+            var result = await HttpPostJson(command);
+            log.Log("Reward response: " + result);
+            return result == "OK";
         }
 
         private async Task<string> HttpGet()
@@ -44,12 +47,13 @@ namespace TestNetRewarder
             }
         }
 
-        private async Task<string> HttpPost(string content)
+        private async Task<string> HttpPostJson<T>(T body)
         {
             try
             {
-                var client = new HttpClient();
-                var response = await client.PostAsync(GetUrl(), new StringContent(content));
+                using var client = new HttpClient();
+                using var content = JsonContent.Create(body);
+                using var response = await client.PostAsync(GetUrl(), content);
                 return await response.Content.ReadAsStringAsync();
             }
             catch (Exception ex)
