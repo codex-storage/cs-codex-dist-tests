@@ -6,6 +6,7 @@ using Nethereum.Contracts;
 using Nethereum.RPC.Eth.DTOs;
 using NethereumWorkflow;
 using Utils;
+using BlockRange = Utils.BlockRange;
 
 namespace GethPlugin
 {
@@ -24,8 +25,9 @@ namespace GethPlugin
         decimal? GetSyncedBlockNumber();
         bool IsContractAvailable(string abi, string contractAddress);
         GethBootstrapNode GetBootstrapRecord();
-        List<EventLog<TEvent>> GetEvents<TEvent>(string address, ulong fromBlockNumber, ulong toBlockNumber) where TEvent : IEventDTO, new();
+        List<EventLog<TEvent>> GetEvents<TEvent>(string address, BlockRange blockRange) where TEvent : IEventDTO, new();
         List<EventLog<TEvent>> GetEvents<TEvent>(string address, TimeRange timeRange) where TEvent : IEventDTO, new();
+        BlockRange ConvertTimeRangeToBlockRange(TimeRange timeRange);
     }
 
     public class DeploymentGethNode : BaseGethNode, IGethNode
@@ -144,14 +146,19 @@ namespace GethPlugin
             return StartInteraction().IsContractAvailable(abi, contractAddress);
         }
 
-        public List<EventLog<TEvent>> GetEvents<TEvent>(string address, ulong fromBlockNumber, ulong toBlockNumber) where TEvent : IEventDTO, new()
+        public List<EventLog<TEvent>> GetEvents<TEvent>(string address, BlockRange blockRange) where TEvent : IEventDTO, new()
         {
-            return StartInteraction().GetEvents<TEvent>(address, fromBlockNumber, toBlockNumber);
+            return StartInteraction().GetEvents<TEvent>(address, blockRange);
         }
 
         public List<EventLog<TEvent>> GetEvents<TEvent>(string address, TimeRange timeRange) where TEvent : IEventDTO, new()
         {
             return StartInteraction().GetEvents<TEvent>(address, timeRange);
+        }
+
+        public BlockRange ConvertTimeRangeToBlockRange(TimeRange timeRange)
+        {
+            return StartInteraction().ConvertTimeRangeToBlockRange(timeRange);
         }
 
         protected abstract NethereumInteraction StartInteraction();

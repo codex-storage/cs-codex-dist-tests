@@ -4,6 +4,7 @@ using Nethereum.Contracts;
 using Nethereum.RPC.Eth.DTOs;
 using Nethereum.Web3;
 using Utils;
+using BlockRange = Utils.BlockRange;
 
 namespace NethereumWorkflow
 {
@@ -88,24 +89,24 @@ namespace NethereumWorkflow
         public List<EventLog<TEvent>> GetEvents<TEvent>(string address, TimeRange timeRange) where TEvent : IEventDTO, new()
         {
             var blockTimeFinder = new BlockTimeFinder(web3, log);
-
-            var lowest = blockTimeFinder.GetLowestBlockNumberAfter(timeRange.From);
-            var highest = blockTimeFinder.GetHighestBlockNumberBefore(timeRange.To);
-
-            var fromBlock = Math.Min(lowest, highest);
-            var toBlock = Math.Max(lowest, highest);
-
-            return GetEvents<TEvent>(address, fromBlock, toBlock);
+            var blockRange = blockTimeFinder.ConvertTimeRangeToBlockRange(timeRange);
+            return GetEvents<TEvent>(address, blockRange);
         }
 
-        public List<EventLog<TEvent>> GetEvents<TEvent>(string address, ulong fromBlockNumber, ulong toBlockNumber) where TEvent : IEventDTO, new()
+        public List<EventLog<TEvent>> GetEvents<TEvent>(string address, BlockRange blockRange) where TEvent : IEventDTO, new()
         {
-            log.Debug($"Getting events of type [{typeof(TEvent).Name}] in block range [{fromBlockNumber} - {toBlockNumber}]");
+            log.Debug($"Getting events of type [{typeof(TEvent).Name}] in block range [{blockRange.From} - {blockRange.To}]");
             var eventHandler = web3.Eth.GetEvent<TEvent>(address);
-            var from = new BlockParameter(fromBlockNumber);
-            var to = new BlockParameter(toBlockNumber);
+            var from = new BlockParameter(blockRange.From);
+            var to = new BlockParameter(blockRange.To);
             var blockFilter = Time.Wait(eventHandler.CreateFilterBlockRangeAsync(from, to));
             return Time.Wait(eventHandler.GetAllChangesAsync(blockFilter));
+        }
+
+        public BlockRange ConvertTimeRangeToBlockRange(TimeRange timeRange)
+        {
+            var blockTimeFinder = new BlockTimeFinder(web3, log);
+            return blockTimeFinder.ConvertTimeRangeToBlockRange(timeRange);
         }
     }
 }

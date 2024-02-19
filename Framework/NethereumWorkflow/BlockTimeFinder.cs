@@ -19,22 +19,35 @@ namespace NethereumWorkflow
             this.log = log;
         }
 
+        public BlockRange ConvertTimeRangeToBlockRange(TimeRange timeRange)
+        {
+            var lowest = GetLowestBlockNumberAfter(timeRange.From);
+            var highest = GetHighestBlockNumberBefore(timeRange.To);
+
+            var fromBlock = Math.Min(lowest, highest);
+            var toBlock = Math.Max(lowest, highest);
+
+            return new BlockRange(fromBlock, toBlock);
+        }
+
         public ulong GetHighestBlockNumberBefore(DateTime moment)
         {
-            log.Log("Looking for highest block before " + moment.ToString("o"));
             AssertMomentIsInPast(moment);
             Initialize();
 
-            return GetHighestBlockBefore(moment);
+            var result = GetHighestBlockBefore(moment);
+            log.Log($"Highest block before [{moment.ToString("o")}] = {result}");
+            return result;
         }
 
         public ulong GetLowestBlockNumberAfter(DateTime moment)
         {
-            log.Log("Looking for lowest block after " + moment.ToString("o"));
             AssertMomentIsInPast(moment);
             Initialize();
 
-            return GetLowestBlockAfter(moment);
+            var result = GetLowestBlockAfter(moment);
+            log.Log($"Lowest block after [{moment.ToString("o")}] = {result}");
+            return result;
         }
 
         private ulong GetHighestBlockBefore(DateTime moment)
@@ -48,14 +61,13 @@ namespace NethereumWorkflow
                 closestAfter.Utc > moment &&
                 closestBefore.BlockNumber + 1 == closestAfter.BlockNumber)
             {
-                log.Log("Found highest-Before: " + closestBefore);
                 return closestBefore.BlockNumber;
             }
 
             var newBlocks = FetchBlocksAround(moment);
             if (newBlocks == 0)
             {
-                log.Log("Didn't find any new blocks.");
+                log.Debug("Didn't find any new blocks.");
                 if (closestBefore != null) return closestBefore.BlockNumber;
                 throw new Exception("Failed to find highest before.");
             }
@@ -73,14 +85,13 @@ namespace NethereumWorkflow
                 closestAfter.Utc > moment &&
                 closestBefore.BlockNumber + 1 == closestAfter.BlockNumber)
             {
-                log.Log("Found lowest-after: " + closestAfter);
                 return closestAfter.BlockNumber;
             }
 
             var newBlocks = FetchBlocksAround(moment);
             if (newBlocks == 0)
             {
-                log.Log("Didn't find any new blocks.");
+                log.Debug("Didn't find any new blocks.");
                 if (closestAfter != null) return closestAfter.BlockNumber;
                 throw new Exception("Failed to find lowest before.");
             }
@@ -187,7 +198,7 @@ namespace NethereumWorkflow
 
         private BlockTimeEntry? AddBlockNumber(string a, ulong blockNumber)
         {
-            log.Log(a + " - Adding blockNumber: " + blockNumber);
+            log.Debug(a + " - Adding blockNumber: " + blockNumber);
             if (entries.ContainsKey(blockNumber))
             {
                 return entries[blockNumber];
@@ -203,7 +214,7 @@ namespace NethereumWorkflow
             var time = GetTimestampFromBlock(blockNumber);
             if (time == null)
             {
-                log.Log("Failed to get block for number: " + blockNumber);
+                log.Debug("Failed to get block for number: " + blockNumber);
                 return null;
             }
             var entry = new BlockTimeEntry(blockNumber, time.Value);
@@ -216,7 +227,6 @@ namespace NethereumWorkflow
         {
             var min = entries.Keys.Min();
             var max = entries.Keys.Max();
-            log.Log("min/max: " + min + " / " + max);
             var clippedMin = Math.Max(max - 100, min);
             var minTime = entries[min].Utc;
             var clippedMinBlock = AddBlockNumber("EST", clippedMin);
