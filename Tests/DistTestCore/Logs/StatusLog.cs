@@ -28,7 +28,7 @@ namespace DistTestCore.Logs
         public void ConcludeTest(string resultStatus, string testDuration, Dictionary<string, string> data)
         {
             data.Add("timestamp", DateTime.UtcNow.ToString("o"));
-            data.Add("runid", deployId);
+            data.Add("deployid", deployId);
             data.Add("status", resultStatus);
             data.Add("category", NameUtils.GetCategoryName());
             data.Add("fixturename", fixtureName);

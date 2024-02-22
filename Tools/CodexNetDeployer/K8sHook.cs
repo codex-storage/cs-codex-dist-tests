@@ -29,7 +29,7 @@ namespace CodexNetDeployer
         public void OnContainerRecipeCreated(ContainerRecipe recipe)
         {
             recipe.PodLabels.Add("tests-type", testsTypeLabel);
-            recipe.PodLabels.Add("runid", deployId);
+            recipe.PodLabels.Add("deployid", deployId);
             recipe.PodLabels.Add("testid", NameUtils.GetTestId());
 
             foreach (var pair in metadata)
