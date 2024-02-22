@@ -27,10 +27,11 @@ namespace ContinuousTests
             var startTime = DateTime.UtcNow;
 
             var overviewLog = new LogSplitter(
-                new FixtureLog(logConfig, startTime, "Overview"),
+                new FixtureLog(logConfig, startTime, config.CodexDeployment.Id, "Overview"),
                 new ConsoleLog()
             );
-            var statusLog = new StatusLog(logConfig, startTime, "continuous-tests", "ContinuousTestRun");
+            var statusLog = new StatusLog(logConfig, startTime, "continuous-tests", config.CodexDeployment.Id,
+                "ContinuousTestRun");
 
             overviewLog.Log("Initializing...");
 

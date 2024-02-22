@@ -77,7 +77,8 @@ namespace ContinuousTests
         {
             var test = (ContinuousTest)Activator.CreateInstance(testType)!;
             var handle = new TestHandle(test);
-            var run = new SingleTestRun(entryPointFactory, taskFactory, config, overviewLog, statusLog, handle, startupChecker, cancelToken);
+            var run = new SingleTestRun(entryPointFactory, taskFactory, config, overviewLog, statusLog, handle,
+                startupChecker, cancelToken, config.CodexDeployment.Id);
 
             runFinishedHandle.Reset();
             run.Run(runFinishedHandle, result =>
