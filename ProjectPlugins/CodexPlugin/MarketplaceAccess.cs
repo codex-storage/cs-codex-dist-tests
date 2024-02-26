@@ -56,7 +56,8 @@ namespace CodexPlugin
 
             if (response == "Purchasing not available" || 
                 response == "Expiry required" ||
-                response == "Expiry needs to be in future")
+                response == "Expiry needs to be in future" ||
+                response == "Expiry has to be before the request's end (now + duration)")
             {
                 throw new InvalidOperationException(response);
             }
