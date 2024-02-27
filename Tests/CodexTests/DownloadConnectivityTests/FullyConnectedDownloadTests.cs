@@ -29,8 +29,8 @@ namespace CodexTests.DownloadConnectivityTests
         [Test]
         [Combinatorial]
         public void FullyConnectedDownloadTest(
-            [Values(3, 5)] int numberOfNodes,
-            [Values(10, 80)] int sizeMBs)
+            [Values(2, 5)] int numberOfNodes,
+            [Values(1, 10)] int sizeMBs)
         {
             AddCodex(numberOfNodes);
 

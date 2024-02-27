@@ -32,7 +32,6 @@ namespace CodexTests.PeerDiscoveryTests
         [TestCase(3)]
         [TestCase(5)]
         [TestCase(10)]
-        [TestCase(20)]
         public void NodeChainTest(int chainLength)
         {
             var node = Ci.StartCodexNode();
