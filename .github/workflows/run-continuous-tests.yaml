@@ -112,7 +112,7 @@ jobs:
           [[ -n "${{ inputs.tests_cleanup }}" ]] && echo "TESTS_CLEANUP=${{ inputs.tests_cleanup }}" >>"$GITHUB_ENV" || echo "TESTS_CLEANUP=${{ env.TESTS_CLEANUP }}" >>"$GITHUB_ENV"
 
       - name: Kubectl - Install ${{ env.KUBE_VERSION }}
-        uses: azure/setup-kubectl@releases/v4.0.0
+        uses: azure/setup-kubectl@v4
         with:
           version: ${{ env.KUBE_VERSION }}
 

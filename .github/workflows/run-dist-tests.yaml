@@ -57,7 +57,7 @@ jobs:
           [[ -n "${{ inputs.command }}" ]] && COMMAND="${{ inputs.command }}" || COMMAND="${{ env.COMMAND }}"
 
       - name: Kubectl - Install ${{ env.KUBE_VERSION }}
-        uses: azure/setup-kubectl@releases/v4.0.0
+        uses: azure/setup-kubectl@v4
         with:
           version: ${{ env.KUBE_VERSION }}
 
