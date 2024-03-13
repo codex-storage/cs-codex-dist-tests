@@ -14,7 +14,6 @@ namespace KubernetesWorkflow.Recipe
         private RecipeComponentFactory factory = null!;
         private ContainerResources resources = new ContainerResources();
         private SchedulingAffinity schedulingAffinity = new SchedulingAffinity();
-        private CommandOverride commandOverride = new CommandOverride();
         private bool setCriticalPriority;
 
         public ContainerRecipe CreateRecipe(int index, int containerNumber, RecipeComponentFactory factory, StartupConfig config)
@@ -25,7 +24,7 @@ namespace KubernetesWorkflow.Recipe
 
             Initialize(config);
 
-            var recipe = new ContainerRecipe(containerNumber, config.NameOverride, Image, resources, schedulingAffinity, commandOverride, setCriticalPriority,
+            var recipe = new ContainerRecipe(containerNumber, config.NameOverride, Image, resources, schedulingAffinity, setCriticalPriority,
                 exposedPorts.ToArray(),
                 internalPorts.ToArray(),
                 envVars.ToArray(),
@@ -44,7 +43,6 @@ namespace KubernetesWorkflow.Recipe
             this.factory = null!;
             resources = new ContainerResources();
             schedulingAffinity = new SchedulingAffinity();
-            commandOverride = new CommandOverride();
             setCriticalPriority = false;
 
             return recipe;
@@ -130,11 +128,6 @@ namespace KubernetesWorkflow.Recipe
         protected void SetSchedulingAffinity(string notIn)
         {
             schedulingAffinity = new SchedulingAffinity(notIn);
-        }
-
-        protected void OverrideCommand(params string[] command)
-        {
-            commandOverride = new CommandOverride(command);
         }
 
         protected void SetSystemCriticalPriority()
