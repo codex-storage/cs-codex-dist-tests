@@ -64,7 +64,9 @@ namespace CodexTests.BasicTests
                 .WithName("Seller")
                 .WithLogLevel(CodexLogLevel.Trace, new CodexLogCustomTopics(CodexLogLevel.Error, CodexLogLevel.Error, CodexLogLevel.Warn))
                 .WithStorageQuota(11.GB())
-                .EnableMarketplace(geth, contracts, initialEth: 10.Eth(), initialTokens: sellerInitialBalance, isValidator: true)
+                .EnableMarketplace(geth, contracts, initialEth: 10.Eth(), initialTokens: sellerInitialBalance, s => s
+                    .AsStorageNode()
+                    .AsValidator())
                 .WithSimulateProofFailures(failEveryNProofs: 3));
 
             AssertBalance(contracts, seller, Is.EqualTo(sellerInitialBalance));

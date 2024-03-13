@@ -17,6 +17,7 @@ namespace CodexPlugin
         ICodexSetup WithBlockMaintenanceInterval(TimeSpan duration);
         ICodexSetup WithBlockMaintenanceNumber(int numberOfBlocks);
         ICodexSetup EnableMetrics();
+        ICodexSetup EnableMarketplace(IGethNode gethNode, ICodexContracts codexContracts, Ether initialEth, TestToken initialTokens);
         ICodexSetup EnableMarketplace(IGethNode gethNode, ICodexContracts codexContracts, Ether initialEth, TestToken initialTokens, Action<IMarketplaceSetup> marketplaceSetup);
         /// <summary>
         /// Provides an invalid proof every N proofs
@@ -28,7 +29,6 @@ namespace CodexPlugin
     public interface IMarketplaceSetup
     {
         IMarketplaceSetup AsStorageNode();
-        IMarketplaceSetup AsClientNode();
         IMarketplaceSetup AsValidator();
     }
 
@@ -122,6 +122,11 @@ namespace CodexPlugin
             return this;
         }
 
+        public ICodexSetup EnableMarketplace(IGethNode gethNode, ICodexContracts codexContracts, Ether initialEth, TestToken initialTokens)
+        {
+            return EnableMarketplace(gethNode, codexContracts, initialEth, initialTokens, s => { });
+        }
+
         public ICodexSetup EnableMarketplace(IGethNode gethNode, ICodexContracts codexContracts, Ether initialEth, TestToken initialTokens, Action<IMarketplaceSetup> marketplaceSetup)
         {
             var ms = new MarketplaceSetup();
@@ -162,15 +167,8 @@ namespace CodexPlugin
 
     public class MarketplaceSetup : IMarketplaceSetup
     {
-        public bool IsClientNode { get; private set; }
         public bool IsStorageNode { get; private set; }
         public bool IsValidator { get; private set; }
-
-        public IMarketplaceSetup AsClientNode()
-        {
-            IsClientNode = true;
-            return this;
-        }
 
         public IMarketplaceSetup AsStorageNode()
         {
@@ -186,8 +184,7 @@ namespace CodexPlugin
 
         public override string ToString()
         {
-            var result = "[";
-            result += IsClientNode ? "(clientNode)" : "()";
+            var result = "[(clientNode)"; // When marketplace is enabled, being a clientNode is implicit.
             result += IsStorageNode ? "(storageNode)" : "()";
             result += IsValidator ? "(validator)" : "()";
             result += "]";

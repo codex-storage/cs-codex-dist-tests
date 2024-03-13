@@ -41,7 +41,11 @@ namespace CodexNetDeployer
 
                     if (config.ShouldMakeStorageAvailable)
                     {
-                        s.EnableMarketplace(gethNode, contracts, 100.Eth(), config.InitialTestTokens.TestTokens(), validatorsLeft > 0);
+                        s.EnableMarketplace(gethNode, contracts, 100.Eth(), config.InitialTestTokens.TestTokens(), s =>
+                        {
+                            if (validatorsLeft > 0) s.AsValidator();
+                            if (config.ShouldMakeStorageAvailable) s.AsStorageNode();
+                        });
                     }
 
                     if (bootstrapNode != null) s.WithBootstrapNode(bootstrapNode);

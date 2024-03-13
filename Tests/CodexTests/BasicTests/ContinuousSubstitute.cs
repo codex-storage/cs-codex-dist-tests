@@ -21,7 +21,9 @@ namespace CodexTests.BasicTests
 
             var group = AddCodex(5, o => o
                     .EnableMetrics()
-                    .EnableMarketplace(geth, contract, 10.Eth(), 100000.TestTokens(), isValidator: true)
+                    .EnableMarketplace(geth, contract, 10.Eth(), 100000.TestTokens(), s => s
+                        .AsStorageNode()
+                        .AsValidator())
                     .WithBlockTTL(TimeSpan.FromMinutes(5))
                     .WithBlockMaintenanceInterval(TimeSpan.FromSeconds(10))
                     .WithBlockMaintenanceNumber(100)

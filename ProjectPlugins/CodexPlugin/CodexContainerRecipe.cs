@@ -128,14 +128,11 @@ namespace CodexPlugin
 
         private void SetCommandOverride(MarketplaceSetup ms)
         {
-            var persistenceRequired = ms.IsClientNode || ms.IsStorageNode || ms.IsValidator;
-            var proverRequired = ms.IsStorageNode;
-
-            if (persistenceRequired && proverRequired)
+            if (ms.IsStorageNode)
             {
                 OverrideCommand("codex", "persistence", "prover");
             }
-            else if (persistenceRequired)
+            else
             {
                 OverrideCommand("codex", "persistence");
             }
