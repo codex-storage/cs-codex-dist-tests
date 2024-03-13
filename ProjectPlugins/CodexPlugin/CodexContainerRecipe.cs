@@ -105,7 +105,6 @@ namespace CodexPlugin
 
                 AddEnvVar("CODEX_ETH_PROVIDER", $"{wsAddress.Host.Replace("http://", "ws://")}:{wsAddress.Port}");
                 AddEnvVar("CODEX_MARKETPLACE_ADDRESS", marketplaceAddress);
-                AddEnvVar("CODEX_PERSISTENCE", "true");
 
                 // Custom scripting in the Codex test image will write this variable to a private-key file,
                 // and pass the correct filename to Codex.
@@ -113,7 +112,9 @@ namespace CodexPlugin
                 AddEnvVar("PRIV_KEY", mStart.PrivateKey);
                 Additional(mStart);
 
-                if (config.MarketplaceConfig.IsValidator)
+                var marketplaceSetup = config.MarketplaceConfig.MarketplaceSetup;
+                SetCommandOverride(marketplaceSetup);
+                if (marketplaceSetup.IsValidator)
                 {
                    AddEnvVar("CODEX_VALIDATOR", "true");
                 }
@@ -122,6 +123,21 @@ namespace CodexPlugin
             if(!string.IsNullOrEmpty(config.NameOverride))
             {
                 AddEnvVar("CODEX_NODENAME", config.NameOverride);
+            }
+        }
+
+        private void SetCommandOverride(MarketplaceSetup ms)
+        {
+            var persistenceRequired = ms.IsClientNode || ms.IsStorageNode || ms.IsValidator;
+            var proverRequired = ms.IsStorageNode;
+
+            if (persistenceRequired && proverRequired)
+            {
+                OverrideCommand("codex", "persistence", "prover");
+            }
+            else if (persistenceRequired)
+            {
+                OverrideCommand("codex", "persistence");
             }
         }
 
