@@ -49,13 +49,14 @@ namespace KubernetesWorkflow
             return CreatePodInfo(pod);
         }
 
-        public void Stop(StartResult startResult)
+        public void Stop(StartResult startResult, bool waitTillStopped)
         {
             log.Debug();
             if (startResult.InternalService != null) DeleteService(startResult.InternalService);
             if (startResult.ExternalService != null) DeleteService(startResult.ExternalService);
             DeleteDeployment(startResult.Deployment);
-            WaitUntilPodsForDeploymentAreOffline(startResult.Deployment);
+
+            if (waitTillStopped) WaitUntilPodsForDeploymentAreOffline(startResult.Deployment);
         }
 
         public void DownloadPodLog(RunningContainer container, ILogHandler logHandler, int? tailLines)

@@ -7,7 +7,7 @@ namespace CodexPlugin
 {
     public interface ICodexNodeGroup : IEnumerable<ICodexNode>, IHasManyMetricScrapeTargets
     {
-        void BringOffline();
+        void BringOffline(bool waitTillStopped);
         ICodexNode this[int index] { get; }
     }
 
@@ -31,9 +31,9 @@ namespace CodexPlugin
             }
         }
 
-        public void BringOffline()
+        public void BringOffline(bool waitTillStopped)
         {
-            starter.BringOffline(this);
+            starter.BringOffline(this, waitTillStopped);
             // Clear everything. Prevent accidental use.
             Nodes = Array.Empty<CodexNode>();
             Containers = null!;

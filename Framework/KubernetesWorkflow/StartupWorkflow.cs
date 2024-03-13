@@ -14,7 +14,7 @@ namespace KubernetesWorkflow
         PodInfo GetPodInfo(RunningContainer container);
         PodInfo GetPodInfo(RunningContainers containers);
         CrashWatcher CreateCrashWatcher(RunningContainer container);
-        void Stop(RunningContainers containers);
+        void Stop(RunningContainers containers, bool waitTillStopped);
         void DownloadContainerLog(RunningContainer container, ILogHandler logHandler, int? tailLines = null);
         string ExecuteCommand(RunningContainer container, string command, params string[] args);
         void DeleteNamespace();
@@ -86,11 +86,11 @@ namespace KubernetesWorkflow
             return K8s(c => c.CreateCrashWatcher(container));
         }
 
-        public void Stop(RunningContainers runningContainers)
+        public void Stop(RunningContainers runningContainers, bool waitTillStopped)
         {
             K8s(controller =>
             {
-                controller.Stop(runningContainers.StartResult);
+                controller.Stop(runningContainers.StartResult, waitTillStopped);
                 cluster.Configuration.Hooks.OnContainersStopped(runningContainers);
             });
         }

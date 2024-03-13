@@ -26,7 +26,7 @@ namespace CodexPlugin
         CrashWatcher CrashWatcher { get; }
         PodInfo GetPodInfo();
         ITransferSpeeds TransferSpeeds { get; }
-        void Stop();
+        void Stop(bool waitTillStopped);
     }
 
     public class CodexNode : ICodexNode
@@ -153,13 +153,13 @@ namespace CodexPlugin
             return CodexAccess.GetPodInfo();
         }
 
-        public void Stop()
+        public void Stop(bool waitTillStopped)
         {
             if (Group.Count() > 1) throw new InvalidOperationException("Codex-nodes that are part of a group cannot be " +
                 "individually shut down. Use 'BringOffline()' on the group object to stop the group. This method is only " +
                 "available for codex-nodes in groups of 1.");
 
-            Group.BringOffline();
+            Group.BringOffline(waitTillStopped);
         }
 
         public void EnsureOnlineGetVersionResponse()
