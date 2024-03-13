@@ -17,12 +17,19 @@ namespace CodexPlugin
         ICodexSetup WithBlockMaintenanceInterval(TimeSpan duration);
         ICodexSetup WithBlockMaintenanceNumber(int numberOfBlocks);
         ICodexSetup EnableMetrics();
-        ICodexSetup EnableMarketplace(IGethNode gethNode, ICodexContracts codexContracts, Ether initialEth, TestToken initialTokens, bool isValidator = false);
+        ICodexSetup EnableMarketplace(IGethNode gethNode, ICodexContracts codexContracts, Ether initialEth, TestToken initialTokens, Action<IMarketplaceSetup> marketplaceSetup);
         /// <summary>
         /// Provides an invalid proof every N proofs
         /// </summary>
         ICodexSetup WithSimulateProofFailures(uint failEveryNProofs);
         ICodexSetup AsPublicTestNet(CodexTestNetConfig testNetConfig);
+    }
+
+    public interface IMarketplaceSetup
+    {
+        IMarketplaceSetup AsStorageNode();
+        IMarketplaceSetup AsClientNode();
+        IMarketplaceSetup AsValidator();
     }
 
     public class CodexLogCustomTopics
@@ -115,9 +122,12 @@ namespace CodexPlugin
             return this;
         }
 
-        public ICodexSetup EnableMarketplace(IGethNode gethNode, ICodexContracts codexContracts, Ether initialEth, TestToken initialTokens, bool isValidator = false)
+        public ICodexSetup EnableMarketplace(IGethNode gethNode, ICodexContracts codexContracts, Ether initialEth, TestToken initialTokens, Action<IMarketplaceSetup> marketplaceSetup)
         {
-            MarketplaceConfig = new MarketplaceInitialConfig(gethNode, codexContracts, initialEth, initialTokens, isValidator);
+            var ms = new MarketplaceSetup();
+            marketplaceSetup(ms);
+
+            MarketplaceConfig = new MarketplaceInitialConfig(ms, gethNode, codexContracts, initialEth, initialTokens);
             return this;
         }
 
@@ -146,7 +156,43 @@ namespace CodexPlugin
             if (BootstrapSpr != null) yield return $"BootstrapNode={BootstrapSpr}";
             if (StorageQuota != null) yield return $"StorageQuota={StorageQuota}";
             if (SimulateProofFailures != null) yield return $"SimulateProofFailures={SimulateProofFailures}";
-            if (MarketplaceConfig != null) yield return $"IsValidator={MarketplaceConfig.IsValidator}";
+            if (MarketplaceConfig != null) yield return $"MarketplaceSetup={MarketplaceConfig.MarketplaceSetup}";
         }
     }
+
+    public class MarketplaceSetup : IMarketplaceSetup
+    {
+        public bool IsClientNode { get; private set; }
+        public bool IsStorageNode { get; private set; }
+        public bool IsValidator { get; private set; }
+
+        public IMarketplaceSetup AsClientNode()
+        {
+            IsClientNode = true;
+            return this;
+        }
+
+        public IMarketplaceSetup AsStorageNode()
+        {
+            IsStorageNode = true;
+            return this;
+        }
+
+        public IMarketplaceSetup AsValidator()
+        {
+            IsValidator = true;
+            return this;
+        }
+
+        public override string ToString()
+        {
+            var result = "[";
+            result += IsClientNode ? "(clientNode)" : "()";
+            result += IsStorageNode ? "(storageNode)" : "()";
+            result += IsValidator ? "(validator)" : "()";
+            result += "]";
+            return result;
+        }
+    }
+
 }
