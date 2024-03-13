@@ -498,8 +498,15 @@ namespace KubernetesWorkflow
                 Ports = CreateContainerPorts(recipe),
                 Env = CreateEnv(recipe),
                 VolumeMounts = CreateContainerVolumeMounts(recipe),
-                Resources = CreateResourceLimits(recipe)
+                Resources = CreateResourceLimits(recipe),
+                Command = CreateCommandList(recipe)
             };
+        }
+
+        private IList<string> CreateCommandList(ContainerRecipe recipe)
+        {
+            if (recipe.CommandOverride == null || !recipe.CommandOverride.Command.Any()) return null!;
+            return recipe.CommandOverride.Command.ToList();
         }
 
         private V1ResourceRequirements CreateResourceLimits(ContainerRecipe recipe)
