@@ -130,11 +130,11 @@ namespace CodexPlugin
         {
             if (ms.IsStorageNode)
             {
-                OverrideCommand("codex", "persistence", "prover");
+                OverrideCommand("sh", "/docker-entrypoint.sh", "codex", "persistence", "prover");
             }
             else
             {
-                OverrideCommand("codex", "persistence");
+                OverrideCommand("sh", "/docker-entrypoint.sh", "codex", "persistence");
             }
         }
 
