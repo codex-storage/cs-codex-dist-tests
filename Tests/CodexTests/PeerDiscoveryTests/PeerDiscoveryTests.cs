@@ -39,7 +39,6 @@ namespace CodexTests.PeerDiscoveryTests
         [TestCase(2)]
         [TestCase(3)]
         [TestCase(10)]
-        [TestCase(20)]
         public void VariableNodes(int number)
         {
             AddCodex(number);

@@ -23,5 +23,6 @@ namespace CodexTests
         }
 
         protected ICodexNode? BootstrapNode { get; private set; }
+        
     }
 }

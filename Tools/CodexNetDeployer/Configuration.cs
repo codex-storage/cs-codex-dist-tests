@@ -1,5 +1,6 @@
 ﻿using ArgsUniform;
 using CodexPlugin;
+using DistTestCore;
 
 namespace CodexNetDeployer
 {
@@ -16,6 +17,9 @@ namespace CodexNetDeployer
 
         [Uniform("kube-namespace", "kn", "KUBENAMESPACE", true, "Kubernetes namespace to be used for deployment.")]
         public string KubeNamespace { get; set; } = string.Empty;
+        
+        [Uniform("deploy-id", "di", "DEPLOYID", false, "ID of the deployment. (default) to current time)")]
+        public string DeployId { get; set; } = NameUtils.MakeDeployId();
 
         [Uniform("deploy-file", "df", "DEPLOYFILE", false, "Output deployment JSON file that will be written. Defaults to 'codex-deployment.json'.")]
         public string DeployFile { get; set; } = "codex-deployment.json";
