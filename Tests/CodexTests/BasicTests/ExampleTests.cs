@@ -66,8 +66,7 @@ namespace CodexTests.BasicTests
                 .WithStorageQuota(11.GB())
                 .EnableMarketplace(geth, contracts, initialEth: 10.Eth(), initialTokens: sellerInitialBalance, s => s
                     .AsStorageNode()
-                    .AsValidator())
-                .WithSimulateProofFailures(failEveryNProofs: 3));
+                    .AsValidator()));
 
             AssertBalance(contracts, seller, Is.EqualTo(sellerInitialBalance));
             seller.Marketplace.MakeStorageAvailable(
@@ -91,9 +90,10 @@ namespace CodexTests.BasicTests
                 requiredCollateral: 10.TestTokens(),
                 minRequiredNumberOfNodes: 1,
                 proofProbability: 5,
-                duration: TimeSpan.FromMinutes(5));
+                duration: TimeSpan.FromMinutes(5),
+                expiry: TimeSpan.FromMinutes(4));
 
-            purchaseContract.WaitForStorageContractStarted(fileSize);
+            purchaseContract.WaitForStorageContractStarted(TimeSpan.FromMinutes(4));
 
             AssertBalance(contracts, seller, Is.LessThan(sellerInitialBalance), "Collateral was not placed.");
 
