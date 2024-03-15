@@ -74,7 +74,7 @@ namespace CodexTests.BasicTests
                 size: 10.GB(),
                 minPriceForTotalSpace: 1.TestTokens(),
                 maxCollateral: 20.TestTokens(),
-                maxDuration: TimeSpan.FromMinutes(3));
+                maxDuration: TimeSpan.FromMinutes(30));
 
             var testFile = GenerateTestFile(fileSize);
 
@@ -91,7 +91,7 @@ namespace CodexTests.BasicTests
                 requiredCollateral: 10.TestTokens(),
                 minRequiredNumberOfNodes: 1,
                 proofProbability: 5,
-                duration: TimeSpan.FromMinutes(1));
+                duration: TimeSpan.FromMinutes(5));
 
             purchaseContract.WaitForStorageContractStarted(fileSize);
 
@@ -108,7 +108,7 @@ namespace CodexTests.BasicTests
             AssertBalance(contracts, buyer, Is.LessThan(buyerInitialBalance), "Buyer was not charged for storage.");
             Assert.That(contracts.GetRequestState(request), Is.EqualTo(RequestState.Finished));
 
-            // waiting for block retransmit fix: CheckLogForErrors(seller, buyer);
+            CheckLogForErrors(seller, buyer);
         }
 
         [Test]
