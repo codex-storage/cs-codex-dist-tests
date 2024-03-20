@@ -84,6 +84,7 @@ namespace CodexPlugin
     {
         private readonly ILog log;
         private readonly CodexAccess codexAccess;
+        private readonly TimeSpan gracePeriod = TimeSpan.FromSeconds(10);
         private DateTime? contractStartUtc;
 
         public StoragePurchaseContract(ILog log, CodexAccess codexAccess, string purchaseId, StoragePurchase purchase)
@@ -99,7 +100,10 @@ namespace CodexPlugin
 
         public void WaitForStorageContractStarted()
         {
-            WaitForStorageContractStarted(TimeSpan.FromSeconds(30));
+            var timeout = Purchase.Expiry + gracePeriod;
+
+            WaitForStorageContractState(timeout, "started");
+            contractStartUtc = DateTime.UtcNow;
         }
 
         public void WaitForStorageContractFinished()
@@ -108,28 +112,14 @@ namespace CodexPlugin
             {
                 WaitForStorageContractStarted();
             }
-            var gracePeriod = TimeSpan.FromSeconds(10);
             var currentContractTime = DateTime.UtcNow - contractStartUtc!.Value;
             var timeout = (Purchase.Duration - currentContractTime) + gracePeriod;
             WaitForStorageContractState(timeout, "finished");
         }
 
-        public void WaitForStorageContractFinished(ByteSize contractFileSize)
+        public CodexStoragePurchase GetPurchaseStatus(string purchaseId)
         {
-            if (!contractStartUtc.HasValue)
-            {
-                WaitForStorageContractStarted(contractFileSize.ToTimeSpan());
-            }
-            var gracePeriod = TimeSpan.FromSeconds(10);
-            var currentContractTime = DateTime.UtcNow - contractStartUtc!.Value;
-            var timeout = (Purchase.Duration - currentContractTime) + gracePeriod;
-            WaitForStorageContractState(timeout, "finished");
-        }
-
-        public void WaitForStorageContractStarted(TimeSpan timeout)
-        {
-            WaitForStorageContractState(timeout, "started");
-            contractStartUtc = DateTime.UtcNow;
+            return codexAccess.GetPurchaseStatus(purchaseId);
         }
 
         private void WaitForStorageContractState(TimeSpan timeout, string desiredState)
@@ -161,11 +151,6 @@ namespace CodexPlugin
                 }
             }
             log.Log($"Contract '{desiredState}'.");
-        }
-
-        public CodexStoragePurchase GetPurchaseStatus(string purchaseId)
-        {
-            return codexAccess.GetPurchaseStatus(purchaseId);
         }
     }
 }

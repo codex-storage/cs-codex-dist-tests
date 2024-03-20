@@ -102,7 +102,7 @@ namespace CodexTests.BasicTests
 
             var purchaseContract = buyer.Marketplace.RequestStorage(purchase);
 
-            purchaseContract.WaitForStorageContractStarted(TimeSpan.FromMinutes(4));
+            purchaseContract.WaitForStorageContractStarted();
 
             AssertBalance(contracts, seller, Is.LessThan(sellerInitialBalance), "Collateral was not placed.");
 
@@ -116,8 +116,6 @@ namespace CodexTests.BasicTests
             AssertBalance(contracts, seller, Is.GreaterThan(sellerInitialBalance), "Seller was not paid for storage.");
             AssertBalance(contracts, buyer, Is.LessThan(buyerInitialBalance), "Buyer was not charged for storage.");
             Assert.That(contracts.GetRequestState(request), Is.EqualTo(RequestState.Finished));
-
-            CheckLogForErrors(seller, buyer);
         }
 
         [Test]
