@@ -1,7 +1,6 @@
 ﻿using CodexPlugin;
 using FileUtils;
 using Logging;
-using Newtonsoft.Json;
 using NUnit.Framework;
 using Utils;
 
@@ -22,9 +21,6 @@ namespace ContinuousTests.Tests
         [TestMoment(t: Zero)]
         public void UploadTestFile()
         {
-            LogBlockExchangeStatus(Nodes[0], "Before upload");
-            LogBlockExchangeStatus(Nodes[1], "Before upload");
-
             file = FileManager.GenerateFile(size);
 
             LogStoredBytes(Nodes[0]);
@@ -38,27 +34,9 @@ namespace ContinuousTests.Tests
         {
             TrackedFile? dl = null;
 
-            try
-            {
-                LogBytesPerMillisecond(() => dl = Nodes[1].DownloadContent(cid!));
+            LogBytesPerMillisecond(() => dl = Nodes[1].DownloadContent(cid!));
 
-                file.AssertIsEqual(dl);
-            }
-            catch
-            {
-                LogRepoStore(Nodes[0]);
-                LogRepoStore(Nodes[1]);
-                throw;
-            }
-
-            LogBlockExchangeStatus(Nodes[0], "After download");
-            LogBlockExchangeStatus(Nodes[1], "After download");
-        }
-
-        private void LogRepoStore(ICodexNode codexNode)
-        {
-            //var response = codexNode.GetDebugRepoStore();
-            //Log.Log($"{codexNode.GetName()} has {string.Join(",", response.Select(r => r.cid))}");
+            file.AssertIsEqual(dl);
         }
 
         private void LogStoredBytes(ICodexNode node)
@@ -86,12 +64,6 @@ namespace ContinuousTests.Tests
 
             var bytesPerMs = totalBytes / totalMs;
             Log.Log($"Bytes per millisecond: {bytesPerMs}");
-        }
-
-        private void LogBlockExchangeStatus(ICodexNode codexNode, string msg)
-        {
-            //var response = codexNode.GetDebugBlockExchange();
-            //Log.Log($"{codexNode.GetName()} {msg}: {JsonConvert.SerializeObject(response)}");
         }
     }
 }
