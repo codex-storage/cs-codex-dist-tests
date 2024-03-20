@@ -149,8 +149,7 @@ namespace CodexTests.BasicTests
             Assert.That(filledSlotEvents.Length, Is.EqualTo(purchase.MinRequiredNumberOfNodes));
             for (var i = 0; i < purchase.MinRequiredNumberOfNodes; i++)
             {
-                var filledSlotEvent = filledSlotEvents[i];
-                Assert.That(filledSlotEvent.SlotIndex, Is.EqualTo(i));
+                var filledSlotEvent = filledSlotEvents.Single(e => e.SlotIndex == i);
                 Assert.That(filledSlotEvent.RequestId.ToHex(), Is.EqualTo(request.RequestId.ToHex()));
                 Assert.That(filledSlotEvent.Host, Is.EqualTo(seller.EthAddress));
             }

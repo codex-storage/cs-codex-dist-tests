@@ -1,5 +1,4 @@
-﻿using CodexContractsPlugin;
-using Logging;
+﻿using Logging;
 using Newtonsoft.Json;
 using Utils;
 

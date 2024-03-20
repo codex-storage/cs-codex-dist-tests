@@ -78,9 +78,9 @@ namespace CodexPlugin
         {
             log.Log($"Making storage available... (" +
                 $"size: {TotalSpace}, " +
-                $"maxDuration: {Time.FormatDuration(MaxDuration)})" + 
+                $"maxDuration: {Time.FormatDuration(MaxDuration)}, " + 
                 $"minPriceForTotalSpace: {MinPriceForTotalSpace}, " +
-                $"maxCollateral: {MaxCollateral}, ");
+                $"maxCollateral: {MaxCollateral})");
         }
     }
 
