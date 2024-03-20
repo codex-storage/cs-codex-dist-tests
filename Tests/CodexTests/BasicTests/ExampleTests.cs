@@ -108,7 +108,7 @@ namespace CodexTests.BasicTests
 
             var request = GetOnChainStorageRequest(contracts);
             AssertStorageRequest(request, purchase, contracts, buyer);
-            AssertSlotFilledEvents(contracts, request, seller);
+            AssertSlotFilledEvents(contracts, purchase, request, seller);
             AssertContractSlot(contracts, request, 0, seller);
 
             purchaseContract.WaitForStorageContractFinished();
@@ -137,17 +137,23 @@ namespace CodexTests.BasicTests
             Assert.That(discN, Is.LessThan(bootN));
         }
 
-        private void AssertSlotFilledEvents(ICodexContracts contracts, Request request, ICodexNode seller)
+        private void AssertSlotFilledEvents(ICodexContracts contracts, StoragePurchase purchase, Request request, ICodexNode seller)
         {
+            // Expect 1 fulfilled event for the purchase.
             var requestFulfilledEvents = contracts.GetRequestFulfilledEvents(GetTestRunTimeRange());
             Assert.That(requestFulfilledEvents.Length, Is.EqualTo(1));
             CollectionAssert.AreEqual(request.RequestId, requestFulfilledEvents[0].RequestId);
+
+            // Expect 1 filled-slot event for each slot in the purchase.
             var filledSlotEvents = contracts.GetSlotFilledEvents(GetTestRunTimeRange());
-            Assert.That(filledSlotEvents.Length, Is.EqualTo(1));
-            var filledSlotEvent = filledSlotEvents.Single();
-            Assert.That(filledSlotEvent.SlotIndex.IsZero);
-            Assert.That(filledSlotEvent.RequestId.ToHex(), Is.EqualTo(request.RequestId.ToHex()));
-            Assert.That(filledSlotEvent.Host, Is.EqualTo(seller.EthAddress));
+            Assert.That(filledSlotEvents.Length, Is.EqualTo(purchase.MinRequiredNumberOfNodes));
+            for (var i = 0; i < purchase.MinRequiredNumberOfNodes; i++)
+            {
+                var filledSlotEvent = filledSlotEvents[i];
+                Assert.That(filledSlotEvent.SlotIndex, Is.EqualTo(i));
+                Assert.That(filledSlotEvent.RequestId.ToHex(), Is.EqualTo(request.RequestId.ToHex()));
+                Assert.That(filledSlotEvent.Host, Is.EqualTo(seller.EthAddress));
+            }
         }
 
         private void AssertStorageRequest(Request request, StoragePurchase purchase, ICodexContracts contracts, ICodexNode buyer)
