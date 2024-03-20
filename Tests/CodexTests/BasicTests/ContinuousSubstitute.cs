@@ -33,13 +33,16 @@ namespace CodexTests.BasicTests
 
             var rc = Ci.DeployMetricsCollector(nodes);
 
+            var availability = new StorageAvailability(
+                totalSpace: 500.MB(),
+                maxDuration: TimeSpan.FromMinutes(5),
+                minPriceForTotalSpace: 500.TestTokens(),
+                maxCollateral: 1024.TestTokens()
+            );
+
             foreach (var node in nodes)
             {
-                node.Marketplace.MakeStorageAvailable(
-                    size: 500.MB(),
-                    minPriceForTotalSpace: 500.TestTokens(),
-                    maxCollateral: 1024.TestTokens(),
-                    maxDuration: TimeSpan.FromMinutes(5));
+                node.Marketplace.MakeStorageAvailable(availability);
             }
 
             var endTime = DateTime.UtcNow + TimeSpan.FromHours(10);

@@ -54,7 +54,7 @@ namespace CodexTests.BasicTests
         public void MarketplaceExample()
         {
             var sellerInitialBalance = 234.TestTokens();
-            var buyerInitialBalance = 1000.TestTokens();
+            var buyerInitialBalance = 100000.TestTokens();
             var fileSize = 10.MB();
 
             var geth = Ci.StartGethNode(s => s.IsMiner().WithName("disttest-geth"));
@@ -69,11 +69,14 @@ namespace CodexTests.BasicTests
                     .AsValidator()));
 
             AssertBalance(contracts, seller, Is.EqualTo(sellerInitialBalance));
-            seller.Marketplace.MakeStorageAvailable(
-                size: 10.GB(),
+
+            var availability = new StorageAvailability(
+                totalSpace: 10.GB(),
+                maxDuration: TimeSpan.FromMinutes(30),
                 minPriceForTotalSpace: 1.TestTokens(),
-                maxCollateral: 20.TestTokens(),
-                maxDuration: TimeSpan.FromMinutes(30));
+                maxCollateral: 20.TestTokens()
+            );
+            seller.Marketplace.MakeStorageAvailable(availability);
 
             var testFile = GenerateTestFile(fileSize);
 
@@ -85,20 +88,26 @@ namespace CodexTests.BasicTests
             AssertBalance(contracts, buyer, Is.EqualTo(buyerInitialBalance));
 
             var contentId = buyer.UploadFile(testFile);
-            var purchaseContract = buyer.Marketplace.RequestStorage(contentId,
-                pricePerSlotPerSecond: 2.TestTokens(),
-                requiredCollateral: 10.TestTokens(),
-                minRequiredNumberOfNodes: 1,
-                proofProbability: 5,
-                duration: TimeSpan.FromMinutes(5),
-                expiry: TimeSpan.FromMinutes(4));
+
+            var purchase = new StoragePurchase(contentId)
+            {
+                PricePerSlotPerSecond = 2.TestTokens(),
+                RequiredCollateral = 10.TestTokens(),
+                MinRequiredNumberOfNodes = 5,
+                NodeFailureTolerance = 2,
+                ProofProbability = 5,
+                Duration = TimeSpan.FromMinutes(5),
+                Expiry = TimeSpan.FromMinutes(4)
+            };
+
+            var purchaseContract = buyer.Marketplace.RequestStorage(purchase);
 
             purchaseContract.WaitForStorageContractStarted(TimeSpan.FromMinutes(4));
 
             AssertBalance(contracts, seller, Is.LessThan(sellerInitialBalance), "Collateral was not placed.");
 
             var request = GetOnChainStorageRequest(contracts);
-            AssertStorageRequest(request, contracts, buyer);
+            AssertStorageRequest(request, purchase, contracts, buyer);
             AssertSlotFilledEvents(contracts, request, seller);
             AssertContractSlot(contracts, request, 0, seller);
 
@@ -141,11 +150,11 @@ namespace CodexTests.BasicTests
             Assert.That(filledSlotEvent.Host, Is.EqualTo(seller.EthAddress));
         }
 
-        private void AssertStorageRequest(Request request, ICodexContracts contracts, ICodexNode buyer)
+        private void AssertStorageRequest(Request request, StoragePurchase purchase, ICodexContracts contracts, ICodexNode buyer)
         {
             Assert.That(contracts.GetRequestState(request), Is.EqualTo(RequestState.Started));
             Assert.That(request.ClientAddress, Is.EqualTo(buyer.EthAddress));
-            Assert.That(request.Ask.Slots, Is.EqualTo(1));
+            Assert.That(request.Ask.Slots, Is.EqualTo(purchase.MinRequiredNumberOfNodes));
         }
 
         private Request GetOnChainStorageRequest(ICodexContracts contracts)

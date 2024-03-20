@@ -67,11 +67,14 @@ namespace CodexNetDeployer
 
                     if (config.ShouldMakeStorageAvailable)
                     {
-                        var response = codexNode.Marketplace.MakeStorageAvailable(
-                            size: config.StorageSell!.Value.MB(),
+                        var availability = new StorageAvailability(
+                            totalSpace: config.StorageSell!.Value.MB(),
+                            maxDuration: TimeSpan.FromSeconds(config.MaxDuration),
                             minPriceForTotalSpace: config.MinPrice.TestTokens(),
-                            maxCollateral: config.MaxCollateral.TestTokens(),
-                            maxDuration: TimeSpan.FromSeconds(config.MaxDuration));
+                            maxCollateral: config.MaxCollateral.TestTokens()
+                        );
+
+                        var response = codexNode.Marketplace.MakeStorageAvailable(availability);
 
                         if (!string.IsNullOrEmpty(response))
                         {
