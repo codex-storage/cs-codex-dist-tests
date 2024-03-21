@@ -3,12 +3,16 @@ using Nethereum.ABI.FunctionEncoding.Attributes;
 using Nethereum.Contracts;
 using Nethereum.RPC.Eth.DTOs;
 using Nethereum.Web3;
+using NethereumWorkflow.BlockUtils;
 using Utils;
 
 namespace NethereumWorkflow
 {
     public class NethereumInteraction
     {
+        // BlockCache is a static instance: It stays alive for the duration of the application runtime.
+        private readonly static BlockCache blockCache = new BlockCache();
+
         private readonly ILog log;
         private readonly Web3 web3;
 
@@ -88,12 +92,23 @@ namespace NethereumWorkflow
         public List<EventLog<TEvent>> GetEvents<TEvent>(string address, TimeRange timeRange) where TEvent : IEventDTO, new()
         {
             var wrapper = new Web3Wrapper(web3, log);
-            var blockTimeFinder = new BlockTimeFinder(wrapper, log);
+            var blockTimeFinder = new BlockTimeFinder(blockCache, wrapper, log);
 
             var fromBlock = blockTimeFinder.GetLowestBlockNumberAfter(timeRange.From);
             var toBlock = blockTimeFinder.GetHighestBlockNumberBefore(timeRange.To);
 
-            return GetEvents<TEvent>(address, fromBlock, toBlock);
+            if (!fromBlock.HasValue)
+            {
+                log.Error("Failed to find lowest block for time range: " + timeRange);
+                throw new Exception("Failed");
+            }
+            if (!toBlock.HasValue)
+            {
+                log.Error("Failed to find highest block for time range: " + timeRange);
+                throw new Exception("Failed");
+            }
+
+            return GetEvents<TEvent>(address, fromBlock.Value, toBlock.Value);
         }
 
         public List<EventLog<TEvent>> GetEvents<TEvent>(string address, ulong fromBlockNumber, ulong toBlockNumber) where TEvent : IEventDTO, new()

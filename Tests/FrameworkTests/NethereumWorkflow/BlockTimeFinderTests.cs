@@ -1,6 +1,7 @@
 ﻿using Logging;
 using Moq;
 using NethereumWorkflow;
+using NethereumWorkflow.BlockUtils;
 using NUnit.Framework;
 
 namespace FrameworkTests.NethereumWorkflow
@@ -39,7 +40,7 @@ namespace FrameworkTests.NethereumWorkflow
                 return null;
             });
 
-            finder = new BlockTimeFinder(web3.Object, log.Object);
+            finder = new BlockTimeFinder(new BlockCache(), web3.Object, log.Object);
         }
 
         [Test]

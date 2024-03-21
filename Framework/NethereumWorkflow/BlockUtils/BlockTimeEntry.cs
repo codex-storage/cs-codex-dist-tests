@@ -1,4 +1,4 @@
-﻿namespace NethereumWorkflow
+﻿namespace NethereumWorkflow.BlockUtils
 {
     public class BlockTimeEntry
     {
