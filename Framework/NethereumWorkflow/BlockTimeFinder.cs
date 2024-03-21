@@ -1,36 +1,33 @@
 ﻿using Logging;
-using Nethereum.RPC.Eth.DTOs;
-using Nethereum.Web3;
-using Utils;
 
 namespace NethereumWorkflow
 {
-    public partial class BlockTimeFinder
+    public class BlockTimeFinder
     {
         private const ulong FetchRange = 6;
         private const int MaxEntries = 1024;
         private static readonly Dictionary<ulong, BlockTimeEntry> entries = new Dictionary<ulong, BlockTimeEntry>();
-        private readonly Web3 web3;
+        private readonly IWeb3Blocks web3;
         private readonly ILog log;
         
-        public BlockTimeFinder(Web3 web3, ILog log)
+        public BlockTimeFinder(IWeb3Blocks web3, ILog log)
         {
             this.web3 = web3;
             this.log = log;
         }
 
-        public ulong GetHighestBlockNumberBefore(DateTime moment)
+        public ulong? GetHighestBlockNumberBefore(DateTime moment)
         {
-            log.Log("Looking for highest block before " + moment.ToString("o"));
+            log.Debug("Looking for highest block before " + moment.ToString("o"));
             AssertMomentIsInPast(moment);
             Initialize();
 
             return GetHighestBlockBefore(moment);
         }
 
-        public ulong GetLowestBlockNumberAfter(DateTime moment)
+        public ulong? GetLowestBlockNumberAfter(DateTime moment)
         {
-            log.Log("Looking for lowest block after " + moment.ToString("o"));
+            log.Debug("Looking for lowest block after " + moment.ToString("o"));
             AssertMomentIsInPast(moment);
             Initialize();
 
@@ -48,7 +45,7 @@ namespace NethereumWorkflow
                 closestAfter.Utc > moment &&
                 closestBefore.BlockNumber + 1 == closestAfter.BlockNumber)
             {
-                log.Log("Found highest-Before: " + closestBefore);
+                log.Debug("Found highest-Before: " + closestBefore);
                 return closestBefore.BlockNumber;
             }
 
@@ -67,7 +64,7 @@ namespace NethereumWorkflow
                 closestAfter.Utc > moment &&
                 closestBefore.BlockNumber + 1 == closestAfter.BlockNumber)
             {
-                log.Log("Found lowest-after: " + closestAfter);
+                log.Debug("Found lowest-after: " + closestAfter);
                 return closestAfter.BlockNumber;
             }
 
@@ -223,24 +220,13 @@ namespace NethereumWorkflow
 
         private BlockTimeEntry? AddCurrentBlock()
         {
-            var number = Time.Wait(web3.Eth.Blocks.GetBlockNumber.SendRequestAsync());
-            var blockNumber = number.ToDecimal();
+            var blockNumber = web3.GetCurrentBlockNumber();
             return AddBlockNumber(blockNumber);
         }
 
         private DateTime? GetTimestampFromBlock(ulong blockNumber)
         {
-            try
-            {
-                var block = Time.Wait(web3.Eth.Blocks.GetBlockWithTransactionsByNumber.SendRequestAsync(new BlockParameter(blockNumber)));
-                if (block == null) return null;
-                return DateTimeOffset.FromUnixTimeSeconds(Convert.ToInt64(block.Timestamp.ToDecimal())).UtcDateTime;
-            }
-            catch (Exception ex)
-            {
-                int i = 0;
-                throw;
-            }
+            return web3.GetTimestampForBlock(blockNumber);
         }
 
         private BlockTimeEntry? FindClosestBeforeEntry(DateTime moment)
