@@ -7,8 +7,8 @@ namespace NethereumWorkflow
 {
     public interface IWeb3Blocks
     {
-        decimal GetCurrentBlockNumber();
-        DateTime? GetTimestampForBlock(decimal blockNumber);
+        ulong GetCurrentBlockNumber();
+        DateTime? GetTimestampForBlock(ulong blockNumber);
     }
 
     public class Web3Wrapper : IWeb3Blocks
@@ -22,17 +22,17 @@ namespace NethereumWorkflow
             this.log = log;
         }
 
-        public decimal GetCurrentBlockNumber()
+        public ulong GetCurrentBlockNumber()
         {
             var number = Time.Wait(web3.Eth.Blocks.GetBlockNumber.SendRequestAsync());
-            return number.ToDecimal();
+            return Convert.ToUInt64(number.ToDecimal());
         }
 
-        public DateTime? GetTimestampForBlock(decimal blockNumber)
+        public DateTime? GetTimestampForBlock(ulong blockNumber)
         {
             try
             {
-                var block = Time.Wait(web3.Eth.Blocks.GetBlockWithTransactionsByNumber.SendRequestAsync(new BlockParameter(Convert.ToUInt64(blockNumber))));
+                var block = Time.Wait(web3.Eth.Blocks.GetBlockWithTransactionsByNumber.SendRequestAsync(new BlockParameter(blockNumber)));
                 if (block == null) return null;
                 return DateTimeOffset.FromUnixTimeSeconds(Convert.ToInt64(block.Timestamp.ToDecimal())).UtcDateTime;
             }

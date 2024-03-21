@@ -4,9 +4,7 @@ namespace NethereumWorkflow
 {
     public class BlockTimeFinder
     {
-        private const ulong FetchRange = 6;
-        private const int MaxEntries = 1024;
-        private static readonly Dictionary<ulong, BlockTimeEntry> entries = new Dictionary<ulong, BlockTimeEntry>();
+        private readonly BlockCache cache;
         private readonly IWeb3Blocks web3;
         private readonly ILog log;
         
@@ -14,253 +12,206 @@ namespace NethereumWorkflow
         {
             this.web3 = web3;
             this.log = log;
+
+            cache = new BlockCache(web3);
         }
 
         public ulong? GetHighestBlockNumberBefore(DateTime moment)
         {
-            log.Debug("Looking for highest block before " + moment.ToString("o"));
-            AssertMomentIsInPast(moment);
-            Initialize();
+            cache.Initialize();
+            if (moment <= cache.Genesis.Utc) return null;
+            if (moment >= cache.Current.Utc) return cache.Current.BlockNumber;
 
-            return GetHighestBlockBefore(moment);
+            return Search(cache.Genesis, cache.Current, moment, HighestBeforeSelector);
         }
 
         public ulong? GetLowestBlockNumberAfter(DateTime moment)
         {
-            log.Debug("Looking for lowest block after " + moment.ToString("o"));
-            AssertMomentIsInPast(moment);
-            Initialize();
+            cache.Initialize();
+            if (moment >= cache.Current.Utc) return null;
+            if (moment <= cache.Genesis.Utc) return cache.Genesis.BlockNumber;
 
-            return GetLowestBlockAfter(moment);
+            return Search(cache.Genesis, cache.Current, moment, LowestAfterSelector);
         }
 
-        private ulong GetHighestBlockBefore(DateTime moment)
+        private ulong Search(BlockTimeEntry lower, BlockTimeEntry upper, DateTime target, Func<DateTime, BlockTimeEntry, bool> isWhatIwant)
         {
-            var closestBefore = FindClosestBeforeEntry(moment);
-            var closestAfter = FindClosestAfterEntry(moment);
-
-            if (closestBefore != null &&
-                closestAfter != null &&
-                closestBefore.Utc < moment &&
-                closestAfter.Utc > moment &&
-                closestBefore.BlockNumber + 1 == closestAfter.BlockNumber)
+            var middle = GetMiddle(lower, upper);
+            if (middle.BlockNumber == lower.BlockNumber)
             {
-                log.Debug("Found highest-Before: " + closestBefore);
-                return closestBefore.BlockNumber;
+                if (isWhatIwant(target, upper)) return upper.BlockNumber;
             }
 
-            FetchBlocksAround(moment);
-            return GetHighestBlockBefore(moment);
-        }
-
-        private ulong GetLowestBlockAfter(DateTime moment)
-        {
-            var closestBefore = FindClosestBeforeEntry(moment);
-            var closestAfter = FindClosestAfterEntry(moment);
-
-            if (closestBefore != null &&
-                closestAfter != null &&
-                closestBefore.Utc < moment &&
-                closestAfter.Utc > moment &&
-                closestBefore.BlockNumber + 1 == closestAfter.BlockNumber)
+            if (isWhatIwant(target, middle))
             {
-                log.Debug("Found lowest-after: " + closestAfter);
-                return closestAfter.BlockNumber;
+                return middle.BlockNumber;
             }
 
-            FetchBlocksAround(moment);
-            return GetLowestBlockAfter(moment);
-        }
-
-        private void FetchBlocksAround(DateTime moment)
-        {
-            var timePerBlock = EstimateTimePerBlock();
-            log.Debug("Fetching blocks around " + moment.ToString("o") + " timePerBlock: " + timePerBlock.TotalSeconds);
-
-            EnsureRecentBlockIfNecessary(moment, timePerBlock);
-
-            var max = entries.Keys.Max();
-            var blockDifference = CalculateBlockDifference(moment, timePerBlock, max);
-
-            FetchUp(max, blockDifference);
-            FetchDown(max, blockDifference);
-        }
-
-        private void FetchDown(ulong max, ulong blockDifference)
-        {
-            var target = max - blockDifference - 1;
-            var fetchDown = FetchRange;
-            while (fetchDown > 0)
+            if (middle.Utc > target)
             {
-                if (!entries.ContainsKey(target))
+                return Search(lower, middle, target, isWhatIwant);
+            }
+            else
+            {
+                return Search(middle, upper, target, isWhatIwant);
+            }
+        }
+
+        private BlockTimeEntry GetMiddle(BlockTimeEntry lower, BlockTimeEntry upper)
+        {
+            ulong range = upper.BlockNumber - lower.BlockNumber;
+            ulong number = lower.BlockNumber + (range / 2);
+            return GetBlock(number);
+        }
+
+        private bool HighestBeforeSelector(DateTime target, BlockTimeEntry entry)
+        {
+            var next = GetBlock(entry.BlockNumber + 1);
+            return
+                entry.Utc < target &&
+                next.Utc > target;
+        }
+
+        private bool LowestAfterSelector(DateTime target, BlockTimeEntry entry)
+        {
+            var previous = GetBlock(entry.BlockNumber - 1);
+            return
+                entry.Utc > target &&
+                previous.Utc < target;
+        }
+
+        private BlockTimeEntry GetBlock(ulong number)
+        {
+            if (number < cache.Genesis.BlockNumber) throw new Exception("Can't fetch block before genesis.");
+            if (number > cache.Current.BlockNumber) throw new Exception("Can't fetch block after current.");
+
+            var dateTime = web3.GetTimestampForBlock(number);
+            if (dateTime == null) throw new Exception("Failed to get dateTime for block that should exist.");
+            return cache.Add(number, dateTime.Value);
+        }
+    }
+
+    public class BlockCache
+    {
+        private const int MaxEntries = 1024;
+        private readonly Dictionary<ulong, BlockTimeEntry> entries = new Dictionary<ulong, BlockTimeEntry>();
+        private readonly IWeb3Blocks web3;
+
+        public BlockTimeEntry Genesis { get; private set; } = null!;
+        public BlockTimeEntry Current { get; private set; } = null!;
+
+        public BlockCache(IWeb3Blocks web3)
+        {
+            this.web3 = web3;
+        }
+
+        public void Initialize()
+        {
+            AddCurrentBlock();
+            LookForGenesisBlock();
+
+            if (Current.BlockNumber == Genesis.BlockNumber)
+            {
+                throw new Exception("Unsupported condition: Current block is genesis block.");
+            }
+        }
+
+        public BlockTimeEntry Add(ulong number, DateTime dateTime)
+        {
+            return Add(new BlockTimeEntry(number, dateTime));
+        }
+
+        public BlockTimeEntry Add(BlockTimeEntry entry)
+        {
+            if (!entries.ContainsKey(entry.BlockNumber))
+            {
+                if (entries.Count > MaxEntries)
                 {
-                    var newBlock = AddBlockNumber(target);
-                    if (newBlock == null) return;
-                    fetchDown--;
+                    entries.Clear();
+                    Initialize();
                 }
-                target--;
-                if (target <= 0) return;
+                entries.Add(entry.BlockNumber, entry);
             }
+
+            return entries[entry.BlockNumber];
         }
 
-        private void FetchUp(ulong max, ulong blockDifference)
+        public BlockTimeEntry? Get(ulong number)
         {
-            var target = max - blockDifference;
-            var fetchUp = FetchRange;
-            while (fetchUp > 0)
+            if (!entries.TryGetValue(number, out BlockTimeEntry? value)) return null;
+            return value;
+        }
+
+        private void LookForGenesisBlock()
+        {
+            if (Genesis != null) return;
+
+            var blockTime = web3.GetTimestampForBlock(0);
+            if (blockTime != null)
             {
-                if (!entries.ContainsKey(target))
+                AddGenesisBlock(0, blockTime.Value);
+                return;
+            }
+
+            LookForGenesisBlock(0, Current);
+        }
+
+        private void LookForGenesisBlock(ulong lower, BlockTimeEntry upper)
+        {
+            if (Genesis != null) return;
+
+            var range = upper.BlockNumber - lower;
+            if (range == 1)
+            {
+                var lowTime = web3.GetTimestampForBlock(lower);
+                if (lowTime != null)
                 {
-                    var newBlock = AddBlockNumber(target);
-                    if (newBlock == null) return;
-                    fetchUp--;
-                }
-                target++;
-                if (target >= max) return;
-            }
-        }
-
-        private ulong CalculateBlockDifference(DateTime moment, TimeSpan timePerBlock, ulong max)
-        {
-            var latest = entries[max];
-            var timeDifference = latest.Utc - moment;
-            double secondsDifference = Math.Abs(timeDifference.TotalSeconds);
-            double secondsPerBlock = timePerBlock.TotalSeconds;
-
-            double numberOfBlocksDifference = secondsDifference / secondsPerBlock;
-            var blockDifference = Convert.ToUInt64(numberOfBlocksDifference);
-            if (blockDifference < 1) blockDifference = 1;
-            return blockDifference;
-        }
-
-        private void EnsureRecentBlockIfNecessary(DateTime moment, TimeSpan timePerBlock)
-        {
-            var max = entries.Keys.Max();
-            var latest = entries[max];
-            var maxRetry = 10;
-            while (moment > latest.Utc)
-            {
-                var newBlock = AddCurrentBlock();
-                if (newBlock == null || newBlock.BlockNumber == latest.BlockNumber)
-                {
-                    maxRetry--;
-                    if (maxRetry == 0) throw new Exception("Unable to fetch recent block after 10x tries.");
-                    Thread.Sleep(timePerBlock);
-                }
-                max = entries.Keys.Max();
-                latest = entries[max];
-            }
-        }
-
-        private BlockTimeEntry? AddBlockNumber(decimal blockNumber)
-        {
-            return AddBlockNumber(Convert.ToUInt64(blockNumber));
-        }
-
-        private BlockTimeEntry? AddBlockNumber(ulong blockNumber)
-        {
-            if (entries.ContainsKey(blockNumber))
-            {
-                return entries[blockNumber];
-            }
-
-            if (entries.Count > MaxEntries)
-            {
-                log.Debug("Entries cleared!");
-                entries.Clear();
-                Initialize();
-            }
-
-            var time = GetTimestampFromBlock(blockNumber);
-            if (time == null)
-            {
-                log.Log("Failed to get block for number: " + blockNumber);
-                return null;
-            }
-            var entry = new BlockTimeEntry(blockNumber, time.Value);
-            log.Debug("Found block " + entry.BlockNumber + " at " + entry.Utc.ToString("o"));
-            entries.Add(blockNumber, entry);
-            return entry;
-        }
-
-        private TimeSpan EstimateTimePerBlock()
-        {
-            var min = entries.Keys.Min();
-            var max = entries.Keys.Max();
-            var clippedMin = Math.Max(max - 100, min);
-            var minTime = entries[min].Utc;
-            var clippedMinBlock = AddBlockNumber(clippedMin);
-            if (clippedMinBlock != null) minTime = clippedMinBlock.Utc;
-
-            var maxTime = entries[max].Utc;
-            var elapsedTime = maxTime - minTime;
-
-            double elapsedSeconds = elapsedTime.TotalSeconds;
-            double numberOfBlocks = max - min;
-            double secondsPerBlock = elapsedSeconds / numberOfBlocks;
-
-            var result = TimeSpan.FromSeconds(secondsPerBlock);
-            if (result.TotalSeconds < 1.0) result = TimeSpan.FromSeconds(1.0);
-            return result;
-        }
-
-        private void Initialize()
-        {
-            if (!entries.Any())
-            {
-                AddCurrentBlock();
-                AddBlockNumber(entries.Single().Key - 1);
-            }
-        }
-
-        private static void AssertMomentIsInPast(DateTime moment)
-        {
-            if (moment > DateTime.UtcNow) throw new Exception("Moment must be UTC and must be in the past.");
-        }
-
-        private BlockTimeEntry? AddCurrentBlock()
-        {
-            var blockNumber = web3.GetCurrentBlockNumber();
-            return AddBlockNumber(blockNumber);
-        }
-
-        private DateTime? GetTimestampFromBlock(ulong blockNumber)
-        {
-            return web3.GetTimestampForBlock(blockNumber);
-        }
-
-        private BlockTimeEntry? FindClosestBeforeEntry(DateTime moment)
-        {
-            BlockTimeEntry? result = null;
-            foreach (var entry in entries.Values)
-            {
-                if (result == null)
-                {
-                    if (entry.Utc < moment) result = entry;
+                    AddGenesisBlock(lower, lowTime.Value);
                 }
                 else
                 {
-                    if (entry.Utc > result.Utc && entry.Utc < moment) result = entry;
+                    AddGenesisBlock(upper);
                 }
+                return;
             }
-            return result;
+
+            var current = lower + (range / 2);
+
+            var blockTime = web3.GetTimestampForBlock(current);
+            if (blockTime != null)
+            {
+                var newUpper = Add(current, blockTime.Value);
+                LookForGenesisBlock(lower, newUpper);
+            }
+            else
+            {
+                LookForGenesisBlock(current, upper);
+            }
         }
 
-        private BlockTimeEntry? FindClosestAfterEntry(DateTime moment)
+        private void AddCurrentBlock()
         {
-            BlockTimeEntry? result = null;
-            foreach (var entry in entries.Values)
-            {
-                if (result == null)
-                {
-                    if (entry.Utc > moment) result = entry;
-                }
-                else
-                {
-                    if (entry.Utc < result.Utc && entry.Utc > moment) result = entry;
-                }
-            }
-            return result;
+            var currentBlockNumber = web3.GetCurrentBlockNumber();
+            var blockTime = web3.GetTimestampForBlock(currentBlockNumber);
+            if (blockTime == null) throw new Exception("Unable to get dateTime for current block.");
+            AddCurrentBlock(currentBlockNumber, blockTime.Value);
+        }
+
+        private void AddCurrentBlock(ulong currentBlockNumber, DateTime dateTime)
+        {
+            Current = new BlockTimeEntry(currentBlockNumber, dateTime);
+            Add(Current);
+        }
+
+        private void AddGenesisBlock(ulong number, DateTime dateTime)
+        {
+            AddGenesisBlock(new BlockTimeEntry(number, dateTime));
+        }
+
+        private void AddGenesisBlock(BlockTimeEntry entry)
+        {
+            Genesis = entry;
+            Add(Genesis);
         }
     }
 }

@@ -8,21 +8,20 @@ namespace FrameworkTests.NethereumWorkflow
     [TestFixture]
     public class BlockTimeFinderTests
     {
+        private readonly Mock<ILog> log = new Mock<ILog>();
         private Mock<IWeb3Blocks> web3 = new Mock<IWeb3Blocks>();
-        private Mock<ILog> log = new Mock<ILog>();
-        private Dictionary<decimal, Block> blocks = new Dictionary<decimal, Block>();
-        private DateTime start = DateTime.Now;
+        private Dictionary<ulong, Block> blocks = new Dictionary<ulong, Block>();
 
         private BlockTimeFinder finder = null!;
 
-        private void SetupContinuousBlockchain()
+        private void SetupBlockchain()
         {
-            start = DateTime.UtcNow.AddDays(-1).AddSeconds(-30);
-            blocks = new Dictionary<decimal, Block>();
+            var start = DateTime.UtcNow.AddDays(-1).AddSeconds(-30);
+            blocks = new Dictionary<ulong, Block>();
             
-            for (var i = 0; i < 30; i++)
+            for (ulong i = 0; i < 30; i++)
             {
-                decimal d = 100 + i;
+                ulong d = 100 + i;
                 blocks.Add(d, new Block(d, start + TimeSpan.FromSeconds(i * 2)));
             }
         }
@@ -30,11 +29,11 @@ namespace FrameworkTests.NethereumWorkflow
         [SetUp]
         public void SetUp()
         {
-            SetupContinuousBlockchain();
+            SetupBlockchain();
 
             web3 = new Mock<IWeb3Blocks>();
             web3.Setup(w => w.GetCurrentBlockNumber()).Returns(blocks.Keys.Max());
-            web3.Setup(w => w.GetTimestampForBlock(It.IsAny<decimal>())).Returns<decimal>(d =>
+            web3.Setup(w => w.GetTimestampForBlock(It.IsAny<ulong>())).Returns<ulong>(d =>
             {
                 if (blocks.ContainsKey(d)) return blocks[d].Time;
                 return null;
@@ -117,21 +116,19 @@ namespace FrameworkTests.NethereumWorkflow
 
             Assert.That(notFound, Is.Null);
         }
-
     }
 
     public class Block
     {
-        public Block(decimal number, DateTime time)
+        public Block(ulong number, DateTime time)
         {
             Number = number;
             Time = time;
         }
 
-        public decimal Number { get; }
+        public ulong Number { get; }
         public DateTime Time { get; }
         public DateTime JustBefore { get { return Time.AddSeconds(-1); } }
         public DateTime JustAfter { get { return Time.AddSeconds(1); } }
     }
-
 }
