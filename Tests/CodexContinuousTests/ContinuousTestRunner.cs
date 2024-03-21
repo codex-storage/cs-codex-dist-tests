@@ -51,8 +51,6 @@ namespace ContinuousTests
             overviewLog.Log("");
             var allTests = testFactory.CreateTests();
 
-            ClearAllCustomNamespaces(allTests, overviewLog);
-
             var filteredTests = FilterTests(allTests, overviewLog);
             if (!filteredTests.Any())
             {
@@ -134,21 +132,6 @@ namespace ContinuousTests
                 result.Add($"summary", $"passes: {testLoop.NumberOfPasses} - failures: {testLoop.NumberOfFailures}");
             }
             return result;
-        }
-
-        private void ClearAllCustomNamespaces(ContinuousTest[] allTests, ILog log)
-        {
-            foreach (var test in allTests) ClearAllCustomNamespaces(test, log);
-        }
-
-        private void ClearAllCustomNamespaces(ContinuousTest test, ILog log)
-        {
-            if (string.IsNullOrEmpty(test.CustomK8sNamespace)) return;
-
-            log.Log($"Clearing namespace '{test.CustomK8sNamespace}'...");
-
-            var entryPoint = entryPointFactory.CreateEntryPoint(config.KubeConfigFile, config.DataPath, test.CustomK8sNamespace, log);
-            entryPoint.Tools.CreateWorkflow().DeleteNamespacesStartingWith(test.CustomK8sNamespace);
         }
 
         private void PerformCleanup(ILog log)

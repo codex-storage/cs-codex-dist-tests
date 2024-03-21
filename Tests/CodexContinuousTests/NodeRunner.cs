@@ -13,14 +13,12 @@ namespace ContinuousTests
         private readonly ICodexNode[] nodes;
         private readonly Configuration config;
         private readonly ILog log;
-        private readonly string customNamespace;
 
-        public NodeRunner(ICodexNode[] nodes, Configuration config, ILog log, string customNamespace)
+        public NodeRunner(ICodexNode[] nodes, Configuration config, ILog log)
         {
             this.nodes = nodes;
             this.config = config;
             this.log = log;
-            this.customNamespace = customNamespace;
         }
 
         public IDownloadedLog DownloadLog(RunningContainer container, int? tailLines = null)
@@ -41,36 +39,34 @@ namespace ContinuousTests
             // Therefore, we use the image of the bootstrap node.
             CodexContainerRecipe.DockerImageOverride = bootstrapNode.Container.Recipe.Image;
 
+            var debugInfo = bootstrapNode.GetDebugInfo();
+            Assert.That(!string.IsNullOrEmpty(debugInfo.spr));
+
+            var node = entryPoint.CreateInterface().StartCodexNode(s =>
+            {
+                setup(s);
+                s.WithBootstrapNode(bootstrapNode);
+            });
+
             try
             {
-                var debugInfo = bootstrapNode.GetDebugInfo();
-                Assert.That(!string.IsNullOrEmpty(debugInfo.spr));
-
-                var node = entryPoint.CreateInterface().StartCodexNode(s =>
-                {
-                    setup(s);
-                    s.WithBootstrapNode(bootstrapNode);
-                });
-
-                try
-                {
-                    operation(node);
-                }
-                catch
-                {
-                    DownloadLog(node.Container);
-                    throw;
-                }
+                operation(node);
+            }
+            catch
+            {
+                DownloadLog(node.Container);
+                node.Stop();
+                throw;
             }
             finally
             {
-                entryPoint.Tools.CreateWorkflow().DeleteNamespace();
+                node.Stop();
             }
         }
 
         private EntryPoint CreateEntryPoint()
         {
-            return entryPointFactory.CreateEntryPoint(config.KubeConfigFile, config.DataPath, customNamespace, log);
+            return entryPointFactory.CreateEntryPoint(config.KubeConfigFile, config.DataPath, config.CodexDeployment.Metadata.KubeNamespace, log);
         }
     }
 }

@@ -9,7 +9,7 @@ namespace CodexPlugin
         public CodexDeployment(CodexInstance[] codexInstances, GethDeployment gethDeployment,
             CodexContractsDeployment codexContractsDeployment, RunningContainers? prometheusContainer,
             RunningContainers? discordBotContainer, DeploymentMetadata metadata,
-            String id)
+            string id)
         {
             Id = id;
             CodexInstances = codexInstances;
@@ -20,7 +20,7 @@ namespace CodexPlugin
             Metadata = metadata;
         }
 
-        public String Id { get; }
+        public string Id { get; }
         public CodexInstance[] CodexInstances { get; }
         public GethDeployment GethDeployment { get; }
         public CodexContractsDeployment CodexContractsDeployment { get; }

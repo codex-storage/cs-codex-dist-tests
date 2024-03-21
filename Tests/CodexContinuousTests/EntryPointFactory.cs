@@ -25,7 +25,6 @@ namespace ContinuousTests
             );
 
             return new EntryPoint(log, lifecycleConfig, dataFilePath);
-            //DefaultContainerRecipe.TestsType = "continuous-tests";
         }
 
         private static string? GetKubeConfig(string kubeConfigFile)

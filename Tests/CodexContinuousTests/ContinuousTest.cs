@@ -1,6 +1,8 @@
-﻿using CodexPlugin;
+﻿using CodexContractsPlugin;
+using CodexPlugin;
 using Core;
 using FileUtils;
+using GethPlugin;
 using Logging;
 using MetricsPlugin;
 
@@ -31,7 +33,7 @@ namespace ContinuousTests
 
             if (nodes != null)
             {
-                NodeRunner = new NodeRunner(Nodes, configuration, Log, CustomK8sNamespace);
+                NodeRunner = new NodeRunner(Nodes, configuration, Log);
             }
             else
             {
@@ -56,15 +58,23 @@ namespace ContinuousTests
         {
             if (Configuration.CodexDeployment.PrometheusContainer == null) throw new Exception("Expected prometheus to be part of Codex deployment.");
 
-            var entryPointFactory = new EntryPointFactory();
-            var entryPoint = entryPointFactory.CreateEntryPoint(Configuration.KubeConfigFile, Configuration.DataPath, Configuration.CodexDeployment.Metadata.KubeNamespace, Log);
-            return entryPoint.CreateInterface().WrapMetricsCollector(Configuration.CodexDeployment.PrometheusContainer, target);
+            var ci = CreateCi();
+            return ci.WrapMetricsCollector(Configuration.CodexDeployment.PrometheusContainer, target);
+        }
+
+        public (IGethNode, ICodexContracts) CreateMarketplaceAccess()
+        {
+            var ci = CreateCi();
+
+            var geth = ci.WrapGethDeployment(Configuration.CodexDeployment.GethDeployment);
+            var contracts = ci.WrapCodexContractsDeployment(geth, Configuration.CodexDeployment.CodexContractsDeployment);
+
+            return (geth, contracts);
         }
 
         public abstract int RequiredNumberOfNodes { get; }
         public abstract TimeSpan RunTestEvery { get; }
         public abstract TestFailMode TestFailMode { get; }
-        public virtual string CustomK8sNamespace { get { return string.Empty; } }
 
         public string Name
         {
@@ -72,6 +82,13 @@ namespace ContinuousTests
             {
                 return GetType().Name;
             }
+        }
+
+        private CoreInterface CreateCi()
+        {
+            var entryPointFactory = new EntryPointFactory();
+            var entryPoint = entryPointFactory.CreateEntryPoint(Configuration.KubeConfigFile, Configuration.DataPath, Configuration.CodexDeployment.Metadata.KubeNamespace, Log);
+            return entryPoint.CreateInterface();
         }
     }
 
