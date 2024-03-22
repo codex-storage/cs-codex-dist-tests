@@ -1,16 +1,13 @@
-﻿using CodexContractsPlugin;
-using Logging;
+﻿using Logging;
 using Newtonsoft.Json;
 using Utils;
-using System.Numerics;
 
 namespace CodexPlugin
 {
     public interface IMarketplaceAccess
     {
-        string MakeStorageAvailable(ByteSize size, TestToken minPriceForTotalSpace, TestToken maxCollateral, TimeSpan maxDuration);
-        StoragePurchaseContract RequestStorage(ContentId contentId, TestToken pricePerSlotPerSecond, TestToken requiredCollateral, uint minRequiredNumberOfNodes, int proofProbability, TimeSpan duration);
-        StoragePurchaseContract RequestStorage(ContentId contentId, TestToken pricePerSlotPerSecond, TestToken requiredCollateral, uint minRequiredNumberOfNodes, int proofProbability, TimeSpan duration, TimeSpan expiry);
+        string MakeStorageAvailable(StorageAvailability availability);
+        StoragePurchaseContract RequestStorage(StoragePurchase purchase);
     }
 
     public class MarketplaceAccess : IMarketplaceAccess
@@ -24,35 +21,12 @@ namespace CodexPlugin
             this.codexAccess = codexAccess;
         }
 
-        public StoragePurchaseContract RequestStorage(ContentId contentId, TestToken pricePerSlotPerSecond, TestToken requiredCollateral, uint minRequiredNumberOfNodes, int proofProbability, TimeSpan duration)
+        public StoragePurchaseContract RequestStorage(StoragePurchase purchase)
         {
-            return RequestStorage(contentId, pricePerSlotPerSecond, requiredCollateral, minRequiredNumberOfNodes, proofProbability, duration, duration / 2);
-        }
+            purchase.Log(log);
+            var request = purchase.ToApiRequest();
 
-        public StoragePurchaseContract RequestStorage(ContentId contentId, TestToken pricePerSlotPerSecond, TestToken requiredCollateral, uint minRequiredNumberOfNodes, int proofProbability, TimeSpan duration, TimeSpan expiry)
-        {
-            var expireUtc = DateTimeOffset.UtcNow.ToUnixTimeSeconds() + expiry.TotalSeconds;
-
-            var request = new CodexSalesRequestStorageRequest
-            {
-                duration = ToDecInt(duration.TotalSeconds),
-                proofProbability = ToDecInt(proofProbability),
-                reward = ToDecInt(pricePerSlotPerSecond),
-                collateral = ToDecInt(requiredCollateral),
-                expiry = ToDecInt(expireUtc),
-                nodes = minRequiredNumberOfNodes,
-                tolerance = null,
-            };
-
-            Log($"Requesting storage for: {contentId.Id}... (" +
-                $"pricePerSlotPerSecond: {pricePerSlotPerSecond}, " +
-                $"requiredCollateral: {requiredCollateral}, " +
-                $"minRequiredNumberOfNodes: {minRequiredNumberOfNodes}, " +
-                $"proofProbability: {proofProbability}, " +
-                $"expiry: {Time.FormatDuration(expiry)}, " +
-                $"duration: {Time.FormatDuration(duration)})");
-
-            var response = codexAccess.RequestStorage(request, contentId.Id);
+            var response = codexAccess.RequestStorage(request, purchase.ContentId.Id);
 
             if (response == "Purchasing not available" || 
                 response == "Expiry required" ||
@@ -64,42 +38,19 @@ namespace CodexPlugin
 
             Log($"Storage requested successfully. PurchaseId: '{response}'.");
 
-            return new StoragePurchaseContract(log, codexAccess, response, duration);
+            return new StoragePurchaseContract(log, codexAccess, response, purchase);
         }
 
-        public string MakeStorageAvailable(ByteSize totalSpace, TestToken minPriceForTotalSpace, TestToken maxCollateral, TimeSpan maxDuration)
+        public string MakeStorageAvailable(StorageAvailability availability)
         {
-            var request = new CodexSalesAvailabilityRequest
-            {
-                size = ToDecInt(totalSpace.SizeInBytes),
-                duration = ToDecInt(maxDuration.TotalSeconds),
-                maxCollateral = ToDecInt(maxCollateral),
-                minPrice = ToDecInt(minPriceForTotalSpace)
-            };
-
-            Log($"Making storage available... (" +
-                $"size: {totalSpace}, " +
-                $"minPriceForTotalSpace: {minPriceForTotalSpace}, " +
-                $"maxCollateral: {maxCollateral}, " +
-                $"maxDuration: {Time.FormatDuration(maxDuration)})");
+            availability.Log(log);
+            var request = availability.ToApiRequest();
 
             var response = codexAccess.SalesAvailability(request);
 
             Log($"Storage successfully made available. Id: {response.id}");
 
             return response.id;
-        }
-
-        private string ToDecInt(double d)
-        {
-            var i = new BigInteger(d);
-            return i.ToString("D");
-        }
-
-        public string ToDecInt(TestToken t)
-        {
-            var i = new BigInteger(t.Amount);
-            return i.ToString("D");
         }
 
         private void Log(string msg)
@@ -110,22 +61,16 @@ namespace CodexPlugin
 
     public class MarketplaceUnavailable : IMarketplaceAccess
     {
-        public StoragePurchaseContract RequestStorage(ContentId contentId, TestToken pricePerBytePerSecond, TestToken requiredCollateral, uint minRequiredNumberOfNodes, int proofProbability, TimeSpan duration)
-        {
-            Unavailable();
-            return null!;
-        }
-
-        public StoragePurchaseContract RequestStorage(ContentId contentId, TestToken pricePerSlotPerSecond, TestToken requiredCollateral, uint minRequiredNumberOfNodes, int proofProbability, TimeSpan duration, TimeSpan expiry)
+        public string MakeStorageAvailable(StorageAvailability availability)
         {
             Unavailable();
             throw new NotImplementedException();
         }
 
-        public string MakeStorageAvailable(ByteSize size, TestToken minPricePerBytePerSecond, TestToken maxCollateral, TimeSpan duration)
+        public StoragePurchaseContract RequestStorage(StoragePurchase purchase)
         {
             Unavailable();
-            return string.Empty;
+            throw new NotImplementedException();
         }
 
         private void Unavailable()
@@ -139,22 +84,26 @@ namespace CodexPlugin
     {
         private readonly ILog log;
         private readonly CodexAccess codexAccess;
+        private readonly TimeSpan gracePeriod = TimeSpan.FromSeconds(10);
         private DateTime? contractStartUtc;
 
-        public StoragePurchaseContract(ILog log, CodexAccess codexAccess, string purchaseId, TimeSpan contractDuration)
+        public StoragePurchaseContract(ILog log, CodexAccess codexAccess, string purchaseId, StoragePurchase purchase)
         {
             this.log = log;
             this.codexAccess = codexAccess;
             PurchaseId = purchaseId;
-            ContractDuration = contractDuration;
+            Purchase = purchase;
         }
 
         public string PurchaseId { get; }
-        public TimeSpan ContractDuration { get; }
+        public StoragePurchase Purchase { get; }
 
         public void WaitForStorageContractStarted()
         {
-            WaitForStorageContractStarted(TimeSpan.FromSeconds(30));
+            var timeout = Purchase.Expiry + gracePeriod;
+
+            WaitForStorageContractState(timeout, "started");
+            contractStartUtc = DateTime.UtcNow;
         }
 
         public void WaitForStorageContractFinished()
@@ -163,39 +112,14 @@ namespace CodexPlugin
             {
                 WaitForStorageContractStarted();
             }
-            var gracePeriod = TimeSpan.FromSeconds(10);
             var currentContractTime = DateTime.UtcNow - contractStartUtc!.Value;
-            var timeout = (ContractDuration - currentContractTime) + gracePeriod;
+            var timeout = (Purchase.Duration - currentContractTime) + gracePeriod;
             WaitForStorageContractState(timeout, "finished");
         }
 
-        public void WaitForStorageContractFinished(ByteSize contractFileSize)
+        public CodexStoragePurchase GetPurchaseStatus(string purchaseId)
         {
-            if (!contractStartUtc.HasValue)
-            {
-                WaitForStorageContractStarted(contractFileSize.ToTimeSpan());
-            }
-            var gracePeriod = TimeSpan.FromSeconds(10);
-            var currentContractTime = DateTime.UtcNow - contractStartUtc!.Value;
-            var timeout = (ContractDuration - currentContractTime) + gracePeriod;
-            WaitForStorageContractState(timeout, "finished");
-        }
-
-        /// <summary>
-        /// Wait for contract to start. Max timeout depends on contract filesize. Allows more time for larger files.
-        /// </summary>
-        public void WaitForStorageContractStarted(ByteSize contractFileSize)
-        {
-            var filesizeInMb = contractFileSize.SizeInBytes / (1024 * 1024);
-            var maxWaitTime = TimeSpan.FromSeconds(filesizeInMb * 10.0);
-
-            WaitForStorageContractStarted(maxWaitTime);
-        }
-
-        public void WaitForStorageContractStarted(TimeSpan timeout)
-        {
-            WaitForStorageContractState(timeout, "started");
-            contractStartUtc = DateTime.UtcNow;
+            return codexAccess.GetPurchaseStatus(purchaseId);
         }
 
         private void WaitForStorageContractState(TimeSpan timeout, string desiredState)
@@ -227,11 +151,6 @@ namespace CodexPlugin
                 }
             }
             log.Log($"Contract '{desiredState}'.");
-        }
-
-        public CodexStoragePurchase GetPurchaseStatus(string purchaseId)
-        {
-            return codexAccess.GetPurchaseStatus(purchaseId);
         }
     }
 }

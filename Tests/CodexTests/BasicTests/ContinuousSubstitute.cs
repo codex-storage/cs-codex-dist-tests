@@ -21,7 +21,9 @@ namespace CodexTests.BasicTests
 
             var group = AddCodex(5, o => o
                     .EnableMetrics()
-                    .EnableMarketplace(geth, contract, 10.Eth(), 100000.TestTokens(), isValidator: true)
+                    .EnableMarketplace(geth, contract, 10.Eth(), 100000.TestTokens(), s => s
+                        .AsStorageNode()
+                        .AsValidator())
                     .WithBlockTTL(TimeSpan.FromMinutes(5))
                     .WithBlockMaintenanceInterval(TimeSpan.FromSeconds(10))
                     .WithBlockMaintenanceNumber(100)
@@ -31,13 +33,16 @@ namespace CodexTests.BasicTests
 
             var rc = Ci.DeployMetricsCollector(nodes);
 
+            var availability = new StorageAvailability(
+                totalSpace: 500.MB(),
+                maxDuration: TimeSpan.FromMinutes(5),
+                minPriceForTotalSpace: 500.TestTokens(),
+                maxCollateral: 1024.TestTokens()
+            );
+
             foreach (var node in nodes)
             {
-                node.Marketplace.MakeStorageAvailable(
-                    size: 500.MB(),
-                    minPriceForTotalSpace: 500.TestTokens(),
-                    maxCollateral: 1024.TestTokens(),
-                    maxDuration: TimeSpan.FromMinutes(5));
+                node.Marketplace.MakeStorageAvailable(availability);
             }
 
             var endTime = DateTime.UtcNow + TimeSpan.FromHours(10);

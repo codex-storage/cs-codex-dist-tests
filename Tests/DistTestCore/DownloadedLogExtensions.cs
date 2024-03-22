@@ -7,7 +7,7 @@ namespace DistTestCore
     {
         public static void AssertLogContains(this IDownloadedLog log, string expectedString)
         {
-            Assert.That(log.DoesLogContain(expectedString), $"Did not find '{expectedString}' in log.");
+            Assert.That(log.GetLinesContaining(expectedString).Any(), $"Did not find '{expectedString}' in log.");
         }
 
         public static void AssertLogDoesNotContain(this IDownloadedLog log, params string[] unexpectedStrings)
@@ -15,9 +15,10 @@ namespace DistTestCore
             var errors = new List<string>();
             foreach (var str in unexpectedStrings)
             {
-                if (log.DoesLogContain(str))
+                var lines = log.GetLinesContaining(str);
+                foreach (var line in lines)
                 {
-                    errors.Add($"Did find '{str}' in log.");
+                    errors.Add($"Found '{str}' in line '{line}'.");
                 }
             }
             CollectionAssert.IsEmpty(errors);

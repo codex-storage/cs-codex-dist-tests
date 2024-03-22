@@ -9,7 +9,7 @@ namespace CodexPlugin
     {
         private readonly MarketplaceStarter marketplaceStarter = new MarketplaceStarter();
 
-        private const string DefaultDockerImage = "codexstorage/nim-codex:latest-dist-tests";
+        private const string DefaultDockerImage = "codexstorage/nim-codex:sha-e4ddb94-dist-tests";
         public const string ApiPortTag = "codex_api_port";
         public const string ListenPortTag = "codex_listen_port";
         public const string MetricsPortTag = "codex_metrics_port";
@@ -105,7 +105,6 @@ namespace CodexPlugin
 
                 AddEnvVar("CODEX_ETH_PROVIDER", $"{wsAddress.Host.Replace("http://", "ws://")}:{wsAddress.Port}");
                 AddEnvVar("CODEX_MARKETPLACE_ADDRESS", marketplaceAddress);
-                AddEnvVar("CODEX_PERSISTENCE", "true");
 
                 // Custom scripting in the Codex test image will write this variable to a private-key file,
                 // and pass the correct filename to Codex.
@@ -113,7 +112,9 @@ namespace CodexPlugin
                 AddEnvVar("PRIV_KEY", mStart.PrivateKey);
                 Additional(mStart);
 
-                if (config.MarketplaceConfig.IsValidator)
+                var marketplaceSetup = config.MarketplaceConfig.MarketplaceSetup;
+                SetCommandOverride(marketplaceSetup);
+                if (marketplaceSetup.IsValidator)
                 {
                    AddEnvVar("CODEX_VALIDATOR", "true");
                 }
@@ -122,6 +123,18 @@ namespace CodexPlugin
             if(!string.IsNullOrEmpty(config.NameOverride))
             {
                 AddEnvVar("CODEX_NODENAME", config.NameOverride);
+            }
+        }
+
+        private void SetCommandOverride(MarketplaceSetup ms)
+        {
+            if (ms.IsStorageNode)
+            {
+                OverrideCommand("bash", "/docker-entrypoint.sh", "codex", "persistence", "prover");
+            }
+            else
+            {
+                OverrideCommand("bash", "/docker-entrypoint.sh", "codex", "persistence");
             }
         }
 

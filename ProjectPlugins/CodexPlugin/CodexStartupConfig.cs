@@ -68,10 +68,17 @@ namespace CodexPlugin
                     "blockexcnetwork",
                     "blockexcnetworkpeer"
                 };
+                var contractClockTopics = new[]
+                {
+                    "contracts",
+                    "clock"
+                };
 
                 level = $"{level};" +
                     $"{CustomTopics.DiscV5.ToString()!.ToLowerInvariant()}:{string.Join(",", discV5Topics)};" +
-                    $"{CustomTopics.Libp2p.ToString()!.ToLowerInvariant()}:{string.Join(",", libp2pTopics)}";
+                    $"{CustomTopics.Libp2p.ToString()!.ToLowerInvariant()}:{string.Join(",", libp2pTopics)};" +
+                    // Contract clock is always set to warn. It logs a trace every second.
+                    $"{CodexLogLevel.Warn.ToString().ToLowerInvariant()}:{string.Join(",", contractClockTopics)}";
 
                 if (CustomTopics.BlockExchange != null)
                 {

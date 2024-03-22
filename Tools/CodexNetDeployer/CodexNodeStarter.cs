@@ -41,7 +41,11 @@ namespace CodexNetDeployer
 
                     if (config.ShouldMakeStorageAvailable)
                     {
-                        s.EnableMarketplace(gethNode, contracts, 100.Eth(), config.InitialTestTokens.TestTokens(), validatorsLeft > 0);
+                        s.EnableMarketplace(gethNode, contracts, 100.Eth(), config.InitialTestTokens.TestTokens(), s =>
+                        {
+                            if (validatorsLeft > 0) s.AsValidator();
+                            if (config.ShouldMakeStorageAvailable) s.AsStorageNode();
+                        });
                     }
 
                     if (bootstrapNode != null) s.WithBootstrapNode(bootstrapNode);
@@ -63,11 +67,14 @@ namespace CodexNetDeployer
 
                     if (config.ShouldMakeStorageAvailable)
                     {
-                        var response = codexNode.Marketplace.MakeStorageAvailable(
-                            size: config.StorageSell!.Value.MB(),
+                        var availability = new StorageAvailability(
+                            totalSpace: config.StorageSell!.Value.MB(),
+                            maxDuration: TimeSpan.FromSeconds(config.MaxDuration),
                             minPriceForTotalSpace: config.MinPrice.TestTokens(),
-                            maxCollateral: config.MaxCollateral.TestTokens(),
-                            maxDuration: TimeSpan.FromSeconds(config.MaxDuration));
+                            maxCollateral: config.MaxCollateral.TestTokens()
+                        );
+
+                        var response = codexNode.Marketplace.MakeStorageAvailable(availability);
 
                         if (!string.IsNullOrEmpty(response))
                         {

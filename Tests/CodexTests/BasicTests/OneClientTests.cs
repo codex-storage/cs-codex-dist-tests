@@ -21,7 +21,7 @@ namespace CodexTests.BasicTests
         {
             var primary = Ci.StartCodexNode();
 
-            primary.Stop();
+            primary.Stop(waitTillStopped: true);
 
             primary = Ci.StartCodexNode();
 
