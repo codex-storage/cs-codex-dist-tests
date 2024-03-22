@@ -4,7 +4,7 @@
     {
         public delegate void CacheClearedEvent();
 
-        private const int MaxEntries = 1024;
+        private const int MaxEntries = 1024 * 1024 * 5;
         private readonly Dictionary<ulong, BlockTimeEntry> entries = new Dictionary<ulong, BlockTimeEntry>();
 
         public event CacheClearedEvent? OnCacheCleared;
