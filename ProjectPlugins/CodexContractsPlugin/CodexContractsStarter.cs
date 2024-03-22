@@ -33,7 +33,7 @@ namespace CodexContractsPlugin
             try
             {
                 var result = DeployContract(container, workflow, gethNode);
-                workflow.Stop(containers);
+                workflow.Stop(containers, waitTillStopped: false);
                 Log("Container stopped.");
                 return result;
             }

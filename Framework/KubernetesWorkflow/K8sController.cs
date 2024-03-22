@@ -49,13 +49,14 @@ namespace KubernetesWorkflow
             return CreatePodInfo(pod);
         }
 
-        public void Stop(StartResult startResult)
+        public void Stop(StartResult startResult, bool waitTillStopped)
         {
             log.Debug();
             if (startResult.InternalService != null) DeleteService(startResult.InternalService);
             if (startResult.ExternalService != null) DeleteService(startResult.ExternalService);
             DeleteDeployment(startResult.Deployment);
-            WaitUntilPodsForDeploymentAreOffline(startResult.Deployment);
+
+            if (waitTillStopped) WaitUntilPodsForDeploymentAreOffline(startResult.Deployment);
         }
 
         public void DownloadPodLog(RunningContainer container, ILogHandler logHandler, int? tailLines)
@@ -498,8 +499,15 @@ namespace KubernetesWorkflow
                 Ports = CreateContainerPorts(recipe),
                 Env = CreateEnv(recipe),
                 VolumeMounts = CreateContainerVolumeMounts(recipe),
-                Resources = CreateResourceLimits(recipe)
+                Resources = CreateResourceLimits(recipe),
+                Command = CreateCommandList(recipe)
             };
+        }
+
+        private IList<string> CreateCommandList(ContainerRecipe recipe)
+        {
+            if (recipe.CommandOverride == null || !recipe.CommandOverride.Command.Any()) return null!;
+            return recipe.CommandOverride.Command.ToList();
         }
 
         private V1ResourceRequirements CreateResourceLimits(ContainerRecipe recipe)

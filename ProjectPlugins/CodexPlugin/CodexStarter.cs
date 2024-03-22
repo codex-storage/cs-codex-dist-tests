@@ -48,14 +48,14 @@ namespace CodexPlugin
             return group;
         }
 
-        public void BringOffline(CodexNodeGroup group)
+        public void BringOffline(CodexNodeGroup group, bool waitTillStopped)
         {
             Log($"Stopping {group.Describe()}...");
             StopCrashWatcher(group);
             var workflow = pluginTools.CreateWorkflow();
             foreach (var c in group.Containers)
             {
-                workflow.Stop(c);
+                workflow.Stop(c, waitTillStopped);
             }
             Log("Stopped.");
         }

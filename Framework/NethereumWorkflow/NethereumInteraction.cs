@@ -3,13 +3,16 @@ using Nethereum.ABI.FunctionEncoding.Attributes;
 using Nethereum.Contracts;
 using Nethereum.RPC.Eth.DTOs;
 using Nethereum.Web3;
+using NethereumWorkflow.BlockUtils;
 using Utils;
-using BlockRange = Utils.BlockRange;
 
 namespace NethereumWorkflow
 {
     public class NethereumInteraction
     {
+        // BlockCache is a static instance: It stays alive for the duration of the application runtime.
+        private readonly static BlockCache blockCache = new BlockCache();
+
         private readonly ILog log;
         private readonly Web3 web3;
 
@@ -88,25 +91,33 @@ namespace NethereumWorkflow
 
         public List<EventLog<TEvent>> GetEvents<TEvent>(string address, TimeRange timeRange) where TEvent : IEventDTO, new()
         {
-            var blockTimeFinder = new BlockTimeFinder(web3, log);
-            var blockRange = blockTimeFinder.ConvertTimeRangeToBlockRange(timeRange);
-            return GetEvents<TEvent>(address, blockRange);
+            var wrapper = new Web3Wrapper(web3, log);
+            var blockTimeFinder = new BlockTimeFinder(blockCache, wrapper, log);
+
+            var fromBlock = blockTimeFinder.GetLowestBlockNumberAfter(timeRange.From);
+            var toBlock = blockTimeFinder.GetHighestBlockNumberBefore(timeRange.To);
+
+            if (!fromBlock.HasValue)
+            {
+                log.Error("Failed to find lowest block for time range: " + timeRange);
+                throw new Exception("Failed");
+            }
+            if (!toBlock.HasValue)
+            {
+                log.Error("Failed to find highest block for time range: " + timeRange);
+                throw new Exception("Failed");
+            }
+
+            return GetEvents<TEvent>(address, fromBlock.Value, toBlock.Value);
         }
 
-        public List<EventLog<TEvent>> GetEvents<TEvent>(string address, BlockRange blockRange) where TEvent : IEventDTO, new()
+        public List<EventLog<TEvent>> GetEvents<TEvent>(string address, ulong fromBlockNumber, ulong toBlockNumber) where TEvent : IEventDTO, new()
         {
-            log.Debug($"Getting events of type [{typeof(TEvent).Name}] in block range [{blockRange.From} - {blockRange.To}]");
             var eventHandler = web3.Eth.GetEvent<TEvent>(address);
-            var from = new BlockParameter(blockRange.From);
-            var to = new BlockParameter(blockRange.To);
+            var from = new BlockParameter(fromBlockNumber);
+            var to = new BlockParameter(toBlockNumber);
             var blockFilter = Time.Wait(eventHandler.CreateFilterBlockRangeAsync(from, to));
             return Time.Wait(eventHandler.GetAllChangesAsync(blockFilter));
-        }
-
-        public BlockRange ConvertTimeRangeToBlockRange(TimeRange timeRange)
-        {
-            var blockTimeFinder = new BlockTimeFinder(web3, log);
-            return blockTimeFinder.ConvertTimeRangeToBlockRange(timeRange);
         }
     }
 }

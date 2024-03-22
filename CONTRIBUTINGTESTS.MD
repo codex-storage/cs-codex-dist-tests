@@ -21,7 +21,7 @@ Do you want to write some tests using this distributed test setup? Great! Here's
    1. When using the auto-bootstrap, you have no control over the bootstrap node from your tests. You can't (for example) shut it down during the course of the test. If you need this level of control for your scenario, use the `CodexDistTest` instead.
 1. If your test needs a long time to run, add the `[UseLongTimeouts]` function attribute. This will greatly increase maximum time-out values for operations like for example uploading and downloading files.
 ### Continuous tests
-1. Add new code files to `Tests/CodexContinousTests/Tests`
+1. Add new code files to `Tests/CodexContinuousTests/Tests`
 1. Inherrit from `ContinuousTest`
 1. Define one or more methods and decorate them with the `[TestMoment(...)]` attribute.
 1. The TestMoment takes a number of seconds as argument. Each moment will be executed by the continuous test runner applying the given seconds as delay. (Non-cumulative. So two moments at T:10 will be executed one after another without delay, in this case the order of execution should not be depended upon.)

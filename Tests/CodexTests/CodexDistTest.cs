@@ -92,6 +92,7 @@ namespace CodexTests
 
         public void CheckLogForErrors(ICodexNode node)
         {
+            Log($"Checking {node.GetName()} log for errors.");
             var log = Ci.DownloadLog(node);
 
             log.AssertLogDoesNotContain("Block validation failed");

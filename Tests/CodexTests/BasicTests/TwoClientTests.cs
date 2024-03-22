@@ -10,12 +10,10 @@ namespace CodexTests.BasicTests
         [Test]
         public void TwoClientTest()
         {
-            var group = Ci.StartCodexNodes(2);
+            var uploader = AddCodex(s => s.WithName("Uploader"));
+            var downloader = AddCodex(s => s.WithName("Downloader").WithBootstrapNode(uploader));
 
-            var primary = group[0];
-            var secondary = group[1];
-
-            PerformTwoClientTest(primary, secondary);
+            PerformTwoClientTest(uploader, downloader);
         }
 
         [Test]
@@ -28,29 +26,27 @@ namespace CodexTests.BasicTests
                 return;
             }
 
-            var primary = Ci.StartCodexNode(s => s.At(locations.Get(0)));
-            var secondary = Ci.StartCodexNode(s => s.At(locations.Get(1)));
+            var uploader = Ci.StartCodexNode(s => s.WithName("Uploader").At(locations.Get(0)));
+            var downloader = Ci.StartCodexNode(s => s.WithName("Downloader").WithBootstrapNode(uploader).At(locations.Get(1)));
 
-            PerformTwoClientTest(primary, secondary);
+            PerformTwoClientTest(uploader, downloader);
         }
 
-        private void PerformTwoClientTest(ICodexNode primary, ICodexNode secondary)
+        private void PerformTwoClientTest(ICodexNode uploader, ICodexNode downloader)
         {
-            PerformTwoClientTest(primary, secondary, 1.MB());
+            PerformTwoClientTest(uploader, downloader, 10.MB());
         }
 
-        private void PerformTwoClientTest(ICodexNode primary, ICodexNode secondary, ByteSize size)
+        private void PerformTwoClientTest(ICodexNode uploader, ICodexNode downloader, ByteSize size)
         {
-            primary.ConnectToPeer(secondary);
-
             var testFile = GenerateTestFile(size);
 
-            var contentId = primary.UploadFile(testFile);
+            var contentId = uploader.UploadFile(testFile);
 
-            var downloadedFile = secondary.DownloadContent(contentId);
+            var downloadedFile = downloader.DownloadContent(contentId);
 
             testFile.AssertIsEqual(downloadedFile);
-            CheckLogForErrors(primary, secondary);
+            CheckLogForErrors(uploader, downloader);
         }
     }
 }
