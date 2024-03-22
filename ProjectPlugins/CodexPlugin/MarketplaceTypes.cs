@@ -67,7 +67,7 @@ namespace CodexPlugin
         {
             return new CodexSalesAvailabilityRequest
             {
-                size = ToDecInt(TotalSpace.SizeInBytes),
+                totalSize = ToDecInt(TotalSpace.SizeInBytes),
                 duration = ToDecInt(MaxDuration.TotalSeconds),
                 maxCollateral = ToDecInt(MaxCollateral),
                 minPrice = ToDecInt(MinPriceForTotalSpace)
@@ -77,7 +77,7 @@ namespace CodexPlugin
         public void Log(ILog log)
         {
             log.Log($"Making storage available... (" +
-                $"size: {TotalSpace}, " +
+                $"totalSize: {TotalSpace}, " +
                 $"maxDuration: {Time.FormatDuration(MaxDuration)}, " + 
                 $"minPriceForTotalSpace: {MinPriceForTotalSpace}, " +
                 $"maxCollateral: {MaxCollateral})");

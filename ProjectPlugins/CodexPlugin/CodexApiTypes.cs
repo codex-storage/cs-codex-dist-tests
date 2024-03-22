@@ -87,7 +87,7 @@ namespace CodexPlugin
 
     public class CodexSalesAvailabilityRequest
     {
-        public string size { get; set; } = string.Empty;
+        public string totalSize { get; set; } = string.Empty;
         public string duration { get; set; } = string.Empty;
         public string minPrice { get; set; } = string.Empty;
         public string maxCollateral { get; set; } = string.Empty;
@@ -96,7 +96,8 @@ namespace CodexPlugin
     public class CodexSalesAvailabilityResponse
     {
         public string id { get; set; } = string.Empty;
-        public string size { get; set; } = string.Empty;
+        public string totalSize { get; set; } = string.Empty;
+        public string freeSize { get; set; } = string.Empty;
         public string duration { get; set; } = string.Empty;
         public string minPrice { get; set; } = string.Empty;
         public string maxCollateral { get; set; } = string.Empty;
