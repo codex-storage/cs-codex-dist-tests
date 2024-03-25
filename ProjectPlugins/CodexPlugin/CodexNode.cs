@@ -12,13 +12,13 @@ namespace CodexPlugin
     public interface ICodexNode : IHasContainer, IHasMetricsScrapeTarget, IHasEthAddress
     {
         string GetName();
-        CodexDebugResponse GetDebugInfo();
-        CodexDebugPeerResponse GetDebugPeer(string peerId);
+        DebugInfo GetDebugInfo();
+        DebugPeer GetDebugPeer(string peerId);
         ContentId UploadFile(TrackedFile file);
         TrackedFile? DownloadContent(ContentId contentId, string fileLabel = "");
-        CodexLocalData[] LocalFiles();
+        LocalDataset[] LocalFiles();
         void ConnectToPeer(ICodexNode node);
-        CodexDebugVersionResponse Version { get; }
+        DebugVersion Version { get; }
         IMarketplaceAccess Marketplace { get; }
         CrashWatcher CrashWatcher { get; }
         PodInfo GetPodInfo();
@@ -41,7 +41,7 @@ namespace CodexPlugin
             CodexAccess = codexAccess;
             Group = group;
             Marketplace = marketplaceAccess;
-            Version = new CodexDebugVersionResponse();
+            Version = new DebugVersion();
             transferSpeeds = new TransferSpeeds();
         }
 
@@ -50,7 +50,7 @@ namespace CodexPlugin
         public CrashWatcher CrashWatcher { get => CodexAccess.CrashWatcher; }
         public CodexNodeGroup Group { get; }
         public IMarketplaceAccess Marketplace { get; }
-        public CodexDebugVersionResponse Version { get; private set; }
+        public DebugVersion Version { get; private set; }
         public ITransferSpeeds TransferSpeeds { get => transferSpeeds; }
         public IMetricsScrapeTarget MetricsScrapeTarget
         {
@@ -73,7 +73,7 @@ namespace CodexPlugin
             return CodexAccess.Container.Name;
         }
 
-        public CodexDebugResponse GetDebugInfo()
+        public DebugInfo GetDebugInfo()
         {
             var debugInfo = CodexAccess.GetDebugInfo();
             var known = string.Join(",", debugInfo.table.nodes.Select(n => n.peerId));
@@ -81,19 +81,9 @@ namespace CodexPlugin
             return debugInfo;
         }
 
-        public CodexDebugPeerResponse GetDebugPeer(string peerId)
+        public DebugPeer GetDebugPeer(string peerId)
         {
             return CodexAccess.GetDebugPeer(peerId);
-        }
-
-        public CodexDebugBlockExchangeResponse GetDebugBlockExchange()
-        {
-            return CodexAccess.GetDebugBlockExchange();
-        }
-
-        public CodexDebugRepoStoreResponse[] GetDebugRepoStore()
-        {
-            return CodexAccess.GetDebugRepoStore();
         }
 
         public ContentId UploadFile(TrackedFile file)
@@ -128,9 +118,13 @@ namespace CodexPlugin
             return file;
         }
 
-        public CodexLocalData[] LocalFiles()
+        public LocalDataset[] LocalFiles()
         {
-            return CodexAccess.LocalFiles().Select(l => new CodexLocalData(new ContentId(l.cid), l.manifest)).ToArray();
+            return CodexAccess.LocalFiles().Select(l => new LocalDataset()
+            {
+                Cid = new ContentId(l.cid)
+                //, l.manifest
+            }).ToArray();
         }
 
         public void ConnectToPeer(ICodexNode node)
@@ -176,9 +170,9 @@ namespace CodexPlugin
             Version = debugInfo.codex;
         }
 
-        private string GetPeerMultiAddress(CodexNode peer, CodexDebugResponse peerInfo)
+        private string GetPeerMultiAddress(CodexNode peer, DebugInfo peerInfo)
         {
-            var multiAddress = peerInfo.addrs.First();
+            var multiAddress = peerInfo.Addrs.First();
             // Todo: Is there a case where First address in list is not the way?
 
             // The peer we want to connect is in a different pod.
@@ -207,26 +201,6 @@ namespace CodexPlugin
         private void Log(string msg)
         {
             tools.GetLog().Log($"{GetName()}: {msg}");
-        }
-    }
-
-    public class ContentId
-    {
-        public ContentId(string id)
-        {
-            Id = id;
-        }
-
-        public string Id { get; }
-
-        public override bool Equals(object? obj)
-        {
-            return obj is ContentId id && Id == id.Id;
-        }
-
-        public override int GetHashCode()
-        {
-            return HashCode.Combine(Id);
         }
     }
 }

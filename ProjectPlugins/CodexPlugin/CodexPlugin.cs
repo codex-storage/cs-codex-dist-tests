@@ -9,7 +9,7 @@ namespace CodexPlugin
         private readonly IPluginTools tools;
         private readonly CodexLogLevel defaultLogLevel = CodexLogLevel.Trace;
 
-        private const string OpenApiYamlHash = "<CODEX_OPENAPI_HASH_HERE>";
+        private const string OpenApiYamlHash = "8B-DD-61-54-42-D7-28-8F-5A-A0-AF-C2-A4-53-A7-08-B6-C7-02-FD-59-1A-01-A9-B4-7D-E4-81-FA-84-23-7F";
 
         public CodexPlugin(IPluginTools tools)
         {

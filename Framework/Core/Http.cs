@@ -9,14 +9,16 @@ namespace Core
 {
     public interface IHttp
     {
-        string HttpGetString(string route);
-        T HttpGetJson<T>(string route);
-        TResponse HttpPostJson<TRequest, TResponse>(string route, TRequest body);
-        string HttpPostJson<TRequest>(string route, TRequest body);
-        TResponse HttpPostString<TResponse>(string route, string body);
-        string HttpPostStream(string route, Stream stream);
-        Stream HttpGetStream(string route);
-        T Deserialize<T>(string json);
+        //string HttpGetString(string route);
+        //T HttpGetJson<T>(string route);
+        //TResponse HttpPostJson<TRequest, TResponse>(string route, TRequest body);
+        //string HttpPostJson<TRequest>(string route, TRequest body);
+        //TResponse HttpPostString<TResponse>(string route, string body);
+        //string HttpPostStream(string route, Stream stream);
+        //Stream HttpGetStream(string route);
+        //T Deserialize<T>(string json);
+
+        T OnClient<T>(Func<HttpClient, T> action);
     }
 
     internal class Http : IHttp
@@ -24,26 +26,37 @@ namespace Core
         private static readonly object httpLock = new object();
         private readonly ILog log;
         private readonly ITimeSet timeSet;
-        private readonly Address address;
-        private readonly string baseUrl;
         private readonly Action<HttpClient> onClientCreated;
         private readonly string? logAlias;
 
-        internal Http(ILog log, ITimeSet timeSet, Address address, string baseUrl, string? logAlias = null)
-            : this(log, timeSet, address, baseUrl, DoNothing, logAlias)
+        internal Http(ILog log, ITimeSet timeSet,  string? logAlias = null)
+            : this(log, timeSet, DoNothing, logAlias)
         {
         }
 
-        internal Http(ILog log, ITimeSet timeSet, Address address, string baseUrl, Action<HttpClient> onClientCreated, string? logAlias = null)
+        internal Http(ILog log, ITimeSet timeSet, Action<HttpClient> onClientCreated, string? logAlias = null)
         {
             this.log = log;
             this.timeSet = timeSet;
-            this.address = address;
-            this.baseUrl = baseUrl;
             this.onClientCreated = onClientCreated;
             this.logAlias = logAlias;
-            if (!this.baseUrl.StartsWith("/")) this.baseUrl = "/" + this.baseUrl;
-            if (!this.baseUrl.EndsWith("/")) this.baseUrl += "/";
+        }
+
+        public T OnClient<T>(Func<HttpClient, T> action)
+        {
+            var client = GetClient();
+            var description = GetDescription();
+
+            return LockRetry(() =>
+            {
+                return action(client);
+            }, description);
+        }
+
+        private string GetDescription()
+        {
+            // todo: check this:
+            return DebugStack.GetCallerName(skipFrames: 2);
         }
 
         public string HttpGetString(string route)
@@ -190,7 +203,8 @@ namespace Core
 
         private string GetUrl()
         {
-            return $"{address.Host}:{address.Port}{baseUrl}";
+            //return $"{address.Host}:{address.Port}{baseUrl}";
+            return "--Obsolete--";
         }
 
         private void Log(string url, string message)

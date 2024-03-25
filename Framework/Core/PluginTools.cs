@@ -22,9 +22,9 @@ namespace Core
 
     public interface IHttpFactoryTool
     {
-        IHttp CreateHttp(Address address, string baseUrl, Action<HttpClient> onClientCreated, string? logAlias = null);
-        IHttp CreateHttp(Address address, string baseUrl, Action<HttpClient> onClientCreated, ITimeSet timeSet, string? logAlias = null);
-        IHttp CreateHttp(Address address, string baseUrl, string? logAlias = null);
+        IHttp CreateHttp(Action<HttpClient> onClientCreated, string? logAlias = null);
+        IHttp CreateHttp(Action<HttpClient> onClientCreated, ITimeSet timeSet, string? logAlias = null);
+        IHttp CreateHttp(string? logAlias = null);
     }
 
     public interface IFileTool
@@ -52,19 +52,19 @@ namespace Core
             log = new LogPrefixer(log, prefix);
         }
 
-        public IHttp CreateHttp(Address address, string baseUrl, Action<HttpClient> onClientCreated, string? logAlias = null)
+        public IHttp CreateHttp(Action<HttpClient> onClientCreated, string? logAlias = null)
         {
-            return CreateHttp(address, baseUrl, onClientCreated, timeSet, logAlias);
+            return CreateHttp(onClientCreated, timeSet, logAlias);
         }
 
-        public IHttp CreateHttp(Address address, string baseUrl, Action<HttpClient> onClientCreated, ITimeSet ts, string? logAlias = null)
+        public IHttp CreateHttp(Action<HttpClient> onClientCreated, ITimeSet ts, string? logAlias = null)
         {
-            return new Http(log, ts, address, baseUrl, onClientCreated, logAlias);
+            return new Http(log, ts, onClientCreated, logAlias);
         }
 
-        public IHttp CreateHttp(Address address, string baseUrl, string? logAlias = null)
+        public IHttp CreateHttp(string? logAlias = null)
         {
-            return new Http(log, timeSet, address, baseUrl, logAlias);
+            return new Http(log, timeSet, logAlias);
         }
 
         public IStartupWorkflow CreateWorkflow(string? namespaceOverride = null)
