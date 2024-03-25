@@ -109,6 +109,20 @@ namespace CodexPlugin
 
         private IHttp Http()
         {
+            var address = GetAddress();
+            var api = new CodexOpenApi.CodexApi(new HttpClient());
+            api.BaseUrl = $"{address.Host}:{address.Port}/api/codex/v1";
+
+            var debugInfo = Time.Wait(api.GetDebugInfoAsync());
+
+            using var stream = File.OpenRead("C:\\Users\\thatb\\Desktop\\Collect\\Wallpapers\\demerui_djinn_illuminatus_fullbody_full_body_view_in_the_style__86ea9491-1fe1-44ab-8577-a3636cad1b21.png");
+            var cid = Time.Wait(api.UploadAsync(stream));
+
+            var file = Time.Wait(api.DownloadNetworkAsync(cid));
+            while (file.IsPartial) Thread.Sleep(100);
+            using var outfile = File.OpenWrite("C:\\Users\\thatb\\Desktop\\output.png");
+            file.Stream.CopyTo(outfile);
+
             return tools.CreateHttp(GetAddress(), baseUrl: "/api/codex/v1", CheckContainerCrashed, Container.Name);
         }
 

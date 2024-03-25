@@ -14,9 +14,6 @@ namespace CodexPlugin
         string GetName();
         CodexDebugResponse GetDebugInfo();
         CodexDebugPeerResponse GetDebugPeer(string peerId);
-        // These debug methods are not available in master-line Codex. Use only for custom builds.
-        //CodexDebugBlockExchangeResponse GetDebugBlockExchange();
-        //CodexDebugRepoStoreResponse[] GetDebugRepoStore();
         ContentId UploadFile(TrackedFile file);
         TrackedFile? DownloadContent(ContentId contentId, string fileLabel = "");
         CodexLocalData[] LocalFiles();
