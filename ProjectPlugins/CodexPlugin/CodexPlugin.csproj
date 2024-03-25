@@ -34,4 +34,8 @@
     <ProjectReference Include="..\MetricsPlugin\MetricsPlugin.csproj" />
   </ItemGroup>
 
+  <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
+    <Exec Command="dotnet run -p $(ProjectDir)\..\CodexPluginPrebuild" />
+  </Target>
+
 </Project>

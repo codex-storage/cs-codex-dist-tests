@@ -1,4 +1,4 @@
-﻿using Core;
+using Core;
 using KubernetesWorkflow.Types;
 
 namespace CodexPlugin
@@ -8,6 +8,8 @@ namespace CodexPlugin
         private readonly CodexStarter codexStarter;
         private readonly IPluginTools tools;
         private readonly CodexLogLevel defaultLogLevel = CodexLogLevel.Trace;
+
+        private const string OpenApiYamlHash = "<CODEX_OPENAPI_HASH_HERE>";
 
         public CodexPlugin(IPluginTools tools)
         {
