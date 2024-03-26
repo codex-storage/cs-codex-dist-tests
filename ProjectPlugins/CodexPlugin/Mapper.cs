@@ -1,4 +1,6 @@
-﻿using Newtonsoft.Json.Linq;
+﻿using CodexContractsPlugin;
+using Newtonsoft.Json.Linq;
+using System.Numerics;
 
 namespace CodexPlugin
 {
@@ -14,6 +16,45 @@ namespace CodexPlugin
                 AnnounceAddresses = JArray(debugInfo.AdditionalProperties, "announceAddresses").Select(x => x.ToString()).ToArray(),
                 Version = MapDebugInfoVersion(JObject(debugInfo.AdditionalProperties, "codex")),
                 Table = MapDebugInfoTable(JObject(debugInfo.AdditionalProperties, "table"))
+            };
+        }
+
+        public LocalDataset[] Map(ICollection<CodexOpenApi.DataList> dataList)
+        {
+            return Array.Empty<LocalDataset>();
+        }
+
+        public CodexOpenApi.SalesAvailabilityCREATE Map(StorageAvailability availability)
+        {
+            return new CodexOpenApi.SalesAvailabilityCREATE
+            {
+                Duration = ToDecInt(availability.MaxDuration.TotalSeconds),
+                MinPrice = ToDecInt(availability.MinPriceForTotalSpace),
+                MaxCollateral = ToDecInt(availability.MaxCollateral),
+                TotalSize = ToDecInt(availability.TotalSpace.SizeInBytes)
+            };
+        }
+
+        public CodexOpenApi.StorageRequestCreation Map(StoragePurchaseRequest purchase)
+        {
+            return new CodexOpenApi.StorageRequestCreation
+            {
+                Duration = ToDecInt(purchase.Duration.TotalSeconds),
+                ProofProbability = ToDecInt(purchase.ProofProbability),
+                Reward = ToDecInt(purchase.PricePerSlotPerSecond),
+                Collateral = ToDecInt(purchase.RequiredCollateral),
+                Expiry = ToDecInt(DateTimeOffset.UtcNow.ToUnixTimeSeconds() + purchase.Expiry.TotalSeconds),
+                Nodes = purchase.MinRequiredNumberOfNodes,
+                Tolerance = purchase.NodeFailureTolerance
+            };
+        }
+
+        public StoragePurchase Map(CodexOpenApi.Purchase purchase)
+        {
+            return new StoragePurchase
+            {
+                State = purchase.State,
+                Error = purchase.Error
             };
         }
 
@@ -77,6 +118,18 @@ namespace CodexPlugin
                 return (bool)token;
             }
             return false;
+        }
+
+        private string ToDecInt(double d)
+        {
+            var i = new BigInteger(d);
+            return i.ToString("D");
+        }
+
+        private string ToDecInt(TestToken t)
+        {
+            var i = new BigInteger(t.Amount);
+            return i.ToString("D");
         }
     }
 }

@@ -55,6 +55,17 @@ namespace CodexPlugin
         public ContentId Cid { get; set; } = new ContentId();
     }
 
+    public class SalesRequestStorageRequest
+    {
+        public string Duration { get; set; } = string.Empty;
+        public string ProofProbability { get; set; } = string.Empty;
+        public string Reward { get; set; } = string.Empty;
+        public string Collateral { get; set; } = string.Empty;
+        public string? Expiry { get; set; }
+        public uint? Nodes { get; set; }
+        public uint? Tolerance { get; set; }
+    }
+
     public class ContentId
     {
         public ContentId()

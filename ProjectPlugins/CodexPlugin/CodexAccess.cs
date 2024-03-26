@@ -33,8 +33,8 @@ namespace CodexPlugin
         public DebugPeer GetDebugPeer(string peerId)
         {
             // Cannot use openAPI: debug/peer endpoint is not specified there.
-            var endoint = GetEndpoint();
-            var str = endoint.HttpGetString($"debug/peer/{peerId}");
+            var endpoint = GetEndpoint();
+            var str = endpoint.HttpGetString($"debug/peer/{peerId}");
 
             if (str.ToLowerInvariant() == "unable to find peer!")
             {
@@ -44,59 +44,45 @@ namespace CodexPlugin
                 };
             }
 
-            var result = endoint.Deserialize<DebugPeer>(str);
+            var result = endpoint.Deserialize<DebugPeer>(str);
             result.IsPeerFound = true;
             return result;
         }
 
-        public CodexDebugBlockExchangeResponse GetDebugBlockExchange()
-        {
-            return Http().HttpGetJson<CodexDebugBlockExchangeResponse>("debug/blockexchange");
-        }
-
-        public CodexDebugRepoStoreResponse[] GetDebugRepoStore()
-        {
-            return LongHttp().HttpGetJson<CodexDebugRepoStoreResponse[]>("debug/repostore");
-        }
-
-        public CodexDebugThresholdBreaches GetDebugThresholdBreaches()
-        {
-            return Http().HttpGetJson<CodexDebugThresholdBreaches>("debug/loop");
-        }
-
         public string UploadFile(FileStream fileStream)
         {
-            return Http().HttpPostStream("data", fileStream);
+            return OnCodex(api => api.UploadAsync(fileStream));
         }
 
         public Stream DownloadFile(string contentId)
         {
-            return Http().HttpGetStream("data/" + contentId + "/network");
+            var fileResponse = OnCodex(api => api.DownloadNetworkAsync(contentId));
+            if (fileResponse.StatusCode != 200) throw new Exception("Download failed with StatusCode: " + fileResponse.StatusCode);
+            return fileResponse.Stream;
         }
 
-        public CodexLocalDataResponse[] LocalFiles()
+        public LocalDataset[] LocalFiles()
         {
-            return Http().HttpGetJson<CodexLocalDataResponse[]>("data");
+            return Map(OnCodex(api => api.ListDataAsync()));
         }
 
-        public CodexSalesAvailabilityResponse SalesAvailability(CodexSalesAvailabilityRequest request)
+        public StorageAvailability SalesAvailability(StorageAvailability request)
         {
-            return Http().HttpPostJson<CodexSalesAvailabilityRequest, CodexSalesAvailabilityResponse>("sales/availability", request);
+            var body = Map(request);
+            var read = OnCodex<SalesAvailabilityREAD>(api => api.OfferStorageAsync(body));
+            return Map(read);
         }
 
-        public string RequestStorage(CodexSalesRequestStorageRequest request, string contentId)
+        public string RequestStorage(StoragePurchaseRequest request)
         {
-            return Http().HttpPostJson($"storage/request/{contentId}", request);
+            var body = Map(request);
+            var read = ""; /* fix incoming*/ OnCodex<string>(api => api.CreateStorageRequestAsync(request.ContentId.Id, body));
+            return read;
         }
 
-        public CodexStoragePurchase GetPurchaseStatus(string purchaseId)
+        public StoragePurchaseRequest GetPurchaseStatus(string purchaseId)
         {
-            return Http().HttpGetJson<CodexStoragePurchase>($"storage/purchases/{purchaseId}");
-        }
-
-        public string ConnectToPeer(string peerId, string peerMultiAddress)
-        {
-            return Http().HttpGetString($"connect/{peerId}?addrs={peerMultiAddress}");
+            return Map(OnCodex(api => api.GetPurchaseAsync(purchaseId)));
         }
 
         public string GetName()
@@ -127,30 +113,6 @@ namespace CodexPlugin
             });
             return result;
         }
-
-        //private IHttp Http()
-        //{
-        //    var address = GetAddress();
-        //    var api = new CodexOpenApi.CodexApi(new HttpClient());
-        //    api.BaseUrl = $"{address.Host}:{address.Port}/api/codex/v1";
-
-        //    var debugInfo = Time.Wait(api.GetDebugInfoAsync());
-
-        //    using var stream = File.OpenRead("C:\\Users\\thatb\\Desktop\\Collect\\Wallpapers\\demerui_djinn_illuminatus_fullbody_full_body_view_in_the_style__86ea9491-1fe1-44ab-8577-a3636cad1b21.png");
-        //    var cid = Time.Wait(api.UploadAsync(stream));
-
-        //    var file = Time.Wait(api.DownloadNetworkAsync(cid));
-        //    while (file.IsPartial) Thread.Sleep(100);
-        //    using var outfile = File.OpenWrite("C:\\Users\\thatb\\Desktop\\output.png");
-        //    file.Stream.CopyTo(outfile);
-
-        //    return tools.CreateHttp(GetAddress(), baseUrl: "/api/codex/v1", CheckContainerCrashed, Container.Name);
-        //}
-
-        //private IHttp LongHttp()
-        //{
-        //    return tools.CreateHttp(GetAddress(), baseUrl: "/api/codex/v1", CheckContainerCrashed, new LongTimeSet(), Container.Name);
-        //}
 
         private IEndpoint GetEndpoint()
         {

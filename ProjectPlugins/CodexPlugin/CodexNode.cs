@@ -3,6 +3,7 @@ using FileUtils;
 using GethPlugin;
 using KubernetesWorkflow;
 using KubernetesWorkflow.Types;
+using Logging;
 using MetricsPlugin;
 using Utils;
 
@@ -121,11 +122,7 @@ namespace CodexPlugin
 
         public LocalDataset[] LocalFiles()
         {
-            return CodexAccess.LocalFiles().Select(l => new LocalDataset()
-            {
-                Cid = new ContentId(l.cid)
-                //, l.manifest
-            }).ToArray();
+            return CodexAccess.LocalFiles();
         }
 
         public void ConnectToPeer(ICodexNode node)
