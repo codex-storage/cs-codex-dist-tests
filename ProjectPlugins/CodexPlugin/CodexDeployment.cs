@@ -31,14 +31,14 @@ namespace CodexPlugin
 
     public class CodexInstance
     {
-        public CodexInstance(RunningContainers containers, CodexDebugResponse info)
+        public CodexInstance(RunningContainers containers, DebugInfo info)
         {
             Containers = containers;
             Info = info;
         }
 
         public RunningContainers Containers { get; }
-        public CodexDebugResponse Info { get; }
+        public DebugInfo Info { get; }
     }
 
     public class DeploymentMetadata

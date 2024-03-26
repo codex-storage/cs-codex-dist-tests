@@ -35,7 +35,7 @@
   </ItemGroup>
 
   <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
-    <Exec Command="dotnet run -p $(ProjectDir)\..\CodexPluginPrebuild" />
+    <Exec Command="dotnet run --project $(ProjectDir)\..\CodexPluginPrebuild" />
   </Target>
 
 </Project>

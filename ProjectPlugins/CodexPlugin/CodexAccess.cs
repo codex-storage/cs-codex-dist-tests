@@ -9,6 +9,7 @@ namespace CodexPlugin
     public class CodexAccess : ILogHandler
     {
         private readonly IPluginTools tools;
+        private readonly Mapper mapper = new Mapper();
         private bool hasContainerCrashed;
 
         public CodexAccess(IPluginTools tools, RunningContainer container, CrashWatcher crashWatcher)
@@ -24,9 +25,9 @@ namespace CodexPlugin
         public RunningContainer Container { get; }
         public CrashWatcher CrashWatcher { get; }
 
-        public CodexOpenApi.DebugInfo GetDebugInfo()
+        public DebugInfo GetDebugInfo()
         {
-            return OnCodex(api => api.GetDebugInfoAsync());
+            return Map(OnCodex(api => api.GetDebugInfoAsync()));
         }
 
         public CodexDebugPeerResponse GetDebugPeer(string peerId)
@@ -106,6 +107,11 @@ namespace CodexPlugin
         {
             var workflow = tools.CreateWorkflow();
             return workflow.GetPodInfo(Container);
+        }
+
+        private dynamic Map(dynamic input)
+        {
+            return mapper.Map(input);
         }
 
         private T OnCodex<T>(Func<CodexApi, Task<T>> action)

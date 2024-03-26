@@ -114,12 +114,12 @@ namespace CodexTests.Helpers
             }
 
             public ICodexNode Node { get; }
-            public CodexDebugResponse Response { get; }
+            public DebugInfo Response { get; }
 
             public override string ToString()
             {
-                if (Response == null || string.IsNullOrEmpty(Response.id)) return "UNKNOWN";
-                return Response.id;
+                if (Response == null || string.IsNullOrEmpty(Response.Id)) return "UNKNOWN";
+                return Response.Id;
             }
         }
 

@@ -9,7 +9,7 @@ namespace CodexPlugin
     {
         private readonly IPluginTools pluginTools;
         private readonly CodexContainerRecipe recipe = new CodexContainerRecipe();
-        private CodexDebugVersionResponse? versionResponse;
+        private DebugVersion? versionResponse;
 
         public CodexStarter(IPluginTools pluginTools)
         {
@@ -62,13 +62,13 @@ namespace CodexPlugin
 
         public string GetCodexId()
         {
-            if (versionResponse != null) return versionResponse.version;
+            if (versionResponse != null) return versionResponse.Version;
             return recipe.Image;
         }
 
         public string GetCodexRevision()
         {
-            if (versionResponse != null) return versionResponse.revision;
+            if (versionResponse != null) return versionResponse.Revision;
             return "unknown";
         }
 

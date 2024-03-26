@@ -70,7 +70,7 @@ namespace CodexTests.PeerDiscoveryTests
             }
         }
 
-        private string AreAllPresent(CodexDebugResponse info, CodexDebugResponse[] allResponses)
+        private string AreAllPresent(DebugInfo info, DebugInfo[] allResponses)
         {
             var knownIds = info.table.nodes.Select(n => n.nodeId).ToArray();
             var allOthers = GetAllOtherResponses(info, allResponses);
@@ -84,9 +84,9 @@ namespace CodexTests.PeerDiscoveryTests
             return string.Empty;
         }
 
-        private CodexDebugResponse[] GetAllOtherResponses(CodexDebugResponse exclude, CodexDebugResponse[] allResponses)
+        private DebugInfo[] GetAllOtherResponses(DebugInfo exclude, DebugInfo[] allResponses)
         {
-            return allResponses.Where(r => r.id != exclude.id).ToArray();
+            return allResponses.Where(r => r.Id != exclude.Id).ToArray();
         }
     }
 }

@@ -9,14 +9,14 @@ namespace Core
 {
     public interface IHttp
     {
-        //string HttpGetString(string route);
-        //T HttpGetJson<T>(string route);
-        //TResponse HttpPostJson<TRequest, TResponse>(string route, TRequest body);
-        //string HttpPostJson<TRequest>(string route, TRequest body);
-        //TResponse HttpPostString<TResponse>(string route, string body);
-        //string HttpPostStream(string route, Stream stream);
-        //Stream HttpGetStream(string route);
-        //T Deserialize<T>(string json);
+        string HttpGetString(string route);
+        T HttpGetJson<T>(string route);
+        TResponse HttpPostJson<TRequest, TResponse>(string route, TRequest body);
+        string HttpPostJson<TRequest>(string route, TRequest body);
+        TResponse HttpPostString<TResponse>(string route, string body);
+        string HttpPostStream(string route, Stream stream);
+        Stream HttpGetStream(string route);
+        T Deserialize<T>(string json);
 
         T OnClient<T>(Func<HttpClient, T> action);
     }

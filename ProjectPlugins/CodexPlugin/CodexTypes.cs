@@ -3,10 +3,14 @@
     public class DebugInfo
     {
         public string[] Addrs { get; set; } = Array.Empty<string>();
+        public string Spr { get; set; } = string.Empty;
+        public string Id { get; set; } = string.Empty;
+        public string[] AnnounceAddresses { get; set; } = Array.Empty<string>();
     }
 
     public class DebugPeer
     {
+        public bool IsPeerFound { get; set; }
 
     }
 
@@ -17,7 +21,8 @@
 
     public class DebugVersion
     {
-
+        public string Version { get; internal set; } = string.Empty;
+        public string Revision { get; internal set; } = string.Empty;
     }
 
     public class ContentId
