@@ -3,7 +3,6 @@ using FileUtils;
 using GethPlugin;
 using KubernetesWorkflow;
 using KubernetesWorkflow.Types;
-using Logging;
 using MetricsPlugin;
 using Utils;
 
@@ -18,7 +17,7 @@ namespace CodexPlugin
         TrackedFile? DownloadContent(ContentId contentId, string fileLabel = "");
         LocalDataset[] LocalFiles();
         void ConnectToPeer(ICodexNode node);
-        DebugVersion Version { get; }
+        DebugInfoVersion Version { get; }
         IMarketplaceAccess Marketplace { get; }
         CrashWatcher CrashWatcher { get; }
         PodInfo GetPodInfo();
@@ -41,7 +40,7 @@ namespace CodexPlugin
             CodexAccess = codexAccess;
             Group = group;
             Marketplace = marketplaceAccess;
-            Version = new DebugVersion();
+            Version = new DebugInfoVersion();
             transferSpeeds = new TransferSpeeds();
         }
 
@@ -50,8 +49,9 @@ namespace CodexPlugin
         public CrashWatcher CrashWatcher { get => CodexAccess.CrashWatcher; }
         public CodexNodeGroup Group { get; }
         public IMarketplaceAccess Marketplace { get; }
-        public DebugVersion Version { get; private set; }
+        public DebugInfoVersion Version { get; private set; }
         public ITransferSpeeds TransferSpeeds { get => transferSpeeds; }
+
         public IMetricsScrapeTarget MetricsScrapeTarget
         {
             get
@@ -59,6 +59,7 @@ namespace CodexPlugin
                 return new MetricsScrapeTarget(CodexAccess.Container, CodexContainerRecipe.MetricsPortTag);
             }
         }
+
         public EthAddress EthAddress 
         {
             get
@@ -76,8 +77,8 @@ namespace CodexPlugin
         public DebugInfo GetDebugInfo()
         {
             var debugInfo = CodexAccess.GetDebugInfo();
-            var known = string.Join(",", debugInfo.table.nodes.Select(n => n.peerId));
-            Log($"Got DebugInfo with id: '{debugInfo.id}'. This node knows: {known}");
+            var known = string.Join(",", debugInfo.Table.Nodes.Select(n => n.PeerId));
+            Log($"Got DebugInfo with id: '{debugInfo.Id}'. This node knows: {known}");
             return debugInfo;
         }
 
@@ -156,18 +157,18 @@ namespace CodexPlugin
         public void EnsureOnlineGetVersionResponse()
         {
             var debugInfo = Time.Retry(CodexAccess.GetDebugInfo, "ensure online");
-            var nodePeerId = debugInfo.id;
+            var nodePeerId = debugInfo.Id;
             var nodeName = CodexAccess.Container.Name;
 
-            if (!debugInfo.codex.IsValid())
+            if (!debugInfo.Version.IsValid())
             {
-                throw new Exception($"Invalid version information received from Codex node {GetName()}: {debugInfo.codex}");
+                throw new Exception($"Invalid version information received from Codex node {GetName()}: {debugInfo.Version}");
             }
 
             var log = tools.GetLog();
             log.AddStringReplace(nodePeerId, nodeName);
-            log.AddStringReplace(debugInfo.table.localNode.nodeId, nodeName);
-            Version = debugInfo.codex;
+            log.AddStringReplace(debugInfo.Table.LocalNode.NodeId, nodeName);
+            Version = debugInfo.Version;
         }
 
         private string GetPeerMultiAddress(CodexNode peer, DebugInfo peerInfo)

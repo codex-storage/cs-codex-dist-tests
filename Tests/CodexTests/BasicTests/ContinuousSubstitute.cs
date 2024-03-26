@@ -103,7 +103,7 @@ namespace CodexTests.BasicTests
         private void CheckRoutingTables(IEnumerable<ICodexNode> nodes)
         {
             var all = nodes.ToArray();
-            var allIds = all.Select(n => n.GetDebugInfo().table.localNode.nodeId).ToArray();
+            var allIds = all.Select(n => n.GetDebugInfo().Table.LocalNode.NodeId).ToArray();
 
             var errors = all.Select(n => AreAllPresent(n, allIds)).Where(s => !string.IsNullOrEmpty(s)).ToArray();
 
@@ -116,8 +116,8 @@ namespace CodexTests.BasicTests
         private string AreAllPresent(ICodexNode n, string[] allIds)
         {
             var info = n.GetDebugInfo();
-            var known = info.table.nodes.Select(n => n.nodeId).ToArray();
-            var expected = allIds.Where(i => i != info.table.localNode.nodeId).ToArray();
+            var known = info.Table.Nodes.Select(n => n.NodeId).ToArray();
+            var expected = allIds.Where(i => i != info.Table.LocalNode.NodeId).ToArray();
 
             if (!expected.All(ex => known.Contains(ex)))
             {

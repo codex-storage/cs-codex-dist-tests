@@ -1,4 +1,6 @@
-﻿namespace CodexPlugin
+﻿using Newtonsoft.Json;
+
+namespace CodexPlugin
 {
     public class DebugInfo
     {
@@ -6,6 +8,39 @@
         public string Spr { get; set; } = string.Empty;
         public string Id { get; set; } = string.Empty;
         public string[] AnnounceAddresses { get; set; } = Array.Empty<string>();
+        public DebugInfoVersion Version { get; set; } = new();
+        public DebugInfoTable Table { get; set; } = new();
+    }
+
+    public class DebugInfoVersion
+    {
+        public string Version { get; set; } = string.Empty;
+        public string Revision { get; set; } = string.Empty;
+
+        public bool IsValid()
+        {
+            return !string.IsNullOrEmpty(Version) && !string.IsNullOrEmpty(Revision);
+        }
+
+        public override string ToString()
+        {
+            return JsonConvert.SerializeObject(this);
+        }
+    }
+
+    public class DebugInfoTable
+    {
+        public DebugInfoTableNode LocalNode { get; set; } = new();
+        public DebugInfoTableNode[] Nodes { get; set; } = Array.Empty<DebugInfoTableNode>();
+    }
+
+    public class DebugInfoTableNode
+    {
+        public string NodeId { get; set; } = string.Empty;
+        public string PeerId { get; set; } = string.Empty;
+        public string Record { get; set; } = string.Empty;
+        public string Address { get; set; } = string.Empty;
+        public bool Seen { get; set; }
     }
 
     public class DebugPeer
@@ -17,12 +52,6 @@
     public class LocalDataset
     {
         public ContentId Cid { get; set; } = new ContentId();
-    }
-
-    public class DebugVersion
-    {
-        public string Version { get; internal set; } = string.Empty;
-        public string Revision { get; internal set; } = string.Empty;
     }
 
     public class ContentId

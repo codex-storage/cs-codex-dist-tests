@@ -9,7 +9,7 @@ namespace CodexPlugin
     {
         private readonly IPluginTools pluginTools;
         private readonly CodexContainerRecipe recipe = new CodexContainerRecipe();
-        private DebugVersion? versionResponse;
+        private DebugInfoVersion? versionResponse;
 
         public CodexStarter(IPluginTools pluginTools)
         {

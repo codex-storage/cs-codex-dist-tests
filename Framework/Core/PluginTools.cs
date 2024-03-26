@@ -21,9 +21,9 @@ namespace Core
 
     public interface IHttpFactoryTool
     {
-        IHttp CreateHttp(Action<HttpClient> onClientCreated, string? logAlias = null);
-        IHttp CreateHttp(Action<HttpClient> onClientCreated, ITimeSet timeSet, string? logAlias = null);
-        IHttp CreateHttp(string? logAlias = null);
+        IHttp CreateHttp(Action<HttpClient> onClientCreated);
+        IHttp CreateHttp(Action<HttpClient> onClientCreated, ITimeSet timeSet);
+        IHttp CreateHttp();
     }
 
     public interface IFileTool
@@ -51,19 +51,19 @@ namespace Core
             log = new LogPrefixer(log, prefix);
         }
 
-        public IHttp CreateHttp(Action<HttpClient> onClientCreated, string? logAlias = null)
+        public IHttp CreateHttp(Action<HttpClient> onClientCreated)
         {
-            return CreateHttp(onClientCreated, timeSet, logAlias);
+            return CreateHttp(onClientCreated, timeSet);
         }
 
-        public IHttp CreateHttp(Action<HttpClient> onClientCreated, ITimeSet ts, string? logAlias = null)
+        public IHttp CreateHttp(Action<HttpClient> onClientCreated, ITimeSet ts)
         {
-            return new Http(log, ts, onClientCreated, logAlias);
+            return new Http(log, ts, onClientCreated);
         }
 
-        public IHttp CreateHttp(string? logAlias = null)
+        public IHttp CreateHttp()
         {
-            return new Http(log, timeSet, logAlias);
+            return new Http(log, timeSet);
         }
 
         public IStartupWorkflow CreateWorkflow(string? namespaceOverride = null)

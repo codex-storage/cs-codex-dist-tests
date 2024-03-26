@@ -20,7 +20,7 @@ namespace CodexPlugin
             this.starter = starter;
             Containers = containers;
             Nodes = containers.Containers().Select(c => CreateOnlineCodexNode(c, tools, codexNodeFactory)).ToArray();
-            Version = new DebugVersion();
+            Version = new DebugInfoVersion();
         }
 
         public ICodexNode this[int index]
@@ -41,7 +41,7 @@ namespace CodexPlugin
 
         public RunningContainers[] Containers { get; private set; }
         public CodexNode[] Nodes { get; private set; }
-        public DebugVersion Version { get; private set; }
+        public DebugInfoVersion Version { get; private set; }
         public IMetricsScrapeTarget[] ScrapeTargets => Nodes.Select(n => n.MetricsScrapeTarget).ToArray();
 
         public IEnumerator<ICodexNode> GetEnumerator()
