@@ -16,7 +16,7 @@ namespace CodexPlugin
         DebugPeer GetDebugPeer(string peerId);
         ContentId UploadFile(TrackedFile file);
         TrackedFile? DownloadContent(ContentId contentId, string fileLabel = "");
-        LocalDataset[] LocalFiles();
+        LocalDatasetList LocalFiles();
         void ConnectToPeer(ICodexNode node);
         DebugInfoVersion Version { get; }
         IMarketplaceAccess Marketplace { get; }
@@ -119,7 +119,7 @@ namespace CodexPlugin
             return file;
         }
 
-        public LocalDataset[] LocalFiles()
+        public LocalDatasetList LocalFiles()
         {
             return CodexAccess.LocalFiles();
         }

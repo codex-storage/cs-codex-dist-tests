@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using Utils;
 
 namespace CodexPlugin
 {
@@ -50,9 +51,23 @@ namespace CodexPlugin
         public string[] Addresses { get; set; } = Array.Empty<string>();
     }
 
+    public class LocalDatasetList
+    {
+        public LocalDataset[] Content { get; set; } = Array.Empty<LocalDataset>();
+    } 
+
     public class LocalDataset
     {
-        public ContentId Cid { get; set; } = new ContentId();
+        public ContentId Cid { get; set; } = new();
+        public Manifest Manifest { get; set; } = new();
+    }
+
+    public class Manifest
+    {
+        public string RootHash { get; set; } = string.Empty;
+        public ByteSize OriginalBytes { get; set; } = ByteSize.Zero;
+        public ByteSize BlockSize { get; set; } = ByteSize.Zero;
+        public bool Protected { get; set; }
     }
 
     public class SalesRequestStorageRequest

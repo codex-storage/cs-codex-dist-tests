@@ -1,6 +1,7 @@
 ﻿using CodexContractsPlugin;
 using Newtonsoft.Json.Linq;
 using System.Numerics;
+using Utils;
 
 namespace CodexPlugin
 {
@@ -19,10 +20,21 @@ namespace CodexPlugin
             };
         }
 
-        public LocalDataset[] Map(ICollection<CodexOpenApi.DataList> dataList)
+        public LocalDatasetList Map(CodexOpenApi.DataList dataList)
         {
-            throw new Exception("todo");
-            return Array.Empty<LocalDataset>();
+            return new LocalDatasetList
+            {
+                Content = dataList.Content.Select(Map).ToArray()
+            };
+        }
+
+        public LocalDataset Map(CodexOpenApi.DataItem dataItem)
+        {
+            return new LocalDataset
+            {
+                Cid = new ContentId(dataItem.Cid),
+                Manifest = MapManifest(dataItem.Manifest)
+            };
         }
 
         public CodexOpenApi.SalesAvailabilityCREATE Map(StorageAvailability availability)
@@ -102,6 +114,17 @@ namespace CodexPlugin
                 PeerId = StringOrEmpty(obj, "peerId"),
                 Record = StringOrEmpty(obj, "record"),
                 Seen = Bool(obj, "seen")
+            };
+        }
+
+        private Manifest MapManifest(CodexOpenApi.ManifestItem manifest)
+        {
+            return new Manifest
+            {
+                BlockSize = new ByteSize(Convert.ToInt64(manifest.BlockSize)),
+                OriginalBytes = new ByteSize(Convert.ToInt64(manifest.OriginalBytes)),
+                RootHash = manifest.RootHash,
+                Protected = manifest.Protected
             };
         }
 

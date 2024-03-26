@@ -70,7 +70,7 @@ namespace CodexPlugin
             return fileResponse.Stream;
         }
 
-        public LocalDataset[] LocalFiles()
+        public LocalDatasetList LocalFiles()
         {
             return Map(OnCodex(api => api.ListDataAsync()));
         }
@@ -85,9 +85,7 @@ namespace CodexPlugin
         public string RequestStorage(StoragePurchaseRequest request)
         {
             var body = Map(request);
-            throw new Exception("todo");
-            var read = ""; /* fix incoming*/ OnCodex<string>(api => api.CreateStorageRequestAsync(request.ContentId.Id, body));
-            return read;
+            return OnCodex<string>(api => api.CreateStorageRequestAsync(request.ContentId.Id, body));
         }
 
         public StoragePurchase GetPurchaseStatus(string purchaseId)

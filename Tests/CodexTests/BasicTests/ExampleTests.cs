@@ -20,8 +20,8 @@ namespace CodexTests.BasicTests
 
             var cid = primary.UploadFile(GenerateTestFile(5.MB()));
 
-            var content = primary.LocalFiles();
-            CollectionAssert.Contains(content.Select(c => c.Cid), cid);
+            var localDatasets = primary.LocalFiles();
+            CollectionAssert.Contains(localDatasets.Content.Select(c => c.Cid), cid);
 
             var log = Ci.DownloadLog(primary);
 
