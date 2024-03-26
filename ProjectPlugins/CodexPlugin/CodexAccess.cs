@@ -49,6 +49,15 @@ namespace CodexPlugin
             return result;
         }
 
+        public void ConnectToPeer(string peerId, string[] peerMultiAddresses)
+        {
+            OnCodex(api =>
+            {
+                Time.Wait(api.ConnectPeerAsync(peerId, peerMultiAddresses));
+                return Task.FromResult(string.Empty);
+            });
+        }
+
         public string UploadFile(FileStream fileStream)
         {
             return OnCodex(api => api.UploadAsync(fileStream));

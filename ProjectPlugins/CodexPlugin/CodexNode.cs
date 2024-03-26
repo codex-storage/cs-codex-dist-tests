@@ -28,7 +28,6 @@ namespace CodexPlugin
 
     public class CodexNode : ICodexNode
     {
-        private const string SuccessfullyConnectedMessage = "Successfully connected to peer";
         private const string UploadFailedMessage = "Unable to store block";
         private readonly IPluginTools tools;
         private readonly EthAddress? ethAddress;
@@ -131,9 +130,8 @@ namespace CodexPlugin
 
             Log($"Connecting to peer {peer.GetName()}...");
             var peerInfo = node.GetDebugInfo();
-            var response = CodexAccess.ConnectToPeer(peerInfo.id, GetPeerMultiAddress(peer, peerInfo));
+            CodexAccess.ConnectToPeer(peerInfo.Id, GetPeerMultiAddresses(peer, peerInfo));
 
-            FrameworkAssert.That(response == SuccessfullyConnectedMessage, "Unable to connect codex nodes.");
             Log($"Successfully connected to peer {peer.GetName()}.");
         }
 
@@ -168,17 +166,16 @@ namespace CodexPlugin
             Version = debugInfo.Version;
         }
 
-        private string GetPeerMultiAddress(CodexNode peer, DebugInfo peerInfo)
+        private string[] GetPeerMultiAddresses(CodexNode peer, DebugInfo peerInfo)
         {
-            var multiAddress = peerInfo.Addrs.First();
-            // Todo: Is there a case where First address in list is not the way?
-
             // The peer we want to connect is in a different pod.
             // We must replace the default IP with the pod IP in the multiAddress.
             var workflow = tools.CreateWorkflow();
             var podInfo = workflow.GetPodInfo(peer.Container);
 
-            return multiAddress.Replace("0.0.0.0", podInfo.Ip);
+            return peerInfo.Addrs.Select(a => a
+                .Replace("0.0.0.0", podInfo.Ip))
+                .ToArray();
         }
 
         private void DownloadToFile(string contentId, TrackedFile file)
