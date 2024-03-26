@@ -30,20 +30,21 @@ namespace CodexPlugin
             return Map(OnCodex(api => api.GetDebugInfoAsync()));
         }
 
-        public CodexDebugPeerResponse GetDebugPeer(string peerId)
+        public DebugPeer GetDebugPeer(string peerId)
         {
-            var http = Http();
-            var str = http.HttpGetString($"debug/peer/{peerId}");
+            // Cannot use openAPI: debug/peer endpoint is not specified there.
+            var endoint = GetEndpoint();
+            var str = endoint.HttpGetString($"debug/peer/{peerId}");
 
             if (str.ToLowerInvariant() == "unable to find peer!")
             {
-                return new CodexDebugPeerResponse
+                return new DebugPeer
                 {
                     IsPeerFound = false
                 };
             }
 
-            var result = http.Deserialize<CodexDebugPeerResponse>(str);
+            var result = endoint.Deserialize<DebugPeer>(str);
             result.IsPeerFound = true;
             return result;
         }
@@ -117,7 +118,8 @@ namespace CodexPlugin
         private T OnCodex<T>(Func<CodexApi, Task<T>> action)
         {
             var address = GetAddress();
-            var result = tools.CreateHttp().OnClient(client =>
+            var result = tools.CreateHttp(CheckContainerCrashed)
+                .OnClient(client =>
             {
                 var api = new CodexApi(client);
                 api.BaseUrl = $"{address.Host}:{address.Port}/api/codex/v1";
@@ -149,6 +151,13 @@ namespace CodexPlugin
         //{
         //    return tools.CreateHttp(GetAddress(), baseUrl: "/api/codex/v1", CheckContainerCrashed, new LongTimeSet(), Container.Name);
         //}
+
+        private IEndpoint GetEndpoint()
+        {
+            return tools
+                .CreateHttp(CheckContainerCrashed)
+                .CreateEndpoint(GetAddress(), "/api/codex/v1/", Container.Name);
+        }
 
         private Address GetAddress()
         {

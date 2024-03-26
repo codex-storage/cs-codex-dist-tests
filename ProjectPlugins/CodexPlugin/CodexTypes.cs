@@ -46,7 +46,8 @@ namespace CodexPlugin
     public class DebugPeer
     {
         public bool IsPeerFound { get; set; }
-
+        public string PeerId { get; set; } = string.Empty;
+        public string[] Addresses { get; set; } = Array.Empty<string>();
     }
 
     public class LocalDataset

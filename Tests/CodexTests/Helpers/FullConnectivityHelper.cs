@@ -31,6 +31,8 @@ namespace CodexTests.Helpers
         private void AssertFullyConnected(ICodexNode[] nodes)
         {
             Log($"Asserting '{implementation.Description()}' for nodes: '{string.Join(",", nodes.Select(n => n.GetName()))}'...");
+            Assert.That(nodes.Length, Is.GreaterThan(1));
+
             var entries = CreateEntries(nodes);
             var pairs = CreatePairs(entries);
 
