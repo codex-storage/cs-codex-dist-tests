@@ -31,7 +31,8 @@ namespace CodexTests.PeerDiscoveryTests
         {
             var geth = Ci.StartGethNode(s => s.IsMiner());
             var contracts = Ci.StartCodexContracts(geth);
-            AddCodex(2, s => s.EnableMarketplace(geth, contracts, 10.Eth(), 1000.TestTokens()));
+            AddCodex(2, s => s.EnableMarketplace(geth, contracts, m => m
+                .WithInitial(10.Eth(), 1000.TestTokens())));
 
             AssertAllNodesConnected();
         }
