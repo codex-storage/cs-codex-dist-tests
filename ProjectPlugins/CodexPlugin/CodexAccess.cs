@@ -27,7 +27,7 @@ namespace CodexPlugin
 
         public DebugInfo GetDebugInfo()
         {
-            return Map(OnCodex(api => api.GetDebugInfoAsync()));
+            return mapper.Map(OnCodex(api => api.GetDebugInfoAsync()));
         }
 
         public DebugPeer GetDebugPeer(string peerId)
@@ -72,25 +72,25 @@ namespace CodexPlugin
 
         public LocalDatasetList LocalFiles()
         {
-            return Map(OnCodex(api => api.ListDataAsync()));
+            return mapper.Map(OnCodex(api => api.ListDataAsync()));
         }
 
         public StorageAvailability SalesAvailability(StorageAvailability request)
         {
-            var body = Map(request);
+            var body = mapper.Map(request);
             var read = OnCodex<SalesAvailabilityREAD>(api => api.OfferStorageAsync(body));
-            return Map(read);
+            return mapper.Map(read);
         }
 
         public string RequestStorage(StoragePurchaseRequest request)
         {
-            var body = Map(request);
+            var body = mapper.Map(request);
             return OnCodex<string>(api => api.CreateStorageRequestAsync(request.ContentId.Id, body));
         }
 
         public StoragePurchase GetPurchaseStatus(string purchaseId)
         {
-            return Map(OnCodex(api => api.GetPurchaseAsync(purchaseId)));
+            return mapper.Map(OnCodex(api => api.GetPurchaseAsync(purchaseId)));
         }
 
         public string GetName()
@@ -102,11 +102,6 @@ namespace CodexPlugin
         {
             var workflow = tools.CreateWorkflow();
             return workflow.GetPodInfo(Container);
-        }
-
-        private dynamic Map(dynamic input)
-        {
-            return mapper.Map(input);
         }
 
         private T OnCodex<T>(Func<CodexApi, Task<T>> action)
