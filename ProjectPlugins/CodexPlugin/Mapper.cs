@@ -21,6 +21,7 @@ namespace CodexPlugin
 
         public LocalDataset[] Map(ICollection<CodexOpenApi.DataList> dataList)
         {
+            throw new Exception("todo");
             return Array.Empty<LocalDataset>();
         }
 
@@ -55,6 +56,19 @@ namespace CodexPlugin
             {
                 State = purchase.State,
                 Error = purchase.Error
+            };
+        }
+
+        public StorageAvailability Map(CodexOpenApi.SalesAvailabilityREAD read)
+        {
+            return new StorageAvailability(
+                totalSpace: new Utils.ByteSize(Convert.ToInt64(read.TotalSize)),
+                maxDuration: TimeSpan.FromSeconds(Convert.ToDouble(read.Duration)),
+                minPriceForTotalSpace: new TestToken(Convert.ToDecimal(read.MinPrice)),
+                maxCollateral: new TestToken(Convert.ToDecimal(read.MaxCollateral))
+            )
+            {
+                Id = read.Id
             };
         }
 

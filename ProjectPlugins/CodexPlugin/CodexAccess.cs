@@ -85,11 +85,12 @@ namespace CodexPlugin
         public string RequestStorage(StoragePurchaseRequest request)
         {
             var body = Map(request);
+            throw new Exception("todo");
             var read = ""; /* fix incoming*/ OnCodex<string>(api => api.CreateStorageRequestAsync(request.ContentId.Id, body));
             return read;
         }
 
-        public StoragePurchaseRequest GetPurchaseStatus(string purchaseId)
+        public StoragePurchase GetPurchaseStatus(string purchaseId)
         {
             return Map(OnCodex(api => api.GetPurchaseAsync(purchaseId)));
         }

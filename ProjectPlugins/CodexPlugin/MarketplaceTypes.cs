@@ -49,6 +49,7 @@ namespace CodexPlugin
             MaxCollateral = maxCollateral;
         }
 
+        public string Id { get; set; } = string.Empty;
         public ByteSize TotalSpace { get; }
         public TimeSpan MaxDuration { get; }
         public TestToken MinPriceForTotalSpace { get; }
