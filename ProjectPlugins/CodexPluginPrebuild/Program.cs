@@ -1,4 +1,5 @@
 ﻿using System.Security.Cryptography;
+using System.Text;
 
 public static class Program
 {
@@ -30,7 +31,10 @@ public static class Program
 
     private static string CreateHash()
     {
-        var fileBytes = File.ReadAllBytes(OpenApiFile);
+        var file = File.ReadAllText(OpenApiFile);
+        var fileBytes = Encoding.ASCII.GetBytes(file
+            .Replace(Environment.NewLine, ""));
+
         var sha = SHA256.Create();
         var hash = sha.ComputeHash(fileBytes);
         return BitConverter.ToString(hash);

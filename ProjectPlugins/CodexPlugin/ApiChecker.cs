@@ -77,7 +77,8 @@ namespace CodexPlugin
 
         private string Hash(string file)
         {
-            var fileBytes = Encoding.ASCII.GetBytes(file);
+            var fileBytes = Encoding.ASCII.GetBytes(file
+                .Replace(Environment.NewLine, ""));
             var sha = SHA256.Create();
             var hash = sha.ComputeHash(fileBytes);
             return BitConverter.ToString(hash);
