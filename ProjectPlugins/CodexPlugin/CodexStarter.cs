@@ -9,11 +9,14 @@ namespace CodexPlugin
     {
         private readonly IPluginTools pluginTools;
         private readonly CodexContainerRecipe recipe = new CodexContainerRecipe();
+        private readonly ApiChecker apiChecker;
         private DebugInfoVersion? versionResponse;
 
         public CodexStarter(IPluginTools pluginTools)
         {
             this.pluginTools = pluginTools;
+
+            apiChecker = new ApiChecker(pluginTools);
         }
 
         public RunningContainers[] BringOnline(CodexSetup codexSetup)
@@ -24,6 +27,8 @@ namespace CodexPlugin
             var startupConfig = CreateStartupConfig(codexSetup);
 
             var containers = StartCodexContainers(startupConfig, codexSetup.NumberOfNodes, codexSetup.Location);
+
+            apiChecker.CheckCompatibility(containers);
 
             foreach (var rc in containers)
             {
