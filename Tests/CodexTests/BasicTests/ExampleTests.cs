@@ -64,7 +64,8 @@ namespace CodexTests.BasicTests
                 .WithName("Seller")
                 .WithLogLevel(CodexLogLevel.Trace, new CodexLogCustomTopics(CodexLogLevel.Error, CodexLogLevel.Error, CodexLogLevel.Warn))
                 .WithStorageQuota(11.GB())
-                .EnableMarketplace(geth, contracts, initialEth: 10.Eth(), initialTokens: sellerInitialBalance, s => s
+                .EnableMarketplace(geth, contracts, m => m
+                    .WithInitial(10.Eth(), sellerInitialBalance)
                     .AsStorageNode()
                     .AsValidator()));
 
@@ -81,9 +82,10 @@ namespace CodexTests.BasicTests
             var testFile = GenerateTestFile(fileSize);
 
             var buyer = AddCodex(s => s
-                            .WithName("Buyer")
-                            .WithBootstrapNode(seller)
-                            .EnableMarketplace(geth, contracts, initialEth: 10.Eth(), initialTokens: buyerInitialBalance));
+                .WithName("Buyer")
+                .WithBootstrapNode(seller)
+                .EnableMarketplace(geth, contracts, m => m
+                    .WithInitial(10.Eth(), buyerInitialBalance)));
 
             AssertBalance(contracts, buyer, Is.EqualTo(buyerInitialBalance));
 
