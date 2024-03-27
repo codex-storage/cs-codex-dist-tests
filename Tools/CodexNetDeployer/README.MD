@@ -9,11 +9,11 @@ After the deployment has successfully finished, a `codex-deployment.json` file w
 ## Overrides
 The arguments allow you to configure quite a bit, but not everything. Here are some environment variables the CodexNetDeployer will respond to. None of these are required.
 
-| Variable         | Description                                                                                                  |
-|------------------|--------------------------------------------------------------------------------------------------------------|
-| RUNID            | A pod-label 'runid' is added to each pod created during deployment. Use this to set the value of that label. |
-| TESTID           | Similar to RUNID, except the label is 'testid'.                                                              |
-| CODEXDOCKERIMAGE | If set, this will be used instead of the default Codex docker image.                                         |
+| Variable         | Description                                                                                                    |
+|------------------|----------------------------------------------------------------------------------------------------------------|
+| DEPLOYID         | A pod-label 'deployid' is added to each pod created during the tests. Use this to set the value of that label. |
+| TESTID           | Similar to RUNID, except the label is 'testid'.                                                                |
+| CODEXDOCKERIMAGE | If set, this will be used instead of the default Codex docker image.                                           |
 
 ## Using a local Codex repository
 If you have a clone of the Codex git repository, and you want to deploy a network using your local modifications, the following environment variable options are for you. Please note that any changes made in Codex's 'vendor' directory will be discarded during the build process.

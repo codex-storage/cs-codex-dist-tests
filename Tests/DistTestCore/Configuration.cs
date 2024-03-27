@@ -14,6 +14,7 @@ namespace DistTestCore
             kubeConfigFile = GetNullableEnvVarOrDefault("KUBECONFIG", null);
             logPath = GetEnvVarOrDefault("LOGPATH", "CodexTestLogs");
             dataFilesPath = GetEnvVarOrDefault("DATAFILEPATH", "TestDataFiles");
+            AlwaysDownloadContainerLogs = !string.IsNullOrEmpty(GetEnvVarOrDefault("ALWAYS_LOGS", ""));
         }
 
         public Configuration(string? kubeConfigFile, string logPath, string dataFilesPath)
@@ -22,6 +23,8 @@ namespace DistTestCore
             this.logPath = logPath;
             this.dataFilesPath = dataFilesPath;
         }
+
+        public bool AlwaysDownloadContainerLogs { get; set; }
 
         public KubernetesWorkflow.Configuration GetK8sConfiguration(ITimeSet timeSet, string k8sNamespace)
         {
