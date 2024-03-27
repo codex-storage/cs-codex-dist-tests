@@ -36,11 +36,11 @@ namespace Core
         private readonly ITimeSet timeSet;
         private readonly WorkflowCreator workflowCreator;
         private readonly IFileManager fileManager;
-        private ILog log;
+        private readonly LogPrefixer log;
 
         internal PluginTools(ILog log, WorkflowCreator workflowCreator, string fileManagerRootFolder, ITimeSet timeSet)
         {
-            this.log = log;
+            this.log = new LogPrefixer(log);
             this.workflowCreator = workflowCreator;
             this.timeSet = timeSet;
             fileManager = new FileManager(log, fileManagerRootFolder);
@@ -48,7 +48,7 @@ namespace Core
 
         public void ApplyLogPrefix(string prefix)
         {
-            log = new LogPrefixer(log, prefix);
+            log.Prefix = prefix;
         }
 
         public IHttp CreateHttp(Action<HttpClient> onClientCreated)
