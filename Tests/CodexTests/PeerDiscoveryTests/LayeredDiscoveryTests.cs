@@ -1,5 +1,4 @@
-﻿using CodexPlugin;
-using NUnit.Framework;
+﻿using NUnit.Framework;
 
 namespace CodexTests.PeerDiscoveryTests
 {
@@ -9,10 +8,10 @@ namespace CodexTests.PeerDiscoveryTests
         [Test]
         public void TwoLayersTest()
         {
-            var root = Ci.StartCodexNode();
-            var l1Source = Ci.StartCodexNode(s => s.WithBootstrapNode(root));
-            var l1Node = Ci.StartCodexNode(s => s.WithBootstrapNode(root));
-            var l2Target = Ci.StartCodexNode(s => s.WithBootstrapNode(l1Node));
+            var root = AddCodex();
+            var l1Source = AddCodex(s => s.WithBootstrapNode(root));
+            var l1Node = AddCodex(s => s.WithBootstrapNode(root));
+            var l2Target = AddCodex(s => s.WithBootstrapNode(l1Node));
 
             AssertAllNodesConnected();
         }
@@ -20,11 +19,11 @@ namespace CodexTests.PeerDiscoveryTests
         [Test]
         public void ThreeLayersTest()
         {
-            var root = Ci.StartCodexNode();
-            var l1Source = Ci.StartCodexNode(s => s.WithBootstrapNode(root));
-            var l1Node = Ci.StartCodexNode(s => s.WithBootstrapNode(root));
-            var l2Node = Ci.StartCodexNode(s => s.WithBootstrapNode(l1Node));
-            var l3Target = Ci.StartCodexNode(s => s.WithBootstrapNode(l2Node));
+            var root = AddCodex();
+            var l1Source = AddCodex(s => s.WithBootstrapNode(root));
+            var l1Node = AddCodex(s => s.WithBootstrapNode(root));
+            var l2Node = AddCodex(s => s.WithBootstrapNode(l1Node));
+            var l3Target = AddCodex(s => s.WithBootstrapNode(l2Node));
 
             AssertAllNodesConnected();
         }
@@ -34,10 +33,10 @@ namespace CodexTests.PeerDiscoveryTests
         [TestCase(10)]
         public void NodeChainTest(int chainLength)
         {
-            var node = Ci.StartCodexNode();
+            var node = AddCodex();
             for (var i = 1; i < chainLength; i++)
             {
-                node = Ci.StartCodexNode(s => s.WithBootstrapNode(node));
+                node = AddCodex(s => s.WithBootstrapNode(node));
             }
 
             AssertAllNodesConnected();

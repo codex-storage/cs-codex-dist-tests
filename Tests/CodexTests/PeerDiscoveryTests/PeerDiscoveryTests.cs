@@ -31,7 +31,8 @@ namespace CodexTests.PeerDiscoveryTests
         {
             var geth = Ci.StartGethNode(s => s.IsMiner());
             var contracts = Ci.StartCodexContracts(geth);
-            AddCodex(2, s => s.EnableMarketplace(geth, contracts, 10.Eth(), 1000.TestTokens()));
+            AddCodex(2, s => s.EnableMarketplace(geth, contracts, m => m
+                .WithInitial(10.Eth(), 1000.TestTokens())));
 
             AssertAllNodesConnected();
         }
@@ -70,23 +71,23 @@ namespace CodexTests.PeerDiscoveryTests
             }
         }
 
-        private string AreAllPresent(CodexDebugResponse info, CodexDebugResponse[] allResponses)
+        private string AreAllPresent(DebugInfo info, DebugInfo[] allResponses)
         {
-            var knownIds = info.table.nodes.Select(n => n.nodeId).ToArray();
+            var knownIds = info.Table.Nodes.Select(n => n.NodeId).ToArray();
             var allOthers = GetAllOtherResponses(info, allResponses);
-            var expectedIds = allOthers.Select(i => i.table.localNode.nodeId).ToArray();
+            var expectedIds = allOthers.Select(i => i.Table.LocalNode.NodeId).ToArray();
 
             if (!expectedIds.All(ex => knownIds.Contains(ex)))
             {
-                return $"Node {info.id}: Not all of '{string.Join(",", expectedIds)}' were present in routing table: '{string.Join(",", knownIds)}'";
+                return $"Node {info.Id}: Not all of '{string.Join(",", expectedIds)}' were present in routing table: '{string.Join(",", knownIds)}'";
             }
 
             return string.Empty;
         }
 
-        private CodexDebugResponse[] GetAllOtherResponses(CodexDebugResponse exclude, CodexDebugResponse[] allResponses)
+        private DebugInfo[] GetAllOtherResponses(DebugInfo exclude, DebugInfo[] allResponses)
         {
-            return allResponses.Where(r => r.id != exclude.id).ToArray();
+            return allResponses.Where(r => r.Id != exclude.Id).ToArray();
         }
     }
 }

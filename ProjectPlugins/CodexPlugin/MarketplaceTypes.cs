@@ -1,13 +1,12 @@
 ﻿using CodexContractsPlugin;
 using Logging;
-using System.Numerics;
 using Utils;
 
 namespace CodexPlugin
 {
-    public class StoragePurchase : MarketplaceType
+    public class StoragePurchaseRequest
     {
-        public StoragePurchase(ContentId cid)
+        public StoragePurchaseRequest(ContentId cid)
         {
             ContentId = cid;
         }
@@ -20,20 +19,6 @@ namespace CodexPlugin
         public int ProofProbability { get; set; }
         public TimeSpan Duration { get; set; }
         public TimeSpan Expiry { get; set; }
-
-        public CodexSalesRequestStorageRequest ToApiRequest()
-        {
-            return new CodexSalesRequestStorageRequest
-            {
-                duration = ToDecInt(Duration.TotalSeconds),
-                proofProbability = ToDecInt(ProofProbability),
-                reward = ToDecInt(PricePerSlotPerSecond),
-                collateral = ToDecInt(RequiredCollateral),
-                expiry = ToDecInt(DateTimeOffset.UtcNow.ToUnixTimeSeconds() + Expiry.TotalSeconds),
-                nodes = MinRequiredNumberOfNodes,
-                tolerance = NodeFailureTolerance
-            };
-        }
 
         public void Log(ILog log)
         {
@@ -48,7 +33,13 @@ namespace CodexPlugin
         }
     }
 
-    public class StorageAvailability : MarketplaceType
+    public class StoragePurchase
+    {
+        public string State { get; set; } = string.Empty;
+        public string Error { get; set; } = string.Empty;
+    }
+
+    public class StorageAvailability
     {
         public StorageAvailability(ByteSize totalSpace, TimeSpan maxDuration, TestToken minPriceForTotalSpace, TestToken maxCollateral)
         {
@@ -58,44 +49,19 @@ namespace CodexPlugin
             MaxCollateral = maxCollateral;
         }
 
+        public string Id { get; set; } = string.Empty;
         public ByteSize TotalSpace { get; }
         public TimeSpan MaxDuration { get; }
         public TestToken MinPriceForTotalSpace { get; }
         public TestToken MaxCollateral { get; } 
 
-        public CodexSalesAvailabilityRequest ToApiRequest()
-        {
-            return new CodexSalesAvailabilityRequest
-            {
-                size = ToDecInt(TotalSpace.SizeInBytes),
-                duration = ToDecInt(MaxDuration.TotalSeconds),
-                maxCollateral = ToDecInt(MaxCollateral),
-                minPrice = ToDecInt(MinPriceForTotalSpace)
-            };
-        }
-
         public void Log(ILog log)
         {
             log.Log($"Making storage available... (" +
-                $"size: {TotalSpace}, " +
+                $"totalSize: {TotalSpace}, " +
                 $"maxDuration: {Time.FormatDuration(MaxDuration)}, " + 
                 $"minPriceForTotalSpace: {MinPriceForTotalSpace}, " +
                 $"maxCollateral: {MaxCollateral})");
-        }
-    }
-
-    public abstract class MarketplaceType
-    {
-        protected string ToDecInt(double d)
-        {
-            var i = new BigInteger(d);
-            return i.ToString("D");
-        }
-
-        protected string ToDecInt(TestToken t)
-        {
-            var i = new BigInteger(t.Amount);
-            return i.ToString("D");
         }
     }
 }

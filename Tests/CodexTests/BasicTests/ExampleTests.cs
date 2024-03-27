@@ -25,9 +25,13 @@ namespace CodexTests.BasicTests
 
             var seller = AddCodex(s => s
                 .WithName("Seller")
-                .WithLogLevel(CodexLogLevel.Trace, new CodexLogCustomTopics(CodexLogLevel.Error, CodexLogLevel.Error, CodexLogLevel.Warn))
+                .WithLogLevel(CodexLogLevel.Trace, new CodexLogCustomTopics(CodexLogLevel.Error, CodexLogLevel.Error, CodexLogLevel.Warn)
+                {
+                    ContractClock = CodexLogLevel.Trace,
+                })
                 .WithStorageQuota(11.GB())
-                .EnableMarketplace(geth, contracts, initialEth: 10.Eth(), initialTokens: sellerInitialBalance, s => s
+                .EnableMarketplace(geth, contracts, m => m
+                    .WithInitial(10.Eth(), sellerInitialBalance)
                     .AsStorageNode()
                     .AsValidator()));
 
@@ -44,9 +48,10 @@ namespace CodexTests.BasicTests
             var testFile = GenerateTestFile(fileSize);
 
             var buyer = AddCodex(s => s
-                            .WithName("Buyer")
-                            .WithBootstrapNode(seller)
-                            .EnableMarketplace(geth, contracts, initialEth: 10.Eth(), initialTokens: buyerInitialBalance));
+                .WithName("Buyer")
+                .WithBootstrapNode(seller)
+                .EnableMarketplace(geth, contracts, m => m
+                    .WithInitial(10.Eth(), buyerInitialBalance)));
 
             AssertBalance(contracts, buyer, Is.EqualTo(buyerInitialBalance));
 
@@ -88,7 +93,7 @@ namespace CodexTests.BasicTests
 
             var contentId = buyer.UploadFile(testFile);
 
-            var purchase = new StoragePurchase(contentId)
+            var purchase = new StoragePurchaseRequest(contentId)
             {
                 PricePerSlotPerSecond = 2.TestTokens(),
                 RequiredCollateral = 10.TestTokens(),
@@ -134,7 +139,7 @@ namespace CodexTests.BasicTests
             Assert.That(discN, Is.LessThan(bootN));
         }
 
-        private void AssertSlotFilledEvents(ICodexContracts contracts, StoragePurchase purchase, Request request, ICodexNode seller)
+        private void AssertSlotFilledEvents(ICodexContracts contracts, StoragePurchaseRequest purchase, Request request, ICodexNode seller)
         {
             // Expect 1 fulfilled event for the purchase.
             var requestFulfilledEvents = contracts.GetRequestFulfilledEvents(GetTestRunTimeRange());
@@ -152,7 +157,7 @@ namespace CodexTests.BasicTests
             }
         }
 
-        private void AssertStorageRequest(Request request, StoragePurchase purchase, ICodexContracts contracts, ICodexNode buyer)
+        private void AssertStorageRequest(Request request, StoragePurchaseRequest purchase, ICodexContracts contracts, ICodexNode buyer)
         {
             Assert.That(contracts.GetRequestState(request), Is.EqualTo(RequestState.Started));
             Assert.That(request.ClientAddress, Is.EqualTo(buyer.EthAddress));

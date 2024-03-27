@@ -1,15 +1,22 @@
-# Distributed System Tests for Nim-Codex
+# Distributed System Tests
 
-Using a common dotnet unit-test framework and a few other libraries, this project allows you to write tests that use multiple Codex node instances in various configurations to test the distributed system in a controlled, reproducible environment.
+This project allows you to write tools and tests that control and interact with container-based applications to form a distributed system in a controlled, reproducible environment.
 
-Nim-Codex: https://github.com/codex-storage/nim-codex  
 Dotnet: v7.0  
 Kubernetes: v1.25.4  
 Dotnet-kubernetes SDK: v10.1.4 https://github.com/kubernetes-client/csharp  
 Nethereum: v4.14.0
 
+Currently, this project is mainly used for distributed testing of [Nim-Codex](https://github.com/codex-storage/nim-codex). However, its plugin-structure allows for other projects to be on-boarded (relatively) easily. (See 'contribute a plugin`.)
+
+## Tests/DistTestCore
+Library with generic distributed-testing functionality. Uses NUnit3. Reference this project to build unit-test style scenarios: setup, run test, teardown. The DistTestCore responds to the following env-vars:
+- `LOGPATH` = Path where log files will be written.
+- `DATAFILEPATH` = Path where (temporary) data files will be stored.
+- `ALWAYS_LOGS` = When set, DistTestCore will always download all container logs at the end of a test run. By default, logs are only downloaded on test failure.
+
 ## Tests/CodexTests and Tests/CodexLongTests
-These are test assemblies that use NUnit3 to perform tests against transient Codex nodes.
+These are test assemblies that use DistTestCore to perform tests against transient Codex nodes.
 Read more [HERE](/Tests/CodexTests/README.md)
 
 ## Tests/ContinuousTests

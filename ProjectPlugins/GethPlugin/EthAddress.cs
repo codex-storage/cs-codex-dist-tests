@@ -5,6 +5,7 @@
         EthAddress EthAddress { get; }
     }
 
+    [Serializable]
     public class EthAddress
     {
         public EthAddress(string address)

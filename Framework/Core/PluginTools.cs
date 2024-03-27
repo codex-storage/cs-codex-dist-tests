@@ -1,7 +1,6 @@
 ﻿using FileUtils;
 using KubernetesWorkflow;
 using Logging;
-using Utils;
 
 namespace Core
 {
@@ -22,9 +21,9 @@ namespace Core
 
     public interface IHttpFactoryTool
     {
-        IHttp CreateHttp(Address address, string baseUrl, Action<HttpClient> onClientCreated, string? logAlias = null);
-        IHttp CreateHttp(Address address, string baseUrl, Action<HttpClient> onClientCreated, ITimeSet timeSet, string? logAlias = null);
-        IHttp CreateHttp(Address address, string baseUrl, string? logAlias = null);
+        IHttp CreateHttp(Action<HttpClient> onClientCreated);
+        IHttp CreateHttp(Action<HttpClient> onClientCreated, ITimeSet timeSet);
+        IHttp CreateHttp();
     }
 
     public interface IFileTool
@@ -37,11 +36,11 @@ namespace Core
         private readonly ITimeSet timeSet;
         private readonly WorkflowCreator workflowCreator;
         private readonly IFileManager fileManager;
-        private ILog log;
+        private readonly LogPrefixer log;
 
         internal PluginTools(ILog log, WorkflowCreator workflowCreator, string fileManagerRootFolder, ITimeSet timeSet)
         {
-            this.log = log;
+            this.log = new LogPrefixer(log);
             this.workflowCreator = workflowCreator;
             this.timeSet = timeSet;
             fileManager = new FileManager(log, fileManagerRootFolder);
@@ -49,22 +48,22 @@ namespace Core
 
         public void ApplyLogPrefix(string prefix)
         {
-            log = new LogPrefixer(log, prefix);
+            log.Prefix = prefix;
         }
 
-        public IHttp CreateHttp(Address address, string baseUrl, Action<HttpClient> onClientCreated, string? logAlias = null)
+        public IHttp CreateHttp(Action<HttpClient> onClientCreated)
         {
-            return CreateHttp(address, baseUrl, onClientCreated, timeSet, logAlias);
+            return CreateHttp(onClientCreated, timeSet);
         }
 
-        public IHttp CreateHttp(Address address, string baseUrl, Action<HttpClient> onClientCreated, ITimeSet ts, string? logAlias = null)
+        public IHttp CreateHttp(Action<HttpClient> onClientCreated, ITimeSet ts)
         {
-            return new Http(log, ts, address, baseUrl, onClientCreated, logAlias);
+            return new Http(log, ts, onClientCreated);
         }
 
-        public IHttp CreateHttp(Address address, string baseUrl, string? logAlias = null)
+        public IHttp CreateHttp()
         {
-            return new Http(log, timeSet, address, baseUrl, logAlias);
+            return new Http(log, timeSet);
         }
 
         public IStartupWorkflow CreateWorkflow(string? namespaceOverride = null)

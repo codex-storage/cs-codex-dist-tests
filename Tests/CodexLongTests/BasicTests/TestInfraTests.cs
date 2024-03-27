@@ -11,7 +11,7 @@ namespace CodexLongTests.BasicTests
         {
             var group = AddCodex(1000, s => s.EnableMetrics());
 
-            var nodeIds = group.Select(n => n.GetDebugInfo().id).ToArray();
+            var nodeIds = group.Select(n => n.GetDebugInfo().Id).ToArray();
 
             Assert.That(nodeIds.Length, Is.EqualTo(nodeIds.Distinct().Count()),
                 "Not all created nodes provided a unique id.");
@@ -24,7 +24,7 @@ namespace CodexLongTests.BasicTests
             {
                 var n = AddCodex();
 
-                Assert.That(!string.IsNullOrEmpty(n.GetDebugInfo().id));
+                Assert.That(!string.IsNullOrEmpty(n.GetDebugInfo().Id));
             }
         }
     }

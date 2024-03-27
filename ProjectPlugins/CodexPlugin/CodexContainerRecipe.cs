@@ -7,9 +7,7 @@ namespace CodexPlugin
 {
     public class CodexContainerRecipe : ContainerRecipeFactory
     {
-        private readonly MarketplaceStarter marketplaceStarter = new MarketplaceStarter();
-
-        private const string DefaultDockerImage = "codexstorage/nim-codex:sha-e4ddb94-dist-tests";
+        private const string DefaultDockerImage = "codexstorage/nim-codex:sha-cd280d4-dist-tests";
         public const string ApiPortTag = "codex_api_port";
         public const string ListenPortTag = "codex_listen_port";
         public const string MetricsPortTag = "codex_metrics_port";
@@ -106,13 +104,13 @@ namespace CodexPlugin
                 AddEnvVar("CODEX_ETH_PROVIDER", $"{wsAddress.Host.Replace("http://", "ws://")}:{wsAddress.Port}");
                 AddEnvVar("CODEX_MARKETPLACE_ADDRESS", marketplaceAddress);
 
+                var marketplaceSetup = config.MarketplaceConfig.MarketplaceSetup;
+
                 // Custom scripting in the Codex test image will write this variable to a private-key file,
                 // and pass the correct filename to Codex.
-                var mStart = marketplaceStarter.Start();
-                AddEnvVar("PRIV_KEY", mStart.PrivateKey);
-                Additional(mStart);
+                AddEnvVar("PRIV_KEY", marketplaceSetup.EthAccount.PrivateKey);
+                Additional(marketplaceSetup.EthAccount);
 
-                var marketplaceSetup = config.MarketplaceConfig.MarketplaceSetup;
                 SetCommandOverride(marketplaceSetup);
                 if (marketplaceSetup.IsValidator)
                 {

@@ -17,8 +17,7 @@ namespace CodexPlugin
         ICodexSetup WithBlockMaintenanceInterval(TimeSpan duration);
         ICodexSetup WithBlockMaintenanceNumber(int numberOfBlocks);
         ICodexSetup EnableMetrics();
-        ICodexSetup EnableMarketplace(IGethNode gethNode, ICodexContracts codexContracts, Ether initialEth, TestToken initialTokens);
-        ICodexSetup EnableMarketplace(IGethNode gethNode, ICodexContracts codexContracts, Ether initialEth, TestToken initialTokens, Action<IMarketplaceSetup> marketplaceSetup);
+        ICodexSetup EnableMarketplace(IGethNode gethNode, ICodexContracts codexContracts, Action<IMarketplaceSetup> marketplaceSetup);
         /// <summary>
         /// Provides an invalid proof every N proofs
         /// </summary>
@@ -28,6 +27,8 @@ namespace CodexPlugin
 
     public interface IMarketplaceSetup
     {
+        IMarketplaceSetup WithInitial(Ether eth, TestToken tokens);
+        IMarketplaceSetup WithAccount(EthAccount account);
         IMarketplaceSetup AsStorageNode();
         IMarketplaceSetup AsValidator();
     }
@@ -49,6 +50,7 @@ namespace CodexPlugin
 
         public CodexLogLevel DiscV5 { get; set; }
         public CodexLogLevel Libp2p { get; set; }
+        public CodexLogLevel ContractClock { get; set; } = CodexLogLevel.Warn;
         public CodexLogLevel? BlockExchange { get; }
     }
 
@@ -75,7 +77,7 @@ namespace CodexPlugin
 
         public ICodexSetup WithBootstrapNode(ICodexNode node)
         {
-            BootstrapSpr = node.GetDebugInfo().spr;
+            BootstrapSpr = node.GetDebugInfo().Spr;
             return this;
         }
 
@@ -122,17 +124,12 @@ namespace CodexPlugin
             return this;
         }
 
-        public ICodexSetup EnableMarketplace(IGethNode gethNode, ICodexContracts codexContracts, Ether initialEth, TestToken initialTokens)
-        {
-            return EnableMarketplace(gethNode, codexContracts, initialEth, initialTokens, s => { });
-        }
-
-        public ICodexSetup EnableMarketplace(IGethNode gethNode, ICodexContracts codexContracts, Ether initialEth, TestToken initialTokens, Action<IMarketplaceSetup> marketplaceSetup)
+        public ICodexSetup EnableMarketplace(IGethNode gethNode, ICodexContracts codexContracts, Action<IMarketplaceSetup> marketplaceSetup)
         {
             var ms = new MarketplaceSetup();
             marketplaceSetup(ms);
 
-            MarketplaceConfig = new MarketplaceInitialConfig(ms, gethNode, codexContracts, initialEth, initialTokens);
+            MarketplaceConfig = new MarketplaceInitialConfig(ms, gethNode, codexContracts);
             return this;
         }
 
@@ -169,6 +166,9 @@ namespace CodexPlugin
     {
         public bool IsStorageNode { get; private set; }
         public bool IsValidator { get; private set; }
+        public Ether InitialEth { get; private set; } = 0.Eth();
+        public TestToken InitialTestTokens { get; private set; } = 0.TestTokens();
+        public EthAccount EthAccount { get; private set; } = EthAccount.GenerateNew();
 
         public IMarketplaceSetup AsStorageNode()
         {
@@ -182,14 +182,28 @@ namespace CodexPlugin
             return this;
         }
 
+        public IMarketplaceSetup WithAccount(EthAccount account)
+        {
+            EthAccount = account;
+            return this;
+        }
+
+        public IMarketplaceSetup WithInitial(Ether eth, TestToken tokens)
+        {
+            InitialEth = eth;
+            InitialTestTokens = tokens;
+            return this;
+        }
+
         public override string ToString()
         {
             var result = "[(clientNode)"; // When marketplace is enabled, being a clientNode is implicit.
             result += IsStorageNode ? "(storageNode)" : "()";
-            result += IsValidator ? "(validator)" : "()";
-            result += "]";
+            result += IsValidator ? "(validator)" : "() ";
+            result += $"Address: '{EthAccount.EthAddress}' ";
+            result += $"InitialEth/TT({InitialEth.Eth}/{InitialTestTokens.Amount})";
+            result += "] ";
             return result;
         }
     }
-
 }

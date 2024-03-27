@@ -104,7 +104,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: digests-${{ matrix.target.arch }}
-          path: /tmp/digests/*
+          path: /tmp/digests
           if-no-files-found: error
           retention-days: 1
 

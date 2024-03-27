@@ -3,6 +3,7 @@ using DistTestCore.Logs;
 using FileUtils;
 using Logging;
 using NUnit.Framework;
+using NUnit.Framework.Interfaces;
 using System.Reflection;
 using Utils;
 using Assert = NUnit.Framework.Assert;
@@ -222,7 +223,7 @@ namespace DistTestCore
                 Log($"{result.StackTrace}");
             }
 
-            if (result.Outcome.Status == NUnit.Framework.Interfaces.TestStatus.Failed)
+            if (result.Outcome.Status == TestStatus.Failed)
             {
                 log.MarkAsFailed();
             }
@@ -251,21 +252,28 @@ namespace DistTestCore
 
         private void IncludeLogsOnTestFailure(TestLifecycle lifecycle)
         {
-            var result = TestContext.CurrentContext.Result;
-            if (result.Outcome.Status == NUnit.Framework.Interfaces.TestStatus.Failed)
+            var testStatus = TestContext.CurrentContext.Result.Outcome.Status;
+            if (testStatus == TestStatus.Failed)
             {
                 fixtureLog.MarkAsFailed();
-
-                if (IsDownloadingLogsEnabled())
-                {
-                    lifecycle.Log.Log("Downloading all container logs because of test failure...");
-                    lifecycle.DownloadAllLogs();
-                }
-                else
-                {
-                    lifecycle.Log.Log("Skipping download of all container logs due to [DontDownloadLogsOnFailure] attribute.");
-                }
             }
+
+            if (ShouldDownloadAllLogs(testStatus))
+            {
+                lifecycle.Log.Log("Downloading all container logs...");
+                lifecycle.DownloadAllLogs();
+            }
+        }
+
+        private bool ShouldDownloadAllLogs(TestStatus testStatus)
+        {
+            if (configuration.AlwaysDownloadContainerLogs) return true;
+            if (testStatus == TestStatus.Failed)
+            {
+                return IsDownloadingLogsEnabled();
+            }
+
+            return false;
         }
 
         private string GetCurrentTestName()

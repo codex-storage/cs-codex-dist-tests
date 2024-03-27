@@ -1,4 +1,4 @@
-﻿using Core;
+using Core;
 using KubernetesWorkflow.Types;
 
 namespace CodexPlugin
@@ -52,8 +52,8 @@ namespace CodexPlugin
             var mconfig = codexSetup.MarketplaceConfig;
             foreach (var node in result)
             {
-                mconfig.GethNode.SendEth(node, mconfig.InitialEth);
-                mconfig.CodexContracts.MintTestTokens(node, mconfig.InitialTokens);
+                mconfig.GethNode.SendEth(node, mconfig.MarketplaceSetup.InitialEth);
+                mconfig.CodexContracts.MintTestTokens(node, mconfig.MarketplaceSetup.InitialTestTokens);
             }
         }
 

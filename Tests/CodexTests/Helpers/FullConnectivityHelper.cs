@@ -31,6 +31,8 @@ namespace CodexTests.Helpers
         private void AssertFullyConnected(ICodexNode[] nodes)
         {
             Log($"Asserting '{implementation.Description()}' for nodes: '{string.Join(",", nodes.Select(n => n.GetName()))}'...");
+            Assert.That(nodes.Length, Is.GreaterThan(1));
+
             var entries = CreateEntries(nodes);
             var pairs = CreatePairs(entries);
 
@@ -114,12 +116,12 @@ namespace CodexTests.Helpers
             }
 
             public ICodexNode Node { get; }
-            public CodexDebugResponse Response { get; }
+            public DebugInfo Response { get; }
 
             public override string ToString()
             {
-                if (Response == null || string.IsNullOrEmpty(Response.id)) return "UNKNOWN";
-                return Response.id;
+                if (Response == null || string.IsNullOrEmpty(Response.Id)) return "UNKNOWN";
+                return Response.Id;
             }
         }
 
