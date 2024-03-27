@@ -16,7 +16,7 @@ namespace MetricsPlugin
             log = tools.GetLog();
             endpoint = tools
                 .CreateHttp()
-                .CreateEndpoint(RunningContainer.GetAddress(log, PrometheusContainerRecipe.PortTag), "api/v1");
+                .CreateEndpoint(RunningContainer.GetAddress(log, PrometheusContainerRecipe.PortTag), "/api/v1/");
         }
 
         public RunningContainer RunningContainer { get; }
