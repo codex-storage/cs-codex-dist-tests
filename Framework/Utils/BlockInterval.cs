@@ -1,8 +1,8 @@
 ﻿namespace Utils
 {
-    public class BlockRange
+    public class BlockInterval
     {
-        public BlockRange(ulong from, ulong to)
+        public BlockInterval(ulong from, ulong to)
         {
             if (from < to)
             {

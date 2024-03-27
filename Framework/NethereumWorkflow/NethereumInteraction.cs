@@ -89,26 +89,9 @@ namespace NethereumWorkflow
             }
         }
 
-        public List<EventLog<TEvent>> GetEvents<TEvent>(string address, TimeRange timeRange) where TEvent : IEventDTO, new()
+        public List<EventLog<TEvent>> GetEvents<TEvent>(string address, BlockInterval blockRange) where TEvent : IEventDTO, new()
         {
-            var wrapper = new Web3Wrapper(web3, log);
-            var blockTimeFinder = new BlockTimeFinder(blockCache, wrapper, log);
-
-            var fromBlock = blockTimeFinder.GetLowestBlockNumberAfter(timeRange.From);
-            var toBlock = blockTimeFinder.GetHighestBlockNumberBefore(timeRange.To);
-
-            if (!fromBlock.HasValue)
-            {
-                log.Error("Failed to find lowest block for time range: " + timeRange);
-                throw new Exception("Failed");
-            }
-            if (!toBlock.HasValue)
-            {
-                log.Error("Failed to find highest block for time range: " + timeRange);
-                throw new Exception("Failed");
-            }
-
-            return GetEvents<TEvent>(address, fromBlock.Value, toBlock.Value);
+            return GetEvents<TEvent>(address, blockRange.From, blockRange.To);
         }
 
         public List<EventLog<TEvent>> GetEvents<TEvent>(string address, ulong fromBlockNumber, ulong toBlockNumber) where TEvent : IEventDTO, new()
@@ -118,6 +101,25 @@ namespace NethereumWorkflow
             var to = new BlockParameter(toBlockNumber);
             var blockFilter = Time.Wait(eventHandler.CreateFilterBlockRangeAsync(from, to));
             return Time.Wait(eventHandler.GetAllChangesAsync(blockFilter));
+        }
+
+        public BlockInterval ConvertTimeRangeToBlockRange(TimeRange timeRange)
+        {
+            var wrapper = new Web3Wrapper(web3, log);
+            var blockTimeFinder = new BlockTimeFinder(blockCache, wrapper, log);
+
+            var fromBlock = blockTimeFinder.GetLowestBlockNumberAfter(timeRange.From);
+            var toBlock = blockTimeFinder.GetHighestBlockNumberBefore(timeRange.To);
+
+            if (fromBlock == null  || toBlock == null)
+            {
+                throw new Exception("Failed to convert time range to block range.");
+            }
+
+            return new BlockInterval(
+                from: fromBlock.Value,
+                to: toBlock.Value
+            );
         }
     }
 }

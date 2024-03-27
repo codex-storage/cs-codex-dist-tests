@@ -1,6 +1,6 @@
 ﻿using CodexContractsPlugin;
 using CodexContractsPlugin.Marketplace;
-using BlockRange = Utils.BlockRange;
+using Utils;
 
 namespace TestNetRewarder
 {
@@ -8,7 +8,7 @@ namespace TestNetRewarder
     {
         private readonly HistoricState historicState;
 
-        public ChainState(HistoricState historicState, ICodexContracts contracts, BlockRange blockRange)
+        public ChainState(HistoricState historicState, ICodexContracts contracts, BlockInterval blockRange)
         {
             NewRequests = contracts.GetStorageRequests(blockRange);
             historicState.ProcessNewRequests(NewRequests);

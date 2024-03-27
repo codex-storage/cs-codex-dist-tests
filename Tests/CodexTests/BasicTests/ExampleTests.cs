@@ -1,7 +1,6 @@
 ﻿using CodexContractsPlugin;
 using CodexDiscordBotPlugin;
 using CodexPlugin;
-using DistTestCore;
 using GethPlugin;
 using Nethereum.Hex.HexConvertors.Extensions;
 using NUnit.Framework;
@@ -110,9 +109,11 @@ namespace CodexTests.BasicTests
 
             AssertBalance(contracts, seller, Is.LessThan(sellerInitialBalance), "Collateral was not placed.");
 
-            var request = GetOnChainStorageRequest(contracts);
+            var blockRange = geth.ConvertTimeRangeToBlockRange(GetTestRunTimeRange());
+
+            var request = GetOnChainStorageRequest(contracts, blockRange);
             AssertStorageRequest(request, purchase, contracts, buyer);
-            AssertSlotFilledEvents(contracts, purchase, request, seller);
+            AssertSlotFilledEvents(contracts, purchase, request, seller, blockRange);
             AssertContractSlot(contracts, request, 0, seller);
 
             purchaseContract.WaitForStorageContractFinished();
@@ -139,15 +140,15 @@ namespace CodexTests.BasicTests
             Assert.That(discN, Is.LessThan(bootN));
         }
 
-        private void AssertSlotFilledEvents(ICodexContracts contracts, StoragePurchaseRequest purchase, Request request, ICodexNode seller)
+        private void AssertSlotFilledEvents(ICodexContracts contracts, StoragePurchaseRequest purchase, Request request, ICodexNode seller, BlockInterval blockRange)
         {
             // Expect 1 fulfilled event for the purchase.
-            var requestFulfilledEvents = contracts.GetRequestFulfilledEvents(GetTestRunTimeRange());
+            var requestFulfilledEvents = contracts.GetRequestFulfilledEvents(blockRange);
             Assert.That(requestFulfilledEvents.Length, Is.EqualTo(1));
             CollectionAssert.AreEqual(request.RequestId, requestFulfilledEvents[0].RequestId);
 
             // Expect 1 filled-slot event for each slot in the purchase.
-            var filledSlotEvents = contracts.GetSlotFilledEvents(GetTestRunTimeRange());
+            var filledSlotEvents = contracts.GetSlotFilledEvents(blockRange);
             Assert.That(filledSlotEvents.Length, Is.EqualTo(purchase.MinRequiredNumberOfNodes));
             for (var i = 0; i < purchase.MinRequiredNumberOfNodes; i++)
             {
@@ -164,9 +165,9 @@ namespace CodexTests.BasicTests
             Assert.That(request.Ask.Slots, Is.EqualTo(purchase.MinRequiredNumberOfNodes));
         }
 
-        private Request GetOnChainStorageRequest(ICodexContracts contracts)
+        private Request GetOnChainStorageRequest(ICodexContracts contracts, BlockInterval blockRange)
         {
-            var requests = contracts.GetStorageRequests(GetTestRunTimeRange());
+            var requests = contracts.GetStorageRequests(blockRange);
             Assert.That(requests.Length, Is.EqualTo(1));
             return requests.Single();
         }

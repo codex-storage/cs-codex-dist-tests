@@ -11,7 +11,7 @@ namespace TestNetRewarder
         private static readonly HistoricState historicState = new HistoricState();
         private static readonly RewardRepo rewardRepo = new RewardRepo();
         private readonly ILog log;
-        private BlockRange? lastBlockRange;
+        private BlockInterval? lastBlockRange;
 
         public Processor(ILog log)
         {
@@ -42,7 +42,7 @@ namespace TestNetRewarder
             }
         }
 
-        private bool IsNewBlockRange(BlockRange blockRange)
+        private bool IsNewBlockRange(BlockInterval blockRange)
         {
             if (lastBlockRange == null ||
                 lastBlockRange.From != blockRange.From || 
