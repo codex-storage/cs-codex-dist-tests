@@ -62,7 +62,10 @@ namespace CodexTests.BasicTests
 
             var seller = AddCodex(s => s
                 .WithName("Seller")
-                .WithLogLevel(CodexLogLevel.Trace, new CodexLogCustomTopics(CodexLogLevel.Error, CodexLogLevel.Error, CodexLogLevel.Warn))
+                .WithLogLevel(CodexLogLevel.Trace, new CodexLogCustomTopics(CodexLogLevel.Error, CodexLogLevel.Error, CodexLogLevel.Warn)
+                {
+                    ContractClock = CodexLogLevel.Trace,
+                })
                 .WithStorageQuota(11.GB())
                 .EnableMarketplace(geth, contracts, m => m
                     .WithInitial(10.Eth(), sellerInitialBalance)

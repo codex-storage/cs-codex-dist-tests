@@ -50,6 +50,7 @@ namespace CodexPlugin
 
         public CodexLogLevel DiscV5 { get; set; }
         public CodexLogLevel Libp2p { get; set; }
+        public CodexLogLevel ContractClock { get; set; } = CodexLogLevel.Warn;
         public CodexLogLevel? BlockExchange { get; }
     }
 
