@@ -26,12 +26,12 @@ namespace CodexTests.Helpers
         public string ValidateEntry(Entry entry, Entry[] allEntries)
         {
             var result = string.Empty;
-            foreach (var peer in entry.Response.table.nodes)
+            foreach (var peer in entry.Response.Table.Nodes)
             {
                 var expected = GetExpectedDiscoveryEndpoint(allEntries, peer);
-                if (expected != peer.address)
+                if (expected != peer.Address)
                 {
-                    result += $"Node:{entry.Node.GetName()} has incorrect peer table entry. Was: '{peer.address}', expected: '{expected}'. ";
+                    result += $"Node:{entry.Node.GetName()} has incorrect peer table entry. Was: '{peer.Address}', expected: '{expected}'. ";
                 }
             }
             return result;
@@ -39,24 +39,24 @@ namespace CodexTests.Helpers
 
         public PeerConnectionState Check(Entry from, Entry to)
         {
-            var peerId = to.Response.id;
+            var peerId = to.Response.Id;
 
             var response = from.Node.GetDebugPeer(peerId);
             if (!response.IsPeerFound)
             {
                 return PeerConnectionState.NoConnection;
             }
-            if (!string.IsNullOrEmpty(response.peerId) && response.addresses.Any())
+            if (!string.IsNullOrEmpty(response.PeerId) && response.Addresses.Any())
             {
                 return PeerConnectionState.Connection;
             }
             return PeerConnectionState.Unknown;
         }
 
-        private static string GetExpectedDiscoveryEndpoint(Entry[] allEntries, CodexDebugTableNodeResponse node)
+        private static string GetExpectedDiscoveryEndpoint(Entry[] allEntries, DebugInfoTableNode node)
         {
-            var peer = allEntries.SingleOrDefault(e => e.Response.table.localNode.peerId == node.peerId);
-            if (peer == null) return $"peerId: {node.peerId} is not known.";
+            var peer = allEntries.SingleOrDefault(e => e.Response.Table.LocalNode.PeerId == node.PeerId);
+            if (peer == null) return $"peerId: {node.PeerId} is not known.";
 
             var container = peer.Node.Container;
             var podInfo = peer.Node.GetPodInfo();

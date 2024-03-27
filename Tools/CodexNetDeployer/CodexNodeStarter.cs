@@ -62,7 +62,7 @@ namespace CodexNetDeployer
                 });
             
                 var debugInfo = codexNode.GetDebugInfo();
-                if (!string.IsNullOrWhiteSpace(debugInfo.spr))
+                if (!string.IsNullOrWhiteSpace(debugInfo.Spr))
                 {
                     Console.Write("Online\t");
 

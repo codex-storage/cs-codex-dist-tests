@@ -12,16 +12,13 @@ namespace CodexPlugin
     public interface ICodexNode : IHasContainer, IHasMetricsScrapeTarget, IHasEthAddress
     {
         string GetName();
-        CodexDebugResponse GetDebugInfo();
-        CodexDebugPeerResponse GetDebugPeer(string peerId);
-        // These debug methods are not available in master-line Codex. Use only for custom builds.
-        //CodexDebugBlockExchangeResponse GetDebugBlockExchange();
-        //CodexDebugRepoStoreResponse[] GetDebugRepoStore();
+        DebugInfo GetDebugInfo();
+        DebugPeer GetDebugPeer(string peerId);
         ContentId UploadFile(TrackedFile file);
         TrackedFile? DownloadContent(ContentId contentId, string fileLabel = "");
-        CodexLocalData[] LocalFiles();
+        LocalDatasetList LocalFiles();
         void ConnectToPeer(ICodexNode node);
-        CodexDebugVersionResponse Version { get; }
+        DebugInfoVersion Version { get; }
         IMarketplaceAccess Marketplace { get; }
         CrashWatcher CrashWatcher { get; }
         PodInfo GetPodInfo();
@@ -31,7 +28,6 @@ namespace CodexPlugin
 
     public class CodexNode : ICodexNode
     {
-        private const string SuccessfullyConnectedMessage = "Successfully connected to peer";
         private const string UploadFailedMessage = "Unable to store block";
         private readonly IPluginTools tools;
         private readonly EthAddress? ethAddress;
@@ -44,7 +40,7 @@ namespace CodexPlugin
             CodexAccess = codexAccess;
             Group = group;
             Marketplace = marketplaceAccess;
-            Version = new CodexDebugVersionResponse();
+            Version = new DebugInfoVersion();
             transferSpeeds = new TransferSpeeds();
         }
 
@@ -53,8 +49,9 @@ namespace CodexPlugin
         public CrashWatcher CrashWatcher { get => CodexAccess.CrashWatcher; }
         public CodexNodeGroup Group { get; }
         public IMarketplaceAccess Marketplace { get; }
-        public CodexDebugVersionResponse Version { get; private set; }
+        public DebugInfoVersion Version { get; private set; }
         public ITransferSpeeds TransferSpeeds { get => transferSpeeds; }
+
         public IMetricsScrapeTarget MetricsScrapeTarget
         {
             get
@@ -62,6 +59,7 @@ namespace CodexPlugin
                 return new MetricsScrapeTarget(CodexAccess.Container, CodexContainerRecipe.MetricsPortTag);
             }
         }
+
         public EthAddress EthAddress 
         {
             get
@@ -76,27 +74,17 @@ namespace CodexPlugin
             return CodexAccess.Container.Name;
         }
 
-        public CodexDebugResponse GetDebugInfo()
+        public DebugInfo GetDebugInfo()
         {
             var debugInfo = CodexAccess.GetDebugInfo();
-            var known = string.Join(",", debugInfo.table.nodes.Select(n => n.peerId));
-            Log($"Got DebugInfo with id: '{debugInfo.id}'. This node knows: {known}");
+            var known = string.Join(",", debugInfo.Table.Nodes.Select(n => n.PeerId));
+            Log($"Got DebugInfo with id: '{debugInfo.Id}'. This node knows: {known}");
             return debugInfo;
         }
 
-        public CodexDebugPeerResponse GetDebugPeer(string peerId)
+        public DebugPeer GetDebugPeer(string peerId)
         {
             return CodexAccess.GetDebugPeer(peerId);
-        }
-
-        public CodexDebugBlockExchangeResponse GetDebugBlockExchange()
-        {
-            return CodexAccess.GetDebugBlockExchange();
-        }
-
-        public CodexDebugRepoStoreResponse[] GetDebugRepoStore()
-        {
-            return CodexAccess.GetDebugRepoStore();
         }
 
         public ContentId UploadFile(TrackedFile file)
@@ -131,9 +119,9 @@ namespace CodexPlugin
             return file;
         }
 
-        public CodexLocalData[] LocalFiles()
+        public LocalDatasetList LocalFiles()
         {
-            return CodexAccess.LocalFiles().Select(l => new CodexLocalData(new ContentId(l.cid), l.manifest)).ToArray();
+            return CodexAccess.LocalFiles();
         }
 
         public void ConnectToPeer(ICodexNode node)
@@ -142,9 +130,8 @@ namespace CodexPlugin
 
             Log($"Connecting to peer {peer.GetName()}...");
             var peerInfo = node.GetDebugInfo();
-            var response = CodexAccess.ConnectToPeer(peerInfo.id, GetPeerMultiAddress(peer, peerInfo));
+            CodexAccess.ConnectToPeer(peerInfo.Id, GetPeerMultiAddresses(peer, peerInfo));
 
-            FrameworkAssert.That(response == SuccessfullyConnectedMessage, "Unable to connect codex nodes.");
             Log($"Successfully connected to peer {peer.GetName()}.");
         }
 
@@ -165,31 +152,30 @@ namespace CodexPlugin
         public void EnsureOnlineGetVersionResponse()
         {
             var debugInfo = Time.Retry(CodexAccess.GetDebugInfo, "ensure online");
-            var nodePeerId = debugInfo.id;
+            var nodePeerId = debugInfo.Id;
             var nodeName = CodexAccess.Container.Name;
 
-            if (!debugInfo.codex.IsValid())
+            if (!debugInfo.Version.IsValid())
             {
-                throw new Exception($"Invalid version information received from Codex node {GetName()}: {debugInfo.codex}");
+                throw new Exception($"Invalid version information received from Codex node {GetName()}: {debugInfo.Version}");
             }
 
             var log = tools.GetLog();
             log.AddStringReplace(nodePeerId, nodeName);
-            log.AddStringReplace(debugInfo.table.localNode.nodeId, nodeName);
-            Version = debugInfo.codex;
+            log.AddStringReplace(debugInfo.Table.LocalNode.NodeId, nodeName);
+            Version = debugInfo.Version;
         }
 
-        private string GetPeerMultiAddress(CodexNode peer, CodexDebugResponse peerInfo)
+        private string[] GetPeerMultiAddresses(CodexNode peer, DebugInfo peerInfo)
         {
-            var multiAddress = peerInfo.addrs.First();
-            // Todo: Is there a case where First address in list is not the way?
-
             // The peer we want to connect is in a different pod.
             // We must replace the default IP with the pod IP in the multiAddress.
             var workflow = tools.CreateWorkflow();
             var podInfo = workflow.GetPodInfo(peer.Container);
 
-            return multiAddress.Replace("0.0.0.0", podInfo.Ip);
+            return peerInfo.Addrs.Select(a => a
+                .Replace("0.0.0.0", podInfo.Ip))
+                .ToArray();
         }
 
         private void DownloadToFile(string contentId, TrackedFile file)
@@ -210,26 +196,6 @@ namespace CodexPlugin
         private void Log(string msg)
         {
             tools.GetLog().Log($"{GetName()}: {msg}");
-        }
-    }
-
-    public class ContentId
-    {
-        public ContentId(string id)
-        {
-            Id = id;
-        }
-
-        public string Id { get; }
-
-        public override bool Equals(object? obj)
-        {
-            return obj is ContentId id && Id == id.Id;
-        }
-
-        public override int GetHashCode()
-        {
-            return HashCode.Combine(Id);
         }
     }
 }

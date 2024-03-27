@@ -20,8 +20,8 @@ namespace CodexTests.BasicTests
 
             var cid = primary.UploadFile(GenerateTestFile(5.MB()));
 
-            var content = primary.LocalFiles();
-            CollectionAssert.Contains(content.Select(c => c.Cid), cid);
+            var localDatasets = primary.LocalFiles();
+            CollectionAssert.Contains(localDatasets.Content.Select(c => c.Cid), cid);
 
             var log = Ci.DownloadLog(primary);
 
@@ -94,7 +94,7 @@ namespace CodexTests.BasicTests
 
             var contentId = buyer.UploadFile(testFile);
 
-            var purchase = new StoragePurchase(contentId)
+            var purchase = new StoragePurchaseRequest(contentId)
             {
                 PricePerSlotPerSecond = 2.TestTokens(),
                 RequiredCollateral = 10.TestTokens(),
@@ -140,7 +140,7 @@ namespace CodexTests.BasicTests
             Assert.That(discN, Is.LessThan(bootN));
         }
 
-        private void AssertSlotFilledEvents(ICodexContracts contracts, StoragePurchase purchase, Request request, ICodexNode seller)
+        private void AssertSlotFilledEvents(ICodexContracts contracts, StoragePurchaseRequest purchase, Request request, ICodexNode seller)
         {
             // Expect 1 fulfilled event for the purchase.
             var requestFulfilledEvents = contracts.GetRequestFulfilledEvents(GetTestRunTimeRange());
@@ -158,7 +158,7 @@ namespace CodexTests.BasicTests
             }
         }
 
-        private void AssertStorageRequest(Request request, StoragePurchase purchase, ICodexContracts contracts, ICodexNode buyer)
+        private void AssertStorageRequest(Request request, StoragePurchaseRequest purchase, ICodexContracts contracts, ICodexNode buyer)
         {
             Assert.That(contracts.GetRequestState(request), Is.EqualTo(RequestState.Started));
             Assert.That(request.ClientAddress, Is.EqualTo(buyer.EthAddress));

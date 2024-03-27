@@ -77,7 +77,7 @@ namespace CodexPlugin
 
         public ICodexSetup WithBootstrapNode(ICodexNode node)
         {
-            BootstrapSpr = node.GetDebugInfo().spr;
+            BootstrapSpr = node.GetDebugInfo().Spr;
             return this;
         }
 

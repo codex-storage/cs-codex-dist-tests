@@ -7,14 +7,16 @@ namespace MetricsPlugin
 {
     public class MetricsQuery
     {
-        private readonly IHttp http;
+        private readonly IEndpoint endpoint;
         private readonly ILog log;
 
         public MetricsQuery(IPluginTools tools, RunningContainer runningContainer)
         {
             RunningContainer = runningContainer;
             log = tools.GetLog();
-            http = tools.CreateHttp(RunningContainer.GetAddress(log, PrometheusContainerRecipe.PortTag), "api/v1");
+            endpoint = tools
+                .CreateHttp()
+                .CreateEndpoint(RunningContainer.GetAddress(log, PrometheusContainerRecipe.PortTag), "/api/v1/");
         }
 
         public RunningContainer RunningContainer { get; }
@@ -51,7 +53,7 @@ namespace MetricsPlugin
 
         public Metrics? GetAllMetricsForNode(IMetricsScrapeTarget target)
         {
-            var response = http.HttpGetJson<PrometheusQueryResponse>($"query?query={GetInstanceStringForNode(target)}{GetQueryTimeRange()}");
+            var response = endpoint.HttpGetJson<PrometheusQueryResponse>($"query?query={GetInstanceStringForNode(target)}{GetQueryTimeRange()}");
             if (response.status != "success") return null;
             var result = MapResponseToMetrics(response);
             Log(target, result);
@@ -60,14 +62,14 @@ namespace MetricsPlugin
 
         private PrometheusQueryResponse? GetLastOverTime(string metricName, string instanceString)
         {
-            var response = http.HttpGetJson<PrometheusQueryResponse>($"query?query=last_over_time({metricName}{instanceString}{GetQueryTimeRange()})");
+            var response = endpoint.HttpGetJson<PrometheusQueryResponse>($"query?query=last_over_time({metricName}{instanceString}{GetQueryTimeRange()})");
             if (response.status != "success") return null;
             return response;
         }
 
         private PrometheusQueryResponse? GetAll(string metricName)
         {
-            var response = http.HttpGetJson<PrometheusQueryResponse>($"query?query={metricName}{GetQueryTimeRange()}");
+            var response = endpoint.HttpGetJson<PrometheusQueryResponse>($"query?query={metricName}{GetQueryTimeRange()}");
             if (response.status != "success") return null;
             return response;
         }

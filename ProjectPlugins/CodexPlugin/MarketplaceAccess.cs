@@ -7,7 +7,7 @@ namespace CodexPlugin
     public interface IMarketplaceAccess
     {
         string MakeStorageAvailable(StorageAvailability availability);
-        StoragePurchaseContract RequestStorage(StoragePurchase purchase);
+        StoragePurchaseContract RequestStorage(StoragePurchaseRequest purchase);
     }
 
     public class MarketplaceAccess : IMarketplaceAccess
@@ -21,14 +21,14 @@ namespace CodexPlugin
             this.codexAccess = codexAccess;
         }
 
-        public StoragePurchaseContract RequestStorage(StoragePurchase purchase)
+        public StoragePurchaseContract RequestStorage(StoragePurchaseRequest purchase)
         {
             purchase.Log(log);
-            var request = purchase.ToApiRequest();
 
-            var response = codexAccess.RequestStorage(request, purchase.ContentId.Id);
+            var response = codexAccess.RequestStorage(purchase);
 
-            if (response == "Purchasing not available" || 
+            if (string.IsNullOrEmpty(response) ||
+                response == "Purchasing not available" ||
                 response == "Expiry required" ||
                 response == "Expiry needs to be in future" ||
                 response == "Expiry has to be before the request's end (now + duration)")
@@ -44,13 +44,12 @@ namespace CodexPlugin
         public string MakeStorageAvailable(StorageAvailability availability)
         {
             availability.Log(log);
-            var request = availability.ToApiRequest();
 
-            var response = codexAccess.SalesAvailability(request);
+            var response = codexAccess.SalesAvailability(availability);
 
-            Log($"Storage successfully made available. Id: {response.id}");
+            Log($"Storage successfully made available. Id: {response.Id}");
 
-            return response.id;
+            return response.Id;
         }
 
         private void Log(string msg)
@@ -67,7 +66,7 @@ namespace CodexPlugin
             throw new NotImplementedException();
         }
 
-        public StoragePurchaseContract RequestStorage(StoragePurchase purchase)
+        public StoragePurchaseContract RequestStorage(StoragePurchaseRequest purchase)
         {
             Unavailable();
             throw new NotImplementedException();
@@ -87,7 +86,7 @@ namespace CodexPlugin
         private readonly TimeSpan gracePeriod = TimeSpan.FromSeconds(10);
         private DateTime? contractStartUtc;
 
-        public StoragePurchaseContract(ILog log, CodexAccess codexAccess, string purchaseId, StoragePurchase purchase)
+        public StoragePurchaseContract(ILog log, CodexAccess codexAccess, string purchaseId, StoragePurchaseRequest purchase)
         {
             this.log = log;
             this.codexAccess = codexAccess;
@@ -96,7 +95,7 @@ namespace CodexPlugin
         }
 
         public string PurchaseId { get; }
-        public StoragePurchase Purchase { get; }
+        public StoragePurchaseRequest Purchase { get; }
 
         public void WaitForStorageContractStarted()
         {
@@ -117,7 +116,7 @@ namespace CodexPlugin
             WaitForStorageContractState(timeout, "finished");
         }
 
-        public CodexStoragePurchase GetPurchaseStatus(string purchaseId)
+        public StoragePurchase GetPurchaseStatus(string purchaseId)
         {
             return codexAccess.GetPurchaseStatus(purchaseId);
         }
@@ -132,9 +131,9 @@ namespace CodexPlugin
             {
                 var purchaseStatus = codexAccess.GetPurchaseStatus(PurchaseId);
                 var statusJson = JsonConvert.SerializeObject(purchaseStatus);
-                if (purchaseStatus != null && purchaseStatus.state != lastState)
+                if (purchaseStatus != null && purchaseStatus.State != lastState)
                 {
-                    lastState = purchaseStatus.state;
+                    lastState = purchaseStatus.State;
                     log.Debug("Purchase status: " + statusJson);
                 }
 
