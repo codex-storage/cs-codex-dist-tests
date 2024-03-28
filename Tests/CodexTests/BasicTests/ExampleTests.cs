@@ -107,6 +107,15 @@ namespace CodexTests.BasicTests
 
             var purchaseContract = buyer.Marketplace.RequestStorage(purchase);
 
+            Time.Retry(() =>
+            {
+                var slotFilledEvents = contracts.GetSlotFilledEvents(GetTestRunTimeRange());
+
+                Log($"SlotFilledEvents: {slotFilledEvents.Length} - NumSlots: {purchase.MinRequiredNumberOfNodes}");
+
+                if (slotFilledEvents.Length != purchase.MinRequiredNumberOfNodes) throw new Exception("not yet");
+            }, Convert.ToInt32(purchase.Duration.TotalSeconds / 2) + 10, TimeSpan.FromSeconds(2), "Checking SlotFilled events");
+
             purchaseContract.WaitForStorageContractStarted();
 
             AssertBalance(contracts, seller, Is.LessThan(sellerInitialBalance), "Collateral was not placed.");
