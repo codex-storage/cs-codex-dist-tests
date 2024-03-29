@@ -7,7 +7,7 @@ namespace CodexDiscordBotPlugin
     public class DiscordBotContainerRecipe : ContainerRecipeFactory
     {
         public override string AppName => "discordbot-bibliotech";
-        public override string Image => "thatbenbierens/codex-discordbot:initial";
+        public override string Image => "codexstorage/codex-discordbot:sha-b25c747";
 
         public static string RewardsPort = "bot_rewards_port";
 
@@ -40,8 +40,6 @@ namespace CodexDiscordBotPlugin
                 AddEnvVar("DATAPATH", config.DataPath);
                 AddVolume(config.DataPath, 1.GB());
             }
-
-            AddVolume(name: "kubeconfig", mountPath: "/opt/kubeconfig.yaml", subPath: "kubeconfig.yaml", secret: "discordbot-sa-kubeconfig");
         }
     }
 }

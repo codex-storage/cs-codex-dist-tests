@@ -25,6 +25,12 @@ namespace BiblioTech
         [Uniform("reward-api-port", "rp", "REWARDAPIPORT", false, "TCP listen port for the reward API.")]
         public int RewardApiPort { get; set; } = 31080;
 
+        [Uniform("send-eth", "se", "SENDETH", false, "Amount of Eth send by the mint command. Default: 10.")]
+        public int SendEth { get; set; } = 10;
+
+        [Uniform("mint-tt", "mt", "MINTTT", false, "Amount of TestTokens minted by the mint command. Default: 1073741824")]
+        public int MintTT { get; set; } = 1073741824;
+
         public string EndpointsPath
         {
             get
