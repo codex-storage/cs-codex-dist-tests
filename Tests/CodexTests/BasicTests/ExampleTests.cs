@@ -10,11 +10,13 @@ using Request = CodexContractsPlugin.Marketplace.Request;
 namespace CodexTests.BasicTests
 {
     [TestFixture]
-    public class ExampleTests : AutoBootstrapDistTest
+    public class ExampleTests : CodexDistTest
     {
         [Test]
         public void BotRewardTest()
         {
+            var myAccount = EthAccount.GenerateNew();
+
             var sellerInitialBalance = 234.TestTokens();
             var buyerInitialBalance = 100000.TestTokens();
             var fileSize = 10.MB();
@@ -22,7 +24,37 @@ namespace CodexTests.BasicTests
             var geth = Ci.StartGethNode(s => s.IsMiner().WithName("disttest-geth"));
             var contracts = Ci.StartCodexContracts(geth);
 
-            var myAccount = EthAccount.GenerateNew();
+            // start bot and rewarder
+            var gethInfo = new DiscordBotGethInfo(
+                host: geth.Container.GetInternalAddress(GethContainerRecipe.HttpPortTag).Host,
+                port: geth.Container.GetInternalAddress(GethContainerRecipe.HttpPortTag).Port,
+                privKey: geth.StartResult.Account.PrivateKey,
+                marketplaceAddress: contracts.Deployment.MarketplaceAddress,
+                tokenAddress: contracts.Deployment.TokenAddress,
+                abi: contracts.Deployment.Abi
+            );
+            var bot = Ci.DeployCodexDiscordBot(new DiscordBotStartupConfig(
+                name: "bot",
+                token: "aaa",
+                serverName: "ThatBen's server",
+                adminRoleName: "bottest-admins",
+                adminChannelName: "admin-channel",
+                rewardChannelName: "rewards-channel",
+                kubeNamespace: "notneeded",
+                gethInfo: gethInfo
+            ));
+            var botContainer = bot.Containers.Single();
+            Ci.DeployRewarderBot(new RewarderBotStartupConfig(
+                //discordBotHost: "http://" + botContainer.GetAddress(GetTestLog(), DiscordBotContainerRecipe.RewardsPort).Host,
+                //discordBotPort: botContainer.GetAddress(GetTestLog(), DiscordBotContainerRecipe.RewardsPort).Port,
+                discordBotHost: botContainer.GetInternalAddress(DiscordBotContainerRecipe.RewardsPort).Host,
+                discordBotPort: botContainer.GetInternalAddress(DiscordBotContainerRecipe.RewardsPort).Port,
+                interval: "60",
+                historyStartUtc: DateTime.UtcNow.AddHours(-1),
+                gethInfo: gethInfo,
+                dataPath: null
+            ));
+
             var numberOfHosts = 3;
 
             for (var i = 0; i < numberOfHosts; i++)
@@ -59,37 +91,6 @@ namespace CodexTests.BasicTests
                     .WithInitial(10.Eth(), buyerInitialBalance)));
 
             AssertBalance(contracts, buyer, Is.EqualTo(buyerInitialBalance));
-
-            // start bot and rewarder
-            var gethInfo = new DiscordBotGethInfo(
-                host: geth.Container.GetInternalAddress(GethContainerRecipe.HttpPortTag).Host,
-                port: geth.Container.GetInternalAddress(GethContainerRecipe.HttpPortTag).Port,
-                privKey: geth.StartResult.Account.PrivateKey,
-                marketplaceAddress: contracts.Deployment.MarketplaceAddress,
-                tokenAddress: contracts.Deployment.TokenAddress,
-                abi: contracts.Deployment.Abi
-            );
-            var bot = Ci.DeployCodexDiscordBot(new DiscordBotStartupConfig(
-                name: "bot",
-                token: "MTE2NDEyNzk3MDU4NDE3NDU5Mw.GTpoV6.aDR7zxMNf7vDgMjKASJBQs-RtNP_lYJEY-OglI",
-                serverName: "ThatBen's server",
-                adminRoleName: "bottest-admins",
-                adminChannelName: "admin-channel",
-                rewardChannelName: "rewards-channel",
-                kubeNamespace: "notneeded",
-                gethInfo: gethInfo
-            ));
-            var botContainer = bot.Containers.Single();
-            Ci.DeployRewarderBot(new RewarderBotStartupConfig(
-                //discordBotHost: "http://" + botContainer.GetAddress(GetTestLog(), DiscordBotContainerRecipe.RewardsPort).Host,
-                //discordBotPort: botContainer.GetAddress(GetTestLog(), DiscordBotContainerRecipe.RewardsPort).Port,
-                discordBotHost: botContainer.GetInternalAddress(DiscordBotContainerRecipe.RewardsPort).Host,
-                discordBotPort: botContainer.GetInternalAddress(DiscordBotContainerRecipe.RewardsPort).Port,
-                interval: "60",
-                historyStartUtc: DateTime.UtcNow.AddHours(-1),
-                gethInfo: gethInfo,
-                dataPath: null
-            ));
 
             var contentId = buyer.UploadFile(testFile);
 
