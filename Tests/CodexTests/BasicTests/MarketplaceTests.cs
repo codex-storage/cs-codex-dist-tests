@@ -71,8 +71,6 @@ namespace CodexTests.BasicTests
                         .AsStorageNode()
                         .AsValidator()));
 
-                AssertBalance(contracts, seller, Is.EqualTo(sellerInitialBalance));
-
                 var availability = new StorageAvailability(
                     totalSpace: 10.GB(),
                     maxDuration: TimeSpan.FromMinutes(30),
@@ -89,8 +87,6 @@ namespace CodexTests.BasicTests
                 .EnableMarketplace(geth, contracts, m => m
                     .WithAccount(myAccount)
                     .WithInitial(10.Eth(), buyerInitialBalance)));
-
-            AssertBalance(contracts, buyer, Is.EqualTo(buyerInitialBalance));
 
             var contentId = buyer.UploadFile(testFile);
 

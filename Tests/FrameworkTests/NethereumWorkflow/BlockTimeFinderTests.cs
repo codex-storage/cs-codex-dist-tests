@@ -117,6 +117,41 @@ namespace FrameworkTests.NethereumWorkflow
 
             Assert.That(notFound, Is.Null);
         }
+
+        [Test]
+        public void FailsToFindBlockBeforeFrontOfChain_history()
+        {
+            var first = blocks.First().Value;
+
+            var notFound = finder.GetHighestBlockNumberBefore(first.JustBefore);
+
+            Assert.That(notFound, Is.Null);
+        }
+
+        [Test]
+        public void FailsToFindBlockAfterTailOfChain_future()
+        {
+            var last = blocks.Last().Value;
+
+            var notFound = finder.GetLowestBlockNumberAfter(last.JustAfter);
+
+            Assert.That(notFound, Is.Null);
+        }
+
+        [Test]
+        public void RunThrough()
+        {
+            foreach (var pair in blocks)
+            {
+                finder.GetHighestBlockNumberBefore(pair.Value.JustBefore);
+                finder.GetHighestBlockNumberBefore(pair.Value.Time);
+                finder.GetHighestBlockNumberBefore(pair.Value.JustAfter);
+
+                finder.GetLowestBlockNumberAfter(pair.Value.JustBefore);
+                finder.GetLowestBlockNumberAfter(pair.Value.Time);
+                finder.GetLowestBlockNumberAfter(pair.Value.JustAfter);
+            }
+        }
     }
 
     public class Block
