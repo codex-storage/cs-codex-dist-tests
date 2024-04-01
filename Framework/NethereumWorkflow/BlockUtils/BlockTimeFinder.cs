@@ -70,7 +70,7 @@ namespace NethereumWorkflow.BlockUtils
         {
             var next = GetBlock(entry.BlockNumber + 1);
             return
-                entry.Utc < target &&
+                entry.Utc <= target &&
                 next.Utc > target;
         }
 
@@ -78,7 +78,7 @@ namespace NethereumWorkflow.BlockUtils
         {
             var previous = GetBlock(entry.BlockNumber - 1);
             return
-                entry.Utc > target &&
+                entry.Utc >= target &&
                 previous.Utc < target;
         }
 

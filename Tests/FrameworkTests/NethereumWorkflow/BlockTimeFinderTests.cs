@@ -166,5 +166,10 @@ namespace FrameworkTests.NethereumWorkflow
         public DateTime Time { get; }
         public DateTime JustBefore { get { return Time.AddSeconds(-1); } }
         public DateTime JustAfter { get { return Time.AddSeconds(1); } }
+
+        public override string ToString()
+        {
+            return $"[{Number}]";
+        }
     }
 }
