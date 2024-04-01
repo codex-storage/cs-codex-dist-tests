@@ -123,10 +123,10 @@ namespace ContinuousTests
             try
             {
                 var info = n.GetDebugInfo();
-                if (info == null || string.IsNullOrEmpty(info.id)) return false;
+                if (info == null || string.IsNullOrEmpty(info.Id)) return false;
 
-                log.Log($"Codex version: '{info.codex.version}' revision: '{info.codex.revision}'");
-                LogReplacements.Add(new BaseLogStringReplacement(info.id, n.GetName()));
+                log.Log($"Codex version: '{info.Version.Version}' revision: '{info.Version.Revision}'");
+                LogReplacements.Add(new BaseLogStringReplacement(info.Id, n.GetName()));
             }
             catch
             {

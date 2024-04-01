@@ -44,7 +44,7 @@ namespace ContinuousTests
             try
             {
                 var debugInfo = bootstrapNode.GetDebugInfo();
-                Assert.That(!string.IsNullOrEmpty(debugInfo.spr));
+                Assert.That(!string.IsNullOrEmpty(debugInfo.Spr));
 
                 var node = entryPoint.CreateInterface().StartCodexNode(s =>
                 {
