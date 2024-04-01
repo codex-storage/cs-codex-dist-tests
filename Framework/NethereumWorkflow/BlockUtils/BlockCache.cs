@@ -35,5 +35,7 @@
             if (!entries.TryGetValue(number, out BlockTimeEntry? value)) return null;
             return value;
         }
+
+        public int Size { get { return entries.Count; } }
     }
 }
