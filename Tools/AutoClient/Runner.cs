@@ -87,7 +87,7 @@ namespace AutoClient
                 Duration = TimeSpan.FromMinutes(config.ContractDurationMinutes),
                 Expiry = TimeSpan.FromMinutes(config.ContractExpiryMinutes)
             };
-            log.Log($"Requesting storage: {request}");
+            request.Log(log);
             return codex.RequestStorage(request);
         }
 
@@ -96,21 +96,33 @@ namespace AutoClient
             log.Log("Waiting till contract is started, or expired...");
             try
             {
+                var emptyResponseTolerance = 10;
                 while (true)
                 {
                     FixedShortDelay();
-                    var status = codex.GetPurchaseStatus(pid);
-                    if (status != null)
+                    var status = codex.GetPurchaseStatusRaw(pid).ToLowerInvariant();
+                    log.Log($"Status response: '{status}'");
+                    if (string.IsNullOrEmpty(status))
                     {
-                        if (!string.IsNullOrEmpty(status.Error)) log.Log("Contract errored: " + status.Error);
-                        var state = status.State.ToLowerInvariant();
-                        if (state.Contains("pending") || state.Contains("submitted"))
+                        emptyResponseTolerance--;
+                        if (emptyResponseTolerance == 0)
+                        {
+                            log.Log("Received 10 empty responses to '/storage/purchases/'. Applying expiry delay, then carrying on.");
+                            ExpiryTimeDelay();
+                            return;
+                        }
+                        FixedShortDelay();
+                    }
+                    else
+                    {
+                        if (status.Contains("pending") || status.Contains("submitted"))
                         {
                             FixedShortDelay();
                         }
                         else
                         {
-                            log.Log("Wait finished with contract status: " + state);
+                            log.Log("Wait finished.");
+                            return;
                         }
                     }
                 }

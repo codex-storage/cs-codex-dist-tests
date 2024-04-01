@@ -90,6 +90,12 @@ namespace AutoClient
             return mapper.Map(OnCodex(api => api.GetPurchaseAsync(purchaseId)));
         }
 
+        public string GetPurchaseStatusRaw(string purchaseId)
+        {
+            var endpoint = GetEndpoint();
+            return endpoint.HttpGetString($"storage/purchases/{purchaseId}");
+        }
+
         private T OnCodex<T>(Func<CodexApi, Task<T>> action)
         {
             var result = tools.CreateHttp()

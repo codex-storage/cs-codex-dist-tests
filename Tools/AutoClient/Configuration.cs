@@ -4,8 +4,8 @@ namespace AutoClient
 {
     public class Configuration
     {
-        [Uniform("codex-host", "ch", "CODEXHOST", false, "Codex Host address. (default localhost)")]
-        public string CodexHost { get; set; } = "localhost";
+        [Uniform("codex-host", "ch", "CODEXHOST", false, "Codex Host address. (default 'http://localhost')")]
+        public string CodexHost { get; set; } = "http://localhost";
 
         [Uniform("codex-port", "cp", "CODEXPORT", false, "port number of Codex API. (8080 by default)")]
         public int CodexPort { get; set; } = 8080;
