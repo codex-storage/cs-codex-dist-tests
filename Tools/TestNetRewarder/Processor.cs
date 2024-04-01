@@ -20,11 +20,11 @@ namespace TestNetRewarder
 
         public async Task ProcessTimeSegment(TimeRange timeRange)
         {
+            var connector = GethConnector.GethConnector.Initialize(log);
+            if (connector == null) throw new Exception("Invalid Geth information");
+
             try
             {
-                var connector = GethConnector.GethConnector.Initialize(log);
-                if (connector == null) return;
-
                 var blockRange = connector.GethNode.ConvertTimeRangeToBlockRange(timeRange);
                 if (!IsNewBlockRange(blockRange))
                 {
@@ -33,12 +33,12 @@ namespace TestNetRewarder
                 }
 
                 var chainState = new ChainState(historicState, connector.CodexContracts, blockRange);
-                await ProcessTimeSegment(chainState);
-
+                await ProcessChainState(chainState);
             }
             catch (Exception ex)
             {
                 log.Error("Exception processing time segment: " + ex);
+                throw;
             }
         }
 
@@ -55,7 +55,7 @@ namespace TestNetRewarder
             return false;
         }
 
-        private async Task ProcessTimeSegment(ChainState chainState)
+        private async Task ProcessChainState(ChainState chainState)
         {
             var outgoingRewards = new List<RewardUsersCommand>();
             foreach (var reward in rewardRepo.Rewards)
@@ -63,6 +63,7 @@ namespace TestNetRewarder
                 ProcessReward(outgoingRewards, reward, chainState);
             }
 
+            log.Log($"Found {outgoingRewards.Count} rewards to send.");
             if (outgoingRewards.Any())
             {
                 if (!await SendRewardsCommand(outgoingRewards))
@@ -79,7 +80,7 @@ namespace TestNetRewarder
                 Rewards = outgoingRewards.ToArray()
             };
 
-            log.Log("Sending rewards: " + JsonConvert.SerializeObject(cmd));
+            log.Debug("Sending rewards: " + JsonConvert.SerializeObject(cmd));
             return await Program.BotClient.SendRewards(cmd);
         }
 
