@@ -7,7 +7,7 @@ namespace CodexDiscordBotPlugin
     public class DiscordBotContainerRecipe : ContainerRecipeFactory
     {
         public override string AppName => "discordbot-bibliotech";
-        public override string Image => "codexstorage/codex-discordbot:sha-8bc63c1";
+        public override string Image => "codexstorage/codex-discordbot:sha-8c64352";
 
         public static string RewardsPort = "bot_rewards_port";
 
