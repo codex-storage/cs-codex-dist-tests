@@ -34,11 +34,11 @@ namespace ContinuousTests
                 $"{startUtc.ToString("o")} - {endUtc.ToString("o")}");
             log.Log(openingLine);
 
-            var http = CreateElasticSearchHttp();
+            var endpoint = CreateElasticSearchEndpoint();
             var queryTemplate = CreateQueryTemplate(container, startUtc, endUtc);
 
             targetFile.Write($"Downloading '{container.Name}' to '{targetFile.FullFilename}'.");
-            var reconstructor = new LogReconstructor(targetFile, http, queryTemplate);
+            var reconstructor = new LogReconstructor(targetFile, endpoint, queryTemplate);
             reconstructor.DownloadFullLog();
 
             log.Log("Log download finished.");
@@ -64,34 +64,36 @@ namespace ContinuousTests
                 .Replace("<NAMESPACENAME>", namespaceName);
         }
 
-        private IHttp CreateElasticSearchHttp()
+        private IEndpoint CreateElasticSearchEndpoint()
         {
             var serviceName = "elasticsearch";
             var k8sNamespace = "monitoring";
             var address = new Address($"http://{serviceName}.{k8sNamespace}.svc.cluster.local", 9200);
             var baseUrl = "";
 
-            return tools.CreateHttp(address, baseUrl, client =>
+            var http = tools.CreateHttp(client =>
             {
                 client.DefaultRequestHeaders.Add("kbn-xsrf", "reporting");
             });
+
+            return http.CreateEndpoint(address, baseUrl);
         }
 
         public class LogReconstructor
         {
             private readonly List<LogQueueEntry> queue = new List<LogQueueEntry>();
             private readonly LogFile targetFile;
-            private readonly IHttp http;
+            private readonly IEndpoint endpoint;
             private readonly string queryTemplate;
             private const int sizeOfPage = 2000;
             private string searchAfter = "";
             private int lastHits = 1;
             private ulong? lastLogLine;
 
-            public LogReconstructor(LogFile targetFile, IHttp http, string queryTemplate)
+            public LogReconstructor(LogFile targetFile, IEndpoint endpoint, string queryTemplate)
             {
                 this.targetFile = targetFile;
-                this.http = http;
+                this.endpoint = endpoint;
                 this.queryTemplate = queryTemplate;
             }
 
@@ -110,7 +112,7 @@ namespace ContinuousTests
                                 .Replace("<SIZE>", sizeOfPage.ToString())
                                 .Replace("<SEARCHAFTER>", searchAfter);
 
-                var response = http.HttpPostString<SearchResponse>("_search", query);
+                var response = endpoint.HttpPostString<SearchResponse>("_search", query);
 
                 lastHits = response.hits.hits.Length;
                 if (lastHits > 0)

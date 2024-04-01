@@ -57,8 +57,8 @@ namespace CodexPlugin
                 Reward = ToDecInt(purchase.PricePerSlotPerSecond),
                 Collateral = ToDecInt(purchase.RequiredCollateral),
                 Expiry = ToDecInt(DateTimeOffset.UtcNow.ToUnixTimeSeconds() + purchase.Expiry.TotalSeconds),
-                Nodes = purchase.MinRequiredNumberOfNodes,
-                Tolerance = purchase.NodeFailureTolerance
+                Nodes = Convert.ToInt32(purchase.MinRequiredNumberOfNodes),
+                Tolerance = Convert.ToInt32(purchase.NodeFailureTolerance)
             };
         }
 

@@ -51,7 +51,6 @@ namespace Core
 
         private string GetDescription()
         {
-            // todo: check this:
             return DebugStack.GetCallerName(skipFrames: 2);
         }
 

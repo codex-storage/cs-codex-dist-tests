@@ -4,12 +4,16 @@ using System.Text;
 public static class Program
 {
     private const string OpenApiFile = "../CodexPlugin/openapi.yaml";
+    private const string ClientFile = "../CodexPlugin/obj/openapiClient.cs";
     private const string Search = "<INSERT-OPENAPI-YAML-HASH>";
     private const string TargetFile = "ApiChecker.cs";
 
     public static void Main(string[] args)
     {
         Console.WriteLine("Injecting hash of 'openapi.yaml'...");
+
+        // Force client rebuild by deleting previous artifact.
+        File.Delete(ClientFile);
 
         var hash = CreateHash();
         // This hash is used to verify that the Codex docker image being used is compatible
