@@ -32,10 +32,27 @@ public static class Program
         var fileManager = tools.GetFileManager();
         var codex = new Codex(tools, address);
 
+        CheckCodex(codex, log);
+
         var runner = new Runner(log, codex, fileManager, cancellationToken, config);
         runner.Run();
 
         log.Log("Done.");
+    }
+
+    private static void CheckCodex(Codex codex, ILog log)
+    {
+        log.Log("Checking Codex...");
+        try
+        {
+            var info = codex.GetDebugInfo();
+            if (string.IsNullOrEmpty(info.Id)) throw new Exception("Failed to fetch Codex node id");
+        }
+        catch (Exception ex)
+        {
+            log.Log($"Codex not OK: {ex}");
+            throw;
+        }
     }
 
     private static void PrintHelp()
