@@ -47,7 +47,7 @@ namespace CodexTests.BasicTests
                 //discordBotPort: botContainer.GetAddress(GetTestLog(), DiscordBotContainerRecipe.RewardsPort).Port,
                 discordBotHost: botContainer.GetInternalAddress(DiscordBotContainerRecipe.RewardsPort).Host,
                 discordBotPort: botContainer.GetInternalAddress(DiscordBotContainerRecipe.RewardsPort).Port,
-                interval: "60",
+                intervalMinutes: "1",
                 historyStartUtc: GetTestRunTimeRange().From - TimeSpan.FromMinutes(3),
                 gethInfo: gethInfo,
                 dataPath: null

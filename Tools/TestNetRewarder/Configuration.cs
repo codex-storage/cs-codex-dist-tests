@@ -14,7 +14,7 @@ namespace TestNetRewarder
         public int DiscordPort { get; set; } = 31080;
 
         [Uniform("interval-minutes", "im", "INTERVALMINUTES", false, "time in minutes between reward updates. (default 15)")]
-        public int Interval { get; set; } = 15;
+        public int IntervalMinutes { get; set; } = 15;
 
         [Uniform("check-history", "ch", "CHECKHISTORY", true, "Unix epoc timestamp of a moment in history on which processing begins. Required for hosting rewards. Should be 'launch of the testnet'.")]
         public int CheckHistoryTimestamp { get; set; } = 0;

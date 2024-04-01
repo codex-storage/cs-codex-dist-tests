@@ -13,10 +13,10 @@ namespace TestNetRewarder
         {
             this.log = log;
 
-            if (configuration.Interval < 0) configuration.Interval = 15;
+            if (configuration.IntervalMinutes < 0) configuration.IntervalMinutes = 15;
             if (configuration.CheckHistoryTimestamp == 0) throw new Exception("'check-history' unix timestamp is required. Set it to the start/launch moment of the testnet.");
 
-            segmentSize = TimeSpan.FromSeconds(configuration.Interval);
+            segmentSize = TimeSpan.FromMinutes(configuration.IntervalMinutes);
             start = DateTimeOffset.FromUnixTimeSeconds(configuration.CheckHistoryTimestamp).UtcDateTime;
 
             log.Log("Starting time segments at " + start);

@@ -27,11 +27,11 @@
 
     public class RewarderBotStartupConfig
     {
-        public RewarderBotStartupConfig(string discordBotHost, int discordBotPort, string interval, DateTime historyStartUtc, DiscordBotGethInfo gethInfo, string? dataPath)
+        public RewarderBotStartupConfig(string discordBotHost, int discordBotPort, string intervalMinutes, DateTime historyStartUtc, DiscordBotGethInfo gethInfo, string? dataPath)
         {
             DiscordBotHost = discordBotHost;
             DiscordBotPort = discordBotPort;
-            Interval = interval;
+            IntervalMinutes = intervalMinutes;
             HistoryStartUtc = historyStartUtc;
             GethInfo = gethInfo;
             DataPath = dataPath;
@@ -39,7 +39,7 @@
 
         public string DiscordBotHost { get; }
         public int DiscordBotPort { get; }
-        public string Interval { get; }
+        public string IntervalMinutes { get; }
         public DateTime HistoryStartUtc { get; }
         public DiscordBotGethInfo GethInfo { get; }
         public string? DataPath { get; set; }
