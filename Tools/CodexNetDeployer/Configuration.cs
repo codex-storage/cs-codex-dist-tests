@@ -116,6 +116,9 @@ namespace CodexNetDeployer
 
         [Uniform("dbot-adminchannelname", "dbotacn", "DBOTADMINCHANNELNAME", false, "Required if discord-bot is true. Name of the Discord channel in which admin commands are allowed.")]
         public string DiscordBotAdminChannelName { get; set; } = string.Empty;
+        
+        [Uniform("dbot-rewardchannelname", "dbotrcn", "DBOTREWARDCHANNELNAME", false, "Required if discord-bot is true. Name of the Discord channel in which reward updates are posted.")]
+        public string DiscordBotRewardChannelName { get; set; } = string.Empty;
 
         [Uniform("dbot-datapath", "dbotdp", "DBOTDATAPATH", false, "Optional. Path in container where bot will save all data.")]
         public string DiscordBotDataPath { get; set; } = string.Empty;
@@ -163,6 +166,7 @@ namespace CodexNetDeployer
                 StringIsSet(nameof(DiscordBotServerName), DiscordBotServerName, errors);
                 StringIsSet(nameof(DiscordBotAdminRoleName), DiscordBotAdminRoleName, errors);
                 StringIsSet(nameof(DiscordBotAdminChannelName), DiscordBotAdminChannelName, errors);
+                StringIsSet(nameof(DiscordBotRewardChannelName), DiscordBotRewardChannelName, errors);
             }
 
             return errors;

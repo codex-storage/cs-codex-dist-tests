@@ -2,7 +2,6 @@
 using CodexContractsPlugin.Marketplace;
 using CodexPlugin;
 using GethPlugin;
-using Nethereum.Hex.HexConvertors.Extensions;
 using NUnit.Framework;
 using Utils;
 
@@ -71,52 +70,31 @@ namespace CodexTests.BasicTests
 
             var purchaseContract = client.Marketplace.RequestStorage(purchase);
 
-            WaitForAllSlotFilledEvents(contracts, purchase);
+            WaitForAllSlotFilledEvents(contracts, purchase, geth);
 
             purchaseContract.WaitForStorageContractStarted();
 
-            //AssertBalance(contracts, host, Is.LessThan(hostInitialBalance), "Collateral was not placed.");
-
-            var request = GetOnChainStorageRequest(contracts);
+            var request = GetOnChainStorageRequest(contracts, geth);
             AssertStorageRequest(request, purchase, contracts, client);
-            //AssertSlotFilledEvents(contracts, purchase, request, host);
-            //AssertContractSlot(contracts, request, 0, host);
+            AssertContractSlot(contracts, request, 0);
 
             purchaseContract.WaitForStorageContractFinished();
 
-            //AssertBalance(contracts, host, Is.GreaterThan(hostInitialBalance), "Seller was not paid for storage.");
             AssertBalance(contracts, client, Is.LessThan(clientInitialBalance), "Buyer was not charged for storage.");
             Assert.That(contracts.GetRequestState(request), Is.EqualTo(RequestState.Finished));
         }
 
-        private void WaitForAllSlotFilledEvents(ICodexContracts contracts, StoragePurchaseRequest purchase)
+        private void WaitForAllSlotFilledEvents(ICodexContracts contracts, StoragePurchaseRequest purchase, IGethNode geth)
         {
             Time.Retry(() =>
             {
-                var slotFilledEvents = contracts.GetSlotFilledEvents(GetTestRunTimeRange());
+                var blockRange = geth.ConvertTimeRangeToBlockRange(GetTestRunTimeRange());
+                var slotFilledEvents = contracts.GetSlotFilledEvents(blockRange);
 
                 Log($"SlotFilledEvents: {slotFilledEvents.Length} - NumSlots: {purchase.MinRequiredNumberOfNodes}");
 
                 if (slotFilledEvents.Length != purchase.MinRequiredNumberOfNodes) throw new Exception();
             }, Convert.ToInt32(purchase.Duration.TotalSeconds / 5) + 10, TimeSpan.FromSeconds(5), "Checking SlotFilled events");
-        }
-
-        private void AssertSlotFilledEvents(ICodexContracts contracts, StoragePurchaseRequest purchase, Request request, ICodexNode seller)
-        {
-            // Expect 1 fulfilled event for the purchase.
-            var requestFulfilledEvents = contracts.GetRequestFulfilledEvents(GetTestRunTimeRange());
-            Assert.That(requestFulfilledEvents.Length, Is.EqualTo(1));
-            CollectionAssert.AreEqual(request.RequestId, requestFulfilledEvents[0].RequestId);
-
-            // Expect 1 filled-slot event for each slot in the purchase.
-            var filledSlotEvents = contracts.GetSlotFilledEvents(GetTestRunTimeRange());
-            Assert.That(filledSlotEvents.Length, Is.EqualTo(purchase.MinRequiredNumberOfNodes));
-            for (var i = 0; i < purchase.MinRequiredNumberOfNodes; i++)
-            {
-                var filledSlotEvent = filledSlotEvents.Single(e => e.SlotIndex == i);
-                Assert.That(filledSlotEvent.RequestId.ToHex(), Is.EqualTo(request.RequestId.ToHex()));
-                Assert.That(filledSlotEvent.Host, Is.EqualTo(seller.EthAddress));
-            }
         }
 
         private void AssertStorageRequest(Request request, StoragePurchaseRequest purchase, ICodexContracts contracts, ICodexNode buyer)
@@ -126,17 +104,17 @@ namespace CodexTests.BasicTests
             Assert.That(request.Ask.Slots, Is.EqualTo(purchase.MinRequiredNumberOfNodes));
         }
 
-        private Request GetOnChainStorageRequest(ICodexContracts contracts)
+        private Request GetOnChainStorageRequest(ICodexContracts contracts, IGethNode geth)
         {
-            var requests = contracts.GetStorageRequests(GetTestRunTimeRange());
+            var requests = contracts.GetStorageRequests(geth.ConvertTimeRangeToBlockRange(GetTestRunTimeRange()));
             Assert.That(requests.Length, Is.EqualTo(1));
             return requests.Single();
         }
 
-        private void AssertContractSlot(ICodexContracts contracts, Request request, int contractSlotIndex, ICodexNode expectedSeller)
+        private void AssertContractSlot(ICodexContracts contracts, Request request, int contractSlotIndex)
         {
             var slotHost = contracts.GetSlotHost(request, contractSlotIndex);
-            Assert.That(slotHost, Is.EqualTo(expectedSeller.EthAddress));
+            Assert.That(slotHost?.Address, Is.Not.Null);
         }
     }
 }

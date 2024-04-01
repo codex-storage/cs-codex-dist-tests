@@ -10,6 +10,11 @@ namespace CodexDiscordBotPlugin
             return Plugin(ci).Deploy(config);
         }
 
+        public static RunningContainers DeployRewarderBot(this CoreInterface ci, RewarderBotStartupConfig config)
+        {
+            return Plugin(ci).DeployRewarder(config);
+        }
+
         private static CodexDiscordBotPlugin Plugin(CoreInterface ci)
         {
             return ci.GetPlugin<CodexDiscordBotPlugin>();

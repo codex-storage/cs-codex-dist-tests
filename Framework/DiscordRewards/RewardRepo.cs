@@ -21,11 +21,11 @@ namespace DiscordRewards
             }),
 
             // Finished a sizable slot
-            new RewardConfig(1202286218738405418, $"{Tag} finished their first 1GB-24h slot!", new CheckConfig
+            new RewardConfig(1202286218738405418, $"{Tag} finished their first 1GB-24h slot! (10mb/5mins for test)", new CheckConfig
             {
                 Type = CheckType.FinishedSlot,
-                MinSlotSize = 1.GB(),
-                MinDuration = TimeSpan.FromHours(24.0),
+                MinSlotSize = 10.MB(),
+                MinDuration = TimeSpan.FromMinutes(5.0),
             }),
 
             // Posted any contract
@@ -41,12 +41,12 @@ namespace DiscordRewards
             }),
 
             // Started a sizable contract
-            new RewardConfig(1202286381670608909, $"A large contract created by {Tag} reached Started state for the first time!", new CheckConfig
+            new RewardConfig(1202286381670608909, $"A large contract created by {Tag} reached Started state for the first time! (10mb/5mins for test)", new CheckConfig
             {
-                Type = CheckType.FinishedSlot,
+                Type = CheckType.StartedContract,
                 MinNumberOfHosts = 4,
-                MinSlotSize = 1.GB(),
-                MinDuration = TimeSpan.FromHours(24.0),
+                MinSlotSize = 10.MB(),
+                MinDuration = TimeSpan.FromMinutes(5.0),
             })
         };
     }

@@ -7,7 +7,9 @@ namespace CodexDiscordBotPlugin
     public class DiscordBotContainerRecipe : ContainerRecipeFactory
     {
         public override string AppName => "discordbot-bibliotech";
-        public override string Image => "thatbenbierens/codex-discordbot:initial";
+        public override string Image => "codexstorage/codex-discordbot:sha-8c64352";
+
+        public static string RewardsPort = "bot_rewards_port";
 
         protected override void Initialize(StartupConfig startupConfig)
         {
@@ -19,6 +21,7 @@ namespace CodexDiscordBotPlugin
             AddEnvVar("SERVERNAME", config.ServerName);
             AddEnvVar("ADMINROLE", config.AdminRoleName);
             AddEnvVar("ADMINCHANNELNAME", config.AdminChannelName);
+            AddEnvVar("REWARDSCHANNELNAME", config.RewardChannelName);
             AddEnvVar("KUBECONFIG", "/opt/kubeconfig.yaml");
             AddEnvVar("KUBENAMESPACE", config.KubeNamespace);
 
@@ -30,13 +33,13 @@ namespace CodexDiscordBotPlugin
             AddEnvVar("CODEXCONTRACTS_TOKENADDRESS", gethInfo.TokenAddress);
             AddEnvVar("CODEXCONTRACTS_ABI", gethInfo.Abi);
 
+            AddInternalPortAndVar("REWARDAPIPORT", RewardsPort);
+
             if (!string.IsNullOrEmpty(config.DataPath))
             {
                 AddEnvVar("DATAPATH", config.DataPath);
                 AddVolume(config.DataPath, 1.GB());
             }
-
-            AddVolume(name: "kubeconfig", mountPath: "/opt/kubeconfig.yaml", subPath: "kubeconfig.yaml", secret: "discordbot-sa-kubeconfig");
         }
     }
 }

@@ -1,5 +1,4 @@
 ﻿using ArgsUniform;
-using GethConnector;
 using Logging;
 using Utils;
 
@@ -12,6 +11,7 @@ namespace TestNetRewarder
         public static CancellationToken CancellationToken { get; private set; }
         public static BotClient BotClient { get; private set; } = null!;
         private static Processor processor = null!;
+        private static DateTime lastCheck = DateTime.MinValue;
 
         public static Task Main(string[] args)
         {
@@ -47,7 +47,7 @@ namespace TestNetRewarder
             {
                 await EnsureBotOnline();
                 await segmenter.WaitForNextSegment(processor.ProcessTimeSegment);
-                await Task.Delay(1000, CancellationToken);
+                await Task.Delay(100, CancellationToken);
             }
         }
 
@@ -59,11 +59,15 @@ namespace TestNetRewarder
 
             var blockNumber = gc.GethNode.GetSyncedBlockNumber();
             if (blockNumber == null || blockNumber < 1) throw new Exception("Geth connection failed.");
+            Log.Log("Geth OK. Block number: " + blockNumber);
         }
 
         private static async Task EnsureBotOnline()
         {
             var start = DateTime.UtcNow;
+            var timeSince = start - lastCheck;
+            if (timeSince.TotalSeconds < 30.0) return;
+
             while (! await BotClient.IsOnline() && !CancellationToken.IsCancellationRequested)
             {
                 await Task.Delay(5000);
@@ -76,6 +80,8 @@ namespace TestNetRewarder
                     throw new Exception(msg);
                 }
             }
+
+            lastCheck = start;
         }
 
         private static void PrintHelp()

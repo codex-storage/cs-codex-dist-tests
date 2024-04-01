@@ -1,6 +1,8 @@
-﻿using DiscordRewards;
+﻿using CodexContractsPlugin.Marketplace;
+using DiscordRewards;
 using Logging;
 using Newtonsoft.Json;
+using System.Net.Http.Json;
 
 namespace TestNetRewarder
 {
@@ -17,21 +19,41 @@ namespace TestNetRewarder
 
         public async Task<bool> IsOnline()
         {
-            return await HttpPost("Ping") == "Ping";
+            var result = await HttpGet();
+            log.Log("Is DiscordBot online: " + result);
+            return result == "Pong";
         }
 
-        public async Task SendRewards(GiveRewardsCommand command)
+        public async Task<bool> SendRewards(GiveRewardsCommand command)
         {
-            if (command == null || command.Rewards == null || !command.Rewards.Any()) return;
-            await HttpPost(JsonConvert.SerializeObject(command));
+            if (command == null || command.Rewards == null || !command.Rewards.Any()) return false;
+            var result = await HttpPostJson(command);
+            log.Log("Reward response: " + result);
+            return result == "OK";
         }
 
-        private async Task<string> HttpPost(string content)
+        private async Task<string> HttpGet()
         {
             try
             {
                 var client = new HttpClient();
-                var response = await client.PostAsync(GetUrl(), new StringContent(content));
+                var response = await client.GetAsync(GetUrl());
+                return await response.Content.ReadAsStringAsync();
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex.ToString());
+                return string.Empty;
+            }
+        }
+
+        private async Task<string> HttpPostJson<T>(T body)
+        {
+            try
+            {
+                using var client = new HttpClient();
+                using var content = JsonContent.Create(body);
+                using var response = await client.PostAsync(GetUrl(), content);
                 return await response.Content.ReadAsStringAsync();
             }
             catch (Exception ex)
@@ -43,7 +65,7 @@ namespace TestNetRewarder
 
         private string GetUrl()
         {
-            return $"{configuration.DiscordHost}:{configuration.DiscordPort}";
+            return $"{configuration.DiscordHost}:{configuration.DiscordPort}/api/reward";
         }
     }
 }

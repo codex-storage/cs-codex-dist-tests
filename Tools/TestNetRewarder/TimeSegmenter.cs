@@ -31,10 +31,12 @@ namespace TestNetRewarder
             if (end > now)
             {
                 // Wait for the entire time segment to be in the past.
-                var delay = (end - now).Add(TimeSpan.FromSeconds(3));
+                var delay = end - now;
                 waited = true;
+                log.Log($"Waiting till time segment is in the past... {Time.FormatDuration(delay)}");
                 await Task.Delay(delay, Program.CancellationToken);
             }
+            await Task.Delay(TimeSpan.FromSeconds(3), Program.CancellationToken);
 
             if (Program.CancellationToken.IsCancellationRequested) return;
 

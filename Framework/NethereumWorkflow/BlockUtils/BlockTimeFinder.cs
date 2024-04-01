@@ -24,7 +24,7 @@ namespace NethereumWorkflow.BlockUtils
             if (moment <= bounds.Genesis.Utc) return null;
             if (moment >= bounds.Current.Utc) return bounds.Current.BlockNumber;
 
-            return Search(bounds.Genesis, bounds.Current, moment, HighestBeforeSelector);
+            return Log(() => Search(bounds.Genesis, bounds.Current, moment, HighestBeforeSelector));
         }
 
         public ulong? GetLowestBlockNumberAfter(DateTime moment)
@@ -33,7 +33,16 @@ namespace NethereumWorkflow.BlockUtils
             if (moment >= bounds.Current.Utc) return null;
             if (moment <= bounds.Genesis.Utc) return bounds.Genesis.BlockNumber;
 
-            return Search(bounds.Genesis, bounds.Current, moment, LowestAfterSelector);
+            return Log(()=> Search(bounds.Genesis, bounds.Current, moment, LowestAfterSelector)); ;
+        }
+
+        private ulong Log(Func<ulong> operation)
+        {
+            var sw = Stopwatch.Begin(log, nameof(BlockTimeFinder));
+            var result = operation();
+            sw.End($"(Bounds: [{bounds.Genesis.BlockNumber}-{bounds.Current.BlockNumber}] Cache: {cache.Size})");
+
+            return result;
         }
 
         private ulong Search(BlockTimeEntry lower, BlockTimeEntry upper, DateTime target, Func<DateTime, BlockTimeEntry, bool> isWhatIwant)
@@ -70,7 +79,7 @@ namespace NethereumWorkflow.BlockUtils
         {
             var next = GetBlock(entry.BlockNumber + 1);
             return
-                entry.Utc < target &&
+                entry.Utc <= target &&
                 next.Utc > target;
         }
 
@@ -78,7 +87,7 @@ namespace NethereumWorkflow.BlockUtils
         {
             var previous = GetBlock(entry.BlockNumber - 1);
             return
-                entry.Utc > target &&
+                entry.Utc >= target &&
                 previous.Utc < target;
         }
 

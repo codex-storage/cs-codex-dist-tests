@@ -6,8 +6,6 @@ namespace BiblioTech.Commands
 {
     public class MintCommand : BaseGethCommand
     {
-        private readonly Ether defaultEthToSend = 10.Eth();
-        private readonly TestToken defaultTestTokensToMint = 1024.TestTokens();
         private readonly UserOption optionalUser = new UserOption(
             description: "If set, mint tokens for this user. (Optional, admin-only)",
             isRequired: false);
@@ -47,9 +45,10 @@ namespace BiblioTech.Commands
         {
             if (ShouldMintTestTokens(contracts, addr))
             {
-                var transaction = contracts.MintTestTokens(addr, defaultTestTokensToMint);
-                report.Add($"Minted {defaultTestTokensToMint} {FormatTransactionLink(transaction)}");
-                return new Transaction<TestToken>(defaultTestTokensToMint, transaction);
+                var tokens = Program.Config.MintTT.TestTokens();
+                var transaction = contracts.MintTestTokens(addr, tokens);
+                report.Add($"Minted {tokens} {FormatTransactionLink(transaction)}");
+                return new Transaction<TestToken>(tokens, transaction);
             }
             
             report.Add("TestToken balance over threshold. (No TestTokens minted.)");
@@ -60,9 +59,10 @@ namespace BiblioTech.Commands
         {
             if (ShouldSendEth(gethNode, addr))
             {
-                var transaction = gethNode.SendEth(addr, defaultEthToSend);
-                report.Add($"Sent {defaultEthToSend} {FormatTransactionLink(transaction)}");
-                return new Transaction<Ether>(defaultEthToSend, transaction);
+                var eth = Program.Config.SendEth.Eth();
+                var transaction = gethNode.SendEth(addr, eth);
+                report.Add($"Sent {eth} {FormatTransactionLink(transaction)}");
+                return new Transaction<Ether>(eth, transaction);
             }
             report.Add("Eth balance is over threshold. (No Eth sent.)");
             return null;
@@ -71,13 +71,13 @@ namespace BiblioTech.Commands
         private bool ShouldMintTestTokens(ICodexContracts contracts, EthAddress addr)
         {
             var testTokens = contracts.GetTestTokenBalance(addr);
-            return testTokens.Amount < 64m;
+            return testTokens.Amount < Program.Config.MintTT;
         }
 
         private bool ShouldSendEth(IGethNode gethNode, EthAddress addr)
         {
             var eth = gethNode.GetEthBalance(addr);
-            return eth.Eth < 1.0m;
+            return eth.Eth < Program.Config.SendEth;
         }
 
         private string FormatTransactionLink(string transaction)

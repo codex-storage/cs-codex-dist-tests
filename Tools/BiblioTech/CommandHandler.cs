@@ -26,12 +26,10 @@ namespace BiblioTech
             Program.AdminChecker.SetGuild(guild);
             Program.Log.Log($"Initializing for guild: '{guild.Name}'");
 
-            var roleController = new RoleController(client);
-            var rewardsApi = new RewardsApi(roleController);
-
             var adminChannels = guild.TextChannels.Where(Program.AdminChecker.IsAdminChannel).ToArray();
             if (adminChannels == null || !adminChannels.Any()) throw new Exception("No admin message channel");
             Program.AdminChecker.SetAdminChannel(adminChannels.First());
+            Program.RoleDriver = new RoleDriver(client);
 
             var builders = commands.Select(c =>
             {
@@ -62,8 +60,6 @@ namespace BiblioTech
                 var json = JsonConvert.SerializeObject(exception.Errors, Formatting.Indented);
                 Program.Log.Error(json);
             }
-
-            rewardsApi.Start();
         }
 
         private async Task SlashCommandHandler(SocketSlashCommand command)

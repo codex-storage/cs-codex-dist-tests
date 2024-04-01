@@ -1,5 +1,6 @@
 ﻿using ArgsUniform;
 using BiblioTech.Commands;
+using BiblioTech.Rewards;
 using Discord;
 using Discord.WebSocket;
 using Logging;
@@ -13,6 +14,7 @@ namespace BiblioTech
         public static Configuration Config { get; private set; } = null!;
         public static UserRepo UserRepo { get; } = new UserRepo();
         public static AdminChecker AdminChecker { get; private set; } = null!;
+        public static IDiscordRoleDriver RoleDriver { get; set; } = null!;
         public static ILog Log { get; private set; } = null!;
 
         public static Task Main(string[] args)
@@ -29,10 +31,10 @@ namespace BiblioTech
             EnsurePath(Config.UserDataPath);
             EnsurePath(Config.EndpointsPath);
 
-            return new Program().MainAsync();
+            return new Program().MainAsync(args);
         }
 
-        public async Task MainAsync()
+        public async Task MainAsync(string[] args)
         {
             Log.Log("Starting Codex Discord Bot...");
             client = new DiscordSocketClient();
@@ -52,10 +54,19 @@ namespace BiblioTech
 
             await client.LoginAsync(TokenType.Bot, Config.ApplicationToken);
             await client.StartAsync();
-
             AdminChecker = new AdminChecker();
 
+            var builder = WebApplication.CreateBuilder(args);
+            builder.WebHost.ConfigureKestrel((context, options) =>
+            {
+                options.ListenAnyIP(Config.RewardApiPort);
+            });
+            builder.Services.AddControllers();
+            var app = builder.Build();
+            app.MapControllers();
+
             Log.Log("Running...");
+            await app.RunAsync();
             await Task.Delay(-1);
         }
 

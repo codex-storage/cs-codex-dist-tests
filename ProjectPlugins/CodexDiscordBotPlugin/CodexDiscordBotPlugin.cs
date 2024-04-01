@@ -35,12 +35,25 @@ namespace CodexDiscordBotPlugin
             return StartContainer(workflow, config);
         }
 
+        public RunningContainers DeployRewarder(RewarderBotStartupConfig config)
+        {
+            var workflow = tools.CreateWorkflow();
+            return StartRewarderContainer(workflow, config);
+        }
+
         private RunningContainers StartContainer(IStartupWorkflow workflow, DiscordBotStartupConfig config)
         {
             var startupConfig = new StartupConfig();
             startupConfig.NameOverride = config.Name;
             startupConfig.Add(config);
             return workflow.Start(1, new DiscordBotContainerRecipe(), startupConfig);
+        }
+
+        private RunningContainers StartRewarderContainer(IStartupWorkflow workflow, RewarderBotStartupConfig config)
+        {
+            var startupConfig = new StartupConfig();
+            startupConfig.Add(config);
+            return workflow.Start(1, new RewarderBotContainerRecipe(), startupConfig);
         }
     }
 }
