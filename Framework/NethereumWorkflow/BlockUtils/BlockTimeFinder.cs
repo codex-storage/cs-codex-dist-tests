@@ -40,7 +40,7 @@ namespace NethereumWorkflow.BlockUtils
         {
             var sw = Stopwatch.Begin(log, nameof(BlockTimeFinder));
             var result = operation();
-            sw.End($"(Cache size: {cache.Size})");
+            sw.End($"(Bounds: [{bounds.Genesis.BlockNumber}-{bounds.Current.BlockNumber}] Cache: {cache.Size})");
 
             return result;
         }

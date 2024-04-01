@@ -7,7 +7,7 @@ namespace CodexDiscordBotPlugin
     public class RewarderBotContainerRecipe : ContainerRecipeFactory
     {
         public override string AppName => "discordbot-rewarder";
-        public override string Image => "codexstorage/codex-rewarderbot:sha-8c64352";
+        public override string Image => "codexstorage/codex-rewarderbot:sha-2ab84e2";
 
         protected override void Initialize(StartupConfig startupConfig)
         {
