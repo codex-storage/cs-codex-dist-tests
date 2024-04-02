@@ -2,6 +2,7 @@
 using Core;
 using KubernetesWorkflow;
 using KubernetesWorkflow.Types;
+using Newtonsoft.Json;
 using Utils;
 
 namespace CodexPlugin
@@ -90,7 +91,16 @@ namespace CodexPlugin
 
         public StoragePurchase GetPurchaseStatus(string purchaseId)
         {
-            return mapper.Map(OnCodex(api => api.GetPurchaseAsync(purchaseId)));
+            var endpoint = GetEndpoint();
+            return Time.Retry(() =>
+            {
+                var str = endpoint.HttpGetString($"storage/purchases/{purchaseId}");
+                if (string.IsNullOrEmpty(str)) throw new Exception("Empty response.");
+                return JsonConvert.DeserializeObject<StoragePurchase>(str)!;
+            }, nameof(GetPurchaseStatus));
+
+            // TODO: current getpurchase api does not line up with its openapi spec.
+            // return mapper.Map(OnCodex(api => api.GetPurchaseAsync(purchaseId)));
         }
 
         public string GetName()
