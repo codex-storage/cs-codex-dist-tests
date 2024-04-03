@@ -104,7 +104,7 @@ namespace TestNetRewarder
         private EthAddress[] PerformCheck(RewardConfig reward, ChainState chainState)
         {
             var check = GetCheck(reward.CheckConfig);
-            return check.Check(chainState);
+            return check.Check(chainState).Distinct().ToArray();
         }
 
         private ICheck GetCheck(CheckConfig config)
