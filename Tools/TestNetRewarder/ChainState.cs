@@ -15,7 +15,7 @@ namespace TestNetRewarder
             historicState.UpdateStorageRequests(contracts);
 
             StartedRequests = historicState.StorageRequests.Where(r => r.RecentlyStarted).ToArray();
-            FinishedRequests = historicState.StorageRequests.Where(r => r.RecentlyFininshed).ToArray();
+            FinishedRequests = historicState.StorageRequests.Where(r => r.RecentlyFinished).ToArray();
             RequestFulfilledEvents = contracts.GetRequestFulfilledEvents(blockRange);
             RequestCancelledEvents = contracts.GetRequestCancelledEvents(blockRange);
             SlotFilledEvents = contracts.GetSlotFilledEvents(blockRange);
