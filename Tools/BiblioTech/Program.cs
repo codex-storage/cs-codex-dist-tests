@@ -3,6 +3,7 @@ using BiblioTech.Commands;
 using BiblioTech.Rewards;
 using Discord;
 using Discord.WebSocket;
+using DiscordRewards;
 using Logging;
 
 namespace BiblioTech
@@ -16,6 +17,7 @@ namespace BiblioTech
         public static AdminChecker AdminChecker { get; private set; } = null!;
         public static IDiscordRoleDriver RoleDriver { get; set; } = null!;
         public static ILog Log { get; private set; } = null!;
+        public static MarketAverage[] Averages { get; set; } = Array.Empty<MarketAverage>();
 
         public static Task Main(string[] args)
         {
@@ -49,7 +51,8 @@ namespace BiblioTech
                 sprCommand,
                 associateCommand,
                 notifyCommand,
-                new AdminCommand(sprCommand)
+                new AdminCommand(sprCommand),
+                new MarketCommand()
             );
 
             await client.LoginAsync(TokenType.Bot, Config.ApplicationToken);

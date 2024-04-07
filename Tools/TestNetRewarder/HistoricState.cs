@@ -33,7 +33,7 @@ namespace TestNetRewarder
         public EthAddress[] Hosts { get; private set; }
         public RequestState State { get; private set; }
         public bool RecentlyStarted { get; private set; }
-        public bool RecentlyFininshed { get; private set; }
+        public bool RecentlyFinished { get; private set; }
 
         public void Update(ICodexContracts contracts)
         {
@@ -45,7 +45,7 @@ namespace TestNetRewarder
                 State == RequestState.New &&
                 newState == RequestState.Started;
 
-            RecentlyFininshed =
+            RecentlyFinished =
                 State == RequestState.Started &&
                 newState == RequestState.Finished;
 

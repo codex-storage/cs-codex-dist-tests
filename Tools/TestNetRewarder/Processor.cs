@@ -10,6 +10,7 @@ namespace TestNetRewarder
     {
         private static readonly HistoricState historicState = new HistoricState();
         private static readonly RewardRepo rewardRepo = new RewardRepo();
+        private static readonly MarketTracker marketTracker = new MarketTracker();
         private readonly ILog log;
         private BlockInterval? lastBlockRange;
 
@@ -63,21 +64,30 @@ namespace TestNetRewarder
                 ProcessReward(outgoingRewards, reward, chainState);
             }
 
-            log.Log($"Found {outgoingRewards.Count} rewards to send.");
+            var marketAverages = GetMarketAverages(chainState);
+
+            log.Log($"Found {outgoingRewards.Count} rewards to send. Found {marketAverages.Length} market averages.");
+
             if (outgoingRewards.Any())
             {
-                if (!await SendRewardsCommand(outgoingRewards))
+                if (!await SendRewardsCommand(outgoingRewards, marketAverages))
                 {
                     log.Error("Failed to send reward command.");
                 }
             }
         }
 
-        private async Task<bool> SendRewardsCommand(List<RewardUsersCommand> outgoingRewards)
+        private MarketAverage[] GetMarketAverages(ChainState chainState)
+        {
+            return marketTracker.ProcessChainState(chainState);
+        }
+
+        private async Task<bool> SendRewardsCommand(List<RewardUsersCommand> outgoingRewards, MarketAverage[] marketAverages)
         {
             var cmd = new GiveRewardsCommand
             {
-                Rewards = outgoingRewards.ToArray()
+                Rewards = outgoingRewards.ToArray(),
+                Averages = marketAverages.ToArray()
             };
 
             log.Debug("Sending rewards: " + JsonConvert.SerializeObject(cmd));
