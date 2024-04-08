@@ -22,6 +22,9 @@ namespace BiblioTech
         [Uniform("rewards-channel-name", "rc", "REWARDSCHANNELNAME", false, "Name of the Discord server channel where participation rewards will be announced.")]
         public string RewardsChannelName { get; set; } = "";
 
+        [Uniform("chain-events-channel-name", "cc", "CHAINEVENTSCHANNELNAME", false, "Name of the Discord server channel where chain events will be posted.")]
+        public string ChainEventsChannelName { get; set; } = "";
+
         [Uniform("reward-api-port", "rp", "REWARDAPIPORT", false, "TCP listen port for the reward API.")]
         public int RewardApiPort { get; set; } = 31080;
 

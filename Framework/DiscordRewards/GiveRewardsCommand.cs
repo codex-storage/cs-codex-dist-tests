@@ -4,6 +4,7 @@
     {
         public RewardUsersCommand[] Rewards { get; set; } = Array.Empty<RewardUsersCommand>();
         public MarketAverage[] Averages { get; set; } = Array.Empty<MarketAverage>();
+        public string[] EventsOverview { get; set; } = Array.Empty<string>();
     }
 
     public class RewardUsersCommand

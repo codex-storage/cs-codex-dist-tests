@@ -9,16 +9,15 @@ namespace BiblioTech.Rewards
     {
         private readonly DiscordSocketClient client;
         private readonly SocketTextChannel? rewardsChannel;
+        private readonly SocketTextChannel? eventsChannel;
         private readonly RewardRepo repo = new RewardRepo();
 
         public RoleDriver(DiscordSocketClient client)
         {
             this.client = client;
 
-            if (!string.IsNullOrEmpty(Program.Config.RewardsChannelName))
-            {
-                rewardsChannel = GetGuild().TextChannels.SingleOrDefault(c => c.Name == Program.Config.RewardsChannelName);
-            }
+            rewardsChannel = GetChannel(Program.Config.RewardsChannelName);
+            eventsChannel = GetChannel(Program.Config.ChainEventsChannelName);
         }
 
         public async Task GiveRewards(GiveRewardsCommand rewards)
@@ -34,6 +33,22 @@ namespace BiblioTech.Rewards
                 rewardsChannel);
 
             await context.ProcessGiveRewardsCommand(LookUpUsers(rewards));
+            await ProcessChainEvents(rewards.EventsOverview);
+        }
+
+        private SocketTextChannel? GetChannel(string name)
+        {
+            if (string.IsNullOrEmpty(name)) return null;
+            return GetGuild().TextChannels.SingleOrDefault(c => c.Name == name);
+        }
+
+        private async Task ProcessChainEvents(string[] eventsOverview)
+        {
+            if (eventsChannel == null || eventsOverview == null || !eventsOverview.Any()) return;
+            foreach (var e in eventsOverview)
+            {
+                await eventsChannel.SendMessageAsync(e);
+            }
         }
 
         private async Task<Dictionary<ulong, IGuildUser>> LoadAllUsers(SocketGuild guild)
