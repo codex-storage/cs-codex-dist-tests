@@ -22,6 +22,9 @@ namespace TestNetRewarder
         [Uniform("market-insights", "mi", "MARKETINSIGHTS", false, "Semi-colon separated integers. Each represents a multiple of intervals, for which a market insights average will be generated.")]
         public string MarketInsights { get; set; } = "1;96";
 
+        [Uniform("events-overview", "eo", "EVENTSOVERVIEW", false, "When greater than zero, chain event summary will be generated. (default 1)")]
+        public int CreateChainEventsOverview { get; set; } = 1;
+
         public string LogPath
         {
             get

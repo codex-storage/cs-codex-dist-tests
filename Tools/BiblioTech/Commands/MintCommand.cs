@@ -33,8 +33,14 @@ namespace BiblioTech.Commands
 
             var report = new List<string>();
 
-            var sentEth = ProcessEth(gethNode, addr, report);
-            var mintedTokens = ProcessTokens(contracts, addr, report);
+            Transaction<Ether>? sentEth = null;
+            Transaction<TestToken>? mintedTokens = null;
+
+            await Task.Run(() =>
+            {
+                sentEth = ProcessEth(gethNode, addr, report);
+                mintedTokens = ProcessTokens(contracts, addr, report);
+            });
 
             Program.UserRepo.AddMintEventForUser(userId, addr, sentEth, mintedTokens);
 
