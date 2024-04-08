@@ -65,16 +65,22 @@ namespace TestNetRewarder
             }
 
             var marketAverages = GetMarketAverages(chainState);
+            var eventsOverview = GenerateEventsOverview(chainState);
 
             log.Log($"Found {outgoingRewards.Count} rewards to send. Found {marketAverages.Length} market averages.");
 
             if (outgoingRewards.Any())
             {
-                if (!await SendRewardsCommand(outgoingRewards, marketAverages))
+                if (!await SendRewardsCommand(outgoingRewards, marketAverages, eventsOverview))
                 {
                     log.Error("Failed to send reward command.");
                 }
             }
+        }
+
+        private string[] GenerateEventsOverview(ChainState chainState)
+        {
+            return chainState.GenerateOverview();
         }
 
         private MarketAverage[] GetMarketAverages(ChainState chainState)
@@ -82,12 +88,13 @@ namespace TestNetRewarder
             return marketTracker.ProcessChainState(chainState);
         }
 
-        private async Task<bool> SendRewardsCommand(List<RewardUsersCommand> outgoingRewards, MarketAverage[] marketAverages)
+        private async Task<bool> SendRewardsCommand(List<RewardUsersCommand> outgoingRewards, MarketAverage[] marketAverages, string[] eventsOverview)
         {
             var cmd = new GiveRewardsCommand
             {
                 Rewards = outgoingRewards.ToArray(),
-                Averages = marketAverages.ToArray()
+                Averages = marketAverages.ToArray(),
+                EventsOverview = eventsOverview
             };
 
             log.Debug("Sending rewards: " + JsonConvert.SerializeObject(cmd));
