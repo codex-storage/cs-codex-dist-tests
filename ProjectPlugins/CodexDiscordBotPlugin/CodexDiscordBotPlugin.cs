@@ -46,14 +46,14 @@ namespace CodexDiscordBotPlugin
             var startupConfig = new StartupConfig();
             startupConfig.NameOverride = config.Name;
             startupConfig.Add(config);
-            return workflow.Start(1, new DiscordBotContainerRecipe(), startupConfig);
+            return workflow.Start(1, new DiscordBotContainerRecipe(), startupConfig).WaitForOnline();
         }
 
         private RunningContainers StartRewarderContainer(IStartupWorkflow workflow, RewarderBotStartupConfig config)
         {
             var startupConfig = new StartupConfig();
             startupConfig.Add(config);
-            return workflow.Start(1, new RewarderBotContainerRecipe(), startupConfig);
+            return workflow.Start(1, new RewarderBotContainerRecipe(), startupConfig).WaitForOnline();
         }
     }
 }

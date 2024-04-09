@@ -30,7 +30,7 @@ namespace DeployAndRunPlugin
             startupConfig.Add(config);
 
             var location = workflow.GetAvailableLocations().Get("fixed-s-4vcpu-16gb-amd-yz8rd");
-            var containers = workflow.Start(1, location, new DeployAndRunContainerRecipe(), startupConfig);
+            var containers = workflow.Start(1, location, new DeployAndRunContainerRecipe(), startupConfig).WaitForOnline();
             return containers.Containers.Single();
         }
     }
