@@ -1,12 +1,11 @@
-﻿using KubernetesWorkflow;
+﻿using KubernetesWorkflow.Types;
 
 namespace MetricsPlugin
 {
     public interface IMetricsScrapeTarget
     {
-        string Name { get; }
-        string Ip { get; }
-        int Port { get; }
+        RunningContainer Container { get; }
+        string MetricsPortTag { get; }
     }
 
     public interface IHasMetricsScrapeTarget
@@ -21,25 +20,13 @@ namespace MetricsPlugin
 
     public class MetricsScrapeTarget : IMetricsScrapeTarget
     {
-        public MetricsScrapeTarget(string ip, int port, string name)
+        public MetricsScrapeTarget(RunningContainer container, string metricsPortTag)
         {
-            Ip = ip;
-            Port = port;
-            Name = name;
+            Container = container;
+            MetricsPortTag = metricsPortTag;
         }
 
-        public MetricsScrapeTarget(RunningContainer container, int port)
-            : this(container.Pod.PodInfo.Ip, port, container.Name)
-        {
-        }
-
-        public MetricsScrapeTarget(RunningContainer container, Port port)
-            : this(container, port.Number)
-        {
-        }
-
-        public string Name { get; }
-        public string Ip { get; }
-        public int Port { get; }
+        public RunningContainer Container { get; }
+        public string MetricsPortTag { get; }
     }
 }

@@ -2,6 +2,7 @@
 using Core;
 using DistTestCore.Logs;
 using Logging;
+using Newtonsoft.Json;
 
 namespace ContinuousTests
 {
@@ -22,8 +23,10 @@ namespace ContinuousTests
 
         public void Check()
         {
-            var log = new FixtureLog(new LogConfig(config.LogPath, false), DateTime.UtcNow, "StartupChecks");
+            var log = new FixtureLog(new LogConfig(config.LogPath), DateTime.UtcNow, config.CodexDeployment.Id,
+                "StartupChecks");
             log.Log("Starting continuous test run...");
+            IncludeDeploymentConfiguration(log);
             log.Log("Checking configuration...");
             PreflightCheck(config);
             log.Log("Contacting Codex nodes...");
@@ -33,6 +36,30 @@ namespace ContinuousTests
 
         public List<BaseLogStringReplacement> LogReplacements { get; }
 
+        private void IncludeDeploymentConfiguration(ILog log)
+        {
+            log.Log("");
+            var deployment = config.CodexDeployment;
+            var workflow = entryPoint.Tools.CreateWorkflow();
+            foreach (var instance in deployment.CodexInstances)
+            {
+                foreach (var container in instance.Containers.Containers)
+                {
+                    var podInfo = workflow.GetPodInfo(container);
+                    log.Log($"Codex environment variables for '{container.Name}':");
+                    log.Log(
+                        $"Namespace: {container.RunningContainers.StartResult.Cluster.Configuration.KubernetesNamespace} - " +
+                        $"Pod name: {podInfo.Name} - Deployment name: {instance.Containers.StartResult.Deployment.Name}");
+                    var codexVars = container.Recipe.EnvVars;
+                    foreach (var vars in codexVars) log.Log(vars.ToString());
+                    log.Log("");
+                }
+            }
+
+            log.Log($"Deployment metadata: {JsonConvert.SerializeObject(deployment.Metadata)}");
+            log.Log("");
+        }
+
         private void PreflightCheck(Configuration config)
         {
             var tests = testFactory.CreateTests();
@@ -40,6 +67,7 @@ namespace ContinuousTests
             {
                 throw new Exception("Unable to find any tests.");
             }
+
             foreach (var test in tests)
             {
                 cancelToken.ThrowIfCancellationRequested();
@@ -63,13 +91,15 @@ namespace ContinuousTests
 
         private void CheckCodexNodes(BaseLog log, Configuration config)
         {
-            var nodes = entryPoint.CreateInterface().WrapCodexContainers(config.CodexDeployment.CodexContainers);
+            var nodes = entryPoint.CreateInterface()
+                .WrapCodexContainers(config.CodexDeployment.CodexInstances.Select(i => i.Containers).ToArray());
             var pass = true;
             foreach (var n in nodes)
             {
                 cancelToken.ThrowIfCancellationRequested();
 
-                log.Log($"Checking {n.Container.Name} @ '{n.Container.Address.Host}:{n.Container.Address.Port}'...");
+                var address = n.Container.GetAddress(log, CodexContainerRecipe.ApiPortTag);
+                log.Log($"Checking {n.Container.Name} @ '{address}'...");
 
                 if (EnsureOnline(log, n))
                 {
@@ -77,10 +107,11 @@ namespace ContinuousTests
                 }
                 else
                 {
-                    log.Error($"No response from '{n.Container.Address.Host}'.");
+                    log.Error($"No response from '{address}'.");
                     pass = false;
                 }
             }
+
             if (!pass)
             {
                 throw new Exception("Not all codex nodes responded.");
@@ -92,15 +123,16 @@ namespace ContinuousTests
             try
             {
                 var info = n.GetDebugInfo();
-                if (info == null || string.IsNullOrEmpty(info.id)) return false;
+                if (info == null || string.IsNullOrEmpty(info.Id)) return false;
 
-                log.Log($"Codex version: '{info.codex.version}' revision: '{info.codex.revision}'");
-                LogReplacements.Add(new BaseLogStringReplacement(info.id, n.GetName()));
+                log.Log($"Codex version: '{info.Version.Version}' revision: '{info.Version.Revision}'");
+                LogReplacements.Add(new BaseLogStringReplacement(info.Id, n.GetName()));
             }
             catch
             {
                 return false;
             }
+
             return true;
         }
 
@@ -120,7 +152,8 @@ namespace ContinuousTests
                 propertyName: nameof(ContinuousTest.CustomK8sNamespace));
         }
 
-        private void DuplicatesCheck(ContinuousTest[] tests, List<string> errors, Func<ContinuousTest, bool> considerCondition, Func<ContinuousTest, object> getValue, string propertyName)
+        private void DuplicatesCheck(ContinuousTest[] tests, List<string> errors,
+            Func<ContinuousTest, bool> considerCondition, Func<ContinuousTest, object> getValue, string propertyName)
         {
             foreach (var test in tests)
             {
@@ -130,7 +163,8 @@ namespace ContinuousTests
                     if (duplicates.Any())
                     {
                         duplicates.Add(test);
-                        errors.Add($"Tests '{string.Join(",", duplicates.Select(d => d.Name))}' have the same '{propertyName}'. These must be unique.");
+                        errors.Add(
+                            $"Tests '{string.Join(",", duplicates.Select(d => d.Name))}' have the same '{propertyName}'. These must be unique.");
                         return;
                     }
                 }
@@ -145,11 +179,13 @@ namespace ContinuousTests
                 {
                     if (test.RequiredNumberOfNodes < 1)
                     {
-                        errors.Add($"Test '{test.Name}' requires {test.RequiredNumberOfNodes} nodes. Test must require > 0 nodes, or -1 to select all nodes.");
+                        errors.Add(
+                            $"Test '{test.Name}' requires {test.RequiredNumberOfNodes} nodes. Test must require > 0 nodes, or -1 to select all nodes.");
                     }
-                    else if (test.RequiredNumberOfNodes > config.CodexDeployment.CodexContainers.Length)
+                    else if (test.RequiredNumberOfNodes > config.CodexDeployment.CodexInstances.Length)
                     {
-                        errors.Add($"Test '{test.Name}' requires {test.RequiredNumberOfNodes} nodes. Deployment only has {config.CodexDeployment.CodexContainers.Length}");
+                        errors.Add(
+                            $"Test '{test.Name}' requires {test.RequiredNumberOfNodes} nodes. Deployment only has {config.CodexDeployment.CodexInstances.Length}");
                     }
                 }
             }

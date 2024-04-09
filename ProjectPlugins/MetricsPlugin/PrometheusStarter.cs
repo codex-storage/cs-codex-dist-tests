@@ -1,5 +1,7 @@
 ﻿using Core;
 using KubernetesWorkflow;
+using KubernetesWorkflow.Types;
+using Logging;
 using System.Text;
 
 namespace MetricsPlugin
@@ -14,8 +16,10 @@ namespace MetricsPlugin
             this.tools = tools;
         }
 
-        public RunningContainer CollectMetricsFor(IMetricsScrapeTarget[] targets)
+        public RunningContainers CollectMetricsFor(IMetricsScrapeTarget[] targets)
         {
+            if (!targets.Any()) throw new ArgumentException(nameof(targets) + " must not be empty.");
+
             Log($"Starting metrics server for {targets.Length} targets...");
             var startupConfig = new StartupConfig();
             startupConfig.Add(new PrometheusStartupConfig(GeneratePrometheusConfig(targets)));
@@ -25,12 +29,12 @@ namespace MetricsPlugin
             if (runningContainers.Containers.Length != 1) throw new InvalidOperationException("Expected only 1 Prometheus container to be created.");
 
             Log("Metrics server started.");
-            return runningContainers.Containers.Single();
+            return runningContainers;
         }
 
-        public MetricsAccess CreateAccessForTarget(RunningContainer metricsContainer, IMetricsScrapeTarget target)
+        public MetricsAccess CreateAccessForTarget(RunningContainers metricsContainer, IMetricsScrapeTarget target)
         {
-            var metricsQuery = new MetricsQuery(tools, metricsContainer);
+            var metricsQuery = new MetricsQuery(tools, metricsContainer.Containers.Single());
             return new MetricsAccess(metricsQuery, target);
         }
 
@@ -44,7 +48,7 @@ namespace MetricsPlugin
             tools.GetLog().Log(msg);
         }
 
-        private static string GeneratePrometheusConfig(IMetricsScrapeTarget[] targets)
+        private string GeneratePrometheusConfig(IMetricsScrapeTarget[] targets)
         {
             var config = "";
             config += "global:\n";
@@ -59,11 +63,26 @@ namespace MetricsPlugin
 
             foreach (var target in targets)
             {
-                config += $"          - '{target.Ip}:{target.Port}'\n";
+                config += $"          - '{FormatTarget(target)}'\n";
             }
 
             var bytes = Encoding.ASCII.GetBytes(config);
             return Convert.ToBase64String(bytes);
+        }
+
+        private string FormatTarget(IMetricsScrapeTarget target)
+        {
+            return ScrapeTargetHelper.FormatTarget(tools.GetLog(), target);
+        }
+    }
+
+    public static class ScrapeTargetHelper
+    {
+        public static string FormatTarget(ILog log, IMetricsScrapeTarget target)
+        {
+            var a = target.Container.GetAddress(log, target.MetricsPortTag);
+            var host = a.Host.Replace("http://", "").Replace("https://", "");
+            return $"{host}:{a.Port}";
         }
     }
 }

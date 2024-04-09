@@ -16,19 +16,19 @@ namespace Logging
             this.debug = debug;
         }
 
-        public static void Measure(ILog log, string name, Action action, bool debug = false)
+        public static TimeSpan Measure(ILog log, string name, Action action, bool debug = false)
         {
             var sw = Begin(log, name, debug);
             action();
-            sw.End();
+            return sw.End();
         }
 
-        public static T Measure<T>(ILog log, string name, Func<T> action, bool debug = false)
+        public static StopwatchResult<T> Measure<T>(ILog log, string name, Func<T> action, bool debug = false)
         {
             var sw = Begin(log, name, debug);
             var result = action();
-            sw.End();
-            return result;
+            var duration = sw.End();
+            return new StopwatchResult<T>(result, duration);
         }
 
         public static Stopwatch Begin(ILog log)
@@ -51,7 +51,7 @@ namespace Logging
             return new Stopwatch(log, name, debug);
         }
 
-        public void End(string msg = "", int skipFrames = 0)
+        public TimeSpan End(string msg = "", int skipFrames = 0)
         {
             var duration = DateTime.UtcNow - start;
             var entry = $"{name} {msg} ({Time.FormatDuration(duration)})";
@@ -64,6 +64,20 @@ namespace Logging
             {
                 log.Log(entry);
             }
+
+            return duration;
         }
+    }
+
+    public class StopwatchResult<T>
+    {
+        public StopwatchResult(T value, TimeSpan duration)
+        {
+            Value = value;
+            Duration = duration;
+        }
+
+        public T Value { get; }
+        public TimeSpan Duration { get; }
     }
 }

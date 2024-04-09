@@ -1,8 +1,11 @@
 ﻿using Core;
-using KubernetesWorkflow;
+using KubernetesWorkflow.Types;
 using Logging;
+using Nethereum.ABI.FunctionEncoding.Attributes;
 using Nethereum.Contracts;
+using Nethereum.RPC.Eth.DTOs;
 using NethereumWorkflow;
+using Utils;
 
 namespace GethPlugin
 {
@@ -13,29 +16,85 @@ namespace GethPlugin
         Ether GetEthBalance();
         Ether GetEthBalance(IHasEthAddress address);
         Ether GetEthBalance(EthAddress address);
-        void SendEth(IHasEthAddress account, Ether eth);
-        void SendEth(EthAddress account, Ether eth);
+        string SendEth(IHasEthAddress account, Ether eth);
+        string SendEth(EthAddress account, Ether eth);
         TResult Call<TFunction, TResult>(string contractAddress, TFunction function) where TFunction : FunctionMessage, new();
-        void SendTransaction<TFunction>(string contractAddress, TFunction function) where TFunction : FunctionMessage, new();
+        string SendTransaction<TFunction>(string contractAddress, TFunction function) where TFunction : FunctionMessage, new();
+        Transaction GetTransaction(string transactionHash);
         decimal? GetSyncedBlockNumber();
         bool IsContractAvailable(string abi, string contractAddress);
+        GethBootstrapNode GetBootstrapRecord();
+        List<EventLog<TEvent>> GetEvents<TEvent>(string address, BlockInterval blockRange) where TEvent : IEventDTO, new();
+        List<EventLog<TEvent>> GetEvents<TEvent>(string address, TimeRange timeRange) where TEvent : IEventDTO, new();
+        BlockInterval ConvertTimeRangeToBlockRange(TimeRange timeRange);
     }
 
-    public class GethNode : IGethNode
+    public class DeploymentGethNode : BaseGethNode, IGethNode
     {
         private readonly ILog log;
 
-        public GethNode(ILog log, GethDeployment startResult)
+        public DeploymentGethNode(ILog log, GethDeployment startResult)
         {
             this.log = log;
             StartResult = startResult;
-            Account = startResult.AllAccounts.Accounts.First();
         }
 
         public GethDeployment StartResult { get; }
-        public GethAccount Account { get; }
         public RunningContainer Container => StartResult.Container;
 
+        public GethBootstrapNode GetBootstrapRecord()
+        {
+            var address = StartResult.Container.GetInternalAddress(GethContainerRecipe.ListenPortTag);
+
+            return new GethBootstrapNode(
+                publicKey: StartResult.PubKey,
+                ipAddress: address.Host.Replace("http://", ""),
+                port: address.Port
+            );
+        }
+
+        protected override NethereumInteraction StartInteraction()
+        {
+            var address = StartResult.Container.GetAddress(log, GethContainerRecipe.HttpPortTag);
+            var account = StartResult.Account;
+
+            var creator = new NethereumInteractionCreator(log, address.Host, address.Port, account.PrivateKey);
+            return creator.CreateWorkflow();
+        }
+    }
+
+    public class CustomGethNode : BaseGethNode, IGethNode
+    {
+        private readonly ILog log;
+        private readonly string gethHost;
+        private readonly int gethPort;
+        private readonly string privateKey;
+
+        public GethDeployment StartResult => throw new NotImplementedException();
+        public RunningContainer Container => throw new NotImplementedException();
+
+        public CustomGethNode(ILog log, string gethHost, int gethPort, string privateKey)
+        {
+            this.log = log;
+            this.gethHost = gethHost;
+            this.gethPort = gethPort;
+            this.privateKey = privateKey;
+        }
+
+        public GethBootstrapNode GetBootstrapRecord()
+        {
+            throw new NotImplementedException();
+        }
+
+        protected override NethereumInteraction StartInteraction()
+        {
+            var creator = new NethereumInteractionCreator(log, gethHost, gethPort, privateKey);
+            return creator.CreateWorkflow();
+        }
+    }
+
+    public abstract class BaseGethNode
+    {
         public Ether GetEthBalance()
         {
             return StartInteraction().GetEthBalance().Eth();
@@ -51,14 +110,14 @@ namespace GethPlugin
             return StartInteraction().GetEthBalance(address.Address).Eth();
         }
 
-        public void SendEth(IHasEthAddress owner, Ether eth)
+        public string SendEth(IHasEthAddress owner, Ether eth)
         {
-            SendEth(owner.EthAddress, eth);
+            return SendEth(owner.EthAddress, eth);
         }
 
-        public void SendEth(EthAddress account, Ether eth)
+        public string SendEth(EthAddress account, Ether eth)
         {
-            StartInteraction().SendEth(account.Address, eth.Eth);
+            return StartInteraction().SendEth(account.Address, eth.Eth);
         }
 
         public TResult Call<TFunction, TResult>(string contractAddress, TFunction function) where TFunction : FunctionMessage, new()
@@ -66,18 +125,14 @@ namespace GethPlugin
             return StartInteraction().Call<TFunction, TResult>(contractAddress, function);
         }
 
-        public void SendTransaction<TFunction>(string contractAddress, TFunction function) where TFunction : FunctionMessage, new()
+        public string SendTransaction<TFunction>(string contractAddress, TFunction function) where TFunction : FunctionMessage, new()
         {
-            StartInteraction().SendTransaction(contractAddress, function);
+            return StartInteraction().SendTransaction(contractAddress, function);
         }
 
-        private NethereumInteraction StartInteraction()
+        public Transaction GetTransaction(string transactionHash)
         {
-            var address = StartResult.Container.Address;
-            var account = Account;
-
-            var creator = new NethereumInteractionCreator(log, address.Host, address.Port, account.PrivateKey);
-            return creator.CreateWorkflow();
+            return StartInteraction().GetTransaction(transactionHash);
         }
 
         public decimal? GetSyncedBlockNumber()
@@ -89,5 +144,22 @@ namespace GethPlugin
         {
             return StartInteraction().IsContractAvailable(abi, contractAddress);
         }
+
+        public List<EventLog<TEvent>> GetEvents<TEvent>(string address, BlockInterval blockRange) where TEvent : IEventDTO, new()
+        {
+            return StartInteraction().GetEvents<TEvent>(address, blockRange);
+        }
+
+        public List<EventLog<TEvent>> GetEvents<TEvent>(string address, TimeRange timeRange) where TEvent : IEventDTO, new()
+        {
+            return StartInteraction().GetEvents<TEvent>(address, ConvertTimeRangeToBlockRange(timeRange));
+        }
+
+        public BlockInterval ConvertTimeRangeToBlockRange(TimeRange timeRange)
+        {
+            return StartInteraction().ConvertTimeRangeToBlockRange(timeRange);
+        }
+
+        protected abstract NethereumInteraction StartInteraction();
     }
 }

@@ -1,4 +1,6 @@
-﻿namespace KubernetesWorkflow
+﻿using KubernetesWorkflow.Types;
+
+namespace KubernetesWorkflow
 {
     public interface ILocation
     {

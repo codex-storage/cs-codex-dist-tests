@@ -1,0 +1,170 @@
+name: Run Continuous Tests
+
+
+on:
+  workflow_dispatch:
+    inputs:
+      source:
+        description: Repository with tests (current)
+        required: false
+        type: string
+      branch:
+        description: Branch with tests (master)
+        required: false
+        type: string
+      codexdockerimage:
+        description: Codex Docker image (codexstorage/nim-codex:latest-dist-tests)
+        required: false
+        type: string
+      nameprefix:
+        description: Resources prefix (c-tests)
+        required: false
+        type: string
+      tests_target_duration:
+        description: Runner target duration (2d)
+        required: false
+        type: string
+      tests_filter:
+        description: Runner tests filter ("")
+        required: false
+        type: string
+      tests_cleanup:
+        description: Runner tests cleanup
+        required: false
+        type: boolean
+        default: true
+  workflow_call:
+    inputs:
+      source:
+        description: Repository with tests (current)
+        required: false
+        type: string
+      branch:
+        description: Branch with tests (master)
+        required: false
+        type: string
+      codexdockerimage:
+        description: Codex Docker image (codexstorage/nim-codex:latest-dist-tests)
+        required: false
+        type: string
+      nameprefix:
+        description: Resources prefix (c-tests)
+        required: false
+        type: string
+      tests_target_duration:
+        description: Runner target duration (2d)
+        required: false
+        type: string
+      tests_filter:
+        description: Runner tests filter ("")
+        required: false
+        type: string
+      tests_cleanup:
+        description: Runner tests cleanup
+        required: false
+        type: boolean
+        default: true
+      workflow_source:
+        description: Workflow source
+        required: false
+        type: string
+        default: ''
+
+
+env:
+  SOURCE: ${{ format('{0}/{1}', github.server_url, github.repository) }}
+  BRANCH: ${{ github.ref_name }}
+  CODEXDOCKERIMAGE: codexstorage/nim-codex:latest-dist-tests
+  NAMEPREFIX: c-tests
+  NAMESPACE: default
+  TESTS_TARGET_DURATION: 2d
+  TESTS_FILTER: ""
+  TESTS_CLEANUP: true
+  JOB_MANIFEST: docker/continuous-tests-job.yaml
+  KUBE_CONFIG: ${{ secrets.KUBE_CONFIG }}
+  KUBE_VERSION: v1.28.2
+
+
+jobs:
+  run_tests:
+    name: Run Continuous Tests ${{ inputs.tests_filter }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ inputs.workflow_source }}
+
+      - name: Variables
+        run: |
+          RUNID=$(date +%Y%m%d-%H%M%S)
+          echo "RUNID=${RUNID}" >> $GITHUB_ENV
+          echo "TESTID=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+          [[ -n "${{ inputs.source }}" ]] && echo "SOURCE=${{ inputs.source }}" >>"$GITHUB_ENV" || echo "SOURCE=${{ env.SOURCE }}" >>"$GITHUB_ENV"
+          [[ -n "${{ inputs.branch }}" ]] && echo "BRANCH=${{ inputs.branch }}" >>"$GITHUB_ENV" || echo "BRANCH=${{ env.BRANCH }}" >>"$GITHUB_ENV"
+          [[ -n "${{ inputs.codexdockerimage }}" ]] && echo "CODEXDOCKERIMAGE=${{ inputs.codexdockerimage }}" >>"$GITHUB_ENV" || echo "CODEXDOCKERIMAGE=${{ env.CODEXDOCKERIMAGE }}" >>"$GITHUB_ENV"
+          [[ -n "${{ inputs.nameprefix }}" ]] && NAMEPREFIX="`awk '{ print tolower($0) }' <<< ${{ inputs.nameprefix }}`" || NAMEPREFIX="`awk '{ print tolower($0) }' <<< ${{ env.NAMEPREFIX }}`"
+          echo "NAMEPREFIX=${NAMEPREFIX}-${RUNID}" >>"$GITHUB_ENV"
+          echo "DEPLOYMENT_NAMESPACE=${NAMEPREFIX}-${RUNID}" >>"$GITHUB_ENV"
+          [[ -n "${{ inputs.namespace }}" ]] && echo "NAMESPACE=${{ inputs.namespace }}" >>"$GITHUB_ENV" || echo "NAMESPACE=${{ env.NAMESPACE }}" >>"$GITHUB_ENV"
+          [[ -n "${{ inputs.tests_target_duration }}" ]] && echo "TESTS_TARGET_DURATION=${{ inputs.tests_target_duration }}" >>"$GITHUB_ENV" || echo "TESTS_TARGET_DURATION=${{ env.TESTS_TARGET_DURATION }}" >>"$GITHUB_ENV"
+          [[ -n "${{ inputs.tests_filter }}" ]] && echo "TESTS_FILTER=${{ inputs.tests_filter }}" >>"$GITHUB_ENV" || echo "TESTS_FILTERS=${{ env.TESTS_FILTERS }}" >>"$GITHUB_ENV"
+          [[ -n "${{ inputs.tests_cleanup }}" ]] && echo "TESTS_CLEANUP=${{ inputs.tests_cleanup }}" >>"$GITHUB_ENV" || echo "TESTS_CLEANUP=${{ env.TESTS_CLEANUP }}" >>"$GITHUB_ENV"
+
+      - name: Kubectl - Install ${{ env.KUBE_VERSION }}
+        uses: azure/setup-kubectl@v4
+        with:
+          version: ${{ env.KUBE_VERSION }}
+
+      - name: Kubectl - Kubeconfig
+        run: |
+          mkdir -p "${HOME}"/.kube
+          echo "${{ env.KUBE_CONFIG }}" | base64 -d > "${HOME}"/.kube/config
+
+      - name: Kubectl - Create Job
+        run: |
+          envsubst < ${{ env.JOB_MANIFEST }} | kubectl apply -f -
+
+      - name: Tests Identification
+        run: |
+          echo "----"
+          echo "Repository: ${{ env.SOURCE }}"
+          echo "Branch: ${{ env.BRANCH }}"
+          echo "Runner job: ${{ env.NAMEPREFIX }}"
+          echo "Runner pod: `kubectl get pod --selector job-name=${{ env.NAMEPREFIX }} -ojsonpath='{.items[0].metadata.name}'`"
+          echo "Runner namespace: ${{ env.NAMESPACE }}"
+          echo "----"
+          echo "Tests runid: ${{ env.RUNID }}"
+          echo "Tests codexdockerimage: ${{ env.CODEXDOCKERIMAGE }}"
+          echo "Tests namespace: ${{ env.DEPLOYMENT_NAMESPACE }}"
+          echo "Tests duration: ${{ env.TESTS_TARGET_DURATION }}"
+          echo "Tests filter: ${{ env.TESTS_FILTER }}"
+          echo "Tests cleanup: ${{ env.TESTS_CLEANUP }}"
+          echo "----"
+
+      - name: Show Runner logs
+        if: false
+        run: |
+          # Variables
+          # We need more than 300 seconds because Auto Scaler may take 3 minutes to tun a node 
+          duration=600
+          namespace="${{ env.NAMESPACE }}"
+          pod=$(kubectl get pod --selector job-name=${{ env.NAMEPREFIX }} -o jsonpath="{.items[0].metadata.name}")
+
+          # Check Pod status
+          WAIT=120
+          SECONDS=0
+          sleep=1
+          while (( SECONDS < WAIT )); do
+            phase=$(kubectl get pod ${pod} -n ${namespace} -o jsonpath="{.status.phase}")
+            [[ "${phase}" == "Running" ]] && { echo "Pod $pod is in $phase state - Get the logs"; break; } || { echo "Pod $pod is in $phase state - Retry in $sleep seconds / $((WAIT - SECONDS))"; }
+            sleep $sleep
+          done
+
+          # Get logs
+          timeout $duration \
+            kubectl logs $pod \
+              -n $namespace \
+              -f \
+              --tail=-1 \
+              --timestamps || true

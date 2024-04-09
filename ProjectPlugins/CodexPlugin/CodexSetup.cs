@@ -11,21 +11,47 @@ namespace CodexPlugin
         ICodexSetup At(ILocation location);
         ICodexSetup WithBootstrapNode(ICodexNode node);
         ICodexSetup WithLogLevel(CodexLogLevel level);
-        /// <summary>
-        /// Sets the log level for codex. The default level is INFO and the
-        /// log level is applied only to the supplied topics.
-        /// </summary>
-        ICodexSetup WithLogLevel(CodexLogLevel level, params string[] topics);
+        ICodexSetup WithLogLevel(CodexLogLevel level, CodexLogCustomTopics customTopics);
         ICodexSetup WithStorageQuota(ByteSize storageQuota);
         ICodexSetup WithBlockTTL(TimeSpan duration);
         ICodexSetup WithBlockMaintenanceInterval(TimeSpan duration);
         ICodexSetup WithBlockMaintenanceNumber(int numberOfBlocks);
         ICodexSetup EnableMetrics();
-        ICodexSetup EnableMarketplace(IGethNode gethNode, ICodexContracts codexContracts, Ether initialEth, TestToken initialTokens, bool isValidator = false);
+        ICodexSetup EnableMarketplace(IGethNode gethNode, ICodexContracts codexContracts, Action<IMarketplaceSetup> marketplaceSetup);
         /// <summary>
         /// Provides an invalid proof every N proofs
         /// </summary>
         ICodexSetup WithSimulateProofFailures(uint failEveryNProofs);
+        ICodexSetup AsPublicTestNet(CodexTestNetConfig testNetConfig);
+    }
+
+    public interface IMarketplaceSetup
+    {
+        IMarketplaceSetup WithInitial(Ether eth, TestToken tokens);
+        IMarketplaceSetup WithAccount(EthAccount account);
+        IMarketplaceSetup AsStorageNode();
+        IMarketplaceSetup AsValidator();
+    }
+
+    public class CodexLogCustomTopics
+    {
+        public CodexLogCustomTopics(CodexLogLevel discV5, CodexLogLevel libp2p, CodexLogLevel blockExchange)
+        {
+            DiscV5 = discV5;
+            Libp2p = libp2p;
+            BlockExchange = blockExchange;
+        }
+
+        public CodexLogCustomTopics(CodexLogLevel discV5, CodexLogLevel libp2p)
+        {
+            DiscV5 = discV5;
+            Libp2p = libp2p;
+        }
+
+        public CodexLogLevel DiscV5 { get; set; }
+        public CodexLogLevel Libp2p { get; set; }
+        public CodexLogLevel ContractClock { get; set; } = CodexLogLevel.Warn;
+        public CodexLogLevel? BlockExchange { get; }
     }
 
     public class CodexSetup : CodexStartupConfig, ICodexSetup
@@ -51,7 +77,7 @@ namespace CodexPlugin
 
         public ICodexSetup WithBootstrapNode(ICodexNode node)
         {
-            BootstrapSpr = node.GetDebugInfo().spr;
+            BootstrapSpr = node.GetDebugInfo().Spr;
             return this;
         }
 
@@ -61,10 +87,10 @@ namespace CodexPlugin
             return this;
         }
 
-        public ICodexSetup WithLogLevel(CodexLogLevel level, params string[] topics)
+        public ICodexSetup WithLogLevel(CodexLogLevel level, CodexLogCustomTopics customTopics)
         {
             LogLevel = level;
-            LogTopics = topics;
+            CustomTopics = customTopics;
             return this;
         }
 
@@ -98,15 +124,24 @@ namespace CodexPlugin
             return this;
         }
 
-        public ICodexSetup EnableMarketplace(IGethNode gethNode, ICodexContracts codexContracts, Ether initialEth, TestToken initialTokens, bool isValidator = false)
+        public ICodexSetup EnableMarketplace(IGethNode gethNode, ICodexContracts codexContracts, Action<IMarketplaceSetup> marketplaceSetup)
         {
-            MarketplaceConfig = new MarketplaceInitialConfig(gethNode, codexContracts, initialEth, initialTokens, isValidator);
+            var ms = new MarketplaceSetup();
+            marketplaceSetup(ms);
+
+            MarketplaceConfig = new MarketplaceInitialConfig(ms, gethNode, codexContracts);
             return this;
         }
 
         public ICodexSetup WithSimulateProofFailures(uint failEveryNProofs)
         {
             SimulateProofFailures = failEveryNProofs;
+            return this;
+        }
+
+        public ICodexSetup AsPublicTestNet(CodexTestNetConfig testNetConfig)
+        {
+            PublicTestNet = testNetConfig;
             return this;
         }
 
@@ -118,11 +153,57 @@ namespace CodexPlugin
 
         private IEnumerable<string> DescribeArgs()
         {
+            if (PublicTestNet != null) yield return $"<!>Public TestNet with listenPort: {PublicTestNet.PublicListenPort}<!>";
             yield return $"LogLevel={LogLevelWithTopics()}";
             if (BootstrapSpr != null) yield return $"BootstrapNode={BootstrapSpr}";
             if (StorageQuota != null) yield return $"StorageQuota={StorageQuota}";
             if (SimulateProofFailures != null) yield return $"SimulateProofFailures={SimulateProofFailures}";
-            if (MarketplaceConfig != null) yield return $"IsValidator={MarketplaceConfig.IsValidator}";
+            if (MarketplaceConfig != null) yield return $"MarketplaceSetup={MarketplaceConfig.MarketplaceSetup}";
+        }
+    }
+
+    public class MarketplaceSetup : IMarketplaceSetup
+    {
+        public bool IsStorageNode { get; private set; }
+        public bool IsValidator { get; private set; }
+        public Ether InitialEth { get; private set; } = 0.Eth();
+        public TestToken InitialTestTokens { get; private set; } = 0.TestTokens();
+        public EthAccount EthAccount { get; private set; } = EthAccount.GenerateNew();
+
+        public IMarketplaceSetup AsStorageNode()
+        {
+            IsStorageNode = true;
+            return this;
+        }
+
+        public IMarketplaceSetup AsValidator()
+        {
+            IsValidator = true;
+            return this;
+        }
+
+        public IMarketplaceSetup WithAccount(EthAccount account)
+        {
+            EthAccount = account;
+            return this;
+        }
+
+        public IMarketplaceSetup WithInitial(Ether eth, TestToken tokens)
+        {
+            InitialEth = eth;
+            InitialTestTokens = tokens;
+            return this;
+        }
+
+        public override string ToString()
+        {
+            var result = "[(clientNode)"; // When marketplace is enabled, being a clientNode is implicit.
+            result += IsStorageNode ? "(storageNode)" : "()";
+            result += IsValidator ? "(validator)" : "() ";
+            result += $"Address: '{EthAccount.EthAddress}' ";
+            result += $"InitialEth/TT({InitialEth.Eth}/{InitialTestTokens.Amount})";
+            result += "] ";
+            return result;
         }
     }
 }

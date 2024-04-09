@@ -1,5 +1,5 @@
 ﻿using Core;
-using KubernetesWorkflow;
+using KubernetesWorkflow.Types;
 
 namespace WakuPlugin
 {
@@ -25,28 +25,29 @@ namespace WakuPlugin
 
         public DebugInfoResponse DebugInfo()
         {
-            return Http().HttpGetJson<DebugInfoResponse>("debug/v1/info");
+            return Api().HttpGetJson<DebugInfoResponse>("debug/v1/info");
         }
 
         public void SubscribeToTopic(string topic)
         {
-            var response = Http().HttpPostString("relay/v1/subscriptions", topic);
+            var response = Api().HttpPostString<string>(route: "relay/v1/subscriptions", body: topic);
         }
 
         public void SendMessage(string topic, string message)
         {
-            var response = Http().HttpPostString($"relay/v1/messages/{topic}", message);
+            var response = Api().HttpPostString<string>($"relay/v1/messages/{topic}", message);
         }
 
         public string[] GetMessages(string topic)
         {
-            var response = Http().HttpGetString($"relay/v1/messages/{topic}");
+            var response = Api().HttpGetString($"relay/v1/messages/{topic}");
             return new[] { "" };
         }
 
-        private IHttp Http()
+        private IEndpoint Api()
         {
-            return tools.CreateHttp(Container.Address, "");
+            var address = Container.GetAddress(tools.GetLog(), WakuContainerRecipe.RestPortTag);
+            return tools.CreateHttp().CreateEndpoint(address, "", logAlias: "waku");
         }
     }
 }

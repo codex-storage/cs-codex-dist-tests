@@ -45,7 +45,7 @@ namespace FileUtils
         {
             var sw = Stopwatch.Begin(log);
             var result = GenerateRandomFile(size, label);
-            sw.End($"Generated file '{result.Describe()}'.");
+            sw.End($"Generated file {result.Describe()}.");
             return result;
         }
 

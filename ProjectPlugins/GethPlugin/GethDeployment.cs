@@ -1,25 +1,29 @@
 ﻿using Core;
-using KubernetesWorkflow;
+using KubernetesWorkflow.Recipe;
+using KubernetesWorkflow.Types;
+using Newtonsoft.Json;
 
 namespace GethPlugin
 {
     public class GethDeployment : IHasContainer
     {
-        public GethDeployment(RunningContainer container, Port discoveryPort, Port httpPort, Port wsPort, AllGethAccounts allAccounts, string pubKey)
+        public GethDeployment(RunningContainers containers, Port discoveryPort, Port httpPort, Port wsPort, GethAccount account, string pubKey)
         {
-            Container = container;
+            Containers = containers;
             DiscoveryPort = discoveryPort;
             HttpPort = httpPort;
             WsPort = wsPort;
-            AllAccounts = allAccounts;
+            Account = account;
             PubKey = pubKey;
         }
 
-        public RunningContainer Container { get; }
+        public RunningContainers Containers { get; }
+        [JsonIgnore]
+        public RunningContainer Container {  get { return Containers.Containers.Single(); } }
         public Port DiscoveryPort { get; }
         public Port HttpPort { get; }
         public Port WsPort { get; }
-        public AllGethAccounts AllAccounts { get; }
+        public GethAccount Account { get; }
         public string PubKey { get; }
     }
 }

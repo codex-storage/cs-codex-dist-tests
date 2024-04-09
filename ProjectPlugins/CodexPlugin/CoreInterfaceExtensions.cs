@@ -1,5 +1,5 @@
 ﻿using Core;
-using KubernetesWorkflow;
+using KubernetesWorkflow.Types;
 
 namespace CodexPlugin
 {
@@ -8,13 +8,6 @@ namespace CodexPlugin
         public static RunningContainers[] DeployCodexNodes(this CoreInterface ci, int number, Action<ICodexSetup> setup)
         {
             return Plugin(ci).DeployCodexNodes(number, setup);
-        }
-
-        public static ICodexNodeGroup WrapCodexContainers(this CoreInterface ci, RunningContainer[] containers)
-        {
-            // ew, clean this up.
-            var rcs = new RunningContainers(null!, containers.First().Pod, containers);
-            return WrapCodexContainers(ci, new[] { rcs });
         }
 
         public static ICodexNodeGroup WrapCodexContainers(this CoreInterface ci, RunningContainers[] containers)

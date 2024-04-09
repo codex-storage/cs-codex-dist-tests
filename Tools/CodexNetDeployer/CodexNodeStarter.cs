@@ -27,7 +27,7 @@ namespace CodexNetDeployer
         public CodexNodeStartResult? Start(int i)
         {
             var name = GetCodexContainerName(i);
-            Console.Write($" - {i} ({name})");
+            Console.Write($" - {i} ({name})\t");
             Console.CursorLeft = 30;
 
             ICodexNode? codexNode = null;
@@ -36,36 +36,59 @@ namespace CodexNetDeployer
                 codexNode = ci.StartCodexNode(s =>
                 {
                     s.WithName(name);
-                    s.WithLogLevel(config.CodexLogLevel);
+                    s.WithLogLevel(config.CodexLogLevel, new CodexLogCustomTopics(config.Discv5LogLevel, config.Libp2pLogLevel));
                     s.WithStorageQuota(config.StorageQuota!.Value.MB());
-                    s.EnableMarketplace(gethNode, contracts, 100.Eth(), config.InitialTestTokens.TestTokens(), validatorsLeft > 0);
-                    s.EnableMetrics();
+
+                    if (config.ShouldMakeStorageAvailable)
+                    {
+                        s.EnableMarketplace(gethNode, contracts, m =>
+                        {
+                            m.WithInitial(100.Eth(), config.InitialTestTokens.TestTokens());
+                            if (validatorsLeft > 0) m.AsValidator();
+                            if (config.ShouldMakeStorageAvailable) m.AsStorageNode();
+                        });
+                    }
 
                     if (bootstrapNode != null) s.WithBootstrapNode(bootstrapNode);
+                    if (config.MetricsEndpoints) s.EnableMetrics();
                     if (config.BlockTTL != Configuration.SecondsIn1Day) s.WithBlockTTL(TimeSpan.FromSeconds(config.BlockTTL));
                     if (config.BlockMI != Configuration.TenMinutes) s.WithBlockMaintenanceInterval(TimeSpan.FromSeconds(config.BlockMI));
                     if (config.BlockMN != 1000) s.WithBlockMaintenanceNumber(config.BlockMN);
+
+                    if (config.IsPublicTestNet)
+                    {
+                        s.AsPublicTestNet(CreatePublicTestNetConfig(i));
+                    }
                 });
             
                 var debugInfo = codexNode.GetDebugInfo();
-                if (!string.IsNullOrWhiteSpace(debugInfo.spr))
+                if (!string.IsNullOrWhiteSpace(debugInfo.Spr))
                 {
                     Console.Write("Online\t");
 
-                    var response = codexNode.Marketplace.MakeStorageAvailable(
-                        size: config.StorageSell!.Value.MB(),
-                        minPriceForTotalSpace: config.MinPrice.TestTokens(),
-                        maxCollateral: config.MaxCollateral.TestTokens(),
-                        maxDuration: TimeSpan.FromSeconds(config.MaxDuration));
-
-                    if (!string.IsNullOrEmpty(response))
+                    if (config.ShouldMakeStorageAvailable)
                     {
-                        Console.Write("Storage available\tOK" + Environment.NewLine);
+                        var availability = new StorageAvailability(
+                            totalSpace: config.StorageSell!.Value.MB(),
+                            maxDuration: TimeSpan.FromSeconds(config.MaxDuration),
+                            minPriceForTotalSpace: config.MinPrice.TestTokens(),
+                            maxCollateral: config.MaxCollateral.TestTokens()
+                        );
 
-                        validatorsLeft--;
-                        if (bootstrapNode == null) bootstrapNode = codexNode;
-                        return new CodexNodeStartResult(codexNode);
+                        var response = codexNode.Marketplace.MakeStorageAvailable(availability);
+
+                        if (!string.IsNullOrEmpty(response))
+                        {
+                            Console.Write("Storage available\t");
+                        }
+                        else throw new Exception("Failed to make storage available.");
                     }
+                    
+                    Console.Write("OK" + Environment.NewLine);
+
+                    validatorsLeft--;
+                    if (bootstrapNode == null) bootstrapNode = codexNode;
+                    return new CodexNodeStartResult(codexNode);
                 }
             }
             catch (Exception ex)
@@ -81,6 +104,18 @@ namespace CodexNetDeployer
             }
 
             return null;
+        }
+
+        private CodexTestNetConfig CreatePublicTestNetConfig(int i)
+        {
+            var discPort = config.PublicDiscPorts.Split(",")[i];
+            var listenPort = config.PublicListenPorts.Split(",")[i];
+
+            return new CodexTestNetConfig
+            {
+                PublicDiscoveryPort = Convert.ToInt32(discPort),
+                PublicListenPort = Convert.ToInt32(listenPort)
+            };
         }
 
         private string GetCodexContainerName(int i)

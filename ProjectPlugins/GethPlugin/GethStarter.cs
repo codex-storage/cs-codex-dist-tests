@@ -26,7 +26,7 @@ namespace GethPlugin
             var container = containers.Containers[0];
 
             var extractor = new GethContainerInfoExtractor(tools.GetLog(), workflow, container);
-            var accounts = extractor.ExtractAccounts();
+            var account = extractor.ExtractAccounts().Accounts.First();
             var pubKey = extractor.ExtractPubKey();
 
             var discoveryPort = container.Recipe.GetPortByTag(GethContainerRecipe.DiscoveryPortTag);
@@ -38,13 +38,13 @@ namespace GethPlugin
 
             Log($"Geth node started.");
 
-            return new GethDeployment(container, discoveryPort, httpPort, wsPort, accounts, pubKey);
+            return new GethDeployment(containers, discoveryPort, httpPort, wsPort, account, pubKey);
         }
 
         public IGethNode WrapGethContainer(GethDeployment startResult)
         {
             startResult = SerializeGate.Gate(startResult);
-            return new GethNode(tools.GetLog(), startResult);
+            return new DeploymentGethNode(tools.GetLog(), startResult);
         }
 
         private void Log(string msg)

@@ -1,4 +1,7 @@
-﻿using KubernetesWorkflow;
+﻿using GethPlugin;
+using KubernetesWorkflow;
+using KubernetesWorkflow.Recipe;
+using Logging;
 
 namespace CodexContractsPlugin
 {
@@ -16,10 +19,11 @@ namespace CodexContractsPlugin
         {
             var config = startupConfig.Get<CodexContractsContainerConfig>();
 
-            var ip = config.GethNode.StartResult.Container.Pod.PodInfo.Ip;
-            var port = config.GethNode.StartResult.HttpPort.Number;
+            var address = config.GethNode.StartResult.Container.GetAddress(new NullLog(), GethContainerRecipe.HttpPortTag);
 
-            AddEnvVar("DISTTEST_NETWORK_URL", $"http://{ip}:{port}");
+            SetSchedulingAffinity(notIn: "false");
+
+            AddEnvVar("DISTTEST_NETWORK_URL", address.ToString());
             AddEnvVar("HARDHAT_NETWORK", "codexdisttestnetwork");
             AddEnvVar("KEEP_ALIVE", "1");
         }

@@ -1,56 +1,69 @@
-﻿namespace KubernetesWorkflow
+﻿using k8s;
+using k8s.Models;
+using KubernetesWorkflow.Recipe;
+using KubernetesWorkflow.Types;
+using Newtonsoft.Json;
+
+namespace KubernetesWorkflow
 {
-    public class RunningPod
+    public class StartResult
     {
-        public RunningPod(K8sCluster cluster, PodInfo podInfo, string deploymentName, string serviceName,  ContainerRecipePortMapEntry[] portMapEntries)
+        public StartResult(
+            K8sCluster cluster,
+            ContainerRecipe[] containerRecipes, 
+            RunningDeployment deployment,
+            RunningService? internalService,
+            RunningService? externalService)
         {
             Cluster = cluster;
-            PodInfo = podInfo;
-            DeploymentName = deploymentName;
-            ServiceName = serviceName;
-            PortMapEntries = portMapEntries;
+            ContainerRecipes = containerRecipes;
+            Deployment = deployment;
+            InternalService = internalService;
+            ExternalService = externalService;
         }
 
         public K8sCluster Cluster { get; }
-        public PodInfo PodInfo { get; }
-        public ContainerRecipePortMapEntry[] PortMapEntries { get; }
-        public string DeploymentName { get; }
-        public string ServiceName { get; }
+        public ContainerRecipe[] ContainerRecipes { get; }
+        public RunningDeployment Deployment { get; }
+        public RunningService? InternalService { get; }
+        public RunningService? ExternalService { get; }
 
-        public Port[] GetServicePortsForContainerRecipe(ContainerRecipe containerRecipe)
+        public Port GetInternalServicePorts(ContainerRecipe recipe, string tag)
         {
-            if (PortMapEntries.Any(p => p.ContainerNumber == containerRecipe.Number))
+            if (InternalService != null)
             {
-                return PortMapEntries.Single(p => p.ContainerNumber == containerRecipe.Number).Ports;
+                var p = InternalService.GetServicePortForRecipeAndTag(recipe, tag);
+                if (p != null) return p;
+            }
+
+            throw new Exception($"Unable to find internal port by tag '{tag}' for recipe '{recipe.Name}'.");
+        }
+
+        public Port GetExternalServicePorts(ContainerRecipe recipe, string tag)
+        {
+            if (ExternalService != null)
+            {
+                var p = ExternalService.GetServicePortForRecipeAndTag(recipe, tag);
+                if (p != null) return p;
+            }
+
+            throw new Exception($"Unable to find external port by tag '{tag}' for recipe '{recipe.Name}'.");
+        }
+
+        public Port[] GetServicePortsForContainer(ContainerRecipe recipe)
+        {
+            if (InternalService != null)
+            {
+                var p = InternalService.GetServicePortsForRecipe(recipe);
+                if (p.Any()) return p;
+            }
+            if (ExternalService != null)
+            {
+                var p = ExternalService.GetServicePortsForRecipe(recipe);
+                if (p.Any()) return p;
             }
 
             return Array.Empty<Port>();
         }
-    }
-
-    public class ContainerRecipePortMapEntry
-    {
-        public ContainerRecipePortMapEntry(int containerNumber, Port[] ports)
-        {
-            ContainerNumber = containerNumber;
-            Ports = ports;
-        }
-
-        public int ContainerNumber { get; }
-        public Port[] Ports { get; }
-    }
-
-    public class PodInfo
-    {
-        public PodInfo(string name, string ip, string k8sNodeName)
-        {
-            Name = name;
-            Ip = ip;
-            K8SNodeName = k8sNodeName;
-        }
-
-        public string Name { get; }
-        public string Ip { get; }
-        public string K8SNodeName { get; }
     }
 }

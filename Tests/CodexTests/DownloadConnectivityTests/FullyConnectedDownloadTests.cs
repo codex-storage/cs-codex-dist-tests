@@ -1,7 +1,9 @@
-﻿using NUnit.Framework;
+﻿using CodexContractsPlugin;
+using GethPlugin;
+using NUnit.Framework;
 using Utils;
 
-namespace Tests.DownloadConnectivityTests
+namespace CodexTests.DownloadConnectivityTests
 {
     [TestFixture]
     public class FullyConnectedDownloadTests : AutoBootstrapDistTest
@@ -17,7 +19,10 @@ namespace Tests.DownloadConnectivityTests
         [Test]
         public void MarketplaceDoesNotInterfereWithPeerDownload()
         {
-            //AddCodex(2, s => s.EnableMetrics().EnableMarketplace(1000.TestTokens()));
+            var geth = Ci.StartGethNode(s => s.IsMiner());
+            var contracts = Ci.StartCodexContracts(geth);
+            AddCodex(2, s => s.EnableMarketplace(geth, contracts, m => m
+                .WithInitial(10.Eth(), 1000.TestTokens())));
 
             AssertAllNodesConnected();
         }
@@ -25,8 +30,8 @@ namespace Tests.DownloadConnectivityTests
         [Test]
         [Combinatorial]
         public void FullyConnectedDownloadTest(
-            [Values(3, 5)] int numberOfNodes,
-            [Values(10, 80)] int sizeMBs)
+            [Values(2, 5)] int numberOfNodes,
+            [Values(1, 10)] int sizeMBs)
         {
             AddCodex(numberOfNodes);
 

@@ -13,16 +13,21 @@ namespace Logging
 
     public abstract class BaseLog : ILog
     {
+        public static bool EnableDebugLogging { get; set; } = false;
+
         private readonly NumberSource subfileNumberSource = new NumberSource(0);
-        private readonly bool debug;
         private readonly List<BaseLogStringReplacement> replacements = new List<BaseLogStringReplacement>();
         private LogFile? logFile;
 
-        protected BaseLog(bool debug)
+        public BaseLog()
         {
-            this.debug = debug;
+            IsDebug =
+                EnableDebugLogging ||
+                !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("LOGDEBUG")) ||
+                !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("DEBUGLOG"));
         }
 
+        protected bool IsDebug { get; private set; }
         protected abstract string GetFullName();
 
         public LogFile LogFile 
@@ -39,19 +44,20 @@ namespace Logging
             LogFile.Write(ApplyReplacements(message));
         }
 
-        public virtual void Debug(string message = "", int skipFrames = 0)
+        public void Debug(string message = "", int skipFrames = 0)
         {
-            if (debug)
+            if (IsDebug)
             {
                 var callerName = DebugStack.GetCallerName(skipFrames);
-                // We don't use Log because in the debug output we should not have any replacements.
-                LogFile.Write($"(debug)({callerName}) {message}");
+                Log($"(debug)({callerName}) {message}");
             }
         }
 
         public virtual void Error(string message)
         {
-            Log($"[ERROR] {message}");
+            var msg = $"[ERROR] {message}";
+            Console.WriteLine(msg);
+            Log(msg);
         }
 
         public virtual void AddStringReplace(string from, string to)
@@ -73,6 +79,7 @@ namespace Logging
 
         private string ApplyReplacements(string str)
         {
+            if (IsDebug) return str;
             foreach (var replacement in replacements)
             {
                 str = replacement.Apply(str);

@@ -1,16 +1,18 @@
 ﻿using CodexContractsPlugin;
+using CodexNetDeployer;
 using CodexPlugin;
+using CodexTests.Helpers;
 using Core;
 using DistTestCore;
 using DistTestCore.Helpers;
-using GethPlugin;
+using DistTestCore.Logs;
 using NUnit.Framework.Constraints;
 
-namespace Tests
+namespace CodexTests
 {
     public class CodexDistTest : DistTest
     {
-        private readonly List<ICodexNode> onlineCodexNodes = new List<ICodexNode>();
+        private readonly Dictionary<TestLifecycle, List<ICodexNode>> onlineCodexNodes = new Dictionary<TestLifecycle, List<ICodexNode>>();
 
         public CodexDistTest()
         {
@@ -18,6 +20,23 @@ namespace Tests
             ProjectPlugin.Load<CodexContractsPlugin.CodexContractsPlugin>();
             ProjectPlugin.Load<GethPlugin.GethPlugin>();
             ProjectPlugin.Load<MetricsPlugin.MetricsPlugin>();
+        }
+
+        protected override void Initialize(FixtureLog fixtureLog)
+        {
+            var localBuilder = new LocalCodexBuilder(fixtureLog);
+            localBuilder.Intialize();
+            localBuilder.Build();
+        }
+
+        protected override void LifecycleStart(TestLifecycle lifecycle)
+        {
+            onlineCodexNodes.Add(lifecycle, new List<ICodexNode>());
+        }
+
+        protected override void LifecycleStop(TestLifecycle lifecycle)
+        {
+            onlineCodexNodes.Remove(lifecycle);
         }
 
         public ICodexNode AddCodex()
@@ -42,7 +61,7 @@ namespace Tests
                 setup(s);
                 OnCodexSetup(s);
             });
-            onlineCodexNodes.AddRange(group);
+            onlineCodexNodes[Get()].AddRange(group);
             return group;
         }
 
@@ -58,16 +77,39 @@ namespace Tests
 
         public IEnumerable<ICodexNode> GetAllOnlineCodexNodes()
         {
-            return onlineCodexNodes;
+            return onlineCodexNodes[Get()];
         }
 
-        public void AssertBalance(IGethNode gethNode, ICodexContracts contracts, ICodexNode codexNode, Constraint constraint, string msg = "")
+        public void AssertBalance(ICodexContracts contracts, ICodexNode codexNode, Constraint constraint, string msg = "")
         {
-            AssertHelpers.RetryAssert(constraint, () => contracts.GetTestTokenBalance(gethNode, codexNode), nameof(AssertBalance) + msg);
+            AssertHelpers.RetryAssert(constraint, () => contracts.GetTestTokenBalance(codexNode), nameof(AssertBalance) + msg);
+        }
+
+        public void CheckLogForErrors(params ICodexNode[] nodes)
+        {
+            foreach (var node in nodes) CheckLogForErrors(node);
+        }
+
+        public void CheckLogForErrors(ICodexNode node)
+        {
+            Log($"Checking {node.GetName()} log for errors.");
+            var log = Ci.DownloadLog(node);
+
+            log.AssertLogDoesNotContain("Block validation failed");
+            log.AssertLogDoesNotContain("ERR ");
         }
 
         protected virtual void OnCodexSetup(ICodexSetup setup)
         {
+        }
+
+        protected override void CollectStatusLogData(TestLifecycle lifecycle, Dictionary<string, string> data)
+        {
+            var nodes = onlineCodexNodes[lifecycle];
+            var upload = nodes.Select(n => n.TransferSpeeds.GetUploadSpeed()).ToList()!.OptionalAverage();
+            var download = nodes.Select(n => n.TransferSpeeds.GetDownloadSpeed()).ToList()!.OptionalAverage();
+            if (upload != null) data.Add("avgupload", upload.ToString());
+            if (download != null) data.Add("avgdownload", download.ToString());
         }
     }
 }

@@ -3,10 +3,10 @@ using DistTestCore;
 using NUnit.Framework;
 using Utils;
 
-namespace Tests.BasicTests
+namespace CodexTests.BasicTests
 {
     [TestFixture]
-    public class OneClientTests : DistTest
+    public class OneClientTests : CodexDistTest
     {
         [Test]
         public void OneClientTest()
@@ -21,7 +21,7 @@ namespace Tests.BasicTests
         {
             var primary = Ci.StartCodexNode();
 
-            primary.Stop();
+            primary.Stop(waitTillStopped: true);
 
             primary = Ci.StartCodexNode();
 

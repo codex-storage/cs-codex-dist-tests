@@ -1,6 +1,7 @@
 ﻿using Core;
 using GethPlugin;
 using KubernetesWorkflow;
+using KubernetesWorkflow.Types;
 
 namespace CodexPlugin
 {
@@ -34,9 +35,9 @@ namespace CodexPlugin
 
         private EthAddress? GetEthAddress(CodexAccess access)
         {
-            var mStart = access.Container.Recipe.Additionals.Get<MarketplaceStartResults>();
-            if (mStart == null) return null;
-            return mStart.EthAddress;
+            var ethAccount = access.Container.Recipe.Additionals.Get<EthAccount>();
+            if (ethAccount == null) return null;
+            return ethAccount.EthAddress;
         }
 
         public CrashWatcher CreateCrashWatcher(RunningContainer c)

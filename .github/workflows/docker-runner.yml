@@ -1,0 +1,22 @@
+name: Docker - Runner
+
+
+on:
+  push:
+    branches:
+      - master
+    tags:
+      - 'v*.*.*'
+    paths:
+      - docker/Dockerfile
+      - docker/docker-entrypoint.sh
+      - .github/workflows/docker-runner.yml
+      - .github/workflows/docker-reusable.yml
+  workflow_dispatch:
+
+
+jobs:
+  build-and-push:
+    name: Build and Push
+    uses: ./.github/workflows/docker-reusable.yml
+    secrets: inherit

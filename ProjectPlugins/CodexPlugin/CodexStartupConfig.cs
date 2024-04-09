@@ -8,7 +8,7 @@ namespace CodexPlugin
         public string? NameOverride { get; set; }
         public ILocation Location { get; set; } = KnownLocations.UnspecifiedLocation;
         public CodexLogLevel LogLevel { get; set; }
-        public string[]? LogTopics { get; set; }
+        public CodexLogCustomTopics? CustomTopics { get; set; } = new CodexLogCustomTopics(CodexLogLevel.Warn, CodexLogLevel.Warn);
         public ByteSize? StorageQuota { get; set; }
         public bool MetricsEnabled { get; set; }
         public MarketplaceInitialConfig? MarketplaceConfig { get; set; }
@@ -18,15 +18,79 @@ namespace CodexPlugin
         public bool? EnableValidator { get; set; }
         public TimeSpan? BlockMaintenanceInterval { get; set; }
         public int? BlockMaintenanceNumber { get; set; }
+        public CodexTestNetConfig? PublicTestNet { get; set; }
 
         public string LogLevelWithTopics()
         {
             var level = LogLevel.ToString()!.ToUpperInvariant();
-            if (LogTopics != null && LogTopics.Count() > 0)
+            if (CustomTopics != null)
             {
-                level = $"INFO;{level}: {string.Join(",", LogTopics.Where(s => !string.IsNullOrEmpty(s)))}";
+                var discV5Topics = new[]
+                {
+                    "discv5",
+                    "providers",
+                    "manager",
+                    "cache",
+                };
+                var libp2pTopics = new[]
+                {
+                    "libp2p",
+                    "multistream",
+                    "switch",
+                    "transport",
+                    "tcptransport",
+                    "semaphore",
+                    "asyncstreamwrapper",
+                    "lpstream",
+                    "mplex",
+                    "mplexchannel",
+                    "noise",
+                    "bufferstream",
+                    "mplexcoder",
+                    "secure",
+                    "chronosstream",
+                    "connection",
+                    "connmanager",
+                    "websock",
+                    "ws-session",
+                    "dialer",
+                    "muxedupgrade",
+                    "upgrade",
+                    "identify"
+                };
+                var blockExchangeTopics = new[]
+                {
+                    "codex",
+                    "pendingblocks",
+                    "peerctxstore",
+                    "discoveryengine",
+                    "blockexcengine",
+                    "blockexcnetwork",
+                    "blockexcnetworkpeer"
+                };
+                var contractClockTopics = new[]
+                {
+                    "contracts",
+                    "clock"
+                };
+
+                level = $"{level};" +
+                    $"{CustomTopics.DiscV5.ToString()!.ToLowerInvariant()}:{string.Join(",", discV5Topics)};" +
+                    $"{CustomTopics.Libp2p.ToString()!.ToLowerInvariant()}:{string.Join(",", libp2pTopics)};" +
+                    $"{CustomTopics.ContractClock.ToString().ToLowerInvariant()}:{string.Join(",", contractClockTopics)}";
+
+                if (CustomTopics.BlockExchange != null)
+                {
+                    level += $";{CustomTopics.BlockExchange.ToString()!.ToLowerInvariant()}:{string.Join(",", blockExchangeTopics)}";
+                }
             }
             return level;
         }
+    }
+
+    public class CodexTestNetConfig
+    {
+        public int PublicDiscoveryPort { get; set; }
+        public int PublicListenPort { get; set; }
     }
 }

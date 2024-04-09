@@ -3,6 +3,7 @@ using DistTestCore.Logs;
 using FileUtils;
 using Logging;
 using NUnit.Framework;
+using NUnit.Framework.Interfaces;
 using System.Reflection;
 using Utils;
 using Assert = NUnit.Framework.Assert;
@@ -20,18 +21,23 @@ namespace DistTestCore
         private readonly object lifecycleLock = new object();
         private readonly EntryPoint globalEntryPoint;
         private readonly Dictionary<string, TestLifecycle> lifecycles = new Dictionary<string, TestLifecycle>();
+        private readonly string deployId;
         
         public DistTest()
         {
             var assemblies = AppDomain.CurrentDomain.GetAssemblies();
             testAssemblies = assemblies.Where(a => a.FullName!.ToLowerInvariant().Contains("test")).ToArray();
+            
+            deployId = NameUtils.MakeDeployId();
 
             var logConfig = configuration.GetLogConfig();
             var startTime = DateTime.UtcNow;
-            fixtureLog = new FixtureLog(logConfig, startTime);
-            statusLog = new StatusLog(logConfig, startTime);
+            fixtureLog = new FixtureLog(logConfig, startTime, deployId);
+            statusLog = new StatusLog(logConfig, startTime, "dist-tests", deployId);
 
             globalEntryPoint = new EntryPoint(fixtureLog, configuration.GetK8sConfiguration(new DefaultTimeSet(), TestNamespacePrefix), configuration.GetFileManagerFolder());
+
+            Initialize(fixtureLog);
         }
 
         [OneTimeSetUp]
@@ -56,6 +62,7 @@ namespace DistTestCore
                 throw;
             }
 
+            fixtureLog.Log("Test framework revision: " + GitInfo.GetStatus());
             fixtureLog.Log("Global setup cleanup successful");
         }
 
@@ -140,6 +147,27 @@ namespace DistTestCore
             Stopwatch.Measure(Get().Log, name, action);
         }
 
+        protected TimeRange GetTestRunTimeRange()
+        {
+            return new TimeRange(Get().TestStart, DateTime.UtcNow);
+        }
+
+        protected virtual void Initialize(FixtureLog fixtureLog)
+        {
+        }
+
+        protected virtual void LifecycleStart(TestLifecycle lifecycle)
+        {
+        }
+
+        protected virtual void LifecycleStop(TestLifecycle lifecycle)
+        {
+        }
+
+        protected virtual void CollectStatusLogData(TestLifecycle lifecycle, Dictionary<string, string> data)
+        {
+        }
+
         protected TestLifecycle Get()
         {
             lock (lifecycleLock)
@@ -157,8 +185,9 @@ namespace DistTestCore
                 lock (lifecycleLock)
                 {
                     var testNamespace = TestNamespacePrefix + Guid.NewGuid().ToString();
-                    var lifecycle = new TestLifecycle(fixtureLog.CreateTestLog(), configuration, GetTimeSet(), testNamespace);
+                    var lifecycle = new TestLifecycle(fixtureLog.CreateTestLog(), configuration, GetTimeSet(), testNamespace, deployId);
                     lifecycles.Add(testName, lifecycle);
+                    LifecycleStart(lifecycle);
                 }
             });
         }
@@ -168,13 +197,16 @@ namespace DistTestCore
             var lifecycle = Get();
             var testResult = GetTestResult();
             var testDuration = lifecycle.GetTestDuration();
+            var data = lifecycle.GetPluginMetadata();
+            CollectStatusLogData(lifecycle, data);
             fixtureLog.Log($"{GetCurrentTestName()} = {testResult} ({testDuration})");
-            statusLog.ConcludeTest(testResult, testDuration, lifecycle.GetPluginMetadata());
+            statusLog.ConcludeTest(testResult, testDuration, data);
             Stopwatch.Measure(fixtureLog, $"Teardown for {GetCurrentTestName()}", () =>
             {
                 WriteEndTestLog(lifecycle.Log);
 
                 IncludeLogsOnTestFailure(lifecycle);
+                LifecycleStop(lifecycle);
                 lifecycle.DeleteAllResources();
                 lifecycle = null!;
             });
@@ -191,7 +223,7 @@ namespace DistTestCore
                 Log($"{result.StackTrace}");
             }
 
-            if (result.Outcome.Status == NUnit.Framework.Interfaces.TestStatus.Failed)
+            if (result.Outcome.Status == TestStatus.Failed)
             {
                 log.MarkAsFailed();
             }
@@ -220,21 +252,28 @@ namespace DistTestCore
 
         private void IncludeLogsOnTestFailure(TestLifecycle lifecycle)
         {
-            var result = TestContext.CurrentContext.Result;
-            if (result.Outcome.Status == NUnit.Framework.Interfaces.TestStatus.Failed)
+            var testStatus = TestContext.CurrentContext.Result.Outcome.Status;
+            if (testStatus == TestStatus.Failed)
             {
                 fixtureLog.MarkAsFailed();
-
-                if (IsDownloadingLogsEnabled())
-                {
-                    lifecycle.Log.Log("Downloading all container logs because of test failure...");
-                    lifecycle.DownloadAllLogs();
-                }
-                else
-                {
-                    lifecycle.Log.Log("Skipping download of all container logs due to [DontDownloadLogsOnFailure] attribute.");
-                }
             }
+
+            if (ShouldDownloadAllLogs(testStatus))
+            {
+                lifecycle.Log.Log("Downloading all container logs...");
+                lifecycle.DownloadAllLogs();
+            }
+        }
+
+        private bool ShouldDownloadAllLogs(TestStatus testStatus)
+        {
+            if (configuration.AlwaysDownloadContainerLogs) return true;
+            if (testStatus == TestStatus.Failed)
+            {
+                return IsDownloadingLogsEnabled();
+            }
+
+            return false;
         }
 
         private string GetCurrentTestName()

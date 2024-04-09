@@ -3,7 +3,7 @@ using DistTestCore;
 using NUnit.Framework;
 using Utils;
 
-namespace Tests.BasicTests
+namespace CodexTests.BasicTests
 {
     // Warning!
     // This is a test to check network-isolation in the test-infrastructure.

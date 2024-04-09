@@ -1,22 +1,27 @@
 ﻿using Core;
-using KubernetesWorkflow;
+using KubernetesWorkflow.Types;
 using Logging;
 
 namespace MetricsPlugin
 {
     public static class CoreInterfaceExtensions
     {
-        public static RunningContainer DeployMetricsCollector(this CoreInterface ci, params IHasMetricsScrapeTarget[] scrapeTargets)
+        public static RunningContainers DeployMetricsCollector(this CoreInterface ci, params IHasMetricsScrapeTarget[] scrapeTargets)
         {
             return Plugin(ci).DeployMetricsCollector(scrapeTargets.Select(t => t.MetricsScrapeTarget).ToArray());
         }
 
-        public static RunningContainer DeployMetricsCollector(this CoreInterface ci, params IMetricsScrapeTarget[] scrapeTargets)
+        public static RunningContainers DeployMetricsCollector(this CoreInterface ci, params IMetricsScrapeTarget[] scrapeTargets)
         {
             return Plugin(ci).DeployMetricsCollector(scrapeTargets);
         }
 
-        public static IMetricsAccess WrapMetricsCollector(this CoreInterface ci, RunningContainer metricsContainer, IMetricsScrapeTarget scrapeTarget)
+        public static IMetricsAccess WrapMetricsCollector(this CoreInterface ci, RunningContainers metricsContainer, IHasMetricsScrapeTarget scrapeTarget)
+        {
+            return ci.WrapMetricsCollector(metricsContainer, scrapeTarget.MetricsScrapeTarget);
+        }
+
+        public static IMetricsAccess WrapMetricsCollector(this CoreInterface ci, RunningContainers metricsContainer, IMetricsScrapeTarget scrapeTarget)
         {
             return Plugin(ci).WrapMetricsCollectorDeployment(metricsContainer, scrapeTarget);
         }

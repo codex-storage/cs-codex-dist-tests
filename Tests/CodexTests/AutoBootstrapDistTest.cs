@@ -1,17 +1,20 @@
 ﻿using CodexPlugin;
 using NUnit.Framework;
 
-namespace Tests
+namespace CodexTests
 {
     public class AutoBootstrapDistTest : CodexDistTest
     {
-        private readonly List<ICodexNode> onlineCodexNodes = new List<ICodexNode>();
-
         [SetUp]
         public void SetUpBootstrapNode()
         {
             BootstrapNode = AddCodex(s => s.WithName("BOOTSTRAP"));
-            onlineCodexNodes.Add(BootstrapNode);
+        }
+
+        [TearDown]
+        public void TearDownBootstrapNode()
+        {
+            BootstrapNode = null;
         }
 
         protected override void OnCodexSetup(ICodexSetup setup)
@@ -20,5 +23,6 @@ namespace Tests
         }
 
         protected ICodexNode? BootstrapNode { get; private set; }
+        
     }
 }

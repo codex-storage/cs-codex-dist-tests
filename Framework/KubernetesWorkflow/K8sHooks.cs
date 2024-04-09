@@ -1,4 +1,7 @@
-﻿namespace KubernetesWorkflow
+﻿using KubernetesWorkflow.Recipe;
+using KubernetesWorkflow.Types;
+
+namespace KubernetesWorkflow
 {
     public interface IK8sHooks
     {

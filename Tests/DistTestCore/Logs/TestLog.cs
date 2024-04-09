@@ -2,13 +2,11 @@
 {
     public class TestLog : BaseTestLog
     {
-        private readonly string methodName;
         private readonly string fullName;
 
-        public TestLog(string folder, bool debug, string name = "")
-            : base(debug)
+        public TestLog(string folder, string deployId, string name = "") : base(deployId)
         {
-            methodName = NameUtils.GetTestMethodName(name);
+            var methodName = NameUtils.GetTestMethodName(name);
             fullName = Path.Combine(folder, methodName);
 
             Log($"*** Begin: {methodName}");

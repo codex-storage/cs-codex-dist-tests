@@ -9,3 +9,12 @@ services:
       - KUBECONFIG=/opt/kubeconfig
       - LOGPATH=/opt/logs
       - RUNNERLOCATION=ExternalToCluster
+
+  continuous-test-run:
+    image: thatbenbierens/dist-tests-deployandrun:initial
+    environment:
+      # - CODEXDOCKERIMAGE=imageoverride
+      - DNR_REP=3
+      - DNR_NAME=Tryout
+      - DNR_FILTER=PeernBeer
+      - DNR_DURATION=172800

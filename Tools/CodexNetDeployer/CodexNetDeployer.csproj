@@ -10,6 +10,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\Framework\ArgsUniform\ArgsUniform.csproj" />
     <ProjectReference Include="..\..\Framework\Core\Core.csproj" />
+    <ProjectReference Include="..\..\ProjectPlugins\CodexDiscordBotPlugin\CodexDiscordBotPlugin.csproj" />
     <ProjectReference Include="..\..\ProjectPlugins\CodexPlugin\CodexPlugin.csproj" />
     <ProjectReference Include="..\..\Tests\CodexTests\CodexTests.csproj" />
   </ItemGroup>

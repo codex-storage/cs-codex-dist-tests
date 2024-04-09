@@ -1,29 +1,56 @@
-﻿using GethPlugin;
-using KubernetesWorkflow;
+﻿using CodexContractsPlugin;
+using GethPlugin;
+using KubernetesWorkflow.Types;
 
 namespace CodexPlugin
 {
     public class CodexDeployment
     {
-        public CodexDeployment(RunningContainer[] codexContainers, GethDeployment gethDeployment, RunningContainer? prometheusContainer, DeploymentMetadata metadata)
+        public CodexDeployment(CodexInstance[] codexInstances, GethDeployment gethDeployment,
+            CodexContractsDeployment codexContractsDeployment, RunningContainers? prometheusContainer,
+            RunningContainers? discordBotContainer, DeploymentMetadata metadata,
+            String id)
         {
-            CodexContainers = codexContainers;
+            Id = id;
+            CodexInstances = codexInstances;
             GethDeployment = gethDeployment;
+            CodexContractsDeployment = codexContractsDeployment;
             PrometheusContainer = prometheusContainer;
+            DiscordBotContainer = discordBotContainer;
             Metadata = metadata;
         }
 
-        public RunningContainer[] CodexContainers { get; }
+        public String Id { get; }
+        public CodexInstance[] CodexInstances { get; }
         public GethDeployment GethDeployment { get; }
-        public RunningContainer? PrometheusContainer { get; }
+        public CodexContractsDeployment CodexContractsDeployment { get; }
+        public RunningContainers? PrometheusContainer { get; }
+        public RunningContainers? DiscordBotContainer { get; }
         public DeploymentMetadata Metadata { get; }
+    }
+
+    public class CodexInstance
+    {
+        public CodexInstance(RunningContainers containers, DebugInfo info)
+        {
+            Containers = containers;
+            Info = info;
+        }
+
+        public RunningContainers Containers { get; }
+        public DebugInfo Info { get; }
     }
 
     public class DeploymentMetadata
     {
-        public DeploymentMetadata(string kubeNamespace, int numberOfCodexNodes, int numberOfValidators, int storageQuotaMB, CodexLogLevel codexLogLevel, int initialTestTokens, int minPrice, int maxCollateral, int maxDuration, int blockTTL, int blockMI, int blockMN)
+        public DeploymentMetadata(string name, DateTime startUtc, DateTime finishedUtc, string kubeNamespace,
+            int numberOfCodexNodes, int numberOfValidators, int storageQuotaMB, CodexLogLevel codexLogLevel,
+            int initialTestTokens, int minPrice, int maxCollateral, int maxDuration, int blockTTL, int blockMI,
+            int blockMN)
         {
-            DeployDateTimeUtc = DateTime.UtcNow;
+            Name = name;
+            StartUtc = startUtc;
+            FinishedUtc = finishedUtc;
             KubeNamespace = kubeNamespace;
             NumberOfCodexNodes = numberOfCodexNodes;
             NumberOfValidators = numberOfValidators;
@@ -38,7 +65,9 @@ namespace CodexPlugin
             BlockMN = blockMN;
         }
 
-        public DateTime DeployDateTimeUtc { get; }
+        public string Name { get; }
+        public DateTime StartUtc { get; }
+        public DateTime FinishedUtc { get; }
         public string KubeNamespace { get; }
         public int NumberOfCodexNodes { get; }
         public int NumberOfValidators { get; }

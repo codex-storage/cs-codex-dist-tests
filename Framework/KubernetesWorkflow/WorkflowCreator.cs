@@ -7,7 +7,6 @@ namespace KubernetesWorkflow
     {
         private readonly NumberSource numberSource = new NumberSource(0);
         private readonly NumberSource containerNumberSource = new NumberSource(0);
-        private readonly KnownK8sPods knownPods = new KnownK8sPods();
         private readonly K8sCluster cluster;
         private readonly ILog log;
         private readonly Configuration configuration;
@@ -26,7 +25,7 @@ namespace KubernetesWorkflow
             var workflowNumberSource = new WorkflowNumberSource(numberSource.GetNextNumber(),
                                                                     containerNumberSource);
 
-            return new StartupWorkflow(log, workflowNumberSource, cluster, knownPods, GetNamespace(namespaceOverride));
+            return new StartupWorkflow(log, workflowNumberSource, cluster, GetNamespace(namespaceOverride));
         }
 
         private string GetNamespace(string? namespaceOverride)

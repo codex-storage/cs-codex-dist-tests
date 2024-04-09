@@ -1,9 +1,13 @@
-﻿using CodexPlugin;
-using DistTestCore;
+﻿using CodexContractsPlugin;
+using CodexPlugin;
+using GethPlugin;
+using KubernetesWorkflow.Types;
+using Logging;
+using MetricsPlugin;
 using NUnit.Framework;
 using Utils;
 
-namespace Tests.BasicTests
+namespace CodexTests.BasicTests
 {
     [Ignore("Used for debugging continuous tests")]
     [TestFixture]
@@ -12,24 +16,34 @@ namespace Tests.BasicTests
         [Test]
         public void ContinuousTestSubstitute()
         {
+            var geth = Ci.StartGethNode(s => s.IsMiner().WithName("geth"));
+            var contract = Ci.StartCodexContracts(geth);
+
             var group = AddCodex(5, o => o
-                    //.EnableMetrics()
-                    //.EnableMarketplace(100000.TestTokens(), 0.Eth(), isValidator: true)
-                    .WithBlockTTL(TimeSpan.FromMinutes(2))
-                    .WithBlockMaintenanceInterval(TimeSpan.FromMinutes(2))
-                    .WithBlockMaintenanceNumber(10000)
-                    .WithBlockTTL(TimeSpan.FromMinutes(2))
+                    .EnableMetrics()
+                    .EnableMarketplace(geth, contract, s => s
+                        .WithInitial(10.Eth(), 100000.TestTokens())
+                        .AsStorageNode()
+                        .AsValidator())
+                    .WithBlockTTL(TimeSpan.FromMinutes(5))
+                    .WithBlockMaintenanceInterval(TimeSpan.FromSeconds(10))
+                    .WithBlockMaintenanceNumber(100)
                     .WithStorageQuota(1.GB()));
 
             var nodes = group.Cast<CodexNode>().ToArray();
 
+            var rc = Ci.DeployMetricsCollector(nodes);
+
+            var availability = new StorageAvailability(
+                totalSpace: 500.MB(),
+                maxDuration: TimeSpan.FromMinutes(5),
+                minPriceForTotalSpace: 500.TestTokens(),
+                maxCollateral: 1024.TestTokens()
+            );
+
             foreach (var node in nodes)
             {
-                //node.Marketplace.MakeStorageAvailable(
-                //size: 500.MB(),
-                //minPricePerBytePerSecond: 1.TestTokens(),
-                //maxCollateral: 1024.TestTokens(),
-                //maxDuration: TimeSpan.FromMinutes(5));
+                node.Marketplace.MakeStorageAvailable(availability);
             }
 
             var endTime = DateTime.UtcNow + TimeSpan.FromHours(10);
@@ -40,10 +54,22 @@ namespace Tests.BasicTests
                 var secondary = allNodes.PickOneRandom();
 
                 Log("Run Test");
-                PerformTest(primary, secondary);
+                PerformTest(primary, secondary, rc);
 
                 Thread.Sleep(TimeSpan.FromSeconds(5));
             }
+        }
+
+        private void LogBytesPerMillisecond(Action action)
+        {
+            var sw = Stopwatch.Begin(GetTestLog());
+            action();
+            var duration = sw.End();
+            double totalMs = duration.TotalMilliseconds;
+            double totalBytes = fileSize.SizeInBytes;
+
+            var bytesPerMs = totalBytes / totalMs;
+            Log($"Bytes per millisecond: {bytesPerMs}");
         }
 
         [Test]
@@ -67,7 +93,7 @@ namespace Tests.BasicTests
                 //CreatePeerConnectionTestHelpers().AssertFullyConnected(GetAllOnlineCodexNodes());
                 //CheckRoutingTables(GetAllOnlineCodexNodes());
 
-                var node = RandomUtils.PickOneRandom(nodes.ToList());
+                var node = nodes.ToList().PickOneRandom();
                 var file = GenerateTestFile(50.MB());
                 node.UploadFile(file);
 
@@ -78,10 +104,10 @@ namespace Tests.BasicTests
         private void CheckRoutingTables(IEnumerable<ICodexNode> nodes)
         {
             var all = nodes.ToArray();
-            var allIds = all.Select(n => n.GetDebugInfo().table.localNode.nodeId).ToArray();
+            var allIds = all.Select(n => n.GetDebugInfo().Table.LocalNode.NodeId).ToArray();
 
             var errors = all.Select(n => AreAllPresent(n, allIds)).Where(s => !string.IsNullOrEmpty(s)).ToArray();
-            
+
             if (errors.Any())
             {
                 Assert.Fail(string.Join(Environment.NewLine, errors));
@@ -91,8 +117,8 @@ namespace Tests.BasicTests
         private string AreAllPresent(ICodexNode n, string[] allIds)
         {
             var info = n.GetDebugInfo();
-            var known = info.table.nodes.Select(n => n.nodeId).ToArray();
-            var expected = allIds.Where(i => i != info.table.localNode.nodeId).ToArray();
+            var known = info.Table.Nodes.Select(n => n.NodeId).ToArray();
+            var expected = allIds.Where(i => i != info.Table.LocalNode.NodeId).ToArray();
 
             if (!expected.All(ex => known.Contains(ex)))
             {
@@ -104,26 +130,45 @@ namespace Tests.BasicTests
 
         private ByteSize fileSize = 80.MB();
 
-        private void PerformTest(ICodexNode primary, ICodexNode secondary)
+        private const string BytesStoredMetric = "codexRepostoreBytesUsed";
+
+        private void PerformTest(ICodexNode primary, ICodexNode secondary, RunningContainers rc)
         {
             ScopedTestFiles(() =>
             {
                 var testFile = GenerateTestFile(fileSize);
 
-                var contentId = primary.UploadFile(testFile);
+                var metrics = Ci.WrapMetricsCollector(rc, primary);
+                var beforeBytesStored = metrics.GetMetric(BytesStoredMetric);
 
-                var downloadedFile = secondary.DownloadContent(contentId);
+                ContentId contentId = null!;
+                LogBytesPerMillisecond(() => contentId = primary.UploadFile(testFile));
+
+                var low = fileSize.SizeInBytes;
+                var high = low * 1.2;
+                Log("looking for: " + low + " < " + high);
+
+                Time.WaitUntil(() =>
+                {
+                    var afterBytesStored = metrics.GetMetric(BytesStoredMetric);
+                    var newBytes = Convert.ToInt64(afterBytesStored.Values.Last().Value - beforeBytesStored.Values.Last().Value);
+
+                    return high > newBytes && newBytes > low;
+                }, TimeSpan.FromMinutes(1), TimeSpan.FromSeconds(2));
+
+                FileUtils.TrackedFile? downloadedFile = null;
+                LogBytesPerMillisecond(() => downloadedFile = secondary.DownloadContent(contentId));
 
                 testFile.AssertIsEqual(downloadedFile);
             });
         }
-        
+
         [Test]
         public void HoldMyBeerTest()
         {
             var blockExpirationTime = TimeSpan.FromMinutes(3);
             var group = AddCodex(3, o => o
-                    //.EnableMetrics()
+                    .EnableMetrics()
                     .WithBlockTTL(blockExpirationTime)
                     .WithBlockMaintenanceInterval(TimeSpan.FromMinutes(2))
                     .WithBlockMaintenanceNumber(10000)

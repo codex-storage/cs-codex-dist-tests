@@ -7,24 +7,24 @@ namespace DistTestCore
     {
         private readonly string? kubeConfigFile;
         private readonly string logPath;
-        private readonly bool logDebug;
         private readonly string dataFilesPath;
 
         public Configuration()
         {
             kubeConfigFile = GetNullableEnvVarOrDefault("KUBECONFIG", null);
             logPath = GetEnvVarOrDefault("LOGPATH", "CodexTestLogs");
-            logDebug = GetEnvVarOrDefault("LOGDEBUG", "false").ToLowerInvariant() == "true";
             dataFilesPath = GetEnvVarOrDefault("DATAFILEPATH", "TestDataFiles");
+            AlwaysDownloadContainerLogs = !string.IsNullOrEmpty(GetEnvVarOrDefault("ALWAYS_LOGS", ""));
         }
 
-        public Configuration(string? kubeConfigFile, string logPath, bool logDebug, string dataFilesPath)
+        public Configuration(string? kubeConfigFile, string logPath, string dataFilesPath)
         {
             this.kubeConfigFile = kubeConfigFile;
             this.logPath = logPath;
-            this.logDebug = logDebug;
             this.dataFilesPath = dataFilesPath;
         }
+
+        public bool AlwaysDownloadContainerLogs { get; set; }
 
         public KubernetesWorkflow.Configuration GetK8sConfiguration(ITimeSet timeSet, string k8sNamespace)
         {
@@ -48,7 +48,7 @@ namespace DistTestCore
 
         public Logging.LogConfig GetLogConfig()
         {
-            return new Logging.LogConfig(logPath, debugEnabled: logDebug);
+            return new Logging.LogConfig(logPath);
         }
 
         public string GetFileManagerFolder()

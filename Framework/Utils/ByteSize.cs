@@ -2,6 +2,9 @@
 {
     public class ByteSize
     {
+        public static readonly ByteSize Zero = new ByteSize(0);
+        public const double DefaultSecondsPerMB = 10.0;
+
         public ByteSize(long sizeInBytes)
         {
             if (sizeInBytes < 0) throw new ArgumentException("Cannot create ByteSize object with size less than 0. Was: " + sizeInBytes);
@@ -10,7 +13,6 @@
 
         public long SizeInBytes { get; }
 
-        public const double DefaultSecondsPerMB = 10.0;
 
         public long ToMB()
         {
@@ -43,6 +45,18 @@
         {
             var filesizeInMb = SizeInBytes / (1024 * 1024);
             return TimeSpan.FromSeconds(filesizeInMb * secsPerMB);
+        }
+    }
+
+    public class BytesPerSecond : ByteSize
+    {
+        public BytesPerSecond(long sizeInBytes) : base(sizeInBytes)
+        {
+        }
+
+        public override string ToString()
+        {
+            return base.ToString() + "/s";
         }
     }
 

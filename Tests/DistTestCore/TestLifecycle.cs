@@ -2,6 +2,8 @@
 using DistTestCore.Logs;
 using FileUtils;
 using KubernetesWorkflow;
+using KubernetesWorkflow.Recipe;
+using KubernetesWorkflow.Types;
 using Utils;
 
 namespace DistTestCore
@@ -9,23 +11,27 @@ namespace DistTestCore
     public class TestLifecycle : IK8sHooks
     {
         private const string TestsType = "dist-tests";
-        private readonly DateTime testStart;
         private readonly EntryPoint entryPoint;
-        private readonly List<RunningContainers> runningContainers = new List<RunningContainers>();
+        private readonly Dictionary<string, string> metadata; 
+        private readonly List<RunningContainers> runningContainers = new();
+        private readonly string deployId;
 
-        public TestLifecycle(TestLog log, Configuration configuration, ITimeSet timeSet, string testNamespace)
+        public TestLifecycle(TestLog log, Configuration configuration, ITimeSet timeSet, string testNamespace, string deployId)
         {
             Log = log;
             Configuration = configuration;
             TimeSet = timeSet;
-            testStart = DateTime.UtcNow;
+            TestStart = DateTime.UtcNow;
 
             entryPoint = new EntryPoint(log, configuration.GetK8sConfiguration(timeSet, this, testNamespace), configuration.GetFileManagerFolder(), timeSet);
+            metadata = entryPoint.GetPluginMetadata();
             CoreInterface = entryPoint.CreateInterface();
+            this.deployId = deployId;
 
             log.WriteLogTag();
         }
 
+        public DateTime TestStart { get; }
         public TestLog Log { get; }
         public Configuration Configuration { get; }
         public ITimeSet TimeSet { get; }
@@ -54,10 +60,9 @@ namespace DistTestCore
             return entryPoint.GetPluginMetadata();
         }
 
-        public string GetTestDuration()
+        public TimeSpan GetTestDuration()
         {
-            var testDuration = DateTime.UtcNow - testStart;
-            return Time.FormatDuration(testDuration);
+            return DateTime.UtcNow - TestStart;
         }
 
         public void OnContainersStarted(RunningContainers rc)
@@ -73,11 +78,17 @@ namespace DistTestCore
         public void OnContainerRecipeCreated(ContainerRecipe recipe)
         {
             recipe.PodLabels.Add("tests-type", TestsType);
-            recipe.PodLabels.Add("runid", NameUtils.GetRunId());
+            recipe.PodLabels.Add("deployid", deployId);
             recipe.PodLabels.Add("testid", NameUtils.GetTestId());
             recipe.PodLabels.Add("category", NameUtils.GetCategoryName());
             recipe.PodLabels.Add("fixturename", NameUtils.GetRawFixtureName());
             recipe.PodLabels.Add("testname", NameUtils.GetTestMethodName());
+            recipe.PodLabels.Add("testframeworkrevision", GitInfo.GetStatus());
+
+            foreach (var pair in metadata)
+            {
+                recipe.PodLabels.Add(pair.Key, pair.Value);
+            }
         }
 
         public void DownloadAllLogs()

@@ -3,13 +3,20 @@
     public class LogPrefixer : ILog
     {
         private readonly ILog backingLog;
-        private readonly string prefix;
+
+        public LogPrefixer(ILog backingLog)
+        {
+            this.backingLog = backingLog;
+        }
 
         public LogPrefixer(ILog backingLog, string prefix)
         {
             this.backingLog = backingLog;
-            this.prefix = prefix;
+            Prefix = prefix;
         }
+
+        public string Prefix { get; set; } = string.Empty;
+
 
         public LogFile CreateSubfile(string ext = "log")
         {
@@ -18,17 +25,17 @@
 
         public void Debug(string message = "", int skipFrames = 0)
         {
-            backingLog.Debug(prefix + message, skipFrames);
+            backingLog.Debug(Prefix + message, skipFrames);
         }
 
         public void Error(string message)
         {
-            backingLog.Error(prefix + message);
+            backingLog.Error(Prefix + message);
         }
 
         public void Log(string message)
         {
-            backingLog.Log(prefix + message);
+            backingLog.Log(Prefix + message);
         }
 
         public void AddStringReplace(string from, string to)

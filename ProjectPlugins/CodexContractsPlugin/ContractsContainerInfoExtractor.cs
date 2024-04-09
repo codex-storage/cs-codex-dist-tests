@@ -1,4 +1,5 @@
 ﻿using KubernetesWorkflow;
+using KubernetesWorkflow.Types;
 using Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -25,6 +26,7 @@ namespace CodexContractsPlugin
             var marketplaceAddress = Retry(FetchMarketplaceAddress);
             if (string.IsNullOrEmpty(marketplaceAddress)) throw new InvalidOperationException("Unable to fetch marketplace account from codex-contracts node. Test infra failure.");
 
+            log.Debug("Got MarketplaceAddress: " + marketplaceAddress);
             return marketplaceAddress;
         }
 
@@ -34,6 +36,7 @@ namespace CodexContractsPlugin
             var marketplaceAbi = Retry(FetchMarketplaceAbi);
             if (string.IsNullOrEmpty(marketplaceAbi)) throw new InvalidOperationException("Unable to fetch marketplace artifacts from codex-contracts node. Test infra failure.");
 
+            log.Debug("Got Marketplace ABI: " + marketplaceAbi);
             return marketplaceAbi;
         }
 

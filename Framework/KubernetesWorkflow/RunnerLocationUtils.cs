@@ -1,55 +1,38 @@
-﻿using System.Net.NetworkInformation;
-using Utils;
-
-namespace KubernetesWorkflow
+﻿namespace KubernetesWorkflow
 {
     internal enum RunnerLocation
     {
+        Unknown,
         ExternalToCluster,
         InternalToCluster,
     }
 
     internal static class RunnerLocationUtils
     {
-        private static RunnerLocation? knownLocation = null;
+        private static RunnerLocation location = RunnerLocation.Unknown;
 
-        internal static RunnerLocation DetermineRunnerLocation(RunningContainer container)
+        internal static RunnerLocation GetRunnerLocation()
         {
-            if (knownLocation != null) return knownLocation.Value;
-
-            if (PingHost(container.Pod.PodInfo.Ip))
-            {
-                knownLocation = RunnerLocation.InternalToCluster;
-            }
-            else if (PingHost(Format(container.ClusterExternalAddress)))
-            {
-                knownLocation = RunnerLocation.ExternalToCluster;
-            }
-
-            if (knownLocation == null) throw new Exception("Unable to determine location relative to kubernetes cluster.");
-            return knownLocation.Value;
+            DetermineRunnerLocation();
+            if (location == RunnerLocation.Unknown) throw new Exception("Runner location is unknown.");
+            return location;
         }
 
-        private static string Format(Address host)
+        private static void DetermineRunnerLocation()
         {
-            return host.Host
-                .Replace("http://", "")
-                .Replace("https://", "");
-        }
+            if (location != RunnerLocation.Unknown) return;
 
-        private static bool PingHost(string host)
-        {
-            try
-            {
-                using var pinger = new Ping();
-                PingReply reply = pinger.Send(host);
-                return reply.Status == IPStatus.Success;
-            }
-            catch (PingException)
-            {
-            }
+            var port = Environment.GetEnvironmentVariable("KUBERNETES_PORT");
+            var host = Environment.GetEnvironmentVariable("KUBERNETES_SERVICE_HOST");
 
-            return false;
+            if (string.IsNullOrEmpty(port) || string.IsNullOrEmpty(host))
+            {
+                location = RunnerLocation.ExternalToCluster;
+            }
+            else
+            {
+                location = RunnerLocation.InternalToCluster;
+            }
         }
     }
 }

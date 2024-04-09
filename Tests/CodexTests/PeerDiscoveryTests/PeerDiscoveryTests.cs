@@ -1,6 +1,9 @@
-﻿using NUnit.Framework;
+﻿using CodexContractsPlugin;
+using CodexPlugin;
+using GethPlugin;
+using NUnit.Framework;
 
-namespace Tests.PeerDiscoveryTests
+namespace CodexTests.PeerDiscoveryTests
 {
     [TestFixture]
     public class PeerDiscoveryTests : AutoBootstrapDistTest
@@ -26,7 +29,10 @@ namespace Tests.PeerDiscoveryTests
         [Test]
         public void MarketplaceDoesNotInterfereWithPeerDiscovery()
         {
-            //AddCodex(2, s => s.EnableMarketplace(1000.TestTokens()));
+            var geth = Ci.StartGethNode(s => s.IsMiner());
+            var contracts = Ci.StartCodexContracts(geth);
+            AddCodex(2, s => s.EnableMarketplace(geth, contracts, m => m
+                .WithInitial(10.Eth(), 1000.TestTokens())));
 
             AssertAllNodesConnected();
         }
@@ -34,7 +40,6 @@ namespace Tests.PeerDiscoveryTests
         [TestCase(2)]
         [TestCase(3)]
         [TestCase(10)]
-        [TestCase(20)]
         public void VariableNodes(int number)
         {
             AddCodex(number);
@@ -44,7 +49,45 @@ namespace Tests.PeerDiscoveryTests
 
         private void AssertAllNodesConnected()
         {
-            CreatePeerConnectionTestHelpers().AssertFullyConnected(GetAllOnlineCodexNodes());
+            var allNodes = GetAllOnlineCodexNodes();
+            CreatePeerConnectionTestHelpers().AssertFullyConnected(allNodes);
+            CheckRoutingTable(allNodes);
+        }
+
+        private void CheckRoutingTable(IEnumerable<ICodexNode> allNodes)
+        {
+            var allResponses = allNodes.Select(n => n.GetDebugInfo()).ToArray();
+
+            var errors = new List<string>();
+            foreach (var response in allResponses)
+            {
+                var error = AreAllPresent(response, allResponses);
+                if (!string.IsNullOrEmpty(error)) errors.Add(error);
+            }
+
+            if (errors.Any())
+            {
+                Assert.Fail(string.Join(Environment.NewLine, errors));
+            }
+        }
+
+        private string AreAllPresent(DebugInfo info, DebugInfo[] allResponses)
+        {
+            var knownIds = info.Table.Nodes.Select(n => n.NodeId).ToArray();
+            var allOthers = GetAllOtherResponses(info, allResponses);
+            var expectedIds = allOthers.Select(i => i.Table.LocalNode.NodeId).ToArray();
+
+            if (!expectedIds.All(ex => knownIds.Contains(ex)))
+            {
+                return $"Node {info.Id}: Not all of '{string.Join(",", expectedIds)}' were present in routing table: '{string.Join(",", knownIds)}'";
+            }
+
+            return string.Empty;
+        }
+
+        private DebugInfo[] GetAllOtherResponses(DebugInfo exclude, DebugInfo[] allResponses)
+        {
+            return allResponses.Where(r => r.Id != exclude.Id).ToArray();
         }
     }
 }

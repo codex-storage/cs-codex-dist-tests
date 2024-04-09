@@ -1,6 +1,6 @@
-﻿using DistTestCore;
+﻿using CodexTests;
+using DistTestCore;
 using NUnit.Framework;
-using Tests;
 using Utils;
 
 namespace CodexLongTests.DownloadConnectivityTests

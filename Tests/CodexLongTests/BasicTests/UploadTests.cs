@@ -1,8 +1,8 @@
 using CodexPlugin;
+using CodexTests;
 using DistTestCore;
 using FileUtils;
 using NUnit.Framework;
-using Tests;
 using Utils;
 
 namespace CodexLongTests.BasicTests

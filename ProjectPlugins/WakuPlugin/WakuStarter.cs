@@ -1,5 +1,6 @@
 ﻿using Core;
 using KubernetesWorkflow;
+using KubernetesWorkflow.Types;
 
 namespace WakuPlugin
 {
@@ -20,7 +21,7 @@ namespace WakuPlugin
 
             for (var i = 0; i < numberOfNodes; i++)
             {
-                result.Add(workflow.Start(1, new WakuPluginContainerRecipe(), startupConfig));
+                result.Add(workflow.Start(1, new WakuContainerRecipe(), startupConfig));
             }
 
             return result.ToArray();

@@ -1,8 +1,8 @@
 ﻿using Core;
 using GethPlugin;
 using KubernetesWorkflow;
+using KubernetesWorkflow.Types;
 using Logging;
-using Nethereum.Contracts;
 using Utils;
 
 namespace CodexContractsPlugin
@@ -32,20 +32,23 @@ namespace CodexContractsPlugin
 
             try
             {
-                return DeployContract(container, workflow, gethNode);
+                var result = DeployContract(container, workflow, gethNode);
+                workflow.Stop(containers, waitTillStopped: false);
+                Log("Container stopped.");
+                return result;
             }
-            catch
+            catch (Exception ex)
             {
-                Log("Failed to deploy contract.");
+                Log("Failed to deploy contract: " + ex);
                 Log("Downloading Codex SmartContracts container log...");
                 ci.DownloadLog(container);
                 throw;
             }
         }
 
-        public ICodexContracts Wrap(CodexContractsDeployment deployment)
+        public ICodexContracts Wrap(IGethNode gethNode, CodexContractsDeployment deployment)
         {
-            return new CodexContractsAccess(tools.GetLog(), deployment);
+            return new CodexContractsAccess(tools.GetLog(), gethNode, deployment);
         }
 
         private CodexContractsDeployment DeployContract(RunningContainer container, IStartupWorkflow workflow, IGethNode gethNode)
@@ -54,7 +57,7 @@ namespace CodexContractsPlugin
             WaitUntil(() =>
             {
                 var logHandler = new ContractsReadyLogHandler(tools.GetLog());
-                workflow.DownloadContainerLog(container, logHandler, null);
+                workflow.DownloadContainerLog(container, logHandler, 100);
                 return logHandler.Found;
             });
             Log("Contracts deployed. Extracting addresses...");
@@ -82,7 +85,7 @@ namespace CodexContractsPlugin
 
         private void WaitUntil(Func<bool> predicate)
         {
-            Time.WaitUntil(predicate, TimeSpan.FromMinutes(3), TimeSpan.FromSeconds(2));
+            Time.WaitUntil(predicate, TimeSpan.FromMinutes(5), TimeSpan.FromSeconds(2));
         }
 
         private StartupConfig CreateStartupConfig(IGethNode gethNode)

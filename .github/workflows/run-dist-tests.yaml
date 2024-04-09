@@ -1,0 +1,83 @@
+name: Run Dist Tests
+
+
+on:
+  workflow_dispatch:
+    inputs:
+      source:
+        description: Repository with tests (current)
+        required: false
+        type: string
+      branch:
+        description: Branch with tests (master)
+        required: false
+        type: string
+      nameprefix:
+        description: Runner name prefix (d-tests-runner)
+        required: false
+        type: string
+      namespace:
+        description: Runner namespace (default)
+        required: false
+        type: string
+      command:
+        description: Command (dotnet test Tests/CodexTests)
+        required: false
+        type: string
+
+
+env:
+  SOURCE: ${{ format('{0}/{1}', github.server_url, github.repository) }}
+  BRANCH: ${{ github.ref_name }}
+  NAMEPREFIX: d-tests-runner
+  NAMESPACE: default
+  COMMAND: dotnet test Tests/CodexTests
+  JOB_MANIFEST: docker/dist-tests-job.yaml
+  KUBE_CONFIG: ${{ secrets.KUBE_CONFIG }}
+  KUBE_VERSION: v1.28.2
+
+
+jobs:
+  run_tests:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Variables
+        run: |
+          echo "COMMAND=$(jq -c 'split(" ")' <<< '"'$COMMAND'"')" >>"$GITHUB_ENV"
+          echo "RUNID=$(date +%Y%m%d-%H%M%S)" >> $GITHUB_ENV
+          echo "TESTID=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+          [[ -n "${{ inputs.branch }}" ]] && echo "BRANCH=${{ inputs.branch }}" >>"$GITHUB_ENV" || echo "BRANCH=${{ env.BRANCH }}" >>"$GITHUB_ENV"
+          [[ -n "${{ inputs.source }}" ]] && echo "SOURCE=${{ inputs.source }}" >>"$GITHUB_ENV" || echo "SOURCE=${{ env.SOURCE }}" >>"$GITHUB_ENV"
+          [[ -n "${{ inputs.nameprefix }}" ]] && echo "NAMEPREFIX=${{ inputs.nameprefix }}" >>"$GITHUB_ENV" || echo "NAMEPREFIX=${{ env.NAMEPREFIX }}" >>"$GITHUB_ENV"
+          [[ -n "${{ inputs.namespace }}" ]] && echo "NAMESPACE=${{ inputs.namespace }}" >>"$GITHUB_ENV" || echo "NAMESPACE=${{ env.NAMESPACE }}" >>"$GITHUB_ENV"
+          [[ -n "${{ inputs.command }}" ]] && COMMAND="${{ inputs.command }}" || COMMAND="${{ env.COMMAND }}"
+
+      - name: Kubectl - Install ${{ env.KUBE_VERSION }}
+        uses: azure/setup-kubectl@v4
+        with:
+          version: ${{ env.KUBE_VERSION }}
+
+      - name: Kubectl - Kubeconfig
+        run: |
+          mkdir -p "${HOME}"/.kube
+          echo "${{ env.KUBE_CONFIG }}" | base64 -d > "${HOME}"/.kube/config
+
+      - name: Kubectl - Create Job
+        run: |
+          envsubst < ${{ env.JOB_MANIFEST }} | kubectl apply -f -
+
+      - name: Tests Identification
+        run: |
+          echo "----"
+          echo "Repository: ${{ env.SOURCE }}"
+          echo "Branch: ${{ env.BRANCH }}"
+          echo "Runner job: ${{ env.NAMEPREFIX }}-${{ env.RUNID }}"
+          echo "Runner namespace: ${{ env.NAMESPACE }}"
+          echo "----"
+          echo "Tests runid: ${{ env.RUNID }}"
+          echo "Tests command: `jq -r '. | join(" ")' <<< '${{ env.COMMAND }}'`"
+          echo "----"

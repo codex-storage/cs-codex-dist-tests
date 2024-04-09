@@ -1,11 +1,16 @@
-﻿using Core;
+﻿using CodexOpenApi;
+using Core;
 using KubernetesWorkflow;
+using KubernetesWorkflow.Types;
+using Newtonsoft.Json;
+using Utils;
 
 namespace CodexPlugin
 {
     public class CodexAccess : ILogHandler
     {
         private readonly IPluginTools tools;
+        private readonly Mapper mapper = new Mapper();
         private bool hasContainerCrashed;
 
         public CodexAccess(IPluginTools tools, RunningContainer container, CrashWatcher crashWatcher)
@@ -21,64 +26,81 @@ namespace CodexPlugin
         public RunningContainer Container { get; }
         public CrashWatcher CrashWatcher { get; }
 
-        public CodexDebugResponse GetDebugInfo()
+        public DebugInfo GetDebugInfo()
         {
-            return Http().HttpGetJson<CodexDebugResponse>("debug/info");
+            return mapper.Map(OnCodex(api => api.GetDebugInfoAsync()));
         }
 
-        public CodexDebugPeerResponse GetDebugPeer(string peerId)
+        public DebugPeer GetDebugPeer(string peerId)
         {
-            var http = Http();
-            var str = http.HttpGetString($"debug/peer/{peerId}");
+            // Cannot use openAPI: debug/peer endpoint is not specified there.
+            var endpoint = GetEndpoint();
+            var str = endpoint.HttpGetString($"debug/peer/{peerId}");
 
             if (str.ToLowerInvariant() == "unable to find peer!")
             {
-                return new CodexDebugPeerResponse
+                return new DebugPeer
                 {
                     IsPeerFound = false
                 };
             }
 
-            var result = http.TryJsonDeserialize<CodexDebugPeerResponse>(str);
+            var result = endpoint.Deserialize<DebugPeer>(str);
             result.IsPeerFound = true;
             return result;
         }
 
-        public CodexDebugThresholdBreaches GetDebugThresholdBreaches()
+        public void ConnectToPeer(string peerId, string[] peerMultiAddresses)
         {
-            return Http().HttpGetJson<CodexDebugThresholdBreaches>("debug/loop");
+            OnCodex(api =>
+            {
+                Time.Wait(api.ConnectPeerAsync(peerId, peerMultiAddresses));
+                return Task.FromResult(string.Empty);
+            });
         }
 
         public string UploadFile(FileStream fileStream)
         {
-            // private const string UploadFailedMessage = "Unable to store block";
-
-            return Http().HttpPostStream("upload", fileStream);
+            return OnCodex(api => api.UploadAsync(fileStream));
         }
 
         public Stream DownloadFile(string contentId)
         {
-            return Http().HttpGetStream("download/" + contentId);
+            var fileResponse = OnCodex(api => api.DownloadNetworkAsync(contentId));
+            if (fileResponse.StatusCode != 200) throw new Exception("Download failed with StatusCode: " + fileResponse.StatusCode);
+            return fileResponse.Stream;
         }
 
-        public CodexSalesAvailabilityResponse SalesAvailability(CodexSalesAvailabilityRequest request)
+        public LocalDatasetList LocalFiles()
         {
-            return Http().HttpPostJson<CodexSalesAvailabilityRequest, CodexSalesAvailabilityResponse>("sales/availability", request);
+            return mapper.Map(OnCodex(api => api.ListDataAsync()));
         }
 
-        public string RequestStorage(CodexSalesRequestStorageRequest request, string contentId)
+        public StorageAvailability SalesAvailability(StorageAvailability request)
         {
-            return Http().HttpPostJson($"storage/request/{contentId}", request);
+            var body = mapper.Map(request);
+            var read = OnCodex<SalesAvailabilityREAD>(api => api.OfferStorageAsync(body));
+            return mapper.Map(read);
         }
 
-        public CodexStoragePurchase GetPurchaseStatus(string purchaseId)
+        public string RequestStorage(StoragePurchaseRequest request)
         {
-            return Http().HttpGetJson<CodexStoragePurchase>($"storage/purchases/{purchaseId}");
+            var body = mapper.Map(request);
+            return OnCodex<string>(api => api.CreateStorageRequestAsync(request.ContentId.Id, body));
         }
 
-        public string ConnectToPeer(string peerId, string peerMultiAddress)
+        public StoragePurchase GetPurchaseStatus(string purchaseId)
         {
-            return Http().HttpGetString($"connect/{peerId}?addrs={peerMultiAddress}");
+            var endpoint = GetEndpoint();
+            return Time.Retry(() =>
+            {
+                var str = endpoint.HttpGetString($"storage/purchases/{purchaseId}");
+                if (string.IsNullOrEmpty(str)) throw new Exception("Empty response.");
+                return JsonConvert.DeserializeObject<StoragePurchase>(str)!;
+            }, nameof(GetPurchaseStatus));
+
+            // TODO: current getpurchase api does not line up with its openapi spec.
+            // return mapper.Map(OnCodex(api => api.GetPurchaseAsync(purchaseId)));
         }
 
         public string GetName()
@@ -86,9 +108,35 @@ namespace CodexPlugin
             return Container.Name;
         }
 
-        private IHttp Http()
+        public PodInfo GetPodInfo()
         {
-            return tools.CreateHttp(Container.Address, baseUrl: "/api/codex/v1", CheckContainerCrashed, Container.Name);
+            var workflow = tools.CreateWorkflow();
+            return workflow.GetPodInfo(Container);
+        }
+
+        private T OnCodex<T>(Func<CodexApi, Task<T>> action)
+        {
+            var address = GetAddress();
+            var result = tools.CreateHttp(CheckContainerCrashed)
+                .OnClient(client =>
+            {
+                var api = new CodexApi(client);
+                api.BaseUrl = $"{address.Host}:{address.Port}/api/codex/v1";
+                return Time.Wait(action(api));
+            });
+            return result;
+        }
+
+        private IEndpoint GetEndpoint()
+        {
+            return tools
+                .CreateHttp(CheckContainerCrashed)
+                .CreateEndpoint(GetAddress(), "/api/codex/v1/", Container.Name);
+        }
+
+        private Address GetAddress()
+        {
+            return Container.GetAddress(tools.GetLog(), CodexContainerRecipe.ApiPortTag);
         }
 
         private void CheckContainerCrashed(HttpClient client)
@@ -101,6 +149,7 @@ namespace CodexPlugin
             var log = tools.GetLog();
             var file = log.CreateSubfile();
             log.Log($"Container {Container.Name} has crashed. Downloading crash log to '{file.FullFilename}'...");
+            file.Write($"Container Crash Log for {Container.Name}.");
 
             using var reader = new StreamReader(crashLog);
             var line = reader.ReadLine();

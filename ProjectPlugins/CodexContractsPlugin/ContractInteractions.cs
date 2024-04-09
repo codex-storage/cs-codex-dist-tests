@@ -1,7 +1,9 @@
-﻿using GethPlugin;
+﻿using CodexContractsPlugin.Marketplace;
+using GethPlugin;
 using Logging;
 using Nethereum.ABI.FunctionEncoding.Attributes;
 using Nethereum.Contracts;
+using Nethereum.Hex.HexConvertors.Extensions;
 using NethereumWorkflow;
 using System.Numerics;
 
@@ -26,9 +28,26 @@ namespace CodexContractsPlugin
             return gethNode.Call<GetTokenFunction, string>(marketplaceAddress, function);
         }
 
-        public void MintTestTokens(EthAddress address, decimal amount, string tokenAddress)
+        public string GetTokenName(string tokenAddress)
         {
-            MintTokens(address.Address, amount, tokenAddress);
+            try
+            {
+                log.Debug(tokenAddress);
+                var function = new GetTokenNameFunction();
+
+                return gethNode.Call<GetTokenNameFunction, string>(tokenAddress, function);
+            }
+            catch (Exception ex)
+            {
+                log.Log("Failed to get token name: " + ex);
+                return string.Empty;
+            }
+        }
+
+        public string MintTestTokens(EthAddress address, decimal amount, string tokenAddress)
+        {
+            log.Debug($"{amount} -> {address} (token: {tokenAddress})");
+            return MintTokens(address.Address, amount, tokenAddress);
         }
 
         public decimal GetBalance(string tokenAddress, string account)
@@ -42,8 +61,20 @@ namespace CodexContractsPlugin
             return gethNode.Call<GetTokenBalanceFunction, BigInteger>(tokenAddress, function).ToDecimal();
         }
 
+        public GetRequestOutputDTO GetRequest(string marketplaceAddress, byte[] requestId)
+        {
+
+            log.Debug($"({marketplaceAddress}) {requestId.ToHex(true)}");
+            var func = new GetRequestFunction
+            {
+                RequestId = requestId
+            };
+            return gethNode.Call<GetRequestFunction, GetRequestOutputDTO>(marketplaceAddress, func);
+        }
+
         public bool IsSynced(string marketplaceAddress, string marketplaceAbi)
         {
+            log.Debug();
             try
             {
                 return IsBlockNumberOK() && IsContractAvailable(marketplaceAddress, marketplaceAbi);
@@ -54,7 +85,7 @@ namespace CodexContractsPlugin
             }
         }
 
-        private void MintTokens(string account, decimal amount, string tokenAddress)
+        private string MintTokens(string account, decimal amount, string tokenAddress)
         {
             log.Debug($"({tokenAddress}) {amount} --> {account}");
             if (string.IsNullOrEmpty(account)) throw new ArgumentException("Invalid arguments for MintTestTokens");
@@ -65,7 +96,7 @@ namespace CodexContractsPlugin
                 Amount = amount.ToBig()
             };
 
-            gethNode.SendTransaction(tokenAddress, function);
+            return gethNode.SendTransaction(tokenAddress, function);
         }
 
         private bool IsBlockNumberOK()
@@ -82,6 +113,11 @@ namespace CodexContractsPlugin
 
     [Function("token", "address")]
     public class GetTokenFunction : FunctionMessage
+    {
+    }
+
+    [Function("name", "string")]
+    public class GetTokenNameFunction : FunctionMessage
     {
     }
 

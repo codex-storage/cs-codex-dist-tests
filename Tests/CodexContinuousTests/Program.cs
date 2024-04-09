@@ -4,7 +4,7 @@ public class Program
 {
     public static void Main(string[] args)
     {
-        Console.WriteLine("Codex Continous-Test-Runner.");
+        Console.WriteLine("Codex Continuous-Test-Runner.");
 
         var runner = new ContinuousTestRunner(args, Cancellation.Cts.Token);
 
@@ -15,8 +15,15 @@ public class Program
 
             Cancellation.Cts.Cancel();
         };
-        
-        runner.Run();
+
+        try
+        {
+            runner.Run();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.ToString());
+        }
         Console.WriteLine("Done.");
     }
 }

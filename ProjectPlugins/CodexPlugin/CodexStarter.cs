@@ -1,5 +1,6 @@
 ﻿using Core;
 using KubernetesWorkflow;
+using KubernetesWorkflow.Types;
 using Logging;
 
 namespace CodexPlugin
@@ -8,11 +9,14 @@ namespace CodexPlugin
     {
         private readonly IPluginTools pluginTools;
         private readonly CodexContainerRecipe recipe = new CodexContainerRecipe();
-        private CodexDebugVersionResponse? versionResponse;
+        private readonly ApiChecker apiChecker;
+        private DebugInfoVersion? versionResponse;
 
         public CodexStarter(IPluginTools pluginTools)
         {
             this.pluginTools = pluginTools;
+
+            apiChecker = new ApiChecker(pluginTools);
         }
 
         public RunningContainers[] BringOnline(CodexSetup codexSetup)
@@ -24,8 +28,14 @@ namespace CodexPlugin
 
             var containers = StartCodexContainers(startupConfig, codexSetup.NumberOfNodes, codexSetup.Location);
 
-            var podInfos = string.Join(", ", containers.Containers().Select(c => $"Container: '{c.Name}' runs at '{c.Pod.PodInfo.K8SNodeName}'={c.Pod.PodInfo.Ip}"));
-            Log($"Started {codexSetup.NumberOfNodes} nodes of image '{containers.Containers().First().Recipe.Image}'. ({podInfos})");
+            apiChecker.CheckCompatibility(containers);
+
+            foreach (var rc in containers)
+            {
+                var podInfo = GetPodInfo(rc);
+                var podInfos = string.Join(", ", rc.Containers.Select(c => $"Container: '{c.Name}' runs at '{podInfo.K8SNodeName}'={podInfo.Ip}"));
+                Log($"Started {codexSetup.NumberOfNodes} nodes of image '{containers.Containers().First().Recipe.Image}'. ({podInfos})");
+            }
             LogSeparator();
 
             return containers;
@@ -43,22 +53,28 @@ namespace CodexPlugin
             return group;
         }
 
-        public void BringOffline(CodexNodeGroup group)
+        public void BringOffline(CodexNodeGroup group, bool waitTillStopped)
         {
             Log($"Stopping {group.Describe()}...");
             StopCrashWatcher(group);
             var workflow = pluginTools.CreateWorkflow();
             foreach (var c in group.Containers)
             {
-                workflow.Stop(c);
+                workflow.Stop(c, waitTillStopped);
             }
             Log("Stopped.");
         }
 
         public string GetCodexId()
         {
-            if (versionResponse != null) return versionResponse.version;
+            if (versionResponse != null) return versionResponse.Version;
             return recipe.Image;
+        }
+
+        public string GetCodexRevision()
+        {
+            if (versionResponse != null) return versionResponse.Revision;
+            return "unknown";
         }
 
         private StartupConfig CreateStartupConfig(CodexSetup codexSetup)
@@ -78,6 +94,12 @@ namespace CodexPlugin
                 result.Add(workflow.Start(1, location, recipe, startupConfig));
             }
             return result.ToArray();
+        }
+
+        private PodInfo GetPodInfo(RunningContainers rc)
+        {
+            var workflow = pluginTools.CreateWorkflow();
+            return workflow.GetPodInfo(rc);
         }
 
         private CodexNodeGroup CreateCodexGroup(CoreInterface coreInterface, RunningContainers[] runningContainers, CodexNodeFactory codexNodeFactory)

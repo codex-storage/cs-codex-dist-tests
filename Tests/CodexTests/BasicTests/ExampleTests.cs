@@ -1,11 +1,11 @@
-﻿using CodexContractsPlugin;
+﻿using CodexPlugin;
 using DistTestCore;
 using GethPlugin;
 using MetricsPlugin;
 using NUnit.Framework;
 using Utils;
 
-namespace Tests.BasicTests
+namespace CodexTests.BasicTests
 {
     [TestFixture]
     public class ExampleTests : CodexDistTest
@@ -13,9 +13,12 @@ namespace Tests.BasicTests
         [Test]
         public void CodexLogExample()
         {
-            var primary = AddCodex();
+            var primary = AddCodex(s => s.WithLogLevel(CodexLogLevel.Trace, new CodexLogCustomTopics(CodexLogLevel.Warn, CodexLogLevel.Warn)));
 
-            primary.UploadFile(GenerateTestFile(5.MB()));
+            var cid = primary.UploadFile(GenerateTestFile(5.MB()));
+
+            var localDatasets = primary.LocalFiles();
+            CollectionAssert.Contains(localDatasets.Content.Select(c => c.Cid), cid);
 
             var log = Ci.DownloadLog(primary);
 
@@ -45,51 +48,20 @@ namespace Tests.BasicTests
         }
 
         [Test]
-        public void MarketplaceExample()
+        public void GethBootstrapTest()
         {
-            var sellerInitialBalance = 234.TestTokens();
-            var buyerInitialBalance = 1000.TestTokens();
-            var fileSize = 10.MB();
+            var boot = Ci.StartGethNode(s => s.WithName("boot").IsMiner());
+            var disconnected = Ci.StartGethNode(s => s.WithName("disconnected"));
+            var follow = Ci.StartGethNode(s => s.WithBootstrapNode(boot).WithName("follow"));
 
-            var geth = Ci.StartGethNode(s => s.IsMiner().WithName("disttest-geth"));
-            var contracts = Ci.StartCodexContracts(geth);
+            Thread.Sleep(12000);
 
-            var seller = AddCodex(s => s
-                .WithStorageQuota(11.GB())
-                .EnableMarketplace(geth, contracts, initialEth: 10.Eth(), initialTokens: sellerInitialBalance, isValidator: true)
-                .WithSimulateProofFailures(failEveryNProofs: 3));
-            
-            AssertBalance(geth, contracts, seller, Is.EqualTo(sellerInitialBalance));
-            seller.Marketplace.MakeStorageAvailable(
-                size: 10.GB(),
-                minPriceForTotalSpace: 1.TestTokens(),
-                maxCollateral: 20.TestTokens(),
-                maxDuration: TimeSpan.FromMinutes(3));
+            var bootN = boot.GetSyncedBlockNumber();
+            var discN = disconnected.GetSyncedBlockNumber();
+            var followN = follow.GetSyncedBlockNumber();
 
-            var testFile = GenerateTestFile(fileSize);
-
-            var buyer = AddCodex(s => s
-                            .WithBootstrapNode(seller)
-                            .EnableMarketplace(geth, contracts, initialEth: 10.Eth(), initialTokens: buyerInitialBalance));
-            
-            AssertBalance(geth, contracts, buyer, Is.EqualTo(buyerInitialBalance));
-
-            var contentId = buyer.UploadFile(testFile);
-            var purchaseContract = buyer.Marketplace.RequestStorage(contentId,
-                pricePerSlotPerSecond: 2.TestTokens(),
-                requiredCollateral: 10.TestTokens(),
-                minRequiredNumberOfNodes: 1,
-                proofProbability: 5,
-                duration: TimeSpan.FromMinutes(1));
-
-            purchaseContract.WaitForStorageContractStarted(fileSize);
-
-            AssertBalance(geth, contracts, seller, Is.LessThan(sellerInitialBalance), "Collateral was not placed.");
-
-            purchaseContract.WaitForStorageContractFinished();
-
-            AssertBalance(geth, contracts, seller, Is.GreaterThan(sellerInitialBalance), "Seller was not paid for storage.");
-            AssertBalance(geth, contracts, buyer, Is.LessThan(buyerInitialBalance), "Buyer was not charged for storage.");
+            Assert.That(bootN, Is.EqualTo(followN));
+            Assert.That(discN, Is.LessThan(bootN));
         }
     }
 }

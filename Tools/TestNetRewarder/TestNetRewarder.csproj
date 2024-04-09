@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net7.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Framework\ArgsUniform\ArgsUniform.csproj" />
+    <ProjectReference Include="..\..\Framework\DiscordRewards\DiscordRewards.csproj" />
+    <ProjectReference Include="..\..\Framework\GethConnector\GethConnector.csproj" />
+    <ProjectReference Include="..\..\Framework\Logging\Logging.csproj" />
+  </ItemGroup>
+
+</Project>

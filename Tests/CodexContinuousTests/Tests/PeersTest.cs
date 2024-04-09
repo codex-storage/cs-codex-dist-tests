@@ -1,8 +1,9 @@
 ﻿using CodexPlugin;
-using DistTestCore.Helpers;
+using CodexTests.Helpers;
+using ContinuousTests;
 using NUnit.Framework;
 
-namespace ContinuousTests.Tests
+namespace CodexContinuousTests.Tests
 {
     public class PeersTest : ContinuousTest
     {
@@ -23,12 +24,12 @@ namespace ContinuousTests.Tests
             var allInfos = Nodes.Select(n =>
             {
                 var info = n.GetDebugInfo();
-                Log.Log($"{n.GetName()} = {info.table.localNode.nodeId}");
-                Log.AddStringReplace(info.table.localNode.nodeId, n.GetName());
+                Log.Log($"{n.GetName()} = {info.Table.LocalNode.NodeId}");
+                Log.AddStringReplace(info.Table.LocalNode.NodeId, n.GetName());
                 return info;
             }).ToArray();
 
-            var allIds = allInfos.Select(i => i.table.localNode.nodeId).ToArray();
+            var allIds = allInfos.Select(i => i.Table.LocalNode.NodeId).ToArray();
             var errors = Nodes.Select(n => AreAllPresent(n, allIds)).Where(s => !string.IsNullOrEmpty(s)).ToArray();
 
             if (errors.Any())
@@ -40,13 +41,13 @@ namespace ContinuousTests.Tests
         private string AreAllPresent(ICodexNode n, string[] allIds)
         {
             var info = n.GetDebugInfo();
-            var known = info.table.nodes.Select(n => n.nodeId).ToArray();
-            var expected = allIds.Where(i => i != info.table.localNode.nodeId).ToArray();
+            var known = info.Table.Nodes.Select(n => n.NodeId).ToArray();
+            var expected = allIds.Where(i => i != info.Table.LocalNode.NodeId).ToArray();
 
             if (!expected.All(ex => known.Contains(ex)))
             {
                 var nl = Environment.NewLine;
-                return $"{nl}At node '{info.table.localNode.nodeId}'{nl}" +
+                return $"{nl}At node '{info.Table.LocalNode.NodeId}'{nl}" +
                     $"Not all of{nl}'{string.Join(",", expected)}'{nl}" +
                     $"were present in routing table:{nl}'{string.Join(",", known)}'";
             }

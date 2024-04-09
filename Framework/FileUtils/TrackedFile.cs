@@ -37,6 +37,11 @@ namespace FileUtils
             return $"'{Filename}'{sizePostfix}";
         }
 
+        public ByteSize GetFilesize()
+        {
+            return new ByteSize(GetFileSize());
+        }
+
         private void AssertEqual(TrackedFile? actual)
         {
             if (actual == null)  FrameworkAssert.Fail("TestFile is null.");

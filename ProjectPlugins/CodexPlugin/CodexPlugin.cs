@@ -1,5 +1,5 @@
-﻿using Core;
-using KubernetesWorkflow;
+using Core;
+using KubernetesWorkflow.Types;
 
 namespace CodexPlugin
 {
@@ -19,12 +19,13 @@ namespace CodexPlugin
 
         public void Announce()
         {
-            tools.GetLog().Log($"Loaded with Codex ID: '{codexStarter.GetCodexId()}'");
+            tools.GetLog().Log($"Loaded with Codex ID: '{codexStarter.GetCodexId()}' - Revision: {codexStarter.GetCodexRevision()}");
         }
 
         public void AddMetadata(IAddMetadata metadata)
         {
             metadata.Add("codexid", codexStarter.GetCodexId());
+            metadata.Add("codexrevision", codexStarter.GetCodexRevision());
         }
 
         public void Decommission()
@@ -51,8 +52,8 @@ namespace CodexPlugin
             var mconfig = codexSetup.MarketplaceConfig;
             foreach (var node in result)
             {
-                mconfig.GethNode.SendEth(node, mconfig.InitialEth);
-                mconfig.CodexContracts.MintTestTokens(mconfig.GethNode, node, mconfig.InitialTokens);
+                mconfig.GethNode.SendEth(node, mconfig.MarketplaceSetup.InitialEth);
+                mconfig.CodexContracts.MintTestTokens(node, mconfig.MarketplaceSetup.InitialTestTokens);
             }
         }
 

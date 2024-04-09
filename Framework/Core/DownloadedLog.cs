@@ -4,7 +4,7 @@ namespace Core
 {
     public interface IDownloadedLog
     {
-        bool DoesLogContain(string expectedString);
+        string[] GetLinesContaining(string expectedString);
         string[] FindLinesThatContain(params string[] tags);
         void DeleteFile();
     }
@@ -18,20 +18,23 @@ namespace Core
             this.logFile = logFile;
         }
 
-        public bool DoesLogContain(string expectedString)
+        public string[] GetLinesContaining(string expectedString)
         {
             using var file = File.OpenRead(logFile.FullFilename);
             using var streamReader = new StreamReader(file);
+            var lines = new List<string>();
 
             var line = streamReader.ReadLine();
             while (line != null)
             {
-                if (line.Contains(expectedString)) return true;
+                if (line.Contains(expectedString))
+                {
+                    lines.Add(line);
+                }
                 line = streamReader.ReadLine();
             }
 
-            //Assert.Fail($"{owner} Unable to find string '{expectedString}' in CodexNode log file {logFile.FullFilename}");
-            return false;
+            return lines.ToArray(); ;
         }
 
         public string[] FindLinesThatContain(params string[] tags)
