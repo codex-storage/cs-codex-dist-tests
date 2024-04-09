@@ -93,6 +93,7 @@ namespace CodexPlugin
                 var workflow = pluginTools.CreateWorkflow();
                 result.Add(workflow.Start(1, location, recipe, startupConfig));
             }
+
             return result.ToArray();
         }
 
