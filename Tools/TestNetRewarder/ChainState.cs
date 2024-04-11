@@ -11,6 +11,8 @@ namespace TestNetRewarder
 
         public ChainState(HistoricState historicState, ICodexContracts contracts, BlockInterval blockRange)
         {
+            this.historicState = historicState;
+
             NewRequests = contracts.GetStorageRequests(blockRange);
             historicState.CleanUpOldRequests();
             historicState.ProcessNewRequests(NewRequests);
@@ -23,7 +25,6 @@ namespace TestNetRewarder
             RequestCancelledEvents = contracts.GetRequestCancelledEvents(blockRange);
             SlotFilledEvents = contracts.GetSlotFilledEvents(blockRange);
             SlotFreedEvents = contracts.GetSlotFreedEvents(blockRange);
-            this.historicState = historicState;
         }
 
         public Request[] NewRequests { get; }
