@@ -9,8 +9,8 @@ namespace KubernetesWorkflow
     public interface IStartupWorkflow
     {
         IKnownLocations GetAvailableLocations();
-        RunningContainers Start(int numberOfContainers, ContainerRecipeFactory recipeFactory, StartupConfig startupConfig);
-        RunningContainers Start(int numberOfContainers, ILocation location, ContainerRecipeFactory recipeFactory, StartupConfig startupConfig);
+        FutureContainers Start(int numberOfContainers, ContainerRecipeFactory recipeFactory, StartupConfig startupConfig);
+        FutureContainers Start(int numberOfContainers, ILocation location, ContainerRecipeFactory recipeFactory, StartupConfig startupConfig);
         PodInfo GetPodInfo(RunningContainer container);
         PodInfo GetPodInfo(RunningContainers containers);
         CrashWatcher CreateCrashWatcher(RunningContainer container);
@@ -45,12 +45,12 @@ namespace KubernetesWorkflow
             return locationProvider.GetAvailableLocations();
         }
 
-        public RunningContainers Start(int numberOfContainers, ContainerRecipeFactory recipeFactory, StartupConfig startupConfig)
+        public FutureContainers Start(int numberOfContainers, ContainerRecipeFactory recipeFactory, StartupConfig startupConfig)
         {
             return Start(numberOfContainers, KnownLocations.UnspecifiedLocation, recipeFactory, startupConfig);
         }
 
-        public RunningContainers Start(int numberOfContainers, ILocation location, ContainerRecipeFactory recipeFactory, StartupConfig startupConfig)
+        public FutureContainers Start(int numberOfContainers, ILocation location, ContainerRecipeFactory recipeFactory, StartupConfig startupConfig)
         {
             return K8s(controller =>
             {
@@ -67,7 +67,18 @@ namespace KubernetesWorkflow
                 {
                     componentFactory.Update(controller);
                 }
-                return rc;
+                return new FutureContainers(rc, this);
+            });
+        }
+
+        public void WaitUntilOnline(RunningContainers rc)
+        {
+            K8s(controller =>
+            {
+                foreach (var c in rc.Containers)
+                {
+                    controller.WaitUntilOnline(c);
+                }
             });
         }
 

@@ -21,7 +21,7 @@ namespace GethPlugin
             startupConfig.NameOverride = gethStartupConfig.NameOverride;
 
             var workflow = tools.CreateWorkflow();
-            var containers = workflow.Start(1, new GethContainerRecipe(), startupConfig);
+            var containers = workflow.Start(1, new GethContainerRecipe(), startupConfig).WaitForOnline();
             if (containers.Containers.Length != 1) throw new InvalidOperationException("Expected 1 Geth bootstrap node to be created. Test infra failure.");
             var container = containers.Containers[0];
 

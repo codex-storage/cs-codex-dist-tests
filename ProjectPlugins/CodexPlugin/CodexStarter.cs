@@ -87,13 +87,16 @@ namespace CodexPlugin
 
         private RunningContainers[] StartCodexContainers(StartupConfig startupConfig, int numberOfNodes, ILocation location)
         {
-            var result = new List<RunningContainers>();
+            var futureContainers = new List<FutureContainers>();
             for (var i = 0; i < numberOfNodes; i++)
             {
                 var workflow = pluginTools.CreateWorkflow();
-                result.Add(workflow.Start(1, location, recipe, startupConfig));
+                futureContainers.Add(workflow.Start(1, location, recipe, startupConfig));
             }
-            return result.ToArray();
+
+            return futureContainers
+                .Select(f => f.WaitForOnline())
+                .ToArray();
         }
 
         private PodInfo GetPodInfo(RunningContainers rc)

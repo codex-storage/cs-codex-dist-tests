@@ -19,23 +19,24 @@ namespace CodexTests.BasicTests
 
             var geth = Ci.StartGethNode(s => s.IsMiner().WithName("disttest-geth"));
             var contracts = Ci.StartCodexContracts(geth);
+            
+            var numberOfHosts = 5;
+            var hosts = AddCodex(numberOfHosts, s => s
+                .WithName("Host")
+                .WithLogLevel(CodexLogLevel.Trace, new CodexLogCustomTopics(CodexLogLevel.Error, CodexLogLevel.Error, CodexLogLevel.Warn)
+                {
+                    ContractClock = CodexLogLevel.Trace,
+                })
+                .WithStorageQuota(11.GB())
+                .EnableMarketplace(geth, contracts, m => m
+                    .WithInitial(10.Eth(), hostInitialBalance)
+                    .AsStorageNode()
+                    .AsValidator()));
 
-            var numberOfHosts = 3;
-            for (var i = 0; i < numberOfHosts; i++)
+            var expectedHostBalance = (numberOfHosts * hostInitialBalance.Amount).TestTokens();
+            foreach (var host in hosts)
             {
-                var host = AddCodex(s => s
-                    .WithName("Host")
-                    .WithLogLevel(CodexLogLevel.Trace, new CodexLogCustomTopics(CodexLogLevel.Error, CodexLogLevel.Error, CodexLogLevel.Warn)
-                    {
-                        ContractClock = CodexLogLevel.Trace,
-                    })
-                    .WithStorageQuota(11.GB())
-                    .EnableMarketplace(geth, contracts, m => m
-                        .WithInitial(10.Eth(), hostInitialBalance)
-                        .AsStorageNode()
-                        .AsValidator()));
-
-                AssertBalance(contracts, host, Is.EqualTo(hostInitialBalance));
+                AssertBalance(contracts, host, Is.EqualTo(expectedHostBalance));
 
                 var availability = new StorageAvailability(
                     totalSpace: 10.GB(),

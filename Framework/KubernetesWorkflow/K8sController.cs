@@ -43,6 +43,11 @@ namespace KubernetesWorkflow
             return new StartResult(cluster, containerRecipes, deployment, internalService, externalService);
         }
 
+        public void WaitUntilOnline(RunningContainer container)
+        {
+            WaitUntilDeploymentOnline(container.Recipe.Name);
+        }
+
         public PodInfo GetPodInfo(RunningDeployment deployment)
         {
             var pod = GetPodForDeployment(deployment);
@@ -372,7 +377,6 @@ namespace KubernetesWorkflow
             };
 
             client.Run(c => c.CreateNamespacedDeployment(deploymentSpec, K8sNamespace));
-            WaitUntilDeploymentOnline(deploymentSpec.Metadata.Name);
 
             var name = deploymentSpec.Metadata.Name;
             return new RunningDeployment(name, podLabel);

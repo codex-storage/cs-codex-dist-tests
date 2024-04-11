@@ -24,7 +24,7 @@ namespace CodexContractsPlugin
             var startupConfig = CreateStartupConfig(gethNode);
             startupConfig.NameOverride = "codex-contracts";
 
-            var containers = workflow.Start(1, new CodexContractsContainerRecipe(), startupConfig);
+            var containers = workflow.Start(1, new CodexContractsContainerRecipe(), startupConfig).WaitForOnline();
             if (containers.Containers.Length != 1) throw new InvalidOperationException("Expected 1 Codex contracts container to be created. Test infra failure.");
             var container = containers.Containers[0];
 
