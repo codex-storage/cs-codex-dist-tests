@@ -42,6 +42,7 @@ namespace TestNetRewarder
         private ChainState[] SelectStates(int numberOfIntervals)
         {
             if (numberOfIntervals < 1) return Array.Empty<ChainState>();
+            if (numberOfIntervals > buffer.Count) return Array.Empty<ChainState>();
             return buffer.TakeLast(numberOfIntervals).ToArray();
         }
 
