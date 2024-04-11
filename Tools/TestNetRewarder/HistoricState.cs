@@ -28,8 +28,6 @@ namespace TestNetRewarder
                 r.State == RequestState.Finished ||
                 r.State == RequestState.Failed
             );
-
-            foreach (var r in storageRequests) r.IsNew = false;
         }
     }
 
@@ -39,22 +37,17 @@ namespace TestNetRewarder
         {
             Request = request;
             Hosts = Array.Empty<EthAddress>();
-            IsNew = true;
         }
 
         public Request Request { get; }
         public EthAddress[] Hosts { get; private set; }
         public RequestState State { get; private set; }
-        public bool IsNew { get; set; }
         
         [JsonIgnore]
         public bool RecentlyStarted { get; private set; }
 
         [JsonIgnore]
         public bool RecentlyFinished { get; private set; }
-
-        [JsonIgnore]
-        public bool RecentlyChanged { get; private set; }
 
         public void Update(ICodexContracts contracts)
         {
@@ -70,25 +63,8 @@ namespace TestNetRewarder
                 State == RequestState.Started &&
                 newState == RequestState.Finished;
 
-            RecentlyChanged =
-                IsNew ||
-                State != newState ||
-                HostsChanged(newHosts);
-
             State = newState;
             Hosts = newHosts;
-        }
-
-        private bool HostsChanged(EthAddress[] newHosts)
-        {
-            if (newHosts.Length != Hosts.Length) return true;
-            
-            foreach (var newHost in newHosts) 
-            {
-                if (!Hosts.Contains(newHost)) return true;
-            }
-
-            return false;
         }
 
         private EthAddress[] GetHosts(ICodexContracts contracts)

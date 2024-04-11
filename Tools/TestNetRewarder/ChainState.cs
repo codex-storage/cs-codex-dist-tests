@@ -20,7 +20,6 @@ namespace TestNetRewarder
 
             StartedRequests = historicState.StorageRequests.Where(r => r.RecentlyStarted).ToArray();
             FinishedRequests = historicState.StorageRequests.Where(r => r.RecentlyFinished).ToArray();
-            ChangedRequests = historicState.StorageRequests.Where(r => r.RecentlyChanged).ToArray();
             RequestFulfilledEvents = contracts.GetRequestFulfilledEvents(blockRange);
             RequestCancelledEvents = contracts.GetRequestCancelledEvents(blockRange);
             SlotFilledEvents = contracts.GetSlotFilledEvents(blockRange);
@@ -31,7 +30,6 @@ namespace TestNetRewarder
         public StorageRequest[] AllRequests => historicState.StorageRequests;
         public StorageRequest[] StartedRequests { get; private set; }
         public StorageRequest[] FinishedRequests { get; private set; }
-        public StorageRequest[] ChangedRequests { get; private set; }
         public RequestFulfilledEventDTO[] RequestFulfilledEvents { get; }
         public RequestCancelledEventDTO[] RequestCancelledEvents { get; }
         public SlotFilledEventDTO[] SlotFilledEvents { get; }
@@ -41,7 +39,7 @@ namespace TestNetRewarder
         {
             var entries = new List<StringBlockNumberPair>();
 
-            entries.AddRange(ChangedRequests.Select(ToPair));
+            entries.AddRange(NewRequests.Select(ToPair));
             entries.AddRange(RequestFulfilledEvents.Select(ToPair));
             entries.AddRange(RequestCancelledEvents.Select(ToPair));
             entries.AddRange(SlotFilledEvents.Select(ToPair));
@@ -52,44 +50,46 @@ namespace TestNetRewarder
             return entries.Select(ToLine).ToArray();
         }
 
-        private StringBlockNumberPair ToPair(StorageRequest r)
+        private StringBlockNumberPair ToPair(Request r)
         {
-            return new StringBlockNumberPair(JsonConvert.SerializeObject(r), r.Request.BlockNumber);
+            return new StringBlockNumberPair("NewRequest", JsonConvert.SerializeObject(r), r.BlockNumber);
         }
 
         private StringBlockNumberPair ToPair(RequestFulfilledEventDTO r)
         {
-            return new StringBlockNumberPair(JsonConvert.SerializeObject(r), r.BlockNumber);
+            return new StringBlockNumberPair("Fulfilled", JsonConvert.SerializeObject(r), r.BlockNumber);
         }
 
         private StringBlockNumberPair ToPair(RequestCancelledEventDTO r)
         {
-            return new StringBlockNumberPair(JsonConvert.SerializeObject(r), r.BlockNumber);
+            return new StringBlockNumberPair("Cancelled", JsonConvert.SerializeObject(r), r.BlockNumber);
         }
 
         private StringBlockNumberPair ToPair(SlotFilledEventDTO r)
         {
-            return new StringBlockNumberPair(JsonConvert.SerializeObject(r), r.BlockNumber);
+            return new StringBlockNumberPair("SlotFilled", JsonConvert.SerializeObject(r), r.BlockNumber);
         }
 
         private StringBlockNumberPair ToPair(SlotFreedEventDTO r)
         {
-            return new StringBlockNumberPair(JsonConvert.SerializeObject(r), r.BlockNumber);
+            return new StringBlockNumberPair("SlotFreed", JsonConvert.SerializeObject(r), r.BlockNumber);
         }
 
         private string ToLine(StringBlockNumberPair pair)
         {
-            return $"[{pair.Number}] {pair.Str}";
+            return $"[{pair.Number}]({pair.Name}) {pair.Str}";
         }
 
         public class StringBlockNumberPair
         {
-            public StringBlockNumberPair(string str, ulong number)
+            public StringBlockNumberPair(string name, string str, ulong number)
             {
+                Name = name;
                 Str = str;
                 Number = number;
             }
 
+            public string Name { get; }
             public string Str { get; }
             public ulong Number { get; }
         }
