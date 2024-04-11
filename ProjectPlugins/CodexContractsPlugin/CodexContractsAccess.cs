@@ -5,6 +5,8 @@ using Nethereum.ABI;
 using Nethereum.Hex.HexTypes;
 using Nethereum.Util;
 using NethereumWorkflow;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 using Utils;
 
 namespace CodexContractsPlugin
@@ -28,6 +30,7 @@ namespace CodexContractsPlugin
         SlotFreedEventDTO[] GetSlotFreedEvents(BlockInterval blockRange);
     }
 
+    [JsonConverter(typeof(StringEnumConverter))]
     public enum RequestState
     {
         New,
