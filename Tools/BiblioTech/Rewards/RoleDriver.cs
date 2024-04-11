@@ -45,10 +45,17 @@ namespace BiblioTech.Rewards
         private async Task ProcessChainEvents(string[] eventsOverview)
         {
             if (eventsChannel == null || eventsOverview == null || !eventsOverview.Any()) return;
-            foreach (var e in eventsOverview)
+            await Task.Run(async () =>
             {
-                await eventsChannel.SendMessageAsync(e);
-            }
+                foreach (var e in eventsOverview)
+                {
+                    if (!string.IsNullOrEmpty(e))
+                    {
+                        await eventsChannel.SendMessageAsync(e);
+                        await Task.Delay(3000);
+                    }
+                }
+            });
         }
 
         private async Task<Dictionary<ulong, IGuildUser>> LoadAllUsers(SocketGuild guild)
