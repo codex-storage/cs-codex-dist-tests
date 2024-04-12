@@ -69,7 +69,7 @@ namespace TestNetRewarder
 
             log.Log($"Found {outgoingRewards.Count} rewards to send. Found {marketAverages.Length} market averages.");
 
-            if (outgoingRewards.Any())
+            if (outgoingRewards.Any() || marketAverages.Any() || eventsOverview.Any())
             {
                 if (!await SendRewardsCommand(outgoingRewards, marketAverages, eventsOverview))
                 {
