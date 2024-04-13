@@ -19,10 +19,10 @@ public class ScalabilityTests : CodexDistTest
     )
     {
         CodexContainerRecipe.DockerImageOverride = usePatchedImage ? PatchedImage : MasterImage;
-        
+
         var bootstrap = AddCodex();
         var nodes = AddCodex(numberOfNodes - 1,
-            s => s.WithBootstrapNode(bootstrap)).ToList();
+            s => s.WithBootstrapNode(bootstrap).WithLogLevel(CodexLogLevel.Info)).ToList();
 
         var uploader = nodes.PickOneRandom();
         var downloader = nodes.PickOneRandom();
