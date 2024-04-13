@@ -68,6 +68,7 @@ namespace TestNetRewarder
             entries.AddRange(RequestCancelledEvents.Select(ToPair));
             entries.AddRange(SlotFilledEvents.Select(ToPair));
             entries.AddRange(SlotFreedEvents.Select(ToPair));
+            entries.AddRange(FinishedRequests.Select(ToPair));
 
             entries.Sort(new StringUtcComparer());
 
@@ -77,6 +78,11 @@ namespace TestNetRewarder
         private StringBlockNumberPair ToPair(Request r)
         {
             return new StringBlockNumberPair("NewRequest", JsonConvert.SerializeObject(r), r.Block, r.RequestId);
+        }
+
+        public StringBlockNumberPair ToPair(StorageRequest r)
+        {
+            return new StringBlockNumberPair("FinishedRequest", JsonConvert.SerializeObject(r), r.Request.Block, r.Request.RequestId);
         }
 
         private StringBlockNumberPair ToPair(RequestFulfilledEventDTO r)
