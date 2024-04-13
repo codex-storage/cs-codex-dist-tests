@@ -1,4 +1,5 @@
 using CodexPlugin;
+using DistTestCore;
 using NUnit.Framework;
 using Utils;
 
@@ -12,6 +13,7 @@ public class ScalabilityTests : CodexDistTest
 
     [Test]
     [Combinatorial]
+    [UseLongTimeouts]
     public void ShouldMaintainFileInNetwork(
         [Values(10, 20, 40, 80, 100)] int numberOfNodes,
         [Values(100, 1000, 5000, 10000)] int fileSizeInMb,
