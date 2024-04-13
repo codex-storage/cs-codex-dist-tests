@@ -1,7 +1,5 @@
-﻿using CodexContractsPlugin.Marketplace;
-using DiscordRewards;
+﻿using DiscordRewards;
 using Logging;
-using Newtonsoft.Json;
 using System.Net.Http.Json;
 
 namespace TestNetRewarder

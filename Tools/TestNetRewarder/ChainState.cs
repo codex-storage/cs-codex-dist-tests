@@ -1,5 +1,6 @@
 ﻿using CodexContractsPlugin;
 using CodexContractsPlugin.Marketplace;
+using NethereumWorkflow.BlockUtils;
 using Newtonsoft.Json;
 using Utils;
 
@@ -8,6 +9,29 @@ namespace TestNetRewarder
     public class ChainState
     {
         private readonly HistoricState historicState;
+        private readonly string[] colorIcons = new[]
+        {
+            "🔴",
+            "🟠",
+            "🟡",
+            "🟢",
+            "🔵",
+            "🟣",
+            "🟤",
+            "⚫",
+            "⚪",
+            "🟥",
+            "🟧",
+            "🟨",
+            "🟩",
+            "🟦",
+            "🟪",
+            "🟫",
+            "⬛",
+            "⬜",
+            "🔶",
+            "🔷"
+        };
 
         public ChainState(HistoricState historicState, ICodexContracts contracts, BlockInterval blockRange)
         {
@@ -52,46 +76,59 @@ namespace TestNetRewarder
 
         private StringBlockNumberPair ToPair(Request r)
         {
-            return new StringBlockNumberPair("NewRequest", JsonConvert.SerializeObject(r), r.BlockNumber);
+            return new StringBlockNumberPair("NewRequest", JsonConvert.SerializeObject(r), r.Block, r.RequestId);
         }
 
         private StringBlockNumberPair ToPair(RequestFulfilledEventDTO r)
         {
-            return new StringBlockNumberPair("Fulfilled", JsonConvert.SerializeObject(r), r.BlockNumber);
+            return new StringBlockNumberPair("Fulfilled", JsonConvert.SerializeObject(r), r.Block, r.RequestId);
         }
 
         private StringBlockNumberPair ToPair(RequestCancelledEventDTO r)
         {
-            return new StringBlockNumberPair("Cancelled", JsonConvert.SerializeObject(r), r.BlockNumber);
+            return new StringBlockNumberPair("Cancelled", JsonConvert.SerializeObject(r), r.Block, r.RequestId);
         }
 
         private StringBlockNumberPair ToPair(SlotFilledEventDTO r)
         {
-            return new StringBlockNumberPair("SlotFilled", JsonConvert.SerializeObject(r), r.BlockNumber);
+            return new StringBlockNumberPair("SlotFilled", JsonConvert.SerializeObject(r), r.Block, r.RequestId);
         }
 
         private StringBlockNumberPair ToPair(SlotFreedEventDTO r)
         {
-            return new StringBlockNumberPair("SlotFreed", JsonConvert.SerializeObject(r), r.BlockNumber);
+            return new StringBlockNumberPair("SlotFreed", JsonConvert.SerializeObject(r), r.Block, r.RequestId);
         }
 
         private string ToLine(StringBlockNumberPair pair)
         {
-            return $"[{pair.Number}]({pair.Name}) {pair.Str}";
+            var nl = Environment.NewLine;
+            var colorIcon = GetColorIcon(pair.RequestId);
+            return $"{colorIcon} {pair.Block} ({pair.Name}){nl}" +
+                $"```json{nl}" +
+                $"{pair.Str}{nl}" +
+                $"```";
+        }
+
+        private string GetColorIcon(byte[] requestId)
+        {
+            var index = requestId[0] % colorIcons.Length;
+            return colorIcons[index];
         }
 
         public class StringBlockNumberPair
         {
-            public StringBlockNumberPair(string name, string str, ulong number)
+            public StringBlockNumberPair(string name, string str, BlockTimeEntry block, byte[] requestId)
             {
                 Name = name;
                 Str = str;
-                Number = number;
+                Block = block;
+                RequestId = requestId;
             }
 
             public string Name { get; }
             public string Str { get; }
-            public ulong Number { get; }
+            public BlockTimeEntry Block { get; }
+            public byte[] RequestId { get; }
         }
 
         public class StringUtcComparer : IComparer<StringBlockNumberPair>
@@ -101,7 +138,7 @@ namespace TestNetRewarder
                 if (x == null && y == null) return 0;
                 if (x == null) return 1;
                 if (y == null) return -1;
-                return x.Number.CompareTo(y.Number);
+                return x.Block.BlockNumber.CompareTo(y.Block.BlockNumber);
             }
         }
     }
