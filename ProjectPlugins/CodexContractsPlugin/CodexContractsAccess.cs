@@ -5,6 +5,7 @@ using Nethereum.ABI;
 using Nethereum.Hex.HexTypes;
 using Nethereum.Util;
 using NethereumWorkflow;
+using NethereumWorkflow.BlockUtils;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Utils;
@@ -89,7 +90,7 @@ namespace CodexContractsPlugin
                     {
                         var requestEvent = i.GetRequest(Deployment.MarketplaceAddress, e.Event.RequestId);
                         var result = requestEvent.ReturnValue1;
-                        result.BlockNumber = e.Log.BlockNumber.ToUlong();
+                        result.Block = GetBlock(e.Log.BlockNumber.ToUlong());
                         result.RequestId = e.Event.RequestId;
                         return result;
                     })
@@ -102,7 +103,7 @@ namespace CodexContractsPlugin
             return events.Select(e =>
             {
                 var result = e.Event;
-                result.BlockNumber = e.Log.BlockNumber.ToUlong();
+                result.Block = GetBlock(e.Log.BlockNumber.ToUlong());
                 return result;
             }).ToArray();
         }
@@ -113,7 +114,7 @@ namespace CodexContractsPlugin
             return events.Select(e =>
             {
                 var result = e.Event;
-                result.BlockNumber = e.Log.BlockNumber.ToUlong();
+                result.Block = GetBlock(e.Log.BlockNumber.ToUlong());
                 return result;
             }).ToArray();
         }
@@ -124,7 +125,7 @@ namespace CodexContractsPlugin
             return events.Select(e =>
             {
                 var result = e.Event;
-                result.BlockNumber = e.Log.BlockNumber.ToUlong();
+                result.Block = GetBlock(e.Log.BlockNumber.ToUlong());
                 result.Host = GetEthAddressFromTransaction(e.Log.TransactionHash);
                 return result;
             }).ToArray();
@@ -136,7 +137,7 @@ namespace CodexContractsPlugin
             return events.Select(e =>
             {
                 var result = e.Event;
-                result.BlockNumber = e.Log.BlockNumber.ToUlong();
+                result.Block = GetBlock(e.Log.BlockNumber.ToUlong());
                 return result;
             }).ToArray();
         }
@@ -167,6 +168,11 @@ namespace CodexContractsPlugin
                 RequestId = request.RequestId
             };
             return gethNode.Call<RequestStateFunction, RequestState>(Deployment.MarketplaceAddress, func);
+        }
+
+        private BlockTimeEntry GetBlock(ulong number)
+        {
+            return gethNode.GetBlockForNumber(number);
         }
 
         private EthAddress GetEthAddressFromTransaction(string transactionHash)

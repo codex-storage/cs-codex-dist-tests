@@ -18,6 +18,13 @@ namespace NethereumWorkflow.BlockUtils
             bounds = new BlockchainBounds(cache, web3);
         }
 
+        public BlockTimeEntry Get(ulong blockNumber)
+        {
+            var b = cache.Get(blockNumber);
+            if (b != null) return b;
+            return GetBlock(blockNumber);
+        }
+
         public ulong? GetHighestBlockNumberBefore(DateTime moment)
         {
             bounds.Initialize();
