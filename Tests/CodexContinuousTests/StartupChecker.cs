@@ -43,13 +43,13 @@ namespace ContinuousTests
             var workflow = entryPoint.Tools.CreateWorkflow();
             foreach (var instance in deployment.CodexInstances)
             {
-                foreach (var container in instance.Containers.Containers)
+                foreach (var container in instance.Pod.Containers)
                 {
                     var podInfo = workflow.GetPodInfo(container);
                     log.Log($"Codex environment variables for '{container.Name}':");
                     log.Log(
-                        $"Namespace: {container.RunningContainers.StartResult.Cluster.Configuration.KubernetesNamespace} - " +
-                        $"Pod name: {podInfo.Name} - Deployment name: {instance.Containers.StartResult.Deployment.Name}");
+                        $"Namespace: {container.RunningPod.StartResult.Cluster.Configuration.KubernetesNamespace} - " +
+                        $"Pod name: {podInfo.Name} - Deployment name: {instance.Pod.StartResult.Deployment.Name}");
                     var codexVars = container.Recipe.EnvVars;
                     foreach (var vars in codexVars) log.Log(vars.ToString());
                     log.Log("");
@@ -92,7 +92,7 @@ namespace ContinuousTests
         private void CheckCodexNodes(BaseLog log, Configuration config)
         {
             var nodes = entryPoint.CreateInterface()
-                .WrapCodexContainers(config.CodexDeployment.CodexInstances.Select(i => i.Containers).ToArray());
+                .WrapCodexContainers(config.CodexDeployment.CodexInstances.Select(i => i.Pod).ToArray());
             var pass = true;
             foreach (var n in nodes)
             {

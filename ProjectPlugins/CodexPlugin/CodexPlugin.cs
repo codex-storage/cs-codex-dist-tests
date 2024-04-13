@@ -32,13 +32,13 @@ namespace CodexPlugin
         {
         }
 
-        public RunningContainers[] DeployCodexNodes(int numberOfNodes, Action<ICodexSetup> setup)
+        public RunningPod[] DeployCodexNodes(int numberOfNodes, Action<ICodexSetup> setup)
         {
             var codexSetup = GetSetup(numberOfNodes, setup);
             return codexStarter.BringOnline(codexSetup);
         }
 
-        public ICodexNodeGroup WrapCodexContainers(CoreInterface coreInterface, RunningContainers[] containers)
+        public ICodexNodeGroup WrapCodexContainers(CoreInterface coreInterface, RunningPod[] containers)
         {
             containers = containers.Select(c => SerializeGate.Gate(c)).ToArray();
             return codexStarter.WrapCodexContainers(coreInterface, containers);

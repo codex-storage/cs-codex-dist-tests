@@ -122,7 +122,7 @@ namespace CodexNetDeployer
             });
         }
 
-        private RunningContainers? DeployDiscordBot(CoreInterface ci, GethDeployment gethDeployment,
+        private RunningPod? DeployDiscordBot(CoreInterface ci, GethDeployment gethDeployment,
             CodexContractsDeployment contractsDeployment)
         {
             if (!config.DeployDiscordBot) return null;
@@ -155,7 +155,7 @@ namespace CodexNetDeployer
             return rc;
         }
 
-        private RunningContainers? StartMetricsService(CoreInterface ci, List<CodexNodeStartResult> startResults)
+        private RunningPod? StartMetricsService(CoreInterface ci, List<CodexNodeStartResult> startResults)
         {
             if (!config.MetricsScraper || !startResults.Any()) return null;
 
@@ -180,7 +180,7 @@ namespace CodexNetDeployer
 
         private CodexInstance CreateCodexInstance(ICodexNode node)
         {
-            return new CodexInstance(node.Container.RunningContainers, node.GetDebugInfo());
+            return new CodexInstance(node.Container.RunningPod, node.GetDebugInfo());
         }
 
         private string? GetKubeConfig(string kubeConfigFile)

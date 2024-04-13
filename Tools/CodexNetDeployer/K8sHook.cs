@@ -18,11 +18,11 @@ namespace CodexNetDeployer
             this.metadata = metadata;
         }
 
-        public void OnContainersStarted(RunningContainers rc)
+        public void OnContainersStarted(RunningPod rc)
         {
         }
 
-        public void OnContainersStopped(RunningContainers rc)
+        public void OnContainersStopped(RunningPod rc)
         {
         }
 

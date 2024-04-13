@@ -13,7 +13,7 @@ namespace CodexPlugin
         private readonly Mapper mapper = new Mapper();
         private bool hasContainerCrashed;
 
-        public CodexAccess(IPluginTools tools, RunningContainer container, CrashWatcher crashWatcher)
+        public CodexAccess(IPluginTools tools, RunningPod container, CrashWatcher crashWatcher)
         {
             this.tools = tools;
             Container = container;
@@ -23,7 +23,7 @@ namespace CodexPlugin
             CrashWatcher.Start(this);
         }
 
-        public RunningContainer Container { get; }
+        public RunningPod Container { get; }
         public CrashWatcher CrashWatcher { get; }
 
         public DebugInfo GetDebugInfo()
@@ -136,7 +136,7 @@ namespace CodexPlugin
 
         private Address GetAddress()
         {
-            return Container.GetAddress(tools.GetLog(), CodexContainerRecipe.ApiPortTag);
+            return Container.Containers.Single().GetAddress(tools.GetLog(), CodexContainerRecipe.ApiPortTag);
         }
 
         private void CheckContainerCrashed(HttpClient client)

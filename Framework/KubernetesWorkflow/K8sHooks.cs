@@ -5,18 +5,18 @@ namespace KubernetesWorkflow
 {
     public interface IK8sHooks
     {
-        void OnContainersStarted(RunningContainers runningContainers);
-        void OnContainersStopped(RunningContainers runningContainers);
+        void OnContainersStarted(RunningPod runningPod);
+        void OnContainersStopped(RunningPod runningPod);
         void OnContainerRecipeCreated(ContainerRecipe recipe);
     }
 
     public class DoNothingK8sHooks : IK8sHooks
     {
-        public void OnContainersStarted(RunningContainers runningContainers)
+        public void OnContainersStarted(RunningPod runningPod)
         {
         }
 
-        public void OnContainersStopped(RunningContainers runningContainers)
+        public void OnContainersStopped(RunningPod runningPod)
         {
         }
 

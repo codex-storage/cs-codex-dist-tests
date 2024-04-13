@@ -35,7 +35,7 @@ namespace CodexPlugin
 
         private EthAddress? GetEthAddress(CodexAccess access)
         {
-            var ethAccount = access.Container.Recipe.Additionals.Get<EthAccount>();
+            var ethAccount = access.Container.Containers.Single().Recipe.Additionals.Get<EthAccount>();
             if (ethAccount == null) return null;
             return ethAccount.EthAddress;
         }

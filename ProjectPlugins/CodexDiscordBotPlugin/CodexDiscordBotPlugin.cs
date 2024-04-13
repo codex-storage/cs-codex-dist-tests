@@ -29,19 +29,19 @@ namespace CodexDiscordBotPlugin
         {
         }
 
-        public RunningContainers Deploy(DiscordBotStartupConfig config)
+        public RunningPod Deploy(DiscordBotStartupConfig config)
         {
             var workflow = tools.CreateWorkflow();
             return StartContainer(workflow, config);
         }
 
-        public RunningContainers DeployRewarder(RewarderBotStartupConfig config)
+        public RunningPod DeployRewarder(RewarderBotStartupConfig config)
         {
             var workflow = tools.CreateWorkflow();
             return StartRewarderContainer(workflow, config);
         }
 
-        private RunningContainers StartContainer(IStartupWorkflow workflow, DiscordBotStartupConfig config)
+        private RunningPod StartContainer(IStartupWorkflow workflow, DiscordBotStartupConfig config)
         {
             var startupConfig = new StartupConfig();
             startupConfig.NameOverride = config.Name;
@@ -49,7 +49,7 @@ namespace CodexDiscordBotPlugin
             return workflow.Start(1, new DiscordBotContainerRecipe(), startupConfig).WaitForOnline();
         }
 
-        private RunningContainers StartRewarderContainer(IStartupWorkflow workflow, RewarderBotStartupConfig config)
+        private RunningPod StartRewarderContainer(IStartupWorkflow workflow, RewarderBotStartupConfig config)
         {
             var startupConfig = new StartupConfig();
             startupConfig.Add(config);

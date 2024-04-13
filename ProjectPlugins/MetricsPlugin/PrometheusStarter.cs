@@ -16,7 +16,7 @@ namespace MetricsPlugin
             this.tools = tools;
         }
 
-        public RunningContainers CollectMetricsFor(IMetricsScrapeTarget[] targets)
+        public RunningPod CollectMetricsFor(IMetricsScrapeTarget[] targets)
         {
             if (!targets.Any()) throw new ArgumentException(nameof(targets) + " must not be empty.");
 
@@ -32,9 +32,9 @@ namespace MetricsPlugin
             return runningContainers;
         }
 
-        public MetricsAccess CreateAccessForTarget(RunningContainers metricsContainer, IMetricsScrapeTarget target)
+        public MetricsAccess CreateAccessForTarget(RunningPod metricsPod, IMetricsScrapeTarget target)
         {
-            var metricsQuery = new MetricsQuery(tools, metricsContainer.Containers.Single());
+            var metricsQuery = new MetricsQuery(tools, metricsPod.Containers.Single());
             return new MetricsAccess(metricsQuery, target);
         }
 

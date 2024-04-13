@@ -19,7 +19,7 @@ namespace KubernetesWorkflow.Types
         public ContainerAddress[] Addresses { get; }
 
         [JsonIgnore]
-        public RunningContainers RunningContainers { get; internal set; } = null!;
+        public RunningPod RunningPod { get; internal set; } = null!;
 
         public Address GetAddress(ILog log, string portTag)
         {

@@ -705,7 +705,7 @@ namespace KubernetesWorkflow
 
         private string GetPodName(RunningContainer container)
         {
-            return GetPodForDeployment(container.RunningContainers.StartResult.Deployment).Metadata.Name;
+            return GetPodForDeployment(container.RunningPod.StartResult.Deployment).Metadata.Name;
         }
 
         private V1Pod GetPodForDeployment(RunningDeployment deployment)

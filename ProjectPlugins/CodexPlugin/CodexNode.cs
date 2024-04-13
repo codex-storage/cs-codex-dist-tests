@@ -44,7 +44,9 @@ namespace CodexPlugin
             transferSpeeds = new TransferSpeeds();
         }
 
-        public RunningContainer Container { get { return CodexAccess.Container; } }
+        public RunningPod Pod { get { return CodexAccess.Container; } }
+        
+        public RunningContainer Container { get { return Pod.Containers.Single(); } }
         public CodexAccess CodexAccess { get; }
         public CrashWatcher CrashWatcher { get => CodexAccess.CrashWatcher; }
         public CodexNodeGroup Group { get; }
@@ -56,7 +58,7 @@ namespace CodexPlugin
         {
             get
             {
-                return new MetricsScrapeTarget(CodexAccess.Container, CodexContainerRecipe.MetricsPortTag);
+                return new MetricsScrapeTarget(CodexAccess.Container.Containers.First(), CodexContainerRecipe.MetricsPortTag);
             }
         }
 
@@ -142,11 +144,13 @@ namespace CodexPlugin
 
         public void Stop(bool waitTillStopped)
         {
-            if (Group.Count() > 1) throw new InvalidOperationException("Codex-nodes that are part of a group cannot be " +
-                "individually shut down. Use 'BringOffline()' on the group object to stop the group. This method is only " +
-                "available for codex-nodes in groups of 1.");
-
-            Group.BringOffline(waitTillStopped);
+            Group.Stop(this, waitTillStopped);
+            CrashWatcher.Stop();
+            // if (Group.Count() > 1) throw new InvalidOperationException("Codex-nodes that are part of a group cannot be " +
+            //     "individually shut down. Use 'BringOffline()' on the group object to stop the group. This method is only " +
+            //     "available for codex-nodes in groups of 1.");
+            //
+            // Group.BringOffline(waitTillStopped);
         }
 
         public void EnsureOnlineGetVersionResponse()
@@ -171,7 +175,7 @@ namespace CodexPlugin
             // The peer we want to connect is in a different pod.
             // We must replace the default IP with the pod IP in the multiAddress.
             var workflow = tools.CreateWorkflow();
-            var podInfo = workflow.GetPodInfo(peer.Container);
+            var podInfo = workflow.GetPodInfo(peer.Pod);
 
             return peerInfo.Addrs.Select(a => a
                 .Replace("0.0.0.0", podInfo.Ip))
