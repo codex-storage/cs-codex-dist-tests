@@ -270,7 +270,7 @@ namespace CodexNetDeployer
             return TimeSpan.FromMinutes(10);
         }
 
-        public TimeSpan WaitForK8sServiceDelay()
+        public TimeSpan K8sOperationRetryDelay()
         {
             return TimeSpan.FromSeconds(30);
         }
