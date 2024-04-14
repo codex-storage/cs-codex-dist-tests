@@ -14,6 +14,7 @@ public class ScalabilityTests : CodexDistTest
     [Test]
     [Combinatorial]
     [UseLongTimeouts]
+    [DontDownloadLogsOnFailure]
     public void ShouldMaintainFileInNetwork(
         [Values(10, 40, 80, 100)] int numberOfNodes,
         [Values(100, 1000, 5000, 10000)] int fileSizeInMb,
