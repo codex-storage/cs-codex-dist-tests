@@ -868,7 +868,7 @@ namespace KubernetesWorkflow
 
         private void WaitUntilNamespaceCreated() 
         {
-            WaitUntil(() => IsNamespaceOnline(K8sNamespace));
+            WaitUntil(() => IsNamespaceOnline(K8sNamespace), nameof(WaitUntilNamespaceCreated));
         }
 
         private void WaitUntilDeploymentOnline(string deploymentName)
@@ -877,7 +877,7 @@ namespace KubernetesWorkflow
             {
                 var deployment = client.Run(c => c.ReadNamespacedDeployment(deploymentName, K8sNamespace));
                 return deployment?.Status.AvailableReplicas != null && deployment.Status.AvailableReplicas > 0;
-            });
+            }, nameof(WaitUntilDeploymentOnline));
         }
 
         private void WaitUntilDeploymentOffline(string deploymentName)
@@ -887,7 +887,7 @@ namespace KubernetesWorkflow
                 var deployments = client.Run(c => c.ListNamespacedDeployment(K8sNamespace));
                 var deployment = deployments.Items.SingleOrDefault(d => d.Metadata.Name == deploymentName);
                 return deployment == null || deployment.Status.AvailableReplicas == 0;
-            });
+            }, nameof(WaitUntilDeploymentOffline));
         }
 
         private void WaitUntilPodsForDeploymentAreOffline(RunningDeployment deployment)
@@ -896,10 +896,10 @@ namespace KubernetesWorkflow
             {
                 var pods = FindPodsByLabel(deployment.PodLabel);
                 return !pods.Any();
-            });
+            }, nameof(WaitUntilPodsForDeploymentAreOffline));
         }
 
-        private void WaitUntil(Func<bool> predicate)
+        private void WaitUntil(Func<bool> predicate, string msg)
         {
             var sw = Stopwatch.Begin(log, true);
             try
@@ -908,7 +908,7 @@ namespace KubernetesWorkflow
             }
             finally
             {
-                sw.End("", 1);
+                sw.End(msg, 1);
             }
         }
 
