@@ -904,7 +904,7 @@ namespace KubernetesWorkflow
             var sw = Stopwatch.Begin(log, true);
             try
             {
-                Time.WaitUntil(predicate, cluster.K8sOperationTimeout(), cluster.K8sOperationRetryDelay());
+                Time.WaitUntil(predicate, cluster.K8sOperationTimeout(), cluster.K8sOperationRetryDelay(), msg);
             }
             finally
             {

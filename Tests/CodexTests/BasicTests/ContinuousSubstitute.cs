@@ -154,7 +154,7 @@ namespace CodexTests.BasicTests
                     var newBytes = Convert.ToInt64(afterBytesStored.Values.Last().Value - beforeBytesStored.Values.Last().Value);
 
                     return high > newBytes && newBytes > low;
-                }, TimeSpan.FromMinutes(1), TimeSpan.FromSeconds(2));
+                }, TimeSpan.FromMinutes(1), TimeSpan.FromSeconds(2), nameof(ContinuousSubstitute));
 
                 FileUtils.TrackedFile? downloadedFile = null;
                 LogBytesPerMillisecond(() => downloadedFile = secondary.DownloadContent(contentId));
