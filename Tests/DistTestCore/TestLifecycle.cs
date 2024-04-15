@@ -93,12 +93,19 @@ namespace DistTestCore
 
         public void DownloadAllLogs()
         {
-            foreach (var rc in runningContainers)
+            try
             {
-                foreach (var c in rc.Containers)
+                foreach (var rc in runningContainers)
                 {
-                    CoreInterface.DownloadLog(c);
+                    foreach (var c in rc.Containers)
+                    {
+                        CoreInterface.DownloadLog(c);
+                    }
                 }
+            }
+            catch (Exception ex)
+            {
+                Log.Error("Exception during log download: " + ex);
             }
         }
     }

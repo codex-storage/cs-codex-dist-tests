@@ -98,7 +98,7 @@ namespace DistTestCore
             }
             catch (Exception ex)
             {
-                fixtureLog.Error("Cleanup failed: " + ex.Message);
+                fixtureLog.Error("Cleanup failed: " + ex);
                 GlobalTestFailure.HasFailed = true;
             }
         }
