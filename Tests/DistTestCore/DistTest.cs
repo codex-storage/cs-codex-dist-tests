@@ -267,10 +267,11 @@ namespace DistTestCore
 
         private bool ShouldDownloadAllLogs(TestStatus testStatus)
         {
+            if (!IsDownloadingLogsEnabled()) return false;
             if (configuration.AlwaysDownloadContainerLogs) return true;
             if (testStatus == TestStatus.Failed)
             {
-                return IsDownloadingLogsEnabled();
+                return true;
             }
 
             return false;
@@ -289,7 +290,7 @@ namespace DistTestCore
         private bool IsDownloadingLogsEnabled()
         {
             var testProperties = TestContext.CurrentContext.Test.Properties;
-            return !testProperties.ContainsKey(DontDownloadLogsOnFailureAttribute.DontDownloadKey);
+            return !testProperties.ContainsKey(DontDownloadLogsAttribute.DontDownloadKey);
         }
     }
 
