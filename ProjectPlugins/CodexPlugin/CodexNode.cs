@@ -73,7 +73,7 @@ namespace CodexPlugin
 
         public string GetName()
         {
-            return CodexAccess.Container.Name;
+            return Container.Name;
         }
 
         public DebugInfo GetDebugInfo()

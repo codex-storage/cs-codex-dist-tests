@@ -7,10 +7,14 @@ namespace CodexTests.ScalabilityTests
     public class MultiPeerDownloadTests : AutoBootstrapDistTest
     {
         [Test]
-        public void MultiPeerDownload()
+        [Combinatorial]
+        public void MultiPeerDownload(
+            [Values(5, 10, 20)] int numberOfHosts,
+            [Values(100, 1000)] int fileSize
+        )
         {
-            var hosts = AddCodex(5, s => s.WithLogLevel(CodexPlugin.CodexLogLevel.Trace));
-            var file = GenerateTestFile(100.MB());
+            var hosts = AddCodex(numberOfHosts, s => s.WithLogLevel(CodexPlugin.CodexLogLevel.Trace));
+            var file = GenerateTestFile(fileSize.MB());
             var cid = hosts[0].UploadFile(file);
 
             var uploadLog = Ci.DownloadLog(hosts[0]);
