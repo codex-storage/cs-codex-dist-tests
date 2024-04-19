@@ -4,6 +4,7 @@ namespace Core
 {
     public interface IDownloadedLog
     {
+        void IterateLines(Action<string> action);
         string[] GetLinesContaining(string expectedString);
         string[] FindLinesThatContain(params string[] tags);
         void DeleteFile();
@@ -16,6 +17,19 @@ namespace Core
         internal DownloadedLog(LogFile logFile)
         {
             this.logFile = logFile;
+        }
+
+        public void IterateLines(Action<string> action)
+        {
+            using var file = File.OpenRead(logFile.FullFilename);
+            using var streamReader = new StreamReader(file);
+
+            var line = streamReader.ReadLine();
+            while (line != null)
+            {
+                action(line);
+                line = streamReader.ReadLine();
+            }
         }
 
         public string[] GetLinesContaining(string expectedString)
