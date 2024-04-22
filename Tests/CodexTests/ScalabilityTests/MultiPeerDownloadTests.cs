@@ -1,4 +1,5 @@
-﻿using NUnit.Framework;
+﻿using DistTestCore;
+using NUnit.Framework;
 using Utils;
 
 namespace CodexTests.ScalabilityTests
@@ -7,6 +8,8 @@ namespace CodexTests.ScalabilityTests
     public class MultiPeerDownloadTests : AutoBootstrapDistTest
     {
         [Test]
+        [DontDownloadLogs]
+        [UseLongTimeouts]
         [Combinatorial]
         public void MultiPeerDownload(
             [Values(5, 10, 20)] int numberOfHosts,
@@ -16,8 +19,10 @@ namespace CodexTests.ScalabilityTests
             var hosts = AddCodex(numberOfHosts, s => s.WithLogLevel(CodexPlugin.CodexLogLevel.Trace));
             var file = GenerateTestFile(fileSize.MB());
             var cid = hosts[0].UploadFile(file);
+            var tailOfManifestCid = cid.Id.Substring(cid.Id.Length - 6);
 
             var uploadLog = Ci.DownloadLog(hosts[0]);
+            var expectedNumberOfBlocks = RoundUp(fileSize.MB().SizeInBytes, 64.KB().SizeInBytes) + 1; // +1 for manifest block.
             var blockCids = uploadLog
                 .FindLinesThatContain("Putting block into network store")
                 .Select(s =>
@@ -29,7 +34,8 @@ namespace CodexTests.ScalabilityTests
                 })
                 .ToArray();
 
-            // Each host has the file.
+            Assert.That(blockCids.Length, Is.EqualTo(expectedNumberOfBlocks));
+
             foreach (var h in hosts) h.DownloadContent(cid);
 
             var client = AddCodex(s => s.WithLogLevel(CodexPlugin.CodexLogLevel.Trace));
@@ -37,9 +43,8 @@ namespace CodexTests.ScalabilityTests
             resultFile!.AssertIsEqual(file);
 
             var downloadLog = Ci.DownloadLog(client);
-            var blocksPerHost = new Dictionary<string, int>();
-            var seenBlocks = new List<string>();
             var host = string.Empty;
+            var blockCidHostMap = new Dictionary<string, string>();
             downloadLog.IterateLines(line =>
             {
                 if (line.Contains("peer=") && line.Contains(" len="))
@@ -56,21 +61,60 @@ namespace CodexTests.ScalabilityTests
                     var len = end - start;
                     var blockCid = line.Substring(start, len);
 
-                    if (!seenBlocks.Contains(blockCid))
-                    {
-                        seenBlocks.Add(blockCid);
-                        if (!blocksPerHost.ContainsKey(host)) blocksPerHost.Add(host, 1);
-                        else blocksPerHost[host]++;
-                    }
+                    blockCidHostMap.Add(blockCid, host);
+                    host = string.Empty;
                 }
             });
 
-            Log("Total number of blocks in dataset: " + blockCids.Length);
+            var totalFetched = blockCidHostMap.Count(p => !string.IsNullOrEmpty(p.Value));
+            //PrintFullMap(blockCidHostMap);
+            PrintOverview(blockCidHostMap);
+
+            Log("Expected number of blocks: " + expectedNumberOfBlocks);
+            Log("Total number of block CIDs found in dataset + manifest block: " + blockCids.Length);
+            Log("Total blocks fetched by hosts: " + totalFetched);
+            Assert.That(totalFetched, Is.EqualTo(expectedNumberOfBlocks));
+        }
+
+        private void PrintOverview(Dictionary<string, string> blockCidHostMap)
+        {
+            var overview = new Dictionary<string, int>();
+            foreach (var pair in blockCidHostMap)
+            {
+                if (!overview.ContainsKey(pair.Value)) overview.Add(pair.Value, 1);
+                else overview[pair.Value]++;
+            }
+
             Log("Blocks fetched per host:");
-            foreach (var pair in blocksPerHost)
+            foreach (var pair in overview)
             {
                 Log($"Host: {pair.Key} = {pair.Value}");
             }
+        }
+
+        private void PrintFullMap(Dictionary<string, string> blockCidHostMap)
+        {
+            Log("Per block, host it was fetched from:");
+            foreach (var pair in blockCidHostMap)
+            {
+                if (string.IsNullOrEmpty(pair.Value))
+                {
+                    Log($"block: {pair.Key} = Not seen");
+                }
+                else
+                {
+                    Log($"block: {pair.Key} = '{pair.Value}'");
+                }
+            }
+        }
+
+        private long RoundUp(long filesize, long blockSize)
+        {
+            double f = filesize;
+            double b = blockSize;
+
+            var result = Math.Ceiling(f / b);
+            return Convert.ToInt64(result);
         }
     }
 }
