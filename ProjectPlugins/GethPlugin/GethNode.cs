@@ -5,6 +5,7 @@ using Nethereum.ABI.FunctionEncoding.Attributes;
 using Nethereum.Contracts;
 using Nethereum.RPC.Eth.DTOs;
 using NethereumWorkflow;
+using NethereumWorkflow.BlockUtils;
 using Utils;
 
 namespace GethPlugin
@@ -27,6 +28,7 @@ namespace GethPlugin
         List<EventLog<TEvent>> GetEvents<TEvent>(string address, BlockInterval blockRange) where TEvent : IEventDTO, new();
         List<EventLog<TEvent>> GetEvents<TEvent>(string address, TimeRange timeRange) where TEvent : IEventDTO, new();
         BlockInterval ConvertTimeRangeToBlockRange(TimeRange timeRange);
+        BlockTimeEntry GetBlockForNumber(ulong number);
     }
 
     public class DeploymentGethNode : BaseGethNode, IGethNode
@@ -158,6 +160,11 @@ namespace GethPlugin
         public BlockInterval ConvertTimeRangeToBlockRange(TimeRange timeRange)
         {
             return StartInteraction().ConvertTimeRangeToBlockRange(timeRange);
+        }
+
+        public BlockTimeEntry GetBlockForNumber(ulong number)
+        {
+            return StartInteraction().GetBlockForNumber(number);
         }
 
         protected abstract NethereumInteraction StartInteraction();

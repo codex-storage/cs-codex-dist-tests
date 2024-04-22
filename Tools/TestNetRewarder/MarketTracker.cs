@@ -42,6 +42,7 @@ namespace TestNetRewarder
         private ChainState[] SelectStates(int numberOfIntervals)
         {
             if (numberOfIntervals < 1) return Array.Empty<ChainState>();
+            if (numberOfIntervals > buffer.Count) return Array.Empty<ChainState>();
             return buffer.TakeLast(numberOfIntervals).ToArray();
         }
 
@@ -52,7 +53,7 @@ namespace TestNetRewarder
                 return new MarketAverage
                 {
                     NumberOfFinished = CountNumberOfFinishedRequests(states),
-                    TimeRange = GetTotalTimeRange(states),
+                    TimeRangeSeconds = GetTotalTimeRange(states),
                     Price = Average(states, s => s.Request.Ask.Reward),
                     Duration = Average(states, s => s.Request.Ask.Duration),
                     Size = Average(states, s => GetTotalSize(s.Request.Ask)),
@@ -92,12 +93,13 @@ namespace TestNetRewarder
                 }
             }
 
+            if (count < 1.0f) return 0.0f;
             return sum / count;
         }
 
-        private TimeSpan GetTotalTimeRange(ChainState[] states)
+        private int GetTotalTimeRange(ChainState[] states)
         {
-            return Program.Config.Interval * states.Length;
+            return Convert.ToInt32((Program.Config.Interval * states.Length).TotalSeconds);
         }
 
         private int CountNumberOfFinishedRequests(ChainState[] states)

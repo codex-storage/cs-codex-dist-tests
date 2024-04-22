@@ -24,6 +24,16 @@ namespace BiblioTech.Rewards
         {
             Program.Log.Log($"Processing rewards command: '{JsonConvert.SerializeObject(rewards)}'");
 
+            if (rewards.Rewards.Any())
+            {
+                await ProcessRewards(rewards);
+            }
+
+            await ProcessChainEvents(rewards.EventsOverview);
+        }
+
+        private async Task ProcessRewards(GiveRewardsCommand rewards)
+        {
             var guild = GetGuild();
             // We load all role and user information first,
             // so we don't ask the server for the same info multiple times.
@@ -33,7 +43,6 @@ namespace BiblioTech.Rewards
                 rewardsChannel);
 
             await context.ProcessGiveRewardsCommand(LookUpUsers(rewards));
-            await ProcessChainEvents(rewards.EventsOverview);
         }
 
         private SocketTextChannel? GetChannel(string name)

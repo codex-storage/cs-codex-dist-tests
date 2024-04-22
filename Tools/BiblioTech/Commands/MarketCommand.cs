@@ -31,7 +31,8 @@ namespace BiblioTech.Commands
 
         private string[] GetInsight(MarketAverage avg)
         {
-            var headerLine = $"[Last {Time.FormatDuration(avg.TimeRange)}] ({avg.NumberOfFinished} Contracts finished)";
+            var timeRange = TimeSpan.FromSeconds(avg.TimeRangeSeconds);
+            var headerLine = $"[Last {Time.FormatDuration(timeRange)}] ({avg.NumberOfFinished} Contracts finished)";
 
             if (avg.NumberOfFinished == 0)
             {

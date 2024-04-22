@@ -67,9 +67,11 @@ namespace TestNetRewarder
             var marketAverages = GetMarketAverages(chainState);
             var eventsOverview = GenerateEventsOverview(chainState);
 
-            log.Log($"Found {outgoingRewards.Count} rewards to send. Found {marketAverages.Length} market averages.");
+            log.Log($"Found {outgoingRewards.Count} rewards. " +
+                $"Found {marketAverages.Length} market averages. " +
+                $"Found {eventsOverview.Length} events.");
 
-            if (outgoingRewards.Any())
+            if (outgoingRewards.Any() || marketAverages.Any() || eventsOverview.Any())
             {
                 if (!await SendRewardsCommand(outgoingRewards, marketAverages, eventsOverview))
                 {
