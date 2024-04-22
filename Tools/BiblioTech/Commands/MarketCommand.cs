@@ -1,7 +1,6 @@
 ﻿using BiblioTech.Options;
 using DiscordRewards;
 using System.Globalization;
-using Utils;
 
 namespace BiblioTech.Commands
 {
@@ -31,13 +30,7 @@ namespace BiblioTech.Commands
 
         private string[] GetInsight(MarketAverage avg)
         {
-            var timeRange = TimeSpan.FromSeconds(avg.TimeRangeSeconds);
-            var headerLine = $"[Last {Time.FormatDuration(timeRange)}] ({avg.NumberOfFinished} Contracts finished)";
-
-            if (avg.NumberOfFinished == 0)
-            {
-                return new[] { headerLine }; 
-            }
+            var headerLine = $"[{avg.Title}]";
 
             return new[]
             {

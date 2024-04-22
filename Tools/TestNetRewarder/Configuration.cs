@@ -19,9 +19,6 @@ namespace TestNetRewarder
         [Uniform("check-history", "ch", "CHECKHISTORY", true, "Unix epoc timestamp of a moment in history on which processing begins. Required for hosting rewards. Should be 'launch of the testnet'.")]
         public int CheckHistoryTimestamp { get; set; } = 0;
 
-        [Uniform("market-insights", "mi", "MARKETINSIGHTS", false, "Semi-colon separated integers. Each represents a multiple of intervals, for which a market insights average will be generated.")]
-        public string MarketInsights { get; set; } = "1;96";
-
         [Uniform("events-overview", "eo", "EVENTSOVERVIEW", false, "When greater than zero, chain event summary will be generated. (default 1)")]
         public int CreateChainEventsOverview { get; set; } = 1;
 

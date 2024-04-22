@@ -6,66 +6,47 @@ namespace TestNetRewarder
 {
     public class MarketTracker
     {
-        private readonly List<ChainState> buffer = new List<ChainState>();
+        private readonly MarketAverage MostRecent = new MarketAverage
+        {
+            Title = "Most recent"
+        };
+        private readonly MarketAverage Irf = new MarketAverage
+        {
+            Title = "Recent average"
+        };
 
         public MarketAverage[] ProcessChainState(ChainState chainState)
         {
-            var intervalCounts = GetInsightCounts();
-            if (!intervalCounts.Any()) return Array.Empty<MarketAverage>();
+            UpdateMostRecent(chainState);
+            UpdateIrf(chainState);
 
-            UpdateBuffer(chainState, intervalCounts.Max());
-            var result = intervalCounts
-                .Select(GenerateMarketAverage)
-                .Where(a => a != null)
-                .Cast<MarketAverage>()
-                .ToArray();
-
-            if (!result.Any()) result = Array.Empty<MarketAverage>();
-            return result;
-        }
-
-        private void UpdateBuffer(ChainState chainState, int maxNumberOfIntervals)
-        {
-            buffer.Add(chainState);
-            while (buffer.Count > maxNumberOfIntervals)
+            return new[]
             {
-                buffer.RemoveAt(0);
-            }
+                MostRecent,
+                Irf
+            };
         }
 
-        private MarketAverage? GenerateMarketAverage(int numberOfIntervals)
+        private void UpdateIrf(ChainState chainState)
         {
-            var states = SelectStates(numberOfIntervals);
-            return CreateAverage(states);
+            if (!chainState.FinishedRequests.Any()) return;
+
+            MostRecent.Price = GetIrf(MostRecent.Price, chainState, s => s.Request.Ask.Reward);
+            MostRecent.Duration = GetIrf(MostRecent.Duration, chainState, s => s.Request.Ask.Duration);
+            MostRecent.Size = GetIrf(MostRecent.Size, chainState, s => GetTotalSize(s.Request.Ask));
+            MostRecent.Collateral = GetIrf(MostRecent.Collateral, chainState, s => s.Request.Ask.Collateral);
+            MostRecent.ProofProbability = GetIrf(MostRecent.ProofProbability, chainState, s => s.Request.Ask.ProofProbability);
         }
 
-        private ChainState[] SelectStates(int numberOfIntervals)
+        private void UpdateMostRecent(ChainState chainState)
         {
-            if (numberOfIntervals < 1) return Array.Empty<ChainState>();
-            if (numberOfIntervals > buffer.Count) return Array.Empty<ChainState>();
-            return buffer.TakeLast(numberOfIntervals).ToArray();
-        }
+            if (!chainState.FinishedRequests.Any()) return;
 
-        private MarketAverage? CreateAverage(ChainState[] states)
-        {
-            try
-            {
-                return new MarketAverage
-                {
-                    NumberOfFinished = CountNumberOfFinishedRequests(states),
-                    TimeRangeSeconds = GetTotalTimeRange(states),
-                    Price = Average(states, s => s.Request.Ask.Reward),
-                    Duration = Average(states, s => s.Request.Ask.Duration),
-                    Size = Average(states, s => GetTotalSize(s.Request.Ask)),
-                    Collateral = Average(states, s => s.Request.Ask.Collateral),
-                    ProofProbability = Average(states, s => s.Request.Ask.ProofProbability)
-                };
-            }
-            catch (Exception ex)
-            {
-                Program.Log.Error($"Exception in CreateAverage: {ex}");
-                return null;
-            }
+            MostRecent.Price = Average(chainState, s => s.Request.Ask.Reward);
+            MostRecent.Duration = Average(chainState, s => s.Request.Ask.Duration);
+            MostRecent.Size = Average(chainState, s => GetTotalSize(s.Request.Ask));
+            MostRecent.Collateral = Average(chainState, s => s.Request.Ask.Collateral);
+            MostRecent.ProofProbability = Average(chainState, s => s.Request.Ask.ProofProbability);
         }
 
         private int GetTotalSize(Ask ask)
@@ -75,50 +56,40 @@ namespace TestNetRewarder
             return nSlots * slotSize;
         }
 
-        private float Average(ChainState[] states, Func<StorageRequest, BigInteger> getValue)
+        private float Average(ChainState state, Func<StorageRequest, BigInteger> getValue)
         {
-            return Average(states, s => Convert.ToInt32(getValue(s)));
+            return Average(state, s => Convert.ToInt32(getValue(s)));
         }
 
-        private float Average(ChainState[] states, Func<StorageRequest, int> getValue)
+        private float GetIrf(float current, ChainState state, Func<StorageRequest, BigInteger> getValue)
+        {
+            return GetIrf(current, state, s => Convert.ToInt32(getValue(s)));
+        }
+
+        private float Average(ChainState state, Func<StorageRequest, int> getValue)
         {
             var sum = 0.0f;
             var count = 0.0f;
-            foreach (var state in states)
+            foreach (var finishedRequest in state.FinishedRequests)
             {
-                foreach (var finishedRequest in state.FinishedRequests)
-                {
-                    sum += getValue(finishedRequest);
-                    count++;
-                }
+                sum += getValue(finishedRequest);
+                count++;
             }
 
             if (count < 1.0f) return 0.0f;
             return sum / count;
         }
 
-        private int GetTotalTimeRange(ChainState[] states)
+        private float GetIrf(float current, ChainState state, Func<StorageRequest, int> getValue)
         {
-            return Convert.ToInt32((Program.Config.Interval * states.Length).TotalSeconds);
-        }
-
-        private int CountNumberOfFinishedRequests(ChainState[] states)
-        {
-            return states.Sum(s => s.FinishedRequests.Length);
-        }
-
-        private int[] GetInsightCounts()
-        {
-            try
+            var result = current;
+            foreach (var finishedRequest in state.FinishedRequests)
             {
-                var tokens = Program.Config.MarketInsights.Split(';').ToArray();
-                return tokens.Select(t => Convert.ToInt32(t)).ToArray();
+                float v = getValue(finishedRequest);
+                result = (result + v) / 2.0f;
             }
-            catch (Exception ex)
-            {
-                Program.Log.Error($"Exception when parsing MarketInsights config parameters: {ex}");
-            }
-            return Array.Empty<int>();            
+
+            return result;
         }
     }
 }

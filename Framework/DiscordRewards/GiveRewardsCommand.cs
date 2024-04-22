@@ -15,8 +15,7 @@
 
     public class MarketAverage
     {
-        public int NumberOfFinished { get; set; }
-        public int TimeRangeSeconds { get; set; }
+        public string Title { get; set; } = string.Empty;
         public float Price { get; set; }
         public float Size { get; set; }
         public float Duration { get; set; }
