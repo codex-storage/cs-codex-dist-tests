@@ -21,15 +21,15 @@ namespace CodexTests.ScalabilityTests
 
             var filename = nameof(DiscSpeedTest);
 
-            Thread.Sleep(1000);
+            Thread.Sleep(2000);
             if (File.Exists(filename)) File.Delete(filename);
-            Thread.Sleep(1000);
+            Thread.Sleep(2000);
             var writeSpeed = PerformWrite(targetSize, bufferSizeBytes, filename);
-            Thread.Sleep(1000);
+            Thread.Sleep(2000);
             var readSpeed = PerformRead(targetSize, bufferSizeBytes, filename);
             
             Log($"Write speed: {writeSpeed} per second.");
-            Log($"Read speed: {writeSpeed} per second.");
+            Log($"Read speed: {readSpeed} per second.");
         }
 
         private ByteSize PerformWrite(long targetSize, long bufferSizeBytes, string filename)
