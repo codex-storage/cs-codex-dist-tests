@@ -10,11 +10,11 @@ namespace CodexTests.BasicTests
         [Test]
         public void FindMostCommonLogMessages()
         {
-            var uploader = AddCodex(s => s.WithLogLevel(CodexLogLevel.Trace));
-            var downloader = AddCodex(s => s.WithLogLevel(CodexLogLevel.Trace));
+            var uploader = AddCodex(s => s.WithName("uploader").WithLogLevel(CodexLogLevel.Trace));
+            var downloader = AddCodex(s => s.WithName("downloader").WithLogLevel(CodexLogLevel.Trace));
 
 
-            var cid = uploader.UploadFile(GenerateTestFile(1.MB()));
+            var cid = uploader.UploadFile(GenerateTestFile(100.MB()));
 
             Thread.Sleep(1000);
             var logStartUtc = DateTime.UtcNow;
@@ -23,10 +23,14 @@ namespace CodexTests.BasicTests
             downloader.DownloadContent(cid);
 
 
-            var map = GetLogMap(uploader, logStartUtc).OrderByDescending(p => p.Value);
+            var map = GetLogMap(downloader, logStartUtc).OrderByDescending(p => p.Value);
+            Log("Downloader - Receive");
             foreach (var entry in map)
             {
-                Log($"'{entry.Key}' = {entry.Value}");
+                if (entry.Value > 9)
+                {
+                    Log($"'{entry.Key}' = {entry.Value}");
+                }
             }
         }
 
