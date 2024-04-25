@@ -5,25 +5,32 @@ using Utils;
 namespace CodexTests.BasicTests
 {
     [TestFixture]
-    public class LogHelperTests : CodexDistTest
+    public class LogHelperTests : AutoBootstrapDistTest
     {
         [Test]
         public void FindMostCommonLogMessages()
         {
-            var node = AddCodex(s => s.WithLogLevel(CodexLogLevel.Trace));
+            var uploader = AddCodex(s => s.WithLogLevel(CodexLogLevel.Trace));
+            var downloader = AddCodex(s => s.WithLogLevel(CodexLogLevel.Trace));
 
 
-            node.UploadFile(GenerateTestFile(1.GB()));
+            var cid = uploader.UploadFile(GenerateTestFile(1.MB()));
+
+            Thread.Sleep(1000);
+            var logStartUtc = DateTime.UtcNow;
+            Thread.Sleep(1000);
+
+            downloader.DownloadContent(cid);
 
 
-            var map = GetLogMap(node).OrderByDescending(p => p.Value);
+            var map = GetLogMap(uploader, logStartUtc).OrderByDescending(p => p.Value);
             foreach (var entry in map)
             {
                 Log($"'{entry.Key}' = {entry.Value}");
             }
         }
 
-        private Dictionary<string, int> GetLogMap(ICodexNode node)
+        private Dictionary<string, int> GetLogMap(ICodexNode node, DateTime? startUtc = null)
         {
             var log = Ci.DownloadLog(node);
             var map = new Dictionary<string, int>();
@@ -35,6 +42,13 @@ namespace CodexTests.BasicTests
                     line.Length < 34 ||
                     line[33] != ' '
                 ) return;
+
+                if (startUtc.HasValue)
+                {
+                    var timestampLine = line.Substring(4, 23);
+                    var timestamp = DateTime.Parse(timestampLine);
+                    if (timestamp < startUtc) return;
+                }
                 
                 // "INF 2024-04-14 10:40:50.042+00:00 Creating a private key and saving it       tid=1 count=2"
                 var start = 34;
