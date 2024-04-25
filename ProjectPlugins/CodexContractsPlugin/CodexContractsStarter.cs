@@ -59,7 +59,7 @@ namespace CodexContractsPlugin
                 var logHandler = new ContractsReadyLogHandler(tools.GetLog());
                 workflow.DownloadContainerLog(container, logHandler, 100);
                 return logHandler.Found;
-            });
+            }, nameof(DeployContract));
             Log("Contracts deployed. Extracting addresses...");
 
             var extractor = new ContractsContainerInfoExtractor(tools.GetLog(), workflow, container);
@@ -71,7 +71,7 @@ namespace CodexContractsPlugin
 
             Log("Extract completed. Checking sync...");
 
-            Time.WaitUntil(() => interaction.IsSynced(marketplaceAddress, abi));
+            Time.WaitUntil(() => interaction.IsSynced(marketplaceAddress, abi), nameof(DeployContract));
 
             Log("Synced. Codex SmartContracts deployed.");
 
@@ -83,9 +83,9 @@ namespace CodexContractsPlugin
             tools.GetLog().Log(msg);
         }
 
-        private void WaitUntil(Func<bool> predicate)
+        private void WaitUntil(Func<bool> predicate, string msg)
         {
-            Time.WaitUntil(predicate, TimeSpan.FromMinutes(5), TimeSpan.FromSeconds(2));
+            Time.WaitUntil(predicate, TimeSpan.FromMinutes(5), TimeSpan.FromSeconds(2), msg);
         }
 
         private StartupConfig CreateStartupConfig(IGethNode gethNode)

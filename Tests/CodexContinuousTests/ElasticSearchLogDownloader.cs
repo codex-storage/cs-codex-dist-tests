@@ -49,8 +49,8 @@ namespace ContinuousTests
             var start = startUtc.ToString("o");
             var end = endUtc.ToString("o");
 
-            var containerName = container.RunningContainers.StartResult.Deployment.Name;
-            var namespaceName = container.RunningContainers.StartResult.Cluster.Configuration.KubernetesNamespace;
+            var containerName = container.RunningPod.StartResult.Deployment.Name;
+            var namespaceName = container.RunningPod.StartResult.Cluster.Configuration.KubernetesNamespace;
 
             //container_name : codex3-5 - deploymentName as stored in pod
             // pod_namespace : codex - continuous - nolimits - tests - 1

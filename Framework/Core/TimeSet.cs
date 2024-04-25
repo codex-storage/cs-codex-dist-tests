@@ -5,7 +5,7 @@
         TimeSpan HttpCallTimeout();
         int HttpMaxNumberOfRetries();
         TimeSpan HttpCallRetryDelay();
-        TimeSpan WaitForK8sServiceDelay();
+        TimeSpan K8sOperationRetryDelay();
         TimeSpan K8sOperationTimeout();
     }
 
@@ -26,7 +26,7 @@
             return TimeSpan.FromSeconds(1);
         }
 
-        public TimeSpan WaitForK8sServiceDelay()
+        public TimeSpan K8sOperationRetryDelay()
         {
             return TimeSpan.FromSeconds(10);
         }
@@ -54,14 +54,14 @@
             return TimeSpan.FromSeconds(2);
         }
 
-        public TimeSpan WaitForK8sServiceDelay()
+        public TimeSpan K8sOperationRetryDelay()
         {
-            return TimeSpan.FromSeconds(10);
+            return TimeSpan.FromSeconds(30);
         }
 
         public TimeSpan K8sOperationTimeout()
         {
-            return TimeSpan.FromMinutes(15);
+            return TimeSpan.FromHours(1);
         }
     }
 }

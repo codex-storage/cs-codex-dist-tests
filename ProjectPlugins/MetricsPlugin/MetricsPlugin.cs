@@ -31,15 +31,15 @@ namespace MetricsPlugin
         {
         }
 
-        public RunningContainers DeployMetricsCollector(IMetricsScrapeTarget[] scrapeTargets)
+        public RunningPod DeployMetricsCollector(IMetricsScrapeTarget[] scrapeTargets)
         {
             return starter.CollectMetricsFor(scrapeTargets);
         }
 
-        public IMetricsAccess WrapMetricsCollectorDeployment(RunningContainers runningContainer, IMetricsScrapeTarget target)
+        public IMetricsAccess WrapMetricsCollectorDeployment(RunningPod runningPod, IMetricsScrapeTarget target)
         {
-            runningContainer = SerializeGate.Gate(runningContainer);
-            return starter.CreateAccessForTarget(runningContainer, target);
+            runningPod = SerializeGate.Gate(runningPod);
+            return starter.CreateAccessForTarget(runningPod, target);
         }
 
         public LogFile? DownloadAllMetrics(IMetricsAccess metricsAccess, string targetName)

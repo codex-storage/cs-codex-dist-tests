@@ -57,24 +57,27 @@
             return result;
         }
 
-        public static void WaitUntil(Func<bool> predicate)
+        public static void WaitUntil(Func<bool> predicate, string msg)
         {
-            WaitUntil(predicate, TimeSpan.FromMinutes(1), TimeSpan.FromSeconds(1));
+            WaitUntil(predicate, TimeSpan.FromMinutes(1), TimeSpan.FromSeconds(1), msg);
         }
 
-        public static void WaitUntil(Func<bool> predicate, TimeSpan timeout, TimeSpan retryDelay)
+        public static void WaitUntil(Func<bool> predicate, TimeSpan timeout, TimeSpan retryDelay, string msg)
         {
             var start = DateTime.UtcNow;
+            var tries = 1;
             var state = predicate();
             while (!state)
             {
-                if (DateTime.UtcNow - start > timeout)
+                var duration = DateTime.UtcNow - start;
+                if (duration > timeout)
                 {
-                    throw new TimeoutException("Operation timed out.");
+                    throw new TimeoutException($"Operation timed out after {tries} tries over (total) {FormatDuration(duration)}. '{msg}'");
                 }
 
                 Sleep(retryDelay);
                 state = predicate();
+                tries++;
             }
         }
 

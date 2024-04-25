@@ -13,7 +13,7 @@ namespace DistTestCore
         private const string TestsType = "dist-tests";
         private readonly EntryPoint entryPoint;
         private readonly Dictionary<string, string> metadata; 
-        private readonly List<RunningContainers> runningContainers = new();
+        private readonly List<RunningPod> runningContainers = new();
         private readonly string deployId;
 
         public TestLifecycle(TestLog log, Configuration configuration, ITimeSet timeSet, string testNamespace, string deployId)
@@ -65,12 +65,12 @@ namespace DistTestCore
             return DateTime.UtcNow - TestStart;
         }
 
-        public void OnContainersStarted(RunningContainers rc)
+        public void OnContainersStarted(RunningPod rc)
         {
             runningContainers.Add(rc);
         }
 
-        public void OnContainersStopped(RunningContainers rc)
+        public void OnContainersStopped(RunningPod rc)
         {
             runningContainers.Remove(rc);
         }
@@ -93,12 +93,19 @@ namespace DistTestCore
 
         public void DownloadAllLogs()
         {
-            foreach (var rc in runningContainers)
+            try
             {
-                foreach (var c in rc.Containers)
+                foreach (var rc in runningContainers)
                 {
-                    CoreInterface.DownloadLog(c);
+                    foreach (var c in rc.Containers)
+                    {
+                        CoreInterface.DownloadLog(c);
+                    }
                 }
+            }
+            catch (Exception ex)
+            {
+                Log.Error("Exception during log download: " + ex);
             }
         }
     }

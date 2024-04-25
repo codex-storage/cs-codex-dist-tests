@@ -2,19 +2,19 @@
 {
     public class FutureContainers
     {
-        private readonly RunningContainers runningContainers;
+        private readonly RunningPod runningPod;
         private readonly StartupWorkflow workflow;
 
-        public FutureContainers(RunningContainers runningContainers, StartupWorkflow workflow)
+        public FutureContainers(RunningPod runningPod, StartupWorkflow workflow)
         {
-            this.runningContainers = runningContainers;
+            this.runningPod = runningPod;
             this.workflow = workflow;
         }
 
-        public RunningContainers WaitForOnline()
+        public RunningPod WaitForOnline()
         {
-            workflow.WaitUntilOnline(runningContainers);
-            return runningContainers;
+            workflow.WaitUntilOnline(runningPod);
+            return runningPod;
         }
     }
 }

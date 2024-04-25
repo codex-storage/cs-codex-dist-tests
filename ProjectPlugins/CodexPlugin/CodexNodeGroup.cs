@@ -15,11 +15,11 @@ namespace CodexPlugin
     {
         private readonly CodexStarter starter;
 
-        public CodexNodeGroup(CodexStarter starter, IPluginTools tools, RunningContainers[] containers, ICodexNodeFactory codexNodeFactory)
+        public CodexNodeGroup(CodexStarter starter, IPluginTools tools, RunningPod[] containers, ICodexNodeFactory codexNodeFactory)
         {
             this.starter = starter;
             Containers = containers;
-            Nodes = containers.Containers().Select(c => CreateOnlineCodexNode(c, tools, codexNodeFactory)).ToArray();
+            Nodes = containers.Select(c => CreateOnlineCodexNode(c, tools, codexNodeFactory)).ToArray();
             Version = new DebugInfoVersion();
         }
 
@@ -39,7 +39,14 @@ namespace CodexPlugin
             Containers = null!;
         }
 
-        public RunningContainers[] Containers { get; private set; }
+        public void Stop(CodexNode node, bool waitTillStopped)
+        {
+            starter.Stop(node.Pod, waitTillStopped);
+            Nodes = Nodes.Where(n => n != node).ToArray();
+            Containers = Containers.Where(c => c != node.Pod).ToArray();
+        }
+
+        public RunningPod[] Containers { get; private set; }
         public CodexNode[] Nodes { get; private set; }
         public DebugInfoVersion Version { get; private set; }
         public IMetricsScrapeTarget[] ScrapeTargets => Nodes.Select(n => n.MetricsScrapeTarget).ToArray();
@@ -74,9 +81,9 @@ namespace CodexPlugin
             Version = first;
         }
 
-        private CodexNode CreateOnlineCodexNode(RunningContainer c, IPluginTools tools, ICodexNodeFactory factory)
+        private CodexNode CreateOnlineCodexNode(RunningPod c, IPluginTools tools, ICodexNodeFactory factory)
         {
-            var watcher = factory.CreateCrashWatcher(c);
+            var watcher = factory.CreateCrashWatcher(c.Containers.Single());
             var access = new CodexAccess(tools, c, watcher);
             return factory.CreateOnlineCodexNode(access, this);
         }

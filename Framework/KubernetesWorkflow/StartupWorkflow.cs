@@ -12,9 +12,9 @@ namespace KubernetesWorkflow
         FutureContainers Start(int numberOfContainers, ContainerRecipeFactory recipeFactory, StartupConfig startupConfig);
         FutureContainers Start(int numberOfContainers, ILocation location, ContainerRecipeFactory recipeFactory, StartupConfig startupConfig);
         PodInfo GetPodInfo(RunningContainer container);
-        PodInfo GetPodInfo(RunningContainers containers);
+        PodInfo GetPodInfo(RunningPod pod);
         CrashWatcher CreateCrashWatcher(RunningContainer container);
-        void Stop(RunningContainers containers, bool waitTillStopped);
+        void Stop(RunningPod pod, bool waitTillStopped);
         void DownloadContainerLog(RunningContainer container, ILogHandler logHandler, int? tailLines = null);
         string ExecuteCommand(RunningContainer container, string command, params string[] args);
         void DeleteNamespace();
@@ -60,7 +60,7 @@ namespace KubernetesWorkflow
                 var startResult = controller.BringOnline(recipes, location);
                 var containers = CreateContainers(startResult, recipes, startupConfig);
 
-                var rc = new RunningContainers(startupConfig, startResult, containers);
+                var rc = new RunningPod(startupConfig, startResult, containers);
                 cluster.Configuration.Hooks.OnContainersStarted(rc);
 
                 if (startResult.ExternalService != null)
@@ -71,7 +71,7 @@ namespace KubernetesWorkflow
             });
         }
 
-        public void WaitUntilOnline(RunningContainers rc)
+        public void WaitUntilOnline(RunningPod rc)
         {
             K8s(controller =>
             {
@@ -84,12 +84,12 @@ namespace KubernetesWorkflow
 
         public PodInfo GetPodInfo(RunningContainer container)
         {
-            return K8s(c => c.GetPodInfo(container.RunningContainers.StartResult.Deployment));
+            return K8s(c => c.GetPodInfo(container.RunningPod.StartResult.Deployment));
         }
 
-        public PodInfo GetPodInfo(RunningContainers containers)
+        public PodInfo GetPodInfo(RunningPod pod)
         {
-            return K8s(c => c.GetPodInfo(containers.StartResult.Deployment));
+            return K8s(c => c.GetPodInfo(pod.StartResult.Deployment));
         }
 
         public CrashWatcher CreateCrashWatcher(RunningContainer container)
@@ -97,12 +97,12 @@ namespace KubernetesWorkflow
             return K8s(c => c.CreateCrashWatcher(container));
         }
 
-        public void Stop(RunningContainers runningContainers, bool waitTillStopped)
+        public void Stop(RunningPod runningPod, bool waitTillStopped)
         {
             K8s(controller =>
             {
-                controller.Stop(runningContainers.StartResult, waitTillStopped);
-                cluster.Configuration.Hooks.OnContainersStopped(runningContainers);
+                controller.Stop(runningPod.StartResult, waitTillStopped);
+                cluster.Configuration.Hooks.OnContainersStopped(runningPod);
             });
         }
 

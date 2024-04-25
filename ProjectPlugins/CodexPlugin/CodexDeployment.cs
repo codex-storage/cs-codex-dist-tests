@@ -7,8 +7,8 @@ namespace CodexPlugin
     public class CodexDeployment
     {
         public CodexDeployment(CodexInstance[] codexInstances, GethDeployment gethDeployment,
-            CodexContractsDeployment codexContractsDeployment, RunningContainers? prometheusContainer,
-            RunningContainers? discordBotContainer, DeploymentMetadata metadata,
+            CodexContractsDeployment codexContractsDeployment, RunningPod? prometheusContainer,
+            RunningPod? discordBotContainer, DeploymentMetadata metadata,
             String id)
         {
             Id = id;
@@ -24,20 +24,20 @@ namespace CodexPlugin
         public CodexInstance[] CodexInstances { get; }
         public GethDeployment GethDeployment { get; }
         public CodexContractsDeployment CodexContractsDeployment { get; }
-        public RunningContainers? PrometheusContainer { get; }
-        public RunningContainers? DiscordBotContainer { get; }
+        public RunningPod? PrometheusContainer { get; }
+        public RunningPod? DiscordBotContainer { get; }
         public DeploymentMetadata Metadata { get; }
     }
 
     public class CodexInstance
     {
-        public CodexInstance(RunningContainers containers, DebugInfo info)
+        public CodexInstance(RunningPod pod, DebugInfo info)
         {
-            Containers = containers;
+            Pod = pod;
             Info = info;
         }
 
-        public RunningContainers Containers { get; }
+        public RunningPod Pod { get; }
         public DebugInfo Info { get; }
     }
 

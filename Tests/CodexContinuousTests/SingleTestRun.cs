@@ -125,8 +125,8 @@ namespace ContinuousTests
             foreach (var node in nodes)
             {
                 var container = node.Container;
-                var deploymentName = container.RunningContainers.StartResult.Deployment.Name;
-                var namespaceName = container.RunningContainers.StartResult.Cluster.Configuration.KubernetesNamespace;
+                var deploymentName = container.RunningPod.StartResult.Deployment.Name;
+                var namespaceName = container.RunningPod.StartResult.Cluster.Configuration.KubernetesNamespace;
                 var openingLine =
                     $"{namespaceName} - {deploymentName} = {node.Container.Name} = {node.GetDebugInfo().Id}";
                 elasticSearchLogDownloader.Download(fixtureLog.CreateSubfile(), node.Container, effectiveStart,
@@ -295,13 +295,13 @@ namespace ContinuousTests
             return entryPoint.CreateInterface().WrapCodexContainers(containers).ToArray();
         }
 
-        private RunningContainers[] SelectRandomContainers()
+        private RunningPod[] SelectRandomContainers()
         {
             var number = handle.Test.RequiredNumberOfNodes;
-            var containers = config.CodexDeployment.CodexInstances.Select(i => i.Containers).ToList();
+            var containers = config.CodexDeployment.CodexInstances.Select(i => i.Pod).ToList();
             if (number == -1) return containers.ToArray();
 
-            var result = new RunningContainers[number];
+            var result = new RunningPod[number];
             for (var i = 0; i < number; i++)
             {
                 result[i] = containers.PickOneRandom();

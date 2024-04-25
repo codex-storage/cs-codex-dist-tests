@@ -5,12 +5,12 @@ namespace CodexPlugin
 {
     public static class CoreInterfaceExtensions
     {
-        public static RunningContainers[] DeployCodexNodes(this CoreInterface ci, int number, Action<ICodexSetup> setup)
+        public static RunningPod[] DeployCodexNodes(this CoreInterface ci, int number, Action<ICodexSetup> setup)
         {
             return Plugin(ci).DeployCodexNodes(number, setup);
         }
 
-        public static ICodexNodeGroup WrapCodexContainers(this CoreInterface ci, RunningContainers[] containers)
+        public static ICodexNodeGroup WrapCodexContainers(this CoreInterface ci, RunningPod[] containers)
         {
             return Plugin(ci).WrapCodexContainers(ci, containers);
         }

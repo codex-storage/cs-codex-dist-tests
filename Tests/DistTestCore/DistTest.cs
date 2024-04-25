@@ -98,7 +98,7 @@ namespace DistTestCore
             }
             catch (Exception ex)
             {
-                fixtureLog.Error("Cleanup failed: " + ex.Message);
+                fixtureLog.Error("Cleanup failed: " + ex);
                 GlobalTestFailure.HasFailed = true;
             }
         }
@@ -237,8 +237,18 @@ namespace DistTestCore
 
         private bool ShouldUseLongTimeouts()
         {
+            return CurrentTestMethodHasAttribute<UseLongTimeoutsAttribute>();
+        }
+
+        private bool HasDontDownloadAttribute()
+        {
+            return CurrentTestMethodHasAttribute<DontDownloadLogsAttribute>();
+        }
+
+        private bool CurrentTestMethodHasAttribute<T>() where T : PropertyAttribute
+        {
             // Don't be fooled! TestContext.CurrentTest.Test allows you easy access to the attributes of the current test.
-            // But this doesn't work for tests making use of [TestCase]. So instead, we use reflection here to figure out
+            // But this doesn't work for tests making use of [TestCase] or [Combinatorial]. So instead, we use reflection here to figure out
             // if the attribute is present.
             var currentTest = TestContext.CurrentContext.Test;
             var className = currentTest.ClassName;
@@ -247,7 +257,7 @@ namespace DistTestCore
             var testClasses = testAssemblies.SelectMany(a => a.GetTypes()).Where(c => c.FullName == className).ToArray();
             var testMethods = testClasses.SelectMany(c => c.GetMethods()).Where(m => m.Name == methodName).ToArray();
 
-            return testMethods.Any(m => m.GetCustomAttribute<UseLongTimeoutsAttribute>() != null);
+            return testMethods.Any(m => m.GetCustomAttribute<T>() != null);
         }
 
         private void IncludeLogsOnTestFailure(TestLifecycle lifecycle)
@@ -268,9 +278,10 @@ namespace DistTestCore
         private bool ShouldDownloadAllLogs(TestStatus testStatus)
         {
             if (configuration.AlwaysDownloadContainerLogs) return true;
+            if (!IsDownloadingLogsEnabled()) return false;
             if (testStatus == TestStatus.Failed)
             {
-                return IsDownloadingLogsEnabled();
+                return true;
             }
 
             return false;
@@ -288,8 +299,7 @@ namespace DistTestCore
 
         private bool IsDownloadingLogsEnabled()
         {
-            var testProperties = TestContext.CurrentContext.Test.Properties;
-            return !testProperties.ContainsKey(DontDownloadLogsOnFailureAttribute.DontDownloadKey);
+            return !HasDontDownloadAttribute();
         }
     }
 

@@ -38,7 +38,7 @@ namespace CodexPlugin
             if (string.IsNullOrEmpty(OpenApiYamlHash)) throw new Exception("OpenAPI yaml hash was not inserted by pre-build trigger.");
         }
 
-        public void CheckCompatibility(RunningContainers[] containers)
+        public void CheckCompatibility(RunningPod[] containers)
         {
             if (checkPassed) return;
 

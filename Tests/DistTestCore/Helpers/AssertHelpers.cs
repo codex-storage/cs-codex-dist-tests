@@ -14,7 +14,7 @@ namespace DistTestCore.Helpers
                 Time.WaitUntil(() => {
                     var c = constraint.Resolve();
                     return c.ApplyTo(actual()).IsSuccess;
-                });
+                }, "RetryAssert: " + message);
             }
             catch (TimeoutException)
             {
