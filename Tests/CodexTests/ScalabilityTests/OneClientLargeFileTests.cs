@@ -26,7 +26,10 @@ namespace CodexTests.ScalabilityTests
         {
             var testFile = GenerateTestFile(sizeMb.MB());
 
-            var node = AddCodex(s => s.WithLogLevel(CodexLogLevel.Warn));
+            var node = AddCodex(s => s
+                .WithLogLevel(CodexLogLevel.Warn)
+                .WithStorageQuota((sizeMb + 10).MB())
+            );
             var contentId = node.UploadFile(testFile);
             var downloadedFile = node.DownloadContent(contentId);
 
