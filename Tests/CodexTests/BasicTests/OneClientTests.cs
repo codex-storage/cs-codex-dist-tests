@@ -1,5 +1,4 @@
 ﻿using CodexPlugin;
-using DistTestCore;
 using NUnit.Framework;
 using Utils;
 
@@ -11,7 +10,7 @@ namespace CodexTests.BasicTests
         [Test]
         public void OneClientTest()
         {
-            var primary = Ci.StartCodexNode();
+            var primary = AddCodex();
 
             PerformOneClientTest(primary);
         }
@@ -19,11 +18,11 @@ namespace CodexTests.BasicTests
         [Test]
         public void RestartTest()
         {
-            var primary = Ci.StartCodexNode();
+            var primary = AddCodex();
 
             primary.Stop(waitTillStopped: true);
 
-            primary = Ci.StartCodexNode();
+            primary = AddCodex();
 
             PerformOneClientTest(primary);
         }
