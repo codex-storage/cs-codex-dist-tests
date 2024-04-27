@@ -1,5 +1,6 @@
 ﻿using CodexPlugin;
 using DistTestCore;
+using Logging;
 using NUnit.Framework;
 using Utils;
 
@@ -34,6 +35,37 @@ namespace CodexTests.ScalabilityTests
             var downloadedFile = node.DownloadContent(contentId);
 
             testFile.AssertIsEqual(downloadedFile);
+        }
+
+        [Test]
+        public void ManyFiles()
+        {
+            // I suspect that the upload speed is linked to the total
+            // number of blocks already in the node. I suspect the
+            // metadata store to be the cause of any slow-down.
+            // Using this test to detect and quantify the numbers.
+
+            var node = AddCodex(s => s
+                .WithLogLevel(CodexLogLevel.Trace)
+                .WithStorageQuota(20.GB())
+            );
+
+            var times = new List<TimeSpan>();
+            for (var i = 0; i < 100; i++)
+            {
+                Thread.Sleep(1000);
+                var file = GenerateTestFile(100.MB());
+                times.Add(Stopwatch.Measure(GetTestLog(), "Upload_" + i, () =>
+                {
+                    node.UploadFile(file);
+                }));
+            }
+
+            Log("Upload times:");
+            foreach (var t in times)
+            {
+                Log(Time.FormatDuration(t));
+            }
         }
     }
 }
