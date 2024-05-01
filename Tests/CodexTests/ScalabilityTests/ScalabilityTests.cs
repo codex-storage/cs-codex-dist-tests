@@ -9,9 +9,6 @@ namespace CodexTests.ScalabilityTests;
 [TestFixture]
 public class ScalabilityTests : CodexDistTest
 {
-    private const string PatchedImage = "codexstorage/nim-codex:sha-9aeac06-dist-tests";
-    private const string MasterImage = "codexstorage/nim-codex:sha-5380912-dist-tests";
-
     /// <summary>
     /// We upload a file to node A, then download it with B.
     /// Then we stop node A, and download again with node C.
@@ -22,12 +19,9 @@ public class ScalabilityTests : CodexDistTest
     [DontDownloadLogs]
     public void ShouldMaintainFileInNetwork(
         [Values(10, 40, 80, 100)] int numberOfNodes,
-        [Values(100, 1000, 5000, 10000)] int fileSizeInMb,
-        [Values(true, false)] bool usePatchedImage
+        [Values(100, 1000, 5000, 10000)] int fileSizeInMb
     )
     {
-        CodexContainerRecipe.DockerImageOverride = usePatchedImage ? PatchedImage : MasterImage;
-
         var logLevel = CodexLogLevel.Info;
 
         var bootstrap = AddCodex(s => s.WithLogLevel(logLevel));
@@ -58,19 +52,15 @@ public class ScalabilityTests : CodexDistTest
     /// We upload a file to each node, to put a more wide-spread load on the network.
     /// Then we run the same test as ShouldMaintainFileInNetwork.
     /// </summary>
-    [Ignore("Make ShouldMaintainFileInNetwork pass reliably first.")]
     [Test]
     [Combinatorial]
     [UseLongTimeouts]
     [DontDownloadLogs]
     public void EveryoneGetsAFile(
         [Values(10, 40, 80, 100)] int numberOfNodes,
-        [Values(100, 1000)] int fileSizeInMb,
-        [Values(true, false)] bool usePatchedImage
+        [Values(100, 1000, 5000, 10000)] int fileSizeInMb
     )
     {
-        CodexContainerRecipe.DockerImageOverride = usePatchedImage ? PatchedImage : MasterImage;
-
         var logLevel = CodexLogLevel.Info;
 
         var bootstrap = AddCodex(s => s.WithLogLevel(logLevel));
