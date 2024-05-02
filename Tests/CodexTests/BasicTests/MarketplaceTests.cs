@@ -95,7 +95,7 @@ namespace CodexTests.BasicTests
                 Log($"SlotFilledEvents: {slotFilledEvents.Length} - NumSlots: {purchase.MinRequiredNumberOfNodes}");
 
                 if (slotFilledEvents.Length != purchase.MinRequiredNumberOfNodes) throw new Exception();
-            }, Convert.ToInt32(purchase.Duration.TotalSeconds / 5) + 10, TimeSpan.FromSeconds(5), "Checking SlotFilled events");
+            }, purchase.Expiry + TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(5), "Checking SlotFilled events");
         }
 
         private void AssertStorageRequest(Request request, StoragePurchaseRequest purchase, ICodexContracts contracts, ICodexNode buyer)

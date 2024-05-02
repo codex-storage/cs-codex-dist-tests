@@ -712,7 +712,7 @@ namespace KubernetesWorkflow
         {
             return Time.Retry(() => GetPodForDeplomentInternal(deployment),
                 // We will wait up to 1 minute, k8s might be moving pods around.
-                maxRetries: 6,
+                maxTimeout: TimeSpan.FromMinutes(1),
                 retryTime: TimeSpan.FromSeconds(10),
                 description: "Find pod by label for deployment.");
         }

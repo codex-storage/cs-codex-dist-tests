@@ -58,7 +58,7 @@ namespace Core
         {
             lock (httpLock)
             {
-                return Time.Retry(operation, timeSet.HttpMaxNumberOfRetries(), timeSet.HttpCallRetryDelay(), description);
+                return Time.Retry(operation, timeSet.HttpRetryTimeout(), timeSet.HttpCallRetryDelay(), description);
             }
         }
 
