@@ -5,12 +5,13 @@ using GethPlugin;
 using NUnit.Framework;
 using Utils;
 
-namespace CodexTests.BasicTests
+namespace CodexTests.UtilityTests
 {
     [TestFixture]
     public class DiscordBotTests : AutoBootstrapDistTest
     {
         [Test]
+        [Ignore("Used for debugging bots")]
         public void BotRewardTest()
         {
             var myAccount = EthAccount.GenerateNew();
