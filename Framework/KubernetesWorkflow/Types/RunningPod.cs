@@ -20,7 +20,7 @@ namespace KubernetesWorkflow.Types
         [JsonIgnore]
         public string Name
         {
-            get { return $"{Containers.Length}x '{Containers.First().Name}'"; }
+            get { return $"'{string.Join("&", Containers.Select(c => c.Name).ToArray())}'"; }
         }
 
         public string Describe()

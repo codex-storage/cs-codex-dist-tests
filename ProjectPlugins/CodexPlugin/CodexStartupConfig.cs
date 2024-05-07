@@ -73,11 +73,18 @@ namespace CodexPlugin
                     "contracts",
                     "clock"
                 };
+                var jsonSerializeTopics = new[]
+                {
+                    "serde",
+                    "json",
+                    "serialization"
+                };
 
                 level = $"{level};" +
                     $"{CustomTopics.DiscV5.ToString()!.ToLowerInvariant()}:{string.Join(",", discV5Topics)};" +
                     $"{CustomTopics.Libp2p.ToString()!.ToLowerInvariant()}:{string.Join(",", libp2pTopics)};" +
-                    $"{CustomTopics.ContractClock.ToString().ToLowerInvariant()}:{string.Join(",", contractClockTopics)}";
+                    $"{CustomTopics.ContractClock.ToString().ToLowerInvariant()}:{string.Join(",", contractClockTopics)};" +
+                    $"{CustomTopics.JsonSerialize.ToString().ToLowerInvariant()}:{string.Join(",", jsonSerializeTopics)}";
 
                 if (CustomTopics.BlockExchange != null)
                 {
