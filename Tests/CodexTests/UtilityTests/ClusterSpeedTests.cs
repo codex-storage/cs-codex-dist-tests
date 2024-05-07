@@ -12,6 +12,7 @@ namespace CodexTests.ScalabilityTests
 
         [Test]
         [Combinatorial]
+        [Ignore("Used to measure disc io speeds in cluster.")]
         public void DiscSpeedTest(
             [Values(1, 10, 100, 1024, 1024 * 10, 1024 * 100, 1024 * 1024)] int bufferSizeKb
         )

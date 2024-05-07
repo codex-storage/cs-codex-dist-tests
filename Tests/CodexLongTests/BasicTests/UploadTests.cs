@@ -8,41 +8,39 @@ using Utils;
 namespace CodexLongTests.BasicTests
 {
     [TestFixture]
-    public class UploadTests : CodexDistTest
+    public class UploadTests : AutoBootstrapDistTest
     {
-        [TestCase(3, 50)]
-        [TestCase(5, 75)]
-        [TestCase(10, 25)]
+        [Test]
+        [Combinatorial] 
         [UseLongTimeouts]
-        public void ParallelUpload(int numberOfNodes, int filesizeMb)
+        public void ParallelUpload(
+            [Values(1, 3, 5)] int numberOfFiles,
+            [Values(10, 50, 100)] int filesizeMb)
         {
-            var group = AddCodex(numberOfNodes);
             var host = AddCodex();
-
-            foreach (var node in group)
-            {
-                host.ConnectToPeer(node);
-            }
+            var client = AddCodex();
 
             var testfiles = new List<TrackedFile>();
-            var contentIds = new List<Task<ContentId>>();
+            var contentIds = new List<ContentId>();
 
-            for (int i = 0; i < group.Count(); i++)
+            for (int i = 0; i < numberOfFiles; i++)
             {
                 testfiles.Add(GenerateTestFile(filesizeMb.MB()));
-                var n = i;
-                contentIds.Add(Task.Run(() => { return host.UploadFile(testfiles[n]); }));
+                contentIds.Add(new ContentId());
             }
-            var downloads = new List<Task<TrackedFile?>>();
-            for (int i = 0; i < group.Count(); i++)
+
+            var uploadTasks = new List<Task>();
+            for (int i = 0; i < numberOfFiles; i++)
             {
-                var n = i;
-                downloads.Add(Task.Run(() => { return group[n].DownloadContent(contentIds[n].Result); }));
+                uploadTasks.Add(Task.Run(() => { contentIds[i] = host.UploadFile(testfiles[i]); }));
             }
-            Task.WaitAll(downloads.ToArray());
-            for (int i = 0; i < group.Count(); i++)
+
+            Task.WaitAll(uploadTasks.ToArray());
+
+            for (int i = 0; i < numberOfFiles; i++)
             {
-                testfiles[i].AssertIsEqual(downloads[i].Result);
+                var downloaded = client.DownloadContent(contentIds[i]);
+                testfiles[i].AssertIsEqual(downloaded);
             }
         }
     }
