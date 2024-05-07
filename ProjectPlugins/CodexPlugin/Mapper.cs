@@ -56,7 +56,7 @@ namespace CodexPlugin
                 ProofProbability = ToDecInt(purchase.ProofProbability),
                 Reward = ToDecInt(purchase.PricePerSlotPerSecond),
                 Collateral = ToDecInt(purchase.RequiredCollateral),
-                Expiry = ToDecInt(DateTimeOffset.UtcNow.ToUnixTimeSeconds() + purchase.Expiry.TotalSeconds),
+                Expiry = ToDecInt(purchase.Expiry.TotalSeconds),
                 Nodes = Convert.ToInt32(purchase.MinRequiredNumberOfNodes),
                 Tolerance = Convert.ToInt32(purchase.NodeFailureTolerance)
             };
