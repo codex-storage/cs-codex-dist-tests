@@ -21,7 +21,7 @@ namespace CodexTests.BasicTests
             var contracts = Ci.StartCodexContracts(geth);
             
             var numberOfHosts = 5;
-            var hosts = AddCodex(numberOfHosts, s => s
+            var hosts = StartCodex(numberOfHosts, s => s
                 .WithName("Host")
                 .WithLogLevel(CodexLogLevel.Trace, new CodexLogCustomTopics(CodexLogLevel.Error, CodexLogLevel.Error, CodexLogLevel.Warn)
                 {
@@ -49,7 +49,7 @@ namespace CodexTests.BasicTests
 
             var testFile = GenerateTestFile(fileSize);
 
-            var client = AddCodex(s => s
+            var client = StartCodex(s => s
                 .WithName("Client")
                 .EnableMarketplace(geth, contracts, m => m
                     .WithInitial(10.Eth(), clientInitialBalance)));

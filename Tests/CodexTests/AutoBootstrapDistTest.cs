@@ -8,7 +8,7 @@ namespace CodexTests
         [SetUp]
         public void SetUpBootstrapNode()
         {
-            BootstrapNode = AddCodex(s => s.WithName("BOOTSTRAP"));
+            BootstrapNode = StartCodex(s => s.WithName("BOOTSTRAP"));
         }
 
         [TearDown]

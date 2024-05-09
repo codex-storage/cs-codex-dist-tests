@@ -13,7 +13,7 @@ namespace CodexTests.BasicTests
         [Test]
         public void CodexLogExample()
         {
-            var primary = AddCodex(s => s.WithLogLevel(CodexLogLevel.Trace, new CodexLogCustomTopics(CodexLogLevel.Warn, CodexLogLevel.Warn)));
+            var primary = StartCodex(s => s.WithLogLevel(CodexLogLevel.Trace, new CodexLogCustomTopics(CodexLogLevel.Warn, CodexLogLevel.Warn)));
 
             var cid = primary.UploadFile(GenerateTestFile(5.MB()));
 
@@ -28,8 +28,8 @@ namespace CodexTests.BasicTests
         [Test]
         public void TwoMetricsExample()
         {
-            var group = AddCodex(2, s => s.EnableMetrics());
-            var group2 = AddCodex(2, s => s.EnableMetrics());
+            var group = StartCodex(2, s => s.EnableMetrics());
+            var group2 = StartCodex(2, s => s.EnableMetrics());
 
             var primary = group[0];
             var secondary = group[1];

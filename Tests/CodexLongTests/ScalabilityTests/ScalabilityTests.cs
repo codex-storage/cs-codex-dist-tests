@@ -24,8 +24,8 @@ public class ScalabilityTests : CodexDistTest
     {
         var logLevel = CodexLogLevel.Info;
 
-        var bootstrap = AddCodex(s => s.WithLogLevel(logLevel));
-        var nodes = AddCodex(numberOfNodes - 1, s => s
+        var bootstrap = StartCodex(s => s.WithLogLevel(logLevel));
+        var nodes = StartCodex(numberOfNodes - 1, s => s
             .WithBootstrapNode(bootstrap)
             .WithLogLevel(logLevel)
             .WithStorageQuota((fileSizeInMb + 50).MB())
@@ -64,8 +64,8 @@ public class ScalabilityTests : CodexDistTest
     {
         var logLevel = CodexLogLevel.Info;
 
-        var bootstrap = AddCodex(s => s.WithLogLevel(logLevel));
-        var nodes = AddCodex(numberOfNodes - 1, s => s
+        var bootstrap = StartCodex(s => s.WithLogLevel(logLevel));
+        var nodes = StartCodex(numberOfNodes - 1, s => s
             .WithBootstrapNode(bootstrap)
             .WithLogLevel(logLevel)
             .WithStorageQuota((fileSizeInMb + 50).MB())

@@ -11,7 +11,7 @@ namespace CodexLongTests.BasicTests
         [Ignore("Not supported atm")]
         public void TestInfraShouldHave1000AddressSpacesPerPod()
         {
-            var group = AddCodex(1000, s => s.EnableMetrics());
+            var group = StartCodex(1000, s => s.EnableMetrics());
 
             var nodeIds = group.Select(n => n.GetDebugInfo().Id).ToArray();
 
@@ -26,7 +26,7 @@ namespace CodexLongTests.BasicTests
         {
             for (var i = 0; i < 20; i++)
             {
-                var n = AddCodex();
+                var n = StartCodex();
 
                 Assert.That(!string.IsNullOrEmpty(n.GetDebugInfo().Id));
             }

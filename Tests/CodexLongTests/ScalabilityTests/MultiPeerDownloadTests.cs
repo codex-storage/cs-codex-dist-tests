@@ -16,7 +16,7 @@ namespace CodexTests.ScalabilityTests
             [Values(100, 1000)] int fileSize
         )
         {
-            var hosts = AddCodex(numberOfHosts, s => s.WithLogLevel(CodexPlugin.CodexLogLevel.Trace));
+            var hosts = StartCodex(numberOfHosts, s => s.WithLogLevel(CodexPlugin.CodexLogLevel.Trace));
             var file = GenerateTestFile(fileSize.MB());
             var cid = hosts[0].UploadFile(file);
             var tailOfManifestCid = cid.Id.Substring(cid.Id.Length - 6);
@@ -38,7 +38,7 @@ namespace CodexTests.ScalabilityTests
 
             foreach (var h in hosts) h.DownloadContent(cid);
 
-            var client = AddCodex(s => s.WithLogLevel(CodexPlugin.CodexLogLevel.Trace));
+            var client = StartCodex(s => s.WithLogLevel(CodexPlugin.CodexLogLevel.Trace));
             var resultFile = client.DownloadContent(cid);
             resultFile!.AssertIsEqual(file);
 

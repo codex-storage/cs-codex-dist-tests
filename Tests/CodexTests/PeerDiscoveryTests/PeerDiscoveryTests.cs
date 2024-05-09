@@ -12,7 +12,7 @@ namespace CodexTests.PeerDiscoveryTests
         public void CanReportUnknownPeerId()
         {
             var unknownId = "16Uiu2HAkv2CHWpff3dj5iuVNERAp8AGKGNgpGjPexJZHSqUstfsK";
-            var node = AddCodex();
+            var node = StartCodex();
 
             var result = node.GetDebugPeer(unknownId);
             Assert.That(result.IsPeerFound, Is.False);
@@ -21,7 +21,7 @@ namespace CodexTests.PeerDiscoveryTests
         [Test]
         public void MetricsDoesNotInterfereWithPeerDiscovery()
         {
-            AddCodex(2, s => s.EnableMetrics());
+            StartCodex(2, s => s.EnableMetrics());
 
             AssertAllNodesConnected();
         }
@@ -31,7 +31,7 @@ namespace CodexTests.PeerDiscoveryTests
         {
             var geth = Ci.StartGethNode(s => s.IsMiner());
             var contracts = Ci.StartCodexContracts(geth);
-            AddCodex(2, s => s.EnableMarketplace(geth, contracts, m => m
+            StartCodex(2, s => s.EnableMarketplace(geth, contracts, m => m
                 .WithInitial(10.Eth(), 1000.TestTokens())));
 
             AssertAllNodesConnected();
@@ -42,7 +42,7 @@ namespace CodexTests.PeerDiscoveryTests
         [TestCase(10)]
         public void VariableNodes(int number)
         {
-            AddCodex(number);
+            StartCodex(number);
 
             AssertAllNodesConnected();
         }

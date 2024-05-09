@@ -17,8 +17,8 @@ namespace CodexLongTests.BasicTests
             [Values(1, 3, 5)] int numberOfFiles,
             [Values(10, 50, 100)] int filesizeMb)
         {
-            var host = AddCodex();
-            var client = AddCodex();
+            var host = StartCodex();
+            var client = StartCodex();
 
             var testfiles = new List<TrackedFile>();
             var contentIds = new List<ContentId>();

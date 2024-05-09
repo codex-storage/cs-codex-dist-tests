@@ -11,7 +11,7 @@ namespace CodexTests.DownloadConnectivityTests
         [Test]
         public void MetricsDoesNotInterfereWithPeerDownload()
         {
-            AddCodex(2, s => s.EnableMetrics());
+            StartCodex(2, s => s.EnableMetrics());
 
             AssertAllNodesConnected();
         }
@@ -21,7 +21,7 @@ namespace CodexTests.DownloadConnectivityTests
         {
             var geth = Ci.StartGethNode(s => s.IsMiner());
             var contracts = Ci.StartCodexContracts(geth);
-            AddCodex(2, s => s.EnableMarketplace(geth, contracts, m => m
+            StartCodex(2, s => s.EnableMarketplace(geth, contracts, m => m
                 .WithInitial(10.Eth(), 1000.TestTokens())));
 
             AssertAllNodesConnected();
@@ -33,7 +33,7 @@ namespace CodexTests.DownloadConnectivityTests
             [Values(2, 5)] int numberOfNodes,
             [Values(1, 10)] int sizeMBs)
         {
-            AddCodex(numberOfNodes);
+            StartCodex(numberOfNodes);
 
             AssertAllNodesConnected(sizeMBs);
         }

@@ -39,22 +39,22 @@ namespace CodexTests
             onlineCodexNodes.Remove(lifecycle);
         }
 
-        public ICodexNode AddCodex()
+        public ICodexNode StartCodex()
         {
-            return AddCodex(s => { });
+            return StartCodex(s => { });
         }
 
-        public ICodexNode AddCodex(Action<ICodexSetup> setup)
+        public ICodexNode StartCodex(Action<ICodexSetup> setup)
         {
-            return AddCodex(1, setup)[0];
+            return StartCodex(1, setup)[0];
         }
 
-        public ICodexNodeGroup AddCodex(int numberOfNodes)
+        public ICodexNodeGroup StartCodex(int numberOfNodes)
         {
-            return AddCodex(numberOfNodes, s => { });
+            return StartCodex(numberOfNodes, s => { });
         }
 
-        public ICodexNodeGroup AddCodex(int numberOfNodes, Action<ICodexSetup> setup)
+        public ICodexNodeGroup StartCodex(int numberOfNodes, Action<ICodexSetup> setup)
         {
             var group = Ci.StartCodexNodes(numberOfNodes, s =>
             {

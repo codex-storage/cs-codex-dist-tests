@@ -8,10 +8,10 @@ namespace CodexTests.PeerDiscoveryTests
         [Test]
         public void TwoLayersTest()
         {
-            var root = AddCodex();
-            var l1Source = AddCodex(s => s.WithBootstrapNode(root));
-            var l1Node = AddCodex(s => s.WithBootstrapNode(root));
-            var l2Target = AddCodex(s => s.WithBootstrapNode(l1Node));
+            var root = StartCodex();
+            var l1Source = StartCodex(s => s.WithBootstrapNode(root));
+            var l1Node = StartCodex(s => s.WithBootstrapNode(root));
+            var l2Target = StartCodex(s => s.WithBootstrapNode(l1Node));
 
             AssertAllNodesConnected();
         }
@@ -19,11 +19,11 @@ namespace CodexTests.PeerDiscoveryTests
         [Test]
         public void ThreeLayersTest()
         {
-            var root = AddCodex();
-            var l1Source = AddCodex(s => s.WithBootstrapNode(root));
-            var l1Node = AddCodex(s => s.WithBootstrapNode(root));
-            var l2Node = AddCodex(s => s.WithBootstrapNode(l1Node));
-            var l3Target = AddCodex(s => s.WithBootstrapNode(l2Node));
+            var root = StartCodex();
+            var l1Source = StartCodex(s => s.WithBootstrapNode(root));
+            var l1Node = StartCodex(s => s.WithBootstrapNode(root));
+            var l2Node = StartCodex(s => s.WithBootstrapNode(l1Node));
+            var l3Target = StartCodex(s => s.WithBootstrapNode(l2Node));
 
             AssertAllNodesConnected();
         }
@@ -33,10 +33,10 @@ namespace CodexTests.PeerDiscoveryTests
         [TestCase(10)]
         public void NodeChainTest(int chainLength)
         {
-            var node = AddCodex();
+            var node = StartCodex();
             for (var i = 1; i < chainLength; i++)
             {
-                node = AddCodex(s => s.WithBootstrapNode(node));
+                node = StartCodex(s => s.WithBootstrapNode(node));
             }
 
             AssertAllNodesConnected();

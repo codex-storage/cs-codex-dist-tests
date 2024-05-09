@@ -58,7 +58,7 @@ namespace CodexTests.UtilityTests
 
             for (var i = 0; i < numberOfHosts; i++)
             {
-                var seller = AddCodex(s => s
+                var seller = StartCodex(s => s
                     .WithName("Seller")
                     .WithLogLevel(CodexLogLevel.Trace, new CodexLogCustomTopics(CodexLogLevel.Error, CodexLogLevel.Error, CodexLogLevel.Warn)
                     {
@@ -82,7 +82,7 @@ namespace CodexTests.UtilityTests
 
             var testFile = GenerateTestFile(fileSize);
 
-            var buyer = AddCodex(s => s
+            var buyer = StartCodex(s => s
                 .WithName("Buyer")
                 .EnableMarketplace(geth, contracts, m => m
                     .WithAccount(myAccount)

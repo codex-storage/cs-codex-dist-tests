@@ -11,8 +11,8 @@ namespace CodexTests.UtilityTests
         [Ignore("Used to find the most common log messages.")]
         public void FindMostCommonLogMessages()
         {
-            var uploader = AddCodex(s => s.WithName("uploader").WithLogLevel(CodexLogLevel.Trace));
-            var downloader = AddCodex(s => s.WithName("downloader").WithLogLevel(CodexLogLevel.Trace));
+            var uploader = StartCodex(s => s.WithName("uploader").WithLogLevel(CodexLogLevel.Trace));
+            var downloader = StartCodex(s => s.WithName("downloader").WithLogLevel(CodexLogLevel.Trace));
 
             var cid = uploader.UploadFile(GenerateTestFile(100.MB()));
 

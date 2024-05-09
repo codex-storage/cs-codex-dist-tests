@@ -1,4 +1,6 @@
-﻿namespace Utils
+﻿using System.Diagnostics;
+
+namespace Utils
 {
     public static class Time
     {
@@ -105,16 +107,18 @@
         {
             var start = DateTime.UtcNow;
             var tries = 1;
-            var exceptions = new List<Exception>();
+            var tryInfo = new List<(Exception, TimeSpan)>();
 
             while (true)
             {
                 var duration = DateTime.UtcNow - start;
                 if (duration > maxTimeout)
                 {
-                    throw new TimeoutException($"Retry '{description}' timed out after {tries} tries over {FormatDuration(duration)}.", new AggregateException(exceptions));
+                    var info = FormatTryInfos(tryInfo);
+                    throw new TimeoutException($"Retry '{description}' timed out after {tries} tries over {FormatDuration(duration)}.{Environment.NewLine}{info}");
                 }
 
+                var sw = Stopwatch.StartNew();
                 try
                 {
                     action();
@@ -122,12 +126,22 @@
                 }
                 catch (Exception ex)
                 {
-                    exceptions.Add(ex);
+                    tryInfo.Add((ex, sw.Elapsed));
                     tries++;
                 }
 
                 Sleep(retryTime);
             }
+        }
+
+        private static string FormatTryInfos(List<(Exception, TimeSpan)> tryInfo)
+        {
+            return string.Join(Environment.NewLine, tryInfo.Select(FormatTryInfo).ToArray());
+        }
+
+        private static string FormatTryInfo((Exception, TimeSpan) info, int index)
+        {
+            return $"Attempt {index} took {FormatDuration(info.Item2)} and failed with exception {info.Item1}.";
         }
 
         public static T Retry<T>(Func<T> action, TimeSpan maxTimeout, TimeSpan retryTime, string description)

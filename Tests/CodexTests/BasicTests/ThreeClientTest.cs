@@ -9,8 +9,8 @@ namespace CodexTests.BasicTests
         [Test]
         public void ThreeClient()
         {
-            var primary = AddCodex();
-            var secondary = AddCodex();
+            var primary = StartCodex();
+            var secondary = StartCodex();
 
             var testFile = GenerateTestFile(10.MB());
 

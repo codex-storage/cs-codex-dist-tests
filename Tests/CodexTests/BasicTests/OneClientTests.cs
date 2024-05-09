@@ -10,7 +10,7 @@ namespace CodexTests.BasicTests
         [Test]
         public void OneClientTest()
         {
-            var primary = AddCodex();
+            var primary = StartCodex();
 
             PerformOneClientTest(primary);
         }
@@ -18,11 +18,11 @@ namespace CodexTests.BasicTests
         [Test]
         public void RestartTest()
         {
-            var primary = AddCodex();
+            var primary = StartCodex();
 
             primary.Stop(waitTillStopped: true);
 
-            primary = AddCodex();
+            primary = StartCodex();
 
             PerformOneClientTest(primary);
         }
