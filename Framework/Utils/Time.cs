@@ -144,6 +144,12 @@ namespace Utils
             return $"Attempt {index} took {FormatDuration(info.Item2)} and failed with exception {info.Item1}.";
         }
 
+        private static Action<int> failedCallback = i => { };
+        public static void SetRetryFailedCallback(Action<int> onRetryFailed)
+        {
+            failedCallback = onRetryFailed;
+        }
+
         public static T Retry<T>(Func<T> action, TimeSpan maxTimeout, TimeSpan retryTime, string description)
         {
             var start = DateTime.UtcNow;
@@ -165,6 +171,7 @@ namespace Utils
                 catch (Exception ex)
                 {
                     exceptions.Add(ex);
+                    failedCallback(tries);
                     tries++;
                 }
 
