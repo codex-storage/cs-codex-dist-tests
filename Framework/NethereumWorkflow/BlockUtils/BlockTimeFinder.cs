@@ -20,6 +20,7 @@ namespace NethereumWorkflow.BlockUtils
 
         public BlockTimeEntry Get(ulong blockNumber)
         {
+            bounds.Initialize();
             var b = cache.Get(blockNumber);
             if (b != null) return b;
             return GetBlock(blockNumber);
