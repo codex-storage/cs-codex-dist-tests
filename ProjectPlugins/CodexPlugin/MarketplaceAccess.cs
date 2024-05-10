@@ -83,7 +83,7 @@ namespace CodexPlugin
     {
         private readonly ILog log;
         private readonly CodexAccess codexAccess;
-        private readonly TimeSpan gracePeriod = TimeSpan.FromSeconds(10);
+        private readonly TimeSpan gracePeriod = TimeSpan.FromSeconds(30);
         private DateTime? contractStartUtc;
 
         public StoragePurchaseContract(ILog log, CodexAccess codexAccess, string purchaseId, StoragePurchaseRequest purchase)
