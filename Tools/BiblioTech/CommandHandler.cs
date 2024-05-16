@@ -22,7 +22,7 @@ namespace BiblioTech
 
         private async Task Client_Ready()
         {
-            var guild = client.Guilds.Single(g => g.Name == Program.Config.ServerName);
+            var guild = client.Guilds.Single(g => g.Id == Program.Config.ServerId);
             Program.AdminChecker.SetGuild(guild);
             Program.Log.Log($"Initializing for guild: '{guild.Name}'");
 
