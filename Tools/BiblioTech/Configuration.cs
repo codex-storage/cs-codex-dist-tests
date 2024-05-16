@@ -34,28 +34,12 @@ namespace BiblioTech
         [Uniform("mint-tt", "mt", "MINTTT", true, "Amount of TestTokens minted by the mint command.")]
         public int MintTT { get; set; } = 1073741824;
 
-        public string EndpointsPath
-        {
-            get
-            {
-                return Path.Combine(DataPath, "endpoints");
-            }
-        }
+        [Uniform("no-discord", "nd", "NODISCORD", false, "For debugging: Bypasses all Discord API calls.")]
+        public int NoDiscord { get; set; } = 0;
 
-        public string UserDataPath
-        {
-            get
-            {
-                return Path.Combine(DataPath, "users");
-            }
-        }
-
-        public string LogPath
-        {
-            get
-            {
-                return Path.Combine(DataPath, "logs");
-            }
-        }
+        public string EndpointsPath => Path.Combine(DataPath, "endpoints");
+        public string UserDataPath => Path.Combine(DataPath, "users");
+        public string LogPath => Path.Combine(DataPath, "logs");
+        public bool DebugNoDiscord => NoDiscord == 1;
     }
 }

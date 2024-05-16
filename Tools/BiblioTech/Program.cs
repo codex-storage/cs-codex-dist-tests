@@ -41,25 +41,15 @@ namespace BiblioTech
         public async Task MainAsync(string[] args)
         {
             Log.Log("Starting Codex Discord Bot...");
-            client = new DiscordSocketClient();
-            client.Log += ClientLog;
-
-            var notifyCommand = new NotifyCommand();
-            var associateCommand = new UserAssociateCommand(notifyCommand);
-            var sprCommand = new SprCommand();
-            var handler = new CommandHandler(client,
-                new GetBalanceCommand(associateCommand), 
-                new MintCommand(associateCommand),
-                sprCommand,
-                associateCommand,
-                notifyCommand,
-                new AdminCommand(sprCommand),
-                new MarketCommand()
-            );
-
-            await client.LoginAsync(TokenType.Bot, Config.ApplicationToken);
-            await client.StartAsync();
-            AdminChecker = new AdminChecker();
+            if (Config.DebugNoDiscord)
+            {
+                Log.Log("Debug option is set. Discord connection disabled!");
+                RoleDriver = new LoggingRoleDriver(Log);
+            }
+            else
+            {
+                await StartDiscordBot();
+            }
 
             var builder = WebApplication.CreateBuilder(args);
             builder.WebHost.ConfigureKestrel((context, options) =>
@@ -73,6 +63,29 @@ namespace BiblioTech
             Log.Log("Running...");
             await app.RunAsync();
             await Task.Delay(-1);
+        }
+
+        private async Task StartDiscordBot()
+        {
+            client = new DiscordSocketClient();
+            client.Log += ClientLog;
+
+            var notifyCommand = new NotifyCommand();
+            var associateCommand = new UserAssociateCommand(notifyCommand);
+            var sprCommand = new SprCommand();
+            var handler = new CommandHandler(client,
+                new GetBalanceCommand(associateCommand),
+                new MintCommand(associateCommand),
+                sprCommand,
+                associateCommand,
+                notifyCommand,
+                new AdminCommand(sprCommand),
+                new MarketCommand()
+            );
+
+            await client.LoginAsync(TokenType.Bot, Config.ApplicationToken);
+            await client.StartAsync();
+            AdminChecker = new AdminChecker();
         }
 
         private static void PrintHelp()
