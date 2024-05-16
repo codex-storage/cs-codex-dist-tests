@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using System.Globalization;
+using System.Reflection;
 
 namespace ArgsUniform
 {
@@ -103,8 +104,11 @@ namespace ArgsUniform
                     if (uniformProperty.PropertyType == typeof(int?)) return AssignOptionalInt(result, uniformProperty, value);
                     if (uniformProperty.PropertyType.IsEnum) return AssignEnum(result, uniformProperty, value);
                     if (uniformProperty.PropertyType == typeof(bool)) return AssignBool(result, uniformProperty, value);
+                    if (uniformProperty.PropertyType == typeof(ulong)) return AssignUlong(result, uniformProperty, value);
 
-                    throw new NotSupportedException();
+                    throw new NotSupportedException(
+                        $"Unsupported property type '${uniformProperty.PropertyType}' " +
+                        $"for property '${uniformProperty.Name}'.");
                 }
             }
         }
@@ -122,7 +126,17 @@ namespace ArgsUniform
 
         private static bool AssignOptionalInt(T result, PropertyInfo uniformProperty, object value)
         {
-            if (int.TryParse(value.ToString(), out int i))
+            if (int.TryParse(value.ToString(), CultureInfo.InvariantCulture, out int i))
+            {
+                uniformProperty.SetValue(result, i);
+                return true;
+            }
+            return false;
+        }
+
+        private bool AssignUlong(T? result, PropertyInfo uniformProperty, object value)
+        {
+            if (ulong.TryParse(value.ToString(), CultureInfo.InvariantCulture, out ulong i))
             {
                 uniformProperty.SetValue(result, i);
                 return true;
