@@ -21,6 +21,8 @@ namespace BiblioTech
 
         public static Task Main(string[] args)
         {
+            Log = new ConsoleLog();
+
             var uniformArgs = new ArgsUniform<Configuration>(PrintHelp, args);
             Config = uniformArgs.Parse();
 

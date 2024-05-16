@@ -42,7 +42,7 @@ namespace ArgsUniform
             {
                 printAppInfo();
                 PrintHelp();
-                throw new Exception();
+                Environment.Exit(0);
             }
 
             var result = Activator.CreateInstance<T>();
@@ -55,9 +55,7 @@ namespace ArgsUniform
                 {
                     if (!UniformAssign(result, attr, uniformProperty) && attr.Required)
                     {
-                        {
-                            missingRequired.Add(uniformProperty);
-                        }
+                        missingRequired.Add(uniformProperty);
                     }
                 }
             }
@@ -75,7 +73,7 @@ namespace ArgsUniform
                 }
 
                 PrintHelp();
-                throw new ArgumentException("Unable to assemble all required arguments");
+                Environment.Exit(1);
             }
 
             if (printResult)
