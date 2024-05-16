@@ -16,8 +16,8 @@ namespace BiblioTech.Rewards
         {
             this.client = client;
 
-            rewardsChannel = GetChannel(Program.Config.RewardsChannelName);
-            eventsChannel = GetChannel(Program.Config.ChainEventsChannelName);
+            rewardsChannel = GetChannel(Program.Config.RewardsChannelId);
+            eventsChannel = GetChannel(Program.Config.ChainEventsChannelId);
         }
 
         public async Task GiveRewards(GiveRewardsCommand rewards)
@@ -45,10 +45,10 @@ namespace BiblioTech.Rewards
             await context.ProcessGiveRewardsCommand(LookUpUsers(rewards));
         }
 
-        private SocketTextChannel? GetChannel(string name)
+        private SocketTextChannel? GetChannel(ulong id)
         {
-            if (string.IsNullOrEmpty(name)) return null;
-            return GetGuild().TextChannels.SingleOrDefault(c => c.Name == name);
+            if (id == 0) return null;
+            return GetGuild().TextChannels.SingleOrDefault(c => c.Id == id);
         }
 
         private async Task ProcessChainEvents(string[] eventsOverview)
@@ -147,11 +147,11 @@ namespace BiblioTech.Rewards
 
         private SocketGuild GetGuild()
         {
-            var guild = client.Guilds.SingleOrDefault(g => g.Name == Program.Config.ServerName);
+            var guild = client.Guilds.SingleOrDefault(g => g.Id == Program.Config.ServerId);
             if (guild == null)
             {
-                throw new Exception($"Unable to find guild by name: '{Program.Config.ServerName}'. " +
-                    $"Known guilds: [{string.Join(",", client.Guilds.Select(g => g.Name))}]");
+                throw new Exception($"Unable to find guild by id: '{Program.Config.ServerId}'. " +
+                    $"Known guilds: [{string.Join(",", client.Guilds.Select(g => g.Name + " (" + g.Id + ")"))}]");
             }
             return guild;
         }

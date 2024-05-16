@@ -10,7 +10,7 @@ namespace BiblioTech
         [Uniform("server-id", "sn", "SERVERID", true, "ID of the Discord server")] 
         public ulong ServerId { get; set; }
 
-        [Uniform("datapath", "dp", "DATAPATH", false, "Root path where all data files will be saved.")]
+        [Uniform("datapath", "dp", "DATAPATH", true, "Root path where all data files will be saved.")]
         public string DataPath { get; set; } = "datapath";
         
         [Uniform("admin-role-id", "a", "ADMINROLEID", true, "ID of the Discord server admin role")]
@@ -23,15 +23,15 @@ namespace BiblioTech
         public ulong RewardsChannelId { get; set; }
 
         [Uniform("chain-events-channel-id", "cc", "CHAINEVENTSCHANNELID", false, "ID of the Discord server channel where chain events will be posted.")]
-        public ulong ChainEventsChannelID { get; set; }
+        public ulong ChainEventsChannelId { get; set; }
 
-        [Uniform("reward-api-port", "rp", "REWARDAPIPORT", false, "TCP listen port for the reward API.")]
+        [Uniform("reward-api-port", "rp", "REWARDAPIPORT", true, "TCP listen port for the reward API.")]
         public int RewardApiPort { get; set; } = 31080;
 
-        [Uniform("send-eth", "se", "SENDETH", false, "Amount of Eth send by the mint command. Default: 10.")]
+        [Uniform("send-eth", "se", "SENDETH", true, "Amount of Eth send by the mint command.")]
         public int SendEth { get; set; } = 10;
 
-        [Uniform("mint-tt", "mt", "MINTTT", false, "Amount of TestTokens minted by the mint command. Default: 1073741824")]
+        [Uniform("mint-tt", "mt", "MINTTT", true, "Amount of TestTokens minted by the mint command.")]
         public int MintTT { get; set; } = 1073741824;
 
         public string EndpointsPath

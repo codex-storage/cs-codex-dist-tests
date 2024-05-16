@@ -23,20 +23,38 @@ namespace ArgsUniform
             return false;
         }
 
+        public string DescribeDefaultFor(PropertyInfo property)
+        {
+            var obj = Activator.CreateInstance<T>();
+            var defaultValue = GetDefaultValue(obj, property);
+            if (defaultValue == null) return "";
+            if (defaultValue is string str)
+            {
+                return "\"" + str + "\"";
+            }
+            return defaultValue.ToString() ?? string.Empty;
+        }
+
+        private object? GetDefaultValue(T result, PropertyInfo uniformProperty)
+        {
+            // Get value from object's static initializer if it's there.
+            var currentValue = uniformProperty.GetValue(result);
+            if (currentValue != null) return currentValue;
+
+            // Get value from defaults-provider object if it's there.
+            if (defaultsProvider == null) return null;
+            var defaultProperty = defaultsProvider.GetType().GetProperties().SingleOrDefault(p => p.Name == uniformProperty.Name);
+            if (defaultProperty == null) return null;
+            return defaultProperty.GetValue(defaultsProvider);
+        }
+
         private bool AssignFromDefaultsIfAble(T result, PropertyInfo uniformProperty)
         {
-            var currentValue = uniformProperty.GetValue(result);
-            var isEmptryString = (currentValue as string) == string.Empty;
-            if (currentValue != GetDefaultValueForType(uniformProperty.PropertyType) && !isEmptryString) return true;
-            if (defaultsProvider == null) return false;
-
-            var defaultProperty = defaultsProvider.GetType().GetProperties().SingleOrDefault(p => p.Name == uniformProperty.Name);
-            if (defaultProperty == null) return false;
-
-            var value = defaultProperty.GetValue(defaultsProvider);
-            if (value != null)
+            var defaultValue = GetDefaultValue(result, uniformProperty);
+            var isEmptryString = (defaultValue as string) == string.Empty;
+            if (defaultValue != null && defaultValue != GetDefaultValueForType(uniformProperty.PropertyType) && !isEmptryString)
             {
-                return Assign(result, uniformProperty, value);
+                return Assign(result, uniformProperty, defaultValue);
             }
             return false;
         }

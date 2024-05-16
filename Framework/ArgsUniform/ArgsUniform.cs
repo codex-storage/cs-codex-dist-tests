@@ -61,7 +61,7 @@ namespace ArgsUniform
 
             if (missingRequired.Any())
             {
-                PrintResults(result, uniformProperties);
+                PrintResults(printResult,result, uniformProperties);
                 Print("");
                 foreach (var missing in missingRequired)
                 {
@@ -75,34 +75,36 @@ namespace ArgsUniform
                 Environment.Exit(1);
             }
 
-            if (printResult)
-            {
-                PrintResults(result, uniformProperties);
-            }
+            PrintResults(printResult, result, uniformProperties);
 
             return result;
-        }
-
-        private void PrintResults(T result, PropertyInfo[] uniformProperties)
-        {
-            Print("");
-            foreach (var p in uniformProperties)
-            {
-                Print($"\t{p.Name} = {p.GetValue(result)}");
-            }
-            Print("");
         }
 
         public void PrintHelp()
         {
             Print("");
-            PrintAligned("CLI option:", "(short)", "Environment variable:", "Description");
-            var attrs = typeof(T).GetProperties().Where(m => m.GetCustomAttributes(typeof(UniformAttribute), false).Length == 1).Select(p => p.GetCustomAttribute<UniformAttribute>()).Where(a => a != null).ToArray();
-            foreach (var attr in attrs)
+            PrintAligned("CLI option:", "(short)", "Environment variable:", "Description", "(default)");
+            var props = typeof(T).GetProperties().Where(m => m.GetCustomAttributes(typeof(UniformAttribute), false).Length == 1).ToArray();
+            foreach (var prop in props)
             {
-                var a = attr!;
-                var optional = !a.Required ? " *" : "";
-                PrintAligned($"--{a.Arg}=...", $"({a.ArgShort})", a.EnvVar, a.Description + optional);
+                var a = prop.GetCustomAttribute<UniformAttribute>();
+                if (a != null)
+                {
+                    var optional = !a.Required ? " (optional)" : "";
+                    var def = assigner.DescribeDefaultFor(prop);
+                    PrintAligned($"--{a.Arg}=...", $"({a.ArgShort})", a.EnvVar, a.Description + optional, $"({def})");
+                }
+            }
+            Print("");
+        }
+
+        private void PrintResults(bool printResult, T result, PropertyInfo[] uniformProperties)
+        {
+            if (!printResult) return;
+            Print("");
+            foreach (var p in uniformProperties)
+            {
+                Print($"\t{p.Name} = {p.GetValue(result)}");
             }
             Print("");
         }
@@ -112,7 +114,7 @@ namespace ArgsUniform
             Console.WriteLine(msg);
         }
 
-        private void PrintAligned(string cli, string s, string env, string desc)
+        private void PrintAligned(string cli, string s, string env, string desc, string def)
         {
             Console.CursorLeft = cliStart;
             Console.Write(cli);
@@ -121,7 +123,8 @@ namespace ArgsUniform
             Console.CursorLeft = envStart;
             Console.Write(env);
             Console.CursorLeft = descStart;
-            Console.Write(desc + Environment.NewLine);
+            Console.Write(desc + " ");
+            Console.Write(def + Environment.NewLine);
         }
     }
 }
