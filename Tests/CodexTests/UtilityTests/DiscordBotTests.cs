@@ -1,8 +1,11 @@
 ﻿using CodexContractsPlugin;
 using CodexDiscordBotPlugin;
 using CodexPlugin;
+using Core;
+using DiscordRewards;
 using GethPlugin;
 using KubernetesWorkflow.Types;
+using Newtonsoft.Json;
 using NUnit.Framework;
 using Utils;
 
@@ -11,9 +14,9 @@ namespace CodexTests.UtilityTests
     [TestFixture]
     public class DiscordBotTests : AutoBootstrapDistTest
     {
-        private readonly TestToken hostInitialBalance = 3000.TestTokens();
+        private readonly RewardRepo repo = new RewardRepo();
+        private readonly TestToken hostInitialBalance = 3000000.TestTokens();
         private readonly TestToken clientInitialBalance = 1000000000.TestTokens();
-        private readonly ByteSize fileSize = 11.MB();
 
         [Test]
         public void BotRewardTest()
@@ -35,23 +38,39 @@ namespace CodexTests.UtilityTests
 
             var purchaseContract = ClientPurchasesStorage(client);
 
-            //purchaseContract.WaitForStorageContractStarted();
-            //purchaseContract.WaitForStorageContractFinished();
-            Thread.Sleep(TimeSpan.FromMinutes(5));
+            var apiCalls = new RewardApiCalls(Ci, botContainer);
 
-            var botLog = Ci.ExecuteContainerCommand(botContainer, "cat", "/app/datapath/logs/discordbot.log");
-            var aaaa = 0;
+            Time.WaitUntil(() => apiCalls.Get().Length > 4, TimeSpan.FromMinutes(10), TimeSpan.FromSeconds(10), "Waiting for API calls");
+
+            var calls = apiCalls.Get();
+            foreach (var call in calls)
+            {
+                var line = "";
+                if (call.Averages.Any()) line += $"{call.Averages.Length} average. ";
+                if (call.EventsOverview.Any()) line += $"{call.EventsOverview.Length} events. ";
+                foreach (var r in call.Rewards)
+                {
+                    var reward = repo.Rewards.Single(a => a.RoleId == r.RewardId);
+                    var isClient = r.UserAddresses.Any(a => a == clientAccount.EthAddress.Address);
+                    var isHost = r.UserAddresses.Any(a => a == hostAccount.EthAddress.Address);
+                    if (isHost && isClient) throw new Exception("what?");
+                    var name = isClient ? "Client" : "Host";
+
+                    line += name + " = " + reward.Message;
+                }
+                Log(line);
+            }
         }
 
         private StoragePurchaseContract ClientPurchasesStorage(ICodexNode client)
         {
-            var testFile = GenerateTestFile(fileSize);
+            var testFile = GenerateTestFile(GetMinFileSize());
             var contentId = client.UploadFile(testFile);
             var purchase = new StoragePurchaseRequest(contentId)
             {
                 PricePerSlotPerSecond = 2.TestTokens(),
                 RequiredCollateral = 10.TestTokens(),
-                MinRequiredNumberOfNodes = 5,
+                MinRequiredNumberOfNodes = GetNumberOfRequiredHosts(),
                 NodeFailureTolerance = 2,
                 ProofProbability = 5,
                 Duration = TimeSpan.FromMinutes(6),
@@ -111,14 +130,13 @@ namespace CodexTests.UtilityTests
 
         private void StartHosts(EthAccount hostAccount, IGethNode geth, ICodexContracts contracts)
         {
-            var numberOfHosts = 5;
-            var hosts = StartCodex(numberOfHosts, s => s
+            var hosts = StartCodex(GetNumberOfLiveHosts(), s => s
                 .WithName("Host")
                 .WithLogLevel(CodexLogLevel.Trace, new CodexLogCustomTopics(CodexLogLevel.Error, CodexLogLevel.Error, CodexLogLevel.Warn)
                 {
                     ContractClock = CodexLogLevel.Trace,
                 })
-                .WithStorageQuota(11.GB())
+                .WithStorageQuota(GetFileSizePlus(50))
                 .EnableMarketplace(geth, contracts, m => m
                     .WithAccount(hostAccount)
                     .WithInitial(10.Eth(), hostInitialBalance)
@@ -126,15 +144,89 @@ namespace CodexTests.UtilityTests
                     .AsValidator()));
 
             var availability = new StorageAvailability(
-                totalSpace: 10.GB(),
+                totalSpace: GetFileSizePlus(5),
                 maxDuration: TimeSpan.FromMinutes(30),
                 minPriceForTotalSpace: 1.TestTokens(),
-                maxCollateral: 20.TestTokens()
+                maxCollateral: hostInitialBalance
             );
 
             foreach (var host in hosts)
             {
                 host.Marketplace.MakeStorageAvailable(availability);
+            }
+        }
+
+        private int GetNumberOfLiveHosts()
+        {
+            return Convert.ToInt32(GetNumberOfRequiredHosts()) + 3;
+        }
+
+        private ByteSize GetFileSizePlus(int plusMb)
+        {
+            return new ByteSize(GetMinFileSize().SizeInBytes + plusMb.MB().SizeInBytes);
+        }
+
+        private ByteSize GetMinFileSize()
+        {
+            ulong minSlotSize = 0;
+            ulong minNumHosts = 0;
+            foreach (var r in repo.Rewards)
+            {
+                var s = Convert.ToUInt64(r.CheckConfig.MinSlotSize.SizeInBytes);
+                var h = r.CheckConfig.MinNumberOfHosts;
+                if (s > minSlotSize) minSlotSize = s;
+                if (h > minNumHosts) minNumHosts = h;
+            }
+
+            var minFileSize = (minSlotSize * minNumHosts) + 1024;
+            return new ByteSize(Convert.ToInt64(minFileSize));
+        }
+
+        private uint GetNumberOfRequiredHosts()
+        {
+            return Convert.ToUInt32(repo.Rewards.Max(r => r.CheckConfig.MinNumberOfHosts));
+        }
+
+        public class RewardApiCalls
+        {
+            private readonly CoreInterface ci;
+            private readonly RunningContainer botContainer;
+            private readonly Dictionary<string, GiveRewardsCommand> commands = new Dictionary<string, GiveRewardsCommand>();
+
+            public RewardApiCalls(CoreInterface ci, RunningContainer botContainer)
+            {
+                this.ci = ci;
+                this.botContainer = botContainer;
+            }
+
+            public void Update()
+            {
+                var botLog = ci.ExecuteContainerCommand(botContainer, "cat", "/app/datapath/logs/discordbot.log");
+
+                var lines = botLog.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
+                foreach (var line in lines) AddToCache(line);
+            }
+
+            public GiveRewardsCommand[] Get()
+            {
+                Update();
+                return commands.Select(c => c.Value).ToArray();
+            }
+
+            private void AddToCache(string line)
+            {
+                try
+                {
+                    var timestamp = line.Substring(0, 30);
+                    if (commands.ContainsKey(timestamp)) return;
+                    var json = line.Substring(31);
+
+                    var cmd = JsonConvert.DeserializeObject<GiveRewardsCommand>(json);
+                    if (cmd != null) commands.Add(timestamp, cmd);
+                }
+                catch
+                {
+                }
             }
         }
     }

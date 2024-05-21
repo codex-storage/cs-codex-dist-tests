@@ -13,6 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\Framework\DiscordRewards\DiscordRewards.csproj" />
     <ProjectReference Include="..\..\ProjectPlugins\CodexContractsPlugin\CodexContractsPlugin.csproj" />
     <ProjectReference Include="..\..\ProjectPlugins\CodexDiscordBotPlugin\CodexDiscordBotPlugin.csproj" />
     <ProjectReference Include="..\..\ProjectPlugins\CodexPlugin\CodexPlugin.csproj" />
