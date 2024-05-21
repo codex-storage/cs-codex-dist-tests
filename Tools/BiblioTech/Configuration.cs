@@ -1,4 +1,5 @@
 ﻿using ArgsUniform;
+using System.Numerics;
 
 namespace BiblioTech
 {
@@ -32,7 +33,7 @@ namespace BiblioTech
         public int SendEth { get; set; } = 10;
 
         [Uniform("mint-tt", "mt", "MINTTT", true, "Amount of TestTokens minted by the mint command.")]
-        public int MintTT { get; set; } = 1073741824;
+        public BigInteger MintTT { get; set; } = 1073741824;
 
         public string EndpointsPath
         {

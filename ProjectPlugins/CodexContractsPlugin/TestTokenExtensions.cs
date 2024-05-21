@@ -1,4 +1,6 @@
-﻿namespace CodexContractsPlugin
+﻿using System.Numerics;
+
+namespace CodexContractsPlugin
 {
     public class TestToken : IComparable<TestToken>
     {
@@ -40,6 +42,11 @@
         public static TestToken TestTokens(this decimal i)
         {
             return new TestToken(i);
+        }
+
+        public static TestToken TestTokens(this BigInteger i)
+        {
+            return new TestToken((decimal)i);
         }
     }
 }

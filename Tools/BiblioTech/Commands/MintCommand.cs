@@ -77,7 +77,7 @@ namespace BiblioTech.Commands
         private bool ShouldMintTestTokens(ICodexContracts contracts, EthAddress addr)
         {
             var testTokens = contracts.GetTestTokenBalance(addr);
-            return testTokens.Amount < Program.Config.MintTT;
+            return testTokens.Amount < Program.Config.MintTT.TestTokens().Amount;
         }
 
         private bool ShouldSendEth(IGethNode gethNode, EthAddress addr)
