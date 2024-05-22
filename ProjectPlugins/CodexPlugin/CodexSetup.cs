@@ -168,7 +168,7 @@ namespace CodexPlugin
         public bool IsStorageNode { get; private set; }
         public bool IsValidator { get; private set; }
         public Ether InitialEth { get; private set; } = 0.Eth();
-        public TestToken InitialTestTokens { get; private set; } = 0.TestTokens();
+        public TestToken InitialTestTokens { get; private set; } = 0.Tst();
         public EthAccount EthAccount { get; private set; } = EthAccount.GenerateNew();
 
         public IMarketplaceSetup AsStorageNode()
@@ -202,7 +202,7 @@ namespace CodexPlugin
             result += IsStorageNode ? "(storageNode)" : "()";
             result += IsValidator ? "(validator)" : "() ";
             result += $"Address: '{EthAccount.EthAddress}' ";
-            result += $"InitialEth/TT({InitialEth.Eth}/{InitialTestTokens.Amount})";
+            result += $"{InitialEth.Eth} / {InitialTestTokens}";
             result += "] ";
             return result;
         }

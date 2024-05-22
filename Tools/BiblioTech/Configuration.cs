@@ -1,4 +1,5 @@
 ﻿using ArgsUniform;
+using System.Numerics;
 
 namespace BiblioTech
 {
@@ -31,8 +32,8 @@ namespace BiblioTech
         [Uniform("send-eth", "se", "SENDETH", true, "Amount of Eth send by the mint command.")]
         public int SendEth { get; set; } = 10;
 
-        [Uniform("mint-tt", "mt", "MINTTT", true, "Amount of TestTokens minted by the mint command.")]
-        public int MintTT { get; set; } = 1073741824;
+        [Uniform("mint-tt", "mt", "MINTTT", true, "Amount of TSTWEI minted by the mint command.")]
+        public BigInteger MintTT { get; set; } = 1073741824;
 
         [Uniform("no-discord", "nd", "NODISCORD", false, "For debugging: Bypasses all Discord API calls.")]
         public int NoDiscord { get; set; } = 0;

@@ -1,4 +1,5 @@
 ﻿using System.Globalization;
+using System.Numerics;
 using System.Reflection;
 
 namespace ArgsUniform
@@ -105,6 +106,7 @@ namespace ArgsUniform
                     if (uniformProperty.PropertyType.IsEnum) return AssignEnum(result, uniformProperty, value);
                     if (uniformProperty.PropertyType == typeof(bool)) return AssignBool(result, uniformProperty, value);
                     if (uniformProperty.PropertyType == typeof(ulong)) return AssignUlong(result, uniformProperty, value);
+                    if (uniformProperty.PropertyType == typeof(BigInteger)) return AssignBigInt(result, uniformProperty, value);
 
                     throw new NotSupportedException(
                         $"Unsupported property type '${uniformProperty.PropertyType}' " +
@@ -137,6 +139,16 @@ namespace ArgsUniform
         private bool AssignUlong(T? result, PropertyInfo uniformProperty, object value)
         {
             if (ulong.TryParse(value.ToString(), CultureInfo.InvariantCulture, out ulong i))
+            {
+                uniformProperty.SetValue(result, i);
+                return true;
+            }
+            return false;
+        }
+
+        private bool AssignBigInt(T result, PropertyInfo uniformProperty, object value)
+        {
+            if (BigInteger.TryParse(value.ToString(), CultureInfo.InvariantCulture, out BigInteger i))
             {
                 uniformProperty.SetValue(result, i);
                 return true;

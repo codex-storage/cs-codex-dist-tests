@@ -15,8 +15,8 @@ namespace CodexTests.UtilityTests
     public class DiscordBotTests : AutoBootstrapDistTest
     {
         private readonly RewardRepo repo = new RewardRepo();
-        private readonly TestToken hostInitialBalance = 3000000.TestTokens();
-        private readonly TestToken clientInitialBalance = 1000000000.TestTokens();
+        private readonly TestToken hostInitialBalance = 3000000.TstWei();
+        private readonly TestToken clientInitialBalance = 1000000000.TstWei();
 
         [Test]
         public void BotRewardTest()
@@ -68,8 +68,8 @@ namespace CodexTests.UtilityTests
             var contentId = client.UploadFile(testFile);
             var purchase = new StoragePurchaseRequest(contentId)
             {
-                PricePerSlotPerSecond = 2.TestTokens(),
-                RequiredCollateral = 10.TestTokens(),
+                PricePerSlotPerSecond = 2.TstWei(),
+                RequiredCollateral = 10.TstWei(),
                 MinRequiredNumberOfNodes = GetNumberOfRequiredHosts(),
                 NodeFailureTolerance = 2,
                 ProofProbability = 5,
@@ -146,7 +146,7 @@ namespace CodexTests.UtilityTests
             var availability = new StorageAvailability(
                 totalSpace: GetFileSizePlus(5),
                 maxDuration: TimeSpan.FromMinutes(30),
-                minPriceForTotalSpace: 1.TestTokens(),
+                minPriceForTotalSpace: 1.TstWei(),
                 maxCollateral: hostInitialBalance
             );
 

@@ -67,7 +67,7 @@ namespace CodexContractsPlugin
 
         public string MintTestTokens(EthAddress ethAddress, TestToken testTokens)
         {
-            return StartInteraction().MintTestTokens(ethAddress, testTokens.Amount, Deployment.TokenAddress);
+            return StartInteraction().MintTestTokens(ethAddress, testTokens.TstWei, Deployment.TokenAddress);
         }
 
         public TestToken GetTestTokenBalance(IHasEthAddress owner)
@@ -78,7 +78,7 @@ namespace CodexContractsPlugin
         public TestToken GetTestTokenBalance(EthAddress ethAddress)
         {
             var balance = StartInteraction().GetBalance(Deployment.TokenAddress, ethAddress.Address);
-            return balance.TestTokens();
+            return balance.TstWei();
         }
 
         public Request[] GetStorageRequests(BlockInterval blockRange)

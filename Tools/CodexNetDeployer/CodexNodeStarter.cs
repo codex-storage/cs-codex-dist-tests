@@ -43,7 +43,7 @@ namespace CodexNetDeployer
                     {
                         s.EnableMarketplace(gethNode, contracts, m =>
                         {
-                            m.WithInitial(100.Eth(), config.InitialTestTokens.TestTokens());
+                            m.WithInitial(100.Eth(), config.InitialTestTokens.TstWei());
                             if (validatorsLeft > 0) m.AsValidator();
                             if (config.ShouldMakeStorageAvailable) m.AsStorageNode();
                         });
@@ -71,8 +71,8 @@ namespace CodexNetDeployer
                         var availability = new StorageAvailability(
                             totalSpace: config.StorageSell!.Value.MB(),
                             maxDuration: TimeSpan.FromSeconds(config.MaxDuration),
-                            minPriceForTotalSpace: config.MinPrice.TestTokens(),
-                            maxCollateral: config.MaxCollateral.TestTokens()
+                            minPriceForTotalSpace: config.MinPrice.TstWei(),
+                            maxCollateral: config.MaxCollateral.TstWei()
                         );
 
                         var response = codexNode.Marketplace.MakeStorageAvailable(availability);
