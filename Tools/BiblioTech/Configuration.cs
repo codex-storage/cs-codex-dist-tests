@@ -32,7 +32,7 @@ namespace BiblioTech
         [Uniform("send-eth", "se", "SENDETH", true, "Amount of Eth send by the mint command.")]
         public int SendEth { get; set; } = 10;
 
-        [Uniform("mint-tt", "mt", "MINTTT", true, "Amount of TestTokens minted by the mint command.")]
+        [Uniform("mint-tt", "mt", "MINTTT", true, "Amount of TSTWEI minted by the mint command.")]
         public BigInteger MintTT { get; set; } = 1073741824;
 
         public string EndpointsPath

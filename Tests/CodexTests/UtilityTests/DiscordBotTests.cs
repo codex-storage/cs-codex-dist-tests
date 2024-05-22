@@ -16,8 +16,8 @@ namespace CodexTests.UtilityTests
         {
             var myAccount = EthAccount.GenerateNew();
 
-            var sellerInitialBalance = 234.TestTokens();
-            var buyerInitialBalance = 100000.TestTokens();
+            var sellerInitialBalance = 234.TstWei();
+            var buyerInitialBalance = 100000.TstWei();
             var fileSize = 11.MB();
 
             var geth = Ci.StartGethNode(s => s.IsMiner().WithName("disttest-geth"));
@@ -74,8 +74,8 @@ namespace CodexTests.UtilityTests
                 var availability = new StorageAvailability(
                     totalSpace: 10.GB(),
                     maxDuration: TimeSpan.FromMinutes(30),
-                    minPriceForTotalSpace: 1.TestTokens(),
-                    maxCollateral: 20.TestTokens()
+                    minPriceForTotalSpace: 1.TstWei(),
+                    maxCollateral: 20.TstWei()
                 );
                 seller.Marketplace.MakeStorageAvailable(availability);
             }
@@ -92,8 +92,8 @@ namespace CodexTests.UtilityTests
 
             var purchase = new StoragePurchaseRequest(contentId)
             {
-                PricePerSlotPerSecond = 2.TestTokens(),
-                RequiredCollateral = 10.TestTokens(),
+                PricePerSlotPerSecond = 2.TstWei(),
+                RequiredCollateral = 10.TstWei(),
                 MinRequiredNumberOfNodes = 5,
                 NodeFailureTolerance = 2,
                 ProofProbability = 5,

@@ -74,10 +74,10 @@ namespace CodexPlugin
         public StorageAvailability Map(CodexOpenApi.SalesAvailabilityREAD read)
         {
             return new StorageAvailability(
-                totalSpace: new Utils.ByteSize(Convert.ToInt64(read.TotalSize)),
+                totalSpace: new ByteSize(Convert.ToInt64(read.TotalSize)),
                 maxDuration: TimeSpan.FromSeconds(Convert.ToDouble(read.Duration)),
-                minPriceForTotalSpace: new TestToken(Convert.ToDecimal(read.MinPrice)),
-                maxCollateral: new TestToken(Convert.ToDecimal(read.MaxCollateral))
+                minPriceForTotalSpace: new TestToken(BigInteger.Parse(read.MinPrice)),
+                maxCollateral: new TestToken(BigInteger.Parse(read.MaxCollateral))
             )
             {
                 Id = read.Id
@@ -165,8 +165,7 @@ namespace CodexPlugin
 
         private string ToDecInt(TestToken t)
         {
-            var i = new BigInteger(t.Amount);
-            return i.ToString("D");
+            return t.TstWei.ToString("D");
         }
     }
 }

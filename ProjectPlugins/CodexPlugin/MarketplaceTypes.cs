@@ -12,8 +12,8 @@ namespace CodexPlugin
         }
 
         public ContentId ContentId { get; set; }
-        public TestToken PricePerSlotPerSecond { get; set; } = 1.TestTokens();
-        public TestToken RequiredCollateral { get; set; } = 1.TestTokens();
+        public TestToken PricePerSlotPerSecond { get; set; } = 1.TstWei();
+        public TestToken RequiredCollateral { get; set; } = 1.TstWei();
         public uint MinRequiredNumberOfNodes { get; set; }
         public uint NodeFailureTolerance { get; set; }
         public int ProofProbability { get; set; }

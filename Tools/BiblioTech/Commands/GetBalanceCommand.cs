@@ -32,7 +32,7 @@ namespace BiblioTech.Commands
             }
 
             var eth = 0.Eth();
-            var testTokens = 0.TestTokens();
+            var testTokens = 0.TstWei();
 
             await Task.Run(() =>
             {

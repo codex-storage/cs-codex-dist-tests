@@ -13,8 +13,8 @@ namespace CodexTests.BasicTests
         [Test]
         public void MarketplaceExample()
         {
-            var hostInitialBalance = 234.TestTokens();
-            var clientInitialBalance = 100000.TestTokens();
+            var hostInitialBalance = 234.TstWei();
+            var clientInitialBalance = 100000.TstWei();
             var fileSize = 10.MB();
 
             var geth = Ci.StartGethNode(s => s.IsMiner().WithName("disttest-geth"));
@@ -33,7 +33,7 @@ namespace CodexTests.BasicTests
                     .AsStorageNode()
                     .AsValidator()));
 
-            var expectedHostBalance = (numberOfHosts * hostInitialBalance.Amount).TestTokens();
+            var expectedHostBalance = (numberOfHosts * hostInitialBalance.TstWei).TstWei();
             foreach (var host in hosts)
             {
                 AssertBalance(contracts, host, Is.EqualTo(expectedHostBalance));
@@ -41,8 +41,8 @@ namespace CodexTests.BasicTests
                 var availability = new StorageAvailability(
                     totalSpace: 10.GB(),
                     maxDuration: TimeSpan.FromMinutes(30),
-                    minPriceForTotalSpace: 1.TestTokens(),
-                    maxCollateral: 20.TestTokens()
+                    minPriceForTotalSpace: 1.TstWei(),
+                    maxCollateral: 20.TstWei()
                 );
                 host.Marketplace.MakeStorageAvailable(availability);
             }
@@ -60,8 +60,8 @@ namespace CodexTests.BasicTests
 
             var purchase = new StoragePurchaseRequest(contentId)
             {
-                PricePerSlotPerSecond = 2.TestTokens(),
-                RequiredCollateral = 10.TestTokens(),
+                PricePerSlotPerSecond = 2.TstWei(),
+                RequiredCollateral = 10.TstWei(),
                 MinRequiredNumberOfNodes = 5,
                 NodeFailureTolerance = 2,
                 ProofProbability = 5,
