@@ -46,7 +46,7 @@ namespace NethereumWorkflow.BlockUtils
 
         private ulong Log(Func<ulong> operation)
         {
-            var sw = Stopwatch.Begin(log, nameof(BlockTimeFinder));
+            var sw = Stopwatch.Begin(log, nameof(BlockTimeFinder), true);
             var result = operation();
             sw.End($"(Bounds: [{bounds.Genesis.BlockNumber}-{bounds.Current.BlockNumber}] Cache: {cache.Size})");
 
