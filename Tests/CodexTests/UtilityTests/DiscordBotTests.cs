@@ -5,6 +5,7 @@ using Core;
 using DiscordRewards;
 using GethPlugin;
 using KubernetesWorkflow.Types;
+using Logging;
 using Newtonsoft.Json;
 using NUnit.Framework;
 using Utils;
@@ -17,49 +18,54 @@ namespace CodexTests.UtilityTests
         private readonly RewardRepo repo = new RewardRepo();
         private readonly TestToken hostInitialBalance = 3000000.TstWei();
         private readonly TestToken clientInitialBalance = 1000000000.TstWei();
+        private readonly EthAccount clientAccount = EthAccount.GenerateNew();
+        private readonly EthAccount hostAccount = EthAccount.GenerateNew();
 
         [Test]
         public void BotRewardTest()
         {
-            var clientAccount = EthAccount.GenerateNew();
-
             var geth = Ci.StartGethNode(s => s.IsMiner().WithName("disttest-geth"));
             var contracts = Ci.StartCodexContracts(geth);
             var gethInfo = CreateGethInfo(geth, contracts);
 
+            var monitor = new ChainMonitor(contracts, geth, GetTestLog());
+            monitor.Start();
+
             var botContainer = StartDiscordBot(gethInfo);
 
-            var hostAccount = EthAccount.GenerateNew();
-            StartHosts(hostAccount, geth, contracts);
+            StartHosts(geth, contracts);
 
             StartRewarderBot(gethInfo, botContainer);
 
-            var client = StartClient(geth, contracts, clientAccount);
+            var client = StartClient(geth, contracts);
 
             var purchaseContract = ClientPurchasesStorage(client);
 
             var apiCalls = new RewardApiCalls(Ci, botContainer);
+            apiCalls.Start(OnCommand);
 
-            Time.WaitUntil(() => apiCalls.Get().Length > 4, TimeSpan.FromMinutes(10), TimeSpan.FromSeconds(10), "Waiting for API calls");
+            Thread.Sleep(TimeSpan.FromMinutes(10));
 
-            var calls = apiCalls.Get();
-            foreach (var call in calls)
+            apiCalls.Stop();
+            monitor.Stop();
+        }
+
+        private void OnCommand(GiveRewardsCommand call)
+        {
+            var line = "";
+            if (call.Averages.Any()) line += $"{call.Averages.Length} average. ";
+            if (call.EventsOverview.Any()) line += $"{call.EventsOverview.Length} events. ";
+            foreach (var r in call.Rewards)
             {
-                var line = "";
-                if (call.Averages.Any()) line += $"{call.Averages.Length} average. ";
-                if (call.EventsOverview.Any()) line += $"{call.EventsOverview.Length} events. ";
-                foreach (var r in call.Rewards)
-                {
-                    var reward = repo.Rewards.Single(a => a.RoleId == r.RewardId);
-                    var isClient = r.UserAddresses.Any(a => a == clientAccount.EthAddress.Address);
-                    var isHost = r.UserAddresses.Any(a => a == hostAccount.EthAddress.Address);
-                    if (isHost && isClient) throw new Exception("what?");
-                    var name = isClient ? "Client" : "Host";
+                var reward = repo.Rewards.Single(a => a.RoleId == r.RewardId);
+                var isClient = r.UserAddresses.Any(a => a == clientAccount.EthAddress.Address);
+                var isHost = r.UserAddresses.Any(a => a == hostAccount.EthAddress.Address);
+                if (isHost && isClient) throw new Exception("what?");
+                var name = isClient ? "Client" : "Host";
 
-                    line += name + " = " + reward.Message;
-                }
-                Log(line);
+                line += name + " = " + reward.Message;
             }
+            Log(line);
         }
 
         private StoragePurchaseContract ClientPurchasesStorage(ICodexNode client)
@@ -80,7 +86,7 @@ namespace CodexTests.UtilityTests
             return client.Marketplace.RequestStorage(purchase);
         }
 
-        private ICodexNode StartClient(IGethNode geth, ICodexContracts contracts, EthAccount clientAccount)
+        private ICodexNode StartClient(IGethNode geth, ICodexContracts contracts)
         {
             return StartCodex(s => s
                 .WithName("Client")
@@ -128,7 +134,7 @@ namespace CodexTests.UtilityTests
             return bot.Containers.Single();
         }
 
-        private void StartHosts(EthAccount hostAccount, IGethNode geth, ICodexContracts contracts)
+        private void StartHosts(IGethNode geth, ICodexContracts contracts)
         {
             var hosts = StartCodex(GetNumberOfLiveHosts(), s => s
                 .WithName("Host")
@@ -192,6 +198,9 @@ namespace CodexTests.UtilityTests
             private readonly CoreInterface ci;
             private readonly RunningContainer botContainer;
             private readonly Dictionary<string, GiveRewardsCommand> commands = new Dictionary<string, GiveRewardsCommand>();
+            private readonly CancellationTokenSource cts = new CancellationTokenSource();
+            private Task worker = Task.CompletedTask;
+            private Action<GiveRewardsCommand> onCommand = c => { };
 
             public RewardApiCalls(CoreInterface ci, RunningContainer botContainer)
             {
@@ -199,18 +208,37 @@ namespace CodexTests.UtilityTests
                 this.botContainer = botContainer;
             }
 
-            public void Update()
+            public void Start(Action<GiveRewardsCommand> onCommand)
             {
-                var botLog = ci.ExecuteContainerCommand(botContainer, "cat", "/app/datapath/logs/discordbot.log");
-
-                var lines = botLog.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
-                foreach (var line in lines) AddToCache(line);
+                this.onCommand = onCommand;
+                worker = Task.Run(Worker);
             }
 
-            public GiveRewardsCommand[] Get()
+            public void Stop()
             {
-                Update();
-                return commands.Select(c => c.Value).ToArray();
+                cts.Cancel();
+                worker.Wait();
+            }
+
+            private void Worker()
+            {
+                while (!cts.IsCancellationRequested)
+                {
+                    Update();
+                }
+            }
+
+            private void Update()
+            {
+                Thread.Sleep(TimeSpan.FromSeconds(10));
+                if (cts.IsCancellationRequested) return;
+
+                var botLog = ci.ExecuteContainerCommand(botContainer, "cat", "/app/datapath/logs/discordbot.log");
+                var lines = botLog.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
+                foreach (var line in lines)
+                {
+                    AddToCache(line);
+                }
             }
 
             private void AddToCache(string line)
@@ -222,11 +250,79 @@ namespace CodexTests.UtilityTests
                     var json = line.Substring(31);
 
                     var cmd = JsonConvert.DeserializeObject<GiveRewardsCommand>(json);
-                    if (cmd != null) commands.Add(timestamp, cmd);
+                    if (cmd != null)
+                    {
+                        commands.Add(timestamp, cmd);
+                        onCommand(cmd);
+                    }
                 }
                 catch
                 {
                 }
+            }
+        }
+
+        public class ChainMonitor
+        {
+            private readonly ICodexContracts contracts;
+            private readonly IGethNode geth;
+            private readonly ILog log;
+            private readonly CancellationTokenSource cts = new CancellationTokenSource();
+            private Task worker = Task.CompletedTask;
+            private DateTime last = DateTime.UtcNow;
+
+            public ChainMonitor(ICodexContracts contracts, IGethNode geth, ILog log)
+            {
+                this.contracts = contracts;
+                this.geth = geth;
+                this.log = log;
+            }
+
+            public void Start()
+            {
+                last = DateTime.UtcNow;
+                worker = Task.Run(Worker);
+            }
+
+            public void Stop()
+            {
+                cts.Cancel();
+                worker.Wait();
+            }
+
+            private void Worker()
+            {
+                while (!cts.IsCancellationRequested)
+                {
+                    Thread.Sleep(TimeSpan.FromSeconds(10));
+                    if (cts.IsCancellationRequested) return;
+
+                    Update();
+
+                }
+            }
+
+            private void Update()
+            {
+                var start = last;
+                var stop = DateTime.UtcNow;
+                last = stop;
+
+                var range = geth.ConvertTimeRangeToBlockRange(new TimeRange(start, stop));
+
+
+                LogEvents(nameof(contracts.GetStorageRequests), contracts.GetStorageRequests, range);
+                LogEvents(nameof(contracts.GetRequestFulfilledEvents), contracts.GetRequestFulfilledEvents, range);
+                LogEvents(nameof(contracts.GetRequestCancelledEvents), contracts.GetRequestCancelledEvents, range);
+                LogEvents(nameof(contracts.GetSlotFilledEvents), contracts.GetSlotFilledEvents, range);
+                LogEvents(nameof(contracts.GetSlotFreedEvents), contracts.GetSlotFreedEvents, range);
+            }
+
+            private void LogEvents(string n, Func<BlockInterval, object> f, BlockInterval r)
+            {
+                var a = (object[])f(r);
+
+                a.ToList().ForEach(request => log.Log(n + " - " + JsonConvert.SerializeObject(request)));
             }
         }
     }
