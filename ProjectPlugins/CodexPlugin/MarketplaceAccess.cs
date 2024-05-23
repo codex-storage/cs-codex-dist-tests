@@ -38,7 +38,9 @@ namespace CodexPlugin
 
             Log($"Storage requested successfully. PurchaseId: '{response}'.");
 
-            return new StoragePurchaseContract(log, codexAccess, response, purchase);
+            var contract = new StoragePurchaseContract(log, codexAccess, response, purchase);
+            contract.WaitForStorageContractSubmitted();
+            return contract;
         }
 
         public string MakeStorageAvailable(StorageAvailability availability)
@@ -54,7 +56,7 @@ namespace CodexPlugin
 
         private void Log(string msg)
         {
-            log.Log($"{codexAccess.Container.Name} {msg}");
+            log.Log($"{codexAccess.Container.Containers.Single().Name} {msg}");
         }
     }
 
@@ -84,7 +86,10 @@ namespace CodexPlugin
         private readonly ILog log;
         private readonly CodexAccess codexAccess;
         private readonly TimeSpan gracePeriod = TimeSpan.FromSeconds(30);
-        private DateTime? contractStartUtc;
+        private readonly DateTime contractPendingUtc = DateTime.UtcNow;
+        private DateTime? contractSubmittedUtc = DateTime.UtcNow;
+        private DateTime? contractStartedUtc;
+        private DateTime? contractFinishedUtc;
 
         public StoragePurchaseContract(ILog log, CodexAccess codexAccess, string purchaseId, StoragePurchaseRequest purchase)
         {
@@ -97,23 +102,38 @@ namespace CodexPlugin
         public string PurchaseId { get; }
         public StoragePurchaseRequest Purchase { get; }
 
+        public TimeSpan? PendingToSubmitted => contractSubmittedUtc - contractPendingUtc;
+        public TimeSpan? SubmittedToStarted => contractStartedUtc - contractSubmittedUtc;
+        public TimeSpan? SubmittedToFinished => contractFinishedUtc - contractSubmittedUtc;
+        public TimeSpan? StartedToFinished => contractFinishedUtc - contractStartedUtc;
+
+        public void WaitForStorageContractSubmitted()
+        {
+            WaitForStorageContractState(gracePeriod, "submitted", sleep: 200);
+            contractSubmittedUtc = DateTime.UtcNow;
+            LogSubmittedDuration();
+        }
+
         public void WaitForStorageContractStarted()
         {
             var timeout = Purchase.Expiry + gracePeriod;
 
             WaitForStorageContractState(timeout, "started");
-            contractStartUtc = DateTime.UtcNow;
+            contractStartedUtc = DateTime.UtcNow;
+            LogStartedDuration();
         }
 
         public void WaitForStorageContractFinished()
         {
-            if (!contractStartUtc.HasValue)
+            if (!contractStartedUtc.HasValue)
             {
                 WaitForStorageContractStarted();
             }
-            var currentContractTime = DateTime.UtcNow - contractStartUtc!.Value;
+            var currentContractTime = DateTime.UtcNow - contractStartedUtc!.Value;
             var timeout = (Purchase.Duration - currentContractTime) + gracePeriod;
             WaitForStorageContractState(timeout, "finished");
+            contractFinishedUtc = DateTime.UtcNow;
+            LogFinishedDuration();
         }
 
         public StoragePurchase GetPurchaseStatus(string purchaseId)
@@ -121,12 +141,12 @@ namespace CodexPlugin
             return codexAccess.GetPurchaseStatus(purchaseId);
         }
 
-        private void WaitForStorageContractState(TimeSpan timeout, string desiredState)
+        private void WaitForStorageContractState(TimeSpan timeout, string desiredState, int sleep = 1000)
         {
             var lastState = "";
             var waitStart = DateTime.UtcNow;
 
-            log.Log($"Waiting for {Time.FormatDuration(timeout)} for contract '{PurchaseId}' to reach state '{desiredState}'.");
+            Log($"Waiting for {Time.FormatDuration(timeout)} to reach state '{desiredState}'.");
             while (lastState != desiredState)
             {
                 var purchaseStatus = codexAccess.GetPurchaseStatus(PurchaseId);
@@ -137,7 +157,7 @@ namespace CodexPlugin
                     log.Debug("Purchase status: " + statusJson);
                 }
 
-                Thread.Sleep(1000);
+                Thread.Sleep(sleep);
 
                 if (lastState == "errored")
                 {
@@ -149,7 +169,27 @@ namespace CodexPlugin
                     FrameworkAssert.Fail($"Contract did not reach '{desiredState}' within {Time.FormatDuration(timeout)} timeout. {statusJson}");
                 }
             }
-            log.Log($"Contract '{desiredState}'.");
+        }
+
+        private void LogSubmittedDuration()
+        {
+            Log($"Pending to Submitted in {Time.FormatDuration(PendingToSubmitted)}");
+        }
+
+        private void LogStartedDuration()
+        {
+            Log($"Submitted to Started in {Time.FormatDuration(SubmittedToStarted)}");
+        }
+
+        private void LogFinishedDuration()
+        {
+            Log($"Submitted to Finished in {Time.FormatDuration(SubmittedToFinished)}");
+            Log($"Started to Finished in {Time.FormatDuration(StartedToFinished)}");
+        }
+
+        private void Log(string msg)
+        {
+            log.Log($"[{PurchaseId}] {msg}");
         }
     }
 }

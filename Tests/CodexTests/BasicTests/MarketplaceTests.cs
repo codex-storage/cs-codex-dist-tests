@@ -83,6 +83,10 @@ namespace CodexTests.BasicTests
 
             AssertBalance(contracts, client, Is.LessThan(clientInitialBalance), "Buyer was not charged for storage.");
             Assert.That(contracts.GetRequestState(request), Is.EqualTo(RequestState.Finished));
+
+            Assert.That(purchaseContract.PendingToSubmitted, Is.LessThan(TimeSpan.FromSeconds(30)));
+            Assert.That(purchaseContract.SubmittedToStarted, Is.LessThan(purchase.Expiry).Within(TimeSpan.FromSeconds(30)));
+            Assert.That(purchaseContract.SubmittedToFinished, Is.LessThan(purchase.Duration).Within(TimeSpan.FromSeconds(30)));
         }
 
         private void WaitForAllSlotFilledEvents(ICodexContracts contracts, StoragePurchaseRequest purchase, IGethNode geth)
