@@ -84,9 +84,9 @@ namespace CodexTests.BasicTests
             AssertBalance(contracts, client, Is.LessThan(clientInitialBalance), "Buyer was not charged for storage.");
             Assert.That(contracts.GetRequestState(request), Is.EqualTo(RequestState.Finished));
 
-            Assert.That(purchaseContract.PendingToSubmitted, Is.LessThan(TimeSpan.FromSeconds(30)));
-            Assert.That(purchaseContract.SubmittedToStarted, Is.LessThan(purchase.Expiry).Within(TimeSpan.FromSeconds(30)));
-            Assert.That(purchaseContract.SubmittedToFinished, Is.LessThan(purchase.Duration).Within(TimeSpan.FromSeconds(30)));
+            AssertDuration(purchaseContract.PendingToSubmitted, 30, 1, nameof(purchaseContract.PendingToSubmitted));
+            AssertDuration(purchaseContract.SubmittedToStarted, purchase.Expiry.TotalSeconds, 30, nameof(purchaseContract.SubmittedToStarted));
+            AssertDuration(purchaseContract.SubmittedToFinished, purchase.Duration.TotalSeconds, 30, nameof(purchaseContract.SubmittedToFinished));
         }
 
         private void WaitForAllSlotFilledEvents(ICodexContracts contracts, StoragePurchaseRequest purchase, IGethNode geth)
@@ -120,6 +120,12 @@ namespace CodexTests.BasicTests
         {
             var slotHost = contracts.GetSlotHost(request, contractSlotIndex);
             Assert.That(slotHost?.Address, Is.Not.Null);
+        }
+
+        private void AssertDuration(TimeSpan? span, double expectedSeconds, int tolerance, string message)
+        {
+            Assert.That(span.HasValue, "IsNull: " + message);
+            Assert.That(span!.Value.TotalSeconds, Is.EqualTo(expectedSeconds).Within(tolerance), message);
         }
     }
 }
