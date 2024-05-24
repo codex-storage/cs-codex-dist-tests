@@ -17,7 +17,7 @@ namespace CodexDiscordBotPlugin
 
             AddEnvVar("DISCORDBOTHOST", config.DiscordBotHost);
             AddEnvVar("DISCORDBOTPORT", config.DiscordBotPort.ToString());
-            AddEnvVar("INTERVALMINUTES", config.IntervalMinutes);
+            AddEnvVar("INTERVALMINUTES", config.IntervalMinutes.ToString());
             var offset = new DateTimeOffset(config.HistoryStartUtc);
             AddEnvVar("CHECKHISTORY", offset.ToUnixTimeSeconds().ToString());
 

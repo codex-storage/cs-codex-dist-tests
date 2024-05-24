@@ -23,6 +23,7 @@ namespace CodexPlugin
         CrashWatcher CrashWatcher { get; }
         PodInfo GetPodInfo();
         ITransferSpeeds TransferSpeeds { get; }
+        EthAccount EthAccount { get; }
         void Stop(bool waitTillStopped);
     }
 
@@ -30,13 +31,13 @@ namespace CodexPlugin
     {
         private const string UploadFailedMessage = "Unable to store block";
         private readonly IPluginTools tools;
-        private readonly EthAddress? ethAddress;
+        private readonly EthAccount? ethAccount;
         private readonly TransferSpeeds transferSpeeds;
 
-        public CodexNode(IPluginTools tools, CodexAccess codexAccess, CodexNodeGroup group, IMarketplaceAccess marketplaceAccess, EthAddress? ethAddress)
+        public CodexNode(IPluginTools tools, CodexAccess codexAccess, CodexNodeGroup group, IMarketplaceAccess marketplaceAccess, EthAccount? ethAccount)
         {
             this.tools = tools;
-            this.ethAddress = ethAddress;
+            this.ethAccount = ethAccount;
             CodexAccess = codexAccess;
             Group = group;
             Marketplace = marketplaceAccess;
@@ -66,8 +67,17 @@ namespace CodexPlugin
         {
             get
             {
-                if (ethAddress == null) throw new Exception("Marketplace is not enabled for this Codex node. Please start it with the option '.EnableMarketplace(...)' to enable it.");
-                return ethAddress;
+                EnsureMarketplace();
+                return ethAccount!.EthAddress;
+            }
+        }
+
+        public EthAccount EthAccount
+        {
+            get
+            {
+                EnsureMarketplace();
+                return ethAccount!;
             }
         }
 
@@ -195,6 +205,11 @@ namespace CodexPlugin
                 Log($"Failed to download file '{contentId}'.");
                 throw;
             }
+        }
+
+        private void EnsureMarketplace()
+        {
+            if (ethAccount == null) throw new Exception("Marketplace is not enabled for this Codex node. Please start it with the option '.EnableMarketplace(...)' to enable it.");
         }
 
         private void Log(string msg)

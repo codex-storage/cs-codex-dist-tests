@@ -65,8 +65,8 @@ namespace CodexTests.BasicTests
                 MinRequiredNumberOfNodes = 5,
                 NodeFailureTolerance = 2,
                 ProofProbability = 5,
-                Duration = TimeSpan.FromMinutes(5),
-                Expiry = TimeSpan.FromMinutes(4)
+                Duration = TimeSpan.FromMinutes(6),
+                Expiry = TimeSpan.FromMinutes(5)
             };
 
             var purchaseContract = client.Marketplace.RequestStorage(purchase);

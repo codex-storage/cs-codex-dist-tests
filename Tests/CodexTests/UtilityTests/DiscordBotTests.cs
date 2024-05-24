@@ -19,7 +19,7 @@ namespace CodexTests.UtilityTests
         private readonly TestToken hostInitialBalance = 3000000.TstWei();
         private readonly TestToken clientInitialBalance = 1000000000.TstWei();
         private readonly EthAccount clientAccount = EthAccount.GenerateNew();
-        private readonly EthAccount hostAccount = EthAccount.GenerateNew();
+        private readonly List<EthAccount> hostAccounts = new List<EthAccount>();
 
         [Test]
         public void BotRewardTest()
@@ -44,28 +44,27 @@ namespace CodexTests.UtilityTests
             var apiCalls = new RewardApiCalls(Ci, botContainer);
             apiCalls.Start(OnCommand);
 
-            Thread.Sleep(TimeSpan.FromMinutes(10));
+            purchaseContract.WaitForStorageContractFinished();
 
             apiCalls.Stop();
             monitor.Stop();
+
+            Log("Done!");
         }
 
         private void OnCommand(GiveRewardsCommand call)
         {
-            var line = "";
-            if (call.Averages.Any()) line += $"{call.Averages.Length} average. ";
-            if (call.EventsOverview.Any()) line += $"{call.EventsOverview.Length} events. ";
+            if (call.Averages.Any()) Log($"{call.Averages.Length} average.");
+            if (call.EventsOverview.Any()) Log($"{call.EventsOverview.Length} events.");
             foreach (var r in call.Rewards)
             {
                 var reward = repo.Rewards.Single(a => a.RoleId == r.RewardId);
-                var isClient = r.UserAddresses.Any(a => a == clientAccount.EthAddress.Address);
-                var isHost = r.UserAddresses.Any(a => a == hostAccount.EthAddress.Address);
-                if (isHost && isClient) throw new Exception("what?");
-                var name = isClient ? "Client" : "Host";
-
-                line += name + " = " + reward.Message;
+                foreach (var address in r.UserAddresses)
+                {
+                    var user = IdentifyAccount(address);
+                    Log(user + ": " + reward.Message);
+                }
             }
-            Log(line);
         }
 
         private StoragePurchaseContract ClientPurchasesStorage(ICodexNode client)
@@ -88,11 +87,14 @@ namespace CodexTests.UtilityTests
 
         private ICodexNode StartClient(IGethNode geth, ICodexContracts contracts)
         {
-            return StartCodex(s => s
+            var node = StartCodex(s => s
                 .WithName("Client")
                 .EnableMarketplace(geth, contracts, m => m
                     .WithAccount(clientAccount)
                     .WithInitial(10.Eth(), clientInitialBalance)));
+
+            Log($"Client {node.EthAccount.EthAddress}");
+            return node;
         }
 
         private void StartRewarderBot(DiscordBotGethInfo gethInfo, RunningContainer botContainer)
@@ -100,7 +102,7 @@ namespace CodexTests.UtilityTests
             Ci.DeployRewarderBot(new RewarderBotStartupConfig(
                 discordBotHost: botContainer.GetInternalAddress(DiscordBotContainerRecipe.RewardsPort).Host,
                 discordBotPort: botContainer.GetInternalAddress(DiscordBotContainerRecipe.RewardsPort).Port,
-                intervalMinutes: "10",
+                intervalMinutes: 1,
                 historyStartUtc: DateTime.UtcNow,
                 gethInfo: gethInfo,
                 dataPath: null
@@ -142,23 +144,27 @@ namespace CodexTests.UtilityTests
                 {
                     ContractClock = CodexLogLevel.Trace,
                 })
-                .WithStorageQuota(GetFileSizePlus(50))
+                .WithStorageQuota(Mult(GetMinFileSizePlus(50), GetNumberOfLiveHosts()))
                 .EnableMarketplace(geth, contracts, m => m
-                    .WithAccount(hostAccount)
                     .WithInitial(10.Eth(), hostInitialBalance)
                     .AsStorageNode()
                     .AsValidator()));
 
             var availability = new StorageAvailability(
-                totalSpace: GetFileSizePlus(5),
+                totalSpace: Mult(GetMinFileSize(), GetNumberOfLiveHosts()),
                 maxDuration: TimeSpan.FromMinutes(30),
                 minPriceForTotalSpace: 1.TstWei(),
                 maxCollateral: hostInitialBalance
             );
 
+            var i = 0;
             foreach (var host in hosts)
             {
+                hostAccounts.Add(host.EthAccount);
                 host.Marketplace.MakeStorageAvailable(availability);
+
+                Log($"Host{i} {host.EthAccount.EthAddress}");
+                i++;
             }
         }
 
@@ -167,7 +173,12 @@ namespace CodexTests.UtilityTests
             return Convert.ToInt32(GetNumberOfRequiredHosts()) + 3;
         }
 
-        private ByteSize GetFileSizePlus(int plusMb)
+        private ByteSize Mult(ByteSize size, int mult)
+        {
+            return new ByteSize(size.SizeInBytes * mult);
+        }
+
+        private ByteSize GetMinFileSizePlus(int plusMb)
         {
             return new ByteSize(GetMinFileSize().SizeInBytes + plusMb.MB().SizeInBytes);
         }
@@ -184,13 +195,27 @@ namespace CodexTests.UtilityTests
                 if (h > minNumHosts) minNumHosts = h;
             }
 
-            var minFileSize = (minSlotSize * minNumHosts) + 1024;
+            var minFileSize = ((minSlotSize + 1024) * minNumHosts);
             return new ByteSize(Convert.ToInt64(minFileSize));
         }
 
         private uint GetNumberOfRequiredHosts()
         {
             return Convert.ToUInt32(repo.Rewards.Max(r => r.CheckConfig.MinNumberOfHosts));
+        }
+
+        private string IdentifyAccount(string address)
+        {
+            if (address == clientAccount.EthAddress.Address) return "Client";
+            try
+            {
+                var index = hostAccounts.FindIndex(a => a.EthAddress.Address == address);
+                return "Host" + index;
+            }
+            catch
+            {
+                return "UNKNOWN";
+            }
         }
 
         public class RewardApiCalls
