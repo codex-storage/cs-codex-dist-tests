@@ -24,5 +24,10 @@ namespace GethPlugin
 
             return new EthAccount(ethAddress, account.PrivateKey);
         }
+
+        public override string ToString()
+        {
+            return EthAddress.ToString();
+        }
     }
 }

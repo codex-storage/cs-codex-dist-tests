@@ -20,6 +20,8 @@ namespace CodexTests.UtilityTests
         private readonly TestToken clientInitialBalance = 1000000000.TstWei();
         private readonly EthAccount clientAccount = EthAccount.GenerateNew();
         private readonly List<EthAccount> hostAccounts = new List<EthAccount>();
+        private readonly List<ulong> rewardsSeen = new List<ulong>();
+        private readonly TimeSpan rewarderInterval = TimeSpan.FromMinutes(1);
 
         [Test]
         public void BotRewardTest()
@@ -50,6 +52,24 @@ namespace CodexTests.UtilityTests
             monitor.Stop();
 
             Log("Done!");
+
+            Thread.Sleep(rewarderInterval * 2);
+
+            Log("Seen:");
+            foreach (var seen in rewardsSeen)
+            {
+                Log(seen.ToString());
+            }
+            Log("");
+
+            foreach (var r in repo.Rewards)
+            {
+                var seen = rewardsSeen.Any(s => r.RoleId == s);
+
+                Log($"{r.RoleId} = {seen}");
+            }
+
+            Assert.That(repo.Rewards.All(r => rewardsSeen.Contains(r.RoleId)));
         }
 
         private void OnCommand(GiveRewardsCommand call)
@@ -59,6 +79,7 @@ namespace CodexTests.UtilityTests
             foreach (var r in call.Rewards)
             {
                 var reward = repo.Rewards.Single(a => a.RoleId == r.RewardId);
+                if (r.UserAddresses.Any()) rewardsSeen.Add(reward.RoleId);
                 foreach (var address in r.UserAddresses)
                 {
                     var user = IdentifyAccount(address);
@@ -102,7 +123,7 @@ namespace CodexTests.UtilityTests
             Ci.DeployRewarderBot(new RewarderBotStartupConfig(
                 discordBotHost: botContainer.GetInternalAddress(DiscordBotContainerRecipe.RewardsPort).Host,
                 discordBotPort: botContainer.GetInternalAddress(DiscordBotContainerRecipe.RewardsPort).Port,
-                intervalMinutes: 1,
+                intervalMinutes: Convert.ToInt32(Math.Round(rewarderInterval.TotalMinutes)),
                 historyStartUtc: DateTime.UtcNow,
                 gethInfo: gethInfo,
                 dataPath: null
@@ -157,14 +178,10 @@ namespace CodexTests.UtilityTests
                 maxCollateral: hostInitialBalance
             );
 
-            var i = 0;
             foreach (var host in hosts)
             {
                 hostAccounts.Add(host.EthAccount);
                 host.Marketplace.MakeStorageAvailable(availability);
-
-                Log($"Host{i} {host.EthAccount.EthAddress}");
-                i++;
             }
         }
 
