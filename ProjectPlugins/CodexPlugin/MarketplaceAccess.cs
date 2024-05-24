@@ -105,13 +105,13 @@ namespace CodexPlugin
         public TimeSpan? PendingToSubmitted => contractSubmittedUtc - contractPendingUtc;
         public TimeSpan? SubmittedToStarted => contractStartedUtc - contractSubmittedUtc;
         public TimeSpan? SubmittedToFinished => contractFinishedUtc - contractSubmittedUtc;
-        public TimeSpan? StartedToFinished => contractFinishedUtc - contractStartedUtc;
 
         public void WaitForStorageContractSubmitted()
         {
             WaitForStorageContractState(gracePeriod, "submitted", sleep: 200);
             contractSubmittedUtc = DateTime.UtcNow;
             LogSubmittedDuration();
+            AssertDuration(PendingToSubmitted, gracePeriod, nameof(PendingToSubmitted));
         }
 
         public void WaitForStorageContractStarted()
@@ -121,6 +121,7 @@ namespace CodexPlugin
             WaitForStorageContractState(timeout, "started");
             contractStartedUtc = DateTime.UtcNow;
             LogStartedDuration();
+            AssertDuration(SubmittedToStarted, timeout, nameof(SubmittedToStarted));
         }
 
         public void WaitForStorageContractFinished()
@@ -129,11 +130,12 @@ namespace CodexPlugin
             {
                 WaitForStorageContractStarted();
             }
-            var currentContractTime = DateTime.UtcNow - contractStartedUtc!.Value;
+            var currentContractTime = DateTime.UtcNow - contractSubmittedUtc!.Value;
             var timeout = (Purchase.Duration - currentContractTime) + gracePeriod;
             WaitForStorageContractState(timeout, "finished");
             contractFinishedUtc = DateTime.UtcNow;
             LogFinishedDuration();
+            AssertDuration(SubmittedToFinished, timeout, nameof(SubmittedToFinished));
         }
 
         public StoragePurchase GetPurchaseStatus(string purchaseId)
@@ -173,18 +175,31 @@ namespace CodexPlugin
 
         private void LogSubmittedDuration()
         {
-            Log($"Pending to Submitted in {Time.FormatDuration(PendingToSubmitted)}");
+            Log($"Pending to Submitted in {Time.FormatDuration(PendingToSubmitted)} " +
+                $"( < {Time.FormatDuration(gracePeriod)})");
         }
 
         private void LogStartedDuration()
         {
-            Log($"Submitted to Started in {Time.FormatDuration(SubmittedToStarted)}");
+            Log($"Submitted to Started in {Time.FormatDuration(SubmittedToStarted)} " +
+                $"( < {Time.FormatDuration(Purchase.Expiry + gracePeriod)})");
         }
 
         private void LogFinishedDuration()
         {
-            Log($"Submitted to Finished in {Time.FormatDuration(SubmittedToFinished)}");
-            Log($"Started to Finished in {Time.FormatDuration(StartedToFinished)}");
+            Log($"Submitted to Finished in {Time.FormatDuration(SubmittedToFinished)} " +
+                $"( < {Time.FormatDuration(Purchase.Duration + gracePeriod)})");
+        }
+
+        private void AssertDuration(TimeSpan? span, TimeSpan max, string message)
+        {
+            if (span == null) throw new ArgumentNullException(nameof(MarketplaceAccess) + ": " + message + " (IsNull)");
+            if (span.Value.TotalDays >= max.TotalSeconds)
+            {
+                throw new Exception(nameof(MarketplaceAccess) + 
+                    $": Duration out of range. Max: {Time.FormatDuration(max)} but was: {Time.FormatDuration(span.Value)} " +
+                    message);
+            }
         }
 
         private void Log(string msg)
