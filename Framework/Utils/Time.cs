@@ -20,6 +20,12 @@ namespace Utils
             task.Wait();
         }
 
+        public static string FormatDuration(TimeSpan? d)
+        {
+            if (d == null) return "[NULL]";
+            return FormatDuration(d.Value);
+        }
+
         public static string FormatDuration(TimeSpan d)
         {
             var result = "";
