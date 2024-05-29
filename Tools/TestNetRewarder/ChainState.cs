@@ -59,6 +59,17 @@ namespace TestNetRewarder
         public SlotFilledEventDTO[] SlotFilledEvents { get; }
         public SlotFreedEventDTO[] SlotFreedEvents { get; }
 
+        public string EntireString()
+        {
+            return
+                $"NewRequests: {JsonConvert.SerializeObject(NewRequests)}" +
+                $"FulfilledE: {JsonConvert.SerializeObject(RequestFulfilledEvents)}" +
+                $"CancelledE: {JsonConvert.SerializeObject(RequestCancelledEvents)}" +
+                $"FilledE: {JsonConvert.SerializeObject(SlotFilledEvents)}" +
+                $"FreedE: {JsonConvert.SerializeObject(SlotFreedEvents)}" + 
+                $"Historic: {historicState.EntireString()}";
+        }
+
         public string[] GenerateOverview()
         {
             var entries = new List<StringBlockNumberPair>();

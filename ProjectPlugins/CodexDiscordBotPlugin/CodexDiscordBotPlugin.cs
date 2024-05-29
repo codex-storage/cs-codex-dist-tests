@@ -56,6 +56,7 @@ namespace CodexDiscordBotPlugin
         private RunningPod StartRewarderContainer(IStartupWorkflow workflow, RewarderBotStartupConfig config)
         {
             var startupConfig = new StartupConfig();
+            startupConfig.NameOverride = config.Name;
             startupConfig.Add(config);
             return workflow.Start(1, new RewarderBotContainerRecipe(), startupConfig).WaitForOnline();
         }

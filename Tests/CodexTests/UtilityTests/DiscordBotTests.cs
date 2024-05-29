@@ -121,6 +121,7 @@ namespace CodexTests.UtilityTests
         private void StartRewarderBot(DiscordBotGethInfo gethInfo, RunningContainer botContainer)
         {
             Ci.DeployRewarderBot(new RewarderBotStartupConfig(
+                name: "rewarder-bot",
                 discordBotHost: botContainer.GetInternalAddress(DiscordBotContainerRecipe.RewardsPort).Host,
                 discordBotPort: botContainer.GetInternalAddress(DiscordBotContainerRecipe.RewardsPort).Port,
                 intervalMinutes: Convert.ToInt32(Math.Round(rewarderInterval.TotalMinutes)),
@@ -145,7 +146,7 @@ namespace CodexTests.UtilityTests
         private RunningContainer StartDiscordBot(DiscordBotGethInfo gethInfo)
         {
             var bot = Ci.DeployCodexDiscordBot(new DiscordBotStartupConfig(
-                name: "bot",
+                name: "discord-bot",
                 token: "aaa",
                 serverName: "ThatBen's server",
                 adminRoleName: "bottest-admins",

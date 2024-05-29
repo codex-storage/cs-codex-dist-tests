@@ -29,6 +29,11 @@ namespace TestNetRewarder
                 r.State == RequestState.Failed
             );
         }
+
+        public string EntireString()
+        {
+            return JsonConvert.SerializeObject(StorageRequests);
+        }
     }
 
     public class StorageRequest
