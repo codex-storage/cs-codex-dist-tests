@@ -8,7 +8,7 @@ namespace TestNetRewarder
 {
     public class ChainState
     {
-        private readonly HistoricState historicState;
+        private HistoricState historicState;
         private readonly string[] colorIcons = new[]
         {
             "🔴",
@@ -50,9 +50,30 @@ namespace TestNetRewarder
             SlotFreedEvents = contracts.GetSlotFreedEvents(blockRange);
         }
 
+        public ChainState(
+            Request[] newRequests,
+            RequestFulfilledEventDTO[] requestFulfilledEvents,
+            RequestCancelledEventDTO[] requestCancelledEvents,
+             SlotFilledEventDTO[] slotFilledEvents,
+             SlotFreedEventDTO[] slotFreedEvents)
+        {
+            NewRequests = newRequests;
+            RequestFulfilledEvents = requestFulfilledEvents;
+            RequestCancelledEvents = requestCancelledEvents;
+            SlotFilledEvents = slotFilledEvents;
+            SlotFreedEvents = slotFreedEvents;
+
+            historicState = new HistoricState();
+            StartedRequests = Array.Empty<StorageRequest>();
+            FinishedRequests = Array.Empty<StorageRequest>();
+        }
+
         public Request[] NewRequests { get; }
+        [JsonIgnore]
         public StorageRequest[] AllRequests => historicState.StorageRequests;
+        [JsonIgnore]
         public StorageRequest[] StartedRequests { get; private set; }
+        [JsonIgnore]
         public StorageRequest[] FinishedRequests { get; private set; }
         public RequestFulfilledEventDTO[] RequestFulfilledEvents { get; }
         public RequestCancelledEventDTO[] RequestCancelledEvents { get; }
@@ -62,12 +83,13 @@ namespace TestNetRewarder
         public string EntireString()
         {
             return
-                $"NewRequests: {JsonConvert.SerializeObject(NewRequests)}" +
-                $"FulfilledE: {JsonConvert.SerializeObject(RequestFulfilledEvents)}" +
-                $"CancelledE: {JsonConvert.SerializeObject(RequestCancelledEvents)}" +
-                $"FilledE: {JsonConvert.SerializeObject(SlotFilledEvents)}" +
-                $"FreedE: {JsonConvert.SerializeObject(SlotFreedEvents)}" + 
-                $"Historic: {historicState.EntireString()}";
+                $"ChainState=[{JsonConvert.SerializeObject(this)}]" +
+                $"HistoricState=[{historicState.EntireString()}]";
+        }
+
+        public void Set(HistoricState h)
+        {
+            historicState = h;
         }
 
         public string[] GenerateOverview()

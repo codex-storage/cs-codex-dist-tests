@@ -1,4 +1,5 @@
 ﻿using CodexContractsPlugin;
+using CodexContractsPlugin.Marketplace;
 using CodexDiscordBotPlugin;
 using CodexPlugin;
 using Core;
@@ -8,6 +9,7 @@ using KubernetesWorkflow.Types;
 using Logging;
 using Newtonsoft.Json;
 using NUnit.Framework;
+using TestNetRewarder;
 using Utils;
 
 namespace CodexTests.UtilityTests
@@ -301,28 +303,29 @@ namespace CodexTests.UtilityTests
 
             private void ProcessLine(string line, Action<string> log)
             {
-                // Processing chain state: '
-                // NewRequests: []
-                // FulfilledE: []
-                // CancelledE: []
-                // FilledE: []
-                // FreedE: []
-                // Historic: [{"Request":{"RequestId":"hvWlli4gHP5tUJoG5b8zh3tMBIr0wpcr/lHgIU/KRmU=","ClientAddress":{"Address":"0x760e722469cdeb086b78edd2b4b670621f43a923"},"Client":"0x760e722469Cdeb086b78EdD2b4b670621F43a923","Ask":{"Slots":4,"SlotSize":33554432,"Duration":360,"ProofProbability":5,"Reward":2,"Collateral":10,"MaxSlotLoss":2},"Content":{"Cid":"zDvZRwzm8DzbqdUcy7gS1wFKAsBjUHTQEUt1am1L6XGEWtsJ5U2X","MerkleRoot":"/KjFr+FezQ8m3huhdaPDy6zVgZs3ODtfE78K5eyieQo="},"Expiry":300,"Nonce":"2tANtfgVcMBuLLxe+4MbxMFWWO36Yv+l2yC4tpqdelI="},"Hosts":[{"Address":"0x0000000000000000000000000000000000000000"},{"Address":"0x0000000000000000000000000000000000000000"},{"Address":"0x0000000000000000000000000000000000000000"},{"Address":"0x0000000000000000000000000000000000000000"}],"State":"New"}]
-                // '
+                //$"ChainState=[{JsonConvert.SerializeObject(this)}]" +
+                //$"HistoricState=[{historicState.EntireString()}]";
 
-                if (!line.Contains("Processing chain state: ")) return;
+                var stateOpenTag = "ChainState=[";
+                var historicOpenTag = "]HistoricState=[";
 
-                log(Between(line, "'"));
-                //var tokens = state.Split("Historic: ", StringSplitOptions.RemoveEmptyEntries);
-                //var historics = JsonConvert.DeserializeObject<TestNetRewarder.StorageRequest[]>(tokens[1]);
+                if (!line.Contains(stateOpenTag)) return;
+                if (!line.Contains(historicOpenTag)) return;
 
-                //log(tokens[0] + " historic: " + string.Join(",", historics!.Select(h => h.Request.RequestId + " = " + h.State)));
+                var stateStr = Between(line, stateOpenTag, historicOpenTag);
+                var historicStr = Between(line, historicOpenTag, "]");
+
+                var chainState = JsonConvert.DeserializeObject<ChainState>(stateStr);
+                var historicState = JsonConvert.DeserializeObject<TestNetRewarder.StorageRequest[]>(historicStr)!;
+                chainState!.Set(new HistoricState(historicState));
+
+                log(string.Join(",", chainState!.GenerateOverview()));
             }
 
-            private string Between(string s, string lim)
+            private string Between(string s, string open, string close)
             {
-                var start = s.IndexOf(lim) + lim.Length;
-                var end = s.LastIndexOf(lim);
+                var start = s.IndexOf(open) + open.Length;
+                var end = s.LastIndexOf(close);
                 return s.Substring(start, end - start);
             }
         }

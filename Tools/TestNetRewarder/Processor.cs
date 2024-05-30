@@ -58,7 +58,7 @@ namespace TestNetRewarder
 
         private async Task ProcessChainState(ChainState chainState)
         {
-            log.Log($"Processing chain state: '{chainState.EntireString()}'");
+            log.Log(chainState.EntireString());
 
             var outgoingRewards = new List<RewardUsersCommand>();
             foreach (var reward in rewardRepo.Rewards)

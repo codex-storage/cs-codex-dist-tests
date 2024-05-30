@@ -34,6 +34,15 @@ namespace TestNetRewarder
         {
             return JsonConvert.SerializeObject(StorageRequests);
         }
+
+        public HistoricState()
+        {
+        }
+
+        public HistoricState(StorageRequest[] requests)
+        {
+            storageRequests.AddRange(requests);
+        }
     }
 
     public class StorageRequest
