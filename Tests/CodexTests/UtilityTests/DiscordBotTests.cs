@@ -37,17 +37,19 @@ namespace CodexTests.UtilityTests
 
             StartHosts(geth, contracts);
 
-            StartRewarderBot(gethInfo, botContainer);
+            var rewarderContainer = StartRewarderBot(gethInfo, botContainer);
 
             var client = StartClient(geth, contracts);
 
-            var purchaseContract = ClientPurchasesStorage(client);
-
             var apiCalls = new RewardApiCalls(Ci, botContainer);
             apiCalls.Start(OnCommand);
+            var rewarderLog = new RewarderLogMonitor(Ci, rewarderContainer.Containers.Single());
+            rewarderLog.Start(l => Log("Rewarder ChainState: " + l));
 
+            var purchaseContract = ClientPurchasesStorage(client);
             purchaseContract.WaitForStorageContractFinished();
 
+            rewarderLog.Stop();
             apiCalls.Stop();
             monitor.Stop();
 
@@ -118,9 +120,9 @@ namespace CodexTests.UtilityTests
             return node;
         }
 
-        private void StartRewarderBot(DiscordBotGethInfo gethInfo, RunningContainer botContainer)
+        private RunningPod StartRewarderBot(DiscordBotGethInfo gethInfo, RunningContainer botContainer)
         {
-            Ci.DeployRewarderBot(new RewarderBotStartupConfig(
+            return Ci.DeployRewarderBot(new RewarderBotStartupConfig(
                 name: "rewarder-bot",
                 discordBotHost: botContainer.GetInternalAddress(DiscordBotContainerRecipe.RewardsPort).Host,
                 discordBotPort: botContainer.GetInternalAddress(DiscordBotContainerRecipe.RewardsPort).Port,
@@ -238,22 +240,113 @@ namespace CodexTests.UtilityTests
 
         public class RewardApiCalls
         {
-            private readonly CoreInterface ci;
-            private readonly RunningContainer botContainer;
+            private readonly ContainerFileMonitor monitor;
             private readonly Dictionary<string, GiveRewardsCommand> commands = new Dictionary<string, GiveRewardsCommand>();
-            private readonly CancellationTokenSource cts = new CancellationTokenSource();
-            private Task worker = Task.CompletedTask;
-            private Action<GiveRewardsCommand> onCommand = c => { };
 
             public RewardApiCalls(CoreInterface ci, RunningContainer botContainer)
             {
-                this.ci = ci;
-                this.botContainer = botContainer;
+                monitor = new ContainerFileMonitor(ci, botContainer, "/app/datapath/logs/discordbot.log");
             }
 
             public void Start(Action<GiveRewardsCommand> onCommand)
             {
-                this.onCommand = onCommand;
+                monitor.Start(line => ParseLine(line, onCommand));
+            }
+
+            public void Stop()
+            {
+                monitor.Stop();
+            }
+
+            private void ParseLine(string line, Action<GiveRewardsCommand> onCommand)
+            {
+                try
+                {
+                    var timestamp = line.Substring(0, 30);
+                    if (commands.ContainsKey(timestamp)) return;
+                    var json = line.Substring(31);
+
+                    var cmd = JsonConvert.DeserializeObject<GiveRewardsCommand>(json);
+                    if (cmd != null)
+                    {
+                        commands.Add(timestamp, cmd);
+                        onCommand(cmd);
+                    }
+                }
+                catch
+                {
+                }
+            }
+        }
+
+        public class RewarderLogMonitor
+        {
+            private readonly ContainerFileMonitor monitor;
+            private readonly Dictionary<string, GiveRewardsCommand> commands = new Dictionary<string, GiveRewardsCommand>();
+
+            public RewarderLogMonitor(CoreInterface ci, RunningContainer botContainer)
+            {
+                monitor = new ContainerFileMonitor(ci, botContainer, "/app/datapath/logs/testnetrewarder.log");
+            }
+
+            public void Start(Action<string> onCommand)
+            {
+                monitor.Start(l => ProcessLine(l, onCommand));
+            }
+
+            public void Stop()
+            {
+                monitor.Stop();
+            }
+
+            private void ProcessLine(string line, Action<string> log)
+            {
+                // Processing chain state: '
+                // NewRequests: []
+                // FulfilledE: []
+                // CancelledE: []
+                // FilledE: []
+                // FreedE: []
+                // Historic: [{"Request":{"RequestId":"hvWlli4gHP5tUJoG5b8zh3tMBIr0wpcr/lHgIU/KRmU=","ClientAddress":{"Address":"0x760e722469cdeb086b78edd2b4b670621f43a923"},"Client":"0x760e722469Cdeb086b78EdD2b4b670621F43a923","Ask":{"Slots":4,"SlotSize":33554432,"Duration":360,"ProofProbability":5,"Reward":2,"Collateral":10,"MaxSlotLoss":2},"Content":{"Cid":"zDvZRwzm8DzbqdUcy7gS1wFKAsBjUHTQEUt1am1L6XGEWtsJ5U2X","MerkleRoot":"/KjFr+FezQ8m3huhdaPDy6zVgZs3ODtfE78K5eyieQo="},"Expiry":300,"Nonce":"2tANtfgVcMBuLLxe+4MbxMFWWO36Yv+l2yC4tpqdelI="},"Hosts":[{"Address":"0x0000000000000000000000000000000000000000"},{"Address":"0x0000000000000000000000000000000000000000"},{"Address":"0x0000000000000000000000000000000000000000"},{"Address":"0x0000000000000000000000000000000000000000"}],"State":"New"}]
+                // '
+
+                if (!line.Contains("Processing chain state: ")) return;
+
+                log(Between(line, "'"));
+                //var tokens = state.Split("Historic: ", StringSplitOptions.RemoveEmptyEntries);
+                //var historics = JsonConvert.DeserializeObject<TestNetRewarder.StorageRequest[]>(tokens[1]);
+
+                //log(tokens[0] + " historic: " + string.Join(",", historics!.Select(h => h.Request.RequestId + " = " + h.State)));
+            }
+
+            private string Between(string s, string lim)
+            {
+                var start = s.IndexOf(lim) + lim.Length;
+                var end = s.LastIndexOf(lim);
+                return s.Substring(start, end - start);
+            }
+        }
+
+        public class ContainerFileMonitor
+        {
+            private readonly CoreInterface ci;
+            private readonly RunningContainer botContainer;
+            private readonly string filePath;
+            private readonly CancellationTokenSource cts = new CancellationTokenSource();
+            private readonly List<string> seenLines = new List<string>();
+            private Task worker = Task.CompletedTask;
+            private Action<string> onNewLine = c => { };
+
+            public ContainerFileMonitor(CoreInterface ci, RunningContainer botContainer, string filePath)
+            {
+                this.ci = ci;
+                this.botContainer = botContainer;
+                this.filePath = filePath;
+            }
+
+            public void Start(Action<string> onNewLine)
+            {
+                this.onNewLine = onNewLine;
                 worker = Task.Run(Worker);
             }
 
@@ -276,31 +369,15 @@ namespace CodexTests.UtilityTests
                 Thread.Sleep(TimeSpan.FromSeconds(10));
                 if (cts.IsCancellationRequested) return;
 
-                var botLog = ci.ExecuteContainerCommand(botContainer, "cat", "/app/datapath/logs/discordbot.log");
+                var botLog = ci.ExecuteContainerCommand(botContainer, "cat", filePath);
                 var lines = botLog.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
                 foreach (var line in lines)
                 {
-                    AddToCache(line);
-                }
-            }
-
-            private void AddToCache(string line)
-            {
-                try
-                {
-                    var timestamp = line.Substring(0, 30);
-                    if (commands.ContainsKey(timestamp)) return;
-                    var json = line.Substring(31);
-
-                    var cmd = JsonConvert.DeserializeObject<GiveRewardsCommand>(json);
-                    if (cmd != null)
+                    if (!seenLines.Contains(line))
                     {
-                        commands.Add(timestamp, cmd);
-                        onCommand(cmd);
+                        seenLines.Add(line);
+                        onNewLine(line);
                     }
-                }
-                catch
-                {
                 }
             }
         }
