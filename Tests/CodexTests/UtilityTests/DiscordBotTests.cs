@@ -92,7 +92,7 @@ namespace CodexTests.UtilityTests
             }
         }
 
-        private StoragePurchaseContract ClientPurchasesStorage(ICodexNode client)
+        private IStoragePurchaseContract ClientPurchasesStorage(ICodexNode client)
         {
             var testFile = GenerateTestFile(GetMinFileSize());
             var contentId = client.UploadFile(testFile);
