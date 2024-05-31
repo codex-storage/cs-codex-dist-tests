@@ -1,7 +1,54 @@
-﻿namespace CodexContractsPlugin.ChainMonitor
+﻿using CodexContractsPlugin.Marketplace;
+using Utils;
+
+namespace CodexContractsPlugin.ChainMonitor
 {
     public class ChainEvents
     {
+        private ChainEvents(
+            BlockInterval blockInterval,
+            Request[] requests,
+            RequestFulfilledEventDTO[] fulfilled,
+            RequestCancelledEventDTO[] cancelled,
+            SlotFilledEventDTO[] slotFilled,
+            SlotFreedEventDTO[] slotFreed
+            )
+        {
+            BlockInterval = blockInterval;
+            Requests = requests;
+            Fulfilled = fulfilled;
+            Cancelled = cancelled;
+            SlotFilled = slotFilled;
+            SlotFreed = slotFreed;
+        }
 
+        public BlockInterval BlockInterval { get; }
+        public Request[] Requests { get; }
+        public RequestFulfilledEventDTO[] Fulfilled { get; }
+        public RequestCancelledEventDTO[] Cancelled { get; }
+        public SlotFilledEventDTO[] SlotFilled { get; }
+        public SlotFreedEventDTO[] SlotFreed { get; }
+
+        public static ChainEvents FromBlockInterval(ICodexContracts contracts, BlockInterval blockInterval)
+        {
+            return FromContractEvents(contracts.GetEvents(blockInterval));
+        }
+
+        public static ChainEvents FromTimeRange(ICodexContracts contracts, TimeRange timeRange)
+        {
+            return FromContractEvents(contracts.GetEvents(timeRange));
+        }
+
+        public static ChainEvents FromContractEvents(ICodexContractsEvents events)
+        {
+            return new ChainEvents(
+                events.BlockInterval,
+                events.GetStorageRequests(),
+                events.GetRequestFulfilledEvents(),
+                events.GetRequestCancelledEvents(),
+                events.GetSlotFilledEvents(),
+                events.GetSlotFreedEvents()
+            );
+        }
     }
 }

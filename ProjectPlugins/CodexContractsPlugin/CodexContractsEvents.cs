@@ -9,6 +9,7 @@ namespace CodexContractsPlugin
 {
     public interface ICodexContractsEvents
     {
+        BlockInterval BlockInterval { get; }
         Request[] GetStorageRequests();
         RequestFulfilledEventDTO[] GetRequestFulfilledEvents();
         RequestCancelledEventDTO[] GetRequestCancelledEvents();
@@ -21,19 +22,20 @@ namespace CodexContractsPlugin
         private readonly ILog log;
         private readonly IGethNode gethNode;
         private readonly CodexContractsDeployment deployment;
-        private readonly BlockInterval blockInterval;
 
         public CodexContractsEvents(ILog log, IGethNode gethNode, CodexContractsDeployment deployment, BlockInterval blockInterval)
         {
             this.log = log;
             this.gethNode = gethNode;
             this.deployment = deployment;
-            this.blockInterval = blockInterval;
+            BlockInterval = blockInterval;
         }
+        
+        public BlockInterval BlockInterval { get; }
 
         public Request[] GetStorageRequests()
         {
-            var events = gethNode.GetEvents<StorageRequestedEventDTO>(deployment.MarketplaceAddress, blockInterval);
+            var events = gethNode.GetEvents<StorageRequestedEventDTO>(deployment.MarketplaceAddress, BlockInterval);
             var i = new ContractInteractions(log, gethNode);
             return events
             .Select(e =>
@@ -49,7 +51,7 @@ namespace CodexContractsPlugin
 
         public RequestFulfilledEventDTO[] GetRequestFulfilledEvents()
         {
-            var events = gethNode.GetEvents<RequestFulfilledEventDTO>(deployment.MarketplaceAddress, blockInterval);
+            var events = gethNode.GetEvents<RequestFulfilledEventDTO>(deployment.MarketplaceAddress, BlockInterval);
             return events.Select(e =>
             {
                 var result = e.Event;
@@ -60,7 +62,7 @@ namespace CodexContractsPlugin
 
         public RequestCancelledEventDTO[] GetRequestCancelledEvents()
         {
-            var events = gethNode.GetEvents<RequestCancelledEventDTO>(deployment.MarketplaceAddress, blockInterval);
+            var events = gethNode.GetEvents<RequestCancelledEventDTO>(deployment.MarketplaceAddress, BlockInterval);
             return events.Select(e =>
             {
                 var result = e.Event;
@@ -71,7 +73,7 @@ namespace CodexContractsPlugin
 
         public SlotFilledEventDTO[] GetSlotFilledEvents()
         {
-            var events = gethNode.GetEvents<SlotFilledEventDTO>(deployment.MarketplaceAddress, blockInterval);
+            var events = gethNode.GetEvents<SlotFilledEventDTO>(deployment.MarketplaceAddress, BlockInterval);
             return events.Select(e =>
             {
                 var result = e.Event;
@@ -83,7 +85,7 @@ namespace CodexContractsPlugin
 
         public SlotFreedEventDTO[] GetSlotFreedEvents()
         {
-            var events = gethNode.GetEvents<SlotFreedEventDTO>(deployment.MarketplaceAddress, blockInterval);
+            var events = gethNode.GetEvents<SlotFreedEventDTO>(deployment.MarketplaceAddress, BlockInterval);
             return events.Select(e =>
             {
                 var result = e.Event;
