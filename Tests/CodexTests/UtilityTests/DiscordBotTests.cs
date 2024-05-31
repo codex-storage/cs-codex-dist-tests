@@ -434,11 +434,12 @@ namespace CodexTests.UtilityTests
                 var range = geth.ConvertTimeRangeToBlockRange(new TimeRange(start, stop));
 
 
-                LogEvents(nameof(contracts.GetStorageRequests), contracts.GetStorageRequests, range);
-                LogEvents(nameof(contracts.GetRequestFulfilledEvents), contracts.GetRequestFulfilledEvents, range);
-                LogEvents(nameof(contracts.GetRequestCancelledEvents), contracts.GetRequestCancelledEvents, range);
-                LogEvents(nameof(contracts.GetSlotFilledEvents), contracts.GetSlotFilledEvents, range);
-                LogEvents(nameof(contracts.GetSlotFreedEvents), contracts.GetSlotFreedEvents, range);
+                throw new Exception();
+                //LogEvents(nameof(contracts.GetStorageRequests), contracts.GetStorageRequests, range);
+                //LogEvents(nameof(contracts.GetRequestFulfilledEvents), contracts.GetRequestFulfilledEvents, range);
+                //LogEvents(nameof(contracts.GetRequestCancelledEvents), contracts.GetRequestCancelledEvents, range);
+                //LogEvents(nameof(contracts.GetSlotFilledEvents), contracts.GetSlotFilledEvents, range);
+                //LogEvents(nameof(contracts.GetSlotFreedEvents), contracts.GetSlotFreedEvents, range);
             }
 
             private void LogEvents(string n, Func<BlockInterval, object> f, BlockInterval r)

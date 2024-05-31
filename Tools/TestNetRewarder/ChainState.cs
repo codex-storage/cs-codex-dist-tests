@@ -37,17 +37,19 @@ namespace TestNetRewarder
         {
             this.historicState = historicState;
 
-            NewRequests = contracts.GetStorageRequests(blockRange);
-            historicState.CleanUpOldRequests();
-            historicState.ProcessNewRequests(NewRequests);
-            historicState.UpdateStorageRequests(contracts);
+            throw new Exception("This is getting a rewrite");
 
-            StartedRequests = historicState.StorageRequests.Where(r => r.RecentlyStarted).ToArray();
-            FinishedRequests = historicState.StorageRequests.Where(r => r.RecentlyFinished).ToArray();
-            RequestFulfilledEvents = contracts.GetRequestFulfilledEvents(blockRange);
-            RequestCancelledEvents = contracts.GetRequestCancelledEvents(blockRange);
-            SlotFilledEvents = contracts.GetSlotFilledEvents(blockRange);
-            SlotFreedEvents = contracts.GetSlotFreedEvents(blockRange);
+            //NewRequests = contracts.GetStorageRequests(blockRange);
+            //historicState.CleanUpOldRequests();
+            //historicState.ProcessNewRequests(NewRequests);
+            //historicState.UpdateStorageRequests(contracts);
+
+            //StartedRequests = historicState.StorageRequests.Where(r => r.RecentlyStarted).ToArray();
+            //FinishedRequests = historicState.StorageRequests.Where(r => r.RecentlyFinished).ToArray();
+            //RequestFulfilledEvents = contracts.GetRequestFulfilledEvents(blockRange);
+            //RequestCancelledEvents = contracts.GetRequestCancelledEvents(blockRange);
+            //SlotFilledEvents = contracts.GetSlotFilledEvents(blockRange);
+            //SlotFreedEvents = contracts.GetSlotFreedEvents(blockRange);
         }
 
         public ChainState(

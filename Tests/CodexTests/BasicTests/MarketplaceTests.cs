@@ -89,8 +89,8 @@ namespace CodexTests.BasicTests
         {
             Time.Retry(() =>
             {
-                var blockRange = geth.ConvertTimeRangeToBlockRange(GetTestRunTimeRange());
-                var slotFilledEvents = contracts.GetSlotFilledEvents(blockRange);
+                var events = contracts.GetEvents(GetTestRunTimeRange());
+                var slotFilledEvents = events.GetSlotFilledEvents();
 
                 Debug($"SlotFilledEvents: {slotFilledEvents.Length} - NumSlots: {purchase.MinRequiredNumberOfNodes}");
 
@@ -107,7 +107,8 @@ namespace CodexTests.BasicTests
 
         private Request GetOnChainStorageRequest(ICodexContracts contracts, IGethNode geth)
         {
-            var requests = contracts.GetStorageRequests(geth.ConvertTimeRangeToBlockRange(GetTestRunTimeRange()));
+            var events = contracts.GetEvents(GetTestRunTimeRange());
+            var requests = events.GetStorageRequests();
             Assert.That(requests.Length, Is.EqualTo(1));
             return requests.Single();
         }
