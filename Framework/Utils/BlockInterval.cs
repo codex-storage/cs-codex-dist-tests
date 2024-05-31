@@ -20,6 +20,7 @@
         public ulong From { get; }
         public ulong To { get; }
         public TimeRange TimeRange { get; }
+        public ulong NumberOfBlocks => To - From;
 
         public override string ToString()
         {

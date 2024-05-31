@@ -29,6 +29,20 @@ namespace CodexContractsPlugin.ChainMonitor
         public SlotFilledEventDTO[] SlotFilled { get; }
         public SlotFreedEventDTO[] SlotFreed { get; }
 
+        public IHasBlock[] All
+        {
+            get
+            {
+                var all = new List<IHasBlock>();
+                all.AddRange(Requests);
+                all.AddRange(Fulfilled);
+                all.AddRange(Cancelled);
+                all.AddRange(SlotFilled);
+                all.AddRange(SlotFreed);
+                return all.ToArray();
+            }
+        }
+
         public static ChainEvents FromBlockInterval(ICodexContracts contracts, BlockInterval blockInterval)
         {
             return FromContractEvents(contracts.GetEvents(blockInterval));
