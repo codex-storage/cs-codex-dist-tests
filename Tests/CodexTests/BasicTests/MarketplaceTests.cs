@@ -92,9 +92,9 @@ namespace CodexTests.BasicTests
                 var blockRange = geth.ConvertTimeRangeToBlockRange(GetTestRunTimeRange());
                 var slotFilledEvents = contracts.GetSlotFilledEvents(blockRange);
 
-                Debug($"SlotFilledEvents: {slotFilledEvents.Length} - NumSlots: {purchase.MinRequiredNumberOfNodes}");
-
-                if (slotFilledEvents.Length != purchase.MinRequiredNumberOfNodes) throw new Exception();
+                var msg = $"SlotFilledEvents: {slotFilledEvents.Length} - NumSlots: {purchase.MinRequiredNumberOfNodes}";
+                Debug(msg);
+                if (slotFilledEvents.Length != purchase.MinRequiredNumberOfNodes) throw new Exception(msg);
             }, purchase.Expiry + TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(5), "Checking SlotFilled events");
         }
 
