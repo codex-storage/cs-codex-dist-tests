@@ -3,7 +3,7 @@ using Logging;
 using NUnit.Framework;
 using Utils;
 
-namespace CodexTests.ScalabilityTests
+namespace CodexTests.UtilityTests
 {
     [TestFixture]
     public class ClusterDiscSpeedTests : DistTest
@@ -18,7 +18,7 @@ namespace CodexTests.ScalabilityTests
         )
         {
             long targetSize = (long)(1024 * 1024 * 1024) * 2;
-            long bufferSizeBytes = ((long)bufferSizeKb) * 1024;
+            long bufferSizeBytes = (long)bufferSizeKb * 1024;
 
             var filename = nameof(DiscSpeedTest);
 
@@ -28,7 +28,7 @@ namespace CodexTests.ScalabilityTests
             var writeSpeed = PerformWrite(targetSize, bufferSizeBytes, filename);
             Thread.Sleep(2000);
             var readSpeed = PerformRead(targetSize, bufferSizeBytes, filename);
-            
+
             Log($"Write speed: {writeSpeed} per second.");
             Log($"Read speed: {readSpeed} per second.");
         }
