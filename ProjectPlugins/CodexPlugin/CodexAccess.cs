@@ -141,7 +141,7 @@ namespace CodexPlugin
 
         private void CheckContainerCrashed(HttpClient client)
         {
-            if (hasContainerCrashed) throw new Exception("Container has crashed.");
+            if (hasContainerCrashed) throw new Exception($"Container {GetName()} has crashed.");
         }
 
         public void Log(Stream crashLog)
