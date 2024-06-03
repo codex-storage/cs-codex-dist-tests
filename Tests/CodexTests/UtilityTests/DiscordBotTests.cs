@@ -1,4 +1,5 @@
 ﻿using CodexContractsPlugin;
+using CodexContractsPlugin.ChainMonitor;
 using CodexContractsPlugin.Marketplace;
 using CodexDiscordBotPlugin;
 using CodexPlugin;
@@ -43,6 +44,14 @@ namespace CodexTests.UtilityTests
 
             var client = StartClient(geth, contracts);
 
+
+            var events = ChainEvents.FromTimeRange(contracts, GetTestRunTimeRange());
+            var chainState = CodexContractsPlugin.ChainMonitor.ChainState.FromEvents(
+                GetTestLog(),
+                events,
+                new DoNothingChainEventHandler());
+
+
             var apiCalls = new RewardApiCalls(Ci, botContainer);
             apiCalls.Start(OnCommand);
             var rewarderLog = new RewarderLogMonitor(Ci, rewarderContainer.Containers.Single());
@@ -58,6 +67,8 @@ namespace CodexTests.UtilityTests
             Log("Done!");
 
             Thread.Sleep(rewarderInterval * 2);
+
+            chainState.Apply(ChainEvents.FromTimeRange(contracts, GetTestRunTimeRange()));
 
             Log("Seen:");
             foreach (var seen in rewardsSeen)
@@ -78,8 +89,8 @@ namespace CodexTests.UtilityTests
 
         private void OnCommand(GiveRewardsCommand call)
         {
-            if (call.Averages.Any()) Log($"{call.Averages.Length} average.");
-            if (call.EventsOverview.Any()) Log($"{call.EventsOverview.Length} events.");
+            if (call.Averages.Any()) Log($"API call: {call.Averages.Length} average.");
+            if (call.EventsOverview.Any()) Log($"API call: {call.EventsOverview.Length} events.");
             foreach (var r in call.Rewards)
             {
                 var reward = repo.Rewards.Single(a => a.RoleId == r.RewardId);
@@ -87,7 +98,7 @@ namespace CodexTests.UtilityTests
                 foreach (var address in r.UserAddresses)
                 {
                     var user = IdentifyAccount(address);
-                    Log(user + ": " + reward.Message);
+                    Log("API call: " + user + ": " + reward.Message);
                 }
             }
         }
@@ -306,20 +317,20 @@ namespace CodexTests.UtilityTests
                 //$"ChainState=[{JsonConvert.SerializeObject(this)}]" +
                 //$"HistoricState=[{historicState.EntireString()}]";
 
-                var stateOpenTag = "ChainState=[";
-                var historicOpenTag = "]HistoricState=[";
+                //var stateOpenTag = "ChainState=[";
+                //var historicOpenTag = "]HistoricState=[";
 
-                if (!line.Contains(stateOpenTag)) return;
-                if (!line.Contains(historicOpenTag)) return;
+                //if (!line.Contains(stateOpenTag)) return;
+                //if (!line.Contains(historicOpenTag)) return;
 
-                var stateStr = Between(line, stateOpenTag, historicOpenTag);
-                var historicStr = Between(line, historicOpenTag, "]");
+                //var stateStr = Between(line, stateOpenTag, historicOpenTag);
+                //var historicStr = Between(line, historicOpenTag, "]");
 
-                var chainState = JsonConvert.DeserializeObject<ChainState>(stateStr);
-                var historicState = JsonConvert.DeserializeObject<TestNetRewarder.StorageRequest[]>(historicStr)!;
-                chainState!.Set(new HistoricState(historicState));
+                //var chainState = JsonConvert.DeserializeObject<ChainState>(stateStr);
+                //var historicState = JsonConvert.DeserializeObject<TestNetRewarder.StorageRequest[]>(historicStr)!;
+                //chainState!.Set(new HistoricState(historicState));
 
-                log(string.Join(",", chainState!.GenerateOverview()));
+                //log(string.Join(",", chainState!.GenerateOverview()));
             }
 
             private string Between(string s, string open, string close)
@@ -427,14 +438,14 @@ namespace CodexTests.UtilityTests
 
             private void Update()
             {
-                var start = last;
-                var stop = DateTime.UtcNow;
-                last = stop;
+                //var start = last;
+                //var stop = DateTime.UtcNow;
+                //last = stop;
 
-                var range = geth.ConvertTimeRangeToBlockRange(new TimeRange(start, stop));
+                //var range = geth.ConvertTimeRangeToBlockRange(new TimeRange(start, stop));
 
 
-                throw new Exception();
+                //throw new Exception();
                 //LogEvents(nameof(contracts.GetStorageRequests), contracts.GetStorageRequests, range);
                 //LogEvents(nameof(contracts.GetRequestFulfilledEvents), contracts.GetRequestFulfilledEvents, range);
                 //LogEvents(nameof(contracts.GetRequestCancelledEvents), contracts.GetRequestCancelledEvents, range);
