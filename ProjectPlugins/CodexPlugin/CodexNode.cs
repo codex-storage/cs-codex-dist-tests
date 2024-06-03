@@ -80,7 +80,7 @@ namespace CodexPlugin
         {
             var debugInfo = CodexAccess.GetDebugInfo();
             var known = string.Join(",", debugInfo.Table.Nodes.Select(n => n.PeerId));
-            Log($"Got DebugInfo with id: '{debugInfo.Id}'. This node knows: {known}");
+            Log($"Got DebugInfo with id: {debugInfo.Id}. This node knows: [{known}]");
             return debugInfo;
         }
 
