@@ -1,37 +1,44 @@
-﻿
-namespace Utils
+﻿namespace Utils
 {
-    public class Retry<T>
+    public class Retry
     {
         private readonly string description;
-        private readonly Func<T> task;
         private readonly TimeSpan maxTimeout;
-        private readonly int maxRetries;
         private readonly TimeSpan sleepAfterFail;
         private readonly Action<Failure> onFail;
 
-        public Retry(string description, Func<T> task, TimeSpan maxTimeout, int maxRetries, TimeSpan sleepAfterFail, Action<Failure> onFail)
+        public Retry(string description, TimeSpan maxTimeout, TimeSpan sleepAfterFail, Action<Failure> onFail)
         {
             this.description = description;
-            this.task = task;
             this.maxTimeout = maxTimeout;
-            this.maxRetries = maxRetries;
             this.sleepAfterFail = sleepAfterFail;
             this.onFail = onFail;
         }
 
-        public T Run()
+        public void Run(Action task)
         {
-            var run = new RetryRun(description, task, maxTimeout, maxRetries, sleepAfterFail, onFail);
-            return run.Run();
+            var run = new RetryRun(description, task, maxTimeout, sleepAfterFail, onFail);
+            run.Run();
+        }
+
+        public T Run<T>(Func<T> task)
+        {
+            T? result = default;
+
+            var run = new RetryRun(description, () =>
+            {
+                result = task();
+            }, maxTimeout, sleepAfterFail, onFail);
+            run.Run();
+
+            return result!;
         }
 
         private class RetryRun
         {
             private readonly string description;
-            private readonly Func<T> task;
+            private readonly Action task;
             private readonly TimeSpan maxTimeout;
-            private readonly int maxRetries;
             private readonly TimeSpan sleepAfterFail;
             private readonly Action<Failure> onFail;
             private readonly DateTime start = DateTime.UtcNow;
@@ -39,12 +46,11 @@ namespace Utils
             private int tryNumber;
             private DateTime tryStart;
 
-            public RetryRun(string description, Func<T> task, TimeSpan maxTimeout, int maxRetries, TimeSpan sleepAfterFail, Action<Failure> onFail)
+            public RetryRun(string description, Action task, TimeSpan maxTimeout, TimeSpan sleepAfterFail, Action<Failure> onFail)
             {
                 this.description = description;
                 this.task = task;
                 this.maxTimeout = maxTimeout;
-                this.maxRetries = maxRetries;
                 this.sleepAfterFail = sleepAfterFail;
                 this.onFail = onFail;
 
@@ -52,7 +58,7 @@ namespace Utils
                 tryStart = DateTime.UtcNow;
             }
 
-            public T Run()
+            public void Run()
             {
                 while (true)
                 {
@@ -62,7 +68,8 @@ namespace Utils
                     tryStart = DateTime.UtcNow;
                     try
                     {
-                        return task();
+                        task();
+                        return;
                     }
                     catch (Exception ex)
                     {
@@ -83,7 +90,6 @@ namespace Utils
             private void CheckMaximums()
             {
                 if (Duration() > maxTimeout) Fail();
-                if (tryNumber > maxRetries) Fail();
             }
 
             private void Fail()

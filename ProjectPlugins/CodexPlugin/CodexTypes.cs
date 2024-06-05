@@ -105,4 +105,17 @@ namespace CodexPlugin
             return HashCode.Combine(Id);
         }
     }
+
+    public class CodexSpace
+    {
+        public int TotalBlocks { get; set; }
+        public int QuotaMaxBytes { get; set; }
+        public int QuotaUsedBytes { get; set; }
+        public int QuotaReservedBytes { get; set; }
+
+        public override string ToString()
+        {
+            return JsonConvert.SerializeObject(this);
+        }
+    }
 }

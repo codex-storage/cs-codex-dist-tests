@@ -2,6 +2,7 @@
 using Core;
 using KubernetesWorkflow;
 using KubernetesWorkflow.Types;
+using Logging;
 using Newtonsoft.Json;
 using Utils;
 
@@ -61,12 +62,17 @@ namespace CodexPlugin
 
         public string UploadFile(FileStream fileStream)
         {
-            return OnCodex(api => api.UploadAsync(fileStream));
+            return OnCodex(
+                api => api.UploadAsync(fileStream),
+                CreateRetryConfig(nameof(UploadFile)));
         }
 
         public Stream DownloadFile(string contentId)
         {
-            var fileResponse = OnCodex(api => api.DownloadNetworkAsync(contentId));
+            var fileResponse = OnCodex(
+                api => api.DownloadNetworkAsync(contentId),
+                CreateRetryConfig(nameof(DownloadFile)));
+
             if (fileResponse.StatusCode != 200) throw new Exception("Download failed with StatusCode: " + fileResponse.StatusCode);
             return fileResponse.Stream;
         }
@@ -87,6 +93,12 @@ namespace CodexPlugin
         {
             var body = mapper.Map(request);
             return OnCodex<string>(api => api.CreateStorageRequestAsync(request.ContentId.Id, body));
+        }
+
+        public CodexSpace Space()
+        {
+            var space = OnCodex<Space>(api => api.SpaceAsync());
+            return mapper.Map(space);
         }
 
         public StoragePurchase GetPurchaseStatus(string purchaseId)
@@ -116,15 +128,22 @@ namespace CodexPlugin
 
         private T OnCodex<T>(Func<CodexApi, Task<T>> action)
         {
-            var address = GetAddress();
-            var result = tools.CreateHttp(CheckContainerCrashed)
-                .OnClient(client =>
-            {
-                var api = new CodexApi(client);
-                api.BaseUrl = $"{address.Host}:{address.Port}/api/codex/v1";
-                return Time.Wait(action(api));
-            });
+            var result = tools.CreateHttp(CheckContainerCrashed).OnClient(client => CallCodex(client, action));
             return result;
+        }
+
+        private T OnCodex<T>(Func<CodexApi, Task<T>> action, Retry retry)
+        {
+            var result = tools.CreateHttp(CheckContainerCrashed).OnClient(client => CallCodex(client, action), retry);
+            return result;
+        }
+
+        private T CallCodex<T>(HttpClient client, Func<CodexApi, Task<T>> action)
+        {
+            var address = GetAddress();
+            var api = new CodexApi(client);
+            api.BaseUrl = $"{address.Host}:{address.Port}/api/codex/v1";
+            return Time.Wait(action(api));
         }
 
         private IEndpoint GetEndpoint()
@@ -144,7 +163,7 @@ namespace CodexPlugin
             if (hasContainerCrashed) throw new Exception($"Container {GetName()} has crashed.");
         }
 
-        public void Log(Stream crashLog)
+        void ILogHandler.Log(Stream crashLog)
         {
             var log = tools.GetLog();
             var file = log.CreateSubfile();
@@ -161,6 +180,81 @@ namespace CodexPlugin
 
             log.Log("Crash log successfully downloaded.");
             hasContainerCrashed = true;
+        }
+
+        private Retry CreateRetryConfig(string description)
+        {
+            var timeSet = tools.TimeSet;
+            var log = tools.GetLog();
+
+            return new Retry(description, timeSet.HttpRetryTimeout(), timeSet.HttpCallRetryDelay(), failure =>
+            {
+                if (failure.TryNumber < 3) return;
+                if (failure.Duration.TotalSeconds < timeSet.HttpCallTimeout().TotalSeconds)
+                {
+                    Investigate(log, failure, timeSet);
+                }
+            });
+        }
+
+        private void Investigate(ILog log, Failure failure, ITimeSet timeSet)
+        {
+            log.Log($"Retry {failure.TryNumber} took {Time.FormatDuration(failure.Duration)}. (HTTP timeout = {Time.FormatDuration(timeSet.HttpCallTimeout())}) " +
+                        $"Checking if node responds to debug/info...");
+            try
+            {
+                var debugInfo = GetDebugInfo();
+                if (string.IsNullOrEmpty(debugInfo.Spr))
+                {
+                    log.Log("Did not get value debug/info response.");
+                    DownloadLog();
+                    Throw(failure);
+                }
+                else
+                {
+                    log.Log("Got valid response from debug/info. Checking storage statistics...");
+                    CheckSpaceStatistics(log, failure);
+                }
+            }
+            catch (Exception ex)
+            {
+                log.Log("Got exception from debug/info call: " + ex);
+                DownloadLog();
+                Throw(failure);
+            }
+        }
+
+        private void CheckSpaceStatistics(ILog log, Failure failure)
+        {
+            try
+            {
+                var space = Space();
+                log.Log($"Got space statistics: {space}");
+                var freeSpace = space.QuotaMaxBytes - (space.QuotaUsedBytes + space.QuotaReservedBytes);
+                log.Log($"Free space: {freeSpace}");
+
+                if (freeSpace < 1.MB().SizeInBytes)
+                {
+                    log.Log("There's less than 1MB free. Stopping...");
+                    Throw(failure);
+                }
+            }
+            catch (Exception e)
+            {
+                log.Log("Failed to get space statistics: " + e);
+                DownloadLog();
+                Throw(failure);
+            }
+        }
+
+        private void Throw(Failure failure)
+        {
+            throw failure.Exception;
+        }
+
+        private void DownloadLog()
+        {
+            tools.CreateWorkflow().DownloadContainerLog(Container.Containers.Single(), this);
         }
     }
 }

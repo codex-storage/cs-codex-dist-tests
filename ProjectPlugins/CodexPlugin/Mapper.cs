@@ -1,4 +1,5 @@
 ﻿using CodexContractsPlugin;
+using CodexOpenApi;
 using Newtonsoft.Json.Linq;
 using System.Numerics;
 using Utils;
@@ -81,6 +82,17 @@ namespace CodexPlugin
             )
             {
                 Id = read.Id
+            };
+        }
+
+        public CodexSpace Map(Space space)
+        {
+            return new CodexSpace
+            {
+                QuotaMaxBytes = space.QuotaMaxBytes,
+                QuotaReservedBytes = space.QuotaReservedBytes,
+                QuotaUsedBytes = space.QuotaUsedBytes,
+                TotalBlocks = space.TotalBlocks
             };
         }
 

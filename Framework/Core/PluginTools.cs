@@ -6,6 +6,7 @@ namespace Core
 {
     public interface IPluginTools : IWorkflowTool, ILogTool, IHttpFactoryTool, IFileTool
     {
+        ITimeSet TimeSet { get; }
         void Decommission(bool deleteKubernetesResources, bool deleteTrackedFiles);
     }
 
@@ -33,7 +34,6 @@ namespace Core
 
     internal class PluginTools : IPluginTools
     {
-        private readonly ITimeSet timeSet;
         private readonly WorkflowCreator workflowCreator;
         private readonly IFileManager fileManager;
         private readonly LogPrefixer log;
@@ -42,9 +42,11 @@ namespace Core
         {
             this.log = new LogPrefixer(log);
             this.workflowCreator = workflowCreator;
-            this.timeSet = timeSet;
+            TimeSet = timeSet;
             fileManager = new FileManager(log, fileManagerRootFolder);
         }
+
+        public ITimeSet TimeSet { get; }
 
         public void ApplyLogPrefix(string prefix)
         {
@@ -53,7 +55,7 @@ namespace Core
 
         public IHttp CreateHttp(Action<HttpClient> onClientCreated)
         {
-            return CreateHttp(onClientCreated, timeSet);
+            return CreateHttp(onClientCreated, TimeSet);
         }
 
         public IHttp CreateHttp(Action<HttpClient> onClientCreated, ITimeSet ts)
@@ -63,7 +65,7 @@ namespace Core
 
         public IHttp CreateHttp()
         {
-            return new Http(log, timeSet);
+            return new Http(log, TimeSet);
         }
 
         public IStartupWorkflow CreateWorkflow(string? namespaceOverride = null)
