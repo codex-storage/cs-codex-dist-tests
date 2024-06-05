@@ -62,16 +62,18 @@ namespace CodexPlugin
 
         public string UploadFile(FileStream fileStream)
         {
+            CheckSpaceIsAvailable(fileStream);
+
             return OnCodex(
                 api => api.UploadAsync(fileStream),
-                CreateRetryConfig(nameof(UploadFile)));
+                CreateRetryConfig(nameof(UploadFile), f => CheckSpaceIsAvailable(fileStream)));
         }
 
         public Stream DownloadFile(string contentId)
         {
             var fileResponse = OnCodex(
                 api => api.DownloadNetworkAsync(contentId),
-                CreateRetryConfig(nameof(DownloadFile)));
+                CreateRetryConfig(nameof(DownloadFile), f => { }));
 
             if (fileResponse.StatusCode != 200) throw new Exception("Download failed with StatusCode: " + fileResponse.StatusCode);
             return fileResponse.Stream;
@@ -158,6 +160,18 @@ namespace CodexPlugin
             return Container.Containers.Single().GetAddress(tools.GetLog(), CodexContainerRecipe.ApiPortTag);
         }
 
+        private void CheckSpaceIsAvailable(FileStream fileStream)
+        {
+            var space = Space();
+
+            if (space.FreeBytes < fileStream.Length)
+            {
+                var msg = $"Not enough space available. File: {fileStream.Length} Free: {space.FreeBytes}";
+                tools.GetLog().Error(msg);
+                throw new Exception(msg);
+            }
+        }
+
         private void CheckContainerCrashed(HttpClient client)
         {
             if (hasContainerCrashed) throw new Exception($"Container {GetName()} has crashed.");
@@ -182,14 +196,14 @@ namespace CodexPlugin
             hasContainerCrashed = true;
         }
 
-        private Retry CreateRetryConfig(string description)
+        private Retry CreateRetryConfig(string description, Action<Failure> onFailure)
         {
             var timeSet = tools.TimeSet;
             var log = tools.GetLog();
 
             return new Retry(description, timeSet.HttpRetryTimeout(), timeSet.HttpCallRetryDelay(), failure =>
             {
-                if (failure.TryNumber < 3) return;
+                onFailure(failure);
                 if (failure.Duration.TotalSeconds < timeSet.HttpCallTimeout().TotalSeconds)
                 {
                     Investigate(log, failure, timeSet);
@@ -230,10 +244,9 @@ namespace CodexPlugin
             {
                 var space = Space();
                 log.Log($"Got space statistics: {space}");
-                var freeSpace = space.QuotaMaxBytes - (space.QuotaUsedBytes + space.QuotaReservedBytes);
-                log.Log($"Free space: {freeSpace}");
+                log.Log($"Free space: {space.FreeBytes}");
 
-                if (freeSpace < 1.MB().SizeInBytes)
+                if (space.FreeBytes < 1.MB().SizeInBytes)
                 {
                     log.Log("There's less than 1MB free. Stopping...");
                     Throw(failure);

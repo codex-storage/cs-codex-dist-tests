@@ -112,6 +112,7 @@ namespace CodexPlugin
         public int QuotaMaxBytes { get; set; }
         public int QuotaUsedBytes { get; set; }
         public int QuotaReservedBytes { get; set; }
+        public int FreeBytes => QuotaMaxBytes - (QuotaUsedBytes + QuotaReservedBytes);
 
         public override string ToString()
         {
