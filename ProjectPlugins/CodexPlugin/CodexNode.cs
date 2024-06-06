@@ -15,7 +15,9 @@ namespace CodexPlugin
         DebugInfo GetDebugInfo();
         DebugPeer GetDebugPeer(string peerId);
         ContentId UploadFile(TrackedFile file);
+        ContentId UploadFile(TrackedFile file, Action<Failure> onFailure);
         TrackedFile? DownloadContent(ContentId contentId, string fileLabel = "");
+        TrackedFile? DownloadContent(ContentId contentId, Action<Failure> onFailure, string fileLabel = "");
         LocalDatasetList LocalFiles();
         CodexSpace Space();
         void ConnectToPeer(ICodexNode node);
@@ -92,13 +94,18 @@ namespace CodexPlugin
 
         public ContentId UploadFile(TrackedFile file)
         {
+            return UploadFile(file, DoNothing);
+        }
+
+        public ContentId UploadFile(TrackedFile file, Action<Failure> onFailure)
+        {
             using var fileStream = File.OpenRead(file.Filename);
 
             var logMessage = $"Uploading file {file.Describe()}...";
             Log(logMessage);
             var measurement = Stopwatch.Measure(tools.GetLog(), logMessage, () =>
             {
-                return CodexAccess.UploadFile(fileStream);
+                return CodexAccess.UploadFile(fileStream, onFailure);
             });
 
             var response = measurement.Value;
@@ -113,10 +120,15 @@ namespace CodexPlugin
 
         public TrackedFile? DownloadContent(ContentId contentId, string fileLabel = "")
         {
+            return DownloadContent(contentId, DoNothing, fileLabel);
+        }
+
+        public TrackedFile? DownloadContent(ContentId contentId, Action<Failure> onFailure, string fileLabel = "")
+        {
             var logMessage = $"Downloading for contentId: '{contentId.Id}'...";
             Log(logMessage);
             var file = tools.GetFileManager().CreateEmptyFile(fileLabel);
-            var measurement = Stopwatch.Measure(tools.GetLog(), logMessage, () => DownloadToFile(contentId.Id, file));
+            var measurement = Stopwatch.Measure(tools.GetLog(), logMessage, () => DownloadToFile(contentId.Id, file, onFailure));
             transferSpeeds.AddDownloadSample(file.GetFilesize(), measurement);
             Log($"Downloaded file {file.Describe()} to '{file.Filename}'.");
             return file;
@@ -188,12 +200,12 @@ namespace CodexPlugin
                 .ToArray();
         }
 
-        private void DownloadToFile(string contentId, TrackedFile file)
+        private void DownloadToFile(string contentId, TrackedFile file, Action<Failure> onFailure)
         {
             using var fileStream = File.OpenWrite(file.Filename);
             try
             {
-                using var downloadStream = CodexAccess.DownloadFile(contentId);
+                using var downloadStream = CodexAccess.DownloadFile(contentId, onFailure);
                 downloadStream.CopyTo(fileStream);
             }
             catch
@@ -206,6 +218,10 @@ namespace CodexPlugin
         private void Log(string msg)
         {
             tools.GetLog().Log($"{GetName()}: {msg}");
+        }
+
+        private void DoNothing(Failure failure)
+        {
         }
     }
 }

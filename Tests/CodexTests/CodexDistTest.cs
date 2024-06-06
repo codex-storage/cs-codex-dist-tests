@@ -6,6 +6,8 @@ using Core;
 using DistTestCore;
 using DistTestCore.Helpers;
 using DistTestCore.Logs;
+using MetricsPlugin;
+using Newtonsoft.Json;
 using NUnit.Framework.Constraints;
 
 namespace CodexTests
@@ -97,6 +99,27 @@ namespace CodexTests
 
             log.AssertLogDoesNotContain("Block validation failed");
             log.AssertLogDoesNotContain("ERR ");
+        }
+
+        public void LogNodeStatus(ICodexNode node, IMetricsAccess? metrics = null)
+        {
+            Log("Status for " + node.GetName() + Environment.NewLine +
+                GetBasicNodeStatus(node) +
+                GetNodeMetrics(metrics));
+        }
+
+        private string GetBasicNodeStatus(ICodexNode node)
+        {
+            return JsonConvert.SerializeObject(node.GetDebugInfo(), Formatting.Indented) + Environment.NewLine +
+                node.Space().ToString() + Environment.NewLine;
+        }
+
+        private string GetNodeMetrics(IMetricsAccess? metrics)
+        {
+            if (metrics == null) return "No metrics enabled";
+            var m = metrics.GetAllMetrics();
+            if (m == null) return "No metrics received";
+            return m.AsCsv();
         }
 
         protected virtual void OnCodexSetup(ICodexSetup setup)

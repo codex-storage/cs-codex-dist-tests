@@ -60,24 +60,18 @@ namespace CodexPlugin
             });
         }
 
-        public string UploadFile(FileStream fileStream)
+        public string UploadFile(FileStream fileStream, Action<Failure> onFailure)
         {
-            LogSpaceStatistics("Before upload");
-
-            var str = OnCodex(
+            return OnCodex(
                 api => api.UploadAsync(fileStream),
-                CreateRetryConfig(nameof(UploadFile)));
-
-            LogSpaceStatistics("After upload");
-
-            return str;
+                CreateRetryConfig(nameof(UploadFile), onFailure));
         }
 
-        public Stream DownloadFile(string contentId)
+        public Stream DownloadFile(string contentId, Action<Failure> onFailure)
         {
             var fileResponse = OnCodex(
                 api => api.DownloadNetworkAsync(contentId),
-                CreateRetryConfig(nameof(DownloadFile)));
+                CreateRetryConfig(nameof(DownloadFile), onFailure));
 
             if (fileResponse.StatusCode != 200) throw new Exception("Download failed with StatusCode: " + fileResponse.StatusCode);
             return fileResponse.Stream;
@@ -188,13 +182,14 @@ namespace CodexPlugin
             hasContainerCrashed = true;
         }
 
-        private Retry CreateRetryConfig(string description)
+        private Retry CreateRetryConfig(string description, Action<Failure> onFailure)
         {
             var timeSet = tools.TimeSet;
             var log = tools.GetLog();
 
             return new Retry(description, timeSet.HttpRetryTimeout(), timeSet.HttpCallRetryDelay(), failure =>
             {
+                onFailure(failure);
                 if (failure.Duration.TotalSeconds < timeSet.HttpCallTimeout().TotalSeconds)
                 {
                     Investigate(log, failure, timeSet);
@@ -243,9 +238,9 @@ namespace CodexPlugin
             }
         }
 
-        private void LogSpaceStatistics(string prefix = "")
+        private void LogSpaceStatistics()
         {
-            tools.GetLog().Log($"{prefix} Space statistics: {Space()}");
+            tools.GetLog().Log($"Space statistics: {Space()}");
         }
 
         private void Throw(Failure failure)
