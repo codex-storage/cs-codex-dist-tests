@@ -45,6 +45,9 @@ namespace CodexTests.BasicTests
 
             metrics[0].AssertThat("libp2p_peers", Is.EqualTo(1));
             metrics[1].AssertThat("libp2p_peers", Is.EqualTo(1));
+
+            LogNodeStatus(primary, metrics[0]);
+            LogNodeStatus(primary2, metrics[1]);
         }
 
         [Test]

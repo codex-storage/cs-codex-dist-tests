@@ -13,6 +13,8 @@ namespace CodexTests.BasicTests
             var primary = StartCodex();
 
             PerformOneClientTest(primary);
+
+            LogNodeStatus(primary);
         }
 
         [Test]
