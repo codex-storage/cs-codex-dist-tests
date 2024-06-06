@@ -38,10 +38,14 @@ namespace Core
             return new CoreInterface(this);
         }
 
-        public void Decommission(bool deleteKubernetesResources, bool deleteTrackedFiles)
+        /// <summary>
+        /// Deletes kubernetes and tracked file resources.
+        /// when `waitTillDone` is true, this function will block until resources are deleted.
+        /// </summary>
+        public void Decommission(bool deleteKubernetesResources, bool deleteTrackedFiles, bool waitTillDone)
         {
-            manager.DecommissionPlugins(deleteKubernetesResources, deleteTrackedFiles);
-            Tools.Decommission(deleteKubernetesResources, deleteTrackedFiles);
+            manager.DecommissionPlugins(deleteKubernetesResources, deleteTrackedFiles, waitTillDone);
+            Tools.Decommission(deleteKubernetesResources, deleteTrackedFiles, waitTillDone);
         }
 
         internal T GetPlugin<T>() where T : IProjectPlugin

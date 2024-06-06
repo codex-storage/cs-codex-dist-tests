@@ -115,7 +115,7 @@ namespace KubernetesWorkflow
             });
         }
 
-        public void DeleteAllNamespacesStartingWith(string prefix)
+        public void DeleteAllNamespacesStartingWith(string prefix, bool wait)
         {
             log.Debug();
 
@@ -124,25 +124,28 @@ namespace KubernetesWorkflow
 
             foreach (var ns in namespaces)
             {
-                DeleteNamespace(ns);
+                DeleteNamespace(ns, wait);
             }
         }
 
-        public void DeleteNamespace()
+        public void DeleteNamespace(bool wait)
         {
             log.Debug();
             if (IsNamespaceOnline(K8sNamespace))
             {
                 client.Run(c => c.DeleteNamespace(K8sNamespace, null, null, gracePeriodSeconds: 0));
+
+                if (wait) WaitUntilNamespaceDeleted(K8sNamespace);
             }
         }
 
-        public void DeleteNamespace(string ns)
+        public void DeleteNamespace(string ns, bool wait)
         {
             log.Debug();
             if (IsNamespaceOnline(ns))
             {
                 client.Run(c => c.DeleteNamespace(ns, null, null, gracePeriodSeconds: 0));
+                if (wait) WaitUntilNamespaceDeleted(ns);
             }
         }
 
@@ -869,6 +872,11 @@ namespace KubernetesWorkflow
         private void WaitUntilNamespaceCreated() 
         {
             WaitUntil(() => IsNamespaceOnline(K8sNamespace), nameof(WaitUntilNamespaceCreated));
+        }
+
+        private void WaitUntilNamespaceDeleted(string @namespace)
+        {
+            WaitUntil(() => !IsNamespaceOnline(@namespace), nameof(WaitUntilNamespaceDeleted));
         }
 
         private void WaitUntilDeploymentOnline(string deploymentName)

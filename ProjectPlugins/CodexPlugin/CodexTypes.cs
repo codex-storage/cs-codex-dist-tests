@@ -108,11 +108,11 @@ namespace CodexPlugin
 
     public class CodexSpace
     {
-        public int TotalBlocks { get; set; }
-        public int QuotaMaxBytes { get; set; }
-        public int QuotaUsedBytes { get; set; }
-        public int QuotaReservedBytes { get; set; }
-        public int FreeBytes => QuotaMaxBytes - (QuotaUsedBytes + QuotaReservedBytes);
+        public long TotalBlocks { get; set; }
+        public long QuotaMaxBytes { get; set; }
+        public long QuotaUsedBytes { get; set; }
+        public long QuotaReservedBytes { get; set; }
+        public long FreeBytes => QuotaMaxBytes - (QuotaUsedBytes + QuotaReservedBytes);
 
         public override string ToString()
         {

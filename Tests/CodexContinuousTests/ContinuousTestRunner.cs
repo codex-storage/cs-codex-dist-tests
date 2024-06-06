@@ -148,7 +148,7 @@ namespace ContinuousTests
             log.Log($"Clearing namespace '{test.CustomK8sNamespace}'...");
 
             var entryPoint = entryPointFactory.CreateEntryPoint(config.KubeConfigFile, config.DataPath, test.CustomK8sNamespace, log);
-            entryPoint.Tools.CreateWorkflow().DeleteNamespacesStartingWith(test.CustomK8sNamespace);
+            entryPoint.Tools.CreateWorkflow().DeleteNamespacesStartingWith(test.CustomK8sNamespace, wait: true);
         }
 
         private void PerformCleanup(ILog log)
@@ -157,7 +157,7 @@ namespace ContinuousTests
             log.Log("Cleaning up test namespace...");
 
             var entryPoint = entryPointFactory.CreateEntryPoint(config.KubeConfigFile, config.DataPath, config.CodexDeployment.Metadata.KubeNamespace, log);
-            entryPoint.Decommission(deleteKubernetesResources: true, deleteTrackedFiles: true);
+            entryPoint.Decommission(deleteKubernetesResources: true, deleteTrackedFiles: true, waitTillDone: true);
             log.Log("Cleanup finished.");
         }
     }

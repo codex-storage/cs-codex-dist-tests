@@ -18,6 +18,7 @@ public class ScalabilityTests : CodexDistTest
     [Combinatorial]
     [UseLongTimeouts]
     [DontDownloadLogs]
+    [WaitForCleanup]
     public void ShouldMaintainFileInNetwork(
         [Values(10, 40)] int numberOfNodes, // TODO: include 80 and 100
         [Values(100, 1000, 5000, 10000)] int fileSizeInMb
@@ -64,6 +65,7 @@ public class ScalabilityTests : CodexDistTest
     [Combinatorial]
     [UseLongTimeouts]
     [DontDownloadLogs]
+    [WaitForCleanup]
     public void EveryoneGetsAFile(
         [Values(10, 40, 80, 100)] int numberOfNodes,
         [Values(100, 1000, 5000, 10000)] int fileSizeInMb

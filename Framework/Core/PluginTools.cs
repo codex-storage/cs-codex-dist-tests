@@ -7,7 +7,12 @@ namespace Core
     public interface IPluginTools : IWorkflowTool, ILogTool, IHttpFactoryTool, IFileTool
     {
         ITimeSet TimeSet { get; }
-        void Decommission(bool deleteKubernetesResources, bool deleteTrackedFiles);
+
+        /// <summary>
+        /// Deletes kubernetes and tracked file resources.
+        /// when `waitTillDone` is true, this function will block until resources are deleted.
+        /// </summary>
+        void Decommission(bool deleteKubernetesResources, bool deleteTrackedFiles, bool waitTillDone);
     }
 
     public interface IWorkflowTool
@@ -73,9 +78,9 @@ namespace Core
             return workflowCreator.CreateWorkflow(namespaceOverride);
         }
 
-        public void Decommission(bool deleteKubernetesResources, bool deleteTrackedFiles)
+        public void Decommission(bool deleteKubernetesResources, bool deleteTrackedFiles, bool waitTillDone)
         {
-            if (deleteKubernetesResources) CreateWorkflow().DeleteNamespace();
+            if (deleteKubernetesResources) CreateWorkflow().DeleteNamespace(waitTillDone);
             if (deleteTrackedFiles) fileManager.DeleteAllFiles();
         }
 

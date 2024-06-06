@@ -17,8 +17,8 @@ namespace KubernetesWorkflow
         void Stop(RunningPod pod, bool waitTillStopped);
         void DownloadContainerLog(RunningContainer container, ILogHandler logHandler, int? tailLines = null);
         string ExecuteCommand(RunningContainer container, string command, params string[] args);
-        void DeleteNamespace();
-        void DeleteNamespacesStartingWith(string namespacePrefix);
+        void DeleteNamespace(bool wait);
+        void DeleteNamespacesStartingWith(string namespacePrefix, bool wait);
     }
 
     public class StartupWorkflow : IStartupWorkflow
@@ -122,19 +122,19 @@ namespace KubernetesWorkflow
             });
         }
 
-        public void DeleteNamespace()
+        public void DeleteNamespace(bool wait)
         {
             K8s(controller =>
             {
-                controller.DeleteNamespace();
+                controller.DeleteNamespace(wait);
             });
         }
 
-        public void DeleteNamespacesStartingWith(string namespacePrefix)
+        public void DeleteNamespacesStartingWith(string namespacePrefix, bool wait)
         {
             K8s(controller =>
             {
-                controller.DeleteAllNamespacesStartingWith(namespacePrefix);
+                controller.DeleteAllNamespacesStartingWith(namespacePrefix, wait);
             });
         }
 

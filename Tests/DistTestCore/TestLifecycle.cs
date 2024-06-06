@@ -16,7 +16,7 @@ namespace DistTestCore
         private readonly List<RunningPod> runningContainers = new();
         private readonly string deployId;
 
-        public TestLifecycle(TestLog log, Configuration configuration, ITimeSet timeSet, string testNamespace, string deployId)
+        public TestLifecycle(TestLog log, Configuration configuration, ITimeSet timeSet, string testNamespace, string deployId, bool waitForCleanup)
         {
             Log = log;
             Configuration = configuration;
@@ -27,7 +27,7 @@ namespace DistTestCore
             metadata = entryPoint.GetPluginMetadata();
             CoreInterface = entryPoint.CreateInterface();
             this.deployId = deployId;
-
+            WaitForCleanup = waitForCleanup;
             log.WriteLogTag();
         }
 
@@ -35,13 +35,15 @@ namespace DistTestCore
         public TestLog Log { get; }
         public Configuration Configuration { get; }
         public ITimeSet TimeSet { get; }
+        public bool WaitForCleanup { get; }
         public CoreInterface CoreInterface { get; }
 
         public void DeleteAllResources()
         {
             entryPoint.Decommission(
                 deleteKubernetesResources: true,
-                deleteTrackedFiles: true
+                deleteTrackedFiles: true,
+                waitTillDone: WaitForCleanup
             );
         }
 

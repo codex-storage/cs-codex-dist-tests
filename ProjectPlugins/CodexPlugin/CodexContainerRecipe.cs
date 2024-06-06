@@ -7,7 +7,7 @@ namespace CodexPlugin
 {
     public class CodexContainerRecipe : ContainerRecipeFactory
     {
-        private const string DefaultDockerImage = "codexstorage/nim-codex:sha-a518ec6-dist-tests";
+        private const string DefaultDockerImage = "codexstorage/nim-codex:sha-b89493e-dist-tests";
 
         public const string ApiPortTag = "codex_api_port";
         public const string ListenPortTag = "codex_listen_port";

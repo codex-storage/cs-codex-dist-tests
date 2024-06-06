@@ -52,7 +52,7 @@ namespace DistTestCore
             {
                 Stopwatch.Measure(fixtureLog, "Global setup", () =>
                 {
-                    globalEntryPoint.Tools.CreateWorkflow().DeleteNamespacesStartingWith(TestNamespacePrefix);
+                    globalEntryPoint.Tools.CreateWorkflow().DeleteNamespacesStartingWith(TestNamespacePrefix, wait: true);
                 });                
             }
             catch (Exception ex)
@@ -72,7 +72,8 @@ namespace DistTestCore
             globalEntryPoint.Decommission(
                 // There shouldn't be any of either, but clean everything up regardless.
                 deleteKubernetesResources: true,
-                deleteTrackedFiles: true
+                deleteTrackedFiles: true,
+                waitTillDone: true
             );
         }
 
@@ -185,7 +186,13 @@ namespace DistTestCore
                 lock (lifecycleLock)
                 {
                     var testNamespace = TestNamespacePrefix + Guid.NewGuid().ToString();
-                    var lifecycle = new TestLifecycle(fixtureLog.CreateTestLog(), configuration, GetTimeSet(), testNamespace, deployId);
+                    var lifecycle = new TestLifecycle(
+                        fixtureLog.CreateTestLog(),
+                        configuration,
+                        GetTimeSet(),
+                        testNamespace,
+                        deployId,
+                        ShouldWaitForCleanup());
                     lifecycles.Add(testName, lifecycle);
                     LifecycleStart(lifecycle);
                 }
@@ -233,6 +240,11 @@ namespace DistTestCore
         {
             if (ShouldUseLongTimeouts()) return new LongTimeSet();
             return new DefaultTimeSet();
+        }
+
+        private bool ShouldWaitForCleanup()
+        {
+            return CurrentTestMethodHasAttribute<WaitForCleanupAttribute>();
         }
 
         private bool ShouldUseLongTimeouts()
