@@ -190,10 +190,7 @@ namespace CodexPlugin
             return new Retry(description, timeSet.HttpRetryTimeout(), timeSet.HttpCallRetryDelay(), failure =>
             {
                 onFailure(failure);
-                if (failure.Duration.TotalSeconds < timeSet.HttpCallTimeout().TotalSeconds)
-                {
-                    Investigate(log, failure, timeSet);
-                }
+                Investigate(log, failure, timeSet);
             });
         }
 
@@ -212,8 +209,7 @@ namespace CodexPlugin
                 }
                 else
                 {
-                    log.Log("Got valid response from debug/info. Checking storage statistics...");
-                    CheckSpaceStatistics(log, failure);
+                    log.Log("Got valid response from debug/info.");
                 }
             }
             catch (Exception ex)
@@ -222,25 +218,6 @@ namespace CodexPlugin
                 DownloadLog();
                 Throw(failure);
             }
-        }
-
-        private void CheckSpaceStatistics(ILog log, Failure failure)
-        {
-            try
-            {
-                LogSpaceStatistics();
-            }
-            catch (Exception e)
-            {
-                log.Log("Failed to get space statistics: " + e);
-                DownloadLog();
-                Throw(failure);
-            }
-        }
-
-        private void LogSpaceStatistics()
-        {
-            tools.GetLog().Log($"Space statistics: {Space()}");
         }
 
         private void Throw(Failure failure)
