@@ -196,8 +196,10 @@ namespace CodexPlugin
 
         private void Investigate(ILog log, Failure failure, ITimeSet timeSet)
         {
-            log.Log($"Retry {failure.TryNumber} took {Time.FormatDuration(failure.Duration)}. (HTTP timeout = {Time.FormatDuration(timeSet.HttpCallTimeout())}) " +
-                        $"Checking if node responds to debug/info...");
+            log.Log($"Retry {failure.TryNumber} took {Time.FormatDuration(failure.Duration)} and failed with '{failure.Exception}'. " +
+                $"(HTTP timeout = {Time.FormatDuration(timeSet.HttpCallTimeout())}) " +
+                $"Checking if node responds to debug/info...");
+
             try
             {
                 var debugInfo = GetDebugInfo();
@@ -215,6 +217,13 @@ namespace CodexPlugin
             catch (Exception ex)
             {
                 log.Log("Got exception from debug/info call: " + ex);
+                DownloadLog();
+                Throw(failure);
+            }
+
+            if (failure.Duration < timeSet.HttpCallTimeout())
+            {
+                log.Log("Retry failed within HTTP timeout duration.");
                 DownloadLog();
                 Throw(failure);
             }

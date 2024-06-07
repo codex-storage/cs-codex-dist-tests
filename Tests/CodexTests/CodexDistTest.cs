@@ -104,8 +104,7 @@ namespace CodexTests
         public void LogNodeStatus(ICodexNode node, IMetricsAccess? metrics = null)
         {
             Log("Status for " + node.GetName() + Environment.NewLine +
-                GetBasicNodeStatus(node) +
-                GetNodeMetrics(metrics));
+                GetBasicNodeStatus(node));
         }
 
         private string GetBasicNodeStatus(ICodexNode node)
@@ -114,13 +113,14 @@ namespace CodexTests
                 node.Space().ToString() + Environment.NewLine;
         }
 
-        private string GetNodeMetrics(IMetricsAccess? metrics)
-        {
-            if (metrics == null) return "No metrics enabled";
-            var m = metrics.GetAllMetrics();
-            if (m == null) return "No metrics received";
-            return m.AsCsv();
-        }
+        // Disabled for now: Makes huge log files!
+        //private string GetNodeMetrics(IMetricsAccess? metrics)
+        //{
+        //    if (metrics == null) return "No metrics enabled";
+        //    var m = metrics.GetAllMetrics();
+        //    if (m == null) return "No metrics received";
+        //    return m.AsCsv();
+        //}
 
         protected virtual void OnCodexSetup(ICodexSetup setup)
         {

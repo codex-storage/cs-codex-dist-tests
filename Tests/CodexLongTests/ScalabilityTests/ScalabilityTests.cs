@@ -1,5 +1,4 @@
 using CodexPlugin;
-using MetricsPlugin;
 using DistTestCore;
 using FileUtils;
 using NUnit.Framework;
@@ -28,7 +27,7 @@ public class ScalabilityTests : CodexDistTest
 
         var bootstrap = StartCodex(s => s.WithLogLevel(logLevel));
         var nodes = StartCodex(numberOfNodes - 1, s => s
-            .EnableMetrics()
+            //.EnableMetrics()
             .WithBootstrapNode(bootstrap)
             .WithLogLevel(logLevel)
             .WithStorageQuota((fileSizeInMb + 50).MB())
@@ -36,15 +35,15 @@ public class ScalabilityTests : CodexDistTest
 
         var uploader = nodes.PickOneRandom();
         var downloader = nodes.PickOneRandom();
-        var metrics = Ci.GetMetricsFor(uploader, downloader);
+        //var metrics = Ci.GetMetricsFor(uploader, downloader);
 
         var testFile = GenerateTestFile(fileSizeInMb.MB());
 
-        LogNodeStatus(uploader, metrics[0]);
-        var contentId = uploader.UploadFile(testFile, f => LogNodeStatus(uploader, metrics[0]));
+        LogNodeStatus(uploader);
+        var contentId = uploader.UploadFile(testFile, f => LogNodeStatus(uploader));
 
-        LogNodeStatus(downloader, metrics[1]);
-        var downloadedFile = downloader.DownloadContent(contentId, f => LogNodeStatus(downloader, metrics[1]));
+        LogNodeStatus(downloader);
+        var downloadedFile = downloader.DownloadContent(contentId, f => LogNodeStatus(downloader));
 
         downloadedFile!.AssertIsEqual(testFile);
 
