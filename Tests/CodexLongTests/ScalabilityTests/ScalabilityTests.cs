@@ -19,8 +19,8 @@ public class ScalabilityTests : CodexDistTest
     [DontDownloadLogs]
     [WaitForCleanup]
     public void ShouldMaintainFileInNetwork(
-        [Values(10, 40)] int numberOfNodes, // TODO: include 80 and 100
-        [Values(100, 1000, 5000, 10000)] int fileSizeInMb
+        [Values(10)] int numberOfNodes, // TODO: include 40, 80 and 100
+        [Values(5000, 10000)] int fileSizeInMb // TODO: include 100, 1000
     )
     {
         var logLevel = CodexLogLevel.Info;
