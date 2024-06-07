@@ -110,7 +110,7 @@ namespace CodexPlugin
             return new DebugInfoTable
             {
                 LocalNode = MapDebugInfoTableNode(obj.GetValue("localNode")),
-                Nodes = new DebugInfoTableNode[0]
+                Nodes = MapDebugInfoTableNodeArray(obj.GetValue("nodes") as JArray)
             };
         }
 
@@ -127,6 +127,16 @@ namespace CodexPlugin
                 Record = StringOrEmpty(obj, "record"),
                 Seen = Bool(obj, "seen")
             };
+        }
+
+        private DebugInfoTableNode[] MapDebugInfoTableNodeArray(JArray? nodes)
+        {
+            if (nodes == null || nodes.Count == 0)
+            {
+                return new DebugInfoTableNode[0];
+            }
+
+            return nodes.Select(MapDebugInfoTableNode).ToArray();
         }
 
         private Manifest MapManifest(CodexOpenApi.ManifestItem manifest)
