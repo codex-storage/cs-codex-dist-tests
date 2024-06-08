@@ -83,12 +83,13 @@ namespace KubernetesWorkflow
         private bool HasContainerBeenRestarted(Kubernetes client)
         {
             var podInfo = client.ReadNamespacedPod(podName, k8sNamespace);
-            return podInfo.Status.ContainerStatuses.Any(c => c.RestartCount > 0);
+            var result = podInfo.Status.ContainerStatuses.Any(c => c.RestartCount > 0);
+            if (result) log.Log("Pod crash detected for " + containerName);
+            return result;
         }
 
         private void DownloadCrashedContainerLogs(Kubernetes client)
         {
-            log.Log("Pod crash detected for " + containerName);
             using var stream = client.ReadNamespacedPodLog(podName, k8sNamespace, recipeName, previous: true);
             logHandler!.Log(stream);
         }

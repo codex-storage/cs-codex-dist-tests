@@ -535,7 +535,7 @@ namespace KubernetesWorkflow
             }
             if (set.Memory.SizeInBytes != 0)
             {
-                result.Add("memory", new ResourceQuantity(set.Memory.ToSuffixNotation()));
+                result.Add("memory", new ResourceQuantity(set.Memory.SizeInBytes.ToString()));
             }
             return result;
         }

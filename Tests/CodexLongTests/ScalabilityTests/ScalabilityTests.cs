@@ -9,12 +9,6 @@ namespace CodexTests.ScalabilityTests;
 [TestFixture]
 public class ScalabilityTests : CodexDistTest
 {
-    private const int Below2 = (Int32.MaxValue / (1024 * 1024)) - 20;
-    private const int Below1 = (Int32.MaxValue / (1024 * 1024)) - 10;
-    private const int Exact = (Int32.MaxValue / (1024 * 1024)) + 0;
-    private const int Above1 = (Int32.MaxValue / (1024 * 1024)) + 10;
-    private const int Above2 = (Int32.MaxValue / (1024 * 1024)) + 20;
-
     /// <summary>
     /// We upload a file to node A, then download it with B.
     /// Then we stop node A, and download again with node C.
@@ -25,8 +19,8 @@ public class ScalabilityTests : CodexDistTest
     [DontDownloadLogs]
     [WaitForCleanup]
     public void ShouldMaintainFileInNetwork(
-        [Values(5)] int numberOfNodes, // TODO: include 10, 40, 80 and 100, not 5
-        [Values(Below2, Below1, Exact, Above1, Above2)] int fileSizeInMb // TODO: include 100, 1000, 5000, 10000
+        [Values(4, 5, 6)] int numberOfNodes, // TODO: include 10, 40, 80 and 100, not 5
+        [Values(2000, 2200, 2500, 2800, 3000, 3200, 3500, 3800, 4200, 4500, 4800, 5000)] int fileSizeInMb // TODO: include 100, 1000, 5000, 10000
     )
     {
         var logLevel = CodexLogLevel.Info;
@@ -47,9 +41,11 @@ public class ScalabilityTests : CodexDistTest
 
         LogNodeStatus(uploader);
         var contentId = uploader.UploadFile(testFile, f => LogNodeStatus(uploader));
+        LogNodeStatus(uploader);
 
         LogNodeStatus(downloader);
         var downloadedFile = downloader.DownloadContent(contentId, f => LogNodeStatus(downloader));
+        LogNodeStatus(downloader);
 
         downloadedFile!.AssertIsEqual(testFile);
 

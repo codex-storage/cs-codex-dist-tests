@@ -167,8 +167,8 @@ namespace CodexPlugin
         {
             var log = tools.GetLog();
             var file = log.CreateSubfile();
-            log.Log($"Container {Container.Name} has crashed. Downloading crash log to '{file.FullFilename}'...");
-            file.Write($"Container Crash Log for {Container.Name}.");
+            log.Log($"Downloading log to '{file.FullFilename}'...");
+            file.Write($"Container log for {Container.Name}.");
 
             using var reader = new StreamReader(crashLog);
             var line = reader.ReadLine();

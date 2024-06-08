@@ -159,7 +159,7 @@ namespace CodexPlugin
 
         private ByteSize GetVolumeCapacity(CodexStartupConfig config)
         {
-            if (config.StorageQuota != null) return config.StorageQuota;
+            if (config.StorageQuota != null) return config.StorageQuota.Multiply(1.2);
             // Default Codex quota: 8 Gb, using +20% to be safe.
             return 8.GB().Multiply(1.2);
         }
