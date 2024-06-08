@@ -23,7 +23,7 @@ public class ScalabilityTests : CodexDistTest
         [Values(2000, 2200, 2500, 2800, 3000, 3200, 3500, 3800, 4200, 4500, 4800, 5000)] int fileSizeInMb // TODO: include 100, 1000, 5000, 10000
     )
     {
-        var logLevel = CodexLogLevel.Info;
+        var logLevel = CodexLogLevel.Trace;
 
         var bootstrap = StartCodex(s => s.WithLogLevel(logLevel));
         var nodes = StartCodex(numberOfNodes - 1, s => s
