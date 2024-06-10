@@ -63,14 +63,47 @@ namespace CodexPlugin
             };
         }
 
-        public StoragePurchase Map(CodexOpenApi.Purchase purchase)
-        {
-            return new StoragePurchase
-            {
-                State = purchase.State,
-                Error = purchase.Error
-            };
-        }
+        // TODO: Fix openapi spec for this call.
+        //public StoragePurchase Map(CodexOpenApi.Purchase purchase)
+        //{
+        //    return new StoragePurchase(Map(purchase.Request))
+        //    {
+        //        State = purchase.State,
+        //        Error = purchase.Error
+        //    };
+        //}
+
+        //public StorageRequest Map(CodexOpenApi.StorageRequest request)
+        //{
+        //    return new StorageRequest(Map(request.Ask), Map(request.Content))
+        //    {
+        //        Id = request.Id,
+        //        Client = request.Client,
+        //        Expiry = TimeSpan.FromSeconds(Convert.ToInt64(request.Expiry)),
+        //        Nonce = request.Nonce
+        //    };
+        //}
+
+        //public StorageAsk Map(CodexOpenApi.StorageAsk ask)
+        //{
+        //    return new StorageAsk
+        //    {
+        //        Duration = TimeSpan.FromSeconds(Convert.ToInt64(ask.Duration)),
+        //        MaxSlotLoss = ask.MaxSlotLoss,
+        //        ProofProbability = ask.ProofProbability,
+        //        Reward = Convert.ToDecimal(ask.Reward).TstWei(),
+        //        Slots = ask.Slots,
+        //        SlotSize = new ByteSize(Convert.ToInt64(ask.SlotSize))
+        //    };
+        //}
+
+        //public StorageContent Map(CodexOpenApi.Content content)
+        //{
+        //    return new StorageContent
+        //    {
+        //        Cid = content.Cid
+        //    };
+        //}
 
         public StorageAvailability Map(CodexOpenApi.SalesAvailabilityREAD read)
         {

@@ -85,6 +85,47 @@ namespace CodexTests.BasicTests
             Assert.That(contracts.GetRequestState(request), Is.EqualTo(RequestState.Finished));
         }
 
+        [Test]
+        public void CanDownloadContentFromContractCid()
+        {
+            var fileSize = 10.MB();
+            var geth = Ci.StartGethNode(s => s.IsMiner().WithName("disttest-geth"));
+            var contracts = Ci.StartCodexContracts(geth);
+            var testFile = GenerateTestFile(fileSize);
+
+            var client = StartCodex(s => s
+                .WithName("Client")
+                .EnableMarketplace(geth, contracts, m => m
+                    .WithInitial(10.Eth(), 10.Tst())));
+
+            var uploadCid = client.UploadFile(testFile);
+
+            var purchase = new StoragePurchaseRequest(uploadCid)
+            {
+                PricePerSlotPerSecond = 2.TstWei(),
+                RequiredCollateral = 10.TstWei(),
+                MinRequiredNumberOfNodes = 5,
+                NodeFailureTolerance = 2,
+                ProofProbability = 5,
+                Duration = TimeSpan.FromMinutes(5),
+                Expiry = TimeSpan.FromMinutes(4)
+            };
+
+            var purchaseContract = client.Marketplace.RequestStorage(purchase);
+
+            var contractCid = purchaseContract.ContentId;
+
+            Assert.That(uploadCid.Id, Is.Not.EqualTo(contractCid.Id));
+
+            var downloader = StartCodex(s => s.WithName("Downloader"));
+            
+            var uploadedFile = downloader.DownloadContent(uploadCid);
+            testFile.AssertIsEqual(uploadedFile);
+
+            var contractFile = downloader.DownloadContent(contractCid);
+            testFile.AssertIsEqual(contractFile);
+        }
+
         private void WaitForAllSlotFilledEvents(ICodexContracts contracts, StoragePurchaseRequest purchase, IGethNode geth)
         {
             Time.Retry(() =>

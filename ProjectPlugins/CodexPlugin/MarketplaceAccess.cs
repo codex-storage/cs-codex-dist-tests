@@ -97,10 +97,13 @@ namespace CodexPlugin
             this.codexAccess = codexAccess;
             PurchaseId = purchaseId;
             Purchase = purchase;
+
+            ContentId = new ContentId(codexAccess.GetPurchaseStatus(purchaseId).Request.Content.Cid);
         }
 
         public string PurchaseId { get; }
         public StoragePurchaseRequest Purchase { get; }
+        public ContentId ContentId { get; }
 
         public TimeSpan? PendingToSubmitted => contractSubmittedUtc - contractPendingUtc;
         public TimeSpan? SubmittedToStarted => contractStartedUtc - contractSubmittedUtc;

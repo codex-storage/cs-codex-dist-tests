@@ -1,5 +1,7 @@
 ﻿using CodexContractsPlugin;
+using CodexOpenApi;
 using Logging;
+using System.Data;
 using Utils;
 
 namespace CodexPlugin
@@ -37,6 +39,34 @@ namespace CodexPlugin
     {
         public string State { get; set; } = string.Empty;
         public string Error { get; set; } = string.Empty;
+        public StorageRequest Request { get; set; } = null!;
+    }
+
+    public class StorageRequest
+    {
+        public string Id { get; set; } = string.Empty;
+        public string Client { get; set; } = string.Empty;
+        public StorageAsk Ask { get; set; } = null!;
+        public StorageContent Content { get; set; } = null!;
+        public string Expiry { get; set; } = string.Empty;
+        public string Nonce { get; set; } = string.Empty;
+    }
+
+    public class StorageAsk
+    {
+        public int Slots { get; set; }
+        public string SlotSize { get; set; } = string.Empty;
+        public string Duration { get; set; } = string.Empty;
+        public string ProofProbability { get; set; } = string.Empty;
+        public string Reward { get; set; } = string.Empty;
+        public int MaxSlotLoss { get; set; }
+    }
+
+    public class StorageContent
+    {
+        public string Cid { get; set; } = string.Empty;
+        //public ErasureParameters Erasure { get; set; }
+        //public PoRParameters Por { get; set; }
     }
 
     public class StorageAvailability
