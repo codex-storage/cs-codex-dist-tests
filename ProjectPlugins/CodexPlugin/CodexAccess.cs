@@ -126,6 +126,14 @@ namespace CodexPlugin
             return workflow.GetPodInfo(Container);
         }
 
+        public void DeleteRepoFolder()
+        {
+            var containerNumber = Container.Containers.First().Recipe.Number;
+            var dataDir = $"datadir{containerNumber}";
+            var workflow = tools.CreateWorkflow();
+            workflow.ExecuteCommand(Container.Containers.First(), "rm", "-Rfv", $"/codex/{dataDir}/repo");
+        }
+
         private T OnCodex<T>(Func<CodexApi, Task<T>> action)
         {
             var result = tools.CreateHttp(CheckContainerCrashed).OnClient(client => CallCodex(client, action));

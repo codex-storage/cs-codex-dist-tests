@@ -119,7 +119,7 @@ namespace CodexPlugin
                 }
             }
 
-            if(!string.IsNullOrEmpty(config.NameOverride))
+            if (!string.IsNullOrEmpty(config.NameOverride))
             {
                 AddEnvVar("CODEX_NODENAME", config.NameOverride);
             }

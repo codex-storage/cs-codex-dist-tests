@@ -38,6 +38,7 @@ namespace CodexTests
 
         protected override void LifecycleStop(TestLifecycle lifecycle)
         {
+            DeleteBlockRepo(onlineCodexNodes[lifecycle]);
             onlineCodexNodes.Remove(lifecycle);
         }
 
@@ -133,6 +134,14 @@ namespace CodexTests
             var download = nodes.Select(n => n.TransferSpeeds.GetDownloadSpeed()).ToList()!.OptionalAverage();
             if (upload != null) data.Add("avgupload", upload.ToString());
             if (download != null) data.Add("avgdownload", download.ToString());
+        }
+
+        private void DeleteBlockRepo(List<ICodexNode> codexNodes)
+        {
+            foreach (var node in codexNodes)
+            {
+                node.DeleteRepoFolder();
+            }
         }
     }
 }
