@@ -6,6 +6,7 @@ namespace CodexPlugin
 {
     public interface IStoragePurchaseContract
     {
+        string PurchaseId { get; }
         void WaitForStorageContractSubmitted();
         void WaitForStorageContractStarted();
         void WaitForStorageContractFinished();

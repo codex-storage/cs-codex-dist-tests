@@ -24,7 +24,7 @@ namespace CodexContractsPlugin.ChainMonitor
             ExpiryUtc = request.Block.Utc + TimeSpan.FromSeconds((double)request.Expiry);
             FinishedUtc = request.Block.Utc + TimeSpan.FromSeconds((double)request.Ask.Duration);
 
-            log.Log($"Request created as {State}.");
+            log.Log($"Created as {State}.");
         }
 
         public Request Request { get; }
@@ -34,8 +34,13 @@ namespace CodexContractsPlugin.ChainMonitor
 
         public void UpdateState(RequestState newState)
         {
-            log.Log($"Request transit: {State} -> {newState}");
+            Log($"Transit: {State} -> {newState}");
             State = newState;
+        }
+
+        public void Log(string msg)
+        {
+            log.Log($"Request '{Request.Id}': {msg}");
         }
     }
 }

@@ -17,6 +17,17 @@ namespace CodexContractsPlugin.Marketplace
         public byte[] RequestId { get; set; }
 
         public EthAddress ClientAddress { get { return new EthAddress(Client); } }
+
+        [JsonIgnore]
+        public string Id
+        {
+            get
+            {
+                var id = "";
+                foreach (var b in RequestId) id += b.ToString();
+                return id;
+            }
+        }
     }
 
     public partial class RequestFulfilledEventDTO : IHasBlock

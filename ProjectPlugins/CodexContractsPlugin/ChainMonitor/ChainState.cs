@@ -24,7 +24,7 @@ namespace CodexContractsPlugin.ChainMonitor
 
         private ChainState(ILog log, IChainStateChangeHandler changeHandler, TimeRange timeRange)
         {
-            this.log = log;
+            this.log = new LogPrefixer(log, "(ChainState) ");
             handler = changeHandler;
             TotalSpan = timeRange;
         }
@@ -39,7 +39,21 @@ namespace CodexContractsPlugin.ChainMonitor
         public TimeRange TotalSpan { get; private set; }
         public IChainStateRequest[] Requests => requests.ToArray();
 
-        public void Apply(ChainEvents events)
+        public void Update(ICodexContracts contracts)
+        {
+            Update(contracts, DateTime.UtcNow);
+        }
+
+        public void Update(ICodexContracts contracts, DateTime toUtc)
+        {
+            var span = new TimeRange(TotalSpan.To, toUtc);
+            var events = ChainEvents.FromTimeRange(contracts, span);
+            Apply(events);
+
+            TotalSpan = new TimeRange(TotalSpan.From, span.To);
+        }
+
+        private void Apply(ChainEvents events)
         {
             if (events.BlockInterval.TimeRange.From < TotalSpan.From)
                 throw new Exception("Attempt to update ChainState with set of events from before its current record.");
@@ -52,7 +66,7 @@ namespace CodexContractsPlugin.ChainMonitor
             var spanPerBlock = span / numBlocks;
 
             var eventUtc = events.BlockInterval.TimeRange.From;
-            for (var b = events.BlockInterval.From; b < events.BlockInterval.To; b++)
+            for (var b = events.BlockInterval.From; b <= events.BlockInterval.To; b++)
             {
                 var blockEvents = events.All.Where(e => e.Block.BlockNumber == b).ToArray();
                 ApplyEvents(blockEvents, eventUtc);
@@ -86,6 +100,7 @@ namespace CodexContractsPlugin.ChainMonitor
         private void ApplyEvent(RequestFulfilledEventDTO request)
         {
             var r = FindRequest(request.RequestId);
+            if (r == null) return;
             r.UpdateState(RequestState.Started);
             handler.OnRequestFulfilled(r);
         }
@@ -93,6 +108,7 @@ namespace CodexContractsPlugin.ChainMonitor
         private void ApplyEvent(RequestCancelledEventDTO request)
         {
             var r = FindRequest(request.RequestId);
+            if (r == null) return;
             r.UpdateState(RequestState.Cancelled);
             handler.OnRequestCancelled(r);
         }
@@ -100,12 +116,16 @@ namespace CodexContractsPlugin.ChainMonitor
         private void ApplyEvent(SlotFilledEventDTO request)
         {
             var r = FindRequest(request.RequestId);
+            if (r == null) return;
+            r.Log("SlotFilled");
             handler.OnSlotFilled(r, request.SlotIndex);
         }
 
         private void ApplyEvent(SlotFreedEventDTO request)
         {
             var r = FindRequest(request.RequestId);
+            if (r == null) return;
+            r.Log("SlotFreed");
             handler.OnSlotFreed(r, request.SlotIndex);
         }
 
@@ -122,9 +142,11 @@ namespace CodexContractsPlugin.ChainMonitor
             }
         }
 
-        private ChainStateRequest FindRequest(byte[] requestId)
+        private ChainStateRequest? FindRequest(byte[] requestId)
         {
-            return requests.Single(r => Equal(r.Request.RequestId, requestId));
+            var r = requests.SingleOrDefault(r => Equal(r.Request.RequestId, requestId));
+            if (r == null) log.Log("Unable to find request by ID!");
+            return r;
         }
 
         private bool Equal(byte[] a, byte[] b)

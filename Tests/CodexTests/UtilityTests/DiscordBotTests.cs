@@ -1,16 +1,13 @@
 ﻿using CodexContractsPlugin;
 using CodexContractsPlugin.ChainMonitor;
-using CodexContractsPlugin.Marketplace;
 using CodexDiscordBotPlugin;
 using CodexPlugin;
 using Core;
 using DiscordRewards;
 using GethPlugin;
 using KubernetesWorkflow.Types;
-using Logging;
 using Newtonsoft.Json;
 using NUnit.Framework;
-using TestNetRewarder;
 using Utils;
 
 namespace CodexTests.UtilityTests
@@ -33,9 +30,6 @@ namespace CodexTests.UtilityTests
             var contracts = Ci.StartCodexContracts(geth);
             var gethInfo = CreateGethInfo(geth, contracts);
 
-            var monitor = new ChainMonitor(contracts, geth, GetTestLog());
-            monitor.Start();
-
             var botContainer = StartDiscordBot(gethInfo);
 
             StartHosts(geth, contracts);
@@ -44,47 +38,43 @@ namespace CodexTests.UtilityTests
 
             var client = StartClient(geth, contracts);
 
-
             var events = ChainEvents.FromTimeRange(contracts, GetTestRunTimeRange());
-            var chainState = CodexContractsPlugin.ChainMonitor.ChainState.FromEvents(
+            var chainState = ChainState.FromEvents(
                 GetTestLog(),
                 events,
                 new DoNothingChainEventHandler());
 
-
             var apiCalls = new RewardApiCalls(Ci, botContainer);
             apiCalls.Start(OnCommand);
-            var rewarderLog = new RewarderLogMonitor(Ci, rewarderContainer.Containers.Single());
-            rewarderLog.Start(l => Log("Rewarder ChainState: " + l));
 
             var purchaseContract = ClientPurchasesStorage(client);
+            chainState.Update(contracts);
+            Assert.That(chainState.Requests.Length, Is.EqualTo(1));
+
+            purchaseContract.WaitForStorageContractStarted();
+            chainState.Update(contracts);
+
             purchaseContract.WaitForStorageContractFinished();
 
-            rewarderLog.Stop();
-            apiCalls.Stop();
-            monitor.Stop();
-
-            Log("Done!");
-
             Thread.Sleep(rewarderInterval * 2);
-
-            chainState.Apply(ChainEvents.FromTimeRange(contracts, GetTestRunTimeRange()));
-
-            Log("Seen:");
-            foreach (var seen in rewardsSeen)
-            {
-                Log(seen.ToString());
-            }
-            Log("");
+            
+            apiCalls.Stop();
+            chainState.Update(contracts);
 
             foreach (var r in repo.Rewards)
             {
                 var seen = rewardsSeen.Any(s => r.RoleId == s);
 
-                Log($"{r.RoleId} = {seen}");
+                Log($"{Lookup(r.RoleId)} = {seen}");
             }
 
             Assert.That(repo.Rewards.All(r => rewardsSeen.Contains(r.RoleId)));
+        }
+
+        private string Lookup(ulong rewardId)
+        {
+            var reward = repo.Rewards.Single(r => r.RoleId == rewardId);
+            return $"({rewardId})'{reward.Message}'";
         }
 
         private void OnCommand(GiveRewardsCommand call)
@@ -292,55 +282,6 @@ namespace CodexTests.UtilityTests
             }
         }
 
-        public class RewarderLogMonitor
-        {
-            private readonly ContainerFileMonitor monitor;
-            private readonly Dictionary<string, GiveRewardsCommand> commands = new Dictionary<string, GiveRewardsCommand>();
-
-            public RewarderLogMonitor(CoreInterface ci, RunningContainer botContainer)
-            {
-                monitor = new ContainerFileMonitor(ci, botContainer, "/app/datapath/logs/testnetrewarder.log");
-            }
-
-            public void Start(Action<string> onCommand)
-            {
-                monitor.Start(l => ProcessLine(l, onCommand));
-            }
-
-            public void Stop()
-            {
-                monitor.Stop();
-            }
-
-            private void ProcessLine(string line, Action<string> log)
-            {
-                //$"ChainState=[{JsonConvert.SerializeObject(this)}]" +
-                //$"HistoricState=[{historicState.EntireString()}]";
-
-                //var stateOpenTag = "ChainState=[";
-                //var historicOpenTag = "]HistoricState=[";
-
-                //if (!line.Contains(stateOpenTag)) return;
-                //if (!line.Contains(historicOpenTag)) return;
-
-                //var stateStr = Between(line, stateOpenTag, historicOpenTag);
-                //var historicStr = Between(line, historicOpenTag, "]");
-
-                //var chainState = JsonConvert.DeserializeObject<ChainState>(stateStr);
-                //var historicState = JsonConvert.DeserializeObject<TestNetRewarder.StorageRequest[]>(historicStr)!;
-                //chainState!.Set(new HistoricState(historicState));
-
-                //log(string.Join(",", chainState!.GenerateOverview()));
-            }
-
-            private string Between(string s, string open, string close)
-            {
-                var start = s.IndexOf(open) + open.Length;
-                var end = s.LastIndexOf(close);
-                return s.Substring(start, end - start);
-            }
-        }
-
         public class ContainerFileMonitor
         {
             private readonly CoreInterface ci;
@@ -393,71 +334,6 @@ namespace CodexTests.UtilityTests
                         onNewLine(line);
                     }
                 }
-            }
-        }
-
-        public class ChainMonitor
-        {
-            private readonly ICodexContracts contracts;
-            private readonly IGethNode geth;
-            private readonly ILog log;
-            private readonly CancellationTokenSource cts = new CancellationTokenSource();
-            private Task worker = Task.CompletedTask;
-            private DateTime last = DateTime.UtcNow;
-
-            public ChainMonitor(ICodexContracts contracts, IGethNode geth, ILog log)
-            {
-                this.contracts = contracts;
-                this.geth = geth;
-                this.log = log;
-            }
-
-            public void Start()
-            {
-                last = DateTime.UtcNow;
-                worker = Task.Run(Worker);
-            }
-
-            public void Stop()
-            {
-                cts.Cancel();
-                worker.Wait();
-            }
-
-            private void Worker()
-            {
-                while (!cts.IsCancellationRequested)
-                {
-                    Thread.Sleep(TimeSpan.FromSeconds(10));
-                    if (cts.IsCancellationRequested) return;
-
-                    Update();
-
-                }
-            }
-
-            private void Update()
-            {
-                //var start = last;
-                //var stop = DateTime.UtcNow;
-                //last = stop;
-
-                //var range = geth.ConvertTimeRangeToBlockRange(new TimeRange(start, stop));
-
-
-                //throw new Exception();
-                //LogEvents(nameof(contracts.GetStorageRequests), contracts.GetStorageRequests, range);
-                //LogEvents(nameof(contracts.GetRequestFulfilledEvents), contracts.GetRequestFulfilledEvents, range);
-                //LogEvents(nameof(contracts.GetRequestCancelledEvents), contracts.GetRequestCancelledEvents, range);
-                //LogEvents(nameof(contracts.GetSlotFilledEvents), contracts.GetSlotFilledEvents, range);
-                //LogEvents(nameof(contracts.GetSlotFreedEvents), contracts.GetSlotFreedEvents, range);
-            }
-
-            private void LogEvents(string n, Func<BlockInterval, object> f, BlockInterval r)
-            {
-                var a = (object[])f(r);
-
-                a.ToList().ForEach(request => log.Log(n + " - " + JsonConvert.SerializeObject(request)));
             }
         }
     }
