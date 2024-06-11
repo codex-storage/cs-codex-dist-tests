@@ -140,7 +140,14 @@ namespace CodexTests
         {
             foreach (var node in codexNodes)
             {
-                node.DeleteRepoFolder();
+                try
+                {
+                    node.DeleteRepoFolder();
+                }
+                catch (Exception ex)
+                {
+                    Log($"Failed to delete repo folder for node {node.GetName()} : {ex}");
+                }
             }
         }
     }

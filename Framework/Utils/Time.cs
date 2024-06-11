@@ -1,6 +1,4 @@
-﻿using System.Diagnostics;
-
-namespace Utils
+﻿namespace Utils
 {
     public static class Time
     {
