@@ -215,7 +215,7 @@ namespace DistTestCore
                 IncludeLogsOnTestFailure(lifecycle);
                 LifecycleStop(lifecycle);
                 lifecycle.DeleteAllResources();
-                lifecycle = null!;
+                lifecycles.Remove(GetCurrentTestName());
             });
         }
 

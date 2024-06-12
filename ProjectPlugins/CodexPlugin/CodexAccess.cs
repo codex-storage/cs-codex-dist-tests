@@ -64,26 +64,16 @@ namespace CodexPlugin
 
         public string UploadFile(FileStream fileStream, Action<Failure> onFailure)
         {
-            LogDiskSpace("Before upload");
-            
-            var response = OnCodex(
+            return OnCodex(
                 api => api.UploadAsync(fileStream),
                 CreateRetryConfig(nameof(UploadFile), onFailure));
-
-            LogDiskSpace("After upload");
-
-            return response;
         }
 
         public Stream DownloadFile(string contentId, Action<Failure> onFailure)
         {
-            LogDiskSpace("Before download");
-
             var fileResponse = OnCodex(
                 api => api.DownloadNetworkAsync(contentId),
                 CreateRetryConfig(nameof(DownloadFile), onFailure));
-
-            LogDiskSpace("After download");
 
             if (fileResponse.StatusCode != 200) throw new Exception("Download failed with StatusCode: " + fileResponse.StatusCode);
             return fileResponse.Stream;
@@ -138,13 +128,17 @@ namespace CodexPlugin
             return workflow.GetPodInfo(Container);
         }
 
-        public void DeleteRepoFolder()
+        public void LogDiskSpace(string msg)
         {
-            var containerNumber = Container.Containers.First().Recipe.Number;
-            var dataDir = $"datadir{containerNumber}";
-            var workflow = tools.CreateWorkflow();
-            workflow.ExecuteCommand(Container.Containers.First(), "rm", "-Rfv", $"/codex/{dataDir}/repo");
-            Log("Deleted repo folder.");
+            try
+            {
+                var diskInfo = tools.CreateWorkflow().ExecuteCommand(Container.Containers.Single(), "df", "--sync");
+                Log($"{msg} - Disk info: {diskInfo}");
+            }
+            catch (Exception e)
+            {
+                Log("Failed to get disk info: " + e);
+            }
         }
 
         private T OnCodex<T>(Func<CodexApi, Task<T>> action)
@@ -250,19 +244,6 @@ namespace CodexPlugin
             }
         }
 
-        private void LogDiskSpace(string msg)
-        {
-            try
-            {
-                var diskInfo = tools.CreateWorkflow().ExecuteCommand(Container.Containers.Single(), "df", "-h");
-                Log($"{GetName()} - {msg} - Disk info: {diskInfo}");
-            }
-            catch (Exception e)
-            {
-                Log("Failed to get disk info: " + e);
-            }
-        }
-
         private void Throw(Failure failure)
         {
             throw failure.Exception;
@@ -270,7 +251,7 @@ namespace CodexPlugin
 
         private void Log(string msg)
         {
-            log.Log(msg);
+            log.Log($"{GetName()} {msg}");
         }
 
         private void DownloadLog()

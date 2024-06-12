@@ -14,8 +14,6 @@ namespace CodexTests
 {
     public class CodexDistTest : DistTest
     {
-        private readonly Dictionary<TestLifecycle, List<ICodexNode>> onlineCodexNodes = new Dictionary<TestLifecycle, List<ICodexNode>>();
-
         public CodexDistTest()
         {
             ProjectPlugin.Load<CodexPlugin.CodexPlugin>();
@@ -29,17 +27,6 @@ namespace CodexTests
             var localBuilder = new LocalCodexBuilder(fixtureLog);
             localBuilder.Intialize();
             localBuilder.Build();
-        }
-
-        protected override void LifecycleStart(TestLifecycle lifecycle)
-        {
-            onlineCodexNodes.Add(lifecycle, new List<ICodexNode>());
-        }
-
-        protected override void LifecycleStop(TestLifecycle lifecycle)
-        {
-            DeleteBlockRepo(onlineCodexNodes[lifecycle]);
-            onlineCodexNodes.Remove(lifecycle);
         }
 
         public ICodexNode StartCodex()
@@ -64,7 +51,7 @@ namespace CodexTests
                 setup(s);
                 OnCodexSetup(s);
             });
-            onlineCodexNodes[Get()].AddRange(group);
+
             return group;
         }
 
@@ -76,11 +63,6 @@ namespace CodexTests
         public PeerDownloadTestHelpers CreatePeerDownloadTestHelpers()
         {
             return new PeerDownloadTestHelpers(GetTestLog(), Get().GetFileManager());
-        }
-
-        public IEnumerable<ICodexNode> GetAllOnlineCodexNodes()
-        {
-            return onlineCodexNodes[Get()];
         }
 
         public void AssertBalance(ICodexContracts contracts, ICodexNode codexNode, Constraint constraint, string msg = "")
@@ -125,34 +107,6 @@ namespace CodexTests
 
         protected virtual void OnCodexSetup(ICodexSetup setup)
         {
-        }
-
-        protected override void CollectStatusLogData(TestLifecycle lifecycle, Dictionary<string, string> data)
-        {
-            var nodes = onlineCodexNodes[lifecycle];
-            var upload = nodes.Select(n => n.TransferSpeeds.GetUploadSpeed()).ToList()!.OptionalAverage();
-            var download = nodes.Select(n => n.TransferSpeeds.GetDownloadSpeed()).ToList()!.OptionalAverage();
-            if (upload != null) data.Add("avgupload", upload.ToString());
-            if (download != null) data.Add("avgdownload", download.ToString());
-        }
-
-        private void DeleteBlockRepo(List<ICodexNode> codexNodes)
-        {
-            foreach (var node in codexNodes)
-            {
-                try
-                {
-                    if (node.CrashWatcher.HasContainerCrashed())
-                    {
-                        Log("Crash detected!");
-                    }
-                    node.DeleteRepoFolder();
-                }
-                catch (Exception ex)
-                {
-                    Log($"Failed to delete repo folder for node {node.GetName()} : {ex}");
-                }
-            }
         }
     }
 }

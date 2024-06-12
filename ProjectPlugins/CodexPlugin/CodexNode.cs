@@ -26,7 +26,6 @@ namespace CodexPlugin
         CrashWatcher CrashWatcher { get; }
         PodInfo GetPodInfo();
         ITransferSpeeds TransferSpeeds { get; }
-        void DeleteRepoFolder();
         void Stop(bool waitTillStopped);
     }
 
@@ -100,6 +99,8 @@ namespace CodexPlugin
 
         public ContentId UploadFile(TrackedFile file, Action<Failure> onFailure)
         {
+            CodexAccess.LogDiskSpace("Before upload");
+
             using var fileStream = File.OpenRead(file.Filename);
 
             var logMessage = $"Uploading file {file.Describe()}...";
@@ -116,6 +117,8 @@ namespace CodexPlugin
             if (response.StartsWith(UploadFailedMessage)) FrameworkAssert.Fail("Node failed to store block.");
 
             Log($"Uploaded file. Received contentId: '{response}'.");
+            CodexAccess.LogDiskSpace("After upload");
+
             return new ContentId(response);
         }
 
@@ -161,13 +164,9 @@ namespace CodexPlugin
             return CodexAccess.GetPodInfo();
         }
 
-        public void DeleteRepoFolder()
-        {
-            CodexAccess.DeleteRepoFolder();
-        }
-
         public void Stop(bool waitTillStopped)
         {
+            Log("Stopping...");
             CrashWatcher.Stop();
             Group.Stop(this, waitTillStopped);
         }
@@ -203,6 +202,8 @@ namespace CodexPlugin
 
         private void DownloadToFile(string contentId, TrackedFile file, Action<Failure> onFailure)
         {
+            CodexAccess.LogDiskSpace("Before download");
+
             using var fileStream = File.OpenWrite(file.Filename);
             try
             {
@@ -214,6 +215,8 @@ namespace CodexPlugin
                 Log($"Failed to download file '{contentId}'.");
                 throw;
             }
+
+            CodexAccess.LogDiskSpace("After download");
         }
 
         private void Log(string msg)

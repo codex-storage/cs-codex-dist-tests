@@ -21,9 +21,9 @@ namespace CodexTests.PeerDiscoveryTests
         [Test]
         public void MetricsDoesNotInterfereWithPeerDiscovery()
         {
-            StartCodex(2, s => s.EnableMetrics());
+            var nodes = StartCodex(2, s => s.EnableMetrics());
 
-            AssertAllNodesConnected();
+            AssertAllNodesConnected(nodes);
         }
 
         [Test]
@@ -31,10 +31,10 @@ namespace CodexTests.PeerDiscoveryTests
         {
             var geth = Ci.StartGethNode(s => s.IsMiner());
             var contracts = Ci.StartCodexContracts(geth);
-            StartCodex(2, s => s.EnableMarketplace(geth, contracts, m => m
+            var nodes = StartCodex(2, s => s.EnableMarketplace(geth, contracts, m => m
                 .WithInitial(10.Eth(), 1000.TstWei())));
 
-            AssertAllNodesConnected();
+            AssertAllNodesConnected(nodes);
         }
 
         [TestCase(2)]
@@ -42,16 +42,15 @@ namespace CodexTests.PeerDiscoveryTests
         [TestCase(10)]
         public void VariableNodes(int number)
         {
-            StartCodex(number);
+            var nodes = StartCodex(number);
 
-            AssertAllNodesConnected();
+            AssertAllNodesConnected(nodes);
         }
 
-        private void AssertAllNodesConnected()
+        private void AssertAllNodesConnected(IEnumerable<ICodexNode> nodes)
         {
-            var allNodes = GetAllOnlineCodexNodes();
-            CreatePeerConnectionTestHelpers().AssertFullyConnected(allNodes);
-            CheckRoutingTable(allNodes);
+            CreatePeerConnectionTestHelpers().AssertFullyConnected(nodes);
+            CheckRoutingTable(nodes);
         }
 
         private void CheckRoutingTable(IEnumerable<ICodexNode> allNodes)
