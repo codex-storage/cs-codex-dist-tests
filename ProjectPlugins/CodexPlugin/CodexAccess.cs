@@ -10,6 +10,7 @@ namespace CodexPlugin
 {
     public class CodexAccess : ILogHandler
     {
+        private readonly ILog log;
         private readonly IPluginTools tools;
         private readonly Mapper mapper = new Mapper();
         private bool hasContainerCrashed;
@@ -17,6 +18,7 @@ namespace CodexPlugin
         public CodexAccess(IPluginTools tools, RunningPod container, CrashWatcher crashWatcher)
         {
             this.tools = tools;
+            log = tools.GetLog();
             Container = container;
             CrashWatcher = crashWatcher;
             hasContainerCrashed = false;
@@ -62,16 +64,26 @@ namespace CodexPlugin
 
         public string UploadFile(FileStream fileStream, Action<Failure> onFailure)
         {
-            return OnCodex(
+            LogDiskSpace("Before upload");
+            
+            var response = OnCodex(
                 api => api.UploadAsync(fileStream),
                 CreateRetryConfig(nameof(UploadFile), onFailure));
+
+            LogDiskSpace("After upload");
+
+            return response;
         }
 
         public Stream DownloadFile(string contentId, Action<Failure> onFailure)
         {
+            LogDiskSpace("Before download");
+
             var fileResponse = OnCodex(
                 api => api.DownloadNetworkAsync(contentId),
                 CreateRetryConfig(nameof(DownloadFile), onFailure));
+
+            LogDiskSpace("After download");
 
             if (fileResponse.StatusCode != 200) throw new Exception("Download failed with StatusCode: " + fileResponse.StatusCode);
             return fileResponse.Stream;
@@ -132,6 +144,7 @@ namespace CodexPlugin
             var dataDir = $"datadir{containerNumber}";
             var workflow = tools.CreateWorkflow();
             workflow.ExecuteCommand(Container.Containers.First(), "rm", "-Rfv", $"/codex/{dataDir}/repo");
+            Log("Deleted repo folder.");
         }
 
         private T OnCodex<T>(Func<CodexApi, Task<T>> action)
@@ -163,7 +176,7 @@ namespace CodexPlugin
 
         private Address GetAddress()
         {
-            return Container.Containers.Single().GetAddress(tools.GetLog(), CodexContainerRecipe.ApiPortTag);
+            return Container.Containers.Single().GetAddress(log, CodexContainerRecipe.ApiPortTag);
         }
 
         private void CheckContainerCrashed(HttpClient client)
@@ -173,9 +186,8 @@ namespace CodexPlugin
 
         void ILogHandler.Log(Stream crashLog)
         {
-            var log = tools.GetLog();
             var file = log.CreateSubfile();
-            log.Log($"Downloading log to '{file.FullFilename}'...");
+            Log($"Downloading log to '{file.FullFilename}'...");
             file.Write($"Container log for {Container.Name}.");
 
             using var reader = new StreamReader(crashLog);
@@ -186,60 +198,79 @@ namespace CodexPlugin
                 line = reader.ReadLine();
             }
 
-            log.Log("Crash log successfully downloaded.");
+            Log("Container log successfully downloaded.");
             hasContainerCrashed = true;
         }
 
         private Retry CreateRetryConfig(string description, Action<Failure> onFailure)
         {
             var timeSet = tools.TimeSet;
-            var log = tools.GetLog();
 
             return new Retry(description, timeSet.HttpRetryTimeout(), timeSet.HttpCallRetryDelay(), failure =>
             {
                 onFailure(failure);
-                Investigate(log, failure, timeSet);
+                Investigate(failure, timeSet);
             });
         }
 
-        private void Investigate(ILog log, Failure failure, ITimeSet timeSet)
+        private void Investigate(Failure failure, ITimeSet timeSet)
         {
-            log.Log($"Retry {failure.TryNumber} took {Time.FormatDuration(failure.Duration)} and failed with '{failure.Exception}'. " +
+            Log($"Retry {failure.TryNumber} took {Time.FormatDuration(failure.Duration)} and failed with '{failure.Exception}'. " +
                 $"(HTTP timeout = {Time.FormatDuration(timeSet.HttpCallTimeout())}) " +
                 $"Checking if node responds to debug/info...");
+
+            LogDiskSpace("After retry failure");
 
             try
             {
                 var debugInfo = GetDebugInfo();
                 if (string.IsNullOrEmpty(debugInfo.Spr))
                 {
-                    log.Log("Did not get value debug/info response.");
+                    Log("Did not get value debug/info response.");
                     DownloadLog();
                     Throw(failure);
                 }
                 else
                 {
-                    log.Log("Got valid response from debug/info.");
+                    Log("Got valid response from debug/info.");
                 }
             }
             catch (Exception ex)
             {
-                log.Log("Got exception from debug/info call: " + ex);
+                Log("Got exception from debug/info call: " + ex);
                 DownloadLog();
                 Throw(failure);
             }
 
             if (failure.Duration < timeSet.HttpCallTimeout())
             {
-                log.Log("Retry failed within HTTP timeout duration.");
+                Log("Retry failed within HTTP timeout duration.");
                 DownloadLog();
                 Throw(failure);
+            }
+        }
+
+        private void LogDiskSpace(string msg)
+        {
+            try
+            {
+                var diskInfo = tools.CreateWorkflow().ExecuteCommand(Container.Containers.Single(), "df", "-h");
+                Log($"{GetName()} - {msg} - Disk info: {diskInfo}");
+            }
+            catch (Exception e)
+            {
+                Log("Failed to get disk info: " + e);
             }
         }
 
         private void Throw(Failure failure)
         {
             throw failure.Exception;
+        }
+
+        private void Log(string msg)
+        {
+            log.Log(msg);
         }
 
         private void DownloadLog()

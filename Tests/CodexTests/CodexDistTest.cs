@@ -142,6 +142,10 @@ namespace CodexTests
             {
                 try
                 {
+                    if (node.CrashWatcher.HasContainerCrashed())
+                    {
+                        Log("Crash detected!");
+                    }
                     node.DeleteRepoFolder();
                 }
                 catch (Exception ex)
