@@ -20,14 +20,13 @@ public class ScalabilityTests : CodexDistTest
     [WaitForCleanup]
     public void ShouldMaintainFileInNetwork(
         [Values(4, 5, 6)] int numberOfNodes, // TODO: include 10, 40, 80 and 100, not 5
-        [Values(2000, 2200, 2500, 2800, 3000, 3200, 3500, 3800, 4200, 4500, 4800, 5000)] int fileSizeInMb // TODO: include 100, 1000, 5000, 10000
+        [Values(4000, 5000, 6000, 7000, 8000, 9000, 10000)] int fileSizeInMb
     )
     {
         var logLevel = CodexLogLevel.Trace;
 
         var bootstrap = StartCodex(s => s.WithLogLevel(logLevel));
         var nodes = StartCodex(numberOfNodes - 1, s => s
-            //.EnableMetrics()
             .WithBootstrapNode(bootstrap)
             .WithLogLevel(logLevel)
             .WithStorageQuota((fileSizeInMb + 50).MB())
@@ -35,7 +34,6 @@ public class ScalabilityTests : CodexDistTest
 
         var uploader = nodes.PickOneRandom();
         var downloader = nodes.PickOneRandom();
-        //var metrics = Ci.GetMetricsFor(uploader, downloader);
 
         var testFile = GenerateTestFile(fileSizeInMb.MB());
 
@@ -49,12 +47,16 @@ public class ScalabilityTests : CodexDistTest
 
         downloadedFile!.AssertIsEqual(testFile);
 
+        uploader.DeleteRepoFolder();
         uploader.Stop(true);
 
         var otherDownloader = nodes.PickOneRandom();
         downloadedFile = otherDownloader.DownloadContent(contentId);
 
         downloadedFile!.AssertIsEqual(testFile);
+
+        downloader.DeleteRepoFolder();
+        otherDownloader.DeleteRepoFolder();
     }
 
     /// <summary>

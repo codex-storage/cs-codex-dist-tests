@@ -26,6 +26,13 @@ namespace CodexPlugin
         CrashWatcher CrashWatcher { get; }
         PodInfo GetPodInfo();
         ITransferSpeeds TransferSpeeds { get; }
+
+        /// <summary>
+        /// Warning! The node is not usable after this.
+        /// TODO: Replace with delete-blocks debug call once available in Codex.
+        /// </summary>
+        void DeleteRepoFolder();
+
         void Stop(bool waitTillStopped);
     }
 
@@ -162,6 +169,11 @@ namespace CodexPlugin
         public PodInfo GetPodInfo()
         {
             return CodexAccess.GetPodInfo();
+        }
+
+        public void DeleteRepoFolder()
+        {
+            CodexAccess.DeleteRepoFolder();
         }
 
         public void Stop(bool waitTillStopped)

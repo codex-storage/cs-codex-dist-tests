@@ -141,6 +141,22 @@ namespace CodexPlugin
             }
         }
 
+        public void DeleteRepoFolder()
+        {
+            try
+            {
+                var containerNumber = Container.Containers.First().Recipe.Number;
+                var dataDir = $"datadir{containerNumber}";
+                var workflow = tools.CreateWorkflow();
+                workflow.ExecuteCommand(Container.Containers.First(), "rm", "-Rfv", $"/codex/{dataDir}/repo");
+                Log("Deleted repo folder.");
+            }
+            catch (Exception e)
+            {
+                Log("Unable to delete repo folder: " + e);
+            }
+        }
+
         private T OnCodex<T>(Func<CodexApi, Task<T>> action)
         {
             var result = tools.CreateHttp(CheckContainerCrashed).OnClient(client => CallCodex(client, action));
