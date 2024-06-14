@@ -1,6 +1,4 @@
-﻿using System.Diagnostics;
-
-namespace Utils
+﻿namespace Utils
 {
     public static class Time
     {
@@ -111,78 +109,24 @@ namespace Utils
 
         public static void Retry(Action action, TimeSpan maxTimeout, TimeSpan retryTime, string description)
         {
-            var start = DateTime.UtcNow;
-            var tries = 1;
-            var tryInfo = new List<(Exception, TimeSpan)>();
-
-            while (true)
-            {
-                var duration = DateTime.UtcNow - start;
-                if (duration > maxTimeout)
-                {
-                    var info = FormatTryInfos(tryInfo);
-                    throw new TimeoutException($"Retry '{description}' timed out after {tries} tries over {FormatDuration(duration)}.{Environment.NewLine}{info}");
-                }
-
-                var sw = Stopwatch.StartNew();
-                try
-                {
-                    action();
-                    return;
-                }
-                catch (Exception ex)
-                {
-                    tryInfo.Add((ex, sw.Elapsed));
-                    tries++;
-                }
-
-                Sleep(retryTime);
-            }
-        }
-
-        private static string FormatTryInfos(List<(Exception, TimeSpan)> tryInfo)
-        {
-            return string.Join(Environment.NewLine, tryInfo.Select(FormatTryInfo).ToArray());
-        }
-
-        private static string FormatTryInfo((Exception, TimeSpan) info, int index)
-        {
-            return $"Attempt {index} took {FormatDuration(info.Item2)} and failed with exception {info.Item1}.";
-        }
-
-        private static Action<int> failedCallback = i => { };
-        public static void SetRetryFailedCallback(Action<int> onRetryFailed)
-        {
-            failedCallback = onRetryFailed;
+            Retry(action, maxTimeout, retryTime, description, f => { });
         }
 
         public static T Retry<T>(Func<T> action, TimeSpan maxTimeout, TimeSpan retryTime, string description)
         {
-            var start = DateTime.UtcNow;
-            var tries = 1;
-            var exceptions = new List<Exception>();
+            return Retry(action, maxTimeout, retryTime, description, f => { });
+        }
 
-            while (true)
-            {
-                var duration = DateTime.UtcNow - start;
-                if (duration > maxTimeout)
-                {
-                    throw new TimeoutException($"Retry '{description}' timed out after {tries} tries over {FormatDuration(duration)}.", new AggregateException(exceptions));
-                }
+        public static void Retry(Action action, TimeSpan maxTimeout, TimeSpan retryTime, string description, Action<Failure> onFail)
+        {
+            var r = new Retry(description, maxTimeout, retryTime, onFail);
+            r.Run(action);
+        }
 
-                try
-                {
-                    return action();
-                }
-                catch (Exception ex)
-                {
-                    exceptions.Add(ex);
-                    failedCallback(tries);
-                    tries++;
-                }
-
-                Sleep(retryTime);
-            }
+        public static T Retry<T>(Func<T> action, TimeSpan maxTimeout, TimeSpan retryTime, string description, Action<Failure> onFail)
+        {
+            var r = new Retry(description, maxTimeout, retryTime, onFail);
+            return r.Run(action);
         }
     }
 }

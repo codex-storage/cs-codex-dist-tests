@@ -6,14 +6,14 @@ using Core;
 using DistTestCore;
 using DistTestCore.Helpers;
 using DistTestCore.Logs;
+using MetricsPlugin;
+using Newtonsoft.Json;
 using NUnit.Framework.Constraints;
 
 namespace CodexTests
 {
     public class CodexDistTest : DistTest
     {
-        private readonly Dictionary<TestLifecycle, List<ICodexNode>> onlineCodexNodes = new Dictionary<TestLifecycle, List<ICodexNode>>();
-
         public CodexDistTest()
         {
             ProjectPlugin.Load<CodexPlugin.CodexPlugin>();
@@ -27,16 +27,6 @@ namespace CodexTests
             var localBuilder = new LocalCodexBuilder(fixtureLog);
             localBuilder.Intialize();
             localBuilder.Build();
-        }
-
-        protected override void LifecycleStart(TestLifecycle lifecycle)
-        {
-            onlineCodexNodes.Add(lifecycle, new List<ICodexNode>());
-        }
-
-        protected override void LifecycleStop(TestLifecycle lifecycle)
-        {
-            onlineCodexNodes.Remove(lifecycle);
         }
 
         public ICodexNode StartCodex()
@@ -61,7 +51,7 @@ namespace CodexTests
                 setup(s);
                 OnCodexSetup(s);
             });
-            onlineCodexNodes[Get()].AddRange(group);
+
             return group;
         }
 
@@ -73,11 +63,6 @@ namespace CodexTests
         public PeerDownloadTestHelpers CreatePeerDownloadTestHelpers()
         {
             return new PeerDownloadTestHelpers(GetTestLog(), Get().GetFileManager());
-        }
-
-        public IEnumerable<ICodexNode> GetAllOnlineCodexNodes()
-        {
-            return onlineCodexNodes[Get()];
         }
 
         public void AssertBalance(ICodexContracts contracts, ICodexNode codexNode, Constraint constraint, string msg = "")
@@ -99,17 +84,29 @@ namespace CodexTests
             log.AssertLogDoesNotContain("ERR ");
         }
 
-        protected virtual void OnCodexSetup(ICodexSetup setup)
+        public void LogNodeStatus(ICodexNode node, IMetricsAccess? metrics = null)
         {
+            Log("Status for " + node.GetName() + Environment.NewLine +
+                GetBasicNodeStatus(node));
         }
 
-        protected override void CollectStatusLogData(TestLifecycle lifecycle, Dictionary<string, string> data)
+        private string GetBasicNodeStatus(ICodexNode node)
         {
-            var nodes = onlineCodexNodes[lifecycle];
-            var upload = nodes.Select(n => n.TransferSpeeds.GetUploadSpeed()).ToList()!.OptionalAverage();
-            var download = nodes.Select(n => n.TransferSpeeds.GetDownloadSpeed()).ToList()!.OptionalAverage();
-            if (upload != null) data.Add("avgupload", upload.ToString());
-            if (download != null) data.Add("avgdownload", download.ToString());
+            return JsonConvert.SerializeObject(node.GetDebugInfo(), Formatting.Indented) + Environment.NewLine +
+                node.Space().ToString() + Environment.NewLine;
+        }
+
+        // Disabled for now: Makes huge log files!
+        //private string GetNodeMetrics(IMetricsAccess? metrics)
+        //{
+        //    if (metrics == null) return "No metrics enabled";
+        //    var m = metrics.GetAllMetrics();
+        //    if (m == null) return "No metrics received";
+        //    return m.AsCsv();
+        //}
+
+        protected virtual void OnCodexSetup(ICodexSetup setup)
+        {
         }
     }
 }

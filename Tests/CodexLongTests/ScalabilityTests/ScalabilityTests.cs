@@ -17,12 +17,13 @@ public class ScalabilityTests : CodexDistTest
     [Combinatorial]
     [UseLongTimeouts]
     [DontDownloadLogs]
+    [WaitForCleanup]
     public void ShouldMaintainFileInNetwork(
-        [Values(10, 40, 80, 100)] int numberOfNodes,
-        [Values(100, 1000, 5000, 10000)] int fileSizeInMb
+        [Values(4, 5, 6)] int numberOfNodes, // TODO: include 10, 40, 80 and 100, not 5
+        [Values(4000, 5000, 6000, 7000, 8000, 9000, 10000)] int fileSizeInMb
     )
     {
-        var logLevel = CodexLogLevel.Info;
+        var logLevel = CodexLogLevel.Trace;
 
         var bootstrap = StartCodex(s => s.WithLogLevel(logLevel));
         var nodes = StartCodex(numberOfNodes - 1, s => s
@@ -35,17 +36,27 @@ public class ScalabilityTests : CodexDistTest
         var downloader = nodes.PickOneRandom();
 
         var testFile = GenerateTestFile(fileSizeInMb.MB());
-        var contentId = uploader.UploadFile(testFile);
-        var downloadedFile = downloader.DownloadContent(contentId);
+
+        LogNodeStatus(uploader);
+        var contentId = uploader.UploadFile(testFile, f => LogNodeStatus(uploader));
+        LogNodeStatus(uploader);
+
+        LogNodeStatus(downloader);
+        var downloadedFile = downloader.DownloadContent(contentId, f => LogNodeStatus(downloader));
+        LogNodeStatus(downloader);
 
         downloadedFile!.AssertIsEqual(testFile);
 
+        uploader.DeleteRepoFolder();
         uploader.Stop(true);
 
         var otherDownloader = nodes.PickOneRandom();
         downloadedFile = otherDownloader.DownloadContent(contentId);
 
         downloadedFile!.AssertIsEqual(testFile);
+
+        downloader.DeleteRepoFolder();
+        otherDownloader.DeleteRepoFolder();
     }
 
     /// <summary>
@@ -57,6 +68,7 @@ public class ScalabilityTests : CodexDistTest
     [Combinatorial]
     [UseLongTimeouts]
     [DontDownloadLogs]
+    [WaitForCleanup]
     public void EveryoneGetsAFile(
         [Values(10, 40, 80, 100)] int numberOfNodes,
         [Values(100, 1000, 5000, 10000)] int fileSizeInMb

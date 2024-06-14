@@ -85,6 +85,46 @@ namespace CodexTests.BasicTests
             Assert.That(contracts.GetRequestState(request), Is.EqualTo(RequestState.Finished));
         }
 
+        [Test]
+        public void CanDownloadContentFromContractCid()
+        {
+            var fileSize = 10.MB();
+            var geth = Ci.StartGethNode(s => s.IsMiner().WithName("disttest-geth"));
+            var contracts = Ci.StartCodexContracts(geth);
+            var testFile = GenerateTestFile(fileSize);
+
+            var client = StartCodex(s => s
+                .WithName("Client")
+                .EnableMarketplace(geth, contracts, m => m
+                    .WithInitial(10.Eth(), 10.Tst())));
+
+            var uploadCid = client.UploadFile(testFile);
+
+            var purchase = new StoragePurchaseRequest(uploadCid)
+            {
+                PricePerSlotPerSecond = 2.TstWei(),
+                RequiredCollateral = 10.TstWei(),
+                MinRequiredNumberOfNodes = 5,
+                NodeFailureTolerance = 2,
+                ProofProbability = 5,
+                Duration = TimeSpan.FromMinutes(5),
+                Expiry = TimeSpan.FromMinutes(4)
+            };
+
+            var purchaseContract = client.Marketplace.RequestStorage(purchase);
+            var contractCid = purchaseContract.ContentId;
+            Assert.That(uploadCid.Id, Is.Not.EqualTo(contractCid.Id));
+
+            // Download both from client.
+            testFile.AssertIsEqual(client.DownloadContent(uploadCid));
+            testFile.AssertIsEqual(client.DownloadContent(contractCid));
+
+            // Download both from another node.
+            var downloader = StartCodex(s => s.WithName("Downloader"));
+            testFile.AssertIsEqual(downloader.DownloadContent(uploadCid));
+            testFile.AssertIsEqual(downloader.DownloadContent(contractCid));
+        }
+
         private void WaitForAllSlotFilledEvents(ICodexContracts contracts, StoragePurchaseRequest purchase, IGethNode geth)
         {
             Time.Retry(() =>
@@ -92,9 +132,9 @@ namespace CodexTests.BasicTests
                 var events = contracts.GetEvents(GetTestRunTimeRange());
                 var slotFilledEvents = events.GetSlotFilledEvents();
 
-                Debug($"SlotFilledEvents: {slotFilledEvents.Length} - NumSlots: {purchase.MinRequiredNumberOfNodes}");
-
-                if (slotFilledEvents.Length != purchase.MinRequiredNumberOfNodes) throw new Exception();
+                var msg = $"SlotFilledEvents: {slotFilledEvents.Length} - NumSlots: {purchase.MinRequiredNumberOfNodes}";
+                Debug(msg);
+                if (slotFilledEvents.Length != purchase.MinRequiredNumberOfNodes) throw new Exception(msg);
             }, purchase.Expiry + TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(5), "Checking SlotFilled events");
         }
 

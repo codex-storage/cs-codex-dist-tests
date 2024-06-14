@@ -34,12 +34,12 @@
             return metadata;
         }
 
-        internal void DecommissionPlugins(bool deleteKubernetesResources, bool deleteTrackedFiles)
+        internal void DecommissionPlugins(bool deleteKubernetesResources, bool deleteTrackedFiles, bool waitTillDone)
         {
             foreach (var pair in pairs)
             {
                 pair.Plugin.Decommission();
-                pair.Tools.Decommission(deleteKubernetesResources, deleteTrackedFiles);
+                pair.Tools.Decommission(deleteKubernetesResources, deleteTrackedFiles, waitTillDone);
             }
         }
 

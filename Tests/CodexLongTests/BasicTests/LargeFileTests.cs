@@ -50,8 +50,6 @@ namespace CodexLongTests.BasicTests
 
             var node = StartCodex(s => s.WithStorageQuota((size + 10).MB()));
 
-            Time.SetRetryFailedCallback(i => OnFailed(i, node));
-
             var uploadStart = DateTime.UtcNow;
             var cid = node.UploadFile(expectedFile);
             var downloadStart = DateTime.UtcNow;
@@ -60,17 +58,6 @@ namespace CodexLongTests.BasicTests
 
             expectedFile.AssertIsEqual(actualFile);
             AssertTimeConstraint(uploadStart, downloadStart, downloadFinished, size);
-        }
-
-        private void OnFailed(int tries, ICodexNode node)
-        {
-            if (tries < 5) return;
-
-            if (tries % 10 == 0)
-            {
-                Log($"After try {tries}, downloading node log.");
-                Ci.DownloadLog(node);
-            }
         }
 
         private void AssertTimeConstraint(DateTime uploadStart, DateTime downloadStart, DateTime downloadFinished, long size)

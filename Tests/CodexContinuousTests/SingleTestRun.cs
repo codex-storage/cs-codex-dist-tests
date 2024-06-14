@@ -54,7 +54,8 @@ namespace ContinuousTests
 
                     entryPoint.Decommission(
                         deleteKubernetesResources: false, // This would delete the continuous test net.
-                        deleteTrackedFiles: true
+                        deleteTrackedFiles: true,
+                        waitTillDone: false
                     );
                     runFinishedHandle.Set();
                 }

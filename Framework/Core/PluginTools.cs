@@ -6,7 +6,13 @@ namespace Core
 {
     public interface IPluginTools : IWorkflowTool, ILogTool, IHttpFactoryTool, IFileTool
     {
-        void Decommission(bool deleteKubernetesResources, bool deleteTrackedFiles);
+        ITimeSet TimeSet { get; }
+
+        /// <summary>
+        /// Deletes kubernetes and tracked file resources.
+        /// when `waitTillDone` is true, this function will block until resources are deleted.
+        /// </summary>
+        void Decommission(bool deleteKubernetesResources, bool deleteTrackedFiles, bool waitTillDone);
     }
 
     public interface IWorkflowTool
@@ -33,7 +39,6 @@ namespace Core
 
     internal class PluginTools : IPluginTools
     {
-        private readonly ITimeSet timeSet;
         private readonly WorkflowCreator workflowCreator;
         private readonly IFileManager fileManager;
         private readonly LogPrefixer log;
@@ -42,9 +47,11 @@ namespace Core
         {
             this.log = new LogPrefixer(log);
             this.workflowCreator = workflowCreator;
-            this.timeSet = timeSet;
+            TimeSet = timeSet;
             fileManager = new FileManager(log, fileManagerRootFolder);
         }
+
+        public ITimeSet TimeSet { get; }
 
         public void ApplyLogPrefix(string prefix)
         {
@@ -53,7 +60,7 @@ namespace Core
 
         public IHttp CreateHttp(Action<HttpClient> onClientCreated)
         {
-            return CreateHttp(onClientCreated, timeSet);
+            return CreateHttp(onClientCreated, TimeSet);
         }
 
         public IHttp CreateHttp(Action<HttpClient> onClientCreated, ITimeSet ts)
@@ -63,7 +70,7 @@ namespace Core
 
         public IHttp CreateHttp()
         {
-            return new Http(log, timeSet);
+            return new Http(log, TimeSet);
         }
 
         public IStartupWorkflow CreateWorkflow(string? namespaceOverride = null)
@@ -71,9 +78,9 @@ namespace Core
             return workflowCreator.CreateWorkflow(namespaceOverride);
         }
 
-        public void Decommission(bool deleteKubernetesResources, bool deleteTrackedFiles)
+        public void Decommission(bool deleteKubernetesResources, bool deleteTrackedFiles, bool waitTillDone)
         {
-            if (deleteKubernetesResources) CreateWorkflow().DeleteNamespace();
+            if (deleteKubernetesResources) CreateWorkflow().DeleteNamespace(waitTillDone);
             if (deleteTrackedFiles) fileManager.DeleteAllFiles();
         }
 

@@ -1,4 +1,5 @@
 ﻿using CodexContractsPlugin;
+using CodexPlugin;
 using GethPlugin;
 using NUnit.Framework;
 using Utils;
@@ -11,9 +12,9 @@ namespace CodexTests.DownloadConnectivityTests
         [Test]
         public void MetricsDoesNotInterfereWithPeerDownload()
         {
-            StartCodex(2, s => s.EnableMetrics());
+            var nodes = StartCodex(2, s => s.EnableMetrics());
 
-            AssertAllNodesConnected();
+            AssertAllNodesConnected(nodes);
         }
 
         [Test]
@@ -21,10 +22,10 @@ namespace CodexTests.DownloadConnectivityTests
         {
             var geth = Ci.StartGethNode(s => s.IsMiner());
             var contracts = Ci.StartCodexContracts(geth);
-            StartCodex(2, s => s.EnableMarketplace(geth, contracts, m => m
+            var nodes = StartCodex(2, s => s.EnableMarketplace(geth, contracts, m => m
                 .WithInitial(10.Eth(), 1000.TstWei())));
 
-            AssertAllNodesConnected();
+            AssertAllNodesConnected(nodes);
         }
 
         [Test]
@@ -33,14 +34,14 @@ namespace CodexTests.DownloadConnectivityTests
             [Values(2, 5)] int numberOfNodes,
             [Values(1, 10)] int sizeMBs)
         {
-            StartCodex(numberOfNodes);
+            var nodes = StartCodex(numberOfNodes);
 
-            AssertAllNodesConnected(sizeMBs);
+            AssertAllNodesConnected(nodes, sizeMBs);
         }
 
-        private void AssertAllNodesConnected(int sizeMBs = 10)
+        private void AssertAllNodesConnected(IEnumerable<ICodexNode> nodes, int sizeMBs = 10)
         {
-            CreatePeerDownloadTestHelpers().AssertFullDownloadInterconnectivity(GetAllOnlineCodexNodes(), sizeMBs.MB());
+            CreatePeerDownloadTestHelpers().AssertFullDownloadInterconnectivity(nodes, sizeMBs.MB());
         }
     }
 }

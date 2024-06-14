@@ -64,7 +64,7 @@ namespace ContinuousTests
             }
             finally
             {
-                entryPoint.Tools.CreateWorkflow().DeleteNamespace();
+                entryPoint.Tools.CreateWorkflow().DeleteNamespace(wait: false);
             }
         }
 

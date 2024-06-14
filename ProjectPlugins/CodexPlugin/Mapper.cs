@@ -1,4 +1,5 @@
 ﻿using CodexContractsPlugin;
+using CodexOpenApi;
 using Newtonsoft.Json.Linq;
 using System.Numerics;
 using Utils;
@@ -62,14 +63,47 @@ namespace CodexPlugin
             };
         }
 
-        public StoragePurchase Map(CodexOpenApi.Purchase purchase)
-        {
-            return new StoragePurchase
-            {
-                State = purchase.State,
-                Error = purchase.Error
-            };
-        }
+        // TODO: Fix openapi spec for this call.
+        //public StoragePurchase Map(CodexOpenApi.Purchase purchase)
+        //{
+        //    return new StoragePurchase(Map(purchase.Request))
+        //    {
+        //        State = purchase.State,
+        //        Error = purchase.Error
+        //    };
+        //}
+
+        //public StorageRequest Map(CodexOpenApi.StorageRequest request)
+        //{
+        //    return new StorageRequest(Map(request.Ask), Map(request.Content))
+        //    {
+        //        Id = request.Id,
+        //        Client = request.Client,
+        //        Expiry = TimeSpan.FromSeconds(Convert.ToInt64(request.Expiry)),
+        //        Nonce = request.Nonce
+        //    };
+        //}
+
+        //public StorageAsk Map(CodexOpenApi.StorageAsk ask)
+        //{
+        //    return new StorageAsk
+        //    {
+        //        Duration = TimeSpan.FromSeconds(Convert.ToInt64(ask.Duration)),
+        //        MaxSlotLoss = ask.MaxSlotLoss,
+        //        ProofProbability = ask.ProofProbability,
+        //        Reward = Convert.ToDecimal(ask.Reward).TstWei(),
+        //        Slots = ask.Slots,
+        //        SlotSize = new ByteSize(Convert.ToInt64(ask.SlotSize))
+        //    };
+        //}
+
+        //public StorageContent Map(CodexOpenApi.Content content)
+        //{
+        //    return new StorageContent
+        //    {
+        //        Cid = content.Cid
+        //    };
+        //}
 
         public StorageAvailability Map(CodexOpenApi.SalesAvailabilityREAD read)
         {
@@ -81,6 +115,17 @@ namespace CodexPlugin
             )
             {
                 Id = read.Id
+            };
+        }
+
+        public CodexSpace Map(Space space)
+        {
+            return new CodexSpace
+            {
+                QuotaMaxBytes = space.QuotaMaxBytes,
+                QuotaReservedBytes = space.QuotaReservedBytes,
+                QuotaUsedBytes = space.QuotaUsedBytes,
+                TotalBlocks = space.TotalBlocks
             };
         }
 
@@ -98,7 +143,7 @@ namespace CodexPlugin
             return new DebugInfoTable
             {
                 LocalNode = MapDebugInfoTableNode(obj.GetValue("localNode")),
-                Nodes = new DebugInfoTableNode[0]
+                Nodes = MapDebugInfoTableNodeArray(obj.GetValue("nodes") as JArray)
             };
         }
 
@@ -115,6 +160,16 @@ namespace CodexPlugin
                 Record = StringOrEmpty(obj, "record"),
                 Seen = Bool(obj, "seen")
             };
+        }
+
+        private DebugInfoTableNode[] MapDebugInfoTableNodeArray(JArray? nodes)
+        {
+            if (nodes == null || nodes.Count == 0)
+            {
+                return new DebugInfoTableNode[0];
+            }
+
+            return nodes.Select(MapDebugInfoTableNode).ToArray();
         }
 
         private Manifest MapManifest(CodexOpenApi.ManifestItem manifest)
