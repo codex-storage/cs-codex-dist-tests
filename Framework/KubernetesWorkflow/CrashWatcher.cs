@@ -50,7 +50,9 @@ namespace KubernetesWorkflow
         public bool HasContainerCrashed()
         {
             using var client = new Kubernetes(config);
-            return HasContainerBeenRestarted(client);
+            var result = HasContainerBeenRestarted(client);
+            if (result) DownloadCrashedContainerLogs(client);
+            return result;
         }
 
         private void Worker()

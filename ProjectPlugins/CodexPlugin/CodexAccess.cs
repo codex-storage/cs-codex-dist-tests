@@ -37,20 +37,23 @@ namespace CodexPlugin
         public DebugPeer GetDebugPeer(string peerId)
         {
             // Cannot use openAPI: debug/peer endpoint is not specified there.
-            var endpoint = GetEndpoint();
-            var str = endpoint.HttpGetString($"debug/peer/{peerId}");
-
-            if (str.ToLowerInvariant() == "unable to find peer!")
+            return CrashCheck(() =>
             {
-                return new DebugPeer
-                {
-                    IsPeerFound = false
-                };
-            }
+                var endpoint = GetEndpoint();
+                var str = endpoint.HttpGetString($"debug/peer/{peerId}");
 
-            var result = endpoint.Deserialize<DebugPeer>(str);
-            result.IsPeerFound = true;
-            return result;
+                if (str.ToLowerInvariant() == "unable to find peer!")
+                {
+                    return new DebugPeer
+                    {
+                        IsPeerFound = false
+                    };
+                }
+
+                var result = endpoint.Deserialize<DebugPeer>(str);
+                result.IsPeerFound = true;
+                return result;
+            });
         }
 
         public void ConnectToPeer(string peerId, string[] peerMultiAddresses)
@@ -105,13 +108,16 @@ namespace CodexPlugin
 
         public StoragePurchase GetPurchaseStatus(string purchaseId)
         {
-            var endpoint = GetEndpoint();
-            return Time.Retry(() =>
+            return CrashCheck(() =>
             {
-                var str = endpoint.HttpGetString($"storage/purchases/{purchaseId}");
-                if (string.IsNullOrEmpty(str)) throw new Exception("Empty response.");
-                return JsonConvert.DeserializeObject<StoragePurchase>(str)!;
-            }, nameof(GetPurchaseStatus));
+                var endpoint = GetEndpoint();
+                return Time.Retry(() =>
+                {
+                    var str = endpoint.HttpGetString($"storage/purchases/{purchaseId}");
+                    if (string.IsNullOrEmpty(str)) throw new Exception("Empty response.");
+                    return JsonConvert.DeserializeObject<StoragePurchase>(str)!;
+                }, nameof(GetPurchaseStatus));
+            });
 
             // TODO: current getpurchase api does not line up with its openapi spec.
             // return mapper.Map(OnCodex(api => api.GetPurchaseAsync(purchaseId)));
@@ -174,7 +180,19 @@ namespace CodexPlugin
             var address = GetAddress();
             var api = new CodexApi(client);
             api.BaseUrl = $"{address.Host}:{address.Port}/api/codex/v1";
-            return Time.Wait(action(api));
+            return CrashCheck(() => Time.Wait(action(api)));
+        }
+
+        private T CrashCheck<T>(Func<T> action)
+        {
+            try
+            {
+                return action();
+            }
+            finally
+            {
+                CrashWatcher.HasContainerCrashed();
+            }
         }
 
         private IEndpoint GetEndpoint()
@@ -237,7 +255,6 @@ namespace CodexPlugin
                 if (string.IsNullOrEmpty(debugInfo.Spr))
                 {
                     Log("Did not get value debug/info response.");
-                    DownloadLog();
                     Throw(failure);
                 }
                 else
@@ -248,14 +265,12 @@ namespace CodexPlugin
             catch (Exception ex)
             {
                 Log("Got exception from debug/info call: " + ex);
-                DownloadLog();
                 Throw(failure);
             }
 
             if (failure.Duration < timeSet.HttpCallTimeout())
             {
                 Log("Retry failed within HTTP timeout duration.");
-                DownloadLog();
                 Throw(failure);
             }
         }
@@ -268,11 +283,6 @@ namespace CodexPlugin
         private void Log(string msg)
         {
             log.Log($"{GetName()} {msg}");
-        }
-
-        private void DownloadLog()
-        {
-            tools.CreateWorkflow().DownloadContainerLog(Container.Containers.Single(), this);
         }
     }
 }

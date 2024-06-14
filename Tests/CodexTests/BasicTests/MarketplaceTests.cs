@@ -112,18 +112,17 @@ namespace CodexTests.BasicTests
             };
 
             var purchaseContract = client.Marketplace.RequestStorage(purchase);
-
             var contractCid = purchaseContract.ContentId;
-
             Assert.That(uploadCid.Id, Is.Not.EqualTo(contractCid.Id));
 
-            var downloader = StartCodex(s => s.WithName("Downloader"));
-            
-            var uploadedFile = downloader.DownloadContent(uploadCid);
-            testFile.AssertIsEqual(uploadedFile);
+            // Download both from client.
+            testFile.AssertIsEqual(client.DownloadContent(uploadCid));
+            testFile.AssertIsEqual(client.DownloadContent(contractCid));
 
-            var contractFile = downloader.DownloadContent(contractCid);
-            testFile.AssertIsEqual(contractFile);
+            // Download both from another node.
+            var downloader = StartCodex(s => s.WithName("Downloader"));
+            testFile.AssertIsEqual(downloader.DownloadContent(uploadCid));
+            testFile.AssertIsEqual(downloader.DownloadContent(contractCid));
         }
 
         private void WaitForAllSlotFilledEvents(ICodexContracts contracts, StoragePurchaseRequest purchase, IGethNode geth)
