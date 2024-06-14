@@ -1,39 +1,37 @@
-﻿using DiscordRewards;
+﻿using CodexContractsPlugin;
+using CodexContractsPlugin.ChainMonitor;
+using DiscordRewards;
 using GethPlugin;
 using Logging;
 using Newtonsoft.Json;
+using System.Numerics;
 using Utils;
 
 namespace TestNetRewarder
 {
-    public class Processor
+    public class Processor : ITimeSegmentHandler, IChainStateChangeHandler
     {
-        private static readonly HistoricState historicState = new HistoricState();
-        private static readonly RewardRepo rewardRepo = new RewardRepo();
-        private static readonly MarketTracker marketTracker = new MarketTracker();
+        private readonly RewardChecker rewardChecker = new RewardChecker();
+        private readonly MarketTracker marketTracker = new MarketTracker();
+        private readonly ChainState chainState;
+        private readonly Configuration config;
         private readonly ILog log;
         private BlockInterval? lastBlockRange;
 
-        public Processor(ILog log)
+        public Processor(Configuration config, ICodexContracts contracts, ILog log)
         {
+            this.config = config;
             this.log = log;
+
+            chainState = new ChainState(log, contracts, this, config.HistoryStartUtc);
         }
 
-        public async Task ProcessTimeSegment(TimeRange timeRange)
+        public async Task OnNewSegment(TimeRange timeRange)
         {
-            var connector = GethConnector.GethConnector.Initialize(log);
-            if (connector == null) throw new Exception("Invalid Geth information");
-
             try
             {
-                var blockRange = connector.GethNode.ConvertTimeRangeToBlockRange(timeRange);
-                if (!IsNewBlockRange(blockRange))
-                {
-                    log.Log($"Block range {blockRange} was previously processed. Skipping...");
-                    return;
-                }
-
-                var chainState = new ChainState(historicState, connector.CodexContracts, blockRange);
+                chainState.Update(timeRange.To);
+                
                 await ProcessChainState(chainState);
             }
             catch (Exception ex)
@@ -41,19 +39,6 @@ namespace TestNetRewarder
                 log.Error("Exception processing time segment: " + ex);
                 throw;
             }
-        }
-
-        private bool IsNewBlockRange(BlockInterval blockRange)
-        {
-            if (lastBlockRange == null ||
-                lastBlockRange.From != blockRange.From || 
-                lastBlockRange.To != blockRange.To)
-            {
-                lastBlockRange = blockRange;
-                return true;
-            }
-
-            return false;
         }
 
         private async Task ProcessChainState(ChainState chainState)
@@ -92,57 +77,39 @@ namespace TestNetRewarder
             return marketTracker.ProcessChainState(chainState);
         }
 
-        private async Task<bool> SendRewardsCommand(List<RewardUsersCommand> outgoingRewards, MarketAverage[] marketAverages, string[] eventsOverview)
+        public void OnNewRequest(IChainStateRequest request)
         {
-            var cmd = new GiveRewardsCommand
-            {
-                Rewards = outgoingRewards.ToArray(),
-                Averages = marketAverages.ToArray(),
-                EventsOverview = eventsOverview
-            };
-
-            log.Debug("Sending rewards: " + JsonConvert.SerializeObject(cmd));
-            return await Program.BotClient.SendRewards(cmd);
+            throw new NotImplementedException();
         }
 
-        private void ProcessReward(List<RewardUsersCommand> outgoingRewards, RewardConfig reward, ChainState chainState)
+        public void OnRequestStarted(IChainStateRequest request)
         {
-            var winningAddresses = PerformCheck(reward, chainState);
-            foreach (var win in winningAddresses)
-            {
-                log.Log($"Address '{win.Address}' wins '{reward.Message}'");
-            }
-            if (winningAddresses.Any())
-            {
-                outgoingRewards.Add(new RewardUsersCommand
-                {
-                    RewardId = reward.RoleId,
-                    UserAddresses = winningAddresses.Select(a => a.Address).ToArray()
-                });
-            }
+            throw new NotImplementedException();
         }
 
-        private EthAddress[] PerformCheck(RewardConfig reward, ChainState chainState)
+        public void OnRequestFinished(IChainStateRequest request)
         {
-            var check = GetCheck(reward.CheckConfig);
-            return check.Check(chainState).Distinct().ToArray();
+            throw new NotImplementedException();
         }
 
-        private ICheck GetCheck(CheckConfig config)
+        public void OnRequestFulfilled(IChainStateRequest request)
         {
-            switch (config.Type)
-            {
-                case CheckType.FilledSlot:
-                    return new FilledAnySlotCheck();
-                case CheckType.FinishedSlot:
-                    return new FinishedSlotCheck(config.MinSlotSize, config.MinDuration);
-                case CheckType.PostedContract:
-                    return new PostedContractCheck(config.MinNumberOfHosts, config.MinSlotSize, config.MinDuration);
-                case CheckType.StartedContract:
-                    return new StartedContractCheck(config.MinNumberOfHosts, config.MinSlotSize, config.MinDuration);
-            }
+            throw new NotImplementedException();
+        }
 
-            throw new Exception("Unknown check type: " + config.Type);
+        public void OnRequestCancelled(IChainStateRequest request)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void OnSlotFilled(IChainStateRequest request, BigInteger slotIndex)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void OnSlotFreed(IChainStateRequest request, BigInteger slotIndex)
+        {
+            throw new NotImplementedException();
         }
     }
 }

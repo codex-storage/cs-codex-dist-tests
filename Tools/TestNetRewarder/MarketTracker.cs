@@ -1,10 +1,11 @@
-﻿using CodexContractsPlugin.Marketplace;
+﻿using CodexContractsPlugin.ChainMonitor;
+using CodexContractsPlugin.Marketplace;
 using DiscordRewards;
 using System.Numerics;
 
 namespace TestNetRewarder
 {
-    public class MarketTracker
+    public class MarketTracker : IChainStateChangeHandler
     {
         private readonly List<ChainState> buffer = new List<ChainState>();
 
@@ -119,6 +120,41 @@ namespace TestNetRewarder
                 Program.Log.Error($"Exception when parsing MarketInsights config parameters: {ex}");
             }
             return Array.Empty<int>();            
+        }
+
+        public void OnNewRequest(IChainStateRequest request)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void OnRequestStarted(IChainStateRequest request)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void OnRequestFinished(IChainStateRequest request)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void OnRequestFulfilled(IChainStateRequest request)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void OnRequestCancelled(IChainStateRequest request)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void OnSlotFilled(IChainStateRequest request, BigInteger slotIndex)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void OnSlotFreed(IChainStateRequest request, BigInteger slotIndex)
+        {
+            throw new NotImplementedException();
         }
     }
 }

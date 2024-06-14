@@ -20,37 +20,29 @@ namespace CodexContractsPlugin.ChainMonitor
     {
         private readonly List<ChainStateRequest> requests = new List<ChainStateRequest>();
         private readonly ILog log;
+        private readonly ICodexContracts contracts;
         private readonly IChainStateChangeHandler handler;
 
-        private ChainState(ILog log, IChainStateChangeHandler changeHandler, TimeRange timeRange)
+        public ChainState(ILog log, ICodexContracts contracts, IChainStateChangeHandler changeHandler, DateTime startUtc)
         {
             this.log = new LogPrefixer(log, "(ChainState) ");
+            this.contracts = contracts;
             handler = changeHandler;
-            TotalSpan = timeRange;
-        }
-
-        public static ChainState FromTimeRange(ILog log, ICodexContracts contracts, TimeRange timeRange, IChainStateChangeHandler changeHandler)
-        {
-            var events = ChainEvents.FromTimeRange(contracts, timeRange);
-            return FromEvents(log, events, changeHandler);
-        }
-
-        public static ChainState FromEvents(ILog log, ChainEvents events, IChainStateChangeHandler changeHandler)
-        {
-            var state = new ChainState(log, changeHandler, events.BlockInterval.TimeRange);
-            state.Apply(events);
-            return state;
+            StartUtc = startUtc;
+            TotalSpan = new TimeRange(startUtc, startUtc);
         }
 
         public TimeRange TotalSpan { get; private set; }
         public IChainStateRequest[] Requests => requests.ToArray();
 
-        public void Update(ICodexContracts contracts)
+        public DateTime StartUtc { get; }
+
+        public void Update()
         {
-            Update(contracts, DateTime.UtcNow);
+            Update(DateTime.UtcNow);
         }
 
-        public void Update(ICodexContracts contracts, DateTime toUtc)
+        public void Update(DateTime toUtc)
         {
             var span = new TimeRange(TotalSpan.To, toUtc);
             var events = ChainEvents.FromTimeRange(contracts, span);

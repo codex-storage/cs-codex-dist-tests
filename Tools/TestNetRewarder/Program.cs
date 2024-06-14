@@ -1,5 +1,6 @@
 ﻿using ArgsUniform;
 using Logging;
+using Nethereum.Model;
 using Utils;
 
 namespace TestNetRewarder
@@ -27,8 +28,11 @@ namespace TestNetRewarder
                 new ConsoleLog()
             );
 
+            var connector = GethConnector.GethConnector.Initialize(Log);
+            if (connector == null) throw new Exception("Invalid Geth information");
+
             BotClient = new BotClient(Config, Log);
-            processor = new Processor(Log);
+            processor = new Processor(Config, connector.CodexContracts, Log);
 
             EnsurePath(Config.DataPath);
             EnsurePath(Config.LogPath);
@@ -41,12 +45,12 @@ namespace TestNetRewarder
             EnsureGethOnline();
 
             Log.Log("Starting TestNet Rewarder...");
-            var segmenter = new TimeSegmenter(Log, Config);
+            var segmenter = new TimeSegmenter(Log, Config, processor);
          
             while (!CancellationToken.IsCancellationRequested)
             {
                 await EnsureBotOnline();
-                await segmenter.WaitForNextSegment(processor.ProcessTimeSegment);
+                await segmenter.ProcessNextSegment();
                 await Task.Delay(100, CancellationToken);
             }
         }
