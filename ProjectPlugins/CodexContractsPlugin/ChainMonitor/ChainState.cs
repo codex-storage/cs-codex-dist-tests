@@ -29,6 +29,12 @@ namespace CodexContractsPlugin.ChainMonitor
             TotalSpan = timeRange;
         }
 
+        public static ChainState FromTimeRange(ILog log, ICodexContracts contracts, TimeRange timeRange, IChainStateChangeHandler changeHandler)
+        {
+            var events = ChainEvents.FromTimeRange(contracts, timeRange);
+            return FromEvents(log, events, changeHandler);
+        }
+
         public static ChainState FromEvents(ILog log, ChainEvents events, IChainStateChangeHandler changeHandler)
         {
             var state = new ChainState(log, changeHandler, events.BlockInterval.TimeRange);
@@ -69,13 +75,13 @@ namespace CodexContractsPlugin.ChainMonitor
             for (var b = events.BlockInterval.From; b <= events.BlockInterval.To; b++)
             {
                 var blockEvents = events.All.Where(e => e.Block.BlockNumber == b).ToArray();
-                ApplyEvents(blockEvents, eventUtc);
+                ApplyEvents(b, blockEvents, eventUtc);
 
                 eventUtc += spanPerBlock;
             }
         }
 
-        private void ApplyEvents(IHasBlock[] blockEvents, DateTime eventsUtc)
+        private void ApplyEvents(ulong blockNumber, IHasBlock[] blockEvents, DateTime eventsUtc)
         {
             foreach (var e in blockEvents)
             {
@@ -83,7 +89,7 @@ namespace CodexContractsPlugin.ChainMonitor
                 ApplyEvent(d);
             }
 
-            ApplyTimeImplicitEvents(eventsUtc);
+            ApplyTimeImplicitEvents(blockNumber, eventsUtc);
         }
 
         private void ApplyEvent(Request request)
@@ -101,7 +107,7 @@ namespace CodexContractsPlugin.ChainMonitor
         {
             var r = FindRequest(request.RequestId);
             if (r == null) return;
-            r.UpdateState(RequestState.Started);
+            r.UpdateState(request.Block.BlockNumber, RequestState.Started);
             handler.OnRequestFulfilled(r);
         }
 
@@ -109,7 +115,7 @@ namespace CodexContractsPlugin.ChainMonitor
         {
             var r = FindRequest(request.RequestId);
             if (r == null) return;
-            r.UpdateState(RequestState.Cancelled);
+            r.UpdateState(request.Block.BlockNumber, RequestState.Cancelled);
             handler.OnRequestCancelled(r);
         }
 
@@ -117,7 +123,7 @@ namespace CodexContractsPlugin.ChainMonitor
         {
             var r = FindRequest(request.RequestId);
             if (r == null) return;
-            r.Log("SlotFilled");
+            r.Log($"[{request.Block.BlockNumber}] SlotFilled");
             handler.OnSlotFilled(r, request.SlotIndex);
         }
 
@@ -125,18 +131,18 @@ namespace CodexContractsPlugin.ChainMonitor
         {
             var r = FindRequest(request.RequestId);
             if (r == null) return;
-            r.Log("SlotFreed");
+            r.Log($"[{request.Block.BlockNumber}] SlotFreed");
             handler.OnSlotFreed(r, request.SlotIndex);
         }
 
-        private void ApplyTimeImplicitEvents(DateTime eventsUtc)
+        private void ApplyTimeImplicitEvents(ulong blockNumber, DateTime eventsUtc)
         {
             foreach (var r in requests)
             {
                 if (r.State == RequestState.Started
                     && r.FinishedUtc < eventsUtc)
                 {
-                    r.UpdateState(RequestState.Finished);
+                    r.UpdateState(blockNumber, RequestState.Finished);
                     handler.OnRequestFinished(r);
                 }
             }
