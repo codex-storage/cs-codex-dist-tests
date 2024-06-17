@@ -115,7 +115,7 @@ namespace CodexContractsPlugin.ChainMonitor
             var r = FindRequest(request.RequestId);
             if (r == null) return;
             r.Hosts.Add(request.Host, (int)request.SlotIndex);
-            r.Log($"[{request.Block.BlockNumber}] SlotFilled");
+            r.Log($"[{request.Block.BlockNumber}] SlotFilled (host:'{request.Host}', slotIndex:{request.SlotIndex})");
             handler.OnSlotFilled(r, request.SlotIndex);
         }
 
@@ -124,7 +124,7 @@ namespace CodexContractsPlugin.ChainMonitor
             var r = FindRequest(request.RequestId);
             if (r == null) return;
             r.Hosts.RemoveHost((int)request.SlotIndex);
-            r.Log($"[{request.Block.BlockNumber}] SlotFreed");
+            r.Log($"[{request.Block.BlockNumber}] SlotFreed (slotIndex:{request.SlotIndex})");
             handler.OnSlotFreed(r, request.SlotIndex);
         }
 

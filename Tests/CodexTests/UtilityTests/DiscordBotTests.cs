@@ -4,6 +4,7 @@ using CodexDiscordBotPlugin;
 using CodexPlugin;
 using Core;
 using DiscordRewards;
+using DistTestCore;
 using GethPlugin;
 using KubernetesWorkflow.Types;
 using Newtonsoft.Json;
@@ -24,6 +25,7 @@ namespace CodexTests.UtilityTests
         private readonly TimeSpan rewarderInterval = TimeSpan.FromMinutes(1);
 
         [Test]
+        [DontDownloadLogs]
         public void BotRewardTest()
         {
             var geth = Ci.StartGethNode(s => s.IsMiner().WithName("disttest-geth"));
@@ -31,11 +33,9 @@ namespace CodexTests.UtilityTests
             var gethInfo = CreateGethInfo(geth, contracts);
 
             var botContainer = StartDiscordBot(gethInfo);
-
-            StartHosts(geth, contracts);
-
             var rewarderContainer = StartRewarderBot(gethInfo, botContainer);
 
+            StartHosts(geth, contracts);
             var client = StartClient(geth, contracts);
 
             var events = ChainEvents.FromTimeRange(contracts, GetTestRunTimeRange());
@@ -76,8 +76,15 @@ namespace CodexTests.UtilityTests
 
         private void OnCommand(GiveRewardsCommand call)
         {
-            if (call.Averages.Any()) Log($"API call: {call.Averages.Length} average.");
-            if (call.EventsOverview.Any()) Log($"API call: {call.EventsOverview.Length} events.");
+            Log($"API call:");
+            foreach (var a in call.Averages)
+            {
+                Log("Average: " + JsonConvert.SerializeObject(a));
+            }
+            foreach (var e in call.EventsOverview)
+            {
+                Log("Event: " + e);
+            }
             foreach (var r in call.Rewards)
             {
                 var reward = repo.Rewards.Single(a => a.RoleId == r.RewardId);
@@ -85,7 +92,7 @@ namespace CodexTests.UtilityTests
                 foreach (var address in r.UserAddresses)
                 {
                     var user = IdentifyAccount(address);
-                    Log("API call: " + user + ": " + reward.Message);
+                    Log("Reward: " + user + ": " + reward.Message);
                 }
             }
         }
