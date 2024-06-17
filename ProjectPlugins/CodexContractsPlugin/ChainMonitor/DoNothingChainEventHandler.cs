@@ -20,10 +20,6 @@ namespace CodexContractsPlugin.ChainMonitor
         {
         }
 
-        public void OnRequestStarted(IChainStateRequest request)
-        {
-        }
-
         public void OnSlotFilled(IChainStateRequest request, BigInteger slotIndex)
         {
         }

@@ -1,29 +1,36 @@
 ﻿using CodexContractsPlugin;
 using CodexContractsPlugin.ChainMonitor;
-using DiscordRewards;
-using GethPlugin;
 using Logging;
-using Newtonsoft.Json;
-using System.Numerics;
 using Utils;
 
 namespace TestNetRewarder
 {
-    public class Processor : ITimeSegmentHandler, IChainStateChangeHandler
+    public class Processor : ITimeSegmentHandler
     {
-        private readonly RewardChecker rewardChecker = new RewardChecker();
-        private readonly MarketTracker marketTracker = new MarketTracker();
+        private readonly RequestBuilder builder;
+        private readonly RewardChecker rewardChecker;
+        private readonly MarketTracker marketTracker;
+        private readonly BufferLogger bufferLogger;
         private readonly ChainState chainState;
-        private readonly Configuration config;
+        private readonly BotClient client;
         private readonly ILog log;
-        private BlockInterval? lastBlockRange;
 
-        public Processor(Configuration config, ICodexContracts contracts, ILog log)
+        public Processor(Configuration config, BotClient client, ICodexContracts contracts, ILog log)
         {
-            this.config = config;
+            this.client = client;
             this.log = log;
 
-            chainState = new ChainState(log, contracts, this, config.HistoryStartUtc);
+            builder = new RequestBuilder();
+            rewardChecker = new RewardChecker(builder);
+            marketTracker = new MarketTracker(config, log);
+            bufferLogger = new BufferLogger();
+
+            var handler = new ChainChangeMux(
+                rewardChecker.Handler,
+                marketTracker
+            );
+
+            chainState = new ChainState(new LogSplitter(log, bufferLogger), contracts, handler, config.HistoryStartUtc);
         }
 
         public async Task OnNewSegment(TimeRange timeRange)
@@ -31,85 +38,21 @@ namespace TestNetRewarder
             try
             {
                 chainState.Update(timeRange.To);
-                
-                await ProcessChainState(chainState);
+
+                var averages = marketTracker.GetAverages();
+                var lines = bufferLogger.Get();
+
+                var request = builder.Build(averages, lines);
+                if (request.HasAny())
+                {
+                    await client.SendRewards(request);
+                }
             }
             catch (Exception ex)
             {
                 log.Error("Exception processing time segment: " + ex);
                 throw;
             }
-        }
-
-        private async Task ProcessChainState(ChainState chainState)
-        {
-            log.Log(chainState.EntireString());
-
-            var outgoingRewards = new List<RewardUsersCommand>();
-            foreach (var reward in rewardRepo.Rewards)
-            {
-                ProcessReward(outgoingRewards, reward, chainState);
-            }
-
-            var marketAverages = GetMarketAverages(chainState);
-            var eventsOverview = GenerateEventsOverview(chainState);
-
-            log.Log($"Found {outgoingRewards.Count} rewards. " +
-                $"Found {marketAverages.Length} market averages. " +
-                $"Found {eventsOverview.Length} events.");
-
-            if (outgoingRewards.Any() || marketAverages.Any() || eventsOverview.Any())
-            {
-                if (!await SendRewardsCommand(outgoingRewards, marketAverages, eventsOverview))
-                {
-                    log.Error("Failed to send reward command.");
-                }
-            }
-        }
-
-        private string[] GenerateEventsOverview(ChainState chainState)
-        {
-            return chainState.GenerateOverview();
-        }
-
-        private MarketAverage[] GetMarketAverages(ChainState chainState)
-        {
-            return marketTracker.ProcessChainState(chainState);
-        }
-
-        public void OnNewRequest(IChainStateRequest request)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void OnRequestStarted(IChainStateRequest request)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void OnRequestFinished(IChainStateRequest request)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void OnRequestFulfilled(IChainStateRequest request)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void OnRequestCancelled(IChainStateRequest request)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void OnSlotFilled(IChainStateRequest request, BigInteger slotIndex)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void OnSlotFreed(IChainStateRequest request, BigInteger slotIndex)
-        {
-            throw new NotImplementedException();
         }
     }
 }

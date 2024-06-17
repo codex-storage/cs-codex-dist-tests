@@ -1,16 +1,15 @@
 ﻿using ArgsUniform;
 using Logging;
-using Nethereum.Model;
 using Utils;
 
 namespace TestNetRewarder
 {
     public class Program
     {
-        public static Configuration Config { get; private set; } = null!;
-        public static ILog Log { get; private set; } = null!;
-        public static CancellationToken CancellationToken { get; private set; }
-        public static BotClient BotClient { get; private set; } = null!;
+        public static CancellationToken CancellationToken;
+        private static Configuration Config = null!;
+        private static ILog Log = null!;
+        private static BotClient BotClient = null!;
         private static Processor processor = null!;
         private static DateTime lastCheck = DateTime.MinValue;
 
@@ -32,7 +31,7 @@ namespace TestNetRewarder
             if (connector == null) throw new Exception("Invalid Geth information");
 
             BotClient = new BotClient(Config, Log);
-            processor = new Processor(Config, connector.CodexContracts, Log);
+            processor = new Processor(Config, BotClient, connector.CodexContracts, Log);
 
             EnsurePath(Config.DataPath);
             EnsurePath(Config.LogPath);

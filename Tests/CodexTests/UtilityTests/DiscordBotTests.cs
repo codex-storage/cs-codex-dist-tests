@@ -39,27 +39,24 @@ namespace CodexTests.UtilityTests
             var client = StartClient(geth, contracts);
 
             var events = ChainEvents.FromTimeRange(contracts, GetTestRunTimeRange());
-            var chainState = ChainState.FromEvents(
-                GetTestLog(),
-                events,
-                new DoNothingChainEventHandler());
+            var chainState = new ChainState(GetTestLog(), contracts, new DoNothingChainEventHandler(), GetTestRunTimeRange().From);
 
             var apiCalls = new RewardApiCalls(Ci, botContainer);
             apiCalls.Start(OnCommand);
 
             var purchaseContract = ClientPurchasesStorage(client);
-            chainState.Update(contracts);
+            chainState.Update();
             Assert.That(chainState.Requests.Length, Is.EqualTo(1));
 
             purchaseContract.WaitForStorageContractStarted();
-            chainState.Update(contracts);
+            chainState.Update();
 
             purchaseContract.WaitForStorageContractFinished();
 
             Thread.Sleep(rewarderInterval * 2);
             
             apiCalls.Stop();
-            chainState.Update(contracts);
+            chainState.Update();
 
             foreach (var r in repo.Rewards)
             {

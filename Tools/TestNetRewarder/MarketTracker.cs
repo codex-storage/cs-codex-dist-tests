@@ -1,160 +1,73 @@
 ﻿using CodexContractsPlugin.ChainMonitor;
-using CodexContractsPlugin.Marketplace;
 using DiscordRewards;
+using Logging;
 using System.Numerics;
 
 namespace TestNetRewarder
 {
     public class MarketTracker : IChainStateChangeHandler
     {
-        private readonly List<ChainState> buffer = new List<ChainState>();
+        private readonly List<MarketBuffer> buffers = new List<MarketBuffer>();
+        private readonly ILog log;
 
-        public MarketAverage[] ProcessChainState(ChainState chainState)
+        public MarketTracker(Configuration config, ILog log)
         {
-            var intervalCounts = GetInsightCounts();
-            if (!intervalCounts.Any()) return Array.Empty<MarketAverage>();
+            var intervals = GetInsightCounts(config);
 
-            UpdateBuffer(chainState, intervalCounts.Max());
-            var result = intervalCounts
-                .Select(GenerateMarketAverage)
-                .Where(a => a != null)
-                .Cast<MarketAverage>()
-                .ToArray();
-
-            if (!result.Any()) result = Array.Empty<MarketAverage>();
-            return result;
-        }
-
-        private void UpdateBuffer(ChainState chainState, int maxNumberOfIntervals)
-        {
-            buffer.Add(chainState);
-            while (buffer.Count > maxNumberOfIntervals)
+            foreach (var i in intervals)
             {
-                buffer.RemoveAt(0);
-            }
-        }
-
-        private MarketAverage? GenerateMarketAverage(int numberOfIntervals)
-        {
-            var states = SelectStates(numberOfIntervals);
-            return CreateAverage(states);
-        }
-
-        private ChainState[] SelectStates(int numberOfIntervals)
-        {
-            if (numberOfIntervals < 1) return Array.Empty<ChainState>();
-            if (numberOfIntervals > buffer.Count) return Array.Empty<ChainState>();
-            return buffer.TakeLast(numberOfIntervals).ToArray();
-        }
-
-        private MarketAverage? CreateAverage(ChainState[] states)
-        {
-            try
-            {
-                return new MarketAverage
-                {
-                    NumberOfFinished = CountNumberOfFinishedRequests(states),
-                    TimeRangeSeconds = GetTotalTimeRange(states),
-                    Price = Average(states, s => s.Request.Ask.Reward),
-                    Duration = Average(states, s => s.Request.Ask.Duration),
-                    Size = Average(states, s => GetTotalSize(s.Request.Ask)),
-                    Collateral = Average(states, s => s.Request.Ask.Collateral),
-                    ProofProbability = Average(states, s => s.Request.Ask.ProofProbability)
-                };
-            }
-            catch (Exception ex)
-            {
-                Program.Log.Error($"Exception in CreateAverage: {ex}");
-                return null;
-            }
-        }
-
-        private int GetTotalSize(Ask ask)
-        {
-            var nSlots = Convert.ToInt32(ask.Slots);
-            var slotSize = Convert.ToInt32(ask.SlotSize);
-            return nSlots * slotSize;
-        }
-
-        private float Average(ChainState[] states, Func<StorageRequest, BigInteger> getValue)
-        {
-            return Average(states, s => Convert.ToInt32(getValue(s)));
-        }
-
-        private float Average(ChainState[] states, Func<StorageRequest, int> getValue)
-        {
-            var sum = 0.0f;
-            var count = 0.0f;
-            foreach (var state in states)
-            {
-                foreach (var finishedRequest in state.FinishedRequests)
-                {
-                    sum += getValue(finishedRequest);
-                    count++;
-                }
+                buffers.Add(new MarketBuffer(
+                    config.Interval * i
+                ));
             }
 
-            if (count < 1.0f) return 0.0f;
-            return sum / count;
+            this.log = log;
         }
 
-        private int GetTotalTimeRange(ChainState[] states)
+        public MarketAverage[] GetAverages()
         {
-            return Convert.ToInt32((Program.Config.Interval * states.Length).TotalSeconds);
-        }
+            foreach (var b in buffers) b.Update();
 
-        private int CountNumberOfFinishedRequests(ChainState[] states)
-        {
-            return states.Sum(s => s.FinishedRequests.Length);
-        }
-
-        private int[] GetInsightCounts()
-        {
-            try
-            {
-                var tokens = Program.Config.MarketInsights.Split(';').ToArray();
-                return tokens.Select(t => Convert.ToInt32(t)).ToArray();
-            }
-            catch (Exception ex)
-            {
-                Program.Log.Error($"Exception when parsing MarketInsights config parameters: {ex}");
-            }
-            return Array.Empty<int>();            
+            return buffers.Select(b => b.GetAverage()).Where(a => a != null).Cast<MarketAverage>().ToArray();
         }
 
         public void OnNewRequest(IChainStateRequest request)
         {
-            throw new NotImplementedException();
-        }
-
-        public void OnRequestStarted(IChainStateRequest request)
-        {
-            throw new NotImplementedException();
         }
 
         public void OnRequestFinished(IChainStateRequest request)
         {
-            throw new NotImplementedException();
+            foreach (var b in buffers) b.Add(request);
         }
 
         public void OnRequestFulfilled(IChainStateRequest request)
         {
-            throw new NotImplementedException();
         }
 
         public void OnRequestCancelled(IChainStateRequest request)
         {
-            throw new NotImplementedException();
         }
 
         public void OnSlotFilled(IChainStateRequest request, BigInteger slotIndex)
         {
-            throw new NotImplementedException();
         }
 
         public void OnSlotFreed(IChainStateRequest request, BigInteger slotIndex)
         {
-            throw new NotImplementedException();
+        }
+
+        private int[] GetInsightCounts(Configuration config)
+        {
+            try
+            {
+                var tokens = config.MarketInsights.Split(';').ToArray();
+                return tokens.Select(t => Convert.ToInt32(t)).ToArray();
+            }
+            catch (Exception ex)
+            {
+                log.Error($"Exception when parsing MarketInsights config parameters: {ex}");
+            }
+            return Array.Empty<int>();
         }
     }
 }

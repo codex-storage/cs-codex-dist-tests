@@ -8,7 +8,6 @@ namespace CodexContractsPlugin.ChainMonitor
     public interface IChainStateChangeHandler
     {
         void OnNewRequest(IChainStateRequest request);
-        void OnRequestStarted(IChainStateRequest request);
         void OnRequestFinished(IChainStateRequest request);
         void OnRequestFulfilled(IChainStateRequest request);
         void OnRequestCancelled(IChainStateRequest request);
@@ -115,6 +114,7 @@ namespace CodexContractsPlugin.ChainMonitor
         {
             var r = FindRequest(request.RequestId);
             if (r == null) return;
+            r.Hosts.Add(request.Host, (int)request.SlotIndex);
             r.Log($"[{request.Block.BlockNumber}] SlotFilled");
             handler.OnSlotFilled(r, request.SlotIndex);
         }
@@ -123,6 +123,7 @@ namespace CodexContractsPlugin.ChainMonitor
         {
             var r = FindRequest(request.RequestId);
             if (r == null) return;
+            r.Hosts.RemoveHost((int)request.SlotIndex);
             r.Log($"[{request.Block.BlockNumber}] SlotFreed");
             handler.OnSlotFreed(r, request.SlotIndex);
         }
