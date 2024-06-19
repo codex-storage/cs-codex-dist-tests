@@ -8,12 +8,11 @@ using Utils;
 
 namespace CodexPlugin
 {
-    public class CodexAccess : ILogHandler
+    public class CodexAccess
     {
         private readonly ILog log;
         private readonly IPluginTools tools;
         private readonly Mapper mapper = new Mapper();
-        private bool hasContainerCrashed;
 
         public CodexAccess(IPluginTools tools, RunningPod container, CrashWatcher crashWatcher)
         {
@@ -21,9 +20,8 @@ namespace CodexPlugin
             log = tools.GetLog();
             Container = container;
             CrashWatcher = crashWatcher;
-            hasContainerCrashed = false;
 
-            CrashWatcher.Start(this);
+            CrashWatcher.Start();
         }
 
         public RunningPod Container { get; }
@@ -209,25 +207,7 @@ namespace CodexPlugin
 
         private void CheckContainerCrashed(HttpClient client)
         {
-            if (hasContainerCrashed) throw new Exception($"Container {GetName()} has crashed.");
-        }
-
-        void ILogHandler.Log(Stream crashLog)
-        {
-            var file = log.CreateSubfile();
-            Log($"Downloading log to '{file.FullFilename}'...");
-            file.Write($"Container log for {Container.Name}.");
-
-            using var reader = new StreamReader(crashLog);
-            var line = reader.ReadLine();
-            while (line != null)
-            {
-                file.Write(line);
-                line = reader.ReadLine();
-            }
-
-            Log("Container log successfully downloaded.");
-            hasContainerCrashed = true;
+            if (CrashWatcher.HasContainerCrashed()) throw new Exception($"Container {GetName()} has crashed.");
         }
 
         private Retry CreateRetryConfig(string description, Action<Failure> onFailure)

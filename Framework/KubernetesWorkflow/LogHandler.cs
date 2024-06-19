@@ -1,4 +1,6 @@
-﻿namespace KubernetesWorkflow
+﻿using Logging;
+
+namespace KubernetesWorkflow
 {
     public interface ILogHandler
     {
@@ -19,5 +21,26 @@
         }
 
         protected abstract void ProcessLine(string line);
+    }
+
+    public class WriteToFileLogHandler : LogHandler, ILogHandler
+    {
+        public WriteToFileLogHandler(ILog sourceLog, string description)
+        {
+            LogFile = sourceLog.CreateSubfile();
+
+            var msg = $"{description} -->> {LogFile.FullFilename}";
+            sourceLog.Log(msg);
+
+            LogFile.Write(msg);
+            LogFile.WriteRaw(description);
+        }
+
+        public LogFile LogFile { get; }
+
+        protected override void ProcessLine(string line)
+        {
+            LogFile.WriteRaw(line);
+        }
     }
 }

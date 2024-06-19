@@ -45,7 +45,7 @@ namespace KubernetesWorkflow
 
         public void WaitUntilOnline(RunningContainer container)
         {
-            WaitUntilDeploymentOnline(container.Recipe.Name);
+            WaitUntilDeploymentOnline(container);
         }
 
         public PodInfo GetPodInfo(RunningDeployment deployment)
@@ -64,14 +64,14 @@ namespace KubernetesWorkflow
             if (waitTillStopped) WaitUntilPodsForDeploymentAreOffline(startResult.Deployment);
         }
 
-        public void DownloadPodLog(RunningContainer container, ILogHandler logHandler, int? tailLines)
+        public void DownloadPodLog(RunningContainer container, ILogHandler logHandler, int? tailLines, bool? previous)
         {
             log.Debug();
 
             var podName = GetPodName(container);
             var recipeName = container.Recipe.Name;
 
-            using var stream = client.Run(c => c.ReadNamespacedPodLog(podName, K8sNamespace, recipeName, tailLines: tailLines));
+            using var stream = client.Run(c => c.ReadNamespacedPodLog(podName, K8sNamespace, recipeName, tailLines: tailLines, previous: previous));
             logHandler.Log(stream);
         }
 
@@ -879,13 +879,37 @@ namespace KubernetesWorkflow
             WaitUntil(() => !IsNamespaceOnline(@namespace), nameof(WaitUntilNamespaceDeleted));
         }
 
-        private void WaitUntilDeploymentOnline(string deploymentName)
+        private void WaitUntilDeploymentOnline(RunningContainer container)
         {
             WaitUntil(() =>
             {
-                var deployment = client.Run(c => c.ReadNamespacedDeployment(deploymentName, K8sNamespace));
+                CheckForCrash(container);
+
+                var deployment = client.Run(c => c.ReadNamespacedDeployment(container.Recipe.Name, K8sNamespace));
                 return deployment?.Status.AvailableReplicas != null && deployment.Status.AvailableReplicas > 0;
             }, nameof(WaitUntilDeploymentOnline));
+        }
+
+        private void CheckForCrash(RunningContainer container)
+        {
+            var deploymentName = container.Recipe.Name;
+            var podName = GetPodName(container);
+
+            var podInfo = client.Run(c => c.ReadNamespacedPod(podName, K8sNamespace));
+            if (podInfo == null) return;
+            if (podInfo.Status == null) return;
+            if (podInfo.Status.ContainerStatuses == null) return;
+
+            var result = podInfo.Status.ContainerStatuses.Any(c => c.RestartCount > 0);
+            if (result)
+            {
+                var msg = $"Pod crash detected for deployment {deploymentName} (pod:{podName})";
+                log.Error(msg);
+
+                DownloadPodLog(container, new WriteToFileLogHandler(log, msg), tailLines: null, previous: true);
+
+                throw new Exception(msg);
+            }
         }
 
         private void WaitUntilDeploymentOffline(string deploymentName)

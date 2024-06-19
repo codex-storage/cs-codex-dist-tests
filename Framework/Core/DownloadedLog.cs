@@ -1,4 +1,5 @@
-﻿using Logging;
+﻿using KubernetesWorkflow;
+using Logging;
 
 namespace Core
 {
@@ -14,9 +15,9 @@ namespace Core
     {
         private readonly LogFile logFile;
 
-        internal DownloadedLog(LogFile logFile)
+        internal DownloadedLog(WriteToFileLogHandler logHandler)
         {
-            this.logFile = logFile;
+            logFile = logHandler.LogFile;
         }
 
         public void IterateLines(Action<string> action)
