@@ -53,7 +53,7 @@ namespace CodexTests.UtilityTests
 
             purchaseContract.WaitForStorageContractFinished();
 
-            Thread.Sleep(rewarderInterval * 2);
+            Thread.Sleep(rewarderInterval * 3);
             
             apiCalls.Stop();
             chainState.Update();
@@ -76,14 +76,14 @@ namespace CodexTests.UtilityTests
 
         private void OnCommand(GiveRewardsCommand call)
         {
-            Log($"API call:");
+            Log($"<API call>");
             foreach (var a in call.Averages)
             {
-                Log("Average: " + JsonConvert.SerializeObject(a));
+                Log("\tAverage: " + JsonConvert.SerializeObject(a));
             }
             foreach (var e in call.EventsOverview)
             {
-                Log("Event: " + e);
+                Log("\tEvent: " + e);
             }
             foreach (var r in call.Rewards)
             {
@@ -92,9 +92,10 @@ namespace CodexTests.UtilityTests
                 foreach (var address in r.UserAddresses)
                 {
                     var user = IdentifyAccount(address);
-                    Log("Reward: " + user + ": " + reward.Message);
+                    Log("\tReward: " + user + ": " + reward.Message);
                 }
             }
+            Log($"</API call>");
         }
 
         private IStoragePurchaseContract ClientPurchasesStorage(ICodexNode client)

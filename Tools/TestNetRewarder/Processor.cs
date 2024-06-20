@@ -40,7 +40,7 @@ namespace TestNetRewarder
                 chainState.Update(timeRange.To);
 
                 var averages = marketTracker.GetAverages();
-                var lines = bufferLogger.Get();
+                var lines = RemoveFirstLine(bufferLogger.Get());
 
                 var request = builder.Build(averages, lines);
                 if (request.HasAny())
@@ -53,6 +53,12 @@ namespace TestNetRewarder
                 log.Error("Exception processing time segment: " + ex);
                 throw;
             }
+        }
+
+        private string[] RemoveFirstLine(string[] lines)
+        {
+            if (!lines.Any()) return Array.Empty<string>();
+            return lines.Skip(1).ToArray();
         }
     }
 }

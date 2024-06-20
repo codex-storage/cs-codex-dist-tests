@@ -23,9 +23,7 @@ namespace CodexContractsPlugin.Marketplace
         {
             get
             {
-                var id = "";
-                foreach (var b in RequestId) id += b.ToString();
-                return id;
+                return BitConverter.ToString(RequestId).Replace("-", "").ToLowerInvariant();
             }
         }
     }
