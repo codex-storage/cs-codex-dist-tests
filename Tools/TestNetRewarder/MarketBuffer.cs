@@ -44,7 +44,11 @@ namespace TestNetRewarder
 
         private float Average(Func<IChainStateRequest, BigInteger> getValue)
         {
-            return Average(s => Convert.ToInt32(getValue(s)));
+            return Average(s =>
+            {
+                var value = getValue(s);
+                return (int)value;
+            });
         }
 
         private float Average(Func<IChainStateRequest, int> getValue)

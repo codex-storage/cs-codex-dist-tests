@@ -50,10 +50,10 @@ namespace CodexTests.UtilityTests
 
             apiCalls.Stop();
 
-            Assert.That(receivedEvents.Count(e => e.Contains("Created as New.")), Is.EqualTo(1));
-            Assert.That(receivedEvents.Count(e => e.Contains("SlotFilled")), Is.EqualTo(GetNumberOfRequiredHosts()));
-            Assert.That(receivedEvents.Count(e => e.Contains("Transit: New -> Started")), Is.EqualTo(1));
-            Assert.That(receivedEvents.Count(e => e.Contains("Transit: Started -> Finished")), Is.EqualTo(1));
+            AssertEventOccurance("Created as New.", 1);
+            AssertEventOccurance("SlotFilled", Convert.ToInt32(GetNumberOfRequiredHosts()));
+            AssertEventOccurance("Transit: New -> Started", 1);
+            AssertEventOccurance("Transit: Started -> Finished", 1);
 
             foreach (var r in repo.Rewards)
             {
@@ -69,6 +69,12 @@ namespace CodexTests.UtilityTests
         {
             var reward = repo.Rewards.Single(r => r.RoleId == rewardId);
             return $"({rewardId})'{reward.Message}'";
+        }
+
+        private void AssertEventOccurance(string msg, int expectedCount)
+        {
+            Assert.That(receivedEvents.Count(e => e.Contains(msg)), Is.EqualTo(expectedCount),
+                $"Event '{msg}' did not occure correct number of times.");
         }
 
         private void OnCommand(string timestamp, GiveRewardsCommand call)
