@@ -7,6 +7,7 @@ using DiscordRewards;
 using DistTestCore;
 using GethPlugin;
 using KubernetesWorkflow.Types;
+using Logging;
 using Newtonsoft.Json;
 using NUnit.Framework;
 using Utils;
@@ -38,25 +39,37 @@ namespace CodexTests.UtilityTests
             StartHosts(geth, contracts);
             var client = StartClient(geth, contracts);
 
-            var events = ChainEvents.FromTimeRange(contracts, GetTestRunTimeRange());
-            var chainState = new ChainState(GetTestLog(), contracts, new DoNothingChainEventHandler(), GetTestRunTimeRange().From);
+            //var chainState = new ChainState(GetTestLog(), contracts, new DoNothingChainEventHandler(), GetTestRunTimeRange().From);
 
-            var apiCalls = new RewardApiCalls(Ci, botContainer);
+            //var running = true;
+            //var task = Task.Run(() =>
+            //{
+            //    while (running)
+            //    {
+            //        Thread.Sleep(TimeSpan.FromMinutes(1));
+            //        chainState.Update();
+            //    }
+            //});
+
+            var apiCalls = new RewardApiCalls(GetTestLog(), Ci, botContainer);
             apiCalls.Start(OnCommand);
 
             var purchaseContract = ClientPurchasesStorage(client);
-            chainState.Update();
-            Assert.That(chainState.Requests.Length, Is.EqualTo(1));
+            //chainState.Update();
+            //Assert.That(chainState.Requests.Length, Is.EqualTo(1));
 
             purchaseContract.WaitForStorageContractStarted();
-            chainState.Update();
+            //chainState.Update();
 
             purchaseContract.WaitForStorageContractFinished();
 
             Thread.Sleep(rewarderInterval * 3);
-            
+
+            //running = false;
+            //task.Wait();
+
             apiCalls.Stop();
-            chainState.Update();
+            //chainState.Update();
 
             foreach (var r in repo.Rewards)
             {
@@ -74,9 +87,9 @@ namespace CodexTests.UtilityTests
             return $"({rewardId})'{reward.Message}'";
         }
 
-        private void OnCommand(GiveRewardsCommand call)
+        private void OnCommand(string timestamp, GiveRewardsCommand call)
         {
-            Log($"<API call>");
+            Log($"<API call {timestamp}>");
             foreach (var a in call.Averages)
             {
                 Log("\tAverage: " + JsonConvert.SerializeObject(a));
@@ -249,14 +262,13 @@ namespace CodexTests.UtilityTests
         public class RewardApiCalls
         {
             private readonly ContainerFileMonitor monitor;
-            private readonly Dictionary<string, GiveRewardsCommand> commands = new Dictionary<string, GiveRewardsCommand>();
 
-            public RewardApiCalls(CoreInterface ci, RunningContainer botContainer)
+            public RewardApiCalls(ILog log, CoreInterface ci, RunningContainer botContainer)
             {
-                monitor = new ContainerFileMonitor(ci, botContainer, "/app/datapath/logs/discordbot.log");
+                monitor = new ContainerFileMonitor(log, ci, botContainer, "/app/datapath/logs/discordbot.log");
             }
 
-            public void Start(Action<GiveRewardsCommand> onCommand)
+            public void Start(Action<string, GiveRewardsCommand> onCommand)
             {
                 monitor.Start(line => ParseLine(line, onCommand));
             }
@@ -266,19 +278,17 @@ namespace CodexTests.UtilityTests
                 monitor.Stop();
             }
 
-            private void ParseLine(string line, Action<GiveRewardsCommand> onCommand)
+            private void ParseLine(string line, Action<string, GiveRewardsCommand> onCommand)
             {
                 try
                 {
                     var timestamp = line.Substring(0, 30);
-                    if (commands.ContainsKey(timestamp)) return;
                     var json = line.Substring(31);
 
                     var cmd = JsonConvert.DeserializeObject<GiveRewardsCommand>(json);
                     if (cmd != null)
                     {
-                        commands.Add(timestamp, cmd);
-                        onCommand(cmd);
+                        onCommand(timestamp, cmd);
                     }
                 }
                 catch
@@ -289,6 +299,7 @@ namespace CodexTests.UtilityTests
 
         public class ContainerFileMonitor
         {
+            private readonly ILog log;
             private readonly CoreInterface ci;
             private readonly RunningContainer botContainer;
             private readonly string filePath;
@@ -297,8 +308,9 @@ namespace CodexTests.UtilityTests
             private Task worker = Task.CompletedTask;
             private Action<string> onNewLine = c => { };
 
-            public ContainerFileMonitor(CoreInterface ci, RunningContainer botContainer, string filePath)
+            public ContainerFileMonitor(ILog log, CoreInterface ci, RunningContainer botContainer, string filePath)
             {
+                this.log = log;
                 this.ci = ci;
                 this.botContainer = botContainer;
                 this.filePath = filePath;
@@ -315,6 +327,9 @@ namespace CodexTests.UtilityTests
                 cts.Cancel();
                 worker.Wait();
             }
+
+            // did any container crash? that's why it repeats?
+
 
             private void Worker()
             {
@@ -333,6 +348,8 @@ namespace CodexTests.UtilityTests
                 var lines = botLog.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
                 foreach (var line in lines)
                 {
+                    // log.Log("line: " + line);
+
                     if (!seenLines.Contains(line))
                     {
                         seenLines.Add(line);

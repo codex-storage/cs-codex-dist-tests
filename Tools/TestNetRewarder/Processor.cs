@@ -50,15 +50,18 @@ namespace TestNetRewarder
             }
             catch (Exception ex)
             {
-                log.Error("Exception processing time segment: " + ex);
+                var msg = "Exception processing time segment: " + ex;
+                log.Error(msg); 
+                bufferLogger.Error(msg);
                 throw;
             }
         }
 
         private string[] RemoveFirstLine(string[] lines)
         {
-            if (!lines.Any()) return Array.Empty<string>();
-            return lines.Skip(1).ToArray();
+            //if (!lines.Any()) return Array.Empty<string>();
+            //return lines.Skip(1).ToArray();
+            return lines;
         }
     }
 }
