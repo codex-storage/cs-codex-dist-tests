@@ -33,10 +33,9 @@ namespace CodexTests.BasicTests
                     .AsStorageNode()
                     .AsValidator()));
 
-            var expectedHostBalance = (numberOfHosts * hostInitialBalance.TstWei).TstWei();
             foreach (var host in hosts)
             {
-                AssertBalance(contracts, host, Is.EqualTo(expectedHostBalance));
+                AssertBalance(contracts, host, Is.EqualTo(hostInitialBalance));
 
                 var availability = new StorageAvailability(
                     totalSpace: 10.GB(),

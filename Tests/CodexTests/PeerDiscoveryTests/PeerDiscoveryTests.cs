@@ -49,6 +49,8 @@ namespace CodexTests.PeerDiscoveryTests
 
         private void AssertAllNodesConnected(IEnumerable<ICodexNode> nodes)
         {
+            nodes = nodes.Concat(new[] { BootstrapNode }).ToArray()!;
+
             CreatePeerConnectionTestHelpers().AssertFullyConnected(nodes);
             CheckRoutingTable(nodes);
         }

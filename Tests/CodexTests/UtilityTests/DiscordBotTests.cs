@@ -28,6 +28,7 @@ namespace CodexTests.UtilityTests
  
         [Test]
         [DontDownloadLogs]
+        [Ignore("Used to debug testnet bots.")]
         public void BotRewardTest()
         {
             var geth = Ci.StartGethNode(s => s.IsMiner().WithName("disttest-geth"));
