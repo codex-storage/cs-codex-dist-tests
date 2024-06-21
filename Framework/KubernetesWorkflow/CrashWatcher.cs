@@ -11,7 +11,6 @@ namespace KubernetesWorkflow
         private readonly string podName;
         private readonly string recipeName;
         private readonly string k8sNamespace;
-        private ILogHandler? logHandler;
         private CancellationTokenSource cts;
         private Task? worker;
         private Exception? workerException;
@@ -27,11 +26,10 @@ namespace KubernetesWorkflow
             cts = new CancellationTokenSource();
         }
 
-        public void Start(ILogHandler logHandler)
+        public void Start()
         {
             if (worker != null) throw new InvalidOperationException();
 
-            this.logHandler = logHandler;
             cts = new CancellationTokenSource();
             worker = Task.Run(Worker);
         }
@@ -93,7 +91,8 @@ namespace KubernetesWorkflow
         private void DownloadCrashedContainerLogs(Kubernetes client)
         {
             using var stream = client.ReadNamespacedPodLog(podName, k8sNamespace, recipeName, previous: true);
-            logHandler!.Log(stream);
+            var handler = new WriteToFileLogHandler(log, "Crash detected for " + containerName);
+            handler.Log(stream);
         }
     }
 }

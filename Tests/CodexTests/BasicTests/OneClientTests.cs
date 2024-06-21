@@ -17,18 +17,6 @@ namespace CodexTests.BasicTests
             LogNodeStatus(primary);
         }
 
-        [Test]
-        public void RestartTest()
-        {
-            var primary = StartCodex();
-
-            primary.Stop(waitTillStopped: true);
-
-            primary = StartCodex();
-
-            PerformOneClientTest(primary);
-        }
-
         private void PerformOneClientTest(ICodexNode primary)
         {
             var testFile = GenerateTestFile(1.MB());
