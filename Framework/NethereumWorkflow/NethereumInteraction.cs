@@ -117,6 +117,7 @@ namespace NethereumWorkflow
             }
 
             return new BlockInterval(
+                timeRange: timeRange,
                 from: fromBlock.Value,
                 to: toBlock.Value
             );

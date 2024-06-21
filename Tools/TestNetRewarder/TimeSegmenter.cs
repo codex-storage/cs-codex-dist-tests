@@ -3,51 +3,60 @@ using Utils;
 
 namespace TestNetRewarder
 {
+    public interface ITimeSegmentHandler
+    {
+        Task OnNewSegment(TimeRange timeRange);
+    }
+
     public class TimeSegmenter
     {
         private readonly ILog log;
+        private readonly ITimeSegmentHandler handler;
         private readonly TimeSpan segmentSize;
-        private DateTime start;
+        private DateTime latest;
 
-        public TimeSegmenter(ILog log, Configuration configuration)
+        public TimeSegmenter(ILog log, Configuration configuration, ITimeSegmentHandler handler)
         {
             this.log = log;
-
+            this.handler = handler;
             if (configuration.IntervalMinutes < 0) configuration.IntervalMinutes = 1;
-            if (configuration.CheckHistoryTimestamp == 0) throw new Exception("'check-history' unix timestamp is required. Set it to the start/launch moment of the testnet.");
 
             segmentSize = configuration.Interval;
-            start = DateTimeOffset.FromUnixTimeSeconds(configuration.CheckHistoryTimestamp).UtcDateTime;
+            latest = configuration.HistoryStartUtc;
 
-            log.Log("Starting time segments at " + start);
+            log.Log("Starting time segments at " + latest);
             log.Log("Segment size: " + Time.FormatDuration(segmentSize));
         }
 
-        public async Task WaitForNextSegment(Func<TimeRange, Task> onSegment)
+        public async Task ProcessNextSegment()
         {
-            var now = DateTime.UtcNow;
-            var end = start + segmentSize;
-            var waited = false;
-            if (end > now)
-            {
-                // Wait for the entire time segment to be in the past.
-                var delay = end - now;
-                waited = true;
-                log.Log($"Waiting till time segment is in the past... {Time.FormatDuration(delay)}");
-                await Task.Delay(delay, Program.CancellationToken);
-            }
-            await Task.Delay(TimeSpan.FromSeconds(3), Program.CancellationToken);
+            var end = latest + segmentSize;
+            var waited = await WaitUntilTimeSegmentInPast(end);
 
             if (Program.CancellationToken.IsCancellationRequested) return;
 
             var postfix = "(Catching up...)";
             if (waited) postfix = "(Real-time)";
+            log.Log($"Time segment [{latest} to {end}] {postfix}");
+            
+            var range = new TimeRange(latest, end);
+            latest = end;
 
-            log.Log($"Time segment [{start} to {end}] {postfix}");
-            var range = new TimeRange(start, end);
-            start = end;
+            await handler.OnNewSegment(range);
+        }
 
-            await onSegment(range);
+        private async Task<bool> WaitUntilTimeSegmentInPast(DateTime end)
+        {
+            await Task.Delay(TimeSpan.FromSeconds(3), Program.CancellationToken);
+
+            var now = DateTime.UtcNow;
+            while (end > now)
+            {
+                var delay = (end - now) + TimeSpan.FromSeconds(3);
+                await Task.Delay(delay, Program.CancellationToken);
+                return true;
+            }
+            return false;
         }
     }
 }

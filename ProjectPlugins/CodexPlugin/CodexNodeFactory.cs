@@ -22,22 +22,22 @@ namespace CodexPlugin
 
         public CodexNode CreateOnlineCodexNode(CodexAccess access, CodexNodeGroup group)
         {
-            var ethAddress = GetEthAddress(access);
-            var marketplaceAccess = GetMarketplaceAccess(access, ethAddress);
-            return new CodexNode(tools, access, group, marketplaceAccess, ethAddress);
+            var ethAccount = GetEthAccount(access);
+            var marketplaceAccess = GetMarketplaceAccess(access, ethAccount);
+            return new CodexNode(tools, access, group, marketplaceAccess, ethAccount);
         }
 
-        private IMarketplaceAccess GetMarketplaceAccess(CodexAccess codexAccess, EthAddress? ethAddress)
+        private IMarketplaceAccess GetMarketplaceAccess(CodexAccess codexAccess, EthAccount? ethAccount)
         {
-            if (ethAddress == null) return new MarketplaceUnavailable();
+            if (ethAccount == null) return new MarketplaceUnavailable();
             return new MarketplaceAccess(tools.GetLog(), codexAccess);
         }
 
-        private EthAddress? GetEthAddress(CodexAccess access)
+        private EthAccount? GetEthAccount(CodexAccess access)
         {
             var ethAccount = access.Container.Containers.Single().Recipe.Additionals.Get<EthAccount>();
             if (ethAccount == null) return null;
-            return ethAccount.EthAddress;
+            return ethAccount;
         }
 
         public CrashWatcher CreateCrashWatcher(RunningContainer c)

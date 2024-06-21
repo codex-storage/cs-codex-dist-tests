@@ -40,5 +40,14 @@ namespace TestNetRewarder
                 return TimeSpan.FromMinutes(IntervalMinutes);
             }
         }
+
+        public DateTime HistoryStartUtc
+        {
+            get
+            {
+                if (CheckHistoryTimestamp == 0) throw new Exception("'check-history' unix timestamp is required. Set it to the start/launch moment of the testnet.");
+                return DateTimeOffset.FromUnixTimeSeconds(CheckHistoryTimestamp).UtcDateTime;
+            }
+        }
     }
 }

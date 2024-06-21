@@ -109,8 +109,9 @@ namespace CodexPlugin
 
                 // Custom scripting in the Codex test image will write this variable to a private-key file,
                 // and pass the correct filename to Codex.
-                AddEnvVar("PRIV_KEY", marketplaceSetup.EthAccount.PrivateKey);
-                Additional(marketplaceSetup.EthAccount);
+                var account = marketplaceSetup.EthAccountSetup.GetNew();
+                AddEnvVar("PRIV_KEY", account.PrivateKey);
+                Additional(account);
 
                 SetCommandOverride(marketplaceSetup);
                 if (marketplaceSetup.IsValidator)

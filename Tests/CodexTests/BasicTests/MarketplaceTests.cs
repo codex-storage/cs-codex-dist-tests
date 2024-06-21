@@ -65,8 +65,8 @@ namespace CodexTests.BasicTests
                 MinRequiredNumberOfNodes = 5,
                 NodeFailureTolerance = 2,
                 ProofProbability = 5,
-                Duration = TimeSpan.FromMinutes(5),
-                Expiry = TimeSpan.FromMinutes(4)
+                Duration = TimeSpan.FromMinutes(6),
+                Expiry = TimeSpan.FromMinutes(5)
             };
 
             var purchaseContract = client.Marketplace.RequestStorage(purchase);
@@ -129,8 +129,8 @@ namespace CodexTests.BasicTests
         {
             Time.Retry(() =>
             {
-                var blockRange = geth.ConvertTimeRangeToBlockRange(GetTestRunTimeRange());
-                var slotFilledEvents = contracts.GetSlotFilledEvents(blockRange);
+                var events = contracts.GetEvents(GetTestRunTimeRange());
+                var slotFilledEvents = events.GetSlotFilledEvents();
 
                 var msg = $"SlotFilledEvents: {slotFilledEvents.Length} - NumSlots: {purchase.MinRequiredNumberOfNodes}";
                 Debug(msg);
@@ -147,7 +147,8 @@ namespace CodexTests.BasicTests
 
         private Request GetOnChainStorageRequest(ICodexContracts contracts, IGethNode geth)
         {
-            var requests = contracts.GetStorageRequests(geth.ConvertTimeRangeToBlockRange(GetTestRunTimeRange()));
+            var events = contracts.GetEvents(GetTestRunTimeRange());
+            var requests = events.GetStorageRequests();
             Assert.That(requests.Length, Is.EqualTo(1));
             return requests.Single();
         }

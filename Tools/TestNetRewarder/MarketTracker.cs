@@ -1,124 +1,73 @@
-﻿using CodexContractsPlugin.Marketplace;
+﻿using CodexContractsPlugin.ChainMonitor;
 using DiscordRewards;
+using Logging;
 using System.Numerics;
 
 namespace TestNetRewarder
 {
-    public class MarketTracker
+    public class MarketTracker : IChainStateChangeHandler
     {
-        private readonly List<ChainState> buffer = new List<ChainState>();
+        private readonly List<MarketBuffer> buffers = new List<MarketBuffer>();
+        private readonly ILog log;
 
-        public MarketAverage[] ProcessChainState(ChainState chainState)
+        public MarketTracker(Configuration config, ILog log)
         {
-            var intervalCounts = GetInsightCounts();
-            if (!intervalCounts.Any()) return Array.Empty<MarketAverage>();
+            var intervals = GetInsightCounts(config);
 
-            UpdateBuffer(chainState, intervalCounts.Max());
-            var result = intervalCounts
-                .Select(GenerateMarketAverage)
-                .Where(a => a != null)
-                .Cast<MarketAverage>()
-                .ToArray();
-
-            if (!result.Any()) result = Array.Empty<MarketAverage>();
-            return result;
-        }
-
-        private void UpdateBuffer(ChainState chainState, int maxNumberOfIntervals)
-        {
-            buffer.Add(chainState);
-            while (buffer.Count > maxNumberOfIntervals)
+            foreach (var i in intervals)
             {
-                buffer.RemoveAt(0);
+                buffers.Add(new MarketBuffer(
+                    config.Interval * i
+                ));
             }
+
+            this.log = log;
         }
 
-        private MarketAverage? GenerateMarketAverage(int numberOfIntervals)
+        public MarketAverage[] GetAverages()
         {
-            var states = SelectStates(numberOfIntervals);
-            return CreateAverage(states);
+            foreach (var b in buffers) b.Update();
+
+            return buffers.Select(b => b.GetAverage()).Where(a => a != null).Cast<MarketAverage>().ToArray();
         }
 
-        private ChainState[] SelectStates(int numberOfIntervals)
+        public void OnNewRequest(IChainStateRequest request)
         {
-            if (numberOfIntervals < 1) return Array.Empty<ChainState>();
-            if (numberOfIntervals > buffer.Count) return Array.Empty<ChainState>();
-            return buffer.TakeLast(numberOfIntervals).ToArray();
         }
 
-        private MarketAverage? CreateAverage(ChainState[] states)
+        public void OnRequestFinished(IChainStateRequest request)
+        {
+            foreach (var b in buffers) b.Add(request);
+        }
+
+        public void OnRequestFulfilled(IChainStateRequest request)
+        {
+        }
+
+        public void OnRequestCancelled(IChainStateRequest request)
+        {
+        }
+
+        public void OnSlotFilled(IChainStateRequest request, BigInteger slotIndex)
+        {
+        }
+
+        public void OnSlotFreed(IChainStateRequest request, BigInteger slotIndex)
+        {
+        }
+
+        private int[] GetInsightCounts(Configuration config)
         {
             try
             {
-                return new MarketAverage
-                {
-                    NumberOfFinished = CountNumberOfFinishedRequests(states),
-                    TimeRangeSeconds = GetTotalTimeRange(states),
-                    Price = Average(states, s => s.Request.Ask.Reward),
-                    Duration = Average(states, s => s.Request.Ask.Duration),
-                    Size = Average(states, s => GetTotalSize(s.Request.Ask)),
-                    Collateral = Average(states, s => s.Request.Ask.Collateral),
-                    ProofProbability = Average(states, s => s.Request.Ask.ProofProbability)
-                };
-            }
-            catch (Exception ex)
-            {
-                Program.Log.Error($"Exception in CreateAverage: {ex}");
-                return null;
-            }
-        }
-
-        private int GetTotalSize(Ask ask)
-        {
-            var nSlots = Convert.ToInt32(ask.Slots);
-            var slotSize = Convert.ToInt32(ask.SlotSize);
-            return nSlots * slotSize;
-        }
-
-        private float Average(ChainState[] states, Func<StorageRequest, BigInteger> getValue)
-        {
-            return Average(states, s => Convert.ToInt32(getValue(s)));
-        }
-
-        private float Average(ChainState[] states, Func<StorageRequest, int> getValue)
-        {
-            var sum = 0.0f;
-            var count = 0.0f;
-            foreach (var state in states)
-            {
-                foreach (var finishedRequest in state.FinishedRequests)
-                {
-                    sum += getValue(finishedRequest);
-                    count++;
-                }
-            }
-
-            if (count < 1.0f) return 0.0f;
-            return sum / count;
-        }
-
-        private int GetTotalTimeRange(ChainState[] states)
-        {
-            return Convert.ToInt32((Program.Config.Interval * states.Length).TotalSeconds);
-        }
-
-        private int CountNumberOfFinishedRequests(ChainState[] states)
-        {
-            return states.Sum(s => s.FinishedRequests.Length);
-        }
-
-        private int[] GetInsightCounts()
-        {
-            try
-            {
-                var tokens = Program.Config.MarketInsights.Split(';').ToArray();
+                var tokens = config.MarketInsights.Split(';').ToArray();
                 return tokens.Select(t => Convert.ToInt32(t)).ToArray();
             }
             catch (Exception ex)
             {
-                Program.Log.Error($"Exception when parsing MarketInsights config parameters: {ex}");
+                log.Error($"Exception when parsing MarketInsights config parameters: {ex}");
             }
-            return Array.Empty<int>();            
+            return Array.Empty<int>();
         }
     }
 }

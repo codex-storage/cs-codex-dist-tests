@@ -7,7 +7,7 @@ namespace CodexDiscordBotPlugin
     public class DiscordBotContainerRecipe : ContainerRecipeFactory
     {
         public override string AppName => "discordbot-bibliotech";
-        public override string Image => "codexstorage/codex-discordbot:sha-8c64352";
+        public override string Image => "codexstorage/codex-discordbot:sha-22cf82b";
 
         public static string RewardsPort = "bot_rewards_port";
 
@@ -32,6 +32,8 @@ namespace CodexDiscordBotPlugin
             AddEnvVar("CODEXCONTRACTS_MARKETPLACEADDRESS", gethInfo.MarketplaceAddress);
             AddEnvVar("CODEXCONTRACTS_TOKENADDRESS", gethInfo.TokenAddress);
             AddEnvVar("CODEXCONTRACTS_ABI", gethInfo.Abi);
+
+            AddEnvVar("NODISCORD", "1");
 
             AddInternalPortAndVar("REWARDAPIPORT", RewardsPort);
 

@@ -5,35 +5,49 @@ using Newtonsoft.Json;
 
 namespace CodexContractsPlugin.Marketplace
 {
-    public partial class Request : RequestBase
+    public interface IHasBlock
+    {
+        BlockTimeEntry Block { get; set; }
+    }
+
+    public partial class Request : RequestBase, IHasBlock
     {
         [JsonIgnore]
         public BlockTimeEntry Block { get; set; }
         public byte[] RequestId { get; set; }
 
         public EthAddress ClientAddress { get { return new EthAddress(Client); } }
+
+        [JsonIgnore]
+        public string Id
+        {
+            get
+            {
+                return BitConverter.ToString(RequestId).Replace("-", "").ToLowerInvariant();
+            }
+        }
     }
 
-    public partial class RequestFulfilledEventDTO
+    public partial class RequestFulfilledEventDTO : IHasBlock
     {
         [JsonIgnore]
         public BlockTimeEntry Block { get; set; }
     }
 
-    public partial class RequestCancelledEventDTO
+    public partial class RequestCancelledEventDTO : IHasBlock
     {
         [JsonIgnore]
         public BlockTimeEntry Block { get; set; }
     }
 
-    public partial class SlotFilledEventDTO
+    public partial class SlotFilledEventDTO : IHasBlock
     {
         [JsonIgnore]
         public BlockTimeEntry Block { get; set; }
         public EthAddress Host { get; set; }
     }
 
-    public partial class SlotFreedEventDTO
+    public partial class SlotFreedEventDTO : IHasBlock
     {
         [JsonIgnore]
         public BlockTimeEntry Block { get; set; }
