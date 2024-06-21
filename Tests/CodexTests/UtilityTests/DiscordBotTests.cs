@@ -55,6 +55,8 @@ namespace CodexTests.UtilityTests
             AssertEventOccurance("Transit: New -> Started", 1);
             AssertEventOccurance("Transit: Started -> Finished", 1);
 
+            AssertMarketAverage();
+
             foreach (var r in repo.Rewards)
             {
                 var seen = rewardsSeen.Any(s => r.RoleId == s);
@@ -75,6 +77,20 @@ namespace CodexTests.UtilityTests
         {
             Assert.That(receivedEvents.Count(e => e.Contains(msg)), Is.EqualTo(expectedCount),
                 $"Event '{msg}' did not occure correct number of times.");
+        }
+
+        private void AssertMarketAverage()
+        {
+            Assert.That(receivedAverages.Count, Is.EqualTo(1));
+            var a = receivedAverages.Single();
+
+            Assert.That(a.NumberOfFinished, Is.EqualTo(1));
+            Assert.That(a.TimeRangeSeconds, Is.EqualTo(5760));
+            Assert.That(a.Price, Is.EqualTo(2.0f).Within(0.1f));
+            Assert.That(a.Size, Is.EqualTo(GetMinFileSize().SizeInBytes).Within(1.0f));
+            Assert.That(a.Duration, Is.EqualTo(GetMinRequiredRequestDuration().TotalSeconds).Within(1.0f));
+            Assert.That(a.Collateral, Is.EqualTo(10.0f).Within(0.1f));
+            Assert.That(a.ProofProbability, Is.EqualTo(5.0f).Within(0.1f));
         }
 
         private void OnCommand(string timestamp, GiveRewardsCommand call)
