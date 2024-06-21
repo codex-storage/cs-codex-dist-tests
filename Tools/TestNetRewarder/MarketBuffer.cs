@@ -67,7 +67,7 @@ namespace TestNetRewarder
         private int GetTotalSize(Ask ask)
         {
             var nSlots = Convert.ToInt32(ask.Slots);
-            var slotSize = Convert.ToInt32(ask.SlotSize);
+            var slotSize = (int)ask.SlotSize;
             return nSlots * slotSize;
         }
     }
