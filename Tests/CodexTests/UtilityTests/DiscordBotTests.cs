@@ -1,5 +1,4 @@
 ﻿using CodexContractsPlugin;
-using CodexContractsPlugin.ChainMonitor;
 using CodexDiscordBotPlugin;
 using CodexPlugin;
 using Core;
@@ -24,7 +23,9 @@ namespace CodexTests.UtilityTests
         private readonly List<EthAccount> hostAccounts = new List<EthAccount>();
         private readonly List<ulong> rewardsSeen = new List<ulong>();
         private readonly TimeSpan rewarderInterval = TimeSpan.FromMinutes(1);
-
+        private readonly List<string> receivedEvents = new List<string>();
+        private readonly List<MarketAverage> receivedAverages = new List<MarketAverage>();
+ 
         [Test]
         [DontDownloadLogs]
         public void BotRewardTest()
@@ -39,37 +40,20 @@ namespace CodexTests.UtilityTests
             StartHosts(geth, contracts);
             var client = StartClient(geth, contracts);
 
-            //var chainState = new ChainState(GetTestLog(), contracts, new DoNothingChainEventHandler(), GetTestRunTimeRange().From);
-
-            //var running = true;
-            //var task = Task.Run(() =>
-            //{
-            //    while (running)
-            //    {
-            //        Thread.Sleep(TimeSpan.FromMinutes(1));
-            //        chainState.Update();
-            //    }
-            //});
-
             var apiCalls = new RewardApiCalls(GetTestLog(), Ci, botContainer);
             apiCalls.Start(OnCommand);
 
             var purchaseContract = ClientPurchasesStorage(client);
-            //chainState.Update();
-            //Assert.That(chainState.Requests.Length, Is.EqualTo(1));
-
             purchaseContract.WaitForStorageContractStarted();
-            //chainState.Update();
-
             purchaseContract.WaitForStorageContractFinished();
-
             Thread.Sleep(rewarderInterval * 3);
 
-            //running = false;
-            //task.Wait();
-
             apiCalls.Stop();
-            //chainState.Update();
+
+            Assert.That(receivedEvents.Count(e => e.Contains("Created as New.")), Is.EqualTo(1));
+            Assert.That(receivedEvents.Count(e => e.Contains("SlotFilled")), Is.EqualTo(GetNumberOfRequiredHosts()));
+            Assert.That(receivedEvents.Count(e => e.Contains("Transit: New -> Started")), Is.EqualTo(1));
+            Assert.That(receivedEvents.Count(e => e.Contains("Transit: Started -> Finished")), Is.EqualTo(1));
 
             foreach (var r in repo.Rewards)
             {
@@ -90,10 +74,12 @@ namespace CodexTests.UtilityTests
         private void OnCommand(string timestamp, GiveRewardsCommand call)
         {
             Log($"<API call {timestamp}>");
+            receivedAverages.AddRange(call.Averages);
             foreach (var a in call.Averages)
             {
                 Log("\tAverage: " + JsonConvert.SerializeObject(a));
             }
+            receivedEvents.AddRange(call.EventsOverview);
             foreach (var e in call.EventsOverview)
             {
                 Log("\tEvent: " + e);
@@ -122,8 +108,8 @@ namespace CodexTests.UtilityTests
                 MinRequiredNumberOfNodes = GetNumberOfRequiredHosts(),
                 NodeFailureTolerance = 2,
                 ProofProbability = 5,
-                Duration = TimeSpan.FromMinutes(6),
-                Expiry = TimeSpan.FromMinutes(5)
+                Duration = GetMinRequiredRequestDuration(),
+                Expiry = GetMinRequiredRequestDuration() - TimeSpan.FromMinutes(1)
             };
 
             return client.Marketplace.RequestStorage(purchase);
@@ -243,6 +229,11 @@ namespace CodexTests.UtilityTests
         private uint GetNumberOfRequiredHosts()
         {
             return Convert.ToUInt32(repo.Rewards.Max(r => r.CheckConfig.MinNumberOfHosts));
+        }
+
+        private TimeSpan GetMinRequiredRequestDuration()
+        {
+            return repo.Rewards.Max(r => r.CheckConfig.MinDuration) + TimeSpan.FromSeconds(10);
         }
 
         private string IdentifyAccount(string address)

@@ -50,6 +50,7 @@ namespace CodexDiscordBotPlugin
             startupConfig.Add(config);
             var pod = workflow.Start(1, new DiscordBotContainerRecipe(), startupConfig).WaitForOnline();
             WaitForStartupMessage(workflow, pod);
+            workflow.CreateCrashWatcher(pod.Containers.Single()).Start();
             return pod;
         }
 
@@ -58,7 +59,9 @@ namespace CodexDiscordBotPlugin
             var startupConfig = new StartupConfig();
             startupConfig.NameOverride = config.Name;
             startupConfig.Add(config);
-            return workflow.Start(1, new RewarderBotContainerRecipe(), startupConfig).WaitForOnline();
+            var pod = workflow.Start(1, new RewarderBotContainerRecipe(), startupConfig).WaitForOnline();
+            workflow.CreateCrashWatcher(pod.Containers.Single()).Start();
+            return pod;
         }
 
         private void WaitForStartupMessage(IStartupWorkflow workflow, RunningPod pod)
