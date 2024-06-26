@@ -73,7 +73,7 @@ namespace BiblioTech
             var notifyCommand = new NotifyCommand();
             var associateCommand = new UserAssociateCommand(notifyCommand);
             var sprCommand = new SprCommand();
-            var handler = new CommandHandler(client,
+            var handler = new CommandHandler(Log, client,
                 new GetBalanceCommand(associateCommand),
                 new MintCommand(associateCommand),
                 sprCommand,

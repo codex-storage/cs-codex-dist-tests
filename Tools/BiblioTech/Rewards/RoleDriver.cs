@@ -1,6 +1,7 @@
 ﻿using Discord;
 using Discord.WebSocket;
 using DiscordRewards;
+using Logging;
 using Newtonsoft.Json;
 
 namespace BiblioTech.Rewards
@@ -8,21 +9,22 @@ namespace BiblioTech.Rewards
     public class RoleDriver : IDiscordRoleDriver
     {
         private readonly DiscordSocketClient client;
+        private readonly ILog log;
         private readonly SocketTextChannel? rewardsChannel;
         private readonly SocketTextChannel? eventsChannel;
         private readonly RewardRepo repo = new RewardRepo();
 
-        public RoleDriver(DiscordSocketClient client)
+        public RoleDriver(DiscordSocketClient client, ILog log)
         {
             this.client = client;
-
+            this.log = log;
             rewardsChannel = GetChannel(Program.Config.RewardsChannelId);
             eventsChannel = GetChannel(Program.Config.ChainEventsChannelId);
         }
 
         public async Task GiveRewards(GiveRewardsCommand rewards)
         {
-            Program.Log.Log($"Processing rewards command: '{JsonConvert.SerializeObject(rewards)}'");
+            log.Log($"Processing rewards command: '{JsonConvert.SerializeObject(rewards)}'");
 
             if (rewards.Rewards.Any())
             {
@@ -34,15 +36,22 @@ namespace BiblioTech.Rewards
 
         private async Task ProcessRewards(GiveRewardsCommand rewards)
         {
-            var guild = GetGuild();
-            // We load all role and user information first,
-            // so we don't ask the server for the same info multiple times.
-            var context = new RewardContext(
-                await LoadAllUsers(guild),
-                LookUpAllRoles(guild, rewards),
-                rewardsChannel);
+            try
+            {
+                var guild = GetGuild();
+                // We load all role and user information first,
+                // so we don't ask the server for the same info multiple times.
+                var context = new RewardContext(
+                    await LoadAllUsers(guild),
+                    LookUpAllRoles(guild, rewards),
+                    rewardsChannel);
 
-            await context.ProcessGiveRewardsCommand(LookUpUsers(rewards));
+                await context.ProcessGiveRewardsCommand(LookUpUsers(rewards));
+            }
+            catch (Exception ex)
+            {
+                log.Error("Failed to process rewards: " + ex);
+            }
         }
 
         private SocketTextChannel? GetChannel(ulong id)
@@ -54,22 +63,29 @@ namespace BiblioTech.Rewards
         private async Task ProcessChainEvents(string[] eventsOverview)
         {
             if (eventsChannel == null || eventsOverview == null || !eventsOverview.Any()) return;
-            await Task.Run(async () =>
+            try
             {
-                foreach (var e in eventsOverview)
+                await Task.Run(async () =>
                 {
-                    if (!string.IsNullOrEmpty(e))
+                    foreach (var e in eventsOverview)
                     {
-                        await eventsChannel.SendMessageAsync(e);
-                        await Task.Delay(3000);
+                        if (!string.IsNullOrEmpty(e))
+                        {
+                            await eventsChannel.SendMessageAsync(e);
+                            await Task.Delay(3000);
+                        }
                     }
-                }
-            });
+                });
+            }
+            catch (Exception ex)
+            {
+                log.Error("Failed to process chain events: " + ex);
+            }
         }
 
         private async Task<Dictionary<ulong, IGuildUser>> LoadAllUsers(SocketGuild guild)
         {
-            Program.Log.Log("Loading all users:");
+            log.Log("Loading all users..");
             var result = new Dictionary<ulong, IGuildUser>();
             var users = guild.GetUsersAsync();
             await foreach (var ulist in users)
@@ -77,8 +93,8 @@ namespace BiblioTech.Rewards
                 foreach (var u in ulist)
                 {
                     result.Add(u.Id, u);
-                    var roleIds = string.Join(",", u.RoleIds.Select(r => r.ToString()).ToArray());
-                    Program.Log.Log($" > {u.Id}({u.DisplayName}) has [{roleIds}]");
+                    //var roleIds = string.Join(",", u.RoleIds.Select(r => r.ToString()).ToArray());
+                    //log.Log($" > {u.Id}({u.DisplayName}) has [{roleIds}]");
                 }
             }
             return result;
@@ -94,14 +110,14 @@ namespace BiblioTech.Rewards
                     var rewardConfig = repo.Rewards.SingleOrDefault(rr => rr.RoleId == r.RewardId);
                     if (rewardConfig == null)
                     {
-                        Program.Log.Log($"No Reward is configured for id '{r.RewardId}'.");
+                        log.Log($"No Reward is configured for id '{r.RewardId}'.");
                     }
                     else
                     {
                         var socketRole = guild.GetRole(r.RewardId);
                         if (socketRole == null)
                         {
-                            Program.Log.Log($"Guild Role by id '{r.RewardId}' not found.");
+                            log.Log($"Guild Role by id '{r.RewardId}' not found.");
                         }
                         else
                         {
@@ -134,13 +150,13 @@ namespace BiblioTech.Rewards
             try
             {
                 var userData =  Program.UserRepo.GetUserDataForAddress(new GethPlugin.EthAddress(address));
-                if (userData != null) Program.Log.Log($"User '{userData.Name}' was looked up.");
-                else Program.Log.Log($"Lookup for user was unsuccessful. EthAddress: '{address}'");
+                if (userData != null) log.Log($"User '{userData.Name}' was looked up.");
+                else log.Log($"Lookup for user was unsuccessful. EthAddress: '{address}'");
                 return userData;
             }
             catch (Exception ex)
             {
-                Program.Log.Error("Error during UserData lookup: " + ex);
+                log.Error("Error during UserData lookup: " + ex);
                 return null;
             }
         }
