@@ -1,14 +1,14 @@
 ﻿using ArgsUniform;
 using AutoClient;
-using CodexPlugin;
+using CodexOpenApi;
 using Core;
 using Logging;
-using static Org.BouncyCastle.Math.EC.ECCurve;
 
 public static class Program
 {
-    public static void Main(string[] args)
+    public static async Task Main(string[] args)
     {
+
         var cts = new CancellationTokenSource();
         var cancellationToken = cts.Token;
         Console.CancelKeyPress += (sender, args) => cts.Cancel();
@@ -28,24 +28,26 @@ public static class Program
 
         log.Log($"Start. Address: {address}");
 
-        var tools = CreateTools(log, config);
-        var fileManager = tools.GetFileManager();
-        var codex = new Codex(tools, address);
+        var imgGenerator = new ImageGenerator();
 
-        CheckCodex(codex, log);
+        var client = new HttpClient();
+        var codex = new CodexApi(client);
+        codex.BaseUrl = $"{address.Host}:{address.Port}/api/codex/v1";
 
-        var runner = new Runner(log, codex, fileManager, cancellationToken, config);
-        runner.Run();
+        await CheckCodex(codex, log);
+
+        var runner = new Runner(log, client, address, codex, cancellationToken, config, imgGenerator);
+        await runner.Run();
 
         log.Log("Done.");
     }
 
-    private static void CheckCodex(Codex codex, ILog log)
+    private static async Task CheckCodex(CodexApi codex, ILog log)
     {
         log.Log("Checking Codex...");
         try
         {
-            var info = codex.GetDebugInfo();
+            var info = await codex.GetDebugInfoAsync();
             if (string.IsNullOrEmpty(info.Id)) throw new Exception("Failed to fetch Codex node id");
         }
         catch (Exception ex)

@@ -1,7 +1,7 @@
-﻿using CodexContractsPlugin;
+﻿using CodexOpenApi;
 using CodexPlugin;
-using FileUtils;
 using Logging;
+using Newtonsoft.Json;
 using Utils;
 
 namespace AutoClient
@@ -9,21 +9,25 @@ namespace AutoClient
     public class Runner
     {
         private readonly ILog log;
-        private readonly Codex codex;
-        private readonly IFileManager fileManager;
+        private readonly HttpClient client;
+        private readonly Address address;
+        private readonly CodexApi codex;
         private readonly CancellationToken ct;
         private readonly Configuration config;
+        private readonly ImageGenerator generator;
 
-        public Runner(ILog log, Codex codex, IFileManager fileManager, CancellationToken ct, Configuration config)
+        public Runner(ILog log, HttpClient client, Address address, CodexApi codex, CancellationToken ct, Configuration config, ImageGenerator generator)
         {
             this.log = log;
+            this.client = client;
+            this.address = address;
             this.codex = codex;
-            this.fileManager = fileManager;
             this.ct = ct;
             this.config = config;
+            this.generator = generator;
         }
 
-        public void Run()
+        public async Task Run()
         {
             while (!ct.IsCancellationRequested)
             {
@@ -31,10 +35,7 @@ namespace AutoClient
 
                 try
                 {
-                    fileManager.ScopedFiles(() =>
-                    {
-                        DoRun();
-                    });
+                    await DoRun();
 
                     log.Log("Run succcessful.");
                 }
@@ -42,32 +43,32 @@ namespace AutoClient
                 {
                     log.Error("Exception during run: " + ex);
                 }
-                
-                FixedShortDelay();
+
+                await FixedShortDelay();
             }
         }
 
-        private void DoRun()
+        private async Task DoRun()
         {
-            var file = CreateFile();
-            var cid = UploadFile(file);
-            var pid = RequestStorage(cid);
-            WaitUntilStarted(pid);
+            var file = await CreateFile();
+            var cid = await UploadFile(file);
+            var pid = await RequestStorage(cid);
+            await WaitUntilStarted(pid);
         }
 
-        private TrackedFile CreateFile()
+        private async Task<string> CreateFile()
         {
-            return fileManager.GenerateFile(new ByteSize(Convert.ToInt64(config.DatasetSizeBytes)));
+            return await generator.GenerateImage();
         }
 
-        private ContentId UploadFile(TrackedFile file)
+        private async Task<ContentId> UploadFile(string filename)
         {
             // Copied from CodexNode :/
-            using var fileStream = File.OpenRead(file.Filename);
+            using var fileStream = File.OpenRead(filename);
 
-            var logMessage = $"Uploading file {file.Describe()}...";
+            var logMessage = $"Uploading file {filename}...";
             log.Log(logMessage);
-            var response = codex.UploadFile(fileStream);
+            var response = await codex.UploadAsync(fileStream, ct);
 
             if (string.IsNullOrEmpty(response)) FrameworkAssert.Fail("Received empty response.");
             if (response.StartsWith("Unable to store block")) FrameworkAssert.Fail("Node failed to store block.");
@@ -76,22 +77,44 @@ namespace AutoClient
             return new ContentId(response);
         }
 
-        private string RequestStorage(ContentId cid)
+        private async Task<string> RequestStorage(ContentId cid)
         {
-            var request = new StoragePurchaseRequest(cid)
+            log.Log("Requesting storage for " + cid.Id);
+            var result = await codex.CreateStorageRequestAsync(cid.Id, new StorageRequestCreation()
             {
-                PricePerSlotPerSecond = config.Price.TestTokens(),
-                RequiredCollateral = config.RequiredCollateral.TestTokens(),
-                MinRequiredNumberOfNodes = Convert.ToUInt32(config.NumHosts),
-                NodeFailureTolerance = Convert.ToUInt32(config.HostTolerance),
-                Duration = TimeSpan.FromMinutes(config.ContractDurationMinutes),
-                Expiry = TimeSpan.FromMinutes(config.ContractExpiryMinutes)
-            };
-            request.Log(log);
-            return codex.RequestStorage(request);
+                Collateral = config.RequiredCollateral.ToString(),
+                Duration = (config.ContractDurationMinutes * 60).ToString(),
+                Expiry = (config.ContractExpiryMinutes * 60).ToString(),
+                Nodes = config.NumHosts,
+                Reward = config.Price.ToString(),
+                ProofProbability = "15",
+                Tolerance = config.HostTolerance
+            }, ct);
+
+            log.Log("Response: " + result);
+
+            return result;
         }
 
-        private void WaitUntilStarted(string pid)
+        private async Task<string?> GetPurchaseState(string pid)
+        {
+            try
+            {
+                // openapi still don't match code.
+                var str = await client.GetStringAsync($"{address.Host}:{address.Port}/api/codex/v1/storage/purchases/{pid}");
+                if (string.IsNullOrEmpty(str)) return null;
+                var sp = JsonConvert.DeserializeObject<StoragePurchase>(str)!;
+                log.Log($"Purchase {pid} is {sp.State}");
+                if (!string.IsNullOrEmpty(sp.Error)) log.Log($"Purchase {pid} error is {sp.Error}");
+                return sp.State;
+            }
+            catch (Exception ex)
+            {
+                return null;
+            }
+        }
+
+        private async Task WaitUntilStarted(string pid)
         {
             log.Log("Waiting till contract is started, or expired...");
             try
@@ -99,30 +122,43 @@ namespace AutoClient
                 var emptyResponseTolerance = 10;
                 while (true)
                 {
-                    FixedShortDelay();
-                    var status = codex.GetPurchaseStatusRaw(pid).ToLowerInvariant();
-                    log.Log($"Status response: '{status}'");
+                    await FixedShortDelay();
+                    var status = await GetPurchaseState(pid); 
                     if (string.IsNullOrEmpty(status))
                     {
                         emptyResponseTolerance--;
                         if (emptyResponseTolerance == 0)
                         {
-                            log.Log("Received 10 empty responses to '/storage/purchases/'. Applying expiry delay, then carrying on.");
-                            ExpiryTimeDelay();
+                            log.Log("Received 10 empty responses. Applying expiry delay, then carrying on.");
+                            await ExpiryTimeDelay();
                             return;
                         }
-                        FixedShortDelay();
+                        await FixedShortDelay();
                     }
                     else
                     {
                         if (status.Contains("pending") || status.Contains("submitted"))
                         {
-                            FixedShortDelay();
+                            await FixedShortDelay();
+                        }
+                        else if (status.Contains("started"))
+                        {
+                            log.Log("Started.");
+                            await FixedDurationDelay();
+                        }
+                        else if (status.Contains("finished"))
+                        {
+                            log.Log("Purchase finished.");
+                            return;
+                        }
+                        else if (status.Contains("error"))
+                        {
+                            await FixedShortDelay();
+                            return;
                         }
                         else
                         {
-                            log.Log("Wait finished.");
-                            return;
+                            await FixedShortDelay();
                         }
                     }
                 }
@@ -130,18 +166,23 @@ namespace AutoClient
             catch (Exception ex)
             {
                 log.Log($"Wait failed with exception: {ex}. Assume contract will expire: Wait expiry time.");
-                ExpiryTimeDelay();
+                await ExpiryTimeDelay();
             }
         }
 
-        private void ExpiryTimeDelay()
+        private async Task FixedDurationDelay()
         {
-            Thread.Sleep(config.ContractExpiryMinutes * 60 * 1000);
+            await Task.Delay(config.ContractDurationMinutes * 60 * 1000);
         }
 
-        private void FixedShortDelay()
+        private async Task ExpiryTimeDelay()
         {
-            Thread.Sleep(15 * 1000);
+            await Task.Delay(config.ContractExpiryMinutes * 60 * 1000);
+        }
+
+        private async Task FixedShortDelay()
+        {
+            await Task.Delay(15 * 1000);
         }
     }
 }

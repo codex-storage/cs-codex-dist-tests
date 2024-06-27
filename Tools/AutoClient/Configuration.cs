@@ -19,9 +19,6 @@ namespace AutoClient
         [Uniform("contract-expiry", "ce", "CONTRACTEXPIRY", false, "contract expiry in minutes. (default 15)")]
         public int ContractExpiryMinutes { get; set; } = 15;
 
-        [Uniform("dataset-size", "ds", "DATASETSIZE", false, "Total dataset size in bytes. (default 10MB).")]
-        public int DatasetSizeBytes { get; set; } = 10 * 1024 * 1024;
-
         [Uniform("num-hosts", "nh", "NUMHOSTS", false, "Number of hosts for contract. (default 5)")]
         public int NumHosts { get; set; } = 5;
 
