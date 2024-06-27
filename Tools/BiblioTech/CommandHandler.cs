@@ -10,12 +10,14 @@ namespace BiblioTech
     public class CommandHandler
     {
         private readonly DiscordSocketClient client;
+        private readonly CustomReplacement replacement;
         private readonly BaseCommand[] commands;
         private readonly ILog log;
 
-        public CommandHandler(ILog log, DiscordSocketClient client, params BaseCommand[] commands)
+        public CommandHandler(ILog log, DiscordSocketClient client, CustomReplacement replacement, params BaseCommand[] commands)
         {
             this.client = client;
+            this.replacement = replacement;
             this.commands = commands;
             this.log = log;
             client.Ready += Client_Ready;
@@ -31,7 +33,7 @@ namespace BiblioTech
             var adminChannels = guild.TextChannels.Where(Program.AdminChecker.IsAdminChannel).ToArray();
             if (adminChannels == null || !adminChannels.Any()) throw new Exception("No admin message channel");
             Program.AdminChecker.SetAdminChannel(adminChannels.First());
-            Program.RoleDriver = new RoleDriver(client, log);
+            Program.RoleDriver = new RoleDriver(client, log, replacement);
 
             var builders = commands.Select(c =>
             {

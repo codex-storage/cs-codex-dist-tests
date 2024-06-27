@@ -6,11 +6,13 @@ namespace BiblioTech.Rewards
     public class ChainEventsSender
     {
         private readonly ILog log;
-        private SocketTextChannel? eventsChannel;
+        private readonly CustomReplacement replacement;
+        private readonly SocketTextChannel? eventsChannel;
 
-        public ChainEventsSender(ILog log, SocketTextChannel? eventsChannel)
+        public ChainEventsSender(ILog log, CustomReplacement replacement, SocketTextChannel? eventsChannel)
         {
             this.log = log;
+            this.replacement = replacement;
             this.eventsChannel = eventsChannel;
         }
 
@@ -43,6 +45,7 @@ namespace BiblioTech.Rewards
         private string ApplyReplacements(UserData[] users, string msg)
         {
             var result = ApplyUserAddressReplacements(users, msg);
+            result = ApplyCustomReplacements(result);
             return result;
         }
 
@@ -59,6 +62,11 @@ namespace BiblioTech.Rewards
             }
 
             return msg;
+        }
+
+        private string ApplyCustomReplacements(string result)
+        {
+            return replacement.Apply(result);
         }
     }
 }

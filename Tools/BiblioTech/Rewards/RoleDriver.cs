@@ -14,12 +14,12 @@ namespace BiblioTech.Rewards
         private readonly ChainEventsSender eventsSender;
         private readonly RewardRepo repo = new RewardRepo();
 
-        public RoleDriver(DiscordSocketClient client, ILog log)
+        public RoleDriver(DiscordSocketClient client, ILog log, CustomReplacement replacement)
         {
             this.client = client;
             this.log = log;
             rewardsChannel = GetChannel(Program.Config.RewardsChannelId);
-            eventsSender = new ChainEventsSender(log, GetChannel(Program.Config.ChainEventsChannelId));
+            eventsSender = new ChainEventsSender(log, replacement, GetChannel(Program.Config.ChainEventsChannelId));
         }
 
         public async Task GiveRewards(GiveRewardsCommand rewards)
