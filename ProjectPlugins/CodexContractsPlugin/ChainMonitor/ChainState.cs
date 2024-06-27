@@ -1,4 +1,5 @@
 ﻿using CodexContractsPlugin.Marketplace;
+using GethPlugin;
 using Logging;
 using System.Numerics;
 using Utils;
@@ -11,7 +12,7 @@ namespace CodexContractsPlugin.ChainMonitor
         void OnRequestFinished(IChainStateRequest request);
         void OnRequestFulfilled(IChainStateRequest request);
         void OnRequestCancelled(IChainStateRequest request);
-        void OnSlotFilled(IChainStateRequest request, BigInteger slotIndex);
+        void OnSlotFilled(IChainStateRequest request, EthAddress host, BigInteger slotIndex);
         void OnSlotFreed(IChainStateRequest request, BigInteger slotIndex);
     }
 
@@ -116,7 +117,7 @@ namespace CodexContractsPlugin.ChainMonitor
             if (r == null) return;
             r.Hosts.Add(request.Host, (int)request.SlotIndex);
             r.Log($"[{request.Block.BlockNumber}] SlotFilled (host:'{request.Host}', slotIndex:{request.SlotIndex})");
-            handler.OnSlotFilled(r, request.SlotIndex);
+            handler.OnSlotFilled(r, request.Host, request.SlotIndex);
         }
 
         private void ApplyEvent(SlotFreedEventDTO request)

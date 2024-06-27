@@ -1,4 +1,5 @@
 ﻿using CodexContractsPlugin.ChainMonitor;
+using GethPlugin;
 using System.Numerics;
 
 namespace TestNetRewarder
@@ -32,9 +33,9 @@ namespace TestNetRewarder
             foreach (var handler in handlers) handler.OnRequestFulfilled(request);
         }
 
-        public void OnSlotFilled(IChainStateRequest request, BigInteger slotIndex)
+        public void OnSlotFilled(IChainStateRequest request, EthAddress host, BigInteger slotIndex)
         {
-            foreach (var handler in handlers) handler.OnSlotFilled(request, slotIndex);
+            foreach (var handler in handlers) handler.OnSlotFilled(request, host, slotIndex);
         }
 
         public void OnSlotFreed(IChainStateRequest request, BigInteger slotIndex)

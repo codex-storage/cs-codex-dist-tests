@@ -1,5 +1,6 @@
 ﻿using CodexContractsPlugin.ChainMonitor;
 using DiscordRewards;
+using GethPlugin;
 using Logging;
 using System.Numerics;
 
@@ -48,7 +49,7 @@ namespace TestNetRewarder
         {
         }
 
-        public void OnSlotFilled(IChainStateRequest request, BigInteger slotIndex)
+        public void OnSlotFilled(IChainStateRequest request, EthAddress host, BigInteger slotIndex)
         {
         }
 
