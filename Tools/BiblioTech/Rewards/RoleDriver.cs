@@ -11,7 +11,7 @@ namespace BiblioTech.Rewards
         private readonly DiscordSocketClient client;
         private readonly ILog log;
         private readonly SocketTextChannel? rewardsChannel;
-        private readonly SocketTextChannel? eventsChannel;
+        private readonly ChainEventsSender eventsSender;
         private readonly RewardRepo repo = new RewardRepo();
 
         public RoleDriver(DiscordSocketClient client, ILog log)
@@ -19,7 +19,7 @@ namespace BiblioTech.Rewards
             this.client = client;
             this.log = log;
             rewardsChannel = GetChannel(Program.Config.RewardsChannelId);
-            eventsChannel = GetChannel(Program.Config.ChainEventsChannelId);
+            eventsSender = new ChainEventsSender(log, GetChannel(Program.Config.ChainEventsChannelId));
         }
 
         public async Task GiveRewards(GiveRewardsCommand rewards)
@@ -31,7 +31,7 @@ namespace BiblioTech.Rewards
                 await ProcessRewards(rewards);
             }
 
-            await ProcessChainEvents(rewards.EventsOverview);
+            await eventsSender.ProcessChainEvents(rewards.EventsOverview);
         }
 
         private async Task ProcessRewards(GiveRewardsCommand rewards)
@@ -58,29 +58,6 @@ namespace BiblioTech.Rewards
         {
             if (id == 0) return null;
             return GetGuild().TextChannels.SingleOrDefault(c => c.Id == id);
-        }
-
-        private async Task ProcessChainEvents(string[] eventsOverview)
-        {
-            if (eventsChannel == null || eventsOverview == null || !eventsOverview.Any()) return;
-            try
-            {
-                await Task.Run(async () =>
-                {
-                    foreach (var e in eventsOverview)
-                    {
-                        if (!string.IsNullOrEmpty(e))
-                        {
-                            await eventsChannel.SendMessageAsync(e);
-                            await Task.Delay(3000);
-                        }
-                    }
-                });
-            }
-            catch (Exception ex)
-            {
-                log.Error("Failed to process chain events: " + ex);
-            }
         }
 
         private async Task<Dictionary<ulong, IGuildUser>> LoadAllUsers(SocketGuild guild)
