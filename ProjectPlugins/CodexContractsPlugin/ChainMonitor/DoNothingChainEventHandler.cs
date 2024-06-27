@@ -5,27 +5,27 @@ namespace CodexContractsPlugin.ChainMonitor
 {
     public class DoNothingChainEventHandler : IChainStateChangeHandler
     {
-        public void OnNewRequest(IChainStateRequest request)
+        public void OnNewRequest(RequestEvent requestEvent)
         {
         }
 
-        public void OnRequestCancelled(IChainStateRequest request)
+        public void OnRequestCancelled(RequestEvent requestEvent)
         {
         }
 
-        public void OnRequestFinished(IChainStateRequest request)
+        public void OnRequestFinished(RequestEvent requestEvent)
         {
         }
 
-        public void OnRequestFulfilled(IChainStateRequest request)
+        public void OnRequestFulfilled(RequestEvent requestEvent)
         {
         }
 
-        public void OnSlotFilled(IChainStateRequest request, EthAddress host, BigInteger slotIndex)
+        public void OnSlotFilled(RequestEvent requestEvent, EthAddress host, BigInteger slotIndex)
         {
         }
 
-        public void OnSlotFreed(IChainStateRequest request, BigInteger slotIndex)
+        public void OnSlotFreed(RequestEvent requestEvent, BigInteger slotIndex)
         {
         }
     }

@@ -32,28 +32,28 @@ namespace TestNetRewarder
             return buffers.Select(b => b.GetAverage()).Where(a => a != null).Cast<MarketAverage>().ToArray();
         }
 
-        public void OnNewRequest(IChainStateRequest request)
+        public void OnNewRequest(RequestEvent requestEvent)
         {
         }
 
-        public void OnRequestFinished(IChainStateRequest request)
+        public void OnRequestFinished(RequestEvent requestEvent)
         {
-            foreach (var b in buffers) b.Add(request);
+            foreach (var b in buffers) b.Add(requestEvent);
         }
 
-        public void OnRequestFulfilled(IChainStateRequest request)
-        {
-        }
-
-        public void OnRequestCancelled(IChainStateRequest request)
+        public void OnRequestFulfilled(RequestEvent requestEvent)
         {
         }
 
-        public void OnSlotFilled(IChainStateRequest request, EthAddress host, BigInteger slotIndex)
+        public void OnRequestCancelled(RequestEvent requestEvent)
         {
         }
 
-        public void OnSlotFreed(IChainStateRequest request, BigInteger slotIndex)
+        public void OnSlotFilled(RequestEvent requestEvent, EthAddress host, BigInteger slotIndex)
+        {
+        }
+
+        public void OnSlotFreed(RequestEvent requestEvent, BigInteger slotIndex)
         {
         }
 

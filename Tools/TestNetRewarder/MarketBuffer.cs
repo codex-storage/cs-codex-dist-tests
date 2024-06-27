@@ -7,7 +7,7 @@ namespace TestNetRewarder
 {
     public class MarketBuffer
     {
-        private readonly List<IChainStateRequest> requests = new List<IChainStateRequest>();
+        private readonly List<RequestEvent> requestEvents = new List<RequestEvent>();
         private readonly TimeSpan bufferSpan;
 
         public MarketBuffer(TimeSpan bufferSpan)
@@ -15,24 +15,24 @@ namespace TestNetRewarder
             this.bufferSpan = bufferSpan;
         }
 
-        public void Add(IChainStateRequest request)
+        public void Add(RequestEvent requestEvent)
         {
-            requests.Add(request);
+            requestEvents.Add(requestEvent);
         }
 
         public void Update()
         {
             var now = DateTime.UtcNow;
-            requests.RemoveAll(r => (now - r.FinishedUtc) > bufferSpan);
+            requestEvents.RemoveAll(r => (now - r.Request.FinishedUtc) > bufferSpan);
         }
 
         public MarketAverage? GetAverage()
         {
-            if (requests.Count == 0) return null;
+            if (requestEvents.Count == 0) return null;
 
             return new MarketAverage
             {
-                NumberOfFinished = requests.Count,
+                NumberOfFinished = requestEvents.Count,
                 TimeRangeSeconds = (int)bufferSpan.TotalSeconds,
                 Price = Average(s => s.Request.Ask.Reward),
                 Duration = Average(s => s.Request.Ask.Duration),
@@ -54,10 +54,10 @@ namespace TestNetRewarder
         private float Average(Func<IChainStateRequest, int> getValue)
         {
             var sum = 0.0f;
-            float count = requests.Count;
-            foreach (var r in requests)
+            float count = requestEvents.Count;
+            foreach (var r in requestEvents)
             {
-                sum += getValue(r);
+                sum += getValue(r.Request);
             }
 
             if (count < 1.0f) return 0.0f;

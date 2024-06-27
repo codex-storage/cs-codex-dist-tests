@@ -22,40 +22,40 @@ namespace TestNetRewarder
             this.giver = giver;
         }
 
-        public void OnNewRequest(IChainStateRequest request)
+        public void OnNewRequest(RequestEvent requestEvent)
         {
-            if (MeetsRequirements(CheckType.ClientPostedContract, request))
+            if (MeetsRequirements(CheckType.ClientPostedContract, requestEvent))
             {
-                GiveReward(reward, request.Client);
+                GiveReward(reward, requestEvent.Request.Client);
             }
         }
 
-        public void OnRequestCancelled(IChainStateRequest request)
+        public void OnRequestCancelled(RequestEvent requestEvent)
         {
         }
 
-        public void OnRequestFinished(IChainStateRequest request)
+        public void OnRequestFinished(RequestEvent requestEvent)
         {
-            if (MeetsRequirements(CheckType.HostFinishedSlot, request))
+            if (MeetsRequirements(CheckType.HostFinishedSlot, requestEvent))
             {
-                foreach (var host in request.Hosts.GetHosts())
+                foreach (var host in requestEvent.Request.Hosts.GetHosts())
                 {
                     GiveReward(reward, host);
                 }
             }
         }
 
-        public void OnRequestFulfilled(IChainStateRequest request)
+        public void OnRequestFulfilled(RequestEvent requestEvent)
         {
-            if (MeetsRequirements(CheckType.ClientStartedContract, request))
+            if (MeetsRequirements(CheckType.ClientStartedContract, requestEvent))
             {
-                GiveReward(reward, request.Client);
+                GiveReward(reward, requestEvent.Request.Client);
             }
         }
 
-        public void OnSlotFilled(IChainStateRequest request, EthAddress host, BigInteger slotIndex)
+        public void OnSlotFilled(RequestEvent requestEvent, EthAddress host, BigInteger slotIndex)
         {
-            if (MeetsRequirements(CheckType.HostFilledSlot, request))
+            if (MeetsRequirements(CheckType.HostFilledSlot, requestEvent))
             {
                 if (host != null)
                 {
@@ -64,7 +64,7 @@ namespace TestNetRewarder
             }
         }
 
-        public void OnSlotFreed(IChainStateRequest request, BigInteger slotIndex)
+        public void OnSlotFreed(RequestEvent requestEvent, BigInteger slotIndex)
         {
         }
 
@@ -73,12 +73,12 @@ namespace TestNetRewarder
             giver.Give(reward, receiver);
         }
 
-        private bool MeetsRequirements(CheckType type, IChainStateRequest request)
+        private bool MeetsRequirements(CheckType type, RequestEvent requestEvent)
         {
             return
                 reward.CheckConfig.Type == type &&
-                MeetsDurationRequirement(request) &&
-                MeetsSizeRequirement(request);
+                MeetsDurationRequirement(requestEvent.Request) &&
+                MeetsSizeRequirement(requestEvent.Request);
         }
 
         private bool MeetsSizeRequirement(IChainStateRequest r)

@@ -1,6 +1,7 @@
 ﻿using CodexContractsPlugin.Marketplace;
 using GethPlugin;
 using Logging;
+using NethereumWorkflow.BlockUtils;
 using System.Numerics;
 using Utils;
 
@@ -8,12 +9,24 @@ namespace CodexContractsPlugin.ChainMonitor
 {
     public interface IChainStateChangeHandler
     {
-        void OnNewRequest(IChainStateRequest request);
-        void OnRequestFinished(IChainStateRequest request);
-        void OnRequestFulfilled(IChainStateRequest request);
-        void OnRequestCancelled(IChainStateRequest request);
-        void OnSlotFilled(IChainStateRequest request, EthAddress host, BigInteger slotIndex);
-        void OnSlotFreed(IChainStateRequest request, BigInteger slotIndex);
+        void OnNewRequest(RequestEvent requestEvent);
+        void OnRequestFinished(RequestEvent requestEvent);
+        void OnRequestFulfilled(RequestEvent requestEvent);
+        void OnRequestCancelled(RequestEvent requestEvent);
+        void OnSlotFilled(RequestEvent requestEvent, EthAddress host, BigInteger slotIndex);
+        void OnSlotFreed(RequestEvent requestEvent, BigInteger slotIndex);
+    }
+
+    public class RequestEvent
+    {
+        public RequestEvent(BlockTimeEntry block, IChainStateRequest request)
+        {
+            Block = block;
+            Request = request;
+        }
+
+        public BlockTimeEntry Block { get; }
+        public IChainStateRequest Request { get; }
     }
 
     public class ChainState
@@ -92,41 +105,41 @@ namespace CodexContractsPlugin.ChainMonitor
             var newRequest = new ChainStateRequest(log, request, RequestState.New);
             requests.Add(newRequest);
 
-            handler.OnNewRequest(newRequest);
+            handler.OnNewRequest(new RequestEvent(request.Block, newRequest));
         }
 
-        private void ApplyEvent(RequestFulfilledEventDTO request)
+        private void ApplyEvent(RequestFulfilledEventDTO @event)
         {
-            var r = FindRequest(request.RequestId);
+            var r = FindRequest(@event.RequestId);
             if (r == null) return;
-            r.UpdateState(request.Block.BlockNumber, RequestState.Started);
-            handler.OnRequestFulfilled(r);
+            r.UpdateState(@event.Block.BlockNumber, RequestState.Started);
+            handler.OnRequestFulfilled(new RequestEvent(@event.Block, r));
         }
 
-        private void ApplyEvent(RequestCancelledEventDTO request)
+        private void ApplyEvent(RequestCancelledEventDTO @event)
         {
-            var r = FindRequest(request.RequestId);
+            var r = FindRequest(@event.RequestId);
             if (r == null) return;
-            r.UpdateState(request.Block.BlockNumber, RequestState.Cancelled);
-            handler.OnRequestCancelled(r);
+            r.UpdateState(@event.Block.BlockNumber, RequestState.Cancelled);
+            handler.OnRequestCancelled(new RequestEvent(@event.Block, r));
         }
 
-        private void ApplyEvent(SlotFilledEventDTO request)
+        private void ApplyEvent(SlotFilledEventDTO @event)
         {
-            var r = FindRequest(request.RequestId);
+            var r = FindRequest(@event.RequestId);
             if (r == null) return;
-            r.Hosts.Add(request.Host, (int)request.SlotIndex);
-            r.Log($"[{request.Block.BlockNumber}] SlotFilled (host:'{request.Host}', slotIndex:{request.SlotIndex})");
-            handler.OnSlotFilled(r, request.Host, request.SlotIndex);
+            r.Hosts.Add(@event.Host, (int)@event.SlotIndex);
+            r.Log($"[{@event.Block.BlockNumber}] SlotFilled (host:'{@event.Host}', slotIndex:{@event.SlotIndex})");
+            handler.OnSlotFilled(new RequestEvent(@event.Block, r), @event.Host, @event.SlotIndex);
         }
 
-        private void ApplyEvent(SlotFreedEventDTO request)
+        private void ApplyEvent(SlotFreedEventDTO @event)
         {
-            var r = FindRequest(request.RequestId);
+            var r = FindRequest(@event.RequestId);
             if (r == null) return;
-            r.Hosts.RemoveHost((int)request.SlotIndex);
-            r.Log($"[{request.Block.BlockNumber}] SlotFreed (slotIndex:{request.SlotIndex})");
-            handler.OnSlotFreed(r, request.SlotIndex);
+            r.Hosts.RemoveHost((int)@event.SlotIndex);
+            r.Log($"[{@event.Block.BlockNumber}] SlotFreed (slotIndex:{@event.SlotIndex})");
+            handler.OnSlotFreed(new RequestEvent(@event.Block, r), @event.SlotIndex);
         }
 
         private void ApplyTimeImplicitEvents(ulong blockNumber, DateTime eventsUtc)
@@ -137,7 +150,7 @@ namespace CodexContractsPlugin.ChainMonitor
                     && r.FinishedUtc < eventsUtc)
                 {
                     r.UpdateState(blockNumber, RequestState.Finished);
-                    handler.OnRequestFinished(r);
+                    handler.OnRequestFinished(new RequestEvent(new BlockTimeEntry(blockNumber, eventsUtc), r));
                 }
             }
         }

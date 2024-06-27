@@ -13,34 +13,34 @@ namespace TestNetRewarder
             this.handlers = handlers;
         }
 
-        public void OnNewRequest(IChainStateRequest request)
+        public void OnNewRequest(RequestEvent requestEvent)
         {
-            foreach (var handler in handlers) handler.OnNewRequest(request);
+            foreach (var handler in handlers) handler.OnNewRequest(requestEvent);
         }
 
-        public void OnRequestCancelled(IChainStateRequest request)
+        public void OnRequestCancelled(RequestEvent requestEvent)
         {
-            foreach (var handler in handlers) handler.OnRequestCancelled(request);
+            foreach (var handler in handlers) handler.OnRequestCancelled(requestEvent);
         }
 
-        public void OnRequestFinished(IChainStateRequest request)
+        public void OnRequestFinished(RequestEvent requestEvent)
         {
-            foreach (var handler in handlers) handler.OnRequestFinished(request);
+            foreach (var handler in handlers) handler.OnRequestFinished(requestEvent);
         }
 
-        public void OnRequestFulfilled(IChainStateRequest request)
+        public void OnRequestFulfilled(RequestEvent requestEvent)
         {
-            foreach (var handler in handlers) handler.OnRequestFulfilled(request);
+            foreach (var handler in handlers) handler.OnRequestFulfilled(requestEvent);
         }
 
-        public void OnSlotFilled(IChainStateRequest request, EthAddress host, BigInteger slotIndex)
+        public void OnSlotFilled(RequestEvent requestEvent, EthAddress host, BigInteger slotIndex)
         {
-            foreach (var handler in handlers) handler.OnSlotFilled(request, host, slotIndex);
+            foreach (var handler in handlers) handler.OnSlotFilled(requestEvent, host, slotIndex);
         }
 
-        public void OnSlotFreed(IChainStateRequest request, BigInteger slotIndex)
+        public void OnSlotFreed(RequestEvent requestEvent, BigInteger slotIndex)
         {
-            foreach (var handler in handlers) handler.OnSlotFreed(request, slotIndex);
+            foreach (var handler in handlers) handler.OnSlotFreed(requestEvent, slotIndex);
         }
     }
 }

@@ -23,9 +23,10 @@ namespace TestNetRewarder
             AddBlock("📢 **Error**", error);
         }
 
-        public void OnNewRequest(IChainStateRequest request)
+        public void OnNewRequest(RequestEvent requestEvent)
         {
-            AddRequestBlock(request, "New Request",
+            var request = requestEvent.Request;
+            AddRequestBlock(requestEvent, "New Request",
                 $"Client: {request.Client}",
                 $"Content: {request.Request.Content.Cid}",
                 $"Duration: {BigIntToDuration(request.Request.Ask.Duration)}",
@@ -38,40 +39,40 @@ namespace TestNetRewarder
             );
         }
 
-        public void OnRequestCancelled(IChainStateRequest request)
+        public void OnRequestCancelled(RequestEvent requestEvent)
         {
-            AddRequestBlock(request, "Cancelled");
+            AddRequestBlock(requestEvent, "Cancelled");
         }
 
-        public void OnRequestFinished(IChainStateRequest request)
+        public void OnRequestFinished(RequestEvent requestEvent)
         {
-            AddRequestBlock(request, "Finished");
+            AddRequestBlock(requestEvent, "Finished");
         }
 
-        public void OnRequestFulfilled(IChainStateRequest request)
+        public void OnRequestFulfilled(RequestEvent requestEvent)
         {
-            AddRequestBlock(request, "Started");
+            AddRequestBlock(requestEvent, "Started");
         }
 
-        public void OnSlotFilled(IChainStateRequest request, EthAddress host, BigInteger slotIndex)
+        public void OnSlotFilled(RequestEvent requestEvent, EthAddress host, BigInteger slotIndex)
         {
-            AddRequestBlock(request, "Slot Filled",
+            AddRequestBlock(requestEvent, "Slot Filled",
                 $"Host: {host}",
                 $"Slot Index: {slotIndex}"
             );
         }
 
-        public void OnSlotFreed(IChainStateRequest request, BigInteger slotIndex)
+        public void OnSlotFreed(RequestEvent requestEvent, BigInteger slotIndex)
         {
-            AddRequestBlock(request, "Slot Freed",
+            AddRequestBlock(requestEvent, "Slot Freed",
                 $"Slot Index: {slotIndex}"
             );
         }
 
-        private void AddRequestBlock(IChainStateRequest request, string eventName, params string[] content)
+        private void AddRequestBlock(RequestEvent requestEvent, string eventName, params string[] content)
         {
-            var blockNumber = $"[{request.Request.Block.BlockNumber}]";
-            var title = $"{blockNumber} **{eventName}** `{request.Request.Id}`";
+            var blockNumber = $"[{requestEvent.Block.BlockNumber}]";
+            var title = $"{blockNumber} **{eventName}** `{requestEvent.Request.Request.Id}`";
             AddBlock(title, content);
         }
 
