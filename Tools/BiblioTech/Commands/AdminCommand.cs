@@ -1,4 +1,5 @@
 ﻿using BiblioTech.Options;
+using BiblioTech.Rewards;
 
 namespace BiblioTech.Commands
 {
@@ -10,12 +11,14 @@ namespace BiblioTech.Commands
         private readonly AddSprCommand addSprCommand;
         private readonly ClearSprsCommand clearSprsCommand;
         private readonly GetSprCommand getSprCommand;
+        private readonly LogReplaceCommand logReplaceCommand;
 
-        public AdminCommand(SprCommand sprCommand)
+        public AdminCommand(SprCommand sprCommand, CustomReplacement replacement)
         {
             addSprCommand = new AddSprCommand(sprCommand);
             clearSprsCommand = new ClearSprsCommand(sprCommand);
             getSprCommand = new GetSprCommand(sprCommand);
+            logReplaceCommand = new LogReplaceCommand(replacement);
         }
 
         public override string Name => "admin";
@@ -29,7 +32,8 @@ namespace BiblioTech.Commands
             whoIsCommand,
             addSprCommand,
             clearSprsCommand,
-            getSprCommand
+            getSprCommand,
+            logReplaceCommand
         };
 
         protected override async Task Invoke(CommandContext context)
@@ -52,6 +56,7 @@ namespace BiblioTech.Commands
             await addSprCommand.CommandHandler(context);
             await clearSprsCommand.CommandHandler(context);
             await getSprCommand.CommandHandler(context);
+            await logReplaceCommand.CommandHandler(context);
         }
 
         public class ClearUserAssociationCommand : SubCommandOption
@@ -194,7 +199,7 @@ namespace BiblioTech.Commands
             }
         }
 
-        public class GetSprCommand: SubCommandOption
+        public class GetSprCommand : SubCommandOption
         {
             private readonly SprCommand sprCommand;
 
@@ -208,6 +213,57 @@ namespace BiblioTech.Commands
             protected override async Task onSubCommand(CommandContext context)
             {
                 await context.Followup("SPRs: " + string.Join(", ", sprCommand.Get().Select(s => $"'{s}'")));
+            }
+        }
+
+        public class LogReplaceCommand : SubCommandOption
+        {
+            private readonly CustomReplacement replacement;
+            private readonly StringOption fromOption = new StringOption("from", "string to replace", true);
+            private readonly StringOption toOption = new StringOption("to", "string to replace with", false);
+
+            public LogReplaceCommand(CustomReplacement replacement)
+                : base(name: "logreplace",
+               description: "Replaces all occurances of 'from' with 'to' in ChainEvent messages. Leave 'to' empty to remove a replacement.")
+            {
+                this.replacement = replacement;
+            }
+
+            public override CommandOption[] Options => new[] { fromOption, toOption };
+
+            protected override async Task onSubCommand(CommandContext context)
+            {
+                var from = await fromOption.Parse(context);
+                var to = await toOption.Parse(context);
+
+                if (string.IsNullOrEmpty(from))
+                {
+                    await context.Followup("'from' not received");
+                    return;
+                }
+
+                if (from.Length < 5)
+                {
+                    await context.Followup("'from' must be length 5 or greater.");
+                    return;
+                }
+                
+                if (string.IsNullOrEmpty(to))
+                {
+                    replacement.Remove(from);
+                    await context.Followup($"Replace for '{from}' removed.");
+                }
+                else
+                {
+                    if (to.Length < 5)
+                    {
+                        await context.Followup("'to' must be length 5 or greater.");
+                        return;
+                    }
+
+                    replacement.Add(from, to);
+                    await context.Followup($"Replace added '{from}' -->> '{to}'.");
+                }
             }
         }
     }

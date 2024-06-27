@@ -1,4 +1,5 @@
-﻿using System.Numerics;
+﻿using GethPlugin;
+using System.Numerics;
 
 namespace CodexContractsPlugin.ChainMonitor
 {
@@ -20,7 +21,7 @@ namespace CodexContractsPlugin.ChainMonitor
         {
         }
 
-        public void OnSlotFilled(IChainStateRequest request, BigInteger slotIndex)
+        public void OnSlotFilled(IChainStateRequest request, EthAddress host, BigInteger slotIndex)
         {
         }
 

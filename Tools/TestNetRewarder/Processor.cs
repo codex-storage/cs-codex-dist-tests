@@ -10,7 +10,7 @@ namespace TestNetRewarder
         private readonly RequestBuilder builder;
         private readonly RewardChecker rewardChecker;
         private readonly MarketTracker marketTracker;
-        private readonly BufferLogger bufferLogger;
+        private readonly EventsFormatter eventsFormatter;
         private readonly ChainState chainState;
         private readonly BotClient client;
         private readonly ILog log;
@@ -23,14 +23,15 @@ namespace TestNetRewarder
             builder = new RequestBuilder();
             rewardChecker = new RewardChecker(builder);
             marketTracker = new MarketTracker(config, log);
-            bufferLogger = new BufferLogger();
+            eventsFormatter = new EventsFormatter();
 
             var handler = new ChainChangeMux(
                 rewardChecker.Handler,
-                marketTracker
+                marketTracker,
+                eventsFormatter
             );
 
-            chainState = new ChainState(new LogSplitter(log, bufferLogger), contracts, handler, config.HistoryStartUtc);
+            chainState = new ChainState(log, contracts, handler, config.HistoryStartUtc);
         }
 
         public async Task OnNewSegment(TimeRange timeRange)
@@ -40,9 +41,9 @@ namespace TestNetRewarder
                 chainState.Update(timeRange.To);
 
                 var averages = marketTracker.GetAverages();
-                var lines = RemoveFirstLine(bufferLogger.Get());
+                var events = eventsFormatter.GetEvents();
 
-                var request = builder.Build(averages, lines);
+                var request = builder.Build(averages, events);
                 if (request.HasAny())
                 {
                     await client.SendRewards(request);
@@ -52,16 +53,9 @@ namespace TestNetRewarder
             {
                 var msg = "Exception processing time segment: " + ex;
                 log.Error(msg); 
-                bufferLogger.Error(msg);
+                eventsFormatter.AddError(msg);
                 throw;
             }
-        }
-
-        private string[] RemoveFirstLine(string[] lines)
-        {
-            //if (!lines.Any()) return Array.Empty<string>();
-            //return lines.Skip(1).ToArray();
-            return lines;
         }
     }
 }

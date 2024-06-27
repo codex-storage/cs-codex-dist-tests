@@ -53,11 +53,10 @@ namespace TestNetRewarder
             }
         }
 
-        public void OnSlotFilled(IChainStateRequest request, BigInteger slotIndex)
+        public void OnSlotFilled(IChainStateRequest request, EthAddress host, BigInteger slotIndex)
         {
             if (MeetsRequirements(CheckType.HostFilledSlot, request))
             {
-                var host = request.Hosts.GetHost((int)slotIndex);
                 if (host != null)
                 {
                     GiveReward(reward, host);

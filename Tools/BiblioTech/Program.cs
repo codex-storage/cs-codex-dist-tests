@@ -11,6 +11,7 @@ namespace BiblioTech
     public class Program
     {
         private DiscordSocketClient client = null!;
+        private readonly CustomReplacement replacement = new CustomReplacement();
 
         public static Configuration Config { get; private set; } = null!;
         public static UserRepo UserRepo { get; } = new UserRepo();
@@ -73,13 +74,13 @@ namespace BiblioTech
             var notifyCommand = new NotifyCommand();
             var associateCommand = new UserAssociateCommand(notifyCommand);
             var sprCommand = new SprCommand();
-            var handler = new CommandHandler(Log, client,
+            var handler = new CommandHandler(Log, client, replacement,
                 new GetBalanceCommand(associateCommand),
                 new MintCommand(associateCommand),
                 sprCommand,
                 associateCommand,
                 notifyCommand,
-                new AdminCommand(sprCommand),
+                new AdminCommand(sprCommand, replacement),
                 new MarketCommand()
             );
 
