@@ -16,7 +16,7 @@ namespace MetricsPlugin
             this.tools = tools;
         }
 
-        public RunningContainers CollectMetricsFor(IMetricsScrapeTarget[] targets)
+        public RunningPod CollectMetricsFor(IMetricsScrapeTarget[] targets)
         {
             if (!targets.Any()) throw new ArgumentException(nameof(targets) + " must not be empty.");
 
@@ -25,16 +25,16 @@ namespace MetricsPlugin
             startupConfig.Add(new PrometheusStartupConfig(GeneratePrometheusConfig(targets)));
 
             var workflow = tools.CreateWorkflow();
-            var runningContainers = workflow.Start(1, recipe, startupConfig);
+            var runningContainers = workflow.Start(1, recipe, startupConfig).WaitForOnline();
             if (runningContainers.Containers.Length != 1) throw new InvalidOperationException("Expected only 1 Prometheus container to be created.");
 
             Log("Metrics server started.");
             return runningContainers;
         }
 
-        public MetricsAccess CreateAccessForTarget(RunningContainers metricsContainer, IMetricsScrapeTarget target)
+        public MetricsAccess CreateAccessForTarget(RunningPod metricsPod, IMetricsScrapeTarget target)
         {
-            var metricsQuery = new MetricsQuery(tools, metricsContainer.Containers.Single());
+            var metricsQuery = new MetricsQuery(tools, metricsPod.Containers.Single());
             return new MetricsAccess(metricsQuery, target);
         }
 

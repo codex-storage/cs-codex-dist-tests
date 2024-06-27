@@ -117,9 +117,17 @@ namespace NethereumWorkflow
             }
 
             return new BlockInterval(
+                timeRange: timeRange,
                 from: fromBlock.Value,
                 to: toBlock.Value
             );
+        }
+
+        public BlockTimeEntry GetBlockForNumber(ulong number)
+        {
+            var wrapper = new Web3Wrapper(web3, log);
+            var blockTimeFinder = new BlockTimeFinder(blockCache, wrapper, log);
+            return blockTimeFinder.Get(number);
         }
     }
 }

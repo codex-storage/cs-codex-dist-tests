@@ -68,6 +68,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AutoClient", "Tools\AutoClient\AutoClient.csproj", "{73599F9C-98BB-4C6A-9D7D-7C50FBF2993B}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "KeyMaker", "Tools\KeyMaker\KeyMaker.csproj", "{B57A4789-D8EF-42E0-8D20-581C4057FFD3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -178,6 +180,10 @@ Global
 		{73599F9C-98BB-4C6A-9D7D-7C50FBF2993B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{73599F9C-98BB-4C6A-9D7D-7C50FBF2993B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{73599F9C-98BB-4C6A-9D7D-7C50FBF2993B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B57A4789-D8EF-42E0-8D20-581C4057FFD3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B57A4789-D8EF-42E0-8D20-581C4057FFD3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B57A4789-D8EF-42E0-8D20-581C4057FFD3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B57A4789-D8EF-42E0-8D20-581C4057FFD3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -209,6 +215,7 @@ Global
 		{B07820C4-309F-4454-BCC1-1D4902C9C67B} = {81AE04BC-CBFA-4E6F-B039-8208E9AFAAE7}
 		{88C212E9-308A-46A4-BAAD-468E8EBD8EDF} = {8F1F1C2A-E313-4E0C-BE40-58FB0BA91124}
 		{73599F9C-98BB-4C6A-9D7D-7C50FBF2993B} = {7591C5B3-D86E-4AE4-8ED2-B272D17FE7E3}
+		{B57A4789-D8EF-42E0-8D20-581C4057FFD3} = {7591C5B3-D86E-4AE4-8ED2-B272D17FE7E3}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {237BF0AA-9EC4-4659-AD9A-65DEB974250C}

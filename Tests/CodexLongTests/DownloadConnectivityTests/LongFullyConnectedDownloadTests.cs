@@ -15,9 +15,9 @@ namespace CodexLongTests.DownloadConnectivityTests
             [Values(10, 15, 20)] int numberOfNodes,
             [Values(10, 100)] int sizeMBs)
         {
-            for (var i = 0; i < numberOfNodes; i++) AddCodex();
+            var nodes = StartCodex(numberOfNodes);
 
-            CreatePeerDownloadTestHelpers().AssertFullDownloadInterconnectivity(GetAllOnlineCodexNodes(), sizeMBs.MB());
+            CreatePeerDownloadTestHelpers().AssertFullDownloadInterconnectivity(nodes, sizeMBs.MB());
         }
     }
 }

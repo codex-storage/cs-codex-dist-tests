@@ -13,9 +13,9 @@ namespace DiscordRewards
     public enum CheckType
     {
         Uninitialized,
-        FilledSlot,
-        FinishedSlot,
-        PostedContract,
-        StartedContract,
+        HostFilledSlot,
+        HostFinishedSlot,
+        ClientPostedContract,
+        ClientStartedContract,
     }
 }

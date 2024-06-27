@@ -11,7 +11,6 @@ namespace KubernetesWorkflow
         private readonly string podName;
         private readonly string recipeName;
         private readonly string k8sNamespace;
-        private ILogHandler? logHandler;
         private CancellationTokenSource cts;
         private Task? worker;
         private Exception? workerException;
@@ -27,11 +26,10 @@ namespace KubernetesWorkflow
             cts = new CancellationTokenSource();
         }
 
-        public void Start(ILogHandler logHandler)
+        public void Start()
         {
             if (worker != null) throw new InvalidOperationException();
 
-            this.logHandler = logHandler;
             cts = new CancellationTokenSource();
             worker = Task.Run(Worker);
         }
@@ -50,7 +48,9 @@ namespace KubernetesWorkflow
         public bool HasContainerCrashed()
         {
             using var client = new Kubernetes(config);
-            return HasContainerBeenRestarted(client);
+            var result = HasContainerBeenRestarted(client);
+            if (result) DownloadCrashedContainerLogs(client);
+            return result;
         }
 
         private void Worker()
@@ -83,14 +83,16 @@ namespace KubernetesWorkflow
         private bool HasContainerBeenRestarted(Kubernetes client)
         {
             var podInfo = client.ReadNamespacedPod(podName, k8sNamespace);
-            return podInfo.Status.ContainerStatuses.Any(c => c.RestartCount > 0);
+            var result = podInfo.Status.ContainerStatuses.Any(c => c.RestartCount > 0);
+            if (result) log.Log("Pod crash detected for " + containerName);
+            return result;
         }
 
         private void DownloadCrashedContainerLogs(Kubernetes client)
         {
-            log.Log("Pod crash detected for " + containerName);
             using var stream = client.ReadNamespacedPodLog(podName, k8sNamespace, recipeName, previous: true);
-            logHandler!.Log(stream);
+            var handler = new WriteToFileLogHandler(log, "Crash detected for " + containerName);
+            handler.Log(stream);
         }
     }
 }

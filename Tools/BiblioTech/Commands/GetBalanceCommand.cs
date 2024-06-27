@@ -31,8 +31,14 @@ namespace BiblioTech.Commands
                 return;
             }
 
-            var eth = gethNode.GetEthBalance(addr);
-            var testTokens = contracts.GetTestTokenBalance(addr);
+            var eth = 0.Eth();
+            var testTokens = 0.TstWei();
+
+            await Task.Run(() =>
+            {
+                eth = gethNode.GetEthBalance(addr);
+                testTokens = contracts.GetTestTokenBalance(addr);
+            });
 
             await context.Followup($"{context.Command.User.Username} has {eth} and {testTokens}.");
         }

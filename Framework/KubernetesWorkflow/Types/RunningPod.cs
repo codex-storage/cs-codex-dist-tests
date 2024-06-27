@@ -2,15 +2,15 @@
 
 namespace KubernetesWorkflow.Types
 {
-    public class RunningContainers
+    public class RunningPod
     {
-        public RunningContainers(StartupConfig startupConfig, StartResult startResult, RunningContainer[] containers)
+        public RunningPod(StartupConfig startupConfig, StartResult startResult, RunningContainer[] containers)
         {
             StartupConfig = startupConfig;
             StartResult = startResult;
             Containers = containers;
 
-            foreach (var c in containers) c.RunningContainers = this;
+            foreach (var c in containers) c.RunningPod = this;
         }
 
         public StartupConfig StartupConfig { get; }
@@ -20,7 +20,7 @@ namespace KubernetesWorkflow.Types
         [JsonIgnore]
         public string Name
         {
-            get { return $"{Containers.Length}x '{Containers.First().Name}'"; }
+            get { return $"'{string.Join("&", Containers.Select(c => c.Name).ToArray())}'"; }
         }
 
         public string Describe()
@@ -31,12 +31,7 @@ namespace KubernetesWorkflow.Types
 
     public static class RunningContainersExtensions
     {
-        public static RunningContainer[] Containers(this RunningContainers[] runningContainers)
-        {
-            return runningContainers.SelectMany(c => c.Containers).ToArray();
-        }
-
-        public static string Describe(this RunningContainers[] runningContainers)
+        public static string Describe(this RunningPod[] runningContainers)
         {
             return string.Join(",", runningContainers.Select(c => c.Describe()));
         }

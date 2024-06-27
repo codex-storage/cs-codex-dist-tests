@@ -24,7 +24,7 @@ namespace BiblioTech
 
         public bool IsAdminChannel(IChannel channel)
         {
-            return channel.Name == Program.Config.AdminChannelName;
+            return channel.Id == Program.Config.AdminChannelId;
         }
 
         public ISocketMessageChannel GetAdminChannel()
@@ -45,7 +45,7 @@ namespace BiblioTech
         private void UpdateAdminIds()
         {
             lastUpdate = DateTime.UtcNow;
-            var adminRole = guild.Roles.Single(r => r.Name == Program.Config.AdminRoleName);
+            var adminRole = guild.Roles.Single(r => r.Id == Program.Config.AdminRoleId);
             adminIds = adminRole.Members.Select(m => m.Id).ToArray();
         }
     }

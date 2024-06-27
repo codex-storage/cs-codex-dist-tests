@@ -16,6 +16,7 @@ namespace KubernetesWorkflow
         {
             var config = GetConfig();
             UpdateHostAddress(config);
+            config.SkipTlsVerify = true; // Required for operation on Wings cluster.
             return config;
         }
 

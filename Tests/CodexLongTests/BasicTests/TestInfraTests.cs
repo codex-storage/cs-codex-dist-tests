@@ -6,10 +6,12 @@ namespace CodexLongTests.BasicTests
 {
     public class TestInfraTests : CodexDistTest
     {
-        [Test, UseLongTimeouts]
+        [Test]
+        [UseLongTimeouts]
+        [Ignore("Not supported atm")]
         public void TestInfraShouldHave1000AddressSpacesPerPod()
         {
-            var group = AddCodex(1000, s => s.EnableMetrics());
+            var group = StartCodex(1000, s => s.EnableMetrics());
 
             var nodeIds = group.Select(n => n.GetDebugInfo().Id).ToArray();
 
@@ -17,12 +19,14 @@ namespace CodexLongTests.BasicTests
                 "Not all created nodes provided a unique id.");
         }
 
-        [Test, UseLongTimeouts]
+        [Test]
+        [UseLongTimeouts]
+        [Ignore("Not supported atm")]
         public void TestInfraSupportsManyConcurrentPods()
         {
             for (var i = 0; i < 20; i++)
             {
-                var n = AddCodex();
+                var n = StartCodex();
 
                 Assert.That(!string.IsNullOrEmpty(n.GetDebugInfo().Id));
             }

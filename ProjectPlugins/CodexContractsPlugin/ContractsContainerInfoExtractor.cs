@@ -1,4 +1,5 @@
-﻿using KubernetesWorkflow;
+﻿using CodexContractsPlugin.Marketplace;
+using KubernetesWorkflow;
 using KubernetesWorkflow.Types;
 using Logging;
 using Newtonsoft.Json;
@@ -53,7 +54,18 @@ namespace CodexContractsPlugin
 
             var artifact = JObject.Parse(json);
             var abi = artifact["abi"];
-            return abi!.ToString(Formatting.None);
+            var byteCode = artifact["bytecode"];
+            var abiResult = abi!.ToString(Formatting.None);
+            var byteCodeResult = byteCode!.ToString(Formatting.None);
+
+            if (byteCodeResult
+                .ToLowerInvariant()
+                .Replace("\"", "") != MarketplaceDeploymentBase.BYTECODE.ToLowerInvariant())
+            {
+                throw new Exception("BYTECODE in CodexContractsPlugin does not match BYTECODE deployed by container. Update Marketplace.cs generated code?");
+            }
+
+            return abiResult;
         }
 
         private static string Retry(Func<string> fetch)

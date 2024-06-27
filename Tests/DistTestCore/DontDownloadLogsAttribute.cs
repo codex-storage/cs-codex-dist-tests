@@ -3,11 +3,11 @@
 namespace DistTestCore
 {
     [AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
-    public class DontDownloadLogsOnFailureAttribute : PropertyAttribute
+    public class DontDownloadLogsAttribute : PropertyAttribute
     {
         public const string DontDownloadKey = "DontDownloadLogs";
 
-        public DontDownloadLogsOnFailureAttribute()
+        public DontDownloadLogsAttribute()
             : base(DontDownloadKey)
         {
         }

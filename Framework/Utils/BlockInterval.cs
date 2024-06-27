@@ -2,7 +2,7 @@
 {
     public class BlockInterval
     {
-        public BlockInterval(ulong from, ulong to)
+        public BlockInterval(TimeRange timeRange, ulong from, ulong to)
         {
             if (from < to)
             {
@@ -14,10 +14,13 @@
                 From = to;
                 To = from;
             }
+            TimeRange = timeRange;
         }
 
         public ulong From { get; }
         public ulong To { get; }
+        public TimeRange TimeRange { get; }
+        public ulong NumberOfBlocks => To - From;
 
         public override string ToString()
         {

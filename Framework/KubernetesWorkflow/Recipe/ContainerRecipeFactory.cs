@@ -105,7 +105,7 @@ namespace KubernetesWorkflow.Recipe
 
         protected void AddVolume(string name, string mountPath, string? subPath = null, string? secret = null, string? hostPath = null)
         {
-            var size = 10.MB().ToSuffixNotation();
+            var size = 10.MB().SizeInBytes.ToString();
             volumeMounts.Add(new VolumeMount(name, mountPath, subPath, size, secret, hostPath));
         }
 
@@ -114,7 +114,7 @@ namespace KubernetesWorkflow.Recipe
             volumeMounts.Add(new VolumeMount(
                 $"autovolume-{Guid.NewGuid().ToString().ToLowerInvariant()}",
                 mountPath,
-                resourceQuantity: volumeSize.ToSuffixNotation()));
+                resourceQuantity: volumeSize.SizeInBytes.ToString()));
         }
 
         protected void Additional(object userData)

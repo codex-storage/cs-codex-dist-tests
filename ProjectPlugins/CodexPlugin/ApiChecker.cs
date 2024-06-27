@@ -9,7 +9,7 @@ namespace CodexPlugin
     public class ApiChecker
     {
         // <INSERT-OPENAPI-YAML-HASH>
-        private const string OpenApiYamlHash = "63-7F-46-5E-2C-60-7A-BD-0C-EC-32-87-61-1B-79-FA-C2-EF-73-81-BA-FA-28-77-33-02-81-30-80-5D-00-97";
+        private const string OpenApiYamlHash = "67-76-AB-FC-54-4F-EB-81-F5-E4-F8-27-DF-82-92-41-63-A5-EA-1B-17-14-0C-BE-20-9C-B3-DF-CE-E4-AA-38";
         private const string OpenApiFilePath = "/codex/openapi.yaml";
         private const string DisableEnvironmentVariable = "CODEXPLUGIN_DISABLE_APICHECK";
 
@@ -38,7 +38,7 @@ namespace CodexPlugin
             if (string.IsNullOrEmpty(OpenApiYamlHash)) throw new Exception("OpenAPI yaml hash was not inserted by pre-build trigger.");
         }
 
-        public void CheckCompatibility(RunningContainers[] containers)
+        public void CheckCompatibility(RunningPod[] containers)
         {
             if (checkPassed) return;
 

@@ -7,7 +7,8 @@ namespace CodexPlugin
 {
     public class CodexContainerRecipe : ContainerRecipeFactory
     {
-        private const string DefaultDockerImage = "codexstorage/nim-codex:sha-f2f1dd5-dist-tests";
+        private const string DefaultDockerImage = "codexstorage/nim-codex:sha-471ebb2-dist-tests";
+
         public const string ApiPortTag = "codex_api_port";
         public const string ListenPortTag = "codex_listen_port";
         public const string MetricsPortTag = "codex_metrics_port";
@@ -108,8 +109,9 @@ namespace CodexPlugin
 
                 // Custom scripting in the Codex test image will write this variable to a private-key file,
                 // and pass the correct filename to Codex.
-                AddEnvVar("PRIV_KEY", marketplaceSetup.EthAccount.PrivateKey);
-                Additional(marketplaceSetup.EthAccount);
+                var account = marketplaceSetup.EthAccountSetup.GetNew();
+                AddEnvVar("PRIV_KEY", account.PrivateKey);
+                Additional(account);
 
                 SetCommandOverride(marketplaceSetup);
                 if (marketplaceSetup.IsValidator)
@@ -118,7 +120,7 @@ namespace CodexPlugin
                 }
             }
 
-            if(!string.IsNullOrEmpty(config.NameOverride))
+            if (!string.IsNullOrEmpty(config.NameOverride))
             {
                 AddEnvVar("CODEX_NODENAME", config.NameOverride);
             }
@@ -158,7 +160,7 @@ namespace CodexPlugin
 
         private ByteSize GetVolumeCapacity(CodexStartupConfig config)
         {
-            if (config.StorageQuota != null) return config.StorageQuota;
+            if (config.StorageQuota != null) return config.StorageQuota.Multiply(1.2);
             // Default Codex quota: 8 Gb, using +20% to be safe.
             return 8.GB().Multiply(1.2);
         }

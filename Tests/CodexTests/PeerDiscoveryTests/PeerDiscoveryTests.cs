@@ -12,7 +12,7 @@ namespace CodexTests.PeerDiscoveryTests
         public void CanReportUnknownPeerId()
         {
             var unknownId = "16Uiu2HAkv2CHWpff3dj5iuVNERAp8AGKGNgpGjPexJZHSqUstfsK";
-            var node = AddCodex();
+            var node = StartCodex();
 
             var result = node.GetDebugPeer(unknownId);
             Assert.That(result.IsPeerFound, Is.False);
@@ -21,9 +21,9 @@ namespace CodexTests.PeerDiscoveryTests
         [Test]
         public void MetricsDoesNotInterfereWithPeerDiscovery()
         {
-            AddCodex(2, s => s.EnableMetrics());
+            var nodes = StartCodex(2, s => s.EnableMetrics());
 
-            AssertAllNodesConnected();
+            AssertAllNodesConnected(nodes);
         }
 
         [Test]
@@ -31,10 +31,10 @@ namespace CodexTests.PeerDiscoveryTests
         {
             var geth = Ci.StartGethNode(s => s.IsMiner());
             var contracts = Ci.StartCodexContracts(geth);
-            AddCodex(2, s => s.EnableMarketplace(geth, contracts, m => m
-                .WithInitial(10.Eth(), 1000.TestTokens())));
+            var nodes = StartCodex(2, s => s.EnableMarketplace(geth, contracts, m => m
+                .WithInitial(10.Eth(), 1000.TstWei())));
 
-            AssertAllNodesConnected();
+            AssertAllNodesConnected(nodes);
         }
 
         [TestCase(2)]
@@ -42,16 +42,17 @@ namespace CodexTests.PeerDiscoveryTests
         [TestCase(10)]
         public void VariableNodes(int number)
         {
-            AddCodex(number);
+            var nodes = StartCodex(number);
 
-            AssertAllNodesConnected();
+            AssertAllNodesConnected(nodes);
         }
 
-        private void AssertAllNodesConnected()
+        private void AssertAllNodesConnected(IEnumerable<ICodexNode> nodes)
         {
-            var allNodes = GetAllOnlineCodexNodes();
-            CreatePeerConnectionTestHelpers().AssertFullyConnected(allNodes);
-            CheckRoutingTable(allNodes);
+            nodes = nodes.Concat(new[] { BootstrapNode }).ToArray()!;
+
+            CreatePeerConnectionTestHelpers().AssertFullyConnected(nodes);
+            CheckRoutingTable(nodes);
         }
 
         private void CheckRoutingTable(IEnumerable<ICodexNode> allNodes)

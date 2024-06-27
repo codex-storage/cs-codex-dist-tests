@@ -1,35 +1,56 @@
 ﻿#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 using GethPlugin;
+using NethereumWorkflow.BlockUtils;
+using Newtonsoft.Json;
 
 namespace CodexContractsPlugin.Marketplace
 {
-    public partial class Request : RequestBase
+    public interface IHasBlock
     {
-        public ulong BlockNumber { get; set; }
+        BlockTimeEntry Block { get; set; }
+    }
+
+    public partial class Request : RequestBase, IHasBlock
+    {
+        [JsonIgnore]
+        public BlockTimeEntry Block { get; set; }
         public byte[] RequestId { get; set; }
 
         public EthAddress ClientAddress { get { return new EthAddress(Client); } }
+
+        [JsonIgnore]
+        public string Id
+        {
+            get
+            {
+                return BitConverter.ToString(RequestId).Replace("-", "").ToLowerInvariant();
+            }
+        }
     }
 
-    public partial class RequestFulfilledEventDTO
+    public partial class RequestFulfilledEventDTO : IHasBlock
     {
-        public ulong BlockNumber { get; set; }
+        [JsonIgnore]
+        public BlockTimeEntry Block { get; set; }
     }
 
-    public partial class RequestCancelledEventDTO
+    public partial class RequestCancelledEventDTO : IHasBlock
     {
-        public ulong BlockNumber { get; set; }
+        [JsonIgnore]
+        public BlockTimeEntry Block { get; set; }
     }
 
-    public partial class SlotFilledEventDTO
+    public partial class SlotFilledEventDTO : IHasBlock
     {
-        public ulong BlockNumber { get; set; }
+        [JsonIgnore]
+        public BlockTimeEntry Block { get; set; }
         public EthAddress Host { get; set; }
     }
 
-    public partial class SlotFreedEventDTO
+    public partial class SlotFreedEventDTO : IHasBlock
     {
-        public ulong BlockNumber { get; set; }
+        [JsonIgnore]
+        public BlockTimeEntry Block { get; set; }
     }
 }
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.

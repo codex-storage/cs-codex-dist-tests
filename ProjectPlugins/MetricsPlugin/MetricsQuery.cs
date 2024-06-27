@@ -1,4 +1,5 @@
 ﻿using Core;
+using IdentityModel;
 using KubernetesWorkflow.Types;
 using Logging;
 using System.Globalization;
@@ -176,6 +177,41 @@ namespace MetricsPlugin
         public override string ToString()
         {
             return "[" + string.Join(',', Sets.Select(s => s.ToString())) + "]";
+        }
+
+        public string AsCsv()
+        {
+            var allTimestamps = Sets.SelectMany(s => s.Values.Select(v => v.Timestamp)).Distinct().OrderDescending().ToArray();
+
+            var lines = new List<string>();
+            MakeLine(lines, e =>
+            {
+                e.Add("Metrics");
+                foreach (var ts in allTimestamps) e.Add(ts.ToEpochTime().ToString());
+            });
+
+            foreach (var set in Sets)
+            {
+                MakeLine(lines, e =>
+                {
+                    e.Add(set.Name);
+                    foreach (var ts in allTimestamps)
+                    {
+                        var value = set.Values.SingleOrDefault(v => v.Timestamp == ts);
+                        if (value == null) e.Add(" ");
+                        else e.Add(value.Value.ToString());
+                    }
+                });
+            }
+
+            return string.Join(Environment.NewLine, lines.ToArray());
+        }
+
+        private void MakeLine(List<string> lines, Action<List<string>> values)
+        {
+            var list = new List<string>();
+            values(list);
+            lines.Add(string.Join(",", list));
         }
     }
 

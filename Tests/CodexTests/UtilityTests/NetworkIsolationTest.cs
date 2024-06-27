@@ -3,7 +3,7 @@ using DistTestCore;
 using NUnit.Framework;
 using Utils;
 
-namespace CodexTests.BasicTests
+namespace CodexTests.UtilityTests
 {
     // Warning!
     // This is a test to check network-isolation in the test-infrastructure.
@@ -19,7 +19,7 @@ namespace CodexTests.BasicTests
         {
             node = Ci.StartCodexNode();
 
-            Time.WaitUntil(() => node == null, TimeSpan.FromMinutes(5), TimeSpan.FromSeconds(5));
+            Time.WaitUntil(() => node == null, TimeSpan.FromMinutes(5), TimeSpan.FromSeconds(5), nameof(SetUpANodeAndWait));
         }
 
         [Test]
@@ -27,7 +27,7 @@ namespace CodexTests.BasicTests
         {
             var myNode = Ci.StartCodexNode();
 
-            Time.WaitUntil(() => node != null, TimeSpan.FromMinutes(1), TimeSpan.FromSeconds(5));
+            Time.WaitUntil(() => node != null, TimeSpan.FromMinutes(1), TimeSpan.FromSeconds(5), nameof(ForeignNodeConnects));
 
             try
             {

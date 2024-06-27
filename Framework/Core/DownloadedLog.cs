@@ -1,9 +1,11 @@
-﻿using Logging;
+﻿using KubernetesWorkflow;
+using Logging;
 
 namespace Core
 {
     public interface IDownloadedLog
     {
+        void IterateLines(Action<string> action);
         string[] GetLinesContaining(string expectedString);
         string[] FindLinesThatContain(params string[] tags);
         void DeleteFile();
@@ -13,9 +15,22 @@ namespace Core
     {
         private readonly LogFile logFile;
 
-        internal DownloadedLog(LogFile logFile)
+        internal DownloadedLog(WriteToFileLogHandler logHandler)
         {
-            this.logFile = logFile;
+            logFile = logHandler.LogFile;
+        }
+
+        public void IterateLines(Action<string> action)
+        {
+            using var file = File.OpenRead(logFile.FullFilename);
+            using var streamReader = new StreamReader(file);
+
+            var line = streamReader.ReadLine();
+            while (line != null)
+            {
+                action(line);
+                line = streamReader.ReadLine();
+            }
         }
 
         public string[] GetLinesContaining(string expectedString)

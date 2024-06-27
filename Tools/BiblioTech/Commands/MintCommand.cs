@@ -33,8 +33,14 @@ namespace BiblioTech.Commands
 
             var report = new List<string>();
 
-            var sentEth = ProcessEth(gethNode, addr, report);
-            var mintedTokens = ProcessTokens(contracts, addr, report);
+            Transaction<Ether>? sentEth = null;
+            Transaction<TestToken>? mintedTokens = null;
+
+            await Task.Run(() =>
+            {
+                sentEth = ProcessEth(gethNode, addr, report);
+                mintedTokens = ProcessTokens(contracts, addr, report);
+            });
 
             Program.UserRepo.AddMintEventForUser(userId, addr, sentEth, mintedTokens);
 
@@ -45,7 +51,7 @@ namespace BiblioTech.Commands
         {
             if (ShouldMintTestTokens(contracts, addr))
             {
-                var tokens = Program.Config.MintTT.TestTokens();
+                var tokens = Program.Config.MintTT.TstWei();
                 var transaction = contracts.MintTestTokens(addr, tokens);
                 report.Add($"Minted {tokens} {FormatTransactionLink(transaction)}");
                 return new Transaction<TestToken>(tokens, transaction);
@@ -71,7 +77,7 @@ namespace BiblioTech.Commands
         private bool ShouldMintTestTokens(ICodexContracts contracts, EthAddress addr)
         {
             var testTokens = contracts.GetTestTokenBalance(addr);
-            return testTokens.Amount < Program.Config.MintTT;
+            return testTokens < Program.Config.MintTT.TstWei();
         }
 
         private bool ShouldSendEth(IGethNode gethNode, EthAddress addr)

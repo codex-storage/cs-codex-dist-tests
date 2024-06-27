@@ -7,7 +7,7 @@ namespace CodexDiscordBotPlugin
     public class RewarderBotContainerRecipe : ContainerRecipeFactory
     {
         public override string AppName => "discordbot-rewarder";
-        public override string Image => "codexstorage/codex-rewarderbot:sha-2ab84e2";
+        public override string Image => "codexstorage/codex-rewarderbot:sha-8033da1";
 
         protected override void Initialize(StartupConfig startupConfig)
         {
@@ -17,7 +17,7 @@ namespace CodexDiscordBotPlugin
 
             AddEnvVar("DISCORDBOTHOST", config.DiscordBotHost);
             AddEnvVar("DISCORDBOTPORT", config.DiscordBotPort.ToString());
-            AddEnvVar("INTERVALMINUTES", config.IntervalMinutes);
+            AddEnvVar("INTERVALMINUTES", config.IntervalMinutes.ToString());
             var offset = new DateTimeOffset(config.HistoryStartUtc);
             AddEnvVar("CHECKHISTORY", offset.ToUnixTimeSeconds().ToString());
 

@@ -19,7 +19,7 @@ namespace CodexPlugin
             apiChecker = new ApiChecker(pluginTools);
         }
 
-        public RunningContainers[] BringOnline(CodexSetup codexSetup)
+        public RunningPod[] BringOnline(CodexSetup codexSetup)
         {
             LogSeparator();
             Log($"Starting {codexSetup.Describe()}...");
@@ -33,15 +33,15 @@ namespace CodexPlugin
             foreach (var rc in containers)
             {
                 var podInfo = GetPodInfo(rc);
-                var podInfos = string.Join(", ", rc.Containers.Select(c => $"Container: '{c.Name}' runs at '{podInfo.K8SNodeName}'={podInfo.Ip}"));
-                Log($"Started {codexSetup.NumberOfNodes} nodes of image '{containers.Containers().First().Recipe.Image}'. ({podInfos})");
+                var podInfos = string.Join(", ", rc.Containers.Select(c => $"Container: '{c.Name}' PodLabel: '{c.RunningPod.StartResult.Deployment.PodLabel}' runs at '{podInfo.K8SNodeName}'={podInfo.Ip}"));
+                Log($"Started {codexSetup.NumberOfNodes} nodes of image '{containers.First().Containers.First().Recipe.Image}'. ({podInfos})");
             }
             LogSeparator();
 
             return containers;
         }
 
-        public ICodexNodeGroup WrapCodexContainers(CoreInterface coreInterface, RunningContainers[] containers)
+        public ICodexNodeGroup WrapCodexContainers(CoreInterface coreInterface, RunningPod[] containers)
         {
             var codexNodeFactory = new CodexNodeFactory(pluginTools);
 
@@ -65,6 +65,14 @@ namespace CodexPlugin
             Log("Stopped.");
         }
 
+        public void Stop(RunningPod pod, bool waitTillStopped)
+        {
+            Log($"Stopping node...");
+            var workflow = pluginTools.CreateWorkflow();
+            workflow.Stop(pod, waitTillStopped);
+            Log("Stopped.");
+        }
+
         public string GetCodexId()
         {
             if (versionResponse != null) return versionResponse.Version;
@@ -85,24 +93,27 @@ namespace CodexPlugin
             return startupConfig;
         }
 
-        private RunningContainers[] StartCodexContainers(StartupConfig startupConfig, int numberOfNodes, ILocation location)
+        private RunningPod[] StartCodexContainers(StartupConfig startupConfig, int numberOfNodes, ILocation location)
         {
-            var result = new List<RunningContainers>();
+            var futureContainers = new List<FutureContainers>();
             for (var i = 0; i < numberOfNodes; i++)
             {
                 var workflow = pluginTools.CreateWorkflow();
-                result.Add(workflow.Start(1, location, recipe, startupConfig));
+                futureContainers.Add(workflow.Start(1, location, recipe, startupConfig));
             }
-            return result.ToArray();
+
+            return futureContainers
+                .Select(f => f.WaitForOnline())
+                .ToArray();
         }
 
-        private PodInfo GetPodInfo(RunningContainers rc)
+        private PodInfo GetPodInfo(RunningPod rc)
         {
             var workflow = pluginTools.CreateWorkflow();
             return workflow.GetPodInfo(rc);
         }
 
-        private CodexNodeGroup CreateCodexGroup(CoreInterface coreInterface, RunningContainers[] runningContainers, CodexNodeFactory codexNodeFactory)
+        private CodexNodeGroup CreateCodexGroup(CoreInterface coreInterface, RunningPod[] runningContainers, CodexNodeFactory codexNodeFactory)
         {
             var group = new CodexNodeGroup(this, pluginTools, runningContainers, codexNodeFactory);
 
@@ -119,10 +130,10 @@ namespace CodexPlugin
             return group;
         }
 
-        private void CodexNodesNotOnline(CoreInterface coreInterface, RunningContainers[] runningContainers)
+        private void CodexNodesNotOnline(CoreInterface coreInterface, RunningPod[] runningContainers)
         {
             Log("Codex nodes failed to start");
-            foreach (var container in runningContainers.Containers()) coreInterface.DownloadLog(container);
+            foreach (var container in runningContainers.First().Containers) coreInterface.DownloadLog(container);
         }
 
         private void LogSeparator()

@@ -48,7 +48,7 @@ namespace CodexLongTests.BasicTests
 
             var expectedFile = GenerateTestFile(sizeMB);
 
-            var node = AddCodex(s => s.WithStorageQuota((size + 10).MB()));
+            var node = StartCodex(s => s.WithStorageQuota((size + 10).MB()));
 
             var uploadStart = DateTime.UtcNow;
             var cid = node.UploadFile(expectedFile);

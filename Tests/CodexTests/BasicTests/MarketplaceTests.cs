@@ -13,42 +13,42 @@ namespace CodexTests.BasicTests
         [Test]
         public void MarketplaceExample()
         {
-            var hostInitialBalance = 234.TestTokens();
-            var clientInitialBalance = 100000.TestTokens();
+            var hostInitialBalance = 234.TstWei();
+            var clientInitialBalance = 100000.TstWei();
             var fileSize = 10.MB();
 
             var geth = Ci.StartGethNode(s => s.IsMiner().WithName("disttest-geth"));
             var contracts = Ci.StartCodexContracts(geth);
+            
+            var numberOfHosts = 5;
+            var hosts = StartCodex(numberOfHosts, s => s
+                .WithName("Host")
+                .WithLogLevel(CodexLogLevel.Trace, new CodexLogCustomTopics(CodexLogLevel.Error, CodexLogLevel.Error, CodexLogLevel.Warn)
+                {
+                    ContractClock = CodexLogLevel.Trace,
+                })
+                .WithStorageQuota(11.GB())
+                .EnableMarketplace(geth, contracts, m => m
+                    .WithInitial(10.Eth(), hostInitialBalance)
+                    .AsStorageNode()
+                    .AsValidator()));
 
-            var numberOfHosts = 3;
-            for (var i = 0; i < numberOfHosts; i++)
+            foreach (var host in hosts)
             {
-                var host = AddCodex(s => s
-                    .WithName("Host")
-                    .WithLogLevel(CodexLogLevel.Trace, new CodexLogCustomTopics(CodexLogLevel.Error, CodexLogLevel.Error, CodexLogLevel.Warn)
-                    {
-                        ContractClock = CodexLogLevel.Trace,
-                    })
-                    .WithStorageQuota(11.GB())
-                    .EnableMarketplace(geth, contracts, m => m
-                        .WithInitial(10.Eth(), hostInitialBalance)
-                        .AsStorageNode()
-                        .AsValidator()));
-
                 AssertBalance(contracts, host, Is.EqualTo(hostInitialBalance));
 
                 var availability = new StorageAvailability(
                     totalSpace: 10.GB(),
                     maxDuration: TimeSpan.FromMinutes(30),
-                    minPriceForTotalSpace: 1.TestTokens(),
-                    maxCollateral: 20.TestTokens()
+                    minPriceForTotalSpace: 1.TstWei(),
+                    maxCollateral: 20.TstWei()
                 );
                 host.Marketplace.MakeStorageAvailable(availability);
             }
 
             var testFile = GenerateTestFile(fileSize);
 
-            var client = AddCodex(s => s
+            var client = StartCodex(s => s
                 .WithName("Client")
                 .EnableMarketplace(geth, contracts, m => m
                     .WithInitial(10.Eth(), clientInitialBalance)));
@@ -59,13 +59,13 @@ namespace CodexTests.BasicTests
 
             var purchase = new StoragePurchaseRequest(contentId)
             {
-                PricePerSlotPerSecond = 2.TestTokens(),
-                RequiredCollateral = 10.TestTokens(),
+                PricePerSlotPerSecond = 2.TstWei(),
+                RequiredCollateral = 10.TstWei(),
                 MinRequiredNumberOfNodes = 5,
                 NodeFailureTolerance = 2,
                 ProofProbability = 5,
-                Duration = TimeSpan.FromMinutes(5),
-                Expiry = TimeSpan.FromMinutes(4)
+                Duration = TimeSpan.FromMinutes(6),
+                Expiry = TimeSpan.FromMinutes(5)
             };
 
             var purchaseContract = client.Marketplace.RequestStorage(purchase);
@@ -84,17 +84,57 @@ namespace CodexTests.BasicTests
             Assert.That(contracts.GetRequestState(request), Is.EqualTo(RequestState.Finished));
         }
 
+        [Test]
+        public void CanDownloadContentFromContractCid()
+        {
+            var fileSize = 10.MB();
+            var geth = Ci.StartGethNode(s => s.IsMiner().WithName("disttest-geth"));
+            var contracts = Ci.StartCodexContracts(geth);
+            var testFile = GenerateTestFile(fileSize);
+
+            var client = StartCodex(s => s
+                .WithName("Client")
+                .EnableMarketplace(geth, contracts, m => m
+                    .WithInitial(10.Eth(), 10.Tst())));
+
+            var uploadCid = client.UploadFile(testFile);
+
+            var purchase = new StoragePurchaseRequest(uploadCid)
+            {
+                PricePerSlotPerSecond = 2.TstWei(),
+                RequiredCollateral = 10.TstWei(),
+                MinRequiredNumberOfNodes = 5,
+                NodeFailureTolerance = 2,
+                ProofProbability = 5,
+                Duration = TimeSpan.FromMinutes(5),
+                Expiry = TimeSpan.FromMinutes(4)
+            };
+
+            var purchaseContract = client.Marketplace.RequestStorage(purchase);
+            var contractCid = purchaseContract.ContentId;
+            Assert.That(uploadCid.Id, Is.Not.EqualTo(contractCid.Id));
+
+            // Download both from client.
+            testFile.AssertIsEqual(client.DownloadContent(uploadCid));
+            testFile.AssertIsEqual(client.DownloadContent(contractCid));
+
+            // Download both from another node.
+            var downloader = StartCodex(s => s.WithName("Downloader"));
+            testFile.AssertIsEqual(downloader.DownloadContent(uploadCid));
+            testFile.AssertIsEqual(downloader.DownloadContent(contractCid));
+        }
+
         private void WaitForAllSlotFilledEvents(ICodexContracts contracts, StoragePurchaseRequest purchase, IGethNode geth)
         {
             Time.Retry(() =>
             {
-                var blockRange = geth.ConvertTimeRangeToBlockRange(GetTestRunTimeRange());
-                var slotFilledEvents = contracts.GetSlotFilledEvents(blockRange);
+                var events = contracts.GetEvents(GetTestRunTimeRange());
+                var slotFilledEvents = events.GetSlotFilledEvents();
 
-                Log($"SlotFilledEvents: {slotFilledEvents.Length} - NumSlots: {purchase.MinRequiredNumberOfNodes}");
-
-                if (slotFilledEvents.Length != purchase.MinRequiredNumberOfNodes) throw new Exception();
-            }, Convert.ToInt32(purchase.Duration.TotalSeconds / 5) + 10, TimeSpan.FromSeconds(5), "Checking SlotFilled events");
+                var msg = $"SlotFilledEvents: {slotFilledEvents.Length} - NumSlots: {purchase.MinRequiredNumberOfNodes}";
+                Debug(msg);
+                if (slotFilledEvents.Length != purchase.MinRequiredNumberOfNodes) throw new Exception(msg);
+            }, purchase.Expiry + TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(5), "Checking SlotFilled events");
         }
 
         private void AssertStorageRequest(Request request, StoragePurchaseRequest purchase, ICodexContracts contracts, ICodexNode buyer)
@@ -106,7 +146,8 @@ namespace CodexTests.BasicTests
 
         private Request GetOnChainStorageRequest(ICodexContracts contracts, IGethNode geth)
         {
-            var requests = contracts.GetStorageRequests(geth.ConvertTimeRangeToBlockRange(GetTestRunTimeRange()));
+            var events = contracts.GetEvents(GetTestRunTimeRange());
+            var requests = events.GetStorageRequests();
             Assert.That(requests.Length, Is.EqualTo(1));
             return requests.Single();
         }

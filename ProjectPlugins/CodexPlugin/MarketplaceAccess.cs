@@ -1,5 +1,4 @@
 ﻿using Logging;
-using Newtonsoft.Json;
 using Utils;
 
 namespace CodexPlugin
@@ -7,7 +6,7 @@ namespace CodexPlugin
     public interface IMarketplaceAccess
     {
         string MakeStorageAvailable(StorageAvailability availability);
-        StoragePurchaseContract RequestStorage(StoragePurchaseRequest purchase);
+        IStoragePurchaseContract RequestStorage(StoragePurchaseRequest purchase);
     }
 
     public class MarketplaceAccess : IMarketplaceAccess
@@ -21,7 +20,7 @@ namespace CodexPlugin
             this.codexAccess = codexAccess;
         }
 
-        public StoragePurchaseContract RequestStorage(StoragePurchaseRequest purchase)
+        public IStoragePurchaseContract RequestStorage(StoragePurchaseRequest purchase)
         {
             purchase.Log(log);
 
@@ -38,7 +37,9 @@ namespace CodexPlugin
 
             Log($"Storage requested successfully. PurchaseId: '{response}'.");
 
-            return new StoragePurchaseContract(log, codexAccess, response, purchase);
+            var contract = new StoragePurchaseContract(log, codexAccess, response, purchase);
+            contract.WaitForStorageContractSubmitted();
+            return contract;
         }
 
         public string MakeStorageAvailable(StorageAvailability availability)
@@ -54,7 +55,7 @@ namespace CodexPlugin
 
         private void Log(string msg)
         {
-            log.Log($"{codexAccess.Container.Name} {msg}");
+            log.Log($"{codexAccess.Container.Containers.Single().Name} {msg}");
         }
     }
 
@@ -66,7 +67,7 @@ namespace CodexPlugin
             throw new NotImplementedException();
         }
 
-        public StoragePurchaseContract RequestStorage(StoragePurchaseRequest purchase)
+        public IStoragePurchaseContract RequestStorage(StoragePurchaseRequest purchase)
         {
             Unavailable();
             throw new NotImplementedException();
@@ -76,80 +77,6 @@ namespace CodexPlugin
         {
             FrameworkAssert.Fail("Incorrect test setup: Marketplace was not enabled for this group of Codex nodes. Add 'EnableMarketplace(...)' after 'SetupCodexNodes()' to enable it.");
             throw new InvalidOperationException();
-        }
-    }
-
-    public class StoragePurchaseContract
-    {
-        private readonly ILog log;
-        private readonly CodexAccess codexAccess;
-        private readonly TimeSpan gracePeriod = TimeSpan.FromSeconds(10);
-        private DateTime? contractStartUtc;
-
-        public StoragePurchaseContract(ILog log, CodexAccess codexAccess, string purchaseId, StoragePurchaseRequest purchase)
-        {
-            this.log = log;
-            this.codexAccess = codexAccess;
-            PurchaseId = purchaseId;
-            Purchase = purchase;
-        }
-
-        public string PurchaseId { get; }
-        public StoragePurchaseRequest Purchase { get; }
-
-        public void WaitForStorageContractStarted()
-        {
-            var timeout = Purchase.Expiry + gracePeriod;
-
-            WaitForStorageContractState(timeout, "started");
-            contractStartUtc = DateTime.UtcNow;
-        }
-
-        public void WaitForStorageContractFinished()
-        {
-            if (!contractStartUtc.HasValue)
-            {
-                WaitForStorageContractStarted();
-            }
-            var currentContractTime = DateTime.UtcNow - contractStartUtc!.Value;
-            var timeout = (Purchase.Duration - currentContractTime) + gracePeriod;
-            WaitForStorageContractState(timeout, "finished");
-        }
-
-        public StoragePurchase GetPurchaseStatus(string purchaseId)
-        {
-            return codexAccess.GetPurchaseStatus(purchaseId);
-        }
-
-        private void WaitForStorageContractState(TimeSpan timeout, string desiredState)
-        {
-            var lastState = "";
-            var waitStart = DateTime.UtcNow;
-
-            log.Log($"Waiting for {Time.FormatDuration(timeout)} for contract '{PurchaseId}' to reach state '{desiredState}'.");
-            while (lastState != desiredState)
-            {
-                var purchaseStatus = codexAccess.GetPurchaseStatus(PurchaseId);
-                var statusJson = JsonConvert.SerializeObject(purchaseStatus);
-                if (purchaseStatus != null && purchaseStatus.State != lastState)
-                {
-                    lastState = purchaseStatus.State;
-                    log.Debug("Purchase status: " + statusJson);
-                }
-
-                Thread.Sleep(1000);
-
-                if (lastState == "errored")
-                {
-                    FrameworkAssert.Fail("Contract errored: " + statusJson);
-                }
-
-                if (DateTime.UtcNow - waitStart > timeout)
-                {
-                    FrameworkAssert.Fail($"Contract did not reach '{desiredState}' within {Time.FormatDuration(timeout)} timeout. {statusJson}");
-                }
-            }
-            log.Log($"Contract '{desiredState}'.");
         }
     }
 }

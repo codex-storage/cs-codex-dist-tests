@@ -52,6 +52,7 @@ namespace CodexPlugin
         public CodexLogLevel Libp2p { get; set; }
         public CodexLogLevel ContractClock { get; set; } = CodexLogLevel.Warn;
         public CodexLogLevel? BlockExchange { get; }
+        public CodexLogLevel JsonSerialize { get; set; } = CodexLogLevel.Warn;
     }
 
     public class CodexSetup : CodexStartupConfig, ICodexSetup
@@ -167,8 +168,8 @@ namespace CodexPlugin
         public bool IsStorageNode { get; private set; }
         public bool IsValidator { get; private set; }
         public Ether InitialEth { get; private set; } = 0.Eth();
-        public TestToken InitialTestTokens { get; private set; } = 0.TestTokens();
-        public EthAccount EthAccount { get; private set; } = EthAccount.GenerateNew();
+        public TestToken InitialTestTokens { get; private set; } = 0.Tst();
+        public EthAccountSetup EthAccountSetup { get; private set; } = new EthAccountSetup();
 
         public IMarketplaceSetup AsStorageNode()
         {
@@ -184,7 +185,7 @@ namespace CodexPlugin
 
         public IMarketplaceSetup WithAccount(EthAccount account)
         {
-            EthAccount = account;
+            EthAccountSetup.Pin(account);
             return this;
         }
 
@@ -200,10 +201,41 @@ namespace CodexPlugin
             var result = "[(clientNode)"; // When marketplace is enabled, being a clientNode is implicit.
             result += IsStorageNode ? "(storageNode)" : "()";
             result += IsValidator ? "(validator)" : "() ";
-            result += $"Address: '{EthAccount.EthAddress}' ";
-            result += $"InitialEth/TT({InitialEth.Eth}/{InitialTestTokens.Amount})";
+            result += $"Address: '{EthAccountSetup}' ";
+            result += $"{InitialEth.Eth} / {InitialTestTokens}";
             result += "] ";
             return result;
+        }
+    }
+
+    public class EthAccountSetup
+    {
+        private readonly List<EthAccount> accounts = new List<EthAccount>();
+        private bool pinned = false;
+
+        public void Pin(EthAccount account)
+        {
+            accounts.Add(account);
+            pinned = true;
+        }
+
+        public EthAccount GetNew()
+        {
+            if (pinned) return accounts.Last();
+
+            var a = EthAccount.GenerateNew();
+            accounts.Add(a);
+            return a;
+        }
+
+        public EthAccount[] GetAll()
+        {
+            return accounts.ToArray();
+        }
+
+        public override string ToString()
+        {
+            return string.Join(",", accounts.Select(a => a.ToString()).ToArray());
         }
     }
 }

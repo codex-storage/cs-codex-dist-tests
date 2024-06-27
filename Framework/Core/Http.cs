@@ -7,6 +7,7 @@ namespace Core
     {
         T OnClient<T>(Func<HttpClient, T> action);
         T OnClient<T>(Func<HttpClient, T> action, string description);
+        T OnClient<T>(Func<HttpClient, T> action, Retry retry);
         IEndpoint CreateEndpoint(Address address, string baseUrl, string? logAlias = null);
     }
 
@@ -36,12 +37,18 @@ namespace Core
 
         public T OnClient<T>(Func<HttpClient, T> action, string description)
         {
+            var retry = new Retry(description, timeSet.HttpRetryTimeout(), timeSet.HttpCallRetryDelay(), f => { });
+            return OnClient(action, retry);
+        }
+
+        public T OnClient<T>(Func<HttpClient, T> action, Retry retry)
+        {
             var client = GetClient();
 
             return LockRetry(() =>
             {
                 return action(client);
-            }, description);
+            }, retry);
         }
 
         public IEndpoint CreateEndpoint(Address address, string baseUrl, string? logAlias = null)
@@ -54,11 +61,11 @@ namespace Core
             return DebugStack.GetCallerName(skipFrames: 2);
         }
 
-        private T LockRetry<T>(Func<T> operation, string description)
+        private T LockRetry<T>(Func<T> operation, Retry retry)
         {
             lock (httpLock)
             {
-                return Time.Retry(operation, timeSet.HttpMaxNumberOfRetries(), timeSet.HttpCallRetryDelay(), description);
+                return retry.Run(operation);
             }
         }
 

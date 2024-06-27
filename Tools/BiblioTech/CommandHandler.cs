@@ -3,33 +3,37 @@ using Discord.WebSocket;
 using Discord;
 using Newtonsoft.Json;
 using BiblioTech.Rewards;
+using Logging;
 
 namespace BiblioTech
 {
     public class CommandHandler
     {
         private readonly DiscordSocketClient client;
+        private readonly CustomReplacement replacement;
         private readonly BaseCommand[] commands;
+        private readonly ILog log;
 
-        public CommandHandler(DiscordSocketClient client, params BaseCommand[] commands)
+        public CommandHandler(ILog log, DiscordSocketClient client, CustomReplacement replacement, params BaseCommand[] commands)
         {
             this.client = client;
+            this.replacement = replacement;
             this.commands = commands;
-
+            this.log = log;
             client.Ready += Client_Ready;
             client.SlashCommandExecuted += SlashCommandHandler;
         }
 
         private async Task Client_Ready()
         {
-            var guild = client.Guilds.Single(g => g.Name == Program.Config.ServerName);
+            var guild = client.Guilds.Single(g => g.Id == Program.Config.ServerId);
             Program.AdminChecker.SetGuild(guild);
-            Program.Log.Log($"Initializing for guild: '{guild.Name}'");
+            log.Log($"Initializing for guild: '{guild.Name}'");
 
             var adminChannels = guild.TextChannels.Where(Program.AdminChecker.IsAdminChannel).ToArray();
             if (adminChannels == null || !adminChannels.Any()) throw new Exception("No admin message channel");
             Program.AdminChecker.SetAdminChannel(adminChannels.First());
-            Program.RoleDriver = new RoleDriver(client);
+            Program.RoleDriver = new RoleDriver(client, log, replacement);
 
             var builders = commands.Select(c =>
             {
@@ -44,7 +48,7 @@ namespace BiblioTech
                     builder.AddOption(option.Build());
                 }
 
-                Program.Log.Log(msg);
+                log.Log(msg);
                 return builder;
             });
 
@@ -58,7 +62,7 @@ namespace BiblioTech
             catch (HttpException exception)
             {
                 var json = JsonConvert.SerializeObject(exception.Errors, Formatting.Indented);
-                Program.Log.Error(json);
+                log.Error(json);
             }
         }
 

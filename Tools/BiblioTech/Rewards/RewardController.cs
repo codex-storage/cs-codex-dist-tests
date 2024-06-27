@@ -23,6 +23,10 @@ namespace BiblioTech.Rewards
         {
             try
             {
+                if (cmd.Averages != null && cmd.Averages.Any())
+                {
+                    Program.Averages = cmd.Averages;
+                }
                 await Program.RoleDriver.GiveRewards(cmd);
             }
             catch (Exception ex)

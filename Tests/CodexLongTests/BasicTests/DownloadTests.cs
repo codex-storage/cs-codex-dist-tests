@@ -1,3 +1,4 @@
+using CodexPlugin;
 using CodexTests;
 using DistTestCore;
 using FileUtils;
@@ -7,35 +8,45 @@ using Utils;
 namespace CodexLongTests.BasicTests
 {
     [TestFixture]
-    public class DownloadTests : CodexDistTest
+    public class DownloadTests : AutoBootstrapDistTest
     {
-        [TestCase(3, 500)]
-        [TestCase(5, 100)]
-        [TestCase(10, 256)]
+        [Test]
+        [Combinatorial]
         [UseLongTimeouts]
-        public void ParallelDownload(int numberOfNodes, int filesizeMb)
+        public void ParallelDownload(
+            [Values(1, 3, 5)] int numberOfFiles,
+            [Values(10, 50, 100)] int filesizeMb)
         {
-            var group = AddCodex(numberOfNodes);
-            var host = AddCodex();
+            var host = StartCodex();
+            var client = StartCodex();
 
-            foreach (var node in group)
+            var testfiles = new List<TrackedFile>();
+            var contentIds = new List<ContentId>();
+            var downloadedFiles = new List<TrackedFile?>();
+
+            for (int i = 0; i < numberOfFiles; i++)
             {
-                host.ConnectToPeer(node);
+                testfiles.Add(GenerateTestFile(filesizeMb.MB()));
+                contentIds.Add(new ContentId());
+                downloadedFiles.Add(null);
             }
 
-            var testFile = GenerateTestFile(filesizeMb.MB());
-            var contentId = host.UploadFile(testFile);
-            var list = new List<Task<TrackedFile?>>();
-
-            foreach (var node in group)
+            for (int i = 0; i < numberOfFiles; i++)
             {
-                list.Add(Task.Run(() => { return node.DownloadContent(contentId); }));
+                contentIds[i] = host.UploadFile(testfiles[i]);
             }
 
-            Task.WaitAll(list.ToArray());
-            foreach (var task in list)
+            var downloadTasks = new List<Task>();
+            for (int i = 0; i < numberOfFiles; i++)
             {
-                testFile.AssertIsEqual(task.Result);
+                downloadTasks.Add(Task.Run(() => { downloadedFiles[i] = client.DownloadContent(contentIds[i]); }));
+            }
+
+            Task.WaitAll(downloadTasks.ToArray());
+
+            for (int i = 0; i < numberOfFiles; i++)
+            {
+                testfiles[i].AssertIsEqual(downloadedFiles[i]);
             }
         }
     }

@@ -1,7 +1,5 @@
-﻿using CodexContractsPlugin.Marketplace;
-using DiscordRewards;
+﻿using DiscordRewards;
 using Logging;
-using Newtonsoft.Json;
 using System.Net.Http.Json;
 
 namespace TestNetRewarder
@@ -26,7 +24,7 @@ namespace TestNetRewarder
 
         public async Task<bool> SendRewards(GiveRewardsCommand command)
         {
-            if (command == null || command.Rewards == null || !command.Rewards.Any()) return false;
+            if (command == null) return false;
             var result = await HttpPostJson(command);
             log.Log("Reward response: " + result);
             return result == "OK";

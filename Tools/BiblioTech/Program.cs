@@ -3,6 +3,7 @@ using BiblioTech.Commands;
 using BiblioTech.Rewards;
 using Discord;
 using Discord.WebSocket;
+using DiscordRewards;
 using Logging;
 
 namespace BiblioTech
@@ -10,15 +11,19 @@ namespace BiblioTech
     public class Program
     {
         private DiscordSocketClient client = null!;
+        private readonly CustomReplacement replacement = new CustomReplacement();
 
         public static Configuration Config { get; private set; } = null!;
         public static UserRepo UserRepo { get; } = new UserRepo();
         public static AdminChecker AdminChecker { get; private set; } = null!;
         public static IDiscordRoleDriver RoleDriver { get; set; } = null!;
         public static ILog Log { get; private set; } = null!;
+        public static MarketAverage[] Averages { get; set; } = Array.Empty<MarketAverage>();
 
         public static Task Main(string[] args)
         {
+            Log = new ConsoleLog();
+
             var uniformArgs = new ArgsUniform<Configuration>(PrintHelp, args);
             Config = uniformArgs.Parse();
 
@@ -37,24 +42,15 @@ namespace BiblioTech
         public async Task MainAsync(string[] args)
         {
             Log.Log("Starting Codex Discord Bot...");
-            client = new DiscordSocketClient();
-            client.Log += ClientLog;
-
-            var notifyCommand = new NotifyCommand();
-            var associateCommand = new UserAssociateCommand(notifyCommand);
-            var sprCommand = new SprCommand();
-            var handler = new CommandHandler(client,
-                new GetBalanceCommand(associateCommand), 
-                new MintCommand(associateCommand),
-                sprCommand,
-                associateCommand,
-                notifyCommand,
-                new AdminCommand(sprCommand)
-            );
-
-            await client.LoginAsync(TokenType.Bot, Config.ApplicationToken);
-            await client.StartAsync();
-            AdminChecker = new AdminChecker();
+            if (Config.DebugNoDiscord)
+            {
+                Log.Log("Debug option is set. Discord connection disabled!");
+                RoleDriver = new LoggingRoleDriver(Log);
+            }
+            else
+            {
+                await StartDiscordBot();
+            }
 
             var builder = WebApplication.CreateBuilder(args);
             builder.WebHost.ConfigureKestrel((context, options) =>
@@ -68,6 +64,29 @@ namespace BiblioTech
             Log.Log("Running...");
             await app.RunAsync();
             await Task.Delay(-1);
+        }
+
+        private async Task StartDiscordBot()
+        {
+            client = new DiscordSocketClient();
+            client.Log += ClientLog;
+
+            var notifyCommand = new NotifyCommand();
+            var associateCommand = new UserAssociateCommand(notifyCommand);
+            var sprCommand = new SprCommand();
+            var handler = new CommandHandler(Log, client, replacement,
+                new GetBalanceCommand(associateCommand),
+                new MintCommand(associateCommand),
+                sprCommand,
+                associateCommand,
+                notifyCommand,
+                new AdminCommand(sprCommand, replacement),
+                new MarketCommand()
+            );
+
+            await client.LoginAsync(TokenType.Bot, Config.ApplicationToken);
+            await client.StartAsync();
+            AdminChecker = new AdminChecker();
         }
 
         private static void PrintHelp()

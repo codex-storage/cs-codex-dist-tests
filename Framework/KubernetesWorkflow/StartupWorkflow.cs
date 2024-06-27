@@ -9,16 +9,16 @@ namespace KubernetesWorkflow
     public interface IStartupWorkflow
     {
         IKnownLocations GetAvailableLocations();
-        RunningContainers Start(int numberOfContainers, ContainerRecipeFactory recipeFactory, StartupConfig startupConfig);
-        RunningContainers Start(int numberOfContainers, ILocation location, ContainerRecipeFactory recipeFactory, StartupConfig startupConfig);
+        FutureContainers Start(int numberOfContainers, ContainerRecipeFactory recipeFactory, StartupConfig startupConfig);
+        FutureContainers Start(int numberOfContainers, ILocation location, ContainerRecipeFactory recipeFactory, StartupConfig startupConfig);
         PodInfo GetPodInfo(RunningContainer container);
-        PodInfo GetPodInfo(RunningContainers containers);
+        PodInfo GetPodInfo(RunningPod pod);
         CrashWatcher CreateCrashWatcher(RunningContainer container);
-        void Stop(RunningContainers containers, bool waitTillStopped);
-        void DownloadContainerLog(RunningContainer container, ILogHandler logHandler, int? tailLines = null);
+        void Stop(RunningPod pod, bool waitTillStopped);
+        void DownloadContainerLog(RunningContainer container, ILogHandler logHandler, int? tailLines = null, bool? previous = null);
         string ExecuteCommand(RunningContainer container, string command, params string[] args);
-        void DeleteNamespace();
-        void DeleteNamespacesStartingWith(string namespacePrefix);
+        void DeleteNamespace(bool wait);
+        void DeleteNamespacesStartingWith(string namespacePrefix, bool wait);
     }
 
     public class StartupWorkflow : IStartupWorkflow
@@ -45,12 +45,12 @@ namespace KubernetesWorkflow
             return locationProvider.GetAvailableLocations();
         }
 
-        public RunningContainers Start(int numberOfContainers, ContainerRecipeFactory recipeFactory, StartupConfig startupConfig)
+        public FutureContainers Start(int numberOfContainers, ContainerRecipeFactory recipeFactory, StartupConfig startupConfig)
         {
             return Start(numberOfContainers, KnownLocations.UnspecifiedLocation, recipeFactory, startupConfig);
         }
 
-        public RunningContainers Start(int numberOfContainers, ILocation location, ContainerRecipeFactory recipeFactory, StartupConfig startupConfig)
+        public FutureContainers Start(int numberOfContainers, ILocation location, ContainerRecipeFactory recipeFactory, StartupConfig startupConfig)
         {
             return K8s(controller =>
             {
@@ -60,25 +60,36 @@ namespace KubernetesWorkflow
                 var startResult = controller.BringOnline(recipes, location);
                 var containers = CreateContainers(startResult, recipes, startupConfig);
 
-                var rc = new RunningContainers(startupConfig, startResult, containers);
+                var rc = new RunningPod(startupConfig, startResult, containers);
                 cluster.Configuration.Hooks.OnContainersStarted(rc);
 
                 if (startResult.ExternalService != null)
                 {
                     componentFactory.Update(controller);
                 }
-                return rc;
+                return new FutureContainers(rc, this);
+            });
+        }
+
+        public void WaitUntilOnline(RunningPod rc)
+        {
+            K8s(controller =>
+            {
+                foreach (var c in rc.Containers)
+                {
+                    controller.WaitUntilOnline(c);
+                }
             });
         }
 
         public PodInfo GetPodInfo(RunningContainer container)
         {
-            return K8s(c => c.GetPodInfo(container.RunningContainers.StartResult.Deployment));
+            return K8s(c => c.GetPodInfo(container.RunningPod.StartResult.Deployment));
         }
 
-        public PodInfo GetPodInfo(RunningContainers containers)
+        public PodInfo GetPodInfo(RunningPod pod)
         {
-            return K8s(c => c.GetPodInfo(containers.StartResult.Deployment));
+            return K8s(c => c.GetPodInfo(pod.StartResult.Deployment));
         }
 
         public CrashWatcher CreateCrashWatcher(RunningContainer container)
@@ -86,20 +97,20 @@ namespace KubernetesWorkflow
             return K8s(c => c.CreateCrashWatcher(container));
         }
 
-        public void Stop(RunningContainers runningContainers, bool waitTillStopped)
+        public void Stop(RunningPod runningPod, bool waitTillStopped)
         {
             K8s(controller =>
             {
-                controller.Stop(runningContainers.StartResult, waitTillStopped);
-                cluster.Configuration.Hooks.OnContainersStopped(runningContainers);
+                controller.Stop(runningPod.StartResult, waitTillStopped);
+                cluster.Configuration.Hooks.OnContainersStopped(runningPod);
             });
         }
 
-        public void DownloadContainerLog(RunningContainer container, ILogHandler logHandler, int? tailLines = null)
+        public void DownloadContainerLog(RunningContainer container, ILogHandler logHandler, int? tailLines = null, bool? previous = null)
         {
             K8s(controller =>
             {
-                controller.DownloadPodLog(container, logHandler, tailLines);
+                controller.DownloadPodLog(container, logHandler, tailLines, previous);
             });
         }
 
@@ -111,19 +122,19 @@ namespace KubernetesWorkflow
             });
         }
 
-        public void DeleteNamespace()
+        public void DeleteNamespace(bool wait)
         {
             K8s(controller =>
             {
-                controller.DeleteNamespace();
+                controller.DeleteNamespace(wait);
             });
         }
 
-        public void DeleteNamespacesStartingWith(string namespacePrefix)
+        public void DeleteNamespacesStartingWith(string namespacePrefix, bool wait)
         {
             K8s(controller =>
             {
-                controller.DeleteAllNamespacesStartingWith(namespacePrefix);
+                controller.DeleteAllNamespacesStartingWith(namespacePrefix, wait);
             });
         }
 

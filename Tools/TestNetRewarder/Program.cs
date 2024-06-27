@@ -6,10 +6,10 @@ namespace TestNetRewarder
 {
     public class Program
     {
-        public static Configuration Config { get; private set; } = null!;
-        public static ILog Log { get; private set; } = null!;
-        public static CancellationToken CancellationToken { get; private set; }
-        public static BotClient BotClient { get; private set; } = null!;
+        public static CancellationToken CancellationToken;
+        private static Configuration Config = null!;
+        private static ILog Log = null!;
+        private static BotClient BotClient = null!;
         private static Processor processor = null!;
         private static DateTime lastCheck = DateTime.MinValue;
 
@@ -27,8 +27,11 @@ namespace TestNetRewarder
                 new ConsoleLog()
             );
 
+            var connector = GethConnector.GethConnector.Initialize(Log);
+            if (connector == null) throw new Exception("Invalid Geth information");
+
             BotClient = new BotClient(Config, Log);
-            processor = new Processor(Log);
+            processor = new Processor(Config, BotClient, connector.CodexContracts, Log);
 
             EnsurePath(Config.DataPath);
             EnsurePath(Config.LogPath);
@@ -41,12 +44,12 @@ namespace TestNetRewarder
             EnsureGethOnline();
 
             Log.Log("Starting TestNet Rewarder...");
-            var segmenter = new TimeSegmenter(Log, Config);
+            var segmenter = new TimeSegmenter(Log, Config, processor);
          
             while (!CancellationToken.IsCancellationRequested)
             {
                 await EnsureBotOnline();
-                await segmenter.WaitForNextSegment(processor.ProcessTimeSegment);
+                await segmenter.ProcessNextSegment();
                 await Task.Delay(100, CancellationToken);
             }
         }

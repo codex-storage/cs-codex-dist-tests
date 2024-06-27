@@ -10,8 +10,8 @@ namespace CodexTests.BasicTests
         [Test]
         public void TwoClientTest()
         {
-            var uploader = AddCodex(s => s.WithName("Uploader"));
-            var downloader = AddCodex(s => s.WithName("Downloader").WithBootstrapNode(uploader));
+            var uploader = StartCodex(s => s.WithName("Uploader"));
+            var downloader = StartCodex(s => s.WithName("Downloader").WithBootstrapNode(uploader));
 
             PerformTwoClientTest(uploader, downloader);
         }

@@ -2,9 +2,10 @@
 using GethPlugin;
 using Logging;
 using Nethereum.ABI;
-using Nethereum.Hex.HexTypes;
 using Nethereum.Util;
 using NethereumWorkflow;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 using Utils;
 
 namespace CodexContractsPlugin
@@ -19,15 +20,13 @@ namespace CodexContractsPlugin
         TestToken GetTestTokenBalance(IHasEthAddress owner);
         TestToken GetTestTokenBalance(EthAddress ethAddress);
 
-        Request[] GetStorageRequests(BlockInterval blockRange);
+        ICodexContractsEvents GetEvents(TimeRange timeRange);
+        ICodexContractsEvents GetEvents(BlockInterval blockInterval);
         EthAddress? GetSlotHost(Request storageRequest, decimal slotIndex);
         RequestState GetRequestState(Request request);
-        RequestFulfilledEventDTO[] GetRequestFulfilledEvents(BlockInterval blockRange);
-        RequestCancelledEventDTO[] GetRequestCancelledEvents(BlockInterval blockRange);
-        SlotFilledEventDTO[] GetSlotFilledEvents(BlockInterval blockRange);
-        SlotFreedEventDTO[] GetSlotFreedEvents(BlockInterval blockRange);
     }
 
+    [JsonConverter(typeof(StringEnumConverter))]
     public enum RequestState
     {
         New,
@@ -63,7 +62,7 @@ namespace CodexContractsPlugin
 
         public string MintTestTokens(EthAddress ethAddress, TestToken testTokens)
         {
-            return StartInteraction().MintTestTokens(ethAddress, testTokens.Amount, Deployment.TokenAddress);
+            return StartInteraction().MintTestTokens(ethAddress, testTokens.TstWei, Deployment.TokenAddress);
         }
 
         public TestToken GetTestTokenBalance(IHasEthAddress owner)
@@ -74,68 +73,17 @@ namespace CodexContractsPlugin
         public TestToken GetTestTokenBalance(EthAddress ethAddress)
         {
             var balance = StartInteraction().GetBalance(Deployment.TokenAddress, ethAddress.Address);
-            return balance.TestTokens();
+            return balance.TstWei();
         }
 
-        public Request[] GetStorageRequests(BlockInterval blockRange)
+        public ICodexContractsEvents GetEvents(TimeRange timeRange)
         {
-            var events = gethNode.GetEvents<StorageRequestedEventDTO>(Deployment.MarketplaceAddress, blockRange);
-            var i = StartInteraction();
-            return events
-                    .Select(e =>
-                    {
-                        var requestEvent = i.GetRequest(Deployment.MarketplaceAddress, e.Event.RequestId);
-                        var result = requestEvent.ReturnValue1;
-                        result.BlockNumber = e.Log.BlockNumber.ToUlong();
-                        result.RequestId = e.Event.RequestId;
-                        return result;
-                    })
-                    .ToArray();
+            return GetEvents(gethNode.ConvertTimeRangeToBlockRange(timeRange));
         }
 
-        public RequestFulfilledEventDTO[] GetRequestFulfilledEvents(BlockInterval blockRange)
+        public ICodexContractsEvents GetEvents(BlockInterval blockInterval)
         {
-            var events = gethNode.GetEvents<RequestFulfilledEventDTO>(Deployment.MarketplaceAddress, blockRange);
-            return events.Select(e =>
-            {
-                var result = e.Event;
-                result.BlockNumber = e.Log.BlockNumber.ToUlong();
-                return result;
-            }).ToArray();
-        }
-
-        public RequestCancelledEventDTO[] GetRequestCancelledEvents(BlockInterval blockRange)
-        {
-            var events = gethNode.GetEvents<RequestCancelledEventDTO>(Deployment.MarketplaceAddress, blockRange);
-            return events.Select(e =>
-            {
-                var result = e.Event;
-                result.BlockNumber = e.Log.BlockNumber.ToUlong();
-                return result;
-            }).ToArray();
-        }
-
-        public SlotFilledEventDTO[] GetSlotFilledEvents(BlockInterval blockRange)
-        {
-            var events = gethNode.GetEvents<SlotFilledEventDTO>(Deployment.MarketplaceAddress, blockRange);
-            return events.Select(e =>
-            {
-                var result = e.Event;
-                result.BlockNumber = e.Log.BlockNumber.ToUlong();
-                result.Host = GetEthAddressFromTransaction(e.Log.TransactionHash);
-                return result;
-            }).ToArray();
-        }
-
-        public SlotFreedEventDTO[] GetSlotFreedEvents(BlockInterval blockRange)
-        {
-            var events = gethNode.GetEvents<SlotFreedEventDTO>(Deployment.MarketplaceAddress, blockRange);
-            return events.Select(e =>
-            {
-                var result = e.Event;
-                result.BlockNumber = e.Log.BlockNumber.ToUlong();
-                return result;
-            }).ToArray();
+            return new CodexContractsEvents(log, gethNode, Deployment, blockInterval);
         }
 
         public EthAddress? GetSlotHost(Request storageRequest, decimal slotIndex)
@@ -164,12 +112,6 @@ namespace CodexContractsPlugin
                 RequestId = request.RequestId
             };
             return gethNode.Call<RequestStateFunction, RequestState>(Deployment.MarketplaceAddress, func);
-        }
-
-        private EthAddress GetEthAddressFromTransaction(string transactionHash)
-        {
-            var transaction = gethNode.GetTransaction(transactionHash);
-            return new EthAddress(transaction.From);
         }
 
         private ContractInteractions StartInteraction()

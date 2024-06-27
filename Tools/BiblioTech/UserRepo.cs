@@ -8,6 +8,7 @@ namespace BiblioTech
     public class UserRepo
     {
         private readonly object repoLock = new object();
+        private readonly Dictionary<ulong, UserData> cache = new Dictionary<ulong, UserData>();
 
         public bool AssociateUserWithAddress(IUser user, EthAddress address)
         {
@@ -31,6 +32,12 @@ namespace BiblioTech
             {
                 SetUserNotification(user, enableNotifications);
             }
+        }
+
+        public UserData[] GetAllUserData()
+        {
+            if (cache.Count == 0) LoadAllUserData();
+            return cache.Values.ToArray();  
         }
 
         public void AddMintEventForUser(IUser user, EthAddress usedAddress, Transaction<Ether>? eth, Transaction<TestToken>? tokens)
@@ -151,12 +158,19 @@ namespace BiblioTech
 
         private UserData? GetUserData(IUser user)
         {
+            if (cache.ContainsKey(user.Id))
+            {
+                return cache[user.Id];
+            }
+
             var filename = GetFilename(user);
             if (!File.Exists(filename))
             {
                 return null;
             }
-            return JsonConvert.DeserializeObject<UserData>(File.ReadAllText(filename))!;
+            var userData = JsonConvert.DeserializeObject<UserData>(File.ReadAllText(filename))!;
+            cache.Add(userData.DiscordId, userData);
+            return userData;
         }
 
         private UserData GetOrCreate(IUser user)
@@ -181,6 +195,15 @@ namespace BiblioTech
             var filename = GetFilename(userData);
             if (File.Exists(filename)) File.Delete(filename);
             File.WriteAllText(filename, JsonConvert.SerializeObject(userData));
+
+            if (cache.ContainsKey(userData.DiscordId))
+            {
+                cache[userData.DiscordId] = userData;
+            }
+            else
+            {
+                cache.Add(userData.DiscordId, userData);
+            }
         }
 
         private static string GetFilename(IUser user)
@@ -197,66 +220,29 @@ namespace BiblioTech
         {
             return Path.Combine(Program.Config.UserDataPath, discordId.ToString() + ".json");
         }
-    }
 
-    public class UserData
-    {
-        public UserData(ulong discordId, string name, DateTime createdUtc, EthAddress? currentAddress, List<UserAssociateAddressEvent> associateEvents, List<UserMintEvent> mintEvents, bool notificationsEnabled)
+        private void LoadAllUserData()
         {
-            DiscordId = discordId;
-            Name = name;
-            CreatedUtc = createdUtc;
-            CurrentAddress = currentAddress;
-            AssociateEvents = associateEvents;
-            MintEvents = mintEvents;
-            NotificationsEnabled = notificationsEnabled;
-        }
-
-        public ulong DiscordId { get; }
-        public string Name { get; }
-        public DateTime CreatedUtc { get; }
-        public EthAddress? CurrentAddress { get; set; }
-        public List<UserAssociateAddressEvent> AssociateEvents { get; }
-        public List<UserMintEvent> MintEvents { get; }
-        public bool NotificationsEnabled { get; set; }
-
-        public string[] CreateOverview()
-        {
-            return new[]
+            try
             {
-                $"name: '{Name}' - id:{DiscordId}",
-                $"joined: {CreatedUtc.ToString("o")}",
-                $"current address: {CurrentAddress}",
-                $"{AssociateEvents.Count + MintEvents.Count} total bot events."
-            };
+                var files = Directory.GetFiles(Program.Config.UserDataPath);
+                foreach (var file in files)
+                {
+                    try
+                    {
+                        var userData = JsonConvert.DeserializeObject<UserData>(File.ReadAllText(file))!;
+                        if (userData != null && userData.DiscordId > 0)
+                        {
+                            cache.Add(userData.DiscordId, userData);
+                        }
+                    }
+                    catch { }
+                }
+            }
+            catch (Exception ex)
+            {
+                Program.Log.Error("Exception while trying to load all user data: " + ex);
+            }
         }
-    }
-
-    public class UserAssociateAddressEvent
-    {
-        public UserAssociateAddressEvent(DateTime utc, EthAddress? newAddress)
-        {
-            Utc = utc;
-            NewAddress = newAddress;
-        }
-
-        public DateTime Utc { get; }
-        public EthAddress? NewAddress { get; }
-    }
-
-    public class UserMintEvent
-    {
-        public UserMintEvent(DateTime utc, EthAddress usedAddress, Transaction<Ether>? ethReceived, Transaction<TestToken>? testTokensMinted)
-        {
-            Utc = utc;
-            UsedAddress = usedAddress;
-            EthReceived = ethReceived;
-            TestTokensMinted = testTokensMinted;
-        }
-
-        public DateTime Utc { get; }
-        public EthAddress UsedAddress { get; }
-        public Transaction<Ether>? EthReceived { get; }
-        public Transaction<TestToken>? TestTokensMinted { get; }
     }
 }

@@ -1,4 +1,6 @@
-﻿namespace Utils
+﻿using System.Globalization;
+
+namespace Utils
 {
     public static class Formatter
     {
@@ -10,7 +12,7 @@
 
             var sizeOrder = Convert.ToInt32(Math.Floor(Math.Log(bytes, 1024)));
             var digit = Math.Round(bytes / Math.Pow(1024, sizeOrder), 1);
-            return digit.ToString() + sizeSuffixes[sizeOrder];
+            return digit.ToString(CultureInfo.InvariantCulture) + sizeSuffixes[sizeOrder];
         }
     }
 }

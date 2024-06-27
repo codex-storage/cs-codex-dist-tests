@@ -43,6 +43,11 @@ namespace KubernetesWorkflow
             return new StartResult(cluster, containerRecipes, deployment, internalService, externalService);
         }
 
+        public void WaitUntilOnline(RunningContainer container)
+        {
+            WaitUntilDeploymentOnline(container);
+        }
+
         public PodInfo GetPodInfo(RunningDeployment deployment)
         {
             var pod = GetPodForDeployment(deployment);
@@ -59,14 +64,14 @@ namespace KubernetesWorkflow
             if (waitTillStopped) WaitUntilPodsForDeploymentAreOffline(startResult.Deployment);
         }
 
-        public void DownloadPodLog(RunningContainer container, ILogHandler logHandler, int? tailLines)
+        public void DownloadPodLog(RunningContainer container, ILogHandler logHandler, int? tailLines, bool? previous)
         {
             log.Debug();
 
             var podName = GetPodName(container);
             var recipeName = container.Recipe.Name;
 
-            using var stream = client.Run(c => c.ReadNamespacedPodLog(podName, K8sNamespace, recipeName, tailLines: tailLines));
+            using var stream = client.Run(c => c.ReadNamespacedPodLog(podName, K8sNamespace, recipeName, tailLines: tailLines, previous: previous));
             logHandler.Log(stream);
         }
 
@@ -110,7 +115,7 @@ namespace KubernetesWorkflow
             });
         }
 
-        public void DeleteAllNamespacesStartingWith(string prefix)
+        public void DeleteAllNamespacesStartingWith(string prefix, bool wait)
         {
             log.Debug();
 
@@ -119,25 +124,28 @@ namespace KubernetesWorkflow
 
             foreach (var ns in namespaces)
             {
-                DeleteNamespace(ns);
+                DeleteNamespace(ns, wait);
             }
         }
 
-        public void DeleteNamespace()
+        public void DeleteNamespace(bool wait)
         {
             log.Debug();
             if (IsNamespaceOnline(K8sNamespace))
             {
                 client.Run(c => c.DeleteNamespace(K8sNamespace, null, null, gracePeriodSeconds: 0));
+
+                if (wait) WaitUntilNamespaceDeleted(K8sNamespace);
             }
         }
 
-        public void DeleteNamespace(string ns)
+        public void DeleteNamespace(string ns, bool wait)
         {
             log.Debug();
             if (IsNamespaceOnline(ns))
             {
                 client.Run(c => c.DeleteNamespace(ns, null, null, gracePeriodSeconds: 0));
+                if (wait) WaitUntilNamespaceDeleted(ns);
             }
         }
 
@@ -372,7 +380,6 @@ namespace KubernetesWorkflow
             };
 
             client.Run(c => c.CreateNamespacedDeployment(deploymentSpec, K8sNamespace));
-            WaitUntilDeploymentOnline(deploymentSpec.Metadata.Name);
 
             var name = deploymentSpec.Metadata.Name;
             return new RunningDeployment(name, podLabel);
@@ -528,7 +535,7 @@ namespace KubernetesWorkflow
             }
             if (set.Memory.SizeInBytes != 0)
             {
-                result.Add("memory", new ResourceQuantity(set.Memory.ToSuffixNotation()));
+                result.Add("memory", new ResourceQuantity(set.Memory.SizeInBytes.ToString()));
             }
             return result;
         }
@@ -701,14 +708,14 @@ namespace KubernetesWorkflow
 
         private string GetPodName(RunningContainer container)
         {
-            return GetPodForDeployment(container.RunningContainers.StartResult.Deployment).Metadata.Name;
+            return GetPodForDeployment(container.RunningPod.StartResult.Deployment).Metadata.Name;
         }
 
         private V1Pod GetPodForDeployment(RunningDeployment deployment)
         {
             return Time.Retry(() => GetPodForDeplomentInternal(deployment),
                 // We will wait up to 1 minute, k8s might be moving pods around.
-                maxRetries: 6,
+                maxTimeout: TimeSpan.FromMinutes(1),
                 retryTime: TimeSpan.FromSeconds(10),
                 description: "Find pod by label for deployment.");
         }
@@ -864,16 +871,45 @@ namespace KubernetesWorkflow
 
         private void WaitUntilNamespaceCreated() 
         {
-            WaitUntil(() => IsNamespaceOnline(K8sNamespace));
+            WaitUntil(() => IsNamespaceOnline(K8sNamespace), nameof(WaitUntilNamespaceCreated));
         }
 
-        private void WaitUntilDeploymentOnline(string deploymentName)
+        private void WaitUntilNamespaceDeleted(string @namespace)
+        {
+            WaitUntil(() => !IsNamespaceOnline(@namespace), nameof(WaitUntilNamespaceDeleted));
+        }
+
+        private void WaitUntilDeploymentOnline(RunningContainer container)
         {
             WaitUntil(() =>
             {
-                var deployment = client.Run(c => c.ReadNamespacedDeployment(deploymentName, K8sNamespace));
+                CheckForCrash(container);
+
+                var deployment = client.Run(c => c.ReadNamespacedDeployment(container.Recipe.Name, K8sNamespace));
                 return deployment?.Status.AvailableReplicas != null && deployment.Status.AvailableReplicas > 0;
-            });
+            }, nameof(WaitUntilDeploymentOnline));
+        }
+
+        private void CheckForCrash(RunningContainer container)
+        {
+            var deploymentName = container.Recipe.Name;
+            var podName = GetPodName(container);
+
+            var podInfo = client.Run(c => c.ReadNamespacedPod(podName, K8sNamespace));
+            if (podInfo == null) return;
+            if (podInfo.Status == null) return;
+            if (podInfo.Status.ContainerStatuses == null) return;
+
+            var result = podInfo.Status.ContainerStatuses.Any(c => c.RestartCount > 0);
+            if (result)
+            {
+                var msg = $"Pod crash detected for deployment {deploymentName} (pod:{podName})";
+                log.Error(msg);
+
+                DownloadPodLog(container, new WriteToFileLogHandler(log, msg), tailLines: null, previous: true);
+
+                throw new Exception(msg);
+            }
         }
 
         private void WaitUntilDeploymentOffline(string deploymentName)
@@ -883,7 +919,7 @@ namespace KubernetesWorkflow
                 var deployments = client.Run(c => c.ListNamespacedDeployment(K8sNamespace));
                 var deployment = deployments.Items.SingleOrDefault(d => d.Metadata.Name == deploymentName);
                 return deployment == null || deployment.Status.AvailableReplicas == 0;
-            });
+            }, nameof(WaitUntilDeploymentOffline));
         }
 
         private void WaitUntilPodsForDeploymentAreOffline(RunningDeployment deployment)
@@ -892,19 +928,19 @@ namespace KubernetesWorkflow
             {
                 var pods = FindPodsByLabel(deployment.PodLabel);
                 return !pods.Any();
-            });
+            }, nameof(WaitUntilPodsForDeploymentAreOffline));
         }
 
-        private void WaitUntil(Func<bool> predicate)
+        private void WaitUntil(Func<bool> predicate, string msg)
         {
             var sw = Stopwatch.Begin(log, true);
             try
             {
-                Time.WaitUntil(predicate, cluster.K8sOperationTimeout(), cluster.K8sOperationRetryDelay());
+                Time.WaitUntil(predicate, cluster.K8sOperationTimeout(), cluster.K8sOperationRetryDelay(), msg);
             }
             finally
             {
-                sw.End("", 1);
+                sw.End(msg, 1);
             }
         }
 

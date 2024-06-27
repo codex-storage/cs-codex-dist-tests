@@ -65,7 +65,7 @@ namespace FileUtils
 
                 if (readExpected == 0 && readActual == 0)
                 {
-                    log.Log($"OK: '{Describe()}' is equal to '{actual.Describe()}'.");
+                    log.Log($"OK: {Describe()} is equal to {actual.Describe()}.");
                     return;
                 }
 

@@ -44,7 +44,7 @@ namespace CodexContractsPlugin
             }
         }
 
-        public string MintTestTokens(EthAddress address, decimal amount, string tokenAddress)
+        public string MintTestTokens(EthAddress address, BigInteger amount, string tokenAddress)
         {
             log.Debug($"{amount} -> {address} (token: {tokenAddress})");
             return MintTokens(address.Address, amount, tokenAddress);
@@ -85,7 +85,7 @@ namespace CodexContractsPlugin
             }
         }
 
-        private string MintTokens(string account, decimal amount, string tokenAddress)
+        private string MintTokens(string account, BigInteger amount, string tokenAddress)
         {
             log.Debug($"({tokenAddress}) {amount} --> {account}");
             if (string.IsNullOrEmpty(account)) throw new ArgumentException("Invalid arguments for MintTestTokens");
@@ -93,7 +93,7 @@ namespace CodexContractsPlugin
             var function = new MintTokensFunction
             {
                 Holder = account,
-                Amount = amount.ToBig()
+                Amount = amount
             };
 
             return gethNode.SendTransaction(tokenAddress, function);
