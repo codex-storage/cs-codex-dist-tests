@@ -35,6 +35,12 @@ namespace BiblioTech
             Program.AdminChecker.SetAdminChannel(adminChannels.First());
             Program.RoleDriver = new RoleDriver(client, log, replacement);
 
+            if (Program.Config.DeleteCommandsAtStartup > 0)
+            {
+                log.Log("Deleting all application commands...");
+                await guild.DeleteApplicationCommandsAsync();
+            }
+
             var builders = commands.Select(c =>
             {
                 var msg = $"Building command '{c.Name}' with options: ";
@@ -54,6 +60,7 @@ namespace BiblioTech
 
             try
             {
+                log.Log("Creating application commands...");
                 foreach (var builder in builders)
                 {
                     await guild.CreateApplicationCommandAsync(builder.Build());

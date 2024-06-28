@@ -38,6 +38,9 @@ namespace BiblioTech
         [Uniform("no-discord", "nd", "NODISCORD", false, "For debugging: Bypasses all Discord API calls.")]
         public int NoDiscord { get; set; } = 0;
 
+        [Uniform("delete-commands-at-startup", "dcas", "DELETECMDSATSTARTUP", false, "If > 0, deletes all app commands at startup.")]
+        public int DeleteCommandsAtStartup { get; set; } = 0;
+
         public string EndpointsPath => Path.Combine(DataPath, "endpoints");
         public string UserDataPath => Path.Combine(DataPath, "users");
         public string LogPath => Path.Combine(DataPath, "logs");
