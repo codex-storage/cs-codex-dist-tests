@@ -6,7 +6,7 @@ using Utils;
 
 namespace AutoClient
 {
-    public class Runner
+    public class Purchaser
     {
         private readonly ILog log;
         private readonly HttpClient client;
@@ -16,7 +16,7 @@ namespace AutoClient
         private readonly Configuration config;
         private readonly ImageGenerator generator;
 
-        public Runner(ILog log, HttpClient client, Address address, CodexApi codex, CancellationToken ct, Configuration config, ImageGenerator generator)
+        public Purchaser(ILog log, HttpClient client, Address address, CodexApi codex, CancellationToken ct, Configuration config, ImageGenerator generator)
         {
             this.log = log;
             this.client = client;
@@ -27,33 +27,25 @@ namespace AutoClient
             this.generator = generator;
         }
 
-        public async Task Run()
+        public void Start()
+        {
+            Task.Run(Worker);
+        }
+
+        private async Task Worker()
         {
             while (!ct.IsCancellationRequested)
             {
-                log.Log("New run!");
-
-                try
-                {
-                    await DoRun();
-
-                    log.Log("Run succcessful.");
-                }
-                catch (Exception ex)
-                {
-                    log.Error("Exception during run: " + ex);
-                }
-
-                await FixedShortDelay();
+                var pid = await StartNewPurchase();
+                await WaitTillFinished(pid);
             }
         }
 
-        private async Task DoRun()
+        private async Task<string> StartNewPurchase()
         {
             var file = await CreateFile();
             var cid = await UploadFile(file);
-            var pid = await RequestStorage(cid);
-            await WaitUntilStarted(pid);
+            return await RequestStorage(cid);
         }
 
         private async Task<string> CreateFile()
@@ -66,8 +58,7 @@ namespace AutoClient
             // Copied from CodexNode :/
             using var fileStream = File.OpenRead(filename);
 
-            var logMessage = $"Uploading file {filename}...";
-            log.Log(logMessage);
+            log.Log($"Uploading file {filename}...");
             var response = await codex.UploadAsync(fileStream, ct);
 
             if (string.IsNullOrEmpty(response)) FrameworkAssert.Fail("Received empty response.");
@@ -91,7 +82,7 @@ namespace AutoClient
                 Tolerance = config.HostTolerance
             }, ct);
 
-            log.Log("Response: " + result);
+            log.Log("Purchase ID: " + result);
 
             return result;
         }
@@ -108,59 +99,46 @@ namespace AutoClient
                 if (!string.IsNullOrEmpty(sp.Error)) log.Log($"Purchase {pid} error is {sp.Error}");
                 return sp.State;
             }
-            catch (Exception ex)
+            catch
             {
                 return null;
             }
         }
 
-        private async Task WaitUntilStarted(string pid)
+        private async Task WaitTillFinished(string pid)
         {
-            log.Log("Waiting till contract is started, or expired...");
+            log.Log("Waiting...");
             try
             {
                 var emptyResponseTolerance = 10;
                 while (true)
                 {
-                    await FixedShortDelay();
-                    var status = await GetPurchaseState(pid); 
+                    var status = (await GetPurchaseState(pid))?.ToLowerInvariant();
                     if (string.IsNullOrEmpty(status))
                     {
                         emptyResponseTolerance--;
                         if (emptyResponseTolerance == 0)
                         {
-                            log.Log("Received 10 empty responses. Applying expiry delay, then carrying on.");
+                            log.Log("Received 10 empty responses. Stop tracking this purchase.");
                             await ExpiryTimeDelay();
                             return;
                         }
-                        await FixedShortDelay();
                     }
                     else
                     {
-                        if (status.Contains("pending") || status.Contains("submitted"))
+                        if (status.Contains("cancel") ||
+                            status.Contains("error") ||
+                            status.Contains("finished"))
                         {
-                            await FixedShortDelay();
+                            return;
                         }
-                        else if (status.Contains("started"))
+                        if (status.Contains("started"))
                         {
-                            log.Log("Started.");
                             await FixedDurationDelay();
                         }
-                        else if (status.Contains("finished"))
-                        {
-                            log.Log("Purchase finished.");
-                            return;
-                        }
-                        else if (status.Contains("error"))
-                        {
-                            await FixedShortDelay();
-                            return;
-                        }
-                        else
-                        {
-                            await FixedShortDelay();
-                        }
                     }
+
+                    await FixedShortDelay();
                 }
             }
             catch (Exception ex)
@@ -172,17 +150,17 @@ namespace AutoClient
 
         private async Task FixedDurationDelay()
         {
-            await Task.Delay(config.ContractDurationMinutes * 60 * 1000);
+            await Task.Delay(config.ContractDurationMinutes * 60 * 1000, ct);
         }
 
         private async Task ExpiryTimeDelay()
         {
-            await Task.Delay(config.ContractExpiryMinutes * 60 * 1000);
+            await Task.Delay(config.ContractExpiryMinutes * 60 * 1000, ct);
         }
 
         private async Task FixedShortDelay()
         {
-            await Task.Delay(15 * 1000);
+            await Task.Delay(15 * 1000, ct);
         }
     }
 }
