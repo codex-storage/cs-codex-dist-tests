@@ -14,7 +14,7 @@ namespace AutoClient
         public string DataPath { get; set; } = "datapath";
 
         [Uniform("purchases", "np", "PURCHASES", false, "Number of concurrent purchases.")]
-        public int NumConcurrentPurchases { get; set; } = 1;
+        public int NumConcurrentPurchases { get; set; } = 10;
 
         [Uniform("contract-duration", "cd", "CONTRACTDURATION", false, "contract duration in minutes. (default 30)")]
         public int ContractDurationMinutes { get; set; } = 30;
