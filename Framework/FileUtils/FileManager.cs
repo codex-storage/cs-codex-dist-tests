@@ -7,27 +7,35 @@ namespace FileUtils
     {
         TrackedFile CreateEmptyFile(string label = "");
         TrackedFile GenerateFile(ByteSize size, string label = "");
+        TrackedFile GenerateFile(Action<IGenerateOption> options, string label = "");
         void DeleteAllFiles();
         void ScopedFiles(Action action);
         T ScopedFiles<T>(Func<T> action);
     }
 
+    public interface IGenerateOption
+    {
+        IGenerateOption Random(ByteSize size);
+        IGenerateOption StringRepeat(string str, ByteSize size);
+        IGenerateOption StringRepeat(string str, int times);
+        IGenerateOption ByteRepeat(byte[] bytes, ByteSize size);
+        IGenerateOption ByteRepeat(byte[] bytes, int times);
+    }
+
     public class FileManager : IFileManager
     {
-        public const int ChunkSize = 1024 * 1024 * 100;
-        private static NumberSource folderNumberSource = new NumberSource(0);
-        private readonly Random random = new Random();
+        private static readonly NumberSource folderNumberSource = new NumberSource(0);
         private readonly ILog log;
-        private readonly string rootFolder;
         private readonly string folder;
         private readonly List<List<TrackedFile>> fileSetStack = new List<List<TrackedFile>>();
+
+        public const int ChunkSize = 1024 * 1024 * 100;
 
         public FileManager(ILog log, string rootFolder)
         {
             folder = Path.Combine(rootFolder, folderNumberSource.GetNextNumber().ToString("D5"));
 
             this.log = log;
-            this.rootFolder = rootFolder;
         }
 
         public TrackedFile CreateEmptyFile(string label = "")
@@ -41,10 +49,15 @@ namespace FileUtils
             return result;
         }
 
-        public TrackedFile GenerateFile(ByteSize size, string label)
+        public TrackedFile GenerateFile(ByteSize size, string label = "")
+        {
+            return GenerateFile(o => o.Random(size), label);
+        }
+
+        public TrackedFile GenerateFile(Action<IGenerateOption> options, string label = "")
         {
             var sw = Stopwatch.Begin(log);
-            var result = GenerateRandomFile(size, label);
+            var result = RunGenerators(options, label);
             sw.End($"Generated file {result.Describe()}.");
             return result;
         }
@@ -89,59 +102,40 @@ namespace FileUtils
             if (!Directory.GetFiles(folder).Any()) DeleteDirectory();
         }
 
-        private TrackedFile GenerateRandomFile(ByteSize size, string label)
+        private TrackedFile RunGenerators(Action<IGenerateOption> options, string label)
         {
             var result = CreateEmptyFile(label);
-            CheckSpaceAvailable(result, size);
+            var generators = GetGenerators(options);
+            CheckSpaceAvailable(result, generators.GetRequiredSpace());
 
-            GenerateFileBytes(result, size);
+            using var stream = new FileStream(result.Filename, FileMode.Append);
+            generators.Run(stream);
             return result;
         }
 
-        private void CheckSpaceAvailable(TrackedFile testFile, ByteSize size)
+        private GeneratorCollection GetGenerators(Action<IGenerateOption> options)
+        {
+            var result = new GeneratorCollection();
+            options(result);
+            return result;
+        }
+
+        private void CheckSpaceAvailable(TrackedFile testFile, long requiredSize)
         {
             var file = new FileInfo(testFile.Filename);
             var drive = new DriveInfo(file.Directory!.Root.FullName);
 
             var spaceAvailable = drive.TotalFreeSpace;
 
-            if (spaceAvailable < size.SizeInBytes)
+            if (spaceAvailable < requiredSize)
             {
                 var msg = $"Not enough disk space. " +
-                    $"{Formatter.FormatByteSize(size.SizeInBytes)} required. " +
+                    $"{Formatter.FormatByteSize(requiredSize)} required. " +
                     $"{Formatter.FormatByteSize(spaceAvailable)} available.";
 
                 log.Log(msg);
                 throw new Exception(msg);
             }
-        }
-
-        private void GenerateFileBytes(TrackedFile result, ByteSize size)
-        {
-            long bytesLeft = size.SizeInBytes;
-            int chunkSize = ChunkSize;
-            while (bytesLeft > 0)
-            {
-                try
-                {
-                    var length = Math.Min(bytesLeft, chunkSize);
-                    AppendRandomBytesToFile(result, length);
-                    bytesLeft -= length;
-                }
-                catch
-                {
-                    chunkSize = chunkSize / 2;
-                    if (chunkSize < 1024) throw;
-                }
-            }
-        }
-
-        private void AppendRandomBytesToFile(TrackedFile result, long length)
-        {
-            var bytes = new byte[length];
-            random.NextBytes(bytes);
-            using var stream = new FileStream(result.Filename, FileMode.Append);
-            stream.Write(bytes, 0, bytes.Length);
         }
 
         private void EnsureDirectory()

@@ -1,7 +1,6 @@
 ﻿using CodexPlugin;
 using FileUtils;
 using Logging;
-using Newtonsoft.Json;
 using NUnit.Framework;
 using Utils;
 

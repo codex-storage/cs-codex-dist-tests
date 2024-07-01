@@ -52,6 +52,11 @@ namespace DistTestCore
             return entryPoint.Tools.GetFileManager().GenerateFile(size, label);
         }
 
+        public TrackedFile GenerateTestFile(Action<IGenerateOption> options, string label = "")
+        {
+            return entryPoint.Tools.GetFileManager().GenerateFile(options, label);
+        }
+
         public IFileManager GetFileManager()
         {
             return entryPoint.Tools.GetFileManager();

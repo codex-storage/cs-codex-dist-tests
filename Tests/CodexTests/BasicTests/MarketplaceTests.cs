@@ -1,6 +1,7 @@
 ﻿using CodexContractsPlugin;
 using CodexContractsPlugin.Marketplace;
 using CodexPlugin;
+using FileUtils;
 using GethPlugin;
 using NUnit.Framework;
 using Utils;
@@ -46,7 +47,7 @@ namespace CodexTests.BasicTests
                 host.Marketplace.MakeStorageAvailable(availability);
             }
 
-            var testFile = GenerateTestFile(fileSize);
+            var testFile = CreateFile(fileSize);
 
             var client = StartCodex(s => s
                 .WithName("Client")
@@ -90,7 +91,7 @@ namespace CodexTests.BasicTests
             var fileSize = 10.MB();
             var geth = Ci.StartGethNode(s => s.IsMiner().WithName("disttest-geth"));
             var contracts = Ci.StartCodexContracts(geth);
-            var testFile = GenerateTestFile(fileSize);
+            var testFile = CreateFile(fileSize);
 
             var client = StartCodex(s => s
                 .WithName("Client")
@@ -122,6 +123,18 @@ namespace CodexTests.BasicTests
             var downloader = StartCodex(s => s.WithName("Downloader"));
             testFile.AssertIsEqual(downloader.DownloadContent(uploadCid));
             testFile.AssertIsEqual(downloader.DownloadContent(contractCid));
+        }
+
+        private TrackedFile CreateFile(ByteSize fileSize)
+        {
+            var segmentSize = new ByteSize(fileSize.SizeInBytes / 4);
+
+            return GenerateTestFile(o => o
+                .Random(segmentSize)
+                .ByteRepeat(new byte[] { 0xaa }, segmentSize)
+                .Random(segmentSize)
+                .ByteRepeat(new byte[] { 0xee }, segmentSize)
+            );
         }
 
         private void WaitForAllSlotFilledEvents(ICodexContracts contracts, StoragePurchaseRequest purchase, IGethNode geth)

@@ -117,6 +117,11 @@ namespace DistTestCore
             return Get().GenerateTestFile(size, label);
         }
 
+        public TrackedFile GenerateTestFile(Action<IGenerateOption> options, string label = "")
+        {
+            return Get().GenerateTestFile(options, label);
+        }
+
         /// <summary>
         /// Any test files generated in 'action' will be deleted after it returns.
         /// This helps prevent large tests from filling up discs.
