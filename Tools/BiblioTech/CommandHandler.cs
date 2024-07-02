@@ -35,12 +35,6 @@ namespace BiblioTech
             Program.AdminChecker.SetAdminChannel(adminChannels.First());
             Program.RoleDriver = new RoleDriver(client, log, replacement);
 
-            if (Program.Config.DeleteCommandsAtStartup > 0)
-            {
-                log.Log("Deleting all application commands...");
-                await guild.DeleteApplicationCommandsAsync();
-            }
-
             var builders = commands.Select(c =>
             {
                 var msg = $"Building command '{c.Name}' with options: ";
@@ -60,10 +54,16 @@ namespace BiblioTech
 
             try
             {
-                log.Log("Creating application commands...");
-                foreach (var builder in builders)
+                log.Log("Building application commands...");
+                var commands = builders.Select(b => b.Build()).ToArray();
+
+                log.Log("Submitting application commands...");
+                var response = await guild.BulkOverwriteApplicationCommandAsync(commands);
+
+                log.Log("Commands in response:");
+                foreach (var cmd in response)
                 {
-                    await guild.CreateApplicationCommandAsync(builder.Build());
+                    log.Log($"{cmd.Name} ({cmd.Description}) [{DescribOptions(cmd.Options)}]");
                 }
             }
             catch (HttpException exception)
@@ -71,6 +71,17 @@ namespace BiblioTech
                 var json = JsonConvert.SerializeObject(exception.Errors, Formatting.Indented);
                 log.Error(json);
             }
+            log.Log("Initialized.");
+        }
+
+        private string DescribOptions(IReadOnlyCollection<SocketApplicationCommandOption> options)
+        {
+            return string.Join(",", options.Select(DescribeOption).ToArray());
+        }
+
+        private string DescribeOption(SocketApplicationCommandOption option)
+        {
+            return $"({option.Name}[{DescribOptions(option.Options)}])";
         }
 
         private async Task SlashCommandHandler(SocketSlashCommand command)

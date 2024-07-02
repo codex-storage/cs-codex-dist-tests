@@ -27,6 +27,7 @@ namespace CodexPlugin
             var response = codexAccess.RequestStorage(purchase);
 
             if (string.IsNullOrEmpty(response) ||
+                response == "Unable to encode manifest" ||
                 response == "Purchasing not available" ||
                 response == "Expiry required" ||
                 response == "Expiry needs to be in future" ||
