@@ -224,7 +224,7 @@ namespace BiblioTech.Commands
 
             public LogReplaceCommand(CustomReplacement replacement)
                 : base(name: "logreplace",
-               description: "Replaces all occurances of 'from' with 'to' in ChainEvent messages. Leave 'to' empty to remove a replacement.")
+               description: "Replaces all 'from' with 'to' in ChainEvents.")
             {
                 this.replacement = replacement;
             }

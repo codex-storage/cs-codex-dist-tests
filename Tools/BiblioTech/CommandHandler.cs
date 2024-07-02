@@ -70,6 +70,7 @@ namespace BiblioTech
             {
                 var json = JsonConvert.SerializeObject(exception.Errors, Formatting.Indented);
                 log.Error(json);
+                throw exception;
             }
             log.Log("Initialized.");
         }

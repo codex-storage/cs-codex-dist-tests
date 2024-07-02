@@ -10,6 +10,8 @@ namespace BiblioTech.Options
             Description = description;
             Type = type;
             IsRequired = isRequired;
+
+            if (Description.Length > 100) throw new Exception("Description for option " + name + " too long!");
         }
 
         public string Name { get; }
