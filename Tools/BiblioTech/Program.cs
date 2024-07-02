@@ -11,7 +11,7 @@ namespace BiblioTech
     public class Program
     {
         private DiscordSocketClient client = null!;
-        private readonly CustomReplacement replacement = new CustomReplacement();
+        private CustomReplacement replacement = null!;
 
         public static Configuration Config { get; private set; } = null!;
         public static UserRepo UserRepo { get; } = new UserRepo();
@@ -42,6 +42,17 @@ namespace BiblioTech
         public async Task MainAsync(string[] args)
         {
             Log.Log("Starting Codex Discord Bot...");
+            try
+            {
+                replacement = new CustomReplacement(Config);
+                replacement.Load();
+            }
+            catch (Exception ex)
+            {
+                Log.Error("Failed to load logReplacements: " + ex);
+                throw;
+            }
+
             if (Config.DebugNoDiscord)
             {
                 Log.Log("Debug option is set. Discord connection disabled!");
