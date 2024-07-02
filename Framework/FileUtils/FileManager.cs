@@ -70,16 +70,27 @@ namespace FileUtils
         public void ScopedFiles(Action action)
         {
             PushFileSet();
-            action();
-            PopFileSet();
+            try
+            {
+                action();
+            }
+            finally
+            {
+                PopFileSet();
+            }
         }
 
         public T ScopedFiles<T>(Func<T> action)
         {
             PushFileSet();
-            var result = action();
-            PopFileSet();
-            return result;
+            try
+            {
+                return action();
+            }
+            finally
+            {
+                PopFileSet();
+            }
         }
 
         private void PushFileSet()

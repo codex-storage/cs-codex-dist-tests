@@ -1,0 +1,26 @@
+name: Docker - AutoClient
+
+on:
+  push:
+    branches:
+      - master
+    tags:
+      - 'v*.*.*'
+    paths:
+      - 'Tools/AutoClient/**'
+      - '!Tools/AutoClient/docker/docker-compose.yaml'
+      - 'Framework/**'
+      - 'ProjectPlugins/**'
+      - .github/workflows/docker-autoclient.yml
+      - .github/workflows/docker-reusable.yml
+  workflow_dispatch:
+
+jobs:
+  build-and-push:
+    name: Build and Push
+    uses: ./.github/workflows/docker-reusable.yml
+    with:
+      docker_file: Tools/AutoClient/docker/Dockerfile
+      docker_repo: codexstorage/codex-autoclient
+    secrets: inherit
+
