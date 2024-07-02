@@ -34,12 +34,12 @@
     {
         public TimeSpan HttpCallTimeout()
         {
-            return TimeSpan.FromMinutes(3);
+            return TimeSpan.FromMinutes(2);
         }
 
         public TimeSpan HttpRetryTimeout()
         {
-            return TimeSpan.FromMinutes(10);
+            return TimeSpan.FromMinutes(5);
         }
 
         public TimeSpan HttpCallRetryDelay()

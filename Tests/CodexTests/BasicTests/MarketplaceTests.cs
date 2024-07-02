@@ -12,11 +12,18 @@ namespace CodexTests.BasicTests
     public class MarketplaceTests : AutoBootstrapDistTest
     {
         [Test]
-        public void MarketplaceExample()
+        [Combinatorial]
+        public void MarketplaceExample(
+            [Values(4, 8, 16 /* 1mb */, 32)] int numBlocks,
+            [Values(-3, -2, -1, 0, 1, 2, 3)] int plusSizeKb
+        )
         {
             var hostInitialBalance = 234.TstWei();
             var clientInitialBalance = 100000.TstWei();
-            var fileSize = 10.MB();
+            var fileSize = new ByteSize(
+                numBlocks * (64 * 1024) +
+                plusSizeKb * 1024
+            );
 
             var geth = Ci.StartGethNode(s => s.IsMiner().WithName("disttest-geth"));
             var contracts = Ci.StartCodexContracts(geth);
@@ -56,9 +63,9 @@ namespace CodexTests.BasicTests
 
             AssertBalance(contracts, client, Is.EqualTo(clientInitialBalance));
 
-            var contentId = client.UploadFile(testFile);
+            var uploadCid = client.UploadFile(testFile);
 
-            var purchase = new StoragePurchaseRequest(contentId)
+            var purchase = new StoragePurchaseRequest(uploadCid)
             {
                 PricePerSlotPerSecond = 2.TstWei(),
                 RequiredCollateral = 10.TstWei(),
@@ -70,6 +77,18 @@ namespace CodexTests.BasicTests
             };
 
             var purchaseContract = client.Marketplace.RequestStorage(purchase);
+            
+            var contractCid = purchaseContract.ContentId;
+            Assert.That(uploadCid.Id, Is.Not.EqualTo(contractCid.Id));
+
+            // Download both from client.
+            testFile.AssertIsEqual(client.DownloadContent(uploadCid));
+            testFile.AssertIsEqual(client.DownloadContent(contractCid));
+
+            // Download both from another node.
+            var downloader = StartCodex(s => s.WithName("Downloader"));
+            testFile.AssertIsEqual(downloader.DownloadContent(uploadCid));
+            testFile.AssertIsEqual(downloader.DownloadContent(contractCid));
 
             WaitForAllSlotFilledEvents(contracts, purchase, geth);
 
@@ -86,6 +105,7 @@ namespace CodexTests.BasicTests
         }
 
         [Test]
+        [Ignore("Integrated into MarketplaceExample to speed up testing.")]
         public void CanDownloadContentFromContractCid()
         {
             var fileSize = 10.MB();
