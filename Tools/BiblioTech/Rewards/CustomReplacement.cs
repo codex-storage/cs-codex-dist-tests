@@ -50,7 +50,7 @@ namespace BiblioTech.Rewards
             var result = msg;
             foreach (var pair in  replacements)
             {
-                result.Replace(pair.Key, pair.Value);
+                result = result.Replace(pair.Key, pair.Value);
             }
             return result;
         }
