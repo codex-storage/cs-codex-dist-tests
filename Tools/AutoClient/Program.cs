@@ -44,7 +44,7 @@ public static class Program
         for (var i = 0; i < config.NumConcurrentPurchases; i++)
         {
             purchasers.Add(
-                new Purchaser(new LogPrefixer(log, $"({i}) "), client, address, codex, cancellationToken, config, imgGenerator)
+                new Purchaser(new LogPrefixer(log, $"({i}) "), client, address, codex, config, imgGenerator, cancellationToken)
             );
         }
 
