@@ -13,7 +13,7 @@ namespace DistTestCore
     [Parallelizable(ParallelScope.All)]
     public abstract class DistTest
     {
-        private const string TestNamespacePrefix = "ct-";
+        private const string TestNamespacePrefix = "cdx-";
         private readonly Configuration configuration = new Configuration();
         private readonly Assembly[] testAssemblies;
         private readonly FixtureLog fixtureLog;

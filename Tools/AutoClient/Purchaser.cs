@@ -12,19 +12,19 @@ namespace AutoClient
         private readonly HttpClient client;
         private readonly Address address;
         private readonly CodexApi codex;
-        private readonly CancellationToken ct;
         private readonly Configuration config;
         private readonly ImageGenerator generator;
+        private readonly CancellationToken ct;
 
-        public Purchaser(ILog log, HttpClient client, Address address, CodexApi codex, CancellationToken ct, Configuration config, ImageGenerator generator)
+        public Purchaser(ILog log, HttpClient client, Address address, CodexApi codex, Configuration config, ImageGenerator generator, CancellationToken ct)
         {
             this.log = log;
             this.client = client;
             this.address = address;
             this.codex = codex;
-            this.ct = ct;
             this.config = config;
             this.generator = generator;
+            this.ct = ct;
         }
 
         public void Start()

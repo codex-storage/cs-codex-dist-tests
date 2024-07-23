@@ -55,6 +55,8 @@ public static class Program
             await Task.Delay(delayPerPurchaser);
         }
 
+        cancellationToken.WaitHandle.WaitOne();
+
         log.Log("Done.");
     }
 
