@@ -3,24 +3,29 @@ using System.Text;
 
 public static class Program
 {
-    private const string OpenApiFile = "../CodexPlugin/openapi.yaml";
-    private const string ClientFile = "../CodexPlugin/obj/openapiClient.cs";
     private const string Search = "<INSERT-OPENAPI-YAML-HASH>";
-    private const string TargetFile = "ApiChecker.cs";
+    private const string CodexPluginFolderName = "CodexPlugin";
+    private const string ProjectPluginsFolderName = "ProjectPlugins";
 
     public static void Main(string[] args)
     {
         Console.WriteLine("Injecting hash of 'openapi.yaml'...");
 
-        // Force client rebuild by deleting previous artifact.
-        File.Delete(ClientFile);
+        var root = FindCodexPluginFolder();
+        Console.WriteLine("Located CodexPlugin: " + root);
+        var openApiFile = Path.Combine(root, "openapi.yaml");
+        var clientFile = Path.Combine(root, "obj", "openapiClient.cs");
+        var targetFile = Path.Combine(root, "ApiChecker.cs");
 
-        var hash = CreateHash();
+        // Force client rebuild by deleting previous artifact.
+        File.Delete(clientFile);
+
+        var hash = CreateHash(openApiFile);
         // This hash is used to verify that the Codex docker image being used is compatible
         // with the openapi.yaml being used by the Codex plugin.
         // If the openapi.yaml files don't match, an exception is thrown.
 
-        SearchAndInject(hash);
+        SearchAndInject(hash, targetFile);
 
         // This program runs as the pre-build trigger for "CodexPlugin".
         // You might be wondering why this work isn't done by a shell script.
@@ -33,9 +38,39 @@ public static class Program
         Console.WriteLine("Done!");
     }
 
-    private static string CreateHash()
+    private static string FindCodexPluginFolder()
     {
-        var file = File.ReadAllText(OpenApiFile);
+        var current = Directory.GetCurrentDirectory();
+
+        while (true)
+        {
+            var localFolders = Directory.GetDirectories(current);
+            var projectPluginsFolders = localFolders.Where(l => l.EndsWith(ProjectPluginsFolderName)).ToArray();
+            if (projectPluginsFolders.Length == 1)
+            {
+                return Path.Combine(projectPluginsFolders.Single(), CodexPluginFolderName);
+            }
+            var codexPluginFolders = localFolders.Where(l => l.EndsWith(CodexPluginFolderName)).ToArray();
+            if (codexPluginFolders.Length == 1)
+            {
+                return codexPluginFolders.Single();
+            }
+
+            var parent = Directory.GetParent(current);
+            if (parent == null)
+            {
+                var msg = $"Unable to locate '{CodexPluginFolderName}' folder. Travelled up from: '{Directory.GetCurrentDirectory()}'";
+                Console.WriteLine(msg);
+                throw new Exception(msg);
+            }
+
+            current = parent.FullName;
+        }
+    }
+
+    private static string CreateHash(string openApiFile)
+    {
+        var file = File.ReadAllText(openApiFile);
         var fileBytes = Encoding.ASCII.GetBytes(file
             .Replace(Environment.NewLine, ""));
 
@@ -44,11 +79,11 @@ public static class Program
         return BitConverter.ToString(hash);
     }
 
-    private static void SearchAndInject(string hash)
+    private static void SearchAndInject(string hash, string targetFile)
     {
-        var lines = File.ReadAllLines(TargetFile);
+        var lines = File.ReadAllLines(targetFile);
         Inject(lines, hash);
-        File.WriteAllLines(TargetFile, lines);
+        File.WriteAllLines(targetFile, lines);
     }
 
     private static void Inject(string[] lines, string hash)
