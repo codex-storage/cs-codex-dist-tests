@@ -14,15 +14,17 @@ namespace CodexTests.BasicTests
         [Test]
         [Combinatorial]
         public void MarketplaceExample(
-            [Values(4, 8, 16 /* 1mb */, 32)] int numBlocks,
-            [Values(-3, -2, -1, 0, 1, 2, 3)] int plusSizeKb
+            [Values(4, 8, 16 /* 1mb */, 32, 64)] int numBlocks,
+            [Values(-3, -2, -1, 0, 1, 2, 3)] int plusSizeKb,
+            [Values(-3, -2, -1, 0, 1, 2, 3)] int plusSizeBytes
         )
         {
             var hostInitialBalance = 234.TstWei();
             var clientInitialBalance = 100000.TstWei();
             var fileSize = new ByteSize(
                 numBlocks * (64 * 1024) +
-                plusSizeKb * 1024
+                plusSizeKb * 1024 +
+                plusSizeBytes
             );
 
             var geth = Ci.StartGethNode(s => s.IsMiner().WithName("disttest-geth"));

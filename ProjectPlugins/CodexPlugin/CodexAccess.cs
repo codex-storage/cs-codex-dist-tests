@@ -134,15 +134,16 @@ namespace CodexPlugin
 
         public void LogDiskSpace(string msg)
         {
-            try
-            {
-                var diskInfo = tools.CreateWorkflow().ExecuteCommand(Container.Containers.Single(), "df", "--sync");
-                Log($"{msg} - Disk info: {diskInfo}");
-            }
-            catch (Exception e)
-            {
-                Log("Failed to get disk info: " + e);
-            }
+            what to do with this?
+            //try
+            //{
+            //    var diskInfo = tools.CreateWorkflow().ExecuteCommand(Container.Containers.Single(), "df", "--sync");
+            //    Log($"{msg} - Disk info: {diskInfo}");
+            //}
+            //catch (Exception e)
+            //{
+            //    Log("Failed to get disk info: " + e);
+            //}
         }
 
         public void DeleteRepoFolder()

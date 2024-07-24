@@ -24,7 +24,7 @@ namespace CodexTests.ScalabilityTests
             var uploadLog = Ci.DownloadLog(hosts[0]);
             var expectedNumberOfBlocks = RoundUp(fileSize.MB().SizeInBytes, 64.KB().SizeInBytes) + 1; // +1 for manifest block.
             var blockCids = uploadLog
-                .FindLinesThatContain("Putting block into network store")
+                .FindLinesThatContain("Block Stored")
                 .Select(s =>
                 {
                     var start = s.IndexOf("cid=") + 4;
@@ -44,9 +44,16 @@ namespace CodexTests.ScalabilityTests
 
             var downloadLog = Ci.DownloadLog(client);
             var host = string.Empty;
-            var blockCidHostMap = new Dictionary<string, string>();
+            var blockIndexHostMap = new Dictionary<int, string>();
             downloadLog.IterateLines(line =>
             {
+                // Received blocks from peer
+                // topics="codex blockexcengine"
+                // tid=1
+                // peer=16U*5ULEov
+                // blocks="treeCid: zDzSvJTfBgds9wsRV6iB8ZVf4fL6Nynxh2hkJSyTH4j8A9QPucyU, index: 1597"
+                // count=28138
+
                 if (line.Contains("peer=") && line.Contains(" len="))
                 {
                     var start = line.IndexOf("peer=") + 5;
