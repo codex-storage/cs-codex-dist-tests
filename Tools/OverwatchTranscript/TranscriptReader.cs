@@ -1,0 +1,92 @@
+﻿using Newtonsoft.Json;
+using System.IO.Compression;
+
+namespace OverwatchTranscript
+{
+    public class TranscriptReader
+    {
+        private readonly string transcriptFile;
+        private readonly string artifactsFolder;
+        private readonly Dictionary<string, Action<DateTime, string>> handlers = new Dictionary<string, Action<DateTime, string>>();
+        private readonly string workingDir;
+        private OverwatchTranscript model = null!;
+        private int eventIndex = 0;
+        private bool closed;
+
+        public TranscriptReader(string workingDir, string inputFilename)
+        {
+            closed = false;
+            this.workingDir = workingDir;
+            transcriptFile = Path.Combine(workingDir, TranscriptConstants.TranscriptFilename);
+            artifactsFolder = Path.Combine(workingDir, TranscriptConstants.ArtifactFolderName);
+
+            if (!Directory.Exists(workingDir)) Directory.CreateDirectory(workingDir);
+            if (File.Exists(transcriptFile) || Directory.Exists(artifactsFolder)) throw new Exception("workingdir not clean");
+
+            LoadModel(inputFilename);
+        }
+
+        public T GetHeader<T>(string key)
+        {
+            CheckClosed();
+            var value = model.Header.Entries.First(e => e.Key == key).Value;
+            return JsonConvert.DeserializeObject<T>(value)!;
+        }
+
+        public void AddHandler<T>(Action<DateTime, T> handler)
+        {
+            CheckClosed();
+            var typeName = typeof(T).FullName;
+            if (string.IsNullOrEmpty(typeName)) throw new Exception("Empty typename for payload");
+
+            handlers.Add(typeName, (utc, s) =>
+            {
+                handler(utc, JsonConvert.DeserializeObject<T>(s)!);
+            });
+        }
+
+        public void Next()
+        {
+            CheckClosed();
+            if (eventIndex >= model.Events.Length) return;
+
+            var @event = model.Events[eventIndex];
+            eventIndex++;
+
+            PlayEvent(@event);
+        }
+
+        public void Close()
+        {
+            CheckClosed();
+            Directory.Delete(workingDir, true);
+            closed = true;
+        }
+
+        private void PlayEvent(OverwatchEvent @event)
+        {
+            if (!handlers.ContainsKey(@event.Type)) return;
+            var handler = handlers[@event.Type];
+
+            handler(@event.Utc, @event.Payload);
+        }
+
+        private void LoadModel(string inputFilename)
+        {
+            ZipFile.ExtractToDirectory(inputFilename, workingDir);
+
+            if (!File.Exists(transcriptFile))
+            {
+                closed = true;
+                throw new Exception("Is not a transcript file. Unzipped to: " + workingDir);
+            }
+
+            model = JsonConvert.DeserializeObject<OverwatchTranscript>(File.ReadAllText(transcriptFile))!;
+        }
+
+        private void CheckClosed()
+        {
+            if (closed) throw new Exception("Transcript has already been written. Cannot modify or write again.");
+        }
+    }
+}
