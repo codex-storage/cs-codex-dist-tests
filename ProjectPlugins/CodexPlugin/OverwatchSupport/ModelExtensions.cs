@@ -1,18 +1,6 @@
 ﻿namespace OverwatchTranscript
 {
     [Serializable]
-    public partial class OverwatchHeader
-    {
-        public OverwatchCodexHeader? CodexHeader { get; set; }
-    }
-
-    [Serializable]
-    public partial class OverwatchEvent
-    {
-        public OverwatchCodexEvent? CodexEvent { get; set; }
-    }
-
-    [Serializable]
     public class OverwatchCodexHeader
     {
         public int TotalNumberOfNodes { get; set; }
@@ -21,6 +9,7 @@
     [Serializable]
     public class OverwatchCodexEvent
     {
+        public ScenarioFinishedEvent? ScenarioFinished { get; set; }
         public NodeStartedEvent? NodeStarted { get; set; }
         public NodeStoppedEvent? NodeStopped { get; set; }
         public FileUploadedEvent? FileUploaded { get; set; }
@@ -29,6 +18,13 @@
     }
 
     #region Scenario Generated Events
+
+    [Serializable]
+    public class ScenarioFinishedEvent
+    {
+        public bool Success { get; set; }
+        public string Result { get; set; } = string.Empty;
+    }
 
     [Serializable]
     public class NodeStartedEvent

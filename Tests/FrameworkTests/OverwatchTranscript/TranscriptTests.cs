@@ -7,7 +7,7 @@ namespace FrameworkTests.OverwatchTranscript
     [TestFixture]
     public class TranscriptTests
     {
-        private const string TranscriptFilename = "testtranscript.json";
+        private const string TranscriptFilename = "testtranscript.owts";
         private const string HeaderKey = "testHeader";
         private const string HeaderData = "abcdef";
         private const string EventData0 = "12345";

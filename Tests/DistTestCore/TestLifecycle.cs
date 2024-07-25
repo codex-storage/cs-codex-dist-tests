@@ -98,21 +98,29 @@ namespace DistTestCore
             }
         }
 
-        public void DownloadAllLogs()
+        private IDownloadedLog[] allLogs = Array.Empty<IDownloadedLog>();
+
+        public IDownloadedLog[] DownloadAllLogs()
         {
+            if (allLogs.Any()) return allLogs;
+
             try
             {
+                var result = new List<IDownloadedLog>();    
                 foreach (var rc in runningContainers)
                 {
                     foreach (var c in rc.Containers)
                     {
-                        CoreInterface.DownloadLog(c);
+                        result.Add(CoreInterface.DownloadLog(c));
                     }
                 }
+                allLogs = result.ToArray();
+                return allLogs;
             }
             catch (Exception ex)
             {
                 Log.Error("Exception during log download: " + ex);
+                return Array.Empty<IDownloadedLog>();
             }
         }
     }

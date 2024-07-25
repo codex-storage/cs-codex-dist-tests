@@ -3,7 +3,15 @@ using System.IO.Compression;
 
 namespace OverwatchTranscript
 {
-    public class TranscriptReader
+    public interface ITranscriptReader
+    {
+        T GetHeader<T>(string key);
+        void AddHandler<T>(Action<DateTime, T> handler);
+        void Next();
+        void Close();
+    }
+
+    public class TranscriptReader : ITranscriptReader
     {
         private readonly string transcriptFile;
         private readonly string artifactsFolder;

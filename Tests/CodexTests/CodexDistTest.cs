@@ -1,6 +1,7 @@
 ﻿using CodexContractsPlugin;
 using CodexNetDeployer;
 using CodexPlugin;
+using CodexPlugin.OverwatchSupport;
 using CodexTests.Helpers;
 using Core;
 using DistTestCore;
@@ -9,11 +10,15 @@ using DistTestCore.Logs;
 using MetricsPlugin;
 using Newtonsoft.Json;
 using NUnit.Framework.Constraints;
+using OverwatchTranscript;
 
 namespace CodexTests
 {
     public class CodexDistTest : DistTest
     {
+        private const bool enableOverwatchTranscript = true;
+        private static readonly Dictionary<TestLifecycle, CodexTranscriptWriter> writers = new Dictionary<TestLifecycle, CodexTranscriptWriter>();
+
         public CodexDistTest()
         {
             ProjectPlugin.Load<CodexPlugin.CodexPlugin>();
@@ -27,6 +32,25 @@ namespace CodexTests
             var localBuilder = new LocalCodexBuilder(fixtureLog);
             localBuilder.Intialize();
             localBuilder.Build();
+        }
+
+        protected override void LifecycleStart(TestLifecycle lifecycle)
+        {
+            base.LifecycleStart(lifecycle);
+            if (!enableOverwatchTranscript) return;
+
+            writers.Add(lifecycle, new CodexTranscriptWriter(Transcript.NewWriter()));
+        }
+
+        protected override void LifecycleStop(TestLifecycle lifecycle)
+        {
+            base.LifecycleStop(lifecycle);
+            if (!enableOverwatchTranscript) return;
+
+            var writer = writers[lifecycle];
+            writers.Remove(lifecycle);
+
+            writer.ProcessLogs(lifecycle.DownloadAllLogs());
         }
 
         public ICodexNode StartCodex()
@@ -50,6 +74,11 @@ namespace CodexTests
             {
                 setup(s);
                 OnCodexSetup(s);
+
+                if (enableOverwatchTranscript)
+                {
+                    s.WithTranscriptWriter(writers[Get()]);
+                }
             });
 
             return group;
