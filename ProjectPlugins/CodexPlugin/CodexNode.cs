@@ -115,8 +115,6 @@ namespace CodexPlugin
 
         public ContentId UploadFile(TrackedFile file, Action<Failure> onFailure)
         {
-            CodexAccess.LogDiskSpace("Before upload");
-
             using var fileStream = File.OpenRead(file.Filename);
 
             var logMessage = $"Uploading file {file.Describe()}...";
@@ -133,7 +131,6 @@ namespace CodexPlugin
             if (response.StartsWith(UploadFailedMessage)) FrameworkAssert.Fail("Node failed to store block.");
 
             Log($"Uploaded file. Received contentId: '{response}'.");
-            CodexAccess.LogDiskSpace("After upload");
 
             return new ContentId(response);
         }
@@ -205,8 +202,19 @@ namespace CodexPlugin
 
             var log = tools.GetLog();
             log.AddStringReplace(nodePeerId, nodeName);
+            log.AddStringReplace(ToShortIdString(nodePeerId), nodeName);
             log.AddStringReplace(debugInfo.Table.LocalNode.NodeId, nodeName);
+            log.AddStringReplace(ToShortIdString(debugInfo.Table.LocalNode.NodeId), nodeName);
             Version = debugInfo.Version;
+        }
+
+        private string ToShortIdString(string id)
+        {
+            if (id.Length > 10)
+            {
+                return $"{id[..3]}*{id[^6..]}";
+            }
+            return id;
         }
 
         private string[] GetPeerMultiAddresses(CodexNode peer, DebugInfo peerInfo)
@@ -223,8 +231,6 @@ namespace CodexPlugin
 
         private void DownloadToFile(string contentId, TrackedFile file, Action<Failure> onFailure)
         {
-            CodexAccess.LogDiskSpace("Before download");
-
             using var fileStream = File.OpenWrite(file.Filename);
             try
             {
@@ -236,8 +242,6 @@ namespace CodexPlugin
                 Log($"Failed to download file '{contentId}'.");
                 throw;
             }
-
-            CodexAccess.LogDiskSpace("After download");
         }
 
         private void EnsureMarketplace()

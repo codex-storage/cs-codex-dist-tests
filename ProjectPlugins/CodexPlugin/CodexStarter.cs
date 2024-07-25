@@ -34,7 +34,7 @@ namespace CodexPlugin
             {
                 var podInfo = GetPodInfo(rc);
                 var podInfos = string.Join(", ", rc.Containers.Select(c => $"Container: '{c.Name}' PodLabel: '{c.RunningPod.StartResult.Deployment.PodLabel}' runs at '{podInfo.K8SNodeName}'={podInfo.Ip}"));
-                Log($"Started {codexSetup.NumberOfNodes} nodes of image '{containers.First().Containers.First().Recipe.Image}'. ({podInfos})");
+                Log($"Started node with image '{containers.First().Containers.First().Recipe.Image}'. ({podInfos})");
             }
             LogSeparator();
 

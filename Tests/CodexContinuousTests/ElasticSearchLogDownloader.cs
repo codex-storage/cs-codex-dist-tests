@@ -71,7 +71,7 @@ namespace ContinuousTests
             var address = new Address($"http://{serviceName}.{k8sNamespace}.svc.cluster.local", 9200);
             var baseUrl = "";
 
-            var http = tools.CreateHttp(client =>
+            var http = tools.CreateHttp(address.ToString(), client =>
             {
                 client.DefaultRequestHeaders.Add("kbn-xsrf", "reporting");
             });

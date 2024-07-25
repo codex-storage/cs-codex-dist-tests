@@ -13,18 +13,20 @@ namespace Core
 
     internal class Http : IHttp
     {
-        private static readonly object httpLock = new object();
+        private static readonly Dictionary<string, object> httpLocks = new Dictionary<string, object>();
         private readonly ILog log;
         private readonly ITimeSet timeSet;
         private readonly Action<HttpClient> onClientCreated;
+        private readonly string id;
 
-        internal Http(ILog log, ITimeSet timeSet)
-            : this(log, timeSet, DoNothing)
+        internal Http(string id, ILog log, ITimeSet timeSet)
+            : this(id, log, timeSet, DoNothing)
         {
         }
 
-        internal Http(ILog log, ITimeSet timeSet, Action<HttpClient> onClientCreated)
+        internal Http(string id, ILog log, ITimeSet timeSet, Action<HttpClient> onClientCreated)
         {
+            this.id = id;
             this.log = log;
             this.timeSet = timeSet;
             this.onClientCreated = onClientCreated;
@@ -63,10 +65,17 @@ namespace Core
 
         private T LockRetry<T>(Func<T> operation, Retry retry)
         {
+            var httpLock = GetLock();
             lock (httpLock)
             {
                 return retry.Run(operation);
             }
+        }
+
+        private object GetLock()
+        {
+            if (!httpLocks.ContainsKey(id)) httpLocks.Add(id, new object());
+            return httpLocks[id];
         }
 
         private HttpClient GetClient()

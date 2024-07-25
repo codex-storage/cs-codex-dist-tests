@@ -132,20 +132,6 @@ namespace CodexPlugin
             return workflow.GetPodInfo(Container);
         }
 
-        public void LogDiskSpace(string msg)
-        {
-            what to do with this?
-            //try
-            //{
-            //    var diskInfo = tools.CreateWorkflow().ExecuteCommand(Container.Containers.Single(), "df", "--sync");
-            //    Log($"{msg} - Disk info: {diskInfo}");
-            //}
-            //catch (Exception e)
-            //{
-            //    Log("Failed to get disk info: " + e);
-            //}
-        }
-
         public void DeleteRepoFolder()
         {
             try
@@ -164,13 +150,13 @@ namespace CodexPlugin
 
         private T OnCodex<T>(Func<CodexApi, Task<T>> action)
         {
-            var result = tools.CreateHttp(CheckContainerCrashed).OnClient(client => CallCodex(client, action));
+            var result = tools.CreateHttp(GetHttpId(), CheckContainerCrashed).OnClient(client => CallCodex(client, action));
             return result;
         }
 
         private T OnCodex<T>(Func<CodexApi, Task<T>> action, Retry retry)
         {
-            var result = tools.CreateHttp(CheckContainerCrashed).OnClient(client => CallCodex(client, action), retry);
+            var result = tools.CreateHttp(GetHttpId(), CheckContainerCrashed).OnClient(client => CallCodex(client, action), retry);
             return result;
         }
 
@@ -197,13 +183,18 @@ namespace CodexPlugin
         private IEndpoint GetEndpoint()
         {
             return tools
-                .CreateHttp(CheckContainerCrashed)
+                .CreateHttp(GetHttpId(), CheckContainerCrashed)
                 .CreateEndpoint(GetAddress(), "/api/codex/v1/", Container.Name);
         }
 
         private Address GetAddress()
         {
             return Container.Containers.Single().GetAddress(log, CodexContainerRecipe.ApiPortTag);
+        }
+
+        private string GetHttpId()
+        {
+            return GetAddress().ToString();
         }
 
         private void CheckContainerCrashed(HttpClient client)
@@ -227,8 +218,6 @@ namespace CodexPlugin
             Log($"Retry {failure.TryNumber} took {Time.FormatDuration(failure.Duration)} and failed with '{failure.Exception}'. " +
                 $"(HTTP timeout = {Time.FormatDuration(timeSet.HttpCallTimeout())}) " +
                 $"Checking if node responds to debug/info...");
-
-            LogDiskSpace("After retry failure");
 
             try
             {

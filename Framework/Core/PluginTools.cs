@@ -27,9 +27,9 @@ namespace Core
 
     public interface IHttpFactoryTool
     {
-        IHttp CreateHttp(Action<HttpClient> onClientCreated);
-        IHttp CreateHttp(Action<HttpClient> onClientCreated, ITimeSet timeSet);
-        IHttp CreateHttp();
+        IHttp CreateHttp(string id, Action<HttpClient> onClientCreated);
+        IHttp CreateHttp(string id, Action<HttpClient> onClientCreated, ITimeSet timeSet);
+        IHttp CreateHttp(string id);
     }
 
     public interface IFileTool
@@ -58,19 +58,19 @@ namespace Core
             log.Prefix = prefix;
         }
 
-        public IHttp CreateHttp(Action<HttpClient> onClientCreated)
+        public IHttp CreateHttp(string id, Action<HttpClient> onClientCreated)
         {
-            return CreateHttp(onClientCreated, TimeSet);
+            return CreateHttp(id, onClientCreated, TimeSet);
         }
 
-        public IHttp CreateHttp(Action<HttpClient> onClientCreated, ITimeSet ts)
+        public IHttp CreateHttp(string id, Action<HttpClient> onClientCreated, ITimeSet ts)
         {
-            return new Http(log, ts, onClientCreated);
+            return new Http(id, log, ts, onClientCreated);
         }
 
-        public IHttp CreateHttp()
+        public IHttp CreateHttp(string id)
         {
-            return new Http(log, TimeSet);
+            return new Http(id, log, TimeSet);
         }
 
         public IStartupWorkflow CreateWorkflow(string? namespaceOverride = null)

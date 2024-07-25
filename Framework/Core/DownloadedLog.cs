@@ -5,7 +5,7 @@ namespace Core
 {
     public interface IDownloadedLog
     {
-        void IterateLines(Action<string> action);
+        void IterateLines(Action<string> action, params string[] thatContain);
         string[] GetLinesContaining(string expectedString);
         string[] FindLinesThatContain(params string[] tags);
         void DeleteFile();
@@ -20,7 +20,7 @@ namespace Core
             logFile = logHandler.LogFile;
         }
 
-        public void IterateLines(Action<string> action)
+        public void IterateLines(Action<string> action, params string[] thatContain)
         {
             using var file = File.OpenRead(logFile.FullFilename);
             using var streamReader = new StreamReader(file);
@@ -28,7 +28,10 @@ namespace Core
             var line = streamReader.ReadLine();
             while (line != null)
             {
-                action(line);
+                if (thatContain.All(line.Contains))
+                {
+                    action(line);
+                }
                 line = streamReader.ReadLine();
             }
         }
