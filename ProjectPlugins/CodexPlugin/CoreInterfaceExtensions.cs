@@ -1,4 +1,5 @@
-﻿using Core;
+﻿using CodexPlugin.Hooks;
+using Core;
 using KubernetesWorkflow.Types;
 
 namespace CodexPlugin
@@ -36,6 +37,11 @@ namespace CodexPlugin
         public static ICodexNodeGroup StartCodexNodes(this CoreInterface ci, int number)
         {
             return ci.StartCodexNodes(number, s => { });
+        }
+
+        public static void SetCodexHooksProvider(this CoreInterface ci, ICodexHooksProvider hooksProvider)
+        {
+            Plugin(ci).SetCodexHooksProvider(hooksProvider);
         }
 
         private static CodexPlugin Plugin(CoreInterface ci)

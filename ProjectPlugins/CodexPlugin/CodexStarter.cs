@@ -1,4 +1,5 @@
-﻿using Core;
+﻿using CodexPlugin.Hooks;
+using Core;
 using KubernetesWorkflow;
 using KubernetesWorkflow.Types;
 using Logging;
@@ -18,6 +19,8 @@ namespace CodexPlugin
 
             apiChecker = new ApiChecker(pluginTools);
         }
+
+        public CodexHooksFactory HooksFactory { get; } = new CodexHooksFactory();
 
         public RunningPod[] BringOnline(CodexSetup codexSetup)
         {
@@ -43,7 +46,7 @@ namespace CodexPlugin
 
         public ICodexNodeGroup WrapCodexContainers(CoreInterface coreInterface, RunningPod[] containers)
         {
-            var codexNodeFactory = new CodexNodeFactory(pluginTools);
+            var codexNodeFactory = new CodexNodeFactory(pluginTools, HooksFactory);
 
             var group = CreateCodexGroup(coreInterface, containers, codexNodeFactory);
 

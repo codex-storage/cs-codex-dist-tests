@@ -1,4 +1,5 @@
-﻿using Core;
+﻿using CodexPlugin.Hooks;
+using Core;
 using GethPlugin;
 using KubernetesWorkflow;
 using KubernetesWorkflow.Types;
@@ -14,17 +15,20 @@ namespace CodexPlugin
     public class CodexNodeFactory : ICodexNodeFactory
     {
         private readonly IPluginTools tools;
+        private readonly CodexHooksFactory codexHooksFactory;
 
-        public CodexNodeFactory(IPluginTools tools)
+        public CodexNodeFactory(IPluginTools tools, CodexHooksFactory codexHooksFactory)
         {
             this.tools = tools;
+            this.codexHooksFactory = codexHooksFactory;
         }
 
         public CodexNode CreateOnlineCodexNode(CodexAccess access, CodexNodeGroup group)
         {
             var ethAccount = GetEthAccount(access);
             var marketplaceAccess = GetMarketplaceAccess(access, ethAccount);
-            return new CodexNode(tools, access, group, marketplaceAccess, ethAccount);
+            var hooks = codexHooksFactory.CreateHooks(access.Container.Name);
+            return new CodexNode(tools, access, group, marketplaceAccess, hooks, ethAccount);
         }
 
         private IMarketplaceAccess GetMarketplaceAccess(CodexAccess codexAccess, EthAccount? ethAccount)

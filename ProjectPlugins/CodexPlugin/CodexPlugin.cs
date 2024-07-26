@@ -1,3 +1,4 @@
+using CodexPlugin.Hooks;
 using Core;
 using KubernetesWorkflow.Types;
 
@@ -55,6 +56,11 @@ namespace CodexPlugin
                 mconfig.GethNode.SendEth(node, mconfig.MarketplaceSetup.InitialEth);
                 mconfig.CodexContracts.MintTestTokens(node, mconfig.MarketplaceSetup.InitialTestTokens);
             }
+        }
+
+        public void SetCodexHooksProvider(ICodexHooksProvider hooksProvider)
+        {
+            codexStarter.HooksFactory.Provider = hooksProvider;
         }
 
         private CodexSetup GetSetup(int numberOfNodes, Action<ICodexSetup> setup)

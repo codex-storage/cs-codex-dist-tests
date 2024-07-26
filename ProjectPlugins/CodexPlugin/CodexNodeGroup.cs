@@ -79,6 +79,7 @@ namespace CodexPlugin
             }
 
             Version = first;
+            foreach (var node in Nodes) node.Initialize();
         }
 
         private CodexNode CreateOnlineCodexNode(RunningPod c, IPluginTools tools, ICodexNodeFactory factory)

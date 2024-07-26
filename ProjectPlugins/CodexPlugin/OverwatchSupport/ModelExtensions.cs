@@ -9,6 +9,7 @@
     [Serializable]
     public class OverwatchCodexEvent
     {
+        public string PeerId { get; set; } = string.Empty;
         public ScenarioFinishedEvent? ScenarioFinished { get; set; }
         public NodeStartedEvent? NodeStarted { get; set; }
         public NodeStoppedEvent? NodeStopped { get; set; }

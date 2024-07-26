@@ -1,4 +1,5 @@
-﻿using Core;
+﻿using CodexPlugin.Hooks;
+using Core;
 using FileUtils;
 using GethPlugin;
 using KubernetesWorkflow;
@@ -12,6 +13,7 @@ namespace CodexPlugin
     public interface ICodexNode : IHasContainer, IHasMetricsScrapeTarget, IHasEthAddress
     {
         string GetName();
+        string GetPeerId();
         DebugInfo GetDebugInfo();
         DebugPeer GetDebugPeer(string peerId);
         ContentId UploadFile(TrackedFile file);
@@ -40,18 +42,26 @@ namespace CodexPlugin
     {
         private const string UploadFailedMessage = "Unable to store block";
         private readonly IPluginTools tools;
+        private readonly ICodexNodeHooks hooks;
         private readonly EthAccount? ethAccount;
         private readonly TransferSpeeds transferSpeeds;
+        private string peerId = string.Empty;
 
-        public CodexNode(IPluginTools tools, CodexAccess codexAccess, CodexNodeGroup group, IMarketplaceAccess marketplaceAccess, EthAccount? ethAccount)
+        public CodexNode(IPluginTools tools, CodexAccess codexAccess, CodexNodeGroup group, IMarketplaceAccess marketplaceAccess, ICodexNodeHooks hooks, EthAccount? ethAccount)
         {
             this.tools = tools;
             this.ethAccount = ethAccount;
             CodexAccess = codexAccess;
             Group = group;
             Marketplace = marketplaceAccess;
+            this.hooks = hooks;
             Version = new DebugInfoVersion();
             transferSpeeds = new TransferSpeeds();
+        }
+
+        public void Initialize()
+        {
+            hooks.OnNodeStarted(peerId, Container.Recipe.Image);
         }
 
         public RunningPod Pod { get { return CodexAccess.Container; } }
@@ -95,6 +105,11 @@ namespace CodexPlugin
             return Container.Name;
         }
 
+        public string GetPeerId()
+        {
+            return peerId;
+        }
+
         public DebugInfo GetDebugInfo()
         {
             var debugInfo = CodexAccess.GetDebugInfo();
@@ -132,7 +147,9 @@ namespace CodexPlugin
 
             Log($"Uploaded file. Received contentId: '{response}'.");
 
-            return new ContentId(response);
+            var cid = new ContentId(response);
+            hooks.OnFileUploaded(cid);
+            return cid;
         }
 
         public TrackedFile? DownloadContent(ContentId contentId, string fileLabel = "")
@@ -148,6 +165,7 @@ namespace CodexPlugin
             var measurement = Stopwatch.Measure(tools.GetLog(), logMessage, () => DownloadToFile(contentId.Id, file, onFailure));
             transferSpeeds.AddDownloadSample(file.GetFilesize(), measurement);
             Log($"Downloaded file {file.Describe()} to '{file.Filename}'.");
+            hooks.OnFileDownloaded(contentId);
             return file;
         }
 
@@ -185,6 +203,8 @@ namespace CodexPlugin
         public void Stop(bool waitTillStopped)
         {
             Log("Stopping...");
+            hooks.OnNodeStopping();
+
             CrashWatcher.Stop();
             Group.Stop(this, waitTillStopped);
         }
@@ -192,7 +212,7 @@ namespace CodexPlugin
         public void EnsureOnlineGetVersionResponse()
         {
             var debugInfo = Time.Retry(CodexAccess.GetDebugInfo, "ensure online");
-            var nodePeerId = debugInfo.Id;
+            peerId = debugInfo.Id;
             var nodeName = CodexAccess.Container.Name;
 
             if (!debugInfo.Version.IsValid())
@@ -201,8 +221,8 @@ namespace CodexPlugin
             }
 
             var log = tools.GetLog();
-            log.AddStringReplace(nodePeerId, nodeName);
-            log.AddStringReplace(ToShortIdString(nodePeerId), nodeName);
+            log.AddStringReplace(peerId, nodeName);
+            log.AddStringReplace(ToShortIdString(peerId), nodeName);
             log.AddStringReplace(debugInfo.Table.LocalNode.NodeId, nodeName);
             log.AddStringReplace(ToShortIdString(debugInfo.Table.LocalNode.NodeId), nodeName);
             Version = debugInfo.Version;
