@@ -166,7 +166,7 @@ namespace DistTestCore
         {
         }
 
-        protected virtual void LifecycleStop(TestLifecycle lifecycle)
+        protected virtual void LifecycleStop(TestLifecycle lifecycle, DistTestResult testResult)
         {
         }
 
@@ -218,7 +218,7 @@ namespace DistTestCore
                 WriteEndTestLog(lifecycle.Log);
 
                 IncludeLogsOnTestFailure(lifecycle);
-                LifecycleStop(lifecycle);
+                LifecycleStop(lifecycle, testResult);
                 lifecycle.DeleteAllResources();
                 lifecycles.Remove(GetCurrentTestName());
             });
@@ -309,15 +309,32 @@ namespace DistTestCore
             return $"[{TestContext.CurrentContext.Test.Name}]";
         }
 
-        private string GetTestResult()
+        private DistTestResult GetTestResult()
         {
-            return TestContext.CurrentContext.Result.Outcome.Status.ToString();
+            var success = TestContext.CurrentContext.Result.Outcome.Status == TestStatus.Passed;
+            var status = TestContext.CurrentContext.Result.Outcome.Status.ToString();
+            var result = TestContext.CurrentContext.Result.Message;
+            return new DistTestResult(success, status, result ?? string.Empty);
         }
 
         private bool IsDownloadingLogsEnabled()
         {
             return !HasDontDownloadAttribute();
         }
+    }
+
+    public class DistTestResult
+    {
+        public DistTestResult(bool success, string status, string result)
+        {
+            Success = success;
+            Status = status;
+            Result = result;
+        }
+
+        public bool Success { get; }
+        public string Status { get; }
+        public string Result { get; }
     }
 
     public static class GlobalTestFailure

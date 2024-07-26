@@ -1,4 +1,5 @@
-﻿using Core;
+﻿using CodexPlugin.OverwatchSupport.LineConverters;
+using Core;
 using OverwatchTranscript;
 using Utils;
 
@@ -18,8 +19,8 @@ namespace CodexPlugin.OverwatchSupport
         public void ProcessLog(IDownloadedLog log)
         {
             var peerId = DeterminPeerId(log);
-
-
+            var runner = new ConversionRunner(writer, peerId);
+            runner.Run(log);
         }
 
         private string DeterminPeerId(IDownloadedLog log)
@@ -30,8 +31,8 @@ namespace CodexPlugin.OverwatchSupport
 
             // Expected string:
             // Downloading container log for '<Downloader1>'
-            var nameLine = log.FindLinesThatContain("Downloading container log for").Single();
-            var name = Str.Between(nameLine, "'<", ">'");
+            var nameLine = log.FindLinesThatContain("Downloading container log for").First();
+            var name = Str.Between(nameLine, "'", "'");
 
             var peerId = nameIdMap.GetPeerId(name);
             var shortPeerId = CodexUtils.ToShortId(peerId);
@@ -45,5 +46,61 @@ namespace CodexPlugin.OverwatchSupport
 
             return peerId;
         }
+    }
+
+    public class ConversionRunner
+    {
+        private readonly ITranscriptWriter writer;
+        private readonly string peerId;
+        private readonly ILineConverter[] converters = new ILineConverter[]
+        {
+            new BlockReceivedLineConverter()
+        };
+
+        public ConversionRunner(ITranscriptWriter writer, string peerId)
+        {
+            this.writer = writer;
+            this.peerId = peerId;
+        }
+
+        public void Run(IDownloadedLog log)
+        {
+            log.IterateLines(line =>
+            {
+                foreach (var converter in converters)
+                {
+                    ProcessLine(line, converter);
+                }
+            });
+        }
+
+        public void AddEvent(DateTime utc, Action<OverwatchCodexEvent> action)
+        {
+            var e = new OverwatchCodexEvent
+            {
+                PeerId = peerId,
+            };
+            action(e);
+            writer.Add(utc, e);
+        }
+
+        private void ProcessLine(string line, ILineConverter converter)
+        {
+            if (!line.Contains(converter.Interest)) return;
+
+            var codexLine = CodexLogLine.Parse(line);
+            if (codexLine == null) throw new Exception("Unable to parse required line");
+
+            converter.Process(codexLine, (action) =>
+            {
+                AddEvent(codexLine.TimestampUtc, action);
+            });
+        }
+    }
+
+    public interface ILineConverter
+    {
+        string Interest { get; }
+        void Process(CodexLogLine line, Action<Action<OverwatchCodexEvent>> addEvent);
     }
 }

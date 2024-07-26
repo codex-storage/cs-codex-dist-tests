@@ -20,9 +20,9 @@ namespace DistTestCore.Logs
             this.deployId = deployId;
         }
 
-        public void ConcludeTest(string resultStatus, TimeSpan testDuration, Dictionary<string, string> data)
+        public void ConcludeTest(DistTestResult resultStatus, TimeSpan testDuration, Dictionary<string, string> data)
         {
-            ConcludeTest(resultStatus, testDuration.TotalSeconds.ToString(CultureInfo.InvariantCulture), data);
+            ConcludeTest(resultStatus.Status, testDuration.TotalSeconds.ToString(CultureInfo.InvariantCulture), data);
         }
 
         public void ConcludeTest(string resultStatus, string testDuration, Dictionary<string, string> data)

@@ -1,6 +1,7 @@
 ﻿using CodexPlugin.Hooks;
 using Core;
 using OverwatchTranscript;
+using Utils;
 
 namespace CodexPlugin.OverwatchSupport
 {
@@ -23,6 +24,7 @@ namespace CodexPlugin.OverwatchSupport
 
         public ICodexNodeHooks CreateHooks(string nodeName)
         {
+            nodeName = Str.Between(nodeName, "'", "'");
             return new CodexNodeTranscriptWriter(writer, nameIdMap, nodeName);
         }
 
@@ -38,6 +40,19 @@ namespace CodexPlugin.OverwatchSupport
                 writer.IncludeArtifact(log.GetFilepath());
                 converter.ProcessLog(log);
             }
+        }
+
+        public void AddResult(bool success, string result)
+        {
+            writer.Add(DateTime.UtcNow, new OverwatchCodexEvent
+            {
+                PeerId = string.Empty,
+                ScenarioFinished = new ScenarioFinishedEvent
+                {
+                    Success = success,
+                    Result = result
+                }
+            });
         }
     }
 

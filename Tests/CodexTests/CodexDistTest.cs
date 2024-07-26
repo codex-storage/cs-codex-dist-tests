@@ -10,6 +10,7 @@ using DistTestCore.Logs;
 using Logging;
 using MetricsPlugin;
 using Newtonsoft.Json;
+using NUnit.Framework;
 using NUnit.Framework.Constraints;
 using OverwatchTranscript;
 
@@ -38,29 +39,13 @@ namespace CodexTests
         protected override void LifecycleStart(TestLifecycle lifecycle)
         {
             base.LifecycleStart(lifecycle);
-            if (!enableOverwatchTranscript) return;
-
-            var writer = new CodexTranscriptWriter(Transcript.NewWriter());
-            Ci.SetCodexHooksProvider(writer);
-            writers.Add(lifecycle, writer);
+            SetupTranscript(lifecycle);
         }
 
-        protected override void LifecycleStop(TestLifecycle lifecycle)
+        protected override void LifecycleStop(TestLifecycle lifecycle, DistTestResult result)
         {
-            base.LifecycleStop(lifecycle);
-            if (!enableOverwatchTranscript) return;
-
-            var writer = writers[lifecycle];
-            writers.Remove(lifecycle);
-
-            writer.ProcessLogs(lifecycle.DownloadAllLogs());
-
-            var file = lifecycle.Log.CreateSubfile("owts");
-            Stopwatch.Measure(lifecycle.Log, $"Transcript.Finalize: {file.FullFilename}", () =>
-            {
-                writer.IncludeFile(lifecycle.Log.LogFile.FullFilename);
-                writer.Finalize(file.FullFilename);
-            });
+            base.LifecycleStop(lifecycle, result);
+            TeardownTranscript(lifecycle, result);
         }
 
         public ICodexNode StartCodex()
@@ -141,6 +126,44 @@ namespace CodexTests
 
         protected virtual void OnCodexSetup(ICodexSetup setup)
         {
+        }
+
+        private void SetupTranscript(TestLifecycle lifecycle)
+        {
+            if (!enableOverwatchTranscript) return;
+
+            var writer = new CodexTranscriptWriter(Transcript.NewWriter());
+            Ci.SetCodexHooksProvider(writer);
+            writers.Add(lifecycle, writer);
+        }
+
+        private void TeardownTranscript(TestLifecycle lifecycle, DistTestResult result)
+        {
+            if (!enableOverwatchTranscript) return;
+
+            var writer = writers[lifecycle];
+            writers.Remove(lifecycle);
+
+            writer.AddResult(result.Success, result.Result);
+
+            try
+            {
+                Stopwatch.Measure(lifecycle.Log, "Transcript.ProcessLogs", () =>
+                {
+                    writer.ProcessLogs(lifecycle.DownloadAllLogs());
+                });
+
+                var file = lifecycle.Log.CreateSubfile("owts");
+                Stopwatch.Measure(lifecycle.Log, $"Transcript.Finalize: {file.FullFilename}", () =>
+                {
+                    writer.IncludeFile(lifecycle.Log.LogFile.FullFilename);
+                    writer.Finalize(file.FullFilename);
+                });
+            }
+            catch (Exception ex)
+            {
+                lifecycle.Log.Error("Failure during transcript teardown: " + ex);
+            }
         }
     }
 }

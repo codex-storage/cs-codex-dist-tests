@@ -1,4 +1,4 @@
-﻿namespace OverwatchTranscript
+﻿namespace CodexPlugin.OverwatchSupport
 {
     [Serializable]
     public class OverwatchCodexHeader
@@ -62,7 +62,7 @@
     public class BlockReceivedEvent
     {
         public string BlockAddress { get; set; } = string.Empty;
-        public string PeerId { get; set; } = string.Empty;
+        public string SenderPeerId { get; set; } = string.Empty;
     }
 
     #endregion
