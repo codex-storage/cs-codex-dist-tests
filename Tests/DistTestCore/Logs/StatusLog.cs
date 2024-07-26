@@ -25,6 +25,11 @@ namespace DistTestCore.Logs
             ConcludeTest(resultStatus.Status, testDuration.TotalSeconds.ToString(CultureInfo.InvariantCulture), data);
         }
 
+        public void ConcludeTest(string result, TimeSpan testDuration, Dictionary<string, string> data)
+        {
+            ConcludeTest(result, testDuration.TotalSeconds.ToString(CultureInfo.InvariantCulture), data);
+        }
+
         public void ConcludeTest(string resultStatus, string testDuration, Dictionary<string, string> data)
         {
             data.Add("timestamp", DateTime.UtcNow.ToString("o"));
