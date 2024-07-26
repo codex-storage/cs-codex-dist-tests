@@ -55,6 +55,7 @@ namespace OverwatchTranscript
         {
             CheckClosed();
             if (!File.Exists(filePath)) throw new Exception("File not found: " + filePath);
+            if (!Directory.Exists(artifactsFolder)) Directory.CreateDirectory(artifactsFolder);
             var name = Path.GetFileName(filePath);
             File.Copy(filePath, Path.Combine(artifactsFolder, name), overwrite: false);
         }

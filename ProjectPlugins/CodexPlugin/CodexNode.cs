@@ -222,19 +222,10 @@ namespace CodexPlugin
 
             var log = tools.GetLog();
             log.AddStringReplace(peerId, nodeName);
-            log.AddStringReplace(ToShortIdString(peerId), nodeName);
+            log.AddStringReplace(CodexUtils.ToShortId(peerId), nodeName);
             log.AddStringReplace(debugInfo.Table.LocalNode.NodeId, nodeName);
-            log.AddStringReplace(ToShortIdString(debugInfo.Table.LocalNode.NodeId), nodeName);
+            log.AddStringReplace(CodexUtils.ToShortId(debugInfo.Table.LocalNode.NodeId), nodeName);
             Version = debugInfo.Version;
-        }
-
-        private string ToShortIdString(string id)
-        {
-            if (id.Length > 10)
-            {
-                return $"{id[..3]}*{id[^6..]}";
-            }
-            return id;
         }
 
         private string[] GetPeerMultiAddresses(CodexNode peer, DebugInfo peerInfo)

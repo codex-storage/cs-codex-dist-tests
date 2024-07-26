@@ -58,6 +58,7 @@ namespace CodexTests
             var file = lifecycle.Log.CreateSubfile("owts");
             Stopwatch.Measure(lifecycle.Log, $"Transcript.Finalize: {file.FullFilename}", () =>
             {
+                writer.IncludeFile(lifecycle.Log.LogFile.FullFilename);
                 writer.Finalize(file.FullFilename);
             });
         }

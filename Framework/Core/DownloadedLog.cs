@@ -8,6 +8,7 @@ namespace Core
         void IterateLines(Action<string> action, params string[] thatContain);
         string[] GetLinesContaining(string expectedString);
         string[] FindLinesThatContain(params string[] tags);
+        string GetFilepath();
         void DeleteFile();
     }
 
@@ -73,6 +74,11 @@ namespace Core
             }
 
             return result.ToArray();
+        }
+
+        public string GetFilepath()
+        {
+            return logFile.FullFilename;
         }
 
         public void DeleteFile()

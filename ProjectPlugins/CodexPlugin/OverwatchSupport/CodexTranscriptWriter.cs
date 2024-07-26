@@ -6,45 +6,59 @@ namespace CodexPlugin.OverwatchSupport
 {
     public class CodexTranscriptWriter : ICodexHooksProvider
     {
-        private readonly ITranscriptWriter transcriptWriter;
+        private readonly ITranscriptWriter writer;
+        private readonly CodexLogConverter converter;
+        private readonly NameIdMap nameIdMap = new NameIdMap();
 
         public CodexTranscriptWriter(ITranscriptWriter transcriptWriter)
         {
-            this.transcriptWriter = transcriptWriter;
+            writer = transcriptWriter;
+            converter = new CodexLogConverter(writer, nameIdMap);
         }
 
         public void Finalize(string outputFilepath)
         {
-            transcriptWriter.Write(outputFilepath);
+            writer.Write(outputFilepath);
         }
 
         public ICodexNodeHooks CreateHooks(string nodeName)
         {
-            return new CodexNodeTranscriptWriter(transcriptWriter, nodeName);
+            return new CodexNodeTranscriptWriter(writer, nameIdMap, nodeName);
+        }
+
+        public void IncludeFile(string filepath)
+        {
+            writer.IncludeArtifact(filepath);   
         }
 
         public void ProcessLogs(IDownloadedLog[] downloadedLogs)
         {
-            // which logs to which nodes?
-            // nodeIDs, peerIDs needed.
+            foreach (var log in downloadedLogs)
+            {
+                writer.IncludeArtifact(log.GetFilepath());
+                converter.ProcessLog(log);
+            }
         }
     }
 
     public class CodexNodeTranscriptWriter : ICodexNodeHooks
     {
         private readonly ITranscriptWriter writer;
+        private readonly NameIdMap nameIdMap;
         private readonly string name;
         private string peerId = string.Empty;
 
-        public CodexNodeTranscriptWriter(ITranscriptWriter writer, string name)
+        public CodexNodeTranscriptWriter(ITranscriptWriter writer, NameIdMap nameIdMap, string name)
         {
             this.writer = writer;
+            this.nameIdMap = nameIdMap;
             this.name = name;
         }
 
         public void OnNodeStarted(string peerId, string image)
         {
             this.peerId = peerId;
+            nameIdMap.Add(name, peerId);
             WriteCodexEvent(e =>
             {
                 e.NodeStarted = new NodeStartedEvent
