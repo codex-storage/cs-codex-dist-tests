@@ -18,7 +18,7 @@ namespace OverwatchTranscript
         private readonly Dictionary<string, Action<DateTime, string>> handlers = new Dictionary<string, Action<DateTime, string>>();
         private readonly string workingDir;
         private OverwatchTranscript model = null!;
-        private int eventIndex = 0;
+        private int momentIndex = 0;
         private bool closed;
 
         public TranscriptReader(string workingDir, string inputFilename)
@@ -56,12 +56,12 @@ namespace OverwatchTranscript
         public void Next()
         {
             CheckClosed();
-            if (eventIndex >= model.Events.Length) return;
+            if (momentIndex >= model.Moments.Length) return;
 
-            var @event = model.Events[eventIndex];
-            eventIndex++;
+            var moment = model.Moments[momentIndex];
+            momentIndex++;
 
-            PlayEvent(@event);
+            PlayMoment(moment);
         }
 
         public void Close()
@@ -71,12 +71,20 @@ namespace OverwatchTranscript
             closed = true;
         }
 
-        private void PlayEvent(OverwatchEvent @event)
+        private void PlayMoment(OverwatchMoment moment)
+        {
+            foreach (var @event in moment.Events)
+            {
+                PlayEvent(moment.Utc, @event);
+            }
+        }
+
+        private void PlayEvent(DateTime utc, OverwatchEvent @event)
         {
             if (!handlers.ContainsKey(@event.Type)) return;
             var handler = handlers[@event.Type];
 
-            handler(@event.Utc, @event.Payload);
+            handler(utc, @event.Payload);
         }
 
         private void LoadModel(string inputFilename)

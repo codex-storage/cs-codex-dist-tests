@@ -38,7 +38,12 @@ namespace CodexPlugin.OverwatchSupport
             foreach (var log in downloadedLogs)
             {
                 writer.IncludeArtifact(log.GetFilepath());
-                converter.ProcessLog(log);
+                // Not all of these logs are necessarily Codex logs.
+                // Check, and process only the Codex ones.
+                if (IsCodexLog(log))
+                {
+                    converter.ProcessLog(log);
+                }
             }
         }
 
@@ -53,6 +58,11 @@ namespace CodexPlugin.OverwatchSupport
                     Result = result
                 }
             });
+        }
+
+        private bool IsCodexLog(IDownloadedLog log)
+        {
+            return log.GetLinesContaining("Run Codex node").Any();
         }
     }
 

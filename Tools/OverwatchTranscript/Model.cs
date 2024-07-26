@@ -4,7 +4,7 @@
     public class OverwatchTranscript
     {
         public OverwatchHeader Header { get; set; } = new();
-        public OverwatchEvent[] Events { get; set; } = Array.Empty<OverwatchEvent>();
+        public OverwatchMoment[] Moments { get; set; } = Array.Empty<OverwatchMoment>();
     }
 
     [Serializable]
@@ -21,9 +21,15 @@
     }
 
     [Serializable]
-    public class OverwatchEvent
+    public class OverwatchMoment
     {
         public DateTime Utc { get; set; }
+        public OverwatchEvent[] Events { get; set; } = Array.Empty<OverwatchEvent>();
+    }
+
+    [Serializable]
+    public class OverwatchEvent
+    {
         public string Type { get; set; } = string.Empty;
         public string Payload { get; set; } = string.Empty;
     }

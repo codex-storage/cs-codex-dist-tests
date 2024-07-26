@@ -16,7 +16,7 @@ namespace OverwatchTranscript
         private readonly string transcriptFile;
         private readonly string artifactsFolder;
         private readonly Dictionary<string, string> header = new Dictionary<string, string>();
-        private readonly SortedList<DateTime, OverwatchEvent> buffer = new SortedList<DateTime, OverwatchEvent>();
+        private readonly SortedList<DateTime, List<OverwatchEvent>> buffer = new SortedList<DateTime, List<OverwatchEvent>>();
         private readonly string workingDir;
         private bool closed;
 
@@ -37,12 +37,20 @@ namespace OverwatchTranscript
             var typeName = payload.GetType().FullName;
             if (string.IsNullOrEmpty(typeName)) throw new Exception("Empty typename for payload");
 
-            buffer.Add(utc, new OverwatchEvent
+            var newEvent = new OverwatchEvent
             {
-                Utc = utc,
                 Type = typeName,
                 Payload = JsonConvert.SerializeObject(payload)
-            });
+            };
+
+            if (buffer.ContainsKey(utc))
+            {
+                buffer[utc].Add(newEvent);
+            }
+            else
+            {
+                buffer.Add(utc, new List<OverwatchEvent> { newEvent });
+            }
         }
 
         public void AddHeader(string key, object value)
@@ -78,7 +86,14 @@ namespace OverwatchTranscript
                         };
                     }).ToArray()
                 },
-                Events = buffer.Values.ToArray()
+                Moments = buffer.Select(p =>
+                {
+                    return new OverwatchMoment
+                    {
+                        Utc = p.Key,
+                        Events = p.Value.ToArray()
+                    };
+                }).ToArray()
             };
 
             header.Clear();
