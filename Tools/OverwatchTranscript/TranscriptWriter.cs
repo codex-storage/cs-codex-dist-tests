@@ -13,6 +13,7 @@ namespace OverwatchTranscript
 
     public class TranscriptWriter : ITranscriptWriter
     {
+        private readonly object _lock = new object();
         private readonly string transcriptFile;
         private readonly string artifactsFolder;
         private readonly Dictionary<string, string> header = new Dictionary<string, string>();
@@ -43,20 +44,26 @@ namespace OverwatchTranscript
                 Payload = JsonConvert.SerializeObject(payload)
             };
 
-            if (buffer.ContainsKey(utc))
+            lock (_lock)
             {
-                buffer[utc].Add(newEvent);
-            }
-            else
-            {
-                buffer.Add(utc, new List<OverwatchEvent> { newEvent });
+                if (buffer.ContainsKey(utc))
+                {
+                    buffer[utc].Add(newEvent);
+                }
+                else
+                {
+                    buffer.Add(utc, new List<OverwatchEvent> { newEvent });
+                }
             }
         }
 
         public void AddHeader(string key, object value)
         {
             CheckClosed();
-            header.Add(key, JsonConvert.SerializeObject(value));
+            lock (_lock)
+            {
+                header.Add(key, JsonConvert.SerializeObject(value));
+            }
         }
 
         public void IncludeArtifact(string filePath)
@@ -73,37 +80,47 @@ namespace OverwatchTranscript
             CheckClosed();
             closed = true;
 
-            var model = new OverwatchTranscript
-            {
-                Header = new OverwatchHeader
-                {
-                    Entries = header.Select(h =>
-                    {
-                        return new OverwatchHeaderEntry
-                        {
-                            Key = h.Key,
-                            Value = h.Value
-                        };
-                    }).ToArray()
-                },
-                Moments = buffer.Select(p =>
-                {
-                    return new OverwatchMoment
-                    {
-                        Utc = p.Key,
-                        Events = p.Value.ToArray()
-                    };
-                }).ToArray()
-            };
-
-            header.Clear();
-            buffer.Clear();
+            var model = CreateModel();
 
             File.WriteAllText(transcriptFile, JsonConvert.SerializeObject(model, Formatting.Indented));
 
             ZipFile.CreateFromDirectory(workingDir, outputFilename);
 
             Directory.Delete(workingDir, true);
+        }
+
+        private OverwatchTranscript CreateModel()
+        {
+            lock (_lock)
+            {
+                var model = new OverwatchTranscript
+                {
+                    Header = new OverwatchHeader
+                    {
+                        Entries = header.Select(h =>
+                        {
+                            return new OverwatchHeaderEntry
+                            {
+                                Key = h.Key,
+                                Value = h.Value
+                            };
+                        }).ToArray()
+                    },
+                    Moments = buffer.Select(p =>
+                    {
+                        return new OverwatchMoment
+                        {
+                            Utc = p.Key,
+                            Events = p.Value.ToArray()
+                        };
+                    }).ToArray()
+                };
+
+                header.Clear();
+                buffer.Clear();
+
+                return model;
+            }
         }
 
         private void CheckClosed()
