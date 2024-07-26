@@ -20,6 +20,11 @@ namespace CodexPlugin.OverwatchSupport
         public void Finalize(string outputFilepath)
         {
             writer.Write(outputFilepath);
+
+            we need:
+            total number of events
+            min max utc, time range
+            total number of codex nodes
         }
 
         public ICodexNodeHooks CreateHooks(string nodeName)
