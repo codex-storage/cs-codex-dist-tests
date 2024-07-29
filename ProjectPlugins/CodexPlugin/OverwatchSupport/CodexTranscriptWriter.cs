@@ -84,6 +84,7 @@ namespace CodexPlugin.OverwatchSupport
         private readonly NameIdMap nameIdMap;
         private readonly string name;
         private string peerId = string.Empty;
+        private readonly List<(DateTime, OverwatchCodexEvent)> pendingEvents = new List<(DateTime, OverwatchCodexEvent)>();
 
         public CodexNodeTranscriptWriter(ITranscriptWriter writer, NameIdMap nameIdMap, string name)
         {
@@ -160,9 +161,39 @@ namespace CodexPlugin.OverwatchSupport
                 Name = name,
                 PeerId = peerId
             };
+
             action(e);
 
-            e.Write(utc, writer);
+            if (string.IsNullOrEmpty(peerId))
+            {
+                // If we don't know our peerId, don't write the events yet.
+                AddToCache(utc, e);
+            }
+            else
+            {
+                e.Write(utc, writer);
+
+                // Write any events that we cached when we didn't have our peerId yet.
+                WriteAndClearCache();
+            }
+        }
+
+        private void AddToCache(DateTime utc, OverwatchCodexEvent e)
+        {
+            pendingEvents.Add((utc, e));
+        }
+
+        private void WriteAndClearCache()
+        {
+            if (pendingEvents.Any())
+            {
+                foreach (var pair in pendingEvents)
+                {
+                    pair.Item2.PeerId = peerId;
+                    pair.Item2.Write(pair.Item1, writer);
+                }
+                pendingEvents.Clear();
+            }
         }
     }
 }
