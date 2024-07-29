@@ -37,6 +37,7 @@ namespace OverwatchTranscript
             CheckClosed();
             var typeName = payload.GetType().FullName;
             if (string.IsNullOrEmpty(typeName)) throw new Exception("Empty typename for payload");
+            if (utc == default) throw new Exception("DateTimeUtc not set");
 
             var newEvent = new OverwatchEvent
             {

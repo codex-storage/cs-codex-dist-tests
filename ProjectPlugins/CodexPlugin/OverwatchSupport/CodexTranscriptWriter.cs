@@ -23,11 +23,6 @@ namespace CodexPlugin.OverwatchSupport
             writer.AddHeader(CodexHeaderKey, CreateCodexHeader());
 
             writer.Write(outputFilepath);
-
-            we need:
-            total number of events
-            min max utc, time range
-            total number of codex nodes
         }
 
         public ICodexNodeHooks CreateHooks(string nodeName)
@@ -59,6 +54,7 @@ namespace CodexPlugin.OverwatchSupport
         {
             writer.Add(DateTime.UtcNow, new OverwatchCodexEvent
             {
+                Name = string.Empty,
                 PeerId = string.Empty,
                 ScenarioFinished = new ScenarioFinishedEvent
                 {
@@ -102,7 +98,6 @@ namespace CodexPlugin.OverwatchSupport
             {
                 e.NodeStarting = new NodeStartingEvent
                 {
-                    Name = name,
                     Image = image
                 };
             });
@@ -162,11 +157,12 @@ namespace CodexPlugin.OverwatchSupport
         {
             var e = new OverwatchCodexEvent
             {
+                Name = name,
                 PeerId = peerId
             };
             action(e);
 
-            writer.Add(utc, e);
+            e.Write(utc, writer);
         }
     }
 }

@@ -5,6 +5,8 @@ namespace Core
 {
     public interface IDownloadedLog
     {
+        string ContainerName { get; }
+
         void IterateLines(Action<string> action, params string[] thatContain);
         string[] GetLinesContaining(string expectedString);
         string[] FindLinesThatContain(params string[] tags);
@@ -16,10 +18,13 @@ namespace Core
     {
         private readonly LogFile logFile;
 
-        internal DownloadedLog(WriteToFileLogHandler logHandler)
+        internal DownloadedLog(WriteToFileLogHandler logHandler, string containerName)
         {
             logFile = logHandler.LogFile;
+            ContainerName = containerName;
         }
+        
+        public string ContainerName { get; }
 
         public void IterateLines(Action<string> action, params string[] thatContain)
         {

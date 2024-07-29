@@ -1,4 +1,6 @@
-﻿namespace CodexPlugin.OverwatchSupport
+﻿using OverwatchTranscript;
+
+namespace CodexPlugin.OverwatchSupport
 {
     [Serializable]
     public class OverwatchCodexHeader
@@ -9,6 +11,7 @@
     [Serializable]
     public class OverwatchCodexEvent
     {
+        public string Name { get; set; } = string.Empty;
         public string PeerId { get; set; } = string.Empty;
         public ScenarioFinishedEvent? ScenarioFinished { get; set; }
         public NodeStartingEvent? NodeStarting { get; set; }
@@ -18,6 +21,23 @@
         public FileUploadedEvent? FileUploaded { get; set; }
         public FileDownloadedEvent? FileDownloaded { get; set; }
         public BlockReceivedEvent? BlockReceived { get; set; }
+
+        public void Write(DateTime utc, ITranscriptWriter writer)
+        {
+            if (string.IsNullOrWhiteSpace(Name)) throw new Exception("Name required");
+            if (AllNull()) throw new Exception("No event data was set");
+
+            writer.Add(utc, this);
+        }
+
+        private bool AllNull()
+        {
+            var props = GetType()
+                .GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
+                .Where(p => p.PropertyType != typeof(string)).ToArray();
+
+            return props.All(p => p.GetValue(this) == null);
+        }
     }
 
     #region Scenario Generated Events
@@ -32,7 +52,6 @@
     [Serializable]
     public class NodeStartingEvent
     {
-        public string Name { get; set; } = string.Empty;
         public string Image { get; set; } = string.Empty;
     }
 

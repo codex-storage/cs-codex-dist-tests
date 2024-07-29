@@ -4,6 +4,7 @@
     {
         public ContainerRecipe(DateTime recipeCreatedUtc, int number, string? nameOverride, string image, ContainerResources resources, SchedulingAffinity schedulingAffinity, CommandOverride commandOverride, bool setCriticalPriority, Port[] exposedPorts, Port[] internalPorts, EnvVar[] envVars, PodLabels podLabels, PodAnnotations podAnnotations, VolumeMount[] volumes, ContainerAdditionals additionals)
         {
+            RecipeCreatedUtc = recipeCreatedUtc;
             Number = number;
             NameOverride = nameOverride;
             Image = image;

@@ -19,7 +19,7 @@ namespace CodexPlugin.OverwatchSupport
         public void ProcessLog(IDownloadedLog log)
         {
             var peerId = DeterminPeerId(log);
-            var runner = new ConversionRunner(writer, peerId);
+            var runner = new ConversionRunner(writer, log.ContainerName, peerId);
             runner.Run(log);
         }
 
@@ -51,6 +51,7 @@ namespace CodexPlugin.OverwatchSupport
     public class ConversionRunner
     {
         private readonly ITranscriptWriter writer;
+        private readonly string name;
         private readonly string peerId;
         private readonly ILineConverter[] converters = new ILineConverter[]
         {
@@ -58,8 +59,9 @@ namespace CodexPlugin.OverwatchSupport
             new BootstrapLineConverter()
         };
 
-        public ConversionRunner(ITranscriptWriter writer, string peerId)
+        public ConversionRunner(ITranscriptWriter writer, string name, string peerId)
         {
+            this.name = name;
             this.writer = writer;
             this.peerId = peerId;
         }
@@ -79,10 +81,12 @@ namespace CodexPlugin.OverwatchSupport
         {
             var e = new OverwatchCodexEvent
             {
+                Name = name,
                 PeerId = peerId,
             };
             action(e);
-            writer.Add(utc, e);
+
+            e.Write(utc, writer);
         }
 
         private void ProcessLine(string line, ILineConverter converter)

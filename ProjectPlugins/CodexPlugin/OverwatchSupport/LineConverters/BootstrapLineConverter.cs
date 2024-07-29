@@ -2,6 +2,8 @@
 {
     public class BootstrapLineConverter : ILineConverter
     {
+        private const string peerIdTag = "peerId: ";
+
         public string Interest => "Starting codex node";
 
         public void Process(CodexLogLine line, Action<Action<OverwatchCodexEvent>> addEvent)
@@ -48,17 +50,22 @@
             // )"
 
             var config = line.Attributes["config"];
-            var openIndex = config.IndexOf("peerId:") + 7;
-            var closeIndex = config.IndexOf(",", openIndex);
-            var bootPeerId = config.Substring(openIndex, closeIndex - openIndex);
-
-            addEvent(e =>
+            
+            while (config.Contains(peerIdTag))
             {
-                e.BootstrapConfig = new BootstrapConfigEvent
+                var openIndex = config.IndexOf(peerIdTag) + peerIdTag.Length;
+                var closeIndex = config.IndexOf(",", openIndex);
+                var bootPeerId = config.Substring(openIndex, closeIndex - openIndex);
+                config = config.Substring(closeIndex);
+
+                addEvent(e =>
                 {
-                    BootstrapPeerId = bootPeerId
-                };
-            });
+                    e.BootstrapConfig = new BootstrapConfigEvent
+                    {
+                        BootstrapPeerId = bootPeerId
+                    };
+                });
+            }
         }
     }
 }
