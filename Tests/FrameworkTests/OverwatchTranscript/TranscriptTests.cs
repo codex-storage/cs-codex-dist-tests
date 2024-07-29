@@ -50,6 +50,8 @@ namespace FrameworkTests.OverwatchTranscript
                 EventData = EventData1
             });
 
+            if (File.Exists(TranscriptFilename)) File.Delete(TranscriptFilename);
+
             writer.Write(TranscriptFilename);
         }
 
@@ -59,6 +61,9 @@ namespace FrameworkTests.OverwatchTranscript
 
             var header = reader.GetHeader<TestHeader>(HeaderKey);
             Assert.That(header.HeaderData, Is.EqualTo(HeaderData));
+            Assert.That(reader.Header.NumberOfEvents, Is.EqualTo(3));
+            Assert.That(reader.Header.EarliestUct, Is.EqualTo(t0));
+            Assert.That(reader.Header.LatestUtc, Is.EqualTo(t2));
 
             var events = new List<MyEvent>();
             reader.AddHandler<MyEvent>((utc, e) =>

@@ -77,6 +77,8 @@ namespace OverwatchTranscript
 
         public void Write(string outputFilename)
         {
+            if (!buffer.Any()) throw new Exception("No entries added.");
+
             CheckClosed();
             closed = true;
 
@@ -97,6 +99,7 @@ namespace OverwatchTranscript
                 {
                     Header = new OverwatchHeader
                     {
+                        Common = CreateCommonHeader(),
                         Entries = header.Select(h =>
                         {
                             return new OverwatchHeaderEntry
@@ -121,6 +124,16 @@ namespace OverwatchTranscript
 
                 return model;
             }
+        }
+
+        private OverwatchCommonHeader CreateCommonHeader()
+        {
+            return new OverwatchCommonHeader
+            {
+                NumberOfEvents = buffer.Sum(e => e.Value.Count),
+                EarliestUct = buffer.Min(e => e.Key),
+                LatestUtc = buffer.Max(e => e.Key)
+            };
         }
 
         private void CheckClosed()

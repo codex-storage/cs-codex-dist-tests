@@ -34,6 +34,15 @@ namespace OverwatchTranscript
             LoadModel(inputFilename);
         }
 
+        public OverwatchCommonHeader Header
+        {
+            get
+            {
+                CheckClosed(); 
+                return model.Header.Common;
+            }
+        }
+
         public T GetHeader<T>(string key)
         {
             CheckClosed();
