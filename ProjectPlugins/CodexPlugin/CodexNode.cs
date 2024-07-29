@@ -59,9 +59,14 @@ namespace CodexPlugin
             transferSpeeds = new TransferSpeeds();
         }
 
+        public void Awake()
+        {
+            hooks.OnNodeStarting(Container.Recipe.RecipeCreatedUtc, Container.Recipe.Image);
+        }
+
         public void Initialize()
         {
-            hooks.OnNodeStarted(peerId, Container.Recipe.Image);
+            hooks.OnNodeStarted(peerId);
         }
 
         public RunningPod Pod { get { return CodexAccess.Container; } }

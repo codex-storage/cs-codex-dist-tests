@@ -13,5 +13,10 @@
         {
             return map[name];
         }
+
+        public int Size
+        {
+            get { return map.Count; }
+        }
     }
 }

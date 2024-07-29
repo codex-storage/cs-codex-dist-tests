@@ -54,7 +54,8 @@ namespace CodexPlugin.OverwatchSupport
         private readonly string peerId;
         private readonly ILineConverter[] converters = new ILineConverter[]
         {
-            new BlockReceivedLineConverter()
+            new BlockReceivedLineConverter(),
+            new BootstrapLineConverter()
         };
 
         public ConversionRunner(ITranscriptWriter writer, string peerId)

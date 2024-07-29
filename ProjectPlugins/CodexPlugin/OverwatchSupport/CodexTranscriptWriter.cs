@@ -7,6 +7,7 @@ namespace CodexPlugin.OverwatchSupport
 {
     public class CodexTranscriptWriter : ICodexHooksProvider
     {
+        private const string CodexHeaderKey = "cdx_h";
         private readonly ITranscriptWriter writer;
         private readonly CodexLogConverter converter;
         private readonly NameIdMap nameIdMap = new NameIdMap();
@@ -19,6 +20,8 @@ namespace CodexPlugin.OverwatchSupport
 
         public void Finalize(string outputFilepath)
         {
+            writer.AddHeader(CodexHeaderKey, CreateCodexHeader());
+
             writer.Write(outputFilepath);
 
             we need:
@@ -65,6 +68,14 @@ namespace CodexPlugin.OverwatchSupport
             });
         }
 
+        private OverwatchCodexHeader CreateCodexHeader()
+        {
+            return new OverwatchCodexHeader
+            {
+                TotalNumberOfNodes = nameIdMap.Size
+            };
+        }
+
         private bool IsCodexLog(IDownloadedLog log)
         {
             return log.GetLinesContaining("Run Codex node").Any();
@@ -85,7 +96,19 @@ namespace CodexPlugin.OverwatchSupport
             this.name = name;
         }
 
-        public void OnNodeStarted(string peerId, string image)
+        public void OnNodeStarting(DateTime startUtc, string image)
+        {
+            WriteCodexEvent(startUtc, e =>
+            {
+                e.NodeStarting = new NodeStartingEvent
+                {
+                    Name = name,
+                    Image = image
+                };
+            });
+        }
+
+        public void OnNodeStarted(string peerId)
         {
             this.peerId = peerId;
             nameIdMap.Add(name, peerId);
@@ -93,9 +116,6 @@ namespace CodexPlugin.OverwatchSupport
             {
                 e.NodeStarted = new NodeStartedEvent
                 {
-                    Name = name,
-                    Image = image,
-                    Args = string.Empty
                 };
             });
         }
@@ -135,15 +155,18 @@ namespace CodexPlugin.OverwatchSupport
 
         private void WriteCodexEvent(Action<OverwatchCodexEvent> action)
         {
-            if (string.IsNullOrEmpty(peerId)) throw new Exception("PeerId required");
+            WriteCodexEvent(DateTime.UtcNow, action);
+        }
 
+        private void WriteCodexEvent(DateTime utc, Action<OverwatchCodexEvent> action)
+        {
             var e = new OverwatchCodexEvent
             {
                 PeerId = peerId
             };
             action(e);
 
-            writer.Add(DateTime.UtcNow, e);
+            writer.Add(utc, e);
         }
     }
 }

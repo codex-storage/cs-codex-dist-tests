@@ -33,7 +33,11 @@
         {
         }
 
-        public void OnNodeStarted(string name, string image)
+        public void OnNodeStarted(string peerId)
+        {
+        }
+
+        public void OnNodeStarting(DateTime startUtc, string name)
         {
         }
 

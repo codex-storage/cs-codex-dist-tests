@@ -2,7 +2,8 @@
 {
     public interface ICodexNodeHooks
     {
-        void OnNodeStarted(string peerId, string image);
+        void OnNodeStarting(DateTime startUtc, string image);
+        void OnNodeStarted(string peerId);
         void OnNodeStopping();
         void OnFileUploaded(ContentId cid);
         void OnFileDownloaded(ContentId cid);

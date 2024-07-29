@@ -86,7 +86,9 @@ namespace CodexPlugin
         {
             var watcher = factory.CreateCrashWatcher(c.Containers.Single());
             var access = new CodexAccess(tools, c, watcher);
-            return factory.CreateOnlineCodexNode(access, this);
+            var node = factory.CreateOnlineCodexNode(access, this);
+            node.Awake();
+            return node;
         }
     }
 }

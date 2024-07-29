@@ -2,7 +2,7 @@
 {
     public class ContainerRecipe
     {
-        public ContainerRecipe(int number, string? nameOverride, string image, ContainerResources resources, SchedulingAffinity schedulingAffinity, CommandOverride commandOverride, bool setCriticalPriority, Port[] exposedPorts, Port[] internalPorts, EnvVar[] envVars, PodLabels podLabels, PodAnnotations podAnnotations, VolumeMount[] volumes, ContainerAdditionals additionals)
+        public ContainerRecipe(DateTime recipeCreatedUtc, int number, string? nameOverride, string image, ContainerResources resources, SchedulingAffinity schedulingAffinity, CommandOverride commandOverride, bool setCriticalPriority, Port[] exposedPorts, Port[] internalPorts, EnvVar[] envVars, PodLabels podLabels, PodAnnotations podAnnotations, VolumeMount[] volumes, ContainerAdditionals additionals)
         {
             Number = number;
             NameOverride = nameOverride;
@@ -31,6 +31,7 @@
             if (exposedPorts.Any(p => string.IsNullOrEmpty(p.Tag))) throw new Exception("Port tags are required for all exposed ports.");
         }
 
+        public DateTime RecipeCreatedUtc { get; }
         public string Name { get; }
         public int Number { get; }
         public string? NameOverride { get; }
