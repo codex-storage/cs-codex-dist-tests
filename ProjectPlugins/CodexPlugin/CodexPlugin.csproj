@@ -29,7 +29,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\Framework\Core\Core.csproj" />
     <ProjectReference Include="..\..\Framework\KubernetesWorkflow\KubernetesWorkflow.csproj" />
-    <ProjectReference Include="..\..\Tools\OverwatchTranscript\OverwatchTranscript.csproj" />
+    <ProjectReference Include="..\..\Framework\OverwatchTranscript\OverwatchTranscript.csproj" />
     <ProjectReference Include="..\CodexContractsPlugin\CodexContractsPlugin.csproj" />
     <ProjectReference Include="..\GethPlugin\GethPlugin.csproj" />
     <ProjectReference Include="..\MetricsPlugin\MetricsPlugin.csproj" />
