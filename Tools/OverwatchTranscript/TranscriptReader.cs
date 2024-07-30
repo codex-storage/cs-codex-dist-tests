@@ -5,9 +5,11 @@ namespace OverwatchTranscript
 {
     public interface ITranscriptReader
     {
+        OverwatchCommonHeader Header { get; }
         T GetHeader<T>(string key);
         void AddHandler<T>(Action<DateTime, T> handler);
-        void Next();
+        (DateTime, long)? Next();
+        TimeSpan? GetDuration();
         void Close();
     }
 
@@ -18,7 +20,7 @@ namespace OverwatchTranscript
         private readonly Dictionary<string, Action<DateTime, string>> handlers = new Dictionary<string, Action<DateTime, string>>();
         private readonly string workingDir;
         private OverwatchTranscript model = null!;
-        private int momentIndex = 0;
+        private long momentIndex = 0;
         private bool closed;
 
         public TranscriptReader(string workingDir, string inputFilename)
@@ -38,7 +40,7 @@ namespace OverwatchTranscript
         {
             get
             {
-                CheckClosed(); 
+                CheckClosed();
                 return model.Header.Common;
             }
         }
@@ -62,15 +64,32 @@ namespace OverwatchTranscript
             });
         }
 
-        public void Next()
+        /// <summary>
+        /// Publishes the events at the next moment in time. Returns that moment.
+        /// </summary>
+        public (DateTime, long)? Next()
         {
             CheckClosed();
-            if (momentIndex >= model.Moments.Length) return;
+            if (momentIndex >= model.Moments.Length) return null;
 
             var moment = model.Moments[momentIndex];
             momentIndex++;
 
             PlayMoment(moment);
+            return (moment.Utc, momentIndex);
+        }
+
+        /// <summary>
+        /// Gets the time from the current moment to the next one.
+        /// </summary>
+        public TimeSpan? GetDuration()
+        {
+            if (momentIndex - 1 < 0) return null;
+            if (momentIndex >= model.Moments.Length) return null;
+
+            return
+                model.Moments[momentIndex].Utc -
+                model.Moments[momentIndex - 1].Utc;
         }
 
         public void Close()
@@ -111,7 +130,7 @@ namespace OverwatchTranscript
 
         private void CheckClosed()
         {
-            if (closed) throw new Exception("Transcript has already been written. Cannot modify or write again.");
+            if (closed) throw new Exception("Transcript has already been closed.");
         }
     }
 }
