@@ -178,7 +178,9 @@ namespace CodexTests
         {
             var outputPath = Path.GetDirectoryName(lifecycle.Log.LogFile.FullFilename);
             if (outputPath == null) throw new Exception("Logfile path is null");
-            var outputFile = Path.Combine(outputPath, attr.OutputFilename);
+            var filename = Path.GetFileNameWithoutExtension(lifecycle.Log.LogFile.FullFilename);
+            if (string.IsNullOrEmpty(filename)) throw new Exception("Logfile name is null or empty");
+            var outputFile = Path.Combine(outputPath, filename + "_" + attr.OutputFilename);
             if (!outputFile.EndsWith(".owts")) outputFile += ".owts";
             return outputFile;
         }
