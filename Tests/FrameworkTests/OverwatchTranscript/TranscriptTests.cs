@@ -68,7 +68,7 @@ namespace FrameworkTests.OverwatchTranscript
             Assert.That(header.HeaderData, Is.EqualTo(HeaderData));
             Assert.That(reader.Header.NumberOfMoments, Is.EqualTo(3));
             Assert.That(reader.Header.NumberOfEvents, Is.EqualTo(4));
-            Assert.That(reader.Header.EarliestUct, Is.EqualTo(t0));
+            Assert.That(reader.Header.EarliestUtc, Is.EqualTo(t0));
             Assert.That(reader.Header.LatestUtc, Is.EqualTo(t2));
 
             var moments = new List<ActivateMoment>();

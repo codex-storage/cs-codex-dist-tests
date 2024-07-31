@@ -133,7 +133,7 @@ namespace OverwatchTranscript
             {
                 NumberOfMoments = buffer.Count,
                 NumberOfEvents = buffer.Sum(e => e.Value.Count),
-                EarliestUct = buffer.Min(e => e.Key),
+                EarliestUtc = buffer.Min(e => e.Key),
                 LatestUtc = buffer.Max(e => e.Key)
             };
         }

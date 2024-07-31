@@ -19,7 +19,7 @@
     {
         public long NumberOfMoments { get; set; }
         public long NumberOfEvents { get; set; }
-        public DateTime EarliestUct { get; set; }
+        public DateTime EarliestUtc { get; set; }
         public DateTime LatestUtc { get; set; }
     }
 
