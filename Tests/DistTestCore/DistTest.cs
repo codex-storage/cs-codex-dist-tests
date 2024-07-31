@@ -262,11 +262,16 @@ namespace DistTestCore
             return CurrentTestMethodHasAttribute<DontDownloadLogsAttribute>();
         }
 
-        private bool CurrentTestMethodHasAttribute<T>() where T : PropertyAttribute
+        protected bool CurrentTestMethodHasAttribute<T>() where T : PropertyAttribute
+        {
+            return GetCurrentTestMethodAttribute<T>().Any();
+        }
+
+        protected T[] GetCurrentTestMethodAttribute<T>() where T : PropertyAttribute
         {
             // Don't be fooled! TestContext.CurrentTest.Test allows you easy access to the attributes of the current test.
-            // But this doesn't work for tests making use of [TestCase] or [Combinatorial]. So instead, we use reflection here to figure out
-            // if the attribute is present.
+            // But this doesn't work for tests making use of [TestCase] or [Combinatorial]. So instead, we use reflection here to
+            // fetch the attributes of type T.
             var currentTest = TestContext.CurrentContext.Test;
             var className = currentTest.ClassName;
             var methodName = currentTest.MethodName;
@@ -274,7 +279,10 @@ namespace DistTestCore
             var testClasses = testAssemblies.SelectMany(a => a.GetTypes()).Where(c => c.FullName == className).ToArray();
             var testMethods = testClasses.SelectMany(c => c.GetMethods()).Where(m => m.Name == methodName).ToArray();
 
-            return testMethods.Any(m => m.GetCustomAttribute<T>() != null);
+            return testMethods.Select(m => m.GetCustomAttribute<T>())
+                .Where(a => a != null)
+                .Cast<T>()
+                .ToArray();
         }
 
         private void IncludeLogsOnTestFailure(TestLifecycle lifecycle)

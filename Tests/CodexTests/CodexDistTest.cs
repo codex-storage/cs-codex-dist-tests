@@ -18,7 +18,6 @@ namespace CodexTests
 {
     public class CodexDistTest : DistTest
     {
-        private const bool enableOverwatchTranscript = true;
         private static readonly Dictionary<TestLifecycle, CodexTranscriptWriter> writers = new Dictionary<TestLifecycle, CodexTranscriptWriter>();
 
         public CodexDistTest()
@@ -128,9 +127,16 @@ namespace CodexTests
         {
         }
 
+        private CreateTranscriptAttribute? GetTranscriptAttributeOfCurrentTest()
+        {
+            var attrs = GetCurrentTestMethodAttribute<CreateTranscriptAttribute>();
+            if (attrs.Any()) return attrs.Single();
+            return null;
+        }
+
         private void SetupTranscript(TestLifecycle lifecycle)
         {
-            if (!enableOverwatchTranscript) return;
+            if (GetTranscriptAttributeOfCurrentTest() == null) return;
 
             var writer = new CodexTranscriptWriter(Transcript.NewWriter());
             Ci.SetCodexHooksProvider(writer);
@@ -139,7 +145,10 @@ namespace CodexTests
 
         private void TeardownTranscript(TestLifecycle lifecycle, DistTestResult result)
         {
-            if (!enableOverwatchTranscript) return;
+            var attr = GetTranscriptAttributeOfCurrentTest();
+            if (attr == null) return;
+
+            var outputFilepath = GetOutputFullPath(lifecycle, attr);
 
             var writer = writers[lifecycle];
             writers.Remove(lifecycle);
@@ -153,11 +162,10 @@ namespace CodexTests
                     writer.ProcessLogs(lifecycle.DownloadAllLogs());
                 });
 
-                var file = lifecycle.Log.CreateSubfile("owts");
-                Stopwatch.Measure(lifecycle.Log, $"Transcript.Finalize: {file.FullFilename}", () =>
+                Stopwatch.Measure(lifecycle.Log, $"Transcript.Finalize: {outputFilepath}", () =>
                 {
                     writer.IncludeFile(lifecycle.Log.LogFile.FullFilename);
-                    writer.Finalize(file.FullFilename);
+                    writer.Finalize(outputFilepath);
                 });
             }
             catch (Exception ex)
@@ -165,5 +173,25 @@ namespace CodexTests
                 lifecycle.Log.Error("Failure during transcript teardown: " + ex);
             }
         }
+
+        private string GetOutputFullPath(TestLifecycle lifecycle, CreateTranscriptAttribute attr)
+        {
+            var outputPath = Path.GetDirectoryName(lifecycle.Log.LogFile.FullFilename);
+            if (outputPath == null) throw new Exception("Logfile path is null");
+            var outputFile = Path.Combine(outputPath, attr.OutputFilename);
+            if (!outputFile.EndsWith(".owts")) outputFile += ".owts";
+            return outputFile;
+        }
+    }
+
+    [AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
+    public class CreateTranscriptAttribute : PropertyAttribute
+    {
+        public CreateTranscriptAttribute(string outputFilename)
+        {
+            OutputFilename = outputFilename;
+        }
+
+        public string OutputFilename { get; }
     }
 }
