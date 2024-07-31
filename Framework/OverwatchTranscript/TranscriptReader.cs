@@ -1,5 +1,9 @@
 ﻿using Newtonsoft.Json;
+using System.IO;
+using System;
 using System.IO.Compression;
+using System.Linq;
+using System.Collections.Generic;
 
 namespace OverwatchTranscript
 {
@@ -7,17 +11,19 @@ namespace OverwatchTranscript
     {
         OverwatchCommonHeader Header { get; }
         T GetHeader<T>(string key);
-        void AddHandler<T>(Action<DateTime, T> handler);
-        (DateTime, long)? Next();
-        TimeSpan? GetDuration();
+        void AddMomentHandler(Action<ActivateMoment> handler);
+        void AddEventHandler<T>(Action<ActivateEvent<T>> handler);
+        void Next();
         void Close();
     }
 
     public class TranscriptReader : ITranscriptReader
     {
+        private readonly object handlersLock = new object();
         private readonly string transcriptFile;
         private readonly string artifactsFolder;
-        private readonly Dictionary<string, Action<DateTime, string>> handlers = new Dictionary<string, Action<DateTime, string>>();
+        private readonly List<Action<ActivateMoment>> momentHandlers = new List<Action<ActivateMoment>>();
+        private readonly Dictionary<string, List<Action<ActivateMoment, string>>> eventHandlers = new Dictionary<string, List<Action<ActivateMoment, string>>>();
         private readonly string workingDir;
         private OverwatchTranscript model = null!;
         private long momentIndex = 0;
@@ -52,44 +58,49 @@ namespace OverwatchTranscript
             return JsonConvert.DeserializeObject<T>(value)!;
         }
 
-        public void AddHandler<T>(Action<DateTime, T> handler)
+        public void AddMomentHandler(Action<ActivateMoment> handler)
         {
             CheckClosed();
+            lock (handlersLock)
+            {
+                momentHandlers.Add(handler);
+            }
+        }
+
+        public void AddEventHandler<T>(Action<ActivateEvent<T>> handler)
+        {
+            CheckClosed();
+
             var typeName = typeof(T).FullName;
             if (string.IsNullOrEmpty(typeName)) throw new Exception("Empty typename for payload");
 
-            handlers.Add(typeName, (utc, s) =>
+            lock (handlersLock)
             {
-                handler(utc, JsonConvert.DeserializeObject<T>(s)!);
-            });
+                if (eventHandlers.ContainsKey(typeName))
+                {
+                    eventHandlers[typeName].Add(CreateEventAction(handler));
+                }
+                else
+                {
+                    eventHandlers.Add(typeName, new List<Action<ActivateMoment, string>>
+                    {
+                        CreateEventAction(handler)
+                    });
+                }
+            }
         }
 
-        /// <summary>
-        /// Publishes the events at the next moment in time. Returns that moment.
-        /// </summary>
-        public (DateTime, long)? Next()
+        public void Next()
         {
             CheckClosed();
-            if (momentIndex >= model.Moments.Length) return null;
+            if (momentIndex >= model.Moments.Length) return;
 
             var moment = model.Moments[momentIndex];
+            var momentDuration = GetMomentDuration();
+
+            ActivateMoment(moment, momentDuration, momentIndex);
+
             momentIndex++;
-
-            PlayMoment(moment);
-            return (moment.Utc, momentIndex);
-        }
-
-        /// <summary>
-        /// Gets the time from the current moment to the next one.
-        /// </summary>
-        public TimeSpan? GetDuration()
-        {
-            if (momentIndex - 1 < 0) return null;
-            if (momentIndex >= model.Moments.Length) return null;
-
-            return
-                model.Moments[momentIndex].Utc -
-                model.Moments[momentIndex - 1].Utc;
         }
 
         public void Close()
@@ -99,20 +110,56 @@ namespace OverwatchTranscript
             closed = true;
         }
 
-        private void PlayMoment(OverwatchMoment moment)
+        private Action<ActivateMoment, string> CreateEventAction<T>(Action<ActivateEvent<T>> handler)
         {
-            foreach (var @event in moment.Events)
+            return (m, s) =>
             {
-                PlayEvent(moment.Utc, @event);
+                handler(new ActivateEvent<T>(m, JsonConvert.DeserializeObject<T>(s)!));
+            };
+        }
+
+        private TimeSpan? GetMomentDuration()
+        {
+            if (momentIndex < 0) throw new Exception("Index < 0");
+            if (momentIndex + 1 >= model.Moments.Length) return null;
+
+            return
+                model.Moments[momentIndex + 1].Utc -
+                model.Moments[momentIndex].Utc;
+        }
+
+        private void ActivateMoment(OverwatchMoment moment, TimeSpan? duration, long momentIndex)
+        {
+            var m = new ActivateMoment(moment.Utc, duration, momentIndex);
+
+            lock (handlersLock)
+            {
+                ActivateMomentHandlers(m);
+
+                foreach (var @event in moment.Events)
+                {
+                    ActivateEventHandlers(m, @event);
+                }
             }
         }
 
-        private void PlayEvent(DateTime utc, OverwatchEvent @event)
+        private void ActivateMomentHandlers(ActivateMoment m)
         {
-            if (!handlers.ContainsKey(@event.Type)) return;
-            var handler = handlers[@event.Type];
+            foreach (var handler in momentHandlers)
+            {
+                handler(m);
+            }
+        }
 
-            handler(utc, @event.Payload);
+        private void ActivateEventHandlers(ActivateMoment m, OverwatchEvent @event)
+        {
+            if (!eventHandlers.ContainsKey(@event.Type)) return;
+            var handlers = eventHandlers[@event.Type];
+
+            foreach (var handler in handlers)
+            {
+                handler(m, @event.Payload);
+            }
         }
 
         private void LoadModel(string inputFilename)
@@ -132,5 +179,31 @@ namespace OverwatchTranscript
         {
             if (closed) throw new Exception("Transcript has already been closed.");
         }
+    }
+
+    public class ActivateMoment
+    {
+        public ActivateMoment(DateTime utc, TimeSpan? duration, long index)
+        {
+            Utc = utc;
+            Duration = duration;
+            Index = index;
+        }
+
+        public DateTime Utc { get; }
+        public TimeSpan? Duration { get; }
+        public long Index { get; }
+    }
+
+    public class ActivateEvent<T>
+    {
+        public ActivateEvent(ActivateMoment moment, T payload)
+        {
+            Moment = moment;
+            Payload = payload;
+        }
+
+        public ActivateMoment Moment { get; }
+        public T Payload { get; }
     }
 }
