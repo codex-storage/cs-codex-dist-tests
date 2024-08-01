@@ -144,7 +144,7 @@ namespace CodexPlugin
 
             hooks.OnFileUploading(uniqueId, size);
 
-            var logMessage = $"Uploading file '{file.Describe()}'...";
+            var logMessage = $"Uploading file {file.Describe()}...";
             var measurement = Stopwatch.Measure(log, logMessage, () =>
             {
                 return CodexAccess.UploadFile(fileStream, onFailure);
@@ -156,7 +156,7 @@ namespace CodexPlugin
             if (string.IsNullOrEmpty(response)) FrameworkAssert.Fail("Received empty response.");
             if (response.StartsWith(UploadFailedMessage)) FrameworkAssert.Fail("Node failed to store block.");
 
-            Log($"Uploaded file '{file.Describe()}'. Received contentId: '{response}'.");
+            Log($"Uploaded file {file.Describe()}. Received contentId: '{response}'.");
 
             var cid = new ContentId(response);
             hooks.OnFileUploaded(uniqueId, size, cid);

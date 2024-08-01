@@ -79,7 +79,7 @@ namespace CodexPlugin.OverwatchSupport
             });
         }
 
-        public void AddEvent(DateTime utc, Action<OverwatchCodexEvent> action)
+        private void AddEvent(DateTime utc, Action<OverwatchCodexEvent> action)
         {
             var e = new OverwatchCodexEvent
             {
