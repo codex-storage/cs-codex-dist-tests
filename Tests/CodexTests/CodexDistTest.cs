@@ -138,7 +138,8 @@ namespace CodexTests
         {
             if (GetTranscriptAttributeOfCurrentTest() == null) return;
 
-            var writer = new CodexTranscriptWriter(Transcript.NewWriter());
+            var log = new LogPrefixer(lifecycle.Log, "(Transcript) ");
+            var writer = new CodexTranscriptWriter(log, Transcript.NewWriter());
             Ci.SetCodexHooksProvider(writer);
             writers.Add(lifecycle, writer);
         }

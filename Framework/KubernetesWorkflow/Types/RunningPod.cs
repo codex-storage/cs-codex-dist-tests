@@ -4,8 +4,9 @@ namespace KubernetesWorkflow.Types
 {
     public class RunningPod
     {
-        public RunningPod(StartupConfig startupConfig, StartResult startResult, RunningContainer[] containers)
+        public RunningPod(string id, StartupConfig startupConfig, StartResult startResult, RunningContainer[] containers)
         {
+            Id = id;
             StartupConfig = startupConfig;
             StartResult = startResult;
             Containers = containers;
@@ -13,6 +14,7 @@ namespace KubernetesWorkflow.Types
             foreach (var c in containers) c.RunningPod = this;
         }
 
+        public string Id { get; }
         public StartupConfig StartupConfig { get; }
         public StartResult StartResult { get; }
         public RunningContainer[] Containers { get; }
@@ -23,9 +25,29 @@ namespace KubernetesWorkflow.Types
             get { return $"'{string.Join("&", Containers.Select(c => c.Name).ToArray())}'"; }
         }
 
+        [JsonIgnore]
+        public bool IsStopped { get; internal set; }
+
         public string Describe()
         {
             return string.Join(",", Containers.Select(c => c.Name));
+        }
+
+        public override bool Equals(object? obj)
+        {
+            return obj is RunningPod pod &&
+                   Id == pod.Id;
+        }
+
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(Id);
+        }
+
+        public override string ToString()
+        {
+            if (IsStopped) return Name + " (*)";
+            return Name;
         }
     }
 

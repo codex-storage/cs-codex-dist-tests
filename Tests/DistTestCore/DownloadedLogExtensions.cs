@@ -1,4 +1,4 @@
-﻿using Core;
+﻿using KubernetesWorkflow;
 using NUnit.Framework;
 
 namespace DistTestCore

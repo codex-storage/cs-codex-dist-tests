@@ -16,6 +16,7 @@ namespace KubernetesWorkflow
         CrashWatcher CreateCrashWatcher(RunningContainer container);
         void Stop(RunningPod pod, bool waitTillStopped);
         void DownloadContainerLog(RunningContainer container, ILogHandler logHandler, int? tailLines = null, bool? previous = null);
+        IDownloadedLog DownloadContainerLog(RunningContainer container, int? tailLines = null, bool? previous = null);
         string ExecuteCommand(RunningContainer container, string command, params string[] args);
         void DeleteNamespace(bool wait);
         void DeleteNamespacesStartingWith(string namespacePrefix, bool wait);
@@ -60,7 +61,7 @@ namespace KubernetesWorkflow
                 var startResult = controller.BringOnline(recipes, location);
                 var containers = CreateContainers(startResult, recipes, startupConfig);
 
-                var rc = new RunningPod(startupConfig, startResult, containers);
+                var rc = new RunningPod(Guid.NewGuid().ToString(), startupConfig, startResult, containers);
                 cluster.Configuration.Hooks.OnContainersStarted(rc);
 
                 if (startResult.ExternalService != null)
@@ -99,11 +100,19 @@ namespace KubernetesWorkflow
 
         public void Stop(RunningPod runningPod, bool waitTillStopped)
         {
+            if (runningPod.IsStopped) return;
+            foreach (var c in runningPod.Containers)
+            {
+                c.StopLog = DownloadContainerLog(c);
+            }
+            runningPod.IsStopped = true;
+
             K8s(controller =>
             {
                 controller.Stop(runningPod.StartResult, waitTillStopped);
-                cluster.Configuration.Hooks.OnContainersStopped(runningPod);
             });
+
+            cluster.Configuration.Hooks.OnContainersStopped(runningPod);
         }
 
         public void DownloadContainerLog(RunningContainer container, ILogHandler logHandler, int? tailLines = null, bool? previous = null)
@@ -112,6 +121,20 @@ namespace KubernetesWorkflow
             {
                 controller.DownloadPodLog(container, logHandler, tailLines, previous);
             });
+        }
+
+        public IDownloadedLog DownloadContainerLog(RunningContainer container, int? tailLines = null, bool? previous = null)
+        {
+            var msg = $"Downloading container log for '{container.Name}'";
+            log.Log(msg);
+            var logHandler = new WriteToFileLogHandler(log, msg);
+
+            K8s(controller =>
+            {
+                controller.DownloadPodLog(container, logHandler, tailLines, previous);
+            });
+
+            return new DownloadedLog(logHandler, container.Name);
         }
 
         public string ExecuteCommand(RunningContainer container, string command, params string[] args)
@@ -147,7 +170,7 @@ namespace KubernetesWorkflow
                 var addresses = CreateContainerAddresses(startResult, r);
                 log.Debug($"{r}={name} -> container addresses: {string.Join(Environment.NewLine, addresses.Select(a => a.ToString()))}");
 
-                return new RunningContainer(name, r, addresses);
+                return new RunningContainer(Guid.NewGuid().ToString(), name, r, addresses);
 
             }).ToArray();
         }

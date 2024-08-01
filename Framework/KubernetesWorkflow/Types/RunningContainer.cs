@@ -7,16 +7,19 @@ namespace KubernetesWorkflow.Types
 {
     public class RunningContainer
     {
-        public RunningContainer(string name, ContainerRecipe recipe, ContainerAddress[] addresses)
+        public RunningContainer(string id, string name, ContainerRecipe recipe, ContainerAddress[] addresses)
         {
+            Id = id;
             Name = name;
             Recipe = recipe;
             Addresses = addresses;
         }
 
+        public string Id { get; }
         public string Name { get; }
         public ContainerRecipe Recipe { get; }
         public ContainerAddress[] Addresses { get; }
+        public IDownloadedLog? StopLog { get; internal set; }
 
         [JsonIgnore]
         public RunningPod RunningPod { get; internal set; } = null!;
@@ -49,6 +52,22 @@ namespace KubernetesWorkflow.Types
                 return addresses.Single(a => !a.IsInteral);
             }
             throw new Exception("Running location not known.");
+        }
+
+        public override string ToString()
+        {
+            return Name;
+        }
+
+        public override bool Equals(object? obj)
+        {
+            return obj is RunningContainer container &&
+                   Id == container.Id;
+        }
+
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(Id);
         }
     }
 }

@@ -4,6 +4,7 @@ using Utils;
 using Core;
 using CodexPlugin;
 using KubernetesWorkflow.Types;
+using KubernetesWorkflow;
 
 namespace ContinuousTests
 {

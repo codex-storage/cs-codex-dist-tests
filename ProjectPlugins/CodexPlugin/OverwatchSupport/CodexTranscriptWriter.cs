@@ -1,5 +1,6 @@
 ﻿using CodexPlugin.Hooks;
-using Core;
+using KubernetesWorkflow;
+using Logging;
 using OverwatchTranscript;
 using Utils;
 
@@ -8,21 +9,26 @@ namespace CodexPlugin.OverwatchSupport
     public class CodexTranscriptWriter : ICodexHooksProvider
     {
         private const string CodexHeaderKey = "cdx_h";
+        private readonly ILog log;
         private readonly ITranscriptWriter writer;
         private readonly CodexLogConverter converter;
         private readonly NameIdMap nameIdMap = new NameIdMap();
 
-        public CodexTranscriptWriter(ITranscriptWriter transcriptWriter)
+        public CodexTranscriptWriter(ILog log, ITranscriptWriter transcriptWriter)
         {
+            this.log = log;
             writer = transcriptWriter;
             converter = new CodexLogConverter(writer, nameIdMap);
         }
 
         public void Finalize(string outputFilepath)
         {
-            writer.AddHeader(CodexHeaderKey, CreateCodexHeader());
+            log.Log("Finalizing Codex transcript...");
 
+            writer.AddHeader(CodexHeaderKey, CreateCodexHeader());
             writer.Write(outputFilepath);
+
+            log.Log("Done");
         }
 
         public ICodexNodeHooks CreateHooks(string nodeName)
@@ -38,14 +44,17 @@ namespace CodexPlugin.OverwatchSupport
 
         public void ProcessLogs(IDownloadedLog[] downloadedLogs)
         {
-            foreach (var log in downloadedLogs)
+            foreach (var l in downloadedLogs)
             {
-                writer.IncludeArtifact(log.GetFilepath());
+                log.Log("Include artifact: " + l.GetFilepath());
+                writer.IncludeArtifact(l.GetFilepath());
+
                 // Not all of these logs are necessarily Codex logs.
                 // Check, and process only the Codex ones.
-                if (IsCodexLog(log))
+                if (IsCodexLog(l))
                 {
-                    converter.ProcessLog(log);
+                    log.Log("Processing Codex log: " + l.GetFilepath());
+                    converter.ProcessLog(l);
                 }
             }
         }

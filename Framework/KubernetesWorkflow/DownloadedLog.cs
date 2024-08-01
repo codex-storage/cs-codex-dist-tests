@@ -1,7 +1,6 @@
-﻿using KubernetesWorkflow;
-using Logging;
+﻿using Logging;
 
-namespace Core
+namespace KubernetesWorkflow
 {
     public interface IDownloadedLog
     {
@@ -23,7 +22,7 @@ namespace Core
             logFile = logHandler.LogFile;
             ContainerName = containerName;
         }
-        
+
         public string ContainerName { get; }
 
         public void IterateLines(Action<string> action, params string[] thatContain)

@@ -30,11 +30,7 @@ namespace Core
         public IDownloadedLog DownloadLog(RunningContainer container, int? tailLines = null)
         {
             var workflow = entryPoint.Tools.CreateWorkflow();
-            var msg = $"Downloading container log for '{container.Name}'";
-            entryPoint.Tools.GetLog().Log(msg);
-            var logHandler = new WriteToFileLogHandler(entryPoint.Tools.GetLog(), msg);
-            workflow.DownloadContainerLog(container, logHandler, tailLines);
-            return new DownloadedLog(logHandler, container.Name);
+            return workflow.DownloadContainerLog(container, tailLines);
         }
 
         public string ExecuteContainerCommand(IHasContainer containerSource, string command, params string[] args)

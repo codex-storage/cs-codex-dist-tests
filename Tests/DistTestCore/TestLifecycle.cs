@@ -15,6 +15,7 @@ namespace DistTestCore
         private readonly Dictionary<string, string> metadata; 
         private readonly List<RunningPod> runningContainers = new();
         private readonly string deployId;
+        private readonly List<IDownloadedLog> stoppedContainerLogs = new List<IDownloadedLog>();
 
         public TestLifecycle(TestLog log, Configuration configuration, ITimeSet timeSet, string testNamespace, string deployId, bool waitForCleanup)
         {
@@ -80,6 +81,12 @@ namespace DistTestCore
         public void OnContainersStopped(RunningPod rc)
         {
             runningContainers.Remove(rc);
+
+            stoppedContainerLogs.AddRange(rc.Containers.Select(c =>
+            {
+                if (c.StopLog == null) throw new Exception("Expected StopLog for stopped container " + c.Name);
+                return c.StopLog;
+            }));
         }
 
         public void OnContainerRecipeCreated(ContainerRecipe recipe)
@@ -98,24 +105,31 @@ namespace DistTestCore
             }
         }
 
-        private IDownloadedLog[] allLogs = Array.Empty<IDownloadedLog>();
-
         public IDownloadedLog[] DownloadAllLogs()
         {
-            if (allLogs.Any()) return allLogs;
-
             try
             {
-                var result = new List<IDownloadedLog>();    
+                var result = new List<IDownloadedLog>();
+                result.AddRange(stoppedContainerLogs);
                 foreach (var rc in runningContainers)
                 {
-                    foreach (var c in rc.Containers)
+                    if (rc.IsStopped)
                     {
-                        result.Add(CoreInterface.DownloadLog(c));
+                        foreach (var c in rc.Containers)
+                        {
+                            if (c.StopLog == null) throw new Exception("No stop-log was downloaded for container.");
+                            result.Add(c.StopLog);
+                        }
+                    }
+                    else
+                    {
+                        foreach (var c in rc.Containers)
+                        {
+                            result.Add(CoreInterface.DownloadLog(c));
+                        }
                     }
                 }
-                allLogs = result.ToArray();
-                return allLogs;
+                return result.ToArray();
             }
             catch (Exception ex)
             {

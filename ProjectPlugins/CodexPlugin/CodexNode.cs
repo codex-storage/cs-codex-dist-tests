@@ -41,6 +41,7 @@ namespace CodexPlugin
     public class CodexNode : ICodexNode
     {
         private const string UploadFailedMessage = "Unable to store block";
+        private readonly ILog log;
         private readonly IPluginTools tools;
         private readonly ICodexNodeHooks hooks;
         private readonly EthAccount? ethAccount;
@@ -57,6 +58,8 @@ namespace CodexPlugin
             this.hooks = hooks;
             Version = new DebugInfoVersion();
             transferSpeeds = new TransferSpeeds();
+
+            log = new LogPrefixer(tools.GetLog(), $"{GetName()} ");
         }
 
         public void Awake()
@@ -141,9 +144,8 @@ namespace CodexPlugin
 
             hooks.OnFileUploading(uniqueId, size);
 
-            var logMessage = $"Uploading file {file.Describe()}...";
-            Log(logMessage);
-            var measurement = Stopwatch.Measure(tools.GetLog(), logMessage, () =>
+            var logMessage = $"Uploading file '{file.Describe()}'...";
+            var measurement = Stopwatch.Measure(log, logMessage, () =>
             {
                 return CodexAccess.UploadFile(fileStream, onFailure);
             });
@@ -154,7 +156,7 @@ namespace CodexPlugin
             if (string.IsNullOrEmpty(response)) FrameworkAssert.Fail("Received empty response.");
             if (response.StartsWith(UploadFailedMessage)) FrameworkAssert.Fail("Node failed to store block.");
 
-            Log($"Uploaded file. Received contentId: '{response}'.");
+            Log($"Uploaded file '{file.Describe()}'. Received contentId: '{response}'.");
 
             var cid = new ContentId(response);
             hooks.OnFileUploaded(uniqueId, size, cid);
@@ -168,15 +170,16 @@ namespace CodexPlugin
 
         public TrackedFile? DownloadContent(ContentId contentId, Action<Failure> onFailure, string fileLabel = "")
         {
-            var logMessage = $"Downloading for contentId: '{contentId.Id}'...";
-            hooks.OnFileDownloading(contentId);
-            Log(logMessage);
             var file = tools.GetFileManager().CreateEmptyFile(fileLabel);
-            var measurement = Stopwatch.Measure(tools.GetLog(), logMessage, () => DownloadToFile(contentId.Id, file, onFailure));
+            var logMessage = $"Downloading '{contentId.Id}' to '{file.Filename}'";
+            hooks.OnFileDownloading(contentId);
+
+            var measurement = Stopwatch.Measure(log, logMessage, () => DownloadToFile(contentId.Id, file, onFailure));
+
             var size = file.GetFilesize();
             transferSpeeds.AddDownloadSample(size, measurement);
-            Log($"Downloaded file {file.Describe()} to '{file.Filename}'.");
             hooks.OnFileDownloaded(size, contentId);
+
             return file;
         }
 
@@ -231,7 +234,6 @@ namespace CodexPlugin
                 throw new Exception($"Invalid version information received from Codex node {GetName()}: {debugInfo.Version}");
             }
 
-            var log = tools.GetLog();
             log.AddStringReplace(peerId, nodeName);
             log.AddStringReplace(CodexUtils.ToShortId(peerId), nodeName);
             log.AddStringReplace(debugInfo.Table.LocalNode.NodeId, nodeName);
@@ -273,7 +275,7 @@ namespace CodexPlugin
 
         private void Log(string msg)
         {
-            tools.GetLog().Log($"{GetName()}: {msg}");
+            log.Log(msg);
         }
 
         private void DoNothing(Failure failure)
