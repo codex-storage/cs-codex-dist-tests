@@ -171,9 +171,10 @@ namespace CodexPlugin
         public TrackedFile? DownloadContent(ContentId contentId, Action<Failure> onFailure, string fileLabel = "")
         {
             var file = tools.GetFileManager().CreateEmptyFile(fileLabel);
-            var logMessage = $"Downloading '{contentId.Id}' to '{file.Filename}'";
             hooks.OnFileDownloading(contentId);
+            Log($"Downloading '{contentId}'...");
 
+            var logMessage = $"Downloaded '{contentId}' to '{file.Filename}'";
             var measurement = Stopwatch.Measure(log, logMessage, () => DownloadToFile(contentId.Id, file, onFailure));
 
             var size = file.GetFilesize();

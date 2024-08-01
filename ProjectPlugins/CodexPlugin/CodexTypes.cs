@@ -95,6 +95,11 @@ namespace CodexPlugin
 
         public string Id { get; }
 
+        public override string ToString()
+        {
+            return Id;
+        }
+
         public override bool Equals(object? obj)
         {
             return obj is ContentId id && Id == id.Id;

@@ -13,6 +13,7 @@ namespace Core
 
     internal class Http : IHttp
     {
+        private static object lockLock = new object();
         private static readonly Dictionary<string, object> httpLocks = new Dictionary<string, object>();
         private readonly ILog log;
         private readonly ITimeSet timeSet;
@@ -74,8 +75,11 @@ namespace Core
 
         private object GetLock()
         {
-            if (!httpLocks.ContainsKey(id)) httpLocks.Add(id, new object());
-            return httpLocks[id];
+            lock (lockLock) // I had to.
+            {
+                if (!httpLocks.ContainsKey(id)) httpLocks.Add(id, new object());
+                return httpLocks[id];
+            }
         }
 
         private HttpClient GetClient()

@@ -2,11 +2,11 @@
 {
     public class PeerDroppedLineConverter : ILineConverter
     {
-        public string Interest => "Peer dropped";
+        public string Interest => "Dropping peer";
 
         public void Process(CodexLogLine line, Action<Action<OverwatchCodexEvent>> addEvent)
         {
-            var peerId = line.Attributes["peerId"];
+            var peerId = line.Attributes["peer"];
 
             addEvent(e =>
             {
