@@ -1,4 +1,6 @@
-﻿namespace CodexPlugin.Hooks
+﻿using Utils;
+
+namespace CodexPlugin.Hooks
 {
     public interface ICodexHooksProvider
     {
@@ -25,11 +27,19 @@
 
     public class DoNothingCodexHooks : ICodexNodeHooks
     {
-        public void OnFileDownloaded(ContentId cid)
+        public void OnFileDownloaded(ByteSize size, ContentId cid)
         {
         }
 
-        public void OnFileUploaded(ContentId cid)
+        public void OnFileDownloading(ContentId cid)
+        {
+        }
+
+        public void OnFileUploaded(string uid, ByteSize size, ContentId cid)
+        {
+        }
+
+        public void OnFileUploading(string uid, ByteSize size)
         {
         }
 
@@ -37,7 +47,7 @@
         {
         }
 
-        public void OnNodeStarting(DateTime startUtc, string name)
+        public void OnNodeStarting(DateTime startUtc, string image)
         {
         }
 

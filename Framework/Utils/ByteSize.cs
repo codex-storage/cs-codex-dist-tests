@@ -13,7 +13,6 @@
 
         public long SizeInBytes { get; }
 
-
         public long ToMB()
         {
             return SizeInBytes / (1024 * 1024);

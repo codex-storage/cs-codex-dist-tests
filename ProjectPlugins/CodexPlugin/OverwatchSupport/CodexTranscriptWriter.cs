@@ -120,31 +120,56 @@ namespace CodexPlugin.OverwatchSupport
         {
             WriteCodexEvent(e =>
             {
-                e.NodeStopped = new NodeStoppedEvent
-                { 
-                    Name = name
+                e.NodeStopping = new NodeStoppingEvent
+                {
                 };
             });
         }
 
-        public void OnFileDownloaded(ContentId cid)
+        public void OnFileDownloading(ContentId cid)
         {
             WriteCodexEvent(e =>
             {
-                e.FileDownloaded = new FileDownloadedEvent
+                e.FileDownloading = new FileDownloadingEvent
                 {
                     Cid = cid.Id
                 };
             });
         }
 
-        public void OnFileUploaded(ContentId cid)
+        public void OnFileDownloaded(ByteSize size, ContentId cid)
+        {
+            WriteCodexEvent(e =>
+            {
+                e.FileDownloaded = new FileDownloadedEvent
+                {
+                    Cid = cid.Id,
+                    ByteSize = size.SizeInBytes
+                };
+            });
+        }
+
+        public void OnFileUploading(string uid, ByteSize size)
+        {
+            WriteCodexEvent(e =>
+            {
+                e.FileUploading = new FileUploadingEvent
+                {
+                    UniqueId = uid,
+                    ByteSize = size.SizeInBytes
+                };
+            });
+        }
+
+        public void OnFileUploaded(string uid, ByteSize size, ContentId cid)
         {
             WriteCodexEvent(e =>
             {
                 e.FileUploaded = new FileUploadedEvent
                 { 
-                    Cid = cid.Id
+                    UniqueId = uid,
+                    Cid = cid.Id,
+                    ByteSize = size.SizeInBytes
                 };
             });
         }

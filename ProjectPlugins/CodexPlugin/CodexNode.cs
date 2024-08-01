@@ -136,6 +136,10 @@ namespace CodexPlugin
         public ContentId UploadFile(TrackedFile file, Action<Failure> onFailure)
         {
             using var fileStream = File.OpenRead(file.Filename);
+            var uniqueId = Guid.NewGuid().ToString();
+            var size = file.GetFilesize();
+
+            hooks.OnFileUploading(uniqueId, size);
 
             var logMessage = $"Uploading file {file.Describe()}...";
             Log(logMessage);
@@ -145,7 +149,7 @@ namespace CodexPlugin
             });
 
             var response = measurement.Value;
-            transferSpeeds.AddUploadSample(file.GetFilesize(), measurement.Duration);
+            transferSpeeds.AddUploadSample(size, measurement.Duration);
 
             if (string.IsNullOrEmpty(response)) FrameworkAssert.Fail("Received empty response.");
             if (response.StartsWith(UploadFailedMessage)) FrameworkAssert.Fail("Node failed to store block.");
@@ -153,7 +157,7 @@ namespace CodexPlugin
             Log($"Uploaded file. Received contentId: '{response}'.");
 
             var cid = new ContentId(response);
-            hooks.OnFileUploaded(cid);
+            hooks.OnFileUploaded(uniqueId, size, cid);
             return cid;
         }
 
@@ -165,12 +169,14 @@ namespace CodexPlugin
         public TrackedFile? DownloadContent(ContentId contentId, Action<Failure> onFailure, string fileLabel = "")
         {
             var logMessage = $"Downloading for contentId: '{contentId.Id}'...";
+            hooks.OnFileDownloading(contentId);
             Log(logMessage);
             var file = tools.GetFileManager().CreateEmptyFile(fileLabel);
             var measurement = Stopwatch.Measure(tools.GetLog(), logMessage, () => DownloadToFile(contentId.Id, file, onFailure));
-            transferSpeeds.AddDownloadSample(file.GetFilesize(), measurement);
+            var size = file.GetFilesize();
+            transferSpeeds.AddDownloadSample(size, measurement);
             Log($"Downloaded file {file.Describe()} to '{file.Filename}'.");
-            hooks.OnFileDownloaded(contentId);
+            hooks.OnFileDownloaded(size, contentId);
             return file;
         }
 

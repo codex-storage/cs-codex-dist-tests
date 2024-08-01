@@ -50,10 +50,10 @@ namespace CodexPlugin
                     "secure",
                     "chronosstream",
                     "connection",
-                    "connmanager",
+                    // Removed: "connmanager", is used for transcript peer-dropped event.
                     "websock",
                     "ws-session",
-                    // Removed: "dialer", is used for transcript event generation.
+                    // Removed: "dialer", is used for transcript successful-dial event.
                     "muxedupgrade",
                     "upgrade",
                     "identify"

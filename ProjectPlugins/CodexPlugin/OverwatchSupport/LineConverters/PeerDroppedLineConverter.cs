@@ -1,8 +1,8 @@
 ﻿namespace CodexPlugin.OverwatchSupport.LineConverters
 {
-    public class DialSuccessfulLineConverter : ILineConverter
+    public class PeerDroppedLineConverter : ILineConverter
     {
-        public string Interest => "Dial successful";
+        public string Interest => "Peer dropped";
 
         public void Process(CodexLogLine line, Action<Action<OverwatchCodexEvent>> addEvent)
         {
@@ -10,9 +10,9 @@
 
             addEvent(e =>
             {
-                e.DialSuccessful = new PeerDialSuccessfulEvent
+                e.PeerDropped = new PeerDroppedEvent
                 {
-                    TargetPeerId = peerId
+                    DroppedPeerId = peerId
                 };
             });
         }

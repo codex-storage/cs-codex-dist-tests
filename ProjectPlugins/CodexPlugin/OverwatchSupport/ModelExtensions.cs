@@ -16,12 +16,15 @@ namespace CodexPlugin.OverwatchSupport
         public ScenarioFinishedEvent? ScenarioFinished { get; set; }
         public NodeStartingEvent? NodeStarting { get; set; }
         public NodeStartedEvent? NodeStarted { get; set; }
-        public NodeStoppedEvent? NodeStopped { get; set; }
+        public NodeStoppingEvent? NodeStopping { get; set; }
         public BootstrapConfigEvent? BootstrapConfig { get; set; }
+        public FileUploadingEvent? FileUploading { get; set; }
         public FileUploadedEvent? FileUploaded { get; set; }
+        public FileDownloadingEvent? FileDownloading { get; set; }
         public FileDownloadedEvent? FileDownloaded { get; set; }
         public BlockReceivedEvent? BlockReceived { get; set; }
-        public DialSuccessfulEvent? DialSuccessful { get; set; }
+        public PeerDialSuccessfulEvent? DialSuccessful { get; set; }
+        public PeerDroppedEvent? PeerDropped { get; set; }
 
         public void Write(DateTime utc, ITranscriptWriter writer)
         {
@@ -62,9 +65,8 @@ namespace CodexPlugin.OverwatchSupport
     }
 
     [Serializable]
-    public class NodeStoppedEvent
+    public class NodeStoppingEvent
     {
-        public string Name { get; set; } = string.Empty;
     }
 
     [Serializable]
@@ -74,9 +76,23 @@ namespace CodexPlugin.OverwatchSupport
     }
 
     [Serializable]
+    public class FileUploadingEvent
+    {
+        public string UniqueId { get; set;} = string.Empty;
+        public long ByteSize { get; set; }
+    }
+
+    [Serializable]
+    public class FileDownloadingEvent
+    {
+        public string Cid { get; set; } = string.Empty;
+    }
+
+    [Serializable]
     public class FileUploadedEvent
     {
-        public ulong ByteSize { get; set; }
+        public string UniqueId { get; set; } = string.Empty;
+        public long ByteSize { get; set; }
         public string Cid { get; set; } = string.Empty;
     }
 
@@ -84,6 +100,7 @@ namespace CodexPlugin.OverwatchSupport
     public class FileDownloadedEvent
     {
         public string Cid { get; set; } = string.Empty;
+        public long ByteSize { get; set; }
     }
 
     #endregion
@@ -98,9 +115,15 @@ namespace CodexPlugin.OverwatchSupport
     }
 
     [Serializable]
-    public class DialSuccessfulEvent
+    public class PeerDialSuccessfulEvent
     {
         public string TargetPeerId { get; set; } = string.Empty;
+    }
+
+    [Serializable]
+    public class PeerDroppedEvent
+    {
+        public string DroppedPeerId { get; set; } = string.Empty;
     }
 
     #endregion

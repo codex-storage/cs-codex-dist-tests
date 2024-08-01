@@ -58,6 +58,7 @@ namespace CodexPlugin.OverwatchSupport
             new BlockReceivedLineConverter(),
             new BootstrapLineConverter(),
             new DialSuccessfulLineConverter(),
+            new PeerDroppedLineConverter()
         };
 
         public ConversionRunner(ITranscriptWriter writer, string name, string peerId)
