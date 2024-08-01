@@ -4,7 +4,17 @@
     public class OverwatchTranscript
     {
         public OverwatchHeader Header { get; set; } = new();
-        public OverwatchMoment[] Moments { get; set; } = Array.Empty<OverwatchMoment>();
+        public OverwatchMomentReference[] MomentReferences { get; set; } = Array.Empty<OverwatchMomentReference>();
+    }
+
+    [Serializable]
+    public class OverwatchMomentReference
+    {
+        public string MomentsFile { get; set; } = string.Empty;
+        public int NumberOfMoments { get; set; }
+        public int NumberOfEvents { get; set; }
+        public DateTime EarliestUtc { get; set; }
+        public DateTime LatestUtc { get; set; }
     }
 
     [Serializable]

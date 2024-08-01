@@ -2,15 +2,14 @@
 
 namespace OverwatchTranscript
 {
-    public class EventBucket
+    public class EventBucket : IFinalizedBucket
     {
         private const int MaxCount = 10000;
         private const int MaxBuffer = 100;
 
         private readonly object _lock = new object();
-        private readonly object _counterLock = new object();
         private bool closed = false;
-        private int pendingAdds = 0;
+
         private readonly string bucketFile;
         private readonly List<EventBucketEntry> buffer = new List<EventBucketEntry>();
         private EventBucketEntry? topEntry;
@@ -28,24 +27,26 @@ namespace OverwatchTranscript
         public bool IsFull { get; private set; }
         public DateTime EarliestUtc { get; private set; }
         public DateTime LatestUtc { get; private set; }
-        public string Error { get; private set; } = string.Empty;
 
         public void Add(DateTime utc, object payload)
         {
-            if (closed) throw new Exception("Already closed");
-            AddPending();
-            Task.Run(() => InternalAdd(utc, payload));
-        }
-
-        public void FinalizeBucket()
-        {
-            closed = true;
             lock (_lock)
             {
-                WaitForZeroPending();
+                if (closed) throw new Exception("Already closed");
+                AddToBuffer(utc, payload);
+                BufferToFile();
+            }
+        }
+
+        public IFinalizedBucket FinalizeBucket()
+        {
+            lock (_lock)
+            {
+                closed = true;
                 BufferToFile();
                 SortFileByTimestamps();
             }
+            return this;
         }
 
         public EventBucketEntry? ViewTopEntry()
@@ -70,43 +71,11 @@ namespace OverwatchTranscript
             }
         }
 
-        private void InternalAdd(DateTime utc, object payload)
-        {
-            lock (_lock)
-            {
-                AddToBuffer(utc, payload);
-                BufferToFile();
-                RemovePending();
-            }
-        }
-
-        private void BufferToFile()
-        {
-            if (buffer.Count > MaxBuffer)
-            {
-                using var file = File.Open(bucketFile, FileMode.Append);
-                using var writer = new StreamWriter(file);
-                foreach (var entry in buffer)
-                {
-                    writer.WriteLine(JsonConvert.SerializeObject(entry));
-                }
-                buffer.Clear();
-            }
-        }
-
         private void AddToBuffer(DateTime utc, object payload)
         {  
             var typeName = payload.GetType().FullName;
-            if (string.IsNullOrEmpty(typeName))
-            {
-                Error += "Empty typename for payload";
-                return;
-            }
-            if (utc == default)
-            {
-                Error += "DateTimeUtc not set";
-                return;
-            }
+            if (string.IsNullOrEmpty(typeName)) throw new Exception("Empty typename for payload");
+            if (utc == default) throw new Exception("DateTimeUtc not set");
 
             var entry = new EventBucketEntry
             {
@@ -126,6 +95,20 @@ namespace OverwatchTranscript
             buffer.Add(entry);
         }
 
+        private void BufferToFile()
+        {
+            if (buffer.Count > MaxBuffer)
+            {
+                using var file = File.Open(bucketFile, FileMode.Append);
+                using var writer = new StreamWriter(file);
+                foreach (var entry in buffer)
+                {
+                    writer.WriteLine(JsonConvert.SerializeObject(entry));
+                }
+                buffer.Clear();
+            }
+        }
+
         private void SortFileByTimestamps()
         {
             var lines = File.ReadAllLines(bucketFile);
@@ -139,35 +122,16 @@ namespace OverwatchTranscript
 
             topEntry = entries.First();
         }
+    }
 
-        private void AddPending()
-        {
-            lock (_counterLock)
-            {
-                pendingAdds++;
-            }
-        }
-
-        private void RemovePending()
-        {
-            lock (_counterLock)
-            {
-                pendingAdds--;
-                if (pendingAdds < 0) Error += "Pending less than zero";
-            }
-        }
-
-        private void WaitForZeroPending()
-        {
-            while (true)
-            {
-                lock (_counterLock)
-                {
-                    if (pendingAdds == 0) return;
-                }
-                Thread.Sleep(10);
-            }
-        }
+    public interface IFinalizedBucket
+    {
+        int Count { get; }
+        bool IsFull { get; }
+        DateTime EarliestUtc { get; }
+        DateTime LatestUtc { get; }
+        EventBucketEntry? ViewTopEntry();
+        void PopTopEntry();
     }
 
     [Serializable]

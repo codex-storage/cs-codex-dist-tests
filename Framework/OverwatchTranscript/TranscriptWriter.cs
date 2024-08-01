@@ -14,10 +14,11 @@ namespace OverwatchTranscript
     public class TranscriptWriter : ITranscriptWriter
     {
         private readonly object _lock = new object();
+        private readonly MomentReferenceBuilder builder;
         private readonly string transcriptFile;
         private readonly string artifactsFolder;
         private readonly Dictionary<string, string> header = new Dictionary<string, string>();
-        private readonly SortedList<DateTime, List<OverwatchEvent>> buffer = new SortedList<DateTime, List<OverwatchEvent>>();
+        private readonly BucketSet bucketSet;
         private readonly string workingDir;
         private bool closed;
 
@@ -25,6 +26,8 @@ namespace OverwatchTranscript
         {
             closed = false;
             this.workingDir = workingDir;
+            bucketSet = new BucketSet(workingDir);
+            builder = new MomentReferenceBuilder(workingDir);
             transcriptFile = Path.Combine(workingDir, TranscriptConstants.TranscriptFilename);
             artifactsFolder = Path.Combine(workingDir, TranscriptConstants.ArtifactFolderName);
 
@@ -35,27 +38,7 @@ namespace OverwatchTranscript
         public void Add(DateTime utc, object payload)
         {
             CheckClosed();
-            var typeName = payload.GetType().FullName;
-            if (string.IsNullOrEmpty(typeName)) throw new Exception("Empty typename for payload");
-            if (utc == default) throw new Exception("DateTimeUtc not set");
-
-            var newEvent = new OverwatchEvent
-            {
-                Type = typeName,
-                Payload = JsonConvert.SerializeObject(payload)
-            };
-
-            lock (_lock)
-            {
-                if (buffer.ContainsKey(utc))
-                {
-                    buffer[utc].Add(newEvent);
-                }
-                else
-                {
-                    buffer.Add(utc, new List<OverwatchEvent> { newEvent });
-                }
-            }
+            bucketSet.Add(utc, payload);
         }
 
         public void AddHeader(string key, object value)
@@ -78,12 +61,17 @@ namespace OverwatchTranscript
 
         public void Write(string outputFilename)
         {
-            if (!buffer.Any()) throw new Exception("No entries added.");
+            if (bucketSet.IsEmpty()) throw new Exception("No entries added.");
+            if (!string.IsNullOrEmpty(bucketSet.Error))
+            {
+                throw new Exception("Exceptions in BucketSet: " + bucketSet.Error);
+            }
 
             CheckClosed();
             closed = true;
 
-            var model = CreateModel();
+            var momentReferences = builder.Build(bucketSet.FinalizeBuckets());
+            var model = CreateModel(momentReferences);
 
             File.WriteAllText(transcriptFile, JsonConvert.SerializeObject(model, Formatting.Indented));
 
@@ -92,7 +80,7 @@ namespace OverwatchTranscript
             Directory.Delete(workingDir, true);
         }
 
-        private OverwatchTranscript CreateModel()
+        private OverwatchTranscript CreateModel(OverwatchMomentReference[] momentReferences)
         {
             lock (_lock)
             {
@@ -100,7 +88,7 @@ namespace OverwatchTranscript
                 {
                     Header = new OverwatchHeader
                     {
-                        Common = CreateCommonHeader(),
+                        Common = CreateCommonHeader(momentReferences),
                         Entries = header.Select(h =>
                         {
                             return new OverwatchHeaderEntry
@@ -110,31 +98,27 @@ namespace OverwatchTranscript
                             };
                         }).ToArray()
                     },
-                    Moments = buffer.Select(p =>
-                    {
-                        return new OverwatchMoment
-                        {
-                            Utc = p.Key,
-                            Events = p.Value.ToArray()
-                        };
-                    }).ToArray()
+                    MomentReferences = momentReferences
                 };
 
                 header.Clear();
-                buffer.Clear();
-
                 return model;
             }
         }
 
-        private OverwatchCommonHeader CreateCommonHeader()
+        private OverwatchCommonHeader CreateCommonHeader(OverwatchMomentReference[] momentReferences)
         {
+            var moments = momentReferences.Sum(m => m.NumberOfMoments);
+            var events = momentReferences.Sum(m => m.NumberOfEvents);
+            var earliest = momentReferences.Min(m => m.EarliestUtc);
+            var latest = momentReferences.Max(m => m.LatestUtc);
+
             return new OverwatchCommonHeader
             {
-                NumberOfMoments = buffer.Count,
-                NumberOfEvents = buffer.Sum(e => e.Value.Count),
-                EarliestUtc = buffer.Min(e => e.Key),
-                LatestUtc = buffer.Max(e => e.Key)
+                NumberOfMoments = moments,
+                NumberOfEvents = events,
+                EarliestUtc = earliest,
+                LatestUtc = latest
             };
         }
 

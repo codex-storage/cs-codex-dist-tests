@@ -25,9 +25,12 @@ namespace OverwatchTranscript
         private readonly List<Action<ActivateMoment>> momentHandlers = new List<Action<ActivateMoment>>();
         private readonly Dictionary<string, List<Action<ActivateMoment, string>>> eventHandlers = new Dictionary<string, List<Action<ActivateMoment, string>>>();
         private readonly string workingDir;
-        private OverwatchTranscript model = null!;
-        private long momentIndex = 0;
+        private readonly OverwatchTranscript model;
+        private readonly MomentReader reader;
         private bool closed;
+        private long momentCounter;
+        private readonly object queueLock = new object();
+        private readonly List<OverwatchMoment> queue = new List<OverwatchMoment>();
 
         public TranscriptReader(string workingDir, string inputFilename)
         {
@@ -39,7 +42,8 @@ namespace OverwatchTranscript
             if (!Directory.Exists(workingDir)) Directory.CreateDirectory(workingDir);
             if (File.Exists(transcriptFile) || Directory.Exists(artifactsFolder)) throw new Exception("workingdir not clean");
 
-            LoadModel(inputFilename);
+            model = LoadModel(inputFilename);
+            reader = new MomentReader(model, workingDir);
         }
 
         public OverwatchCommonHeader Header
@@ -93,14 +97,15 @@ namespace OverwatchTranscript
         public void Next()
         {
             CheckClosed();
-            if (momentIndex >= model.Moments.Length) return;
+            OverwatchMoment moment = null!;
+            lock (queueLock)
+            {
+                if (queue.Count == 0) return;
+                moment = queue[0];
+                queue.RemoveAt(0);
+            }
 
-            var moment = model.Moments[momentIndex];
-            var momentDuration = GetMomentDuration();
-
-            ActivateMoment(moment, momentDuration, momentIndex);
-
-            momentIndex++;
+            ActivateMoment(moment);
         }
 
         public void Close()
@@ -120,12 +125,10 @@ namespace OverwatchTranscript
 
         private TimeSpan? GetMomentDuration()
         {
-            if (momentIndex < 0) throw new Exception("Index < 0");
-            if (momentIndex + 1 >= model.Moments.Length) return null;
+            if (current == null) return null;
+            if (next == null) return null;
 
-            return
-                model.Moments[momentIndex + 1].Utc -
-                model.Moments[momentIndex].Utc;
+            return next.Utc - current.Utc;
         }
 
         private void ActivateMoment(OverwatchMoment moment, TimeSpan? duration, long momentIndex)
@@ -162,7 +165,7 @@ namespace OverwatchTranscript
             }
         }
 
-        private void LoadModel(string inputFilename)
+        private OverwatchTranscript LoadModel(string inputFilename)
         {
             ZipFile.ExtractToDirectory(inputFilename, workingDir);
 
@@ -172,7 +175,7 @@ namespace OverwatchTranscript
                 throw new Exception("Is not a transcript file. Unzipped to: " + workingDir);
             }
 
-            model = JsonConvert.DeserializeObject<OverwatchTranscript>(File.ReadAllText(transcriptFile))!;
+            return JsonConvert.DeserializeObject<OverwatchTranscript>(File.ReadAllText(transcriptFile))!;
         }
 
         private void CheckClosed()
