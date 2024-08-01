@@ -53,7 +53,7 @@ namespace CodexPlugin
                     "connmanager",
                     "websock",
                     "ws-session",
-                    "dialer",
+                    // Removed: "dialer", is used for transcript event generation.
                     "muxedupgrade",
                     "upgrade",
                     "identify"

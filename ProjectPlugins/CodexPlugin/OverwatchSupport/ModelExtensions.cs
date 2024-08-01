@@ -21,6 +21,7 @@ namespace CodexPlugin.OverwatchSupport
         public FileUploadedEvent? FileUploaded { get; set; }
         public FileDownloadedEvent? FileDownloaded { get; set; }
         public BlockReceivedEvent? BlockReceived { get; set; }
+        public DialSuccessfulEvent? DialSuccessful { get; set; }
 
         public void Write(DateTime utc, ITranscriptWriter writer)
         {
@@ -94,6 +95,12 @@ namespace CodexPlugin.OverwatchSupport
     {
         public string BlockAddress { get; set; } = string.Empty;
         public string SenderPeerId { get; set; } = string.Empty;
+    }
+
+    [Serializable]
+    public class DialSuccessfulEvent
+    {
+        public string TargetPeerId { get; set; } = string.Empty;
     }
 
     #endregion
