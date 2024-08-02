@@ -5,7 +5,7 @@ namespace OverwatchTranscript
 {
     public class MomentReferenceBuilder
     {
-        private const int MaxMomentsPerReference = 1000;
+        private const int MaxMomentsPerReference = 10000;
         private readonly ILog log;
         private readonly string workingDir;
 
@@ -28,11 +28,8 @@ namespace OverwatchTranscript
                 if (!buckets.Any()) break;
 
                 var earliestUtc = GetEarliestUtc(buckets);
-                if (earliestUtc == null)
-                {
-                    Thread.Sleep(1); continue;
-                }
-
+                if (earliestUtc == null) continue;
+                
                 var tops = CollectAllTopsForUtc(earliestUtc.Value, buckets);
                 var moment = ConvertTopsToMoment(tops);
                 currentBuilder.Add(moment);

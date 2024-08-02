@@ -1,4 +1,5 @@
 ﻿using Logging;
+using System.Collections.Concurrent;
 
 namespace OverwatchTranscript
 {
@@ -49,7 +50,12 @@ namespace OverwatchTranscript
 
             var buckets = fullBuckets.Concat(activeBuckets).ToArray();
             log.Debug($"Finalizing {buckets.Length} buckets...");
-            return buckets.Select(b => b.FinalizeBucket()).ToArray();
+
+            var finalized = new ConcurrentBag<IFinalizedBucket>();
+            var tasks = Parallel.ForEach(buckets, b => finalized.Add(b.FinalizeBucket()));
+            if (!tasks.IsCompleted) throw new Exception("Failed to finalize buckets: " + tasks);
+
+            return finalized.ToArray();
         }
 
         private bool IsEmpty()

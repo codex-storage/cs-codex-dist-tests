@@ -1,5 +1,6 @@
 ﻿using Logging;
 using Newtonsoft.Json;
+using System.Collections.Concurrent;
 
 namespace OverwatchTranscript
 {
@@ -24,12 +25,10 @@ namespace OverwatchTranscript
 
     public class EventBucketReader : IFinalizedBucket
     {
-        private readonly object topLock = new object();
         private readonly string bucketFile;
-        private readonly AutoResetEvent topReadySignal = new AutoResetEvent(false);
-        private readonly AutoResetEvent topTakenSignal = new AutoResetEvent(true);
-        private BucketTop? top;
-        private DateTime? topUtc;
+        private readonly ConcurrentQueue<BucketTop> topQueue = new ConcurrentQueue<BucketTop>();
+        private readonly AutoResetEvent itemDequeued = new AutoResetEvent(false);
+        private bool stopping;
 
         public EventBucketReader(ILog log, string bucketFile)
         {
@@ -46,21 +45,30 @@ namespace OverwatchTranscript
         public DateTime? SeeTopUtc()
         {
             if (IsEmpty) return null;
-            return topUtc;
+            while (true)
+            {
+                UpdateIsEmpty();
+                if (IsEmpty) return null;
+                if (topQueue.TryPeek(out BucketTop? top))
+                {
+                    return top.Utc;
+                }
+            }
         }
 
         public BucketTop? TakeTop()
         {
             if (IsEmpty) return null;
-            topReadySignal.WaitOne();
 
-            lock (topLock)
+            while (true)
             {
-                var t = top;
-                top = null;
-                topUtc = null;
-                topTakenSignal.Set();
-                return t;
+                UpdateIsEmpty();
+                if (IsEmpty) return null;
+                if (topQueue.TryDequeue(out BucketTop? top))
+                {
+                    itemDequeued.Set();
+                    return top;
+                }
             }
         }
 
@@ -71,24 +79,32 @@ namespace OverwatchTranscript
 
             while (true)
             {
-                topTakenSignal.WaitOne(10);
-                lock (topLock)
+                while (topQueue.Count < 5)
                 {
-                    if (top == null)
+                    var top = CreateNewTop(reader);
+                    if (top != null)
                     {
-                        top = CreateNewTop(reader);
-                        if (top != null)
-                        {
-                            topUtc = top.Utc;
-                        }
-                        topReadySignal.Set();
+                        topQueue.Enqueue(top);
                     }
-                    if (top == null)
+                    else
                     {
-                        IsEmpty = true;
+                        stopping = true;
                         return;
                     }
                 }
+
+                itemDequeued.Reset();
+                itemDequeued.WaitOne();
+            }
+        }
+
+        private void UpdateIsEmpty()
+        {
+            var empty = stopping && topQueue.IsEmpty;
+            if (!IsEmpty && empty)
+            {
+                File.Delete(bucketFile);
+                IsEmpty = true;
             }
         }
 
