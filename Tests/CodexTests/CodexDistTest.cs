@@ -139,7 +139,7 @@ namespace CodexTests
             if (GetTranscriptAttributeOfCurrentTest() == null) return;
 
             var log = new LogPrefixer(lifecycle.Log, "(Transcript) ");
-            var writer = new CodexTranscriptWriter(log, Transcript.NewWriter());
+            var writer = new CodexTranscriptWriter(log, Transcript.NewWriter(log));
             Ci.SetCodexHooksProvider(writer);
             writers.Add(lifecycle, writer);
         }

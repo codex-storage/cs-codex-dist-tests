@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using Logging;
+using Newtonsoft.Json;
 using System.IO.Compression;
 
 namespace OverwatchTranscript
@@ -19,14 +20,16 @@ namespace OverwatchTranscript
         private readonly string artifactsFolder;
         private readonly Dictionary<string, string> header = new Dictionary<string, string>();
         private readonly BucketSet bucketSet;
+        private readonly ILog log;
         private readonly string workingDir;
         private bool closed;
 
-        public TranscriptWriter(string workingDir)
+        public TranscriptWriter(ILog log, string workingDir)
         {
             closed = false;
+            this.log = log;
             this.workingDir = workingDir;
-            bucketSet = new BucketSet(workingDir);
+            bucketSet = new BucketSet(log, workingDir);
             builder = new MomentReferenceBuilder(workingDir);
             transcriptFile = Path.Combine(workingDir, TranscriptConstants.TranscriptFilename);
             artifactsFolder = Path.Combine(workingDir, TranscriptConstants.ArtifactFolderName);
@@ -61,12 +64,6 @@ namespace OverwatchTranscript
 
         public void Write(string outputFilename)
         {
-            if (bucketSet.IsEmpty()) throw new Exception("No entries added.");
-            if (!string.IsNullOrEmpty(bucketSet.Error))
-            {
-                throw new Exception("Exceptions in BucketSet: " + bucketSet.Error);
-            }
-
             CheckClosed();
             closed = true;
 
@@ -76,8 +73,10 @@ namespace OverwatchTranscript
             File.WriteAllText(transcriptFile, JsonConvert.SerializeObject(model, Formatting.Indented));
 
             ZipFile.CreateFromDirectory(workingDir, outputFilename);
+            log.Debug($"Transcript written to {outputFilename}");
 
             Directory.Delete(workingDir, true);
+            log.Debug($"Workdir {workingDir} deleted");
         }
 
         private OverwatchTranscript CreateModel(OverwatchMomentReference[] momentReferences)

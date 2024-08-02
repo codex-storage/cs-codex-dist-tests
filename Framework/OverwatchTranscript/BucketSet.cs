@@ -1,20 +1,24 @@
-﻿namespace OverwatchTranscript
+﻿using Logging;
+
+namespace OverwatchTranscript
 {
     public class BucketSet
     {
         private const int numberOfActiveBuckets = 5;
         private readonly object _counterLock = new object();
         private int pendingAdds = 0;
-
+        private readonly ILog log;
+        private readonly string workingDir;
         private readonly object _bucketLock = new object();
         private readonly List<EventBucket> fullBuckets = new List<EventBucket>();
         private readonly List<EventBucket> activeBuckets = new List<EventBucket>();
         private int activeBucketIndex = 0;
         private bool closed = false;
-        private readonly string workingDir;
-
-        public BucketSet(string workingDir)
+        private string internalErrors = string.Empty;
+        
+        public BucketSet(ILog log, string workingDir)
         {
+            this.log = log;
             this.workingDir = workingDir;
 
             for (var i = 0; i < numberOfActiveBuckets;i++)
@@ -23,8 +27,6 @@
             }
         }
 
-        public string Error { get; private set; } = string.Empty;
-
         public void Add(DateTime utc, object payload)
         {
             if (closed) throw new Exception("Buckets already closed!");
@@ -32,18 +34,22 @@
             Task.Run(() => AddInternal(utc, payload));
         }
 
-        public bool IsEmpty()
-        {
-            return fullBuckets.All(b => b.Count == 0) && activeBuckets.All(b => b.Count == 0);
-        }
-
         public IFinalizedBucket[] FinalizeBuckets()
         {
             closed = true;
             WaitForZeroPending();
 
+            if (IsEmpty()) throw new Exception("No entries have been added.");
+            if (!string.IsNullOrEmpty(internalErrors)) throw new Exception(internalErrors);
+
             var buckets = fullBuckets.Concat(activeBuckets).ToArray();
+            log.Debug($"Finalizing {buckets.Length} buckets...");
             return buckets.Select(b => b.FinalizeBucket()).ToArray();
+        }
+
+        private bool IsEmpty()
+        {
+            return fullBuckets.All(b => b.Count == 0) && activeBuckets.All(b => b.Count == 0);
         }
 
         private void AddInternal(DateTime utc, object payload)
@@ -67,7 +73,7 @@
             }
             catch (Exception ex)
             {
-                Error += ex.ToString();
+                internalErrors += ex.ToString();
             }
         }
 
@@ -75,7 +81,7 @@
         {
             lock (_bucketLock)
             {
-                activeBuckets.Add(new EventBucket(Path.Combine(workingDir, Guid.NewGuid().ToString())));
+                activeBuckets.Add(new EventBucket(log, Path.Combine(workingDir, Guid.NewGuid().ToString())));
             }
         }
 
@@ -84,6 +90,7 @@
             lock (_counterLock)
             {
                 pendingAdds++;
+                log.Debug("(+) Pending: " + pendingAdds);
             }
         }
 
@@ -92,16 +99,19 @@
             lock (_counterLock)
             {
                 pendingAdds--;
-                if (pendingAdds < 0) Error += "Pending less than zero";
+                if (pendingAdds < 0) internalErrors += "Pending less than zero";
+                log.Debug("(-) Pending: " + pendingAdds);
             }
         }
 
         private void WaitForZeroPending()
         {
+            log.Debug("Wait for zero pending.");
             while (true)
             {
                 lock (_counterLock)
                 {
+                    log.Debug("(wait) Pending: " + pendingAdds);
                     if (pendingAdds == 0) return;
                 }
                 Thread.Sleep(10);

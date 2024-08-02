@@ -15,7 +15,6 @@ namespace OverwatchTranscript
         public OverwatchMomentReference[] Build(IFinalizedBucket[] buckets)
         {
             var result = new List<OverwatchMomentReference>();
-
             var currentBuilder = new Builder(workingDir);
 
             while (EntriesRemaining(buckets))
@@ -29,6 +28,11 @@ namespace OverwatchTranscript
                     result.Add(currentBuilder.Build());
                     currentBuilder = new Builder(workingDir);
                 }
+            }
+
+            if (currentBuilder.NumberOfMoments > 0)
+            {
+                result.Add(currentBuilder.Build());
             }
 
             return result.ToArray();

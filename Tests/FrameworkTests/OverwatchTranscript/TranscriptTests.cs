@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using Logging;
+using Newtonsoft.Json;
 using NUnit.Framework;
 using OverwatchTranscript;
 
@@ -31,7 +32,8 @@ namespace FrameworkTests.OverwatchTranscript
 
         private void WriteTranscript(string workdir)
         {
-            var writer = new TranscriptWriter(workdir);
+            var log = new ConsoleLog();
+            var writer = new TranscriptWriter(log, workdir);
 
             writer.AddHeader(HeaderKey, new TestHeader
             {

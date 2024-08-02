@@ -31,6 +31,7 @@ namespace OverwatchTranscript
         private long momentCounter;
         private readonly object queueLock = new object();
         private readonly List<OverwatchMoment> queue = new List<OverwatchMoment>();
+        private readonly Task queueFiller;
 
         public TranscriptReader(string workingDir, string inputFilename)
         {
@@ -44,6 +45,8 @@ namespace OverwatchTranscript
 
             model = LoadModel(inputFilename);
             reader = new MomentReader(model, workingDir);
+
+            queueFiller = Task.Run(FillQueue);
         }
 
         public OverwatchCommonHeader Header
@@ -98,21 +101,28 @@ namespace OverwatchTranscript
         {
             CheckClosed();
             OverwatchMoment moment = null!;
+            OverwatchMoment? next = null;
             lock (queueLock)
             {
                 if (queue.Count == 0) return;
                 moment = queue[0];
+                if (queue.Count > 1) next = queue[1];
+
                 queue.RemoveAt(0);
             }
 
-            ActivateMoment(moment);
+            var duration = GetMomentDuration(moment, next);
+            ActivateMoment(moment, duration);
         }
 
         public void Close()
         {
             CheckClosed();
-            Directory.Delete(workingDir, true);
             closed = true;
+
+            queueFiller.Wait();
+
+            Directory.Delete(workingDir, true);
         }
 
         private Action<ActivateMoment, string> CreateEventAction<T>(Action<ActivateEvent<T>> handler)
@@ -123,17 +133,37 @@ namespace OverwatchTranscript
             };
         }
 
-        private TimeSpan? GetMomentDuration()
+        private void FillQueue()
         {
-            if (current == null) return null;
-            if (next == null) return null;
+            while (true)
+            {
+                if (closed) return;
 
-            return next.Utc - current.Utc;
+                lock (queueLock)
+                {
+                    while (queue.Count < 100)
+                    {
+                        var moment = reader.Next();
+                        if (moment == null) return;
+                        queue.Add(moment);
+                    }
+                }
+
+                Thread.Sleep(1);
+            }
         }
 
-        private void ActivateMoment(OverwatchMoment moment, TimeSpan? duration, long momentIndex)
+        private TimeSpan? GetMomentDuration(OverwatchMoment moment, OverwatchMoment? next)
         {
-            var m = new ActivateMoment(moment.Utc, duration, momentIndex);
+            if (moment == null) return null;
+            if (next == null) return null;
+
+            return next.Utc - moment.Utc;
+        }
+
+        private void ActivateMoment(OverwatchMoment moment, TimeSpan? duration)
+        {
+            var m = new ActivateMoment(moment.Utc, duration, momentCounter);
 
             lock (handlersLock)
             {
@@ -144,6 +174,8 @@ namespace OverwatchTranscript
                     ActivateEventHandlers(m, @event);
                 }
             }
+
+            momentCounter++;
         }
 
         private void ActivateMomentHandlers(ActivateMoment m)

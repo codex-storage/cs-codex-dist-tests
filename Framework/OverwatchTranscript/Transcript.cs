@@ -1,10 +1,13 @@
-﻿namespace OverwatchTranscript
+﻿using Logging;
+
+namespace OverwatchTranscript
 {
     public static class Transcript
     {
-        public static ITranscriptWriter NewWriter()
+        public static ITranscriptWriter NewWriter(ILog log)
         {
-            return new TranscriptWriter(NewWorkDir());
+            log = new LogPrefixer(log, "(TranscriptWriter) ");
+            return new TranscriptWriter(log, NewWorkDir());
         }
 
         public static ITranscriptReader NewReader(string transcriptFile)

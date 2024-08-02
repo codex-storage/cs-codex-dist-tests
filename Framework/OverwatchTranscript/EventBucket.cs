@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using Logging;
+using Newtonsoft.Json;
 
 namespace OverwatchTranscript
 {
@@ -9,24 +10,22 @@ namespace OverwatchTranscript
 
         private readonly object _lock = new object();
         private bool closed = false;
-
+        private readonly ILog log;
         private readonly string bucketFile;
         private readonly List<EventBucketEntry> buffer = new List<EventBucketEntry>();
         private EventBucketEntry? topEntry;
 
-        public EventBucket(string bucketFile)
+        public EventBucket(ILog log, string bucketFile)
         {
+            this.log = log;
             this.bucketFile = bucketFile;
             if (File.Exists(bucketFile)) throw new Exception("Already exists");
 
-            EarliestUtc = DateTime.MaxValue;
-            LatestUtc = DateTime.MinValue;
+            log.Debug("Bucket open: " + bucketFile);
         }
 
         public int Count { get; private set; }
         public bool IsFull { get; private set; }
-        public DateTime EarliestUtc { get; private set; }
-        public DateTime LatestUtc { get; private set; }
 
         public void Add(DateTime utc, object payload)
         {
@@ -34,7 +33,7 @@ namespace OverwatchTranscript
             {
                 if (closed) throw new Exception("Already closed");
                 AddToBuffer(utc, payload);
-                BufferToFile();
+                BufferToFile(emptyBuffer: false);
             }
         }
 
@@ -43,9 +42,10 @@ namespace OverwatchTranscript
             lock (_lock)
             {
                 closed = true;
-                BufferToFile();
+                BufferToFile(emptyBuffer: true);
                 SortFileByTimestamps();
             }
+            log.Debug($"Finalized bucket with {Count} entries");
             return this;
         }
 
@@ -71,6 +71,11 @@ namespace OverwatchTranscript
             }
         }
 
+        public override string ToString()
+        {
+            return $"EventBucket: " + Count;
+        }
+
         private void AddToBuffer(DateTime utc, object payload)
         {  
             var typeName = payload.GetType().FullName;
@@ -87,17 +92,15 @@ namespace OverwatchTranscript
                 }
             };
 
-            if (utc < EarliestUtc) EarliestUtc = utc;
-            if (utc > LatestUtc) LatestUtc = utc;
             Count++;
             IsFull = Count > MaxCount;
 
             buffer.Add(entry);
         }
 
-        private void BufferToFile()
+        private void BufferToFile(bool emptyBuffer)
         {
-            if (buffer.Count > MaxBuffer)
+            if (emptyBuffer || buffer.Count > MaxBuffer)
             {
                 using var file = File.Open(bucketFile, FileMode.Append);
                 using var writer = new StreamWriter(file);
@@ -105,6 +108,7 @@ namespace OverwatchTranscript
                 {
                     writer.WriteLine(JsonConvert.SerializeObject(entry));
                 }
+                log.Debug($"Bucket wrote {buffer.Count} entries to file.");
                 buffer.Clear();
             }
         }
@@ -120,7 +124,7 @@ namespace OverwatchTranscript
             File.Delete(bucketFile);
             File.WriteAllLines(bucketFile, entries.Select(JsonConvert.SerializeObject));
 
-            topEntry = entries.First();
+            topEntry = entries.FirstOrDefault();
         }
     }
 
@@ -128,8 +132,6 @@ namespace OverwatchTranscript
     {
         int Count { get; }
         bool IsFull { get; }
-        DateTime EarliestUtc { get; }
-        DateTime LatestUtc { get; }
         EventBucketEntry? ViewTopEntry();
         void PopTopEntry();
     }
