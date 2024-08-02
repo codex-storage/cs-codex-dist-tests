@@ -5,20 +5,21 @@ namespace OverwatchTranscript
 {
     public class EventBucket : IFinalizedBucket
     {
-        private const int MaxCount = 10000;
-        private const int MaxBuffer = 100;
+        private const int MaxBuffer = 1000;
 
         private readonly object _lock = new object();
         private bool closed = false;
         private readonly ILog log;
         private readonly string bucketFile;
+        private readonly int maxCount;
         private readonly List<EventBucketEntry> buffer = new List<EventBucketEntry>();
         private EventBucketEntry? topEntry;
 
-        public EventBucket(ILog log, string bucketFile)
+        public EventBucket(ILog log, string bucketFile, int maxCount)
         {
             this.log = log;
             this.bucketFile = bucketFile;
+            this.maxCount = maxCount;
             if (File.Exists(bucketFile)) throw new Exception("Already exists");
 
             log.Debug("Bucket open: " + bucketFile);
@@ -93,7 +94,7 @@ namespace OverwatchTranscript
             };
 
             Count++;
-            IsFull = Count > MaxCount;
+            IsFull = Count > maxCount;
 
             buffer.Add(entry);
         }

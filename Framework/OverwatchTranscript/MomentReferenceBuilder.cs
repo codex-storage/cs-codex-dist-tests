@@ -1,22 +1,26 @@
-﻿using Newtonsoft.Json;
+﻿using Logging;
+using Newtonsoft.Json;
 
 namespace OverwatchTranscript
 {
     public class MomentReferenceBuilder
     {
-        private const int MaxMomentsPerReference = 100;
+        private const int MaxMomentsPerReference = 1000;
+        private readonly ILog log;
         private readonly string workingDir;
 
-        public MomentReferenceBuilder(string workingDir)
+        public MomentReferenceBuilder(ILog log, string workingDir)
         {
+            this.log = log;
             this.workingDir = workingDir;
         }
 
         public OverwatchMomentReference[] Build(IFinalizedBucket[] buckets)
         {
             var result = new List<OverwatchMomentReference>();
-            var currentBuilder = new Builder(workingDir);
+            var currentBuilder = new Builder(log, workingDir);
 
+            log.Debug($"Building references for {buckets.Length} buckets.");
             while (EntriesRemaining(buckets))
             {
                 var earliestUtc = GetEarliestUtc(buckets);
@@ -26,7 +30,7 @@ namespace OverwatchTranscript
                 if (currentBuilder.NumberOfMoments == MaxMomentsPerReference)
                 {
                     result.Add(currentBuilder.Build());
-                    currentBuilder = new Builder(workingDir);
+                    currentBuilder = new Builder(log, workingDir);
                 }
             }
 
@@ -86,9 +90,10 @@ namespace OverwatchTranscript
 
         public class Builder
         {
+            private readonly ILog log;
             private OverwatchMomentReference reference;
 
-            public Builder(string workingDir)
+            public Builder(ILog log, string workingDir)
             {
                 reference = new OverwatchMomentReference
                 {
@@ -98,6 +103,7 @@ namespace OverwatchTranscript
                     NumberOfEvents = 0,
                     NumberOfMoments = 0,
                 };
+                this.log = log;
             }
 
             public int NumberOfMoments => reference.NumberOfMoments;
@@ -117,6 +123,7 @@ namespace OverwatchTranscript
 
             public OverwatchMomentReference Build()
             {
+                log.Debug($"Created reference with {reference.NumberOfMoments} moments and {reference.NumberOfEvents} events...");
                 var result = reference;
                 reference = null!;
                 return result;

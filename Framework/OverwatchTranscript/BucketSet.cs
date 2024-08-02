@@ -4,9 +4,10 @@ namespace OverwatchTranscript
 {
     public class BucketSet
     {
-        private const int numberOfActiveBuckets = 5;
-        private readonly object _counterLock = new object();
-        private int pendingAdds = 0;
+        private const int numberOfActiveBuckets = 10;
+        private readonly object queueLock = new object();
+        private List<Action> queue = new List<Action>();
+        private readonly Task queueWorker;
         private readonly ILog log;
         private readonly string workingDir;
         private readonly object _bucketLock = new object();
@@ -25,19 +26,31 @@ namespace OverwatchTranscript
             {
                 AddNewBucket();
             }
+
+            queueWorker = Task.Run(QueueWorker);
         }
 
         public void Add(DateTime utc, object payload)
         {
             if (closed) throw new Exception("Buckets already closed!");
-            AddPending();
-            Task.Run(() => AddInternal(utc, payload));
+            int count = 0;
+            lock (queueLock)
+            {
+                queue.Add(() => AddInternal(utc, payload));
+                count = queue.Count;
+            }
+
+            if (count > 1000)
+            {
+                Thread.Sleep(1);
+            }
         }
 
         public IFinalizedBucket[] FinalizeBuckets()
         {
             closed = true;
-            WaitForZeroPending();
+            WaitForZeroQueue();
+            queueWorker.Wait();
 
             if (IsEmpty()) throw new Exception("No entries have been added.");
             if (!string.IsNullOrEmpty(internalErrors)) throw new Exception(internalErrors);
@@ -64,55 +77,68 @@ namespace OverwatchTranscript
 
                     if (current.IsFull)
                     {
+                        log.Debug("Bucket is full. New bucket...");
                         fullBuckets.Add(current);
                         activeBuckets.Remove(current);
                         AddNewBucket();
                     }
-                    RemovePending();
                 }
             }
             catch (Exception ex)
             {
                 internalErrors += ex.ToString();
+                log.Error(ex.ToString());
             }
         }
+
+        private static int bucketSizeIndex = 0;
+        private static int[] bucketSizes = new[]
+        {
+            10000,
+            15000,
+            20000,
+        };
 
         private void AddNewBucket()
         {
             lock (_bucketLock)
             {
-                activeBuckets.Add(new EventBucket(log, Path.Combine(workingDir, Guid.NewGuid().ToString())));
+                var size = bucketSizes[bucketSizeIndex];
+                bucketSizeIndex = (bucketSizeIndex + 1) % bucketSizes.Length;
+                activeBuckets.Add(new EventBucket(log, Path.Combine(workingDir, Guid.NewGuid().ToString()), size));
             }
         }
 
-        private void AddPending()
+        private void QueueWorker()
         {
-            lock (_counterLock)
+            while (true)
             {
-                pendingAdds++;
-                log.Debug("(+) Pending: " + pendingAdds);
+                List<Action> work = null!;
+                lock (queueLock)
+                {
+                    work = queue;
+                    queue = new List<Action>();
+                }
+
+                if (closed && !work.Any()) return;
+                foreach (var action in work)
+                {
+                    action();
+                }
+
+                Thread.Sleep(0);
             }
         }
 
-        private void RemovePending()
-        {
-            lock (_counterLock)
-            {
-                pendingAdds--;
-                if (pendingAdds < 0) internalErrors += "Pending less than zero";
-                log.Debug("(-) Pending: " + pendingAdds);
-            }
-        }
-
-        private void WaitForZeroPending()
+        private void WaitForZeroQueue()
         {
             log.Debug("Wait for zero pending.");
             while (true)
             {
-                lock (_counterLock)
+                lock (queueLock)
                 {
-                    log.Debug("(wait) Pending: " + pendingAdds);
-                    if (pendingAdds == 0) return;
+                    log.Debug("(wait) Pending: " + queue.Count);
+                    if (queue.Count == 0) return;
                 }
                 Thread.Sleep(10);
             }

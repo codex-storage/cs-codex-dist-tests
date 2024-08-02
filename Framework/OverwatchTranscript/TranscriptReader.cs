@@ -13,7 +13,7 @@ namespace OverwatchTranscript
         T GetHeader<T>(string key);
         void AddMomentHandler(Action<ActivateMoment> handler);
         void AddEventHandler<T>(Action<ActivateEvent<T>> handler);
-        void Next();
+        bool Next();
         void Close();
     }
 
@@ -26,7 +26,6 @@ namespace OverwatchTranscript
         private readonly Dictionary<string, List<Action<ActivateMoment, string>>> eventHandlers = new Dictionary<string, List<Action<ActivateMoment, string>>>();
         private readonly string workingDir;
         private readonly OverwatchTranscript model;
-        private readonly MomentReader reader;
         private bool closed;
         private long momentCounter;
         private readonly object queueLock = new object();
@@ -44,9 +43,8 @@ namespace OverwatchTranscript
             if (File.Exists(transcriptFile) || Directory.Exists(artifactsFolder)) throw new Exception("workingdir not clean");
 
             model = LoadModel(inputFilename);
-            reader = new MomentReader(model, workingDir);
 
-            queueFiller = Task.Run(FillQueue);
+            queueFiller = Task.Run(() => FillQueue(model, workingDir));
         }
 
         public OverwatchCommonHeader Header
@@ -97,14 +95,14 @@ namespace OverwatchTranscript
             }
         }
 
-        public void Next()
+        public bool Next()
         {
             CheckClosed();
             OverwatchMoment moment = null!;
             OverwatchMoment? next = null;
             lock (queueLock)
             {
-                if (queue.Count == 0) return;
+                if (queue.Count == 0) return false;
                 moment = queue[0];
                 if (queue.Count > 1) next = queue[1];
 
@@ -113,6 +111,7 @@ namespace OverwatchTranscript
 
             var duration = GetMomentDuration(moment, next);
             ActivateMoment(moment, duration);
+            return true;
         }
 
         public void Close()
@@ -133,18 +132,28 @@ namespace OverwatchTranscript
             };
         }
 
-        private void FillQueue()
+        private void FillQueue(OverwatchTranscript model, string workingDir)
         {
+            var reader = new MomentReader(model, workingDir);
+
             while (true)
             {
-                if (closed) return;
+                if (closed)
+                {
+                    reader.Close();
+                    return;
+                }
 
                 lock (queueLock)
                 {
                     while (queue.Count < 100)
                     {
                         var moment = reader.Next();
-                        if (moment == null) return;
+                        if (moment == null)
+                        {
+                            reader.Close();
+                            return;
+                        }
                         queue.Add(moment);
                     }
                 }

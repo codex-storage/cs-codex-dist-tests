@@ -25,8 +25,7 @@ namespace OverwatchTranscript
             var moment = currentRef.ReadNext();
             if (moment == null)
             {
-                currentRef.Close();
-                currentRef = null!;
+                Close();
 
                 // This reference file ran out.
                 // The number of moments read should match exactly the number of moments
@@ -41,15 +40,30 @@ namespace OverwatchTranscript
                 referenceIndex++;
                 if (referenceIndex < model.MomentReferences.Length)
                 {
+                    // Proceed to next reference file.
                     currentRef = CreateOpenReference();
+                    momentsRead = 0;
+                    return Next();
                 }
-                momentsRead = 0;
-                return Next();
+                else
+                {
+                    // That was the last one.
+                    return null;
+                }
             }
             else
             {
                 momentsRead++;
                 return moment;
+            }
+        }
+
+        public void Close()
+        {
+            if (currentRef != null)
+            {
+                currentRef.Close();
+                currentRef = null!;
             }
         }
 

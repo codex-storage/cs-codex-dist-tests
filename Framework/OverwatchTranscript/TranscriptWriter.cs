@@ -30,7 +30,7 @@ namespace OverwatchTranscript
             this.log = log;
             this.workingDir = workingDir;
             bucketSet = new BucketSet(log, workingDir);
-            builder = new MomentReferenceBuilder(workingDir);
+            builder = new MomentReferenceBuilder(log, workingDir);
             transcriptFile = Path.Combine(workingDir, TranscriptConstants.TranscriptFilename);
             artifactsFolder = Path.Combine(workingDir, TranscriptConstants.ArtifactFolderName);
 
@@ -74,6 +74,7 @@ namespace OverwatchTranscript
 
             ZipFile.CreateFromDirectory(workingDir, outputFilename);
             log.Debug($"Transcript written to {outputFilename}");
+            log.Debug($"Common header: {JsonConvert.SerializeObject(model.Header.Common, Formatting.Indented)}");
 
             Directory.Delete(workingDir, true);
             log.Debug($"Workdir {workingDir} deleted");
