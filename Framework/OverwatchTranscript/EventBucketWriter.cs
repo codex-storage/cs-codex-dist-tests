@@ -3,7 +3,7 @@ using Newtonsoft.Json;
 
 namespace OverwatchTranscript
 {
-    public class EventBucket : IFinalizedBucket
+    public class EventBucketWriter
     {
         private const int MaxBuffer = 1000;
 
@@ -13,16 +13,15 @@ namespace OverwatchTranscript
         private readonly string bucketFile;
         private readonly int maxCount;
         private readonly List<EventBucketEntry> buffer = new List<EventBucketEntry>();
-        private EventBucketEntry? topEntry;
 
-        public EventBucket(ILog log, string bucketFile, int maxCount)
+        public EventBucketWriter(ILog log, string bucketFile, int maxCount)
         {
             this.log = log;
             this.bucketFile = bucketFile;
             this.maxCount = maxCount;
             if (File.Exists(bucketFile)) throw new Exception("Already exists");
 
-            log.Debug("Bucket open: " + bucketFile);
+            log.Debug("Write Bucket open: " + bucketFile);
         }
 
         public int Count { get; private set; }
@@ -47,29 +46,7 @@ namespace OverwatchTranscript
                 SortFileByTimestamps();
             }
             log.Debug($"Finalized bucket with {Count} entries");
-            return this;
-        }
-
-        public EventBucketEntry? ViewTopEntry()
-        {
-            if (!closed) throw new Exception("Bucket not closed yet. FinalizeBucket first.");
-            return topEntry;
-        }
-
-        public void PopTopEntry()
-        {
-            var lines = File.ReadAllLines(bucketFile).ToList();
-            lines.RemoveAt(0);
-            File.WriteAllLines(bucketFile, lines);
-
-            if (lines.Any())
-            {
-                topEntry = JsonConvert.DeserializeObject<EventBucketEntry>(lines[0]);
-            }
-            else
-            {
-                topEntry = null;
-            }
+            return new EventBucketReader(log, bucketFile);
         }
 
         public override string ToString()
@@ -124,17 +101,7 @@ namespace OverwatchTranscript
 
             File.Delete(bucketFile);
             File.WriteAllLines(bucketFile, entries.Select(JsonConvert.SerializeObject));
-
-            topEntry = entries.FirstOrDefault();
         }
-    }
-
-    public interface IFinalizedBucket
-    {
-        int Count { get; }
-        bool IsFull { get; }
-        EventBucketEntry? ViewTopEntry();
-        void PopTopEntry();
     }
 
     [Serializable]

@@ -5,14 +5,12 @@ namespace OverwatchTranscript
     public class BucketSet
     {
         private const int numberOfActiveBuckets = 10;
-        private readonly object queueLock = new object();
-        private List<Action> queue = new List<Action>();
-        private readonly Task queueWorker;
         private readonly ILog log;
         private readonly string workingDir;
         private readonly object _bucketLock = new object();
-        private readonly List<EventBucket> fullBuckets = new List<EventBucket>();
-        private readonly List<EventBucket> activeBuckets = new List<EventBucket>();
+        private readonly List<EventBucketWriter> fullBuckets = new List<EventBucketWriter>();
+        private readonly List<EventBucketWriter> activeBuckets = new List<EventBucketWriter>();
+        private readonly ActionQueue queue = new ActionQueue();
         private int activeBucketIndex = 0;
         private bool closed = false;
         private string internalErrors = string.Empty;
@@ -27,20 +25,15 @@ namespace OverwatchTranscript
                 AddNewBucket();
             }
 
-            queueWorker = Task.Run(QueueWorker);
+            queue.Start();
         }
 
         public void Add(DateTime utc, object payload)
         {
             if (closed) throw new Exception("Buckets already closed!");
-            int count = 0;
-            lock (queueLock)
-            {
-                queue.Add(() => AddInternal(utc, payload));
-                count = queue.Count;
-            }
-
-            if (count > 1000)
+            queue.Add(() => AddInternal(utc, payload));
+            
+            if (queue.Count > 1000)
             {
                 Thread.Sleep(1);
             }
@@ -49,8 +42,7 @@ namespace OverwatchTranscript
         public IFinalizedBucket[] FinalizeBuckets()
         {
             closed = true;
-            WaitForZeroQueue();
-            queueWorker.Wait();
+            queue.StopAndJoin();
 
             if (IsEmpty()) throw new Exception("No entries have been added.");
             if (!string.IsNullOrEmpty(internalErrors)) throw new Exception(internalErrors);
@@ -105,42 +97,7 @@ namespace OverwatchTranscript
             {
                 var size = bucketSizes[bucketSizeIndex];
                 bucketSizeIndex = (bucketSizeIndex + 1) % bucketSizes.Length;
-                activeBuckets.Add(new EventBucket(log, Path.Combine(workingDir, Guid.NewGuid().ToString()), size));
-            }
-        }
-
-        private void QueueWorker()
-        {
-            while (true)
-            {
-                List<Action> work = null!;
-                lock (queueLock)
-                {
-                    work = queue;
-                    queue = new List<Action>();
-                }
-
-                if (closed && !work.Any()) return;
-                foreach (var action in work)
-                {
-                    action();
-                }
-
-                Thread.Sleep(0);
-            }
-        }
-
-        private void WaitForZeroQueue()
-        {
-            log.Debug("Wait for zero pending.");
-            while (true)
-            {
-                lock (queueLock)
-                {
-                    log.Debug("(wait) Pending: " + queue.Count);
-                    if (queue.Count == 0) return;
-                }
-                Thread.Sleep(10);
+                activeBuckets.Add(new EventBucketWriter(log, Path.Combine(workingDir, Guid.NewGuid().ToString()), size));
             }
         }
     }

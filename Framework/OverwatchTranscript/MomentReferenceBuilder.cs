@@ -15,17 +15,26 @@ namespace OverwatchTranscript
             this.workingDir = workingDir;
         }
 
-        public OverwatchMomentReference[] Build(IFinalizedBucket[] buckets)
+        public OverwatchMomentReference[] Build(IFinalizedBucket[] finalizedBuckets)
         {
             var result = new List<OverwatchMomentReference>();
             var currentBuilder = new Builder(log, workingDir);
 
-            log.Debug($"Building references for {buckets.Length} buckets.");
-            while (EntriesRemaining(buckets))
+            var buckets = finalizedBuckets.ToList();
+            log.Debug($"Building references for {buckets.Count} buckets.");
+            while (buckets.Any())
             {
+                buckets.RemoveAll(b => b.IsEmpty);
+                if (!buckets.Any()) break;
+
                 var earliestUtc = GetEarliestUtc(buckets);
-                var entries = CollectAllEntriesForUtc(earliestUtc, buckets);
-                var moment = ConvertEntriesToMoment(entries);
+                if (earliestUtc == null)
+                {
+                    Thread.Sleep(1); continue;
+                }
+
+                var tops = CollectAllTopsForUtc(earliestUtc.Value, buckets);
+                var moment = ConvertTopsToMoment(tops);
                 currentBuilder.Add(moment);
                 if (currentBuilder.NumberOfMoments == MaxMomentsPerReference)
                 {
@@ -42,56 +51,58 @@ namespace OverwatchTranscript
             return result.ToArray();
         }
 
-        private OverwatchMoment ConvertEntriesToMoment(List<EventBucketEntry> entries)
+        private OverwatchMoment ConvertTopsToMoment(List<BucketTop> tops)
         {
-            var discintUtc = entries.Select(e => e.Utc).Distinct().ToArray();
+            var discintUtc = tops.Select(e => e.Utc).Distinct().ToArray();
             if (discintUtc.Length != 1) throw new Exception("UTC mixing in moment construction.");
 
             return new OverwatchMoment
             {
-                Utc = entries[0].Utc,
-                Events = entries.Select(e => e.Event).ToArray()
+                Utc = tops[0].Utc,
+                Events = tops.SelectMany(e => e.Events).ToArray()
             };
         }
 
-        private List<EventBucketEntry> CollectAllEntriesForUtc(DateTime earliestUtc, IFinalizedBucket[] buckets)
+        private List<BucketTop> CollectAllTopsForUtc(DateTime earliestUtc, List<IFinalizedBucket> buckets)
         {
-            var result = new List<EventBucketEntry>();
+            var result = new List<BucketTop>();
 
             foreach (var bucket in buckets)
             {
-                var top = bucket.ViewTopEntry();
-                while (top != null && top.Utc == earliestUtc)
+                if (bucket.IsEmpty) continue;
+
+                var utc = bucket.SeeTopUtc();
+                if (utc == null) continue;
+
+                if (utc.Value == earliestUtc)
                 {
+                    var top = bucket.TakeTop();
+                    if (top == null) throw new Exception("top was null after top utc was not");
                     result.Add(top);
-                    bucket.PopTopEntry();
-                    top = bucket.ViewTopEntry();
                 }
             }
 
             return result;
         }
 
-        private DateTime GetEarliestUtc(IFinalizedBucket[] buckets)
+        private DateTime? GetEarliestUtc(List<IFinalizedBucket> buckets)
         {
             var earliest = DateTime.MaxValue;
             foreach (var bucket in buckets)
             {
-                var top = bucket.ViewTopEntry();
-                if (top != null && top.Utc < earliest) earliest = top.Utc;
+                var utc = bucket.SeeTopUtc();
+                if (utc == null) return null;
+
+                if (utc.Value < earliest) earliest = utc.Value;
             }
             return earliest;
-        }
-
-        private bool EntriesRemaining(IFinalizedBucket[] buckets)
-        {
-            return buckets.Any(b => b.ViewTopEntry() != null);
         }
 
         public class Builder
         {
             private readonly ILog log;
             private OverwatchMomentReference reference;
+            private readonly ActionQueue queue = new ActionQueue();
 
             public Builder(ILog log, string workingDir)
             {
@@ -104,25 +115,32 @@ namespace OverwatchTranscript
                     NumberOfMoments = 0,
                 };
                 this.log = log;
+
+                queue.Start();
             }
 
             public int NumberOfMoments => reference.NumberOfMoments;
 
             public void Add(OverwatchMoment moment)
             {
-                File.AppendAllLines(reference.MomentsFile, new[]
-                {
-                    JsonConvert.SerializeObject(moment)
-                });
-
                 if (moment.Utc < reference.EarliestUtc) reference.EarliestUtc = moment.Utc;
                 if (moment.Utc > reference.LatestUtc) reference.LatestUtc = moment.Utc;
                 reference.NumberOfMoments++;
                 reference.NumberOfEvents += moment.Events.Length;
+
+                queue.Add(() =>
+                {
+                    File.AppendAllLines(reference.MomentsFile, new[]
+                    {
+                        JsonConvert.SerializeObject(moment)
+                    });
+                });
             }
 
             public OverwatchMomentReference Build()
             {
+                queue.StopAndJoin();
+
                 log.Debug($"Created reference with {reference.NumberOfMoments} moments and {reference.NumberOfEvents} events...");
                 var result = reference;
                 reference = null!;
