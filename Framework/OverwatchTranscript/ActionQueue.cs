@@ -2,6 +2,7 @@
 {
     public class ActionQueue
     {
+        // Using ConcurrentQueue<> here would make this process slower.
         private readonly object queueLock = new object();
         private readonly AutoResetEvent signal = new AutoResetEvent(false);
         private List<Action> queue = new List<Action>();

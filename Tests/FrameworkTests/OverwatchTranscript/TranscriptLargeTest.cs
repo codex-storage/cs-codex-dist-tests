@@ -13,6 +13,7 @@ namespace FrameworkTests.OverwatchTranscript
         private TranscriptWriter writer = null!;
 
         [Test]
+        [Ignore("Takes about 25 minutes to run.")]
         public void MillionsOfEvents()
         {
             var workdir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
@@ -20,17 +21,26 @@ namespace FrameworkTests.OverwatchTranscript
             var log = new FileLog(nameof(MillionsOfEvents));
             writer = new TranscriptWriter(log, workdir);
 
-            var tasks = new List<Task>();
-            for (var i = 0; i < NumberOfThreads; i++)
+            Stopwatch.Measure(log, "Generate", () =>
             {
-                tasks.Add(RunGeneratorThread());
-            }
+                var tasks = new List<Task>();
+                for (var i = 0; i < NumberOfThreads; i++)
+                {
+                    tasks.Add(RunGeneratorThread());
+                }
 
-            Task.WaitAll(tasks.ToArray());
+                Task.WaitAll(tasks.ToArray());
+            });
 
-            writer.Write(TranscriptFilename);
+            Stopwatch.Measure(log, "Write", () =>
+            {
+                writer.Write(TranscriptFilename);
+            });
 
-            ReadTranscript(workdir);
+            Stopwatch.Measure(log, "Read", () =>
+            {
+                ReadTranscript(workdir);
+            });
 
             File.Delete(TranscriptFilename);
         }
@@ -66,9 +76,15 @@ namespace FrameworkTests.OverwatchTranscript
             Assert.That(reader.Header.NumberOfEvents, Is.EqualTo(expectedNumberOfEvents));
 
             var counter = 0;
+            var current = DateTime.MinValue;
             reader.AddEventHandler<MyEvent>(e =>
             {
                 counter++;
+                if (e.Moment.Utc < current)
+                {
+                    Assert.Fail("Event has moment BEFORE previous one.");
+                }
+                current = e.Moment.Utc;
             });
 
             var run = true;

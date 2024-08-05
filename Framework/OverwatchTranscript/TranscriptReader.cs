@@ -4,6 +4,7 @@ using System;
 using System.IO.Compression;
 using System.Linq;
 using System.Collections.Generic;
+using System.Collections.Concurrent;
 
 namespace OverwatchTranscript
 {
@@ -28,8 +29,7 @@ namespace OverwatchTranscript
         private readonly OverwatchTranscript model;
         private bool closed;
         private long momentCounter;
-        private readonly object queueLock = new object();
-        private readonly List<OverwatchMoment> queue = new List<OverwatchMoment>();
+        private readonly ConcurrentQueue<OverwatchMoment> queue = new ConcurrentQueue<OverwatchMoment>();
         private readonly Task queueFiller;
 
         public TranscriptReader(string workingDir, string inputFilename)
@@ -95,22 +95,36 @@ namespace OverwatchTranscript
             }
         }
 
+        private readonly object nextLock = new object();
+        private OverwatchMoment? moment = null;
+        private OverwatchMoment? next = null;
+
         public bool Next()
         {
             CheckClosed();
-            OverwatchMoment moment = null!;
-            OverwatchMoment? next = null;
-            lock (queueLock)
-            {
-                if (queue.Count == 0) return false;
-                moment = queue[0];
-                if (queue.Count > 1) next = queue[1];
 
-                queue.RemoveAt(0);
+            OverwatchMoment? m = null;
+            TimeSpan? duration = null;
+            lock (nextLock)
+            {
+                if (next == null)
+                {
+                    if (!queue.TryDequeue(out moment)) return false;
+                    queue.TryDequeue(out next);
+                }
+                else
+                {
+                    moment = next;
+                    next = null;
+                    queue.TryDequeue(out next);
+                }
+
+                m = moment;
+                duration = GetMomentDuration();
             }
 
-            var duration = GetMomentDuration(moment, next);
             ActivateMoment(moment, duration);
+
             return true;
         }
 
@@ -144,25 +158,22 @@ namespace OverwatchTranscript
                     return;
                 }
 
-                lock (queueLock)
+                while (queue.Count < 10)
                 {
-                    while (queue.Count < 100)
+                    var moment = reader.Next();
+                    if (moment == null)
                     {
-                        var moment = reader.Next();
-                        if (moment == null)
-                        {
-                            reader.Close();
-                            return;
-                        }
-                        queue.Add(moment);
+                        reader.Close();
+                        return;
                     }
+                    queue.Enqueue(moment);
                 }
 
                 Thread.Sleep(1);
             }
         }
 
-        private TimeSpan? GetMomentDuration(OverwatchMoment moment, OverwatchMoment? next)
+        private TimeSpan? GetMomentDuration()
         {
             if (moment == null) return null;
             if (next == null) return null;
