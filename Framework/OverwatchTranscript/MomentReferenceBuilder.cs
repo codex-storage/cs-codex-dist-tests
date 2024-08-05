@@ -98,6 +98,7 @@ namespace OverwatchTranscript
         public class Builder
         {
             private readonly ILog log;
+            private readonly string workingDir;
             private OverwatchMomentReference reference;
             private readonly ActionQueue queue = new ActionQueue();
 
@@ -105,14 +106,14 @@ namespace OverwatchTranscript
             {
                 reference = new OverwatchMomentReference
                 {
-                    MomentsFile = Path.Combine(workingDir, Guid.NewGuid().ToString()),
+                    MomentsFile = Guid.NewGuid().ToString(),
                     EarliestUtc = DateTime.MaxValue,
                     LatestUtc = DateTime.MinValue,
                     NumberOfEvents = 0,
                     NumberOfMoments = 0,
                 };
                 this.log = log;
-
+                this.workingDir = workingDir;
                 queue.Start();
             }
 
@@ -125,9 +126,11 @@ namespace OverwatchTranscript
                 reference.NumberOfMoments++;
                 reference.NumberOfEvents += moment.Events.Length;
 
+                var filePath = Path.Combine(workingDir, reference.MomentsFile);
+
                 queue.Add(() =>
                 {
-                    File.AppendAllLines(reference.MomentsFile, new[]
+                    File.AppendAllLines(filePath, new[]
                     {
                         JsonConvert.SerializeObject(moment)
                     });

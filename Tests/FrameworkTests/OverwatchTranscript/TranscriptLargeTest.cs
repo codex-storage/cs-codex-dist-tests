@@ -10,16 +10,14 @@ namespace FrameworkTests.OverwatchTranscript
         private const int NumberOfThreads = 10;
         private const int NumberOfEventsPerThread = 1000000;
         private const string TranscriptFilename = "testtranscriptlarge.owts";
-        private TranscriptWriter writer = null!;
+        private ITranscriptWriter writer = null!;
 
         [Test]
         [Ignore("Takes about 25 minutes to run.")]
         public void MillionsOfEvents()
         {
-            var workdir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
-
             var log = new FileLog(nameof(MillionsOfEvents));
-            writer = new TranscriptWriter(log, workdir);
+            writer = Transcript.NewWriter(log);
 
             Stopwatch.Measure(log, "Generate", () =>
             {
@@ -39,7 +37,7 @@ namespace FrameworkTests.OverwatchTranscript
 
             Stopwatch.Measure(log, "Read", () =>
             {
-                ReadTranscript(workdir);
+                ReadTranscript();
             });
 
             File.Delete(TranscriptFilename);
@@ -68,9 +66,9 @@ namespace FrameworkTests.OverwatchTranscript
             });
         }
 
-        private void ReadTranscript(string workdir)
+        private void ReadTranscript()
         {
-            var reader = new TranscriptReader(workdir, TranscriptFilename);
+            var reader = Transcript.NewReader(TranscriptFilename);
 
             var expectedNumberOfEvents = NumberOfThreads * NumberOfEventsPerThread;
             Assert.That(reader.Header.NumberOfEvents, Is.EqualTo(expectedNumberOfEvents));

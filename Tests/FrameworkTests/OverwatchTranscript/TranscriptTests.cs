@@ -21,18 +21,16 @@ namespace FrameworkTests.OverwatchTranscript
         [Test]
         public void WriteAndRun()
         {
-            var workdir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
-
-            WriteTranscript(workdir);
-            ReadTranscript(workdir);
+            WriteTranscript();
+            ReadTranscript();
 
             File.Delete(TranscriptFilename);
         }
 
-        private void WriteTranscript(string workdir)
+        private void WriteTranscript()
         {
             var log = new ConsoleLog();
-            var writer = new TranscriptWriter(log, workdir);
+            var writer = Transcript.NewWriter(log);
 
             writer.AddHeader(HeaderKey, new TestHeader
             {
@@ -61,9 +59,9 @@ namespace FrameworkTests.OverwatchTranscript
             writer.Write(TranscriptFilename);
         }
 
-        private void ReadTranscript(string workdir)
+        private void ReadTranscript()
         {
-            var reader = new TranscriptReader(workdir, TranscriptFilename);
+            var reader = Transcript.NewReader(TranscriptFilename);
 
             var header = reader.GetHeader<TestHeader>(HeaderKey);
             Assert.That(header.HeaderData, Is.EqualTo(HeaderData));
