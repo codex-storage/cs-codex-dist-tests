@@ -1,21 +1,21 @@
 ﻿using CodexPlugin.OverwatchSupport;
-using Logging;
 using OverwatchTranscript;
 
-namespace TranscriptAnalysis
+namespace TranscriptAnalysis.Receivers
 {
-    public class DuplicateBlocksReceived
+    public class DuplicateBlocksReceived : BaseReceiver<OverwatchCodexEvent>
     {
-        private readonly ILog log;
+        public override string Name => "BlocksReceived";
 
-        public DuplicateBlocksReceived(ILog log, ITranscriptReader reader)
+        public override void Receive(ActivateEvent<OverwatchCodexEvent> @event)
         {
-            this.log = new LogPrefixer(log, "(DuplicateBlocks) ");
-
-            reader.AddEventHandler<OverwatchCodexEvent>(Handle);
+            if (@event.Payload.BlockReceived != null)
+            {
+                Handle(@event.Payload, @event.Payload.BlockReceived);
+            }
         }
 
-        public void Finish()
+        public override void Finish()
         {
             Log("Number of BlockReceived events seen: " + seen);
 
@@ -28,7 +28,7 @@ namespace TranscriptAnalysis
                 foreach (var pair in peerPair.Value)
                 {
                     occurances[pair.Value]++;
-                }   
+                }
             }
 
             float t = totalReceived;
@@ -37,14 +37,6 @@ namespace TranscriptAnalysis
                 float n = occurances[i];
                 float p = 100.0f * (n / t);
                 Log($"Block received {i} times = {occurances[i]}x ({p}%)");
-            }
-        }
-
-        private void Handle(ActivateEvent<OverwatchCodexEvent> obj)
-        {
-            if (obj.Payload.BlockReceived != null)
-            {
-                Handle(obj.Payload, obj.Payload.BlockReceived);
             }
         }
 
@@ -70,11 +62,6 @@ namespace TranscriptAnalysis
             {
                 blockAddCount[blockAddress]++;
             }
-        }
-
-        private void Log(string v)
-        {
-            log.Log(v);
         }
     }
 }

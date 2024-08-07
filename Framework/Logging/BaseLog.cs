@@ -77,7 +77,7 @@ namespace Logging
             return new LogFile($"{GetFullName()}_{GetSubfileNumber()}", ext);
         }
 
-        private string ApplyReplacements(string str)
+        protected string ApplyReplacements(string str)
         {
             if (IsDebug) return str;
             foreach (var replacement in replacements)

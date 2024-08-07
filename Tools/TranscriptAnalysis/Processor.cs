@@ -28,7 +28,7 @@ namespace TranscriptAnalysis
                 if (!reader.Next())
                 {
                     miss++;
-                    if (miss > 1000)
+                    if (miss > 20)
                     {
                         log.Log("Done");
                         return;

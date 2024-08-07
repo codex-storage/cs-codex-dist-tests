@@ -4,11 +4,10 @@ using TranscriptAnalysis;
 
 public static class Program
 {
-    private static ILog log;
+    private static readonly ILog log = new ConsoleLog();
 
     public static void Main(string[] args)
     {
-        log = new ConsoleLog();
         args = new[] { "D:\\Projects\\cs-codex-dist-tests\\Tests\\CodexTests\\bin\\Debug\\net7.0\\CodexTestLogs\\2024-08\\06\\08-24-45Z_ThreeClientTest\\SwarmTest_SwarmTest.owts" };
 
         Log("Transcript Analysis");
@@ -32,12 +31,13 @@ public static class Program
             CloseReader(reader);
         };
 
-        var duplicatesReceived = new DuplicateBlocksReceived(log, reader);
+        var receivers = new ReceiverSet(log, reader);
+        receivers.InitAll();
 
         var processor = new Processor(log, reader);
         processor.RunAll();
 
-        duplicatesReceived.Finish();
+        receivers.FinishAll();
 
         CloseReader(reader);
         Log("Done.");
