@@ -8,7 +8,7 @@ public static class Program
 
     public static void Main(string[] args)
     {
-        args = new[] { "D:\\Projects\\cs-codex-dist-tests\\Tests\\CodexTests\\bin\\Debug\\net7.0\\CodexTestLogs\\2024-08\\06\\08-24-45Z_ThreeClientTest\\SwarmTest_SwarmTest.owts" };
+        //args = new[] { "D:\\Projects\\cs-codex-dist-tests\\Tests\\CodexTests\\bin\\Debug\\net7.0\\CodexTestLogs\\2024-08\\06\\08-24-45Z_ThreeClientTest\\SwarmTest_SwarmTest.owts" };
 
         Log("Transcript Analysis");
         if (!args.Any())

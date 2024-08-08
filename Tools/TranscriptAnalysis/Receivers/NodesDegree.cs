@@ -6,7 +6,46 @@ namespace TranscriptAnalysis.Receivers
 {
     public class NodesDegree : BaseReceiver<OverwatchCodexEvent>
     {
-        private readonly Dictionary<string, Dictionary<string, int>> dials = new Dictionary<string, Dictionary<string, int>>();
+        public class Dial
+        {
+            public Dial(Node peer, Node target)
+            {
+                Id = GetLineId(peer.Id, target.Id);
+                InitiatedBy.Add(peer);
+                Peer = peer;
+                Target = target;
+            }
+
+            public string Id { get; }
+            public int RedialCount => InitiatedBy.Count - 1;
+            public List<Node> InitiatedBy { get; } = new List<Node>();
+            public Node Peer { get; }
+            public Node Target { get; }
+
+            private string GetLineId(string a, string b)
+            {
+                if (string.Compare(a, b) > 0)
+                {
+                    return a + b;
+                }
+                return b + a;
+            }
+        }
+
+        public class Node
+        {
+            public Node(string peerId)
+            {
+                Id = peerId;
+            }
+
+            public string Id { get; }
+            public List<Dial> Dials { get; } = new List<Dial>();
+            public int Degree => Dials.Count;
+        }
+
+        private readonly Dictionary<string, Node> dialingNodes = new Dictionary<string, Node>();
+        private readonly Dictionary<string, Dial> dials = new Dictionary<string, Dial>();
 
         public override string Name => "NodesDegree";
 
@@ -18,34 +57,68 @@ namespace TranscriptAnalysis.Receivers
             }
         }
 
-        private void AddDial(string peerId, string targetPeerId)
+        public override void Finish()
         {
-            if (!dials.ContainsKey(peerId))
+            var numNodes = dialingNodes.Count;
+            var redialOccurances = new OccuranceMap();
+            foreach (var dial in dials.Values)
             {
-                dials.Add(peerId, new Dictionary<string, int>());
+                redialOccurances.Add(dial.RedialCount);
+            }
+            var degreeOccurances = new OccuranceMap();
+            foreach (var node in dialingNodes.Values)
+            {
+                degreeOccurances.Add(node.Degree);
             }
 
-            var d = dials[peerId];
-            if (!d.ContainsKey(targetPeerId))
+            Log($"Dialing nodes: {numNodes}");
+            Log("Redials:");
+            redialOccurances.PrintContinous((i, count) =>
             {
-                d.Add(targetPeerId, 1);
+                Log($"{i} redials = {count}x");
+            });
+
+            float tot = numNodes;
+            degreeOccurances.Print((i, count) =>
+            {
+                float n = count;
+                float p = 100.0f * (n / tot);
+                Log($"Degree: {i} = {count}x ({p}%)");
+            });
+        }
+
+        private void AddDial(string peerId, string targetPeerId)
+        {
+            peerId = CodexUtils.ToShortId(peerId);
+            targetPeerId = CodexUtils.ToShortId(targetPeerId);
+
+            var peer = GetNode(peerId);
+            var target = GetNode(targetPeerId); ;
+
+            var dial = new Dial(peer, target);
+
+            if (dials.ContainsKey(dial.Id))
+            {
+                var d = dials[dial.Id];
+                d.InitiatedBy.Add(peer);
+                peer.Dials.Add(d);
+                target.Dials.Add(d);
             }
             else
             {
-                d[targetPeerId]++;
+                dials.Add(dial.Id, dial);
+                peer.Dials.Add(dial);
+                target.Dials.Add(dial);
             }
         }
 
-        public override void Finish()
+        private Node GetNode(string id)
         {
-            var numNodes = dials.Keys.Count;
-            var redials = dials.Values.Count(t => t.Values.Any(nd => nd > 1));
-
-            var min = dials.Values.Min(t => t.Count);
-            var avg = dials.Values.Average(t => t.Count);
-            var max = dials.Values.Max(t => t.Count);
-
-            Log($"Nodes: {numNodes} - Degrees: min:{min} avg:{avg} max:{max} - Redials: {redials}");
+            if (!dialingNodes.ContainsKey(id))
+            {
+                dialingNodes.Add(id, new Node(id));
+            }
+            return dialingNodes[id];
         }
     }
 }

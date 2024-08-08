@@ -21,23 +21,23 @@ namespace TranscriptAnalysis.Receivers
 
             var totalReceived = peerIdBlockAddrCount.Sum(a => a.Value.Sum(p => p.Value));
             var maxRepeats = peerIdBlockAddrCount.Max(a => a.Value.Max(p => p.Value));
-            var occurances = new int[maxRepeats + 1];
+            var occurances = new OccuranceMap();
 
             foreach (var peerPair in peerIdBlockAddrCount)
             {
-                foreach (var pair in peerPair.Value)
+                foreach (var blockCountPair in peerPair.Value)
                 {
-                    occurances[pair.Value]++;
+                    occurances.Add(blockCountPair.Value);
                 }
             }
 
             float t = totalReceived;
-            for (var i = 1; i < occurances.Length; i++)
+            occurances.PrintContinous((i, count) =>
             {
-                float n = occurances[i];
+                float n = count;
                 float p = 100.0f * (n / t);
-                Log($"Block received {i} times = {occurances[i]}x ({p}%)");
-            }
+                Log($"Block received {i} times = {count}x ({p}%)");
+            });
         }
 
         private int seen = 0;
