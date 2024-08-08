@@ -19,7 +19,7 @@ namespace CodexPlugin.OverwatchSupport
         public void ProcessLog(IDownloadedLog log)
         {
             var peerId = DeterminPeerId(log);
-            var runner = new ConversionRunner(writer, log.ContainerName, peerId);
+            var runner = new ConversionRunner(writer, nameIdMap, log.ContainerName, peerId);
             runner.Run(log);
         }
 
@@ -51,6 +51,7 @@ namespace CodexPlugin.OverwatchSupport
     public class ConversionRunner
     {
         private readonly ITranscriptWriter writer;
+        private readonly NameIdMap nameIdMap;
         private readonly string name;
         private readonly string peerId;
         private readonly ILineConverter[] converters = new ILineConverter[]
@@ -61,10 +62,11 @@ namespace CodexPlugin.OverwatchSupport
             new PeerDroppedLineConverter()
         };
 
-        public ConversionRunner(ITranscriptWriter writer, string name, string peerId)
+        public ConversionRunner(ITranscriptWriter writer, NameIdMap nameIdMap, string name, string peerId)
         {
             this.name = name;
             this.writer = writer;
+            this.nameIdMap = nameIdMap;
             this.peerId = peerId;
         }
 
@@ -96,12 +98,34 @@ namespace CodexPlugin.OverwatchSupport
             if (!line.Contains(converter.Interest)) return;
 
             var codexLine = CodexLogLine.Parse(line);
+
             if (codexLine == null) throw new Exception("Unable to parse required line");
+            EnsureFullIds(codexLine);
 
             converter.Process(codexLine, (action) =>
             {
                 AddEvent(codexLine.TimestampUtc, action);
             });
+        }
+
+        private void EnsureFullIds(CodexLogLine codexLine)
+        {
+            // The issue is: node IDs occure both in full and short version.
+            // Downstream tools will assume that a node ID string-equals its own ID.
+            // So we replace all shortened IDs we can find with their full ones.
+
+            // Usually, the shortID appears as the entire string of an attribute:
+            // "peerId=123*567890"
+            // But sometimes, it is part of a larger string:
+            // "thing=abc:123*567890,def"
+            
+            foreach (var pair in codexLine.Attributes)
+            {
+                if (pair.Value.Contains("*"))
+                {
+                    codexLine.Attributes[pair.Key] = nameIdMap.ReplaceShortIds(pair.Value);
+                }
+            }
         }
     }
 
