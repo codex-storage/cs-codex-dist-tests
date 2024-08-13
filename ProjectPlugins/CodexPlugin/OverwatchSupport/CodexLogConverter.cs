@@ -18,23 +18,46 @@ namespace CodexPlugin.OverwatchSupport
 
         public void ProcessLog(IDownloadedLog log)
         {
-            var peerId = DeterminPeerId(log);
+            var peerId = GetIdentity(log);
             var runner = new ConversionRunner(writer, nameIdMap, log.ContainerName, peerId);
             runner.Run(log);
         }
 
-        private string DeterminPeerId(IDownloadedLog log)
+        private CodexNodeIdentity GetIdentity(IDownloadedLog log)
         {
-            // We have to use a look-up map to match the node name to its peerId,
-            // because the Codex logging never prints the peerId in full.
+            var name = DetermineName(log);
+
+            // We have to use a look-up map to match the node name to its peerId and nodeId,
+            // because the Codex logging never prints the id in full.
             // After we find it, we confirm it be looking for the shortened version.
+            var peerId = DeterminPeerId(name, log);
+            var nodeId = DeterminNodeId(name, log);
 
-            // Expected string:
-            // Downloading container log for '<Downloader1>'
-            var nameLine = log.FindLinesThatContain("Downloading container log for").First();
-            var name = Str.Between(nameLine, "'", "'");
+            return new CodexNodeIdentity
+            {
+                PeerId = peerId,
+                NodeId = nodeId
+            };
+        }
 
-            var peerId = nameIdMap.GetPeerId(name);
+        private string DeterminNodeId(string name, IDownloadedLog log)
+        {
+            var nodeId = nameIdMap.GetId(name).NodeId;
+            var shortNodeId = CodexUtils.ToNodeIdShortId(nodeId);
+
+            // Look for "Starting discovery node" line to confirm nodeId.
+            var startedLine = log.FindLinesThatContain("Starting discovery node").Single();
+            var started = CodexLogLine.Parse(startedLine)!;
+            var foundId = started.Attributes["node"];
+
+            if (foundId != shortNodeId) throw new Exception("NodeId from name-lookup did not match NodeId found in codex-started log line.");
+
+            return nodeId;
+        }
+
+        private string DeterminPeerId(string name, IDownloadedLog log)
+        {
+            var peerId = nameIdMap.GetId(name).PeerId;
             var shortPeerId = CodexUtils.ToShortId(peerId);
 
             // Look for "Started codex node" line to confirm peerId.
@@ -46,6 +69,14 @@ namespace CodexPlugin.OverwatchSupport
 
             return peerId;
         }
+
+        private string DetermineName(IDownloadedLog log)
+        {
+            // Expected string:
+            // Downloading container log for '<Downloader1>'
+            var nameLine = log.FindLinesThatContain("Downloading container log for").First();
+            return Str.Between(nameLine, "'", "'");
+        }
     }
 
     public class ConversionRunner
@@ -53,7 +84,7 @@ namespace CodexPlugin.OverwatchSupport
         private readonly ITranscriptWriter writer;
         private readonly NameIdMap nameIdMap;
         private readonly string name;
-        private readonly string peerId;
+        private readonly CodexNodeIdentity nodeIdentity;
         private readonly ILineConverter[] converters = new ILineConverter[]
         {
             new BlockReceivedLineConverter(),
@@ -62,12 +93,12 @@ namespace CodexPlugin.OverwatchSupport
             new PeerDroppedLineConverter()
         };
 
-        public ConversionRunner(ITranscriptWriter writer, NameIdMap nameIdMap, string name, string peerId)
+        public ConversionRunner(ITranscriptWriter writer, NameIdMap nameIdMap, string name, CodexNodeIdentity nodeIdentity)
         {
             this.name = name;
+            this.nodeIdentity = nodeIdentity;
             this.writer = writer;
             this.nameIdMap = nameIdMap;
-            this.peerId = peerId;
         }
 
         public void Run(IDownloadedLog log)
@@ -86,7 +117,7 @@ namespace CodexPlugin.OverwatchSupport
             var e = new OverwatchCodexEvent
             {
                 Name = name,
-                PeerId = peerId,
+                Identity = nodeIdentity,
             };
             action(e);
 

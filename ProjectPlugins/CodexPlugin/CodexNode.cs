@@ -47,6 +47,7 @@ namespace CodexPlugin
         private readonly EthAccount? ethAccount;
         private readonly TransferSpeeds transferSpeeds;
         private string peerId = string.Empty;
+        private string nodeId = string.Empty;
 
         public CodexNode(IPluginTools tools, CodexAccess codexAccess, CodexNodeGroup group, IMarketplaceAccess marketplaceAccess, ICodexNodeHooks hooks, EthAccount? ethAccount)
         {
@@ -69,7 +70,7 @@ namespace CodexPlugin
 
         public void Initialize()
         {
-            hooks.OnNodeStarted(peerId);
+            hooks.OnNodeStarted(peerId, nodeId);
         }
 
         public RunningPod Pod { get { return CodexAccess.Container; } }
@@ -228,6 +229,7 @@ namespace CodexPlugin
         {
             var debugInfo = Time.Retry(CodexAccess.GetDebugInfo, "ensure online");
             peerId = debugInfo.Id;
+            nodeId = debugInfo.Table.LocalNode.NodeId;
             var nodeName = CodexAccess.Container.Name;
 
             if (!debugInfo.Version.IsValid())

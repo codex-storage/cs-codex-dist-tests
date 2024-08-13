@@ -64,7 +64,7 @@ namespace CodexPlugin.OverwatchSupport
             writer.Add(DateTime.UtcNow, new OverwatchCodexEvent
             {
                 Name = string.Empty,
-                PeerId = string.Empty,
+                Identity = new CodexNodeIdentity(),
                 ScenarioFinished = new ScenarioFinishedEvent
                 {
                     Success = success,

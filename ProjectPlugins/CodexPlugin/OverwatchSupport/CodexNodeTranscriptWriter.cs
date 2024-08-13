@@ -9,7 +9,7 @@ namespace CodexPlugin.OverwatchSupport
         private readonly ITranscriptWriter writer;
         private readonly NameIdMap nameIdMap;
         private readonly string name;
-        private string peerId = string.Empty;
+        private CodexNodeIdentity identity = new CodexNodeIdentity();
         private readonly List<(DateTime, OverwatchCodexEvent)> pendingEvents = new List<(DateTime, OverwatchCodexEvent)>();
 
         public CodexNodeTranscriptWriter(ITranscriptWriter writer, NameIdMap nameIdMap, string name)
@@ -30,10 +30,22 @@ namespace CodexPlugin.OverwatchSupport
             });
         }
 
-        public void OnNodeStarted(string peerId)
+        public void OnNodeStarted(string peerId, string nodeId)
         {
-            this.peerId = peerId;
-            nameIdMap.Add(name, peerId);
+            identity.PeerId = peerId;
+            identity.NodeId = nodeId;
+
+            if (string.IsNullOrEmpty(peerId) || string.IsNullOrEmpty(nodeId))
+            {
+                throw new Exception("Node started - peerId and/or nodeId unknown.");
+            }
+
+            nameIdMap.Add(name, new CodexNodeIdentity
+            {
+                PeerId = peerId,
+                NodeId = nodeId
+            });
+
             WriteCodexEvent(e =>
             {
                 e.NodeStarted = new NodeStartedEvent
@@ -110,12 +122,12 @@ namespace CodexPlugin.OverwatchSupport
             var e = new OverwatchCodexEvent
             {
                 Name = name,
-                PeerId = peerId
+                Identity = identity
             };
 
             action(e);
 
-            if (string.IsNullOrEmpty(peerId))
+            if (string.IsNullOrEmpty(identity.PeerId))
             {
                 // If we don't know our peerId, don't write the events yet.
                 AddToCache(utc, e);
@@ -140,7 +152,7 @@ namespace CodexPlugin.OverwatchSupport
             {
                 foreach (var pair in pendingEvents)
                 {
-                    pair.Item2.PeerId = peerId;
+                    pair.Item2.Identity = identity;
                     pair.Item2.Write(pair.Item1, writer);
                 }
                 pendingEvents.Clear();

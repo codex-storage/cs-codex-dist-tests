@@ -43,7 +43,7 @@ namespace CodexPlugin.Hooks
         {
         }
 
-        public void OnNodeStarted(string peerId)
+        public void OnNodeStarted(string peerId, string nodeId)
         {
         }
 

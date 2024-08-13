@@ -2,17 +2,18 @@
 {
     public class NameIdMap
     {
-        private readonly Dictionary<string, string> map = new Dictionary<string, string>();
+        private readonly Dictionary<string, CodexNodeIdentity> map = new Dictionary<string, CodexNodeIdentity>();
         private readonly Dictionary<string, string> shortToLong = new Dictionary<string, string>();
 
-        public void Add(string name, string peerId)
+        public void Add(string name, CodexNodeIdentity identity)
         {
-            map.Add(name, peerId);
+            map.Add(name, identity);
 
-            shortToLong.Add(CodexUtils.ToShortId(peerId), peerId);
+            shortToLong.Add(CodexUtils.ToShortId(identity.PeerId), identity.PeerId);
+            shortToLong.Add(CodexUtils.ToShortId(identity.NodeId), identity.NodeId);
         }
 
-        public string GetPeerId(string name)
+        public CodexNodeIdentity GetId(string name)
         {
             return map[name];
         }
