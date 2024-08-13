@@ -7,15 +7,15 @@ namespace CodexPlugin.OverwatchSupport
     public class CodexNodeTranscriptWriter : ICodexNodeHooks
     {
         private readonly ITranscriptWriter writer;
-        private readonly NameIdMap nameIdMap;
+        private readonly IdentityMap identityMap;
         private readonly string name;
-        private CodexNodeIdentity identity = new CodexNodeIdentity();
+        private int identityIndex = -1;
         private readonly List<(DateTime, OverwatchCodexEvent)> pendingEvents = new List<(DateTime, OverwatchCodexEvent)>();
 
-        public CodexNodeTranscriptWriter(ITranscriptWriter writer, NameIdMap nameIdMap, string name)
+        public CodexNodeTranscriptWriter(ITranscriptWriter writer, IdentityMap identityMap, string name)
         {
             this.writer = writer;
-            this.nameIdMap = nameIdMap;
+            this.identityMap = identityMap;
             this.name = name;
         }
 
@@ -32,19 +32,13 @@ namespace CodexPlugin.OverwatchSupport
 
         public void OnNodeStarted(string peerId, string nodeId)
         {
-            identity.PeerId = peerId;
-            identity.NodeId = nodeId;
-
             if (string.IsNullOrEmpty(peerId) || string.IsNullOrEmpty(nodeId))
             {
                 throw new Exception("Node started - peerId and/or nodeId unknown.");
             }
 
-            nameIdMap.Add(name, new CodexNodeIdentity
-            {
-                PeerId = peerId,
-                NodeId = nodeId
-            });
+            identityMap.Add(name, peerId, nodeId);
+            identityIndex = identityMap.GetIndex(name);
 
             WriteCodexEvent(e =>
             {
@@ -121,22 +115,21 @@ namespace CodexPlugin.OverwatchSupport
         {
             var e = new OverwatchCodexEvent
             {
-                Name = name,
-                Identity = identity
+                NodeIdentity = identityIndex
             };
 
             action(e);
 
-            if (string.IsNullOrEmpty(identity.PeerId))
+            if (identityIndex < 0)
             {
-                // If we don't know our peerId, don't write the events yet.
+                // If we don't know our id, don't write the events yet.
                 AddToCache(utc, e);
             }
             else
             {
                 e.Write(utc, writer);
 
-                // Write any events that we cached when we didn't have our peerId yet.
+                // Write any events that we cached when we didn't have our id yet.
                 WriteAndClearCache();
             }
         }
@@ -152,7 +145,7 @@ namespace CodexPlugin.OverwatchSupport
             {
                 foreach (var pair in pendingEvents)
                 {
-                    pair.Item2.Identity = identity;
+                    pair.Item2.NodeIdentity = identityIndex;
                     pair.Item2.Write(pair.Item1, writer);
                 }
                 pendingEvents.Clear();

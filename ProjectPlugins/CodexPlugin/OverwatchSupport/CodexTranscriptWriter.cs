@@ -12,13 +12,13 @@ namespace CodexPlugin.OverwatchSupport
         private readonly ILog log;
         private readonly ITranscriptWriter writer;
         private readonly CodexLogConverter converter;
-        private readonly NameIdMap nameIdMap = new NameIdMap();
+        private readonly IdentityMap identityMap = new IdentityMap();
 
         public CodexTranscriptWriter(ILog log, ITranscriptWriter transcriptWriter)
         {
             this.log = log;
             writer = transcriptWriter;
-            converter = new CodexLogConverter(writer, nameIdMap);
+            converter = new CodexLogConverter(writer, identityMap);
         }
 
         public void Finalize(string outputFilepath)
@@ -34,7 +34,7 @@ namespace CodexPlugin.OverwatchSupport
         public ICodexNodeHooks CreateHooks(string nodeName)
         {
             nodeName = Str.Between(nodeName, "'", "'");
-            return new CodexNodeTranscriptWriter(writer, nameIdMap, nodeName);
+            return new CodexNodeTranscriptWriter(writer, identityMap, nodeName);
         }
 
         public void IncludeFile(string filepath)
@@ -63,8 +63,7 @@ namespace CodexPlugin.OverwatchSupport
         {
             writer.Add(DateTime.UtcNow, new OverwatchCodexEvent
             {
-                Name = string.Empty,
-                Identity = new CodexNodeIdentity(),
+                NodeIdentity = -1,
                 ScenarioFinished = new ScenarioFinishedEvent
                 {
                     Success = success,
@@ -77,7 +76,7 @@ namespace CodexPlugin.OverwatchSupport
         {
             return new OverwatchCodexHeader
             {
-                TotalNumberOfNodes = nameIdMap.Size
+                Nodes = identityMap.Get()
             };
         }
 

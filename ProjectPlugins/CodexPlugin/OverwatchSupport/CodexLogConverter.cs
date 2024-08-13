@@ -8,66 +8,20 @@ namespace CodexPlugin.OverwatchSupport
     public class CodexLogConverter
     {
         private readonly ITranscriptWriter writer;
-        private readonly NameIdMap nameIdMap;
+        private readonly IdentityMap identityMap;
 
-        public CodexLogConverter(ITranscriptWriter writer, NameIdMap nameIdMap)
+        public CodexLogConverter(ITranscriptWriter writer, IdentityMap identityMap)
         {
             this.writer = writer;
-            this.nameIdMap = nameIdMap;
+            this.identityMap = identityMap;
         }
 
         public void ProcessLog(IDownloadedLog log)
         {
-            var peerId = GetIdentity(log);
-            var runner = new ConversionRunner(writer, nameIdMap, log.ContainerName, peerId);
-            runner.Run(log);
-        }
-
-        private CodexNodeIdentity GetIdentity(IDownloadedLog log)
-        {
             var name = DetermineName(log);
-
-            // We have to use a look-up map to match the node name to its peerId and nodeId,
-            // because the Codex logging never prints the id in full.
-            // After we find it, we confirm it be looking for the shortened version.
-            var peerId = DeterminPeerId(name, log);
-            var nodeId = DeterminNodeId(name, log);
-
-            return new CodexNodeIdentity
-            {
-                PeerId = peerId,
-                NodeId = nodeId
-            };
-        }
-
-        private string DeterminNodeId(string name, IDownloadedLog log)
-        {
-            var nodeId = nameIdMap.GetId(name).NodeId;
-            var shortNodeId = CodexUtils.ToNodeIdShortId(nodeId);
-
-            // Look for "Starting discovery node" line to confirm nodeId.
-            var startedLine = log.FindLinesThatContain("Starting discovery node").Single();
-            var started = CodexLogLine.Parse(startedLine)!;
-            var foundId = started.Attributes["node"];
-
-            if (foundId != shortNodeId) throw new Exception("NodeId from name-lookup did not match NodeId found in codex-started log line.");
-
-            return nodeId;
-        }
-
-        private string DeterminPeerId(string name, IDownloadedLog log)
-        {
-            var peerId = nameIdMap.GetId(name).PeerId;
-            var shortPeerId = CodexUtils.ToShortId(peerId);
-
-            // Look for "Started codex node" line to confirm peerId.
-            var startedLine = log.FindLinesThatContain("Started codex node").Single();
-            var started = CodexLogLine.Parse(startedLine)!;
-            var foundId = started.Attributes["id"];
-
-            if (foundId != shortPeerId) throw new Exception("PeerId from name-lookup did not match PeerId found in codex-started log line.");
-
-            return peerId;
+            var identityIndex = identityMap.GetIndex(name);
+            var runner = new ConversionRunner(writer, identityMap, log.ContainerName, identityIndex);
+            runner.Run(log);
         }
 
         private string DetermineName(IDownloadedLog log)
@@ -82,9 +36,9 @@ namespace CodexPlugin.OverwatchSupport
     public class ConversionRunner
     {
         private readonly ITranscriptWriter writer;
-        private readonly NameIdMap nameIdMap;
+        private readonly IdentityMap nameIdMap;
         private readonly string name;
-        private readonly CodexNodeIdentity nodeIdentity;
+        private readonly int nodeIdentityIndex;
         private readonly ILineConverter[] converters = new ILineConverter[]
         {
             new BlockReceivedLineConverter(),
@@ -93,10 +47,10 @@ namespace CodexPlugin.OverwatchSupport
             new PeerDroppedLineConverter()
         };
 
-        public ConversionRunner(ITranscriptWriter writer, NameIdMap nameIdMap, string name, CodexNodeIdentity nodeIdentity)
+        public ConversionRunner(ITranscriptWriter writer, IdentityMap nameIdMap, string name, int nodeIdentityIndex)
         {
             this.name = name;
-            this.nodeIdentity = nodeIdentity;
+            this.nodeIdentityIndex = nodeIdentityIndex;
             this.writer = writer;
             this.nameIdMap = nameIdMap;
         }
@@ -116,8 +70,7 @@ namespace CodexPlugin.OverwatchSupport
         {
             var e = new OverwatchCodexEvent
             {
-                Name = name,
-                Identity = nodeIdentity,
+                NodeIdentity = nodeIdentityIndex,
             };
             action(e);
 

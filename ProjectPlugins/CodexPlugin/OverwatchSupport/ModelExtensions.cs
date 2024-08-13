@@ -5,14 +5,13 @@ namespace CodexPlugin.OverwatchSupport
     [Serializable]
     public class OverwatchCodexHeader
     {
-        public int TotalNumberOfNodes { get; set; }
+        public CodexNodeIdentity[] Nodes { get; set; } = Array.Empty<CodexNodeIdentity>();
     }
 
     [Serializable]
     public class OverwatchCodexEvent
     {
-        public string Name { get; set; } = string.Empty;
-        public CodexNodeIdentity Identity { get; set; } = new();
+        public int NodeIdentity { get; set; } = -1;
         public ScenarioFinishedEvent? ScenarioFinished { get; set; }
         public NodeStartingEvent? NodeStarting { get; set; }
         public NodeStartedEvent? NodeStarted { get; set; }
@@ -28,9 +27,10 @@ namespace CodexPlugin.OverwatchSupport
 
         public void Write(DateTime utc, ITranscriptWriter writer)
         {
-            if (string.IsNullOrWhiteSpace(Name)) throw new Exception("Name required");
-            if (string.IsNullOrWhiteSpace(Identity.PeerId) || Identity.PeerId.Length < 11) throw new Exception("PeerId invalid");
-            if (string.IsNullOrWhiteSpace(Identity.NodeId) || Identity.NodeId.Length < 11) throw new Exception("NodeId invalid");
+            if (NodeIdentity == -1 && ScenarioFinished == null)
+            {
+                throw new Exception("NodeIdentity not set, and event is not ScenarioFinished.");
+            }
             if (AllNull()) throw new Exception("No event data was set");
 
             writer.Add(utc, this);
@@ -49,6 +49,7 @@ namespace CodexPlugin.OverwatchSupport
     [Serializable]
     public class CodexNodeIdentity
     {
+        public string Name { get; set; } = string.Empty;
         public string PeerId { get; set; } = string.Empty;
         public string NodeId { get; set; } = string.Empty;
     }
