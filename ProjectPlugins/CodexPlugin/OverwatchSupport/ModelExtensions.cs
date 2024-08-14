@@ -52,6 +52,7 @@ namespace CodexPlugin.OverwatchSupport
         public string Name { get; set; } = string.Empty;
         public string PeerId { get; set; } = string.Empty;
         public string NodeId { get; set; } = string.Empty;
+        public float KademliaNormalizedPosition { get; set; } = 0.0f;
     }
 
     #region Scenario Generated Events

@@ -13,6 +13,7 @@ namespace CodexPlugin.OverwatchSupport
         private readonly ITranscriptWriter writer;
         private readonly CodexLogConverter converter;
         private readonly IdentityMap identityMap = new IdentityMap();
+        private readonly KademliaPositionFinder positionFinder = new KademliaPositionFinder();
 
         public CodexTranscriptWriter(ILog log, ITranscriptWriter transcriptWriter)
         {
@@ -76,7 +77,7 @@ namespace CodexPlugin.OverwatchSupport
         {
             return new OverwatchCodexHeader
             {
-                Nodes = identityMap.Get()
+                Nodes = positionFinder.DeterminePositions(identityMap.Get())
             };
         }
 
