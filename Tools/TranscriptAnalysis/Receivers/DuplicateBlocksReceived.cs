@@ -45,7 +45,7 @@ namespace TranscriptAnalysis.Receivers
 
         private void Handle(OverwatchCodexEvent payload, BlockReceivedEvent blockReceived)
         {
-            var receiverPeerId = payload.Identity.PeerId;
+            var receiverPeerId = GetPeerId(payload.NodeIdentity);
             var blockAddress = blockReceived.BlockAddress;
             seen++;
 

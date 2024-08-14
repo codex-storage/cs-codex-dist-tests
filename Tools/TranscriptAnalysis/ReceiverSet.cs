@@ -1,4 +1,5 @@
-﻿using Logging;
+﻿using CodexPlugin.OverwatchSupport;
+using Logging;
 using OverwatchTranscript;
 using TranscriptAnalysis.Receivers;
 
@@ -6,7 +7,7 @@ namespace TranscriptAnalysis
 {
     public interface IEventReceiver
     {
-        void Init(ILog log);
+        void Init(ILog log, OverwatchCodexHeader header);
         void Finish();
     }
 
@@ -19,12 +20,14 @@ namespace TranscriptAnalysis
     {
         private readonly ILog log;
         private readonly ITranscriptReader reader;
+        private readonly OverwatchCodexHeader header;
         private readonly List<IEventReceiver> receivers = new List<IEventReceiver>();
 
-        public ReceiverSet(ILog log, ITranscriptReader reader)
+        public ReceiverSet(ILog log, ITranscriptReader reader, OverwatchCodexHeader header)
         {
             this.log = log;
             this.reader = reader;
+            this.header = header;
         }
 
         public void InitAll()
@@ -50,7 +53,7 @@ namespace TranscriptAnalysis
             mux.Add(receiver);
 
             receivers.Add(receiver);
-            receiver.Init(log);
+            receiver.Init(log, header);
         }
 
         // We use a mux here because, for each time we call reader.AddEventHandler,

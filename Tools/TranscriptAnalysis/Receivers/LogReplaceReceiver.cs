@@ -12,12 +12,15 @@ namespace TranscriptAnalysis.Receivers
 
         public override void Receive(ActivateEvent<OverwatchCodexEvent> @event)
         {
-            if (!seen.Contains(@event.Payload.Identity.PeerId))
-            {
-                seen.Add(@event.Payload.Identity.PeerId);
+            var peerId = GetPeerId(@event.Payload.NodeIdentity);
+            var name = GetName(@event.Payload.NodeIdentity);
 
-                log.AddStringReplace(@event.Payload.Identity.PeerId, @event.Payload.Name);
-                log.AddStringReplace(CodexUtils.ToShortId(@event.Payload.Identity.PeerId), @event.Payload.Name);
+            if (!seen.Contains(peerId))
+            {
+                seen.Add(peerId);
+
+                log.AddStringReplace(peerId, name);
+                log.AddStringReplace(CodexUtils.ToShortId(peerId), name);
             }
         }
 
