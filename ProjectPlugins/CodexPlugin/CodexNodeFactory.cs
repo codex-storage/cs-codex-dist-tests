@@ -26,15 +26,16 @@ namespace CodexPlugin
         public CodexNode CreateOnlineCodexNode(CodexAccess access, CodexNodeGroup group)
         {
             var ethAccount = GetEthAccount(access);
-            var marketplaceAccess = GetMarketplaceAccess(access, ethAccount);
             var hooks = codexHooksFactory.CreateHooks(access.Container.Name);
+
+            var marketplaceAccess = GetMarketplaceAccess(access, ethAccount, hooks);
             return new CodexNode(tools, access, group, marketplaceAccess, hooks, ethAccount);
         }
 
-        private IMarketplaceAccess GetMarketplaceAccess(CodexAccess codexAccess, EthAccount? ethAccount)
+        private IMarketplaceAccess GetMarketplaceAccess(CodexAccess codexAccess, EthAccount? ethAccount, ICodexNodeHooks hooks)
         {
             if (ethAccount == null) return new MarketplaceUnavailable();
-            return new MarketplaceAccess(tools.GetLog(), codexAccess);
+            return new MarketplaceAccess(tools.GetLog(), codexAccess, hooks);
         }
 
         private EthAccount? GetEthAccount(CodexAccess access)

@@ -1,4 +1,5 @@
-﻿using Utils;
+﻿using GethPlugin;
+using Utils;
 
 namespace CodexPlugin.Hooks
 {
@@ -47,11 +48,23 @@ namespace CodexPlugin.Hooks
         {
         }
 
-        public void OnNodeStarting(DateTime startUtc, string image)
+        public void OnNodeStarting(DateTime startUtc, string image, EthAccount? ethAccount)
         {
         }
 
         public void OnNodeStopping()
+        {
+        }
+
+        public void OnStorageAvailabilityCreated(StorageAvailability response)
+        {
+        }
+
+        public void OnStorageContractSubmitted(StoragePurchaseContract storagePurchaseContract)
+        {
+        }
+
+        public void OnStorageContractUpdated(StoragePurchase purchaseStatus)
         {
         }
     }

@@ -14,5 +14,6 @@ namespace CodexPlugin.Hooks
         void OnFileDownloaded(ByteSize size, ContentId cid);
         void OnStorageContractSubmitted(StoragePurchaseContract storagePurchaseContract);
         void OnStorageContractUpdated(StoragePurchase purchaseStatus);
+        void OnStorageAvailabilityCreated(StorageAvailability response);
     }
 }
