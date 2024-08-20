@@ -343,6 +343,12 @@ namespace DistTestCore
         public bool Success { get; }
         public string Status { get; }
         public string Result { get; }
+
+        public override string ToString()
+        {
+            if (Success) return $"Passed ({Status}) ({Result})";
+            return $"Failed ({Status}) ({Result})";
+        }
     }
 
     public static class GlobalTestFailure
