@@ -1,4 +1,5 @@
-﻿using Logging;
+﻿using CodexPlugin.Hooks;
+using Logging;
 using Utils;
 
 namespace CodexPlugin
@@ -13,11 +14,13 @@ namespace CodexPlugin
     {
         private readonly ILog log;
         private readonly CodexAccess codexAccess;
+        private readonly ICodexNodeHooks hooks;
 
-        public MarketplaceAccess(ILog log, CodexAccess codexAccess)
+        public MarketplaceAccess(ILog log, CodexAccess codexAccess, ICodexNodeHooks hooks)
         {
             this.log = log;
             this.codexAccess = codexAccess;
+            this.hooks = hooks;
         }
 
         public IStoragePurchaseContract RequestStorage(StoragePurchaseRequest purchase)
@@ -38,8 +41,11 @@ namespace CodexPlugin
 
             Log($"Storage requested successfully. PurchaseId: '{response}'.");
 
-            var contract = new StoragePurchaseContract(log, codexAccess, response, purchase);
+            var contract = new StoragePurchaseContract(log, codexAccess, response, purchase, hooks);
             contract.WaitForStorageContractSubmitted();
+
+            hooks.OnStorageContractSubmitted(contract);
+
             return contract;
         }
 
@@ -50,6 +56,7 @@ namespace CodexPlugin
             var response = codexAccess.SalesAvailability(availability);
 
             Log($"Storage successfully made available. Id: {response.Id}");
+            hooks.OnStorageAvailabilityCreated(response);
 
             return response.Id;
         }

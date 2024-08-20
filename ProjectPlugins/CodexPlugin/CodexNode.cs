@@ -65,7 +65,7 @@ namespace CodexPlugin
 
         public void Awake()
         {
-            hooks.OnNodeStarting(Container.Recipe.RecipeCreatedUtc, Container.Recipe.Image);
+            hooks.OnNodeStarting(Container.Recipe.RecipeCreatedUtc, Container.Recipe.Image, ethAccount);
         }
 
         public void Initialize()

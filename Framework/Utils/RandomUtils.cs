@@ -11,5 +11,16 @@
             remainingItems.RemoveAt(i);
             return result;
         }
+
+        public static T[] Shuffled<T>(T[] items)
+        {
+            var result = new List<T>();
+            var source = items.ToList();
+            while (source.Any())
+            {
+                result.Add(RandomUtils.PickOneRandom(source));
+            }
+            return result.ToArray();
+        }
     }
 }

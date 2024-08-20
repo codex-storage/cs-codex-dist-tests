@@ -1,4 +1,5 @@
-﻿using Logging;
+﻿using CodexPlugin.Hooks;
+using Logging;
 using Newtonsoft.Json;
 using Utils;
 
@@ -18,19 +19,20 @@ namespace CodexPlugin
     {
         private readonly ILog log;
         private readonly CodexAccess codexAccess;
+        private readonly ICodexNodeHooks hooks;
         private readonly TimeSpan gracePeriod = TimeSpan.FromSeconds(30);
         private readonly DateTime contractPendingUtc = DateTime.UtcNow;
         private DateTime? contractSubmittedUtc = DateTime.UtcNow;
         private DateTime? contractStartedUtc;
         private DateTime? contractFinishedUtc;
 
-        public StoragePurchaseContract(ILog log, CodexAccess codexAccess, string purchaseId, StoragePurchaseRequest purchase)
+        public StoragePurchaseContract(ILog log, CodexAccess codexAccess, string purchaseId, StoragePurchaseRequest purchase, ICodexNodeHooks hooks)
         {
             this.log = log;
             this.codexAccess = codexAccess;
             PurchaseId = purchaseId;
             Purchase = purchase;
-
+            this.hooks = hooks;
             ContentId = new ContentId(codexAccess.GetPurchaseStatus(purchaseId).Request.Content.Cid);
         }
 
@@ -87,15 +89,16 @@ namespace CodexPlugin
             Log($"Waiting for {Time.FormatDuration(timeout)} to reach state '{desiredState}'.");
             while (lastState != desiredState)
             {
+                Thread.Sleep(sleep);
+
                 var purchaseStatus = codexAccess.GetPurchaseStatus(PurchaseId);
                 var statusJson = JsonConvert.SerializeObject(purchaseStatus);
                 if (purchaseStatus != null && purchaseStatus.State != lastState)
                 {
                     lastState = purchaseStatus.State;
                     log.Debug("Purchase status: " + statusJson);
+                    hooks.OnStorageContractUpdated(purchaseStatus);
                 }
-
-                Thread.Sleep(sleep);
 
                 if (lastState == "errored")
                 {
