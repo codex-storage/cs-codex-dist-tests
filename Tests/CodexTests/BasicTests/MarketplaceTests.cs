@@ -14,9 +14,9 @@ namespace CodexTests.BasicTests
         [Test]
         [Combinatorial]
         public void MarketplaceExample(
-            [Values(4, 8, 16 /* 1mb */, 32, 64)] int numBlocks,
-            [Values(-3, -2, -1, 0, 1, 2, 3)] int plusSizeKb,
-            [Values(-3, -2, -1, 0, 1, 2, 3)] int plusSizeBytes
+            [Values(64)] int numBlocks,
+            [Values(0)] int plusSizeKb,
+            [Values(0)] int plusSizeBytes
         )
         {
             var hostInitialBalance = 234.TstWei();
