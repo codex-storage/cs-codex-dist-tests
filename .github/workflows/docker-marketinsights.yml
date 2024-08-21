@@ -1,0 +1,27 @@
+name: Docker - MarketInsights API
+
+
+on:
+  push:
+    branches:
+      - master
+    tags:
+      - 'v*.*.*'
+    paths:
+      - 'Tools/MarketInsights/**'
+      - 'Framework/**'
+      - 'ProjectPlugins/**'
+      - .github/workflows/docker-marketinsights.yml
+      - .github/workflows/docker-reusable.yml
+  workflow_dispatch:
+
+
+jobs:
+  build-and-push:
+    name: Build and Push
+    uses: ./.github/workflows/docker-reusable.yml
+    with:
+      docker_file: Tools/MarketInsights/Dockerfile
+      docker_repo: codexstorage/codex-marketinsights
+    secrets: inherit
+
