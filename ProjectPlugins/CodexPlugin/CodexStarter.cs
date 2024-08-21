@@ -1,5 +1,6 @@
 ﻿using CodexPlugin.Hooks;
 using Core;
+using GethPlugin;
 using KubernetesWorkflow;
 using KubernetesWorkflow.Types;
 using Logging;
@@ -38,6 +39,7 @@ namespace CodexPlugin
                 var podInfo = GetPodInfo(rc);
                 var podInfos = string.Join(", ", rc.Containers.Select(c => $"Container: '{c.Name}' PodLabel: '{c.RunningPod.StartResult.Deployment.PodLabel}' runs at '{podInfo.K8SNodeName}'={podInfo.Ip}"));
                 Log($"Started node with image '{containers.First().Containers.First().Recipe.Image}'. ({podInfos})");
+                LogEthAddress(rc);
             }
             LogSeparator();
 
@@ -142,6 +144,13 @@ namespace CodexPlugin
         private void LogSeparator()
         {
             Log("----------------------------------------------------------------------------");
+        }
+
+        private void LogEthAddress(RunningPod rc)
+        {
+            var account = rc.Containers.First().Recipe.Additionals.Get<EthAccount>();
+            if (account == null) return;
+            Log($"{rc.Name} = {account}");
         }
 
         private void Log(string message)

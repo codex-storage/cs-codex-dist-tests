@@ -169,7 +169,7 @@ namespace CodexPlugin
         public bool IsValidator { get; private set; }
         public Ether InitialEth { get; private set; } = 0.Eth();
         public TestToken InitialTestTokens { get; private set; } = 0.Tst();
-        public EthAccountSetup EthAccountSetup { get; private set; } = new EthAccountSetup();
+        public EthAccountSetup EthAccountSetup { get; } = new EthAccountSetup();
 
         public IMarketplaceSetup AsStorageNode()
         {
@@ -201,8 +201,8 @@ namespace CodexPlugin
             var result = "[(clientNode)"; // When marketplace is enabled, being a clientNode is implicit.
             result += IsStorageNode ? "(storageNode)" : "()";
             result += IsValidator ? "(validator)" : "() ";
-            result += $"Address: '{EthAccountSetup}' ";
-            result += $"{InitialEth.Eth} / {InitialTestTokens}";
+            result += $"Pinned address: '{EthAccountSetup}' ";
+            result += $"{InitialEth} / {InitialTestTokens}";
             result += "] ";
             return result;
         }
@@ -235,6 +235,7 @@ namespace CodexPlugin
 
         public override string ToString()
         {
+            if (!accounts.Any()) return "NoEthAccounts";
             return string.Join(",", accounts.Select(a => a.ToString()).ToArray());
         }
     }

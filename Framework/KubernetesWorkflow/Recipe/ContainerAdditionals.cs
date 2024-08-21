@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json.Linq;
+﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace KubernetesWorkflow.Recipe
 {
@@ -21,14 +22,13 @@ namespace KubernetesWorkflow.Recipe
             var typeName = GetTypeName(typeof(T));
             var userData = Additionals.SingleOrDefault(a => a.Type == typeName);
             if (userData == null) return default;
-            var jobject = (JObject)userData.UserData;
-            return jobject.ToObject<T>();
+            return JsonConvert.DeserializeObject<T>(userData.UserData);
         }
 
         private static Additional ConvertToAdditional(object userData)
         {
             var typeName = GetTypeName(userData.GetType());
-            return new Additional(typeName, userData);
+            return new Additional(typeName, JsonConvert.SerializeObject(userData));
         }
 
         private static string GetTypeName(Type type)
@@ -41,13 +41,13 @@ namespace KubernetesWorkflow.Recipe
 
     public class Additional
     {
-        public Additional(string type, object userData)
+        public Additional(string type, string userData)
         {
             Type = type;
             UserData = userData;
         }
 
         public string Type { get; }
-        public object UserData { get; }
+        public string UserData { get; }
     }
 }
