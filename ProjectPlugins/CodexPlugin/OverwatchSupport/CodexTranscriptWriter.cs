@@ -10,16 +10,18 @@ namespace CodexPlugin.OverwatchSupport
     {
         private const string CodexHeaderKey = "cdx_h";
         private readonly ILog log;
+        private readonly CodexTranscriptWriterConfig config;
         private readonly ITranscriptWriter writer;
         private readonly CodexLogConverter converter;
         private readonly IdentityMap identityMap = new IdentityMap();
         private readonly KademliaPositionFinder positionFinder = new KademliaPositionFinder();
 
-        public CodexTranscriptWriter(ILog log, ITranscriptWriter transcriptWriter)
+        public CodexTranscriptWriter(ILog log, CodexTranscriptWriterConfig config, ITranscriptWriter transcriptWriter)
         {
             this.log = log;
+            this.config = config;
             writer = transcriptWriter;
-            converter = new CodexLogConverter(writer, identityMap);
+            converter = new CodexLogConverter(writer, config, identityMap);
         }
 
         public void Finalize(string outputFilepath)

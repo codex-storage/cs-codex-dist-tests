@@ -136,10 +136,15 @@ namespace CodexTests
 
         private void SetupTranscript(TestLifecycle lifecycle)
         {
-            if (GetTranscriptAttributeOfCurrentTest() == null) return;
+            var attr = GetTranscriptAttributeOfCurrentTest();
+            if (attr == null) return;
+
+            var config = new CodexTranscriptWriterConfig(
+                attr.IncludeBlockReceivedEvents
+            );
 
             var log = new LogPrefixer(lifecycle.Log, "(Transcript) ");
-            var writer = new CodexTranscriptWriter(log, Transcript.NewWriter(log));
+            var writer = new CodexTranscriptWriter(log, config, Transcript.NewWriter(log));
             Ci.SetCodexHooksProvider(writer);
             writers.Add(lifecycle, writer);
         }
@@ -190,11 +195,13 @@ namespace CodexTests
     [AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
     public class CreateTranscriptAttribute : PropertyAttribute
     {
-        public CreateTranscriptAttribute(string outputFilename)
+        public CreateTranscriptAttribute(string outputFilename, bool includeBlockReceivedEvents = true)
         {
             OutputFilename = outputFilename;
+            IncludeBlockReceivedEvents = includeBlockReceivedEvents;
         }
 
         public string OutputFilename { get; }
+        public bool IncludeBlockReceivedEvents { get; }
     }
 }

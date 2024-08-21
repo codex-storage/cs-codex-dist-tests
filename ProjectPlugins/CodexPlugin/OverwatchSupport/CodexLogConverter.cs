@@ -8,11 +8,13 @@ namespace CodexPlugin.OverwatchSupport
     public class CodexLogConverter
     {
         private readonly ITranscriptWriter writer;
+        private readonly CodexTranscriptWriterConfig config;
         private readonly IdentityMap identityMap;
 
-        public CodexLogConverter(ITranscriptWriter writer, IdentityMap identityMap)
+        public CodexLogConverter(ITranscriptWriter writer, CodexTranscriptWriterConfig config, IdentityMap identityMap)
         {
             this.writer = writer;
+            this.config = config;
             this.identityMap = identityMap;
         }
 
@@ -20,7 +22,7 @@ namespace CodexPlugin.OverwatchSupport
         {
             var name = DetermineName(log);
             var identityIndex = identityMap.GetIndex(name);
-            var runner = new ConversionRunner(writer, identityMap, log.ContainerName, identityIndex);
+            var runner = new ConversionRunner(writer, config, identityMap, identityIndex);
             runner.Run(log);
         }
 
@@ -37,22 +39,27 @@ namespace CodexPlugin.OverwatchSupport
     {
         private readonly ITranscriptWriter writer;
         private readonly IdentityMap nameIdMap;
-        private readonly string name;
         private readonly int nodeIdentityIndex;
-        private readonly ILineConverter[] converters = new ILineConverter[]
-        {
-            new BlockReceivedLineConverter(),
-            new BootstrapLineConverter(),
-            new DialSuccessfulLineConverter(),
-            new PeerDroppedLineConverter()
-        };
+        private readonly ILineConverter[] converters;
 
-        public ConversionRunner(ITranscriptWriter writer, IdentityMap nameIdMap, string name, int nodeIdentityIndex)
+        public ConversionRunner(ITranscriptWriter writer, CodexTranscriptWriterConfig config, IdentityMap nameIdMap, int nodeIdentityIndex)
         {
-            this.name = name;
             this.nodeIdentityIndex = nodeIdentityIndex;
             this.writer = writer;
             this.nameIdMap = nameIdMap;
+
+            converters = CreateConverters(config).ToArray();
+        }
+
+        private IEnumerable<ILineConverter> CreateConverters(CodexTranscriptWriterConfig config)
+        {
+            if (config.IncludeBlockReceivedEvents)
+            {
+                yield return new BlockReceivedLineConverter();
+            }
+            yield return new BootstrapLineConverter();
+            yield return new DialSuccessfulLineConverter();
+            yield return new PeerDroppedLineConverter();
         }
 
         public void Run(IDownloadedLog log)

@@ -13,6 +13,7 @@ namespace CodexTests.BasicTests
     {
         [Test]
         [Combinatorial]
+        [CreateTranscript(nameof(MarketplaceTests), includeBlockReceivedEvents: false)]
         public void MarketplaceExample(
             [Values(64)] int numBlocks,
             [Values(0)] int plusSizeKb,

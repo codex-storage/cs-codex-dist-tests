@@ -27,7 +27,7 @@
             nodes.Add(identity);
 
             shortToLong.Add(CodexUtils.ToShortId(identity.PeerId), identity.PeerId);
-            shortToLong.Add(CodexUtils.ToShortId(identity.NodeId), identity.NodeId);
+            shortToLong.Add(CodexUtils.ToNodeIdShortId(identity.NodeId), identity.NodeId);
         }
 
         public CodexNodeIdentity[] Get()
