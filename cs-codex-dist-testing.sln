@@ -74,6 +74,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OverwatchTranscript", "Fram
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TranscriptAnalysis", "Tools\TranscriptAnalysis\TranscriptAnalysis.csproj", "{C0EEBD32-23CB-45EC-A863-79FB948508C8}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MarketInsights", "Tools\MarketInsights\MarketInsights.csproj", "{004614DF-1C65-45E3-882D-59AE44282573}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -196,6 +198,10 @@ Global
 		{C0EEBD32-23CB-45EC-A863-79FB948508C8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C0EEBD32-23CB-45EC-A863-79FB948508C8}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C0EEBD32-23CB-45EC-A863-79FB948508C8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{004614DF-1C65-45E3-882D-59AE44282573}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{004614DF-1C65-45E3-882D-59AE44282573}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{004614DF-1C65-45E3-882D-59AE44282573}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{004614DF-1C65-45E3-882D-59AE44282573}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -230,6 +236,7 @@ Global
 		{B57A4789-D8EF-42E0-8D20-581C4057FFD3} = {7591C5B3-D86E-4AE4-8ED2-B272D17FE7E3}
 		{870DDFBE-D7ED-4196-9681-13CA947BDEA6} = {81AE04BC-CBFA-4E6F-B039-8208E9AFAAE7}
 		{C0EEBD32-23CB-45EC-A863-79FB948508C8} = {7591C5B3-D86E-4AE4-8ED2-B272D17FE7E3}
+		{004614DF-1C65-45E3-882D-59AE44282573} = {7591C5B3-D86E-4AE4-8ED2-B272D17FE7E3}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {237BF0AA-9EC4-4659-AD9A-65DEB974250C}
