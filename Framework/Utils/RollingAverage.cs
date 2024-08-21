@@ -15,7 +15,14 @@
             var originalValue = currentAverage;
             var originalValueWeight = ((n - 1.0f) / n);
             var newValueWeight = (1.0f / n);
-            return (originalValue * originalValueWeight) + (newValue * newValueWeight);
+            return GetWeightedAverage(originalValue, originalValueWeight, newValue, newValueWeight);
+        }
+
+        public static float GetWeightedAverage(float value1, float weight1, float value2, float weight2)
+        {
+            float totalWeight = weight1 + weight2;
+            if (totalWeight == 0.0f) return 0.0f;
+            return ((value1 * weight1) + (value2 * weight2)) / totalWeight;
         }
     }
 }

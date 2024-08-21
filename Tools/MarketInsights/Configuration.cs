@@ -33,5 +33,13 @@ namespace MarketInsights
                 return DateTimeOffset.FromUnixTimeSeconds(CheckHistoryTimestamp).UtcDateTime;
             }
         }
+
+        public TimeSpan UpdateInterval
+        {
+            get
+            {
+                return TimeSpan.FromMinutes(UpdateIntervalMinutes);
+            }
+        }
     }
 }

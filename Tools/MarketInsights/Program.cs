@@ -1,5 +1,6 @@
 using ArgsUniform;
 using Microsoft.Extensions.Options;
+using Nethereum.Model;
 using System.Reflection;
 
 namespace MarketInsights
@@ -10,9 +11,20 @@ namespace MarketInsights
         {
             var uniformArgs = new ArgsUniform<Configuration>(PrintHelp, args);
             var config = uniformArgs.Parse(true);
-
+            var cts = new CancellationTokenSource();
             var appState = new AppState(config);
-            var updater = new Updater(appState);
+
+            Console.CancelKeyPress += (s, e) =>
+            {
+                appState.Log.Log("Stopping...");
+                cts.Cancel();
+                e.Cancel = true;
+            };
+
+            var connector = GethConnector.GethConnector.Initialize(appState.Log);
+            if (connector == null) throw new Exception("Invalid Geth information");
+
+            var updater = new Updater(appState, connector.CodexContracts, cts.Token);
 
             var builder = WebApplication.CreateBuilder(args);
 
@@ -49,6 +61,14 @@ namespace MarketInsights
         private static void PrintHelp()
         {
             Console.WriteLine("WebAPI for generating market overview for Codex network. Comes with OpenAPI swagger endpoint.");
+
+            var nl = Environment.NewLine;
+            Console.WriteLine($"Required environment variables: {nl}" +
+                $"'GETH_HOST'{nl}",
+                $"'GETH_HTTP_PORT'{nl}",
+                $"'CODEXCONTRACTS_MARKETPLACEADDRESS'{nl}",
+                $"'CODEXCONTRACTS_TOKENADDRESS'{nl}",
+                $"'CODEXCONTRACTS_ABI'{nl}");
         }
     }
 }

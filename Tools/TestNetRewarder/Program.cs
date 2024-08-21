@@ -44,7 +44,7 @@ namespace TestNetRewarder
             EnsureGethOnline();
 
             Log.Log("Starting TestNet Rewarder...");
-            var segmenter = new TimeSegmenter(Log, Config, processor);
+            var segmenter = new TimeSegmenter(Log, Config.Interval, Config.HistoryStartUtc, processor);
          
             while (!CancellationToken.IsCancellationRequested)
             {

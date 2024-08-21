@@ -7,6 +7,11 @@
         /// </summary>
         public DateTime LastUpdatedUtc { get; set; }
 
+        /// <summary>
+        /// When false, service is busy processing history in order to catch up to the present.
+        /// </summary>
+        public bool IsUpToDate { get; set; }
+
         public MarketTimeSegment[] TimeSegments { get; set; } = Array.Empty<MarketTimeSegment>();
     }
 

@@ -19,6 +19,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\Framework\ArgsUniform\ArgsUniform.csproj" />
     <ProjectReference Include="..\..\ProjectPlugins\CodexContractsPlugin\CodexContractsPlugin.csproj" />
+    <ProjectReference Include="..\TestNetRewarder\TestNetRewarder.csproj" />
   </ItemGroup>
 
 </Project>

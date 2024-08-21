@@ -15,28 +15,28 @@ namespace TestNetRewarder
         private readonly TimeSpan segmentSize;
         private DateTime latest;
 
-        public TimeSegmenter(ILog log, Configuration configuration, ITimeSegmentHandler handler)
+        public TimeSegmenter(ILog log, TimeSpan segmentSize, DateTime historyStartUtc, ITimeSegmentHandler handler)
         {
             this.log = log;
             this.handler = handler;
-            if (configuration.IntervalMinutes < 0) configuration.IntervalMinutes = 1;
-
-            segmentSize = configuration.Interval;
-            latest = configuration.HistoryStartUtc;
+            this.segmentSize = segmentSize;
+            latest = historyStartUtc;
 
             log.Log("Starting time segments at " + latest);
             log.Log("Segment size: " + Time.FormatDuration(segmentSize));
         }
 
+        public bool IsRealtime { get; private set; } = false;
+
         public async Task ProcessNextSegment()
         {
             var end = latest + segmentSize;
-            var waited = await WaitUntilTimeSegmentInPast(end);
+            IsRealtime = await WaitUntilTimeSegmentInPast(end);
 
             if (Program.CancellationToken.IsCancellationRequested) return;
 
             var postfix = "(Catching up...)";
-            if (waited) postfix = "(Real-time)";
+            if (IsRealtime) postfix = "(Real-time)";
             log.Log($"Time segment [{latest} to {end}] {postfix}");
             
             var range = new TimeRange(latest, end);
