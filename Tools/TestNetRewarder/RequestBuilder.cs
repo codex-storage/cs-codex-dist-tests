@@ -19,7 +19,7 @@ namespace TestNetRewarder
             }
         }
 
-        public GiveRewardsCommand Build(MarketAverage[] marketAverages, string[] lines)
+        public GiveRewardsCommand Build(string[] lines)
         {
             var result = new GiveRewardsCommand
             {
@@ -28,7 +28,6 @@ namespace TestNetRewarder
                     RewardId = p.Key,
                     UserAddresses = p.Value.Select(v => v.Address).ToArray()
                 }).ToArray(),
-                Averages = marketAverages,
                 EventsOverview = lines
             };
 

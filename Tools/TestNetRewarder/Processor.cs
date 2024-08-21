@@ -9,7 +9,6 @@ namespace TestNetRewarder
     {
         private readonly RequestBuilder builder;
         private readonly RewardChecker rewardChecker;
-        private readonly MarketTracker marketTracker;
         private readonly EventsFormatter eventsFormatter;
         private readonly ChainState chainState;
         private readonly BotClient client;
@@ -22,12 +21,10 @@ namespace TestNetRewarder
 
             builder = new RequestBuilder();
             rewardChecker = new RewardChecker(builder);
-            marketTracker = new MarketTracker(config, log);
             eventsFormatter = new EventsFormatter();
 
             var handler = new ChainStateChangeHandlerMux(
                 rewardChecker.Handler,
-                marketTracker,
                 eventsFormatter
             );
 
@@ -40,10 +37,9 @@ namespace TestNetRewarder
             {
                 chainState.Update(timeRange.To);
 
-                var averages = marketTracker.GetAverages();
                 var events = eventsFormatter.GetEvents();
 
-                var request = builder.Build(averages, events);
+                var request = builder.Build(events);
                 if (request.HasAny())
                 {
                     await client.SendRewards(request);

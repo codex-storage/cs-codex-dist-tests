@@ -24,7 +24,6 @@ namespace CodexTests.UtilityTests
         private readonly List<ulong> rewardsSeen = new List<ulong>();
         private readonly TimeSpan rewarderInterval = TimeSpan.FromMinutes(1);
         private readonly List<string> receivedEvents = new List<string>();
-        private readonly List<MarketAverage> receivedAverages = new List<MarketAverage>();
  
         [Test]
         [DontDownloadLogs]
@@ -56,8 +55,6 @@ namespace CodexTests.UtilityTests
             AssertEventOccurance("Transit: New -> Started", 1);
             AssertEventOccurance("Transit: Started -> Finished", 1);
 
-            AssertMarketAverage();
-
             foreach (var r in repo.Rewards)
             {
                 var seen = rewardsSeen.Any(s => r.RoleId == s);
@@ -80,28 +77,9 @@ namespace CodexTests.UtilityTests
                 $"Event '{msg}' did not occure correct number of times.");
         }
 
-        private void AssertMarketAverage()
-        {
-            Assert.That(receivedAverages.Count, Is.EqualTo(1));
-            var a = receivedAverages.Single();
-
-            Assert.That(a.NumberOfFinished, Is.EqualTo(1));
-            Assert.That(a.TimeRangeSeconds, Is.EqualTo(5760));
-            Assert.That(a.Price, Is.EqualTo(2.0f).Within(0.1f));
-            Assert.That(a.Size, Is.EqualTo(GetMinFileSize().SizeInBytes).Within(1.0f));
-            Assert.That(a.Duration, Is.EqualTo(GetMinRequiredRequestDuration().TotalSeconds).Within(1.0f));
-            Assert.That(a.Collateral, Is.EqualTo(10.0f).Within(0.1f));
-            Assert.That(a.ProofProbability, Is.EqualTo(5.0f).Within(0.1f));
-        }
-
         private void OnCommand(string timestamp, GiveRewardsCommand call)
         {
             Log($"<API call {timestamp}>");
-            receivedAverages.AddRange(call.Averages);
-            foreach (var a in call.Averages)
-            {
-                Log("\tAverage: " + JsonConvert.SerializeObject(a));
-            }
             receivedEvents.AddRange(call.EventsOverview);
             foreach (var e in call.EventsOverview)
             {

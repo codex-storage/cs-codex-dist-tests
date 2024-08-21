@@ -18,7 +18,6 @@ namespace BiblioTech
         public static AdminChecker AdminChecker { get; private set; } = null!;
         public static IDiscordRoleDriver RoleDriver { get; set; } = null!;
         public static ILog Log { get; private set; } = null!;
-        public static MarketAverage[] Averages { get; set; } = Array.Empty<MarketAverage>();
 
         public static Task Main(string[] args)
         {
@@ -91,8 +90,7 @@ namespace BiblioTech
                 sprCommand,
                 associateCommand,
                 notifyCommand,
-                new AdminCommand(sprCommand, replacement),
-                new MarketCommand()
+                new AdminCommand(sprCommand, replacement)
             );
 
             await client.LoginAsync(TokenType.Bot, Config.ApplicationToken);
