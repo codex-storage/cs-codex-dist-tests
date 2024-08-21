@@ -1,4 +1,4 @@
-
+using ArgsUniform;
 using Microsoft.Extensions.Options;
 using System.Reflection;
 
@@ -8,9 +8,15 @@ namespace MarketInsights
     {
         public static void Main(string[] args)
         {
+            var uniformArgs = new ArgsUniform<Configuration>(PrintHelp, args);
+            var config = uniformArgs.Parse(true);
+
+            var appState = new AppState(config);
+            var updater = new Updater(appState);
+
             var builder = WebApplication.CreateBuilder(args);
 
-            // Add services to the container.
+            builder.Services.AddSingleton(appState);
 
             builder.Services.AddControllers();
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -34,10 +40,15 @@ namespace MarketInsights
 
             app.UseAuthorization();
 
-
             app.MapControllers();
 
+            updater.Run();
             app.Run();
+        }
+
+        private static void PrintHelp()
+        {
+            Console.WriteLine("WebAPI for generating market overview for Codex network. Comes with OpenAPI swagger endpoint.");
         }
     }
 }

@@ -10,6 +10,7 @@ namespace CodexContractsPlugin.ChainMonitor
             Request[] requests,
             RequestFulfilledEventDTO[] fulfilled,
             RequestCancelledEventDTO[] cancelled,
+            RequestFailedEventDTO[] failed,
             SlotFilledEventDTO[] slotFilled,
             SlotFreedEventDTO[] slotFreed
             )
@@ -18,6 +19,7 @@ namespace CodexContractsPlugin.ChainMonitor
             Requests = requests;
             Fulfilled = fulfilled;
             Cancelled = cancelled;
+            Failed = failed;
             SlotFilled = slotFilled;
             SlotFreed = slotFreed;
         }
@@ -26,6 +28,7 @@ namespace CodexContractsPlugin.ChainMonitor
         public Request[] Requests { get; }
         public RequestFulfilledEventDTO[] Fulfilled { get; }
         public RequestCancelledEventDTO[] Cancelled { get; }
+        public RequestFailedEventDTO[] Failed { get; }
         public SlotFilledEventDTO[] SlotFilled { get; }
         public SlotFreedEventDTO[] SlotFreed { get; }
 
@@ -37,6 +40,7 @@ namespace CodexContractsPlugin.ChainMonitor
                 all.AddRange(Requests);
                 all.AddRange(Fulfilled);
                 all.AddRange(Cancelled);
+                all.AddRange(Failed);
                 all.AddRange(SlotFilled);
                 all.AddRange(SlotFreed);
                 return all.ToArray();
@@ -60,6 +64,7 @@ namespace CodexContractsPlugin.ChainMonitor
                 events.GetStorageRequests(),
                 events.GetRequestFulfilledEvents(),
                 events.GetRequestCancelledEvents(),
+                events.GetRequestFailedEvents(),
                 events.GetSlotFilledEvents(),
                 events.GetSlotFreedEvents()
             );

@@ -2,6 +2,11 @@
 {
     public class MarketOverview
     {
+        /// <summary>
+        /// Moment when overview was last updated.
+        /// </summary>
+        public DateTime LastUpdatedUtc { get; set; }
+
         public MarketTimeSegment[] TimeSegments { get; set; } = Array.Empty<MarketTimeSegment>();
     }
 

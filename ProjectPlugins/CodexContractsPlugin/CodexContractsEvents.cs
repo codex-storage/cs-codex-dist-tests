@@ -13,6 +13,7 @@ namespace CodexContractsPlugin
         Request[] GetStorageRequests();
         RequestFulfilledEventDTO[] GetRequestFulfilledEvents();
         RequestCancelledEventDTO[] GetRequestCancelledEvents();
+        RequestFailedEventDTO[] GetRequestFailedEvents();
         SlotFilledEventDTO[] GetSlotFilledEvents();
         SlotFreedEventDTO[] GetSlotFreedEvents();
     }
@@ -63,6 +64,17 @@ namespace CodexContractsPlugin
         public RequestCancelledEventDTO[] GetRequestCancelledEvents()
         {
             var events = gethNode.GetEvents<RequestCancelledEventDTO>(deployment.MarketplaceAddress, BlockInterval);
+            return events.Select(e =>
+            {
+                var result = e.Event;
+                result.Block = GetBlock(e.Log.BlockNumber.ToUlong());
+                return result;
+            }).ToArray();
+        }
+
+        public RequestFailedEventDTO[] GetRequestFailedEvents()
+        {
+            var events = gethNode.GetEvents<RequestFailedEventDTO>(deployment.MarketplaceAddress, BlockInterval);
             return events.Select(e =>
             {
                 var result = e.Event;

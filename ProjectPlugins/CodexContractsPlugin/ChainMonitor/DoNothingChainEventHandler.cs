@@ -13,6 +13,10 @@ namespace CodexContractsPlugin.ChainMonitor
         {
         }
 
+        public void OnRequestFailed(RequestEvent requestEvent)
+        {
+        }
+
         public void OnRequestFinished(RequestEvent requestEvent)
         {
         }

@@ -70,5 +70,10 @@ namespace TestNetRewarder
             }
             return Array.Empty<int>();
         }
+
+        public void OnRequestFailed(RequestEvent requestEvent)
+        {
+            throw new NotImplementedException("being removed");
+        }
     }
 }

@@ -21,5 +21,16 @@ namespace FrameworkTests.Utils
                 TimeSpan.FromSeconds(28)
             ));
         }
+
+        [Test]
+        public void Averaging()
+        {
+            var first = RollingAverage.GetNewAverage(0.0f, 1, 1.0f);
+            Assert.That(first, Is.EqualTo(1.0f));
+
+            var fifth = RollingAverage.GetNewAverage(5.0f, 5, 0.0f);
+            var expected = new[] { 5.0f, 5.0f, 5.0f, 5.0f, 0.0f }.Average();
+            Assert.That(fifth, Is.EqualTo(expected));
+        }
     }
 }

@@ -34,6 +34,10 @@ namespace TestNetRewarder
         {
         }
 
+        public void OnRequestFailed(RequestEvent requestEvent)
+        {
+        }
+
         public void OnRequestFinished(RequestEvent requestEvent)
         {
             if (MeetsRequirements(CheckType.HostFinishedSlot, requestEvent))

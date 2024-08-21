@@ -40,6 +40,12 @@ namespace CodexContractsPlugin.Marketplace
         public BlockTimeEntry Block { get; set; }
     }
 
+    public partial class RequestFailedEventDTO : IHasBlock
+    {
+        [JsonIgnore]
+        public BlockTimeEntry Block { get; set; }
+    }
+
     public partial class SlotFilledEventDTO : IHasBlock
     {
         [JsonIgnore]

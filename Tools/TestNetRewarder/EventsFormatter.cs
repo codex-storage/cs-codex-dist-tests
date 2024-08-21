@@ -44,6 +44,11 @@ namespace TestNetRewarder
             AddRequestBlock(requestEvent, "Cancelled");
         }
 
+        public void OnRequestFailed(RequestEvent requestEvent)
+        {
+            AddRequestBlock(requestEvent, "Failed");
+        }
+
         public void OnRequestFinished(RequestEvent requestEvent)
         {
             AddRequestBlock(requestEvent, "Finished");

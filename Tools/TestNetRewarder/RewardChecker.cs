@@ -9,7 +9,7 @@ namespace TestNetRewarder
         {
             var repo = new RewardRepo();
             var checks = repo.Rewards.Select(r => new RewardCheck(r, giver)).ToArray();
-            Handler = new ChainChangeMux(checks);
+            Handler = new ChainStateChangeHandlerMux(checks);
         }
 
         public IChainStateChangeHandler Handler { get; }

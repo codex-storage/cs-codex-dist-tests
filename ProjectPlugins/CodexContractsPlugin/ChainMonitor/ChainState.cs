@@ -13,6 +13,7 @@ namespace CodexContractsPlugin.ChainMonitor
         void OnRequestFinished(RequestEvent requestEvent);
         void OnRequestFulfilled(RequestEvent requestEvent);
         void OnRequestCancelled(RequestEvent requestEvent);
+        void OnRequestFailed(RequestEvent requestEvent);
         void OnSlotFilled(RequestEvent requestEvent, EthAddress host, BigInteger slotIndex);
         void OnSlotFreed(RequestEvent requestEvent, BigInteger slotIndex);
     }
@@ -41,14 +42,11 @@ namespace CodexContractsPlugin.ChainMonitor
             this.log = new LogPrefixer(log, "(ChainState) ");
             this.contracts = contracts;
             handler = changeHandler;
-            StartUtc = startUtc;
             TotalSpan = new TimeRange(startUtc, startUtc);
         }
 
         public TimeRange TotalSpan { get; private set; }
         public IChainStateRequest[] Requests => requests.ToArray();
-
-        public DateTime StartUtc { get; }
 
         public void Update()
         {
@@ -122,6 +120,14 @@ namespace CodexContractsPlugin.ChainMonitor
             if (r == null) return;
             r.UpdateState(@event.Block.BlockNumber, RequestState.Cancelled);
             handler.OnRequestCancelled(new RequestEvent(@event.Block, r));
+        }
+
+        private void ApplyEvent(RequestFailedEventDTO @event)
+        {
+            var r = FindRequest(@event.RequestId);
+            if (r == null) return;
+            r.UpdateState(@event.Block.BlockNumber, RequestState.Failed);
+            handler.OnRequestFailed(new RequestEvent(@event.Block, r));
         }
 
         private void ApplyEvent(SlotFilledEventDTO @event)

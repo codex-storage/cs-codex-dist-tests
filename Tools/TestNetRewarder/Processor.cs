@@ -25,7 +25,7 @@ namespace TestNetRewarder
             marketTracker = new MarketTracker(config, log);
             eventsFormatter = new EventsFormatter();
 
-            var handler = new ChainChangeMux(
+            var handler = new ChainStateChangeHandlerMux(
                 rewardChecker.Handler,
                 marketTracker,
                 eventsFormatter
