@@ -66,7 +66,7 @@ namespace OverwatchTranscript
                 Event = new OverwatchEvent
                 {
                     Type = typeName,
-                    Payload = JsonConvert.SerializeObject(payload)
+                    Payload = Json.Serialize(payload)
                 }
             };
 
@@ -84,7 +84,7 @@ namespace OverwatchTranscript
                 using var writer = new StreamWriter(file);
                 foreach (var entry in buffer)
                 {
-                    writer.WriteLine(JsonConvert.SerializeObject(entry));
+                    writer.WriteLine(Json.Serialize(entry));
                 }
                 log.Debug($"Bucket wrote {buffer.Count} entries to file.");
                 buffer.Clear();
@@ -94,13 +94,13 @@ namespace OverwatchTranscript
         private void SortFileByTimestamps()
         {
             var lines = File.ReadAllLines(bucketFile);
-            var entries = lines.Select(JsonConvert.DeserializeObject<EventBucketEntry>)
+            var entries = lines.Select(Json.Deserialize<EventBucketEntry>)
                 .Cast<EventBucketEntry>()
                 .OrderBy(e => e.Utc)
                 .ToArray();
 
             File.Delete(bucketFile);
-            File.WriteAllLines(bucketFile, entries.Select(JsonConvert.SerializeObject));
+            File.WriteAllLines(bucketFile, entries.Select(e => Json.Serialize(e)));
         }
     }
 

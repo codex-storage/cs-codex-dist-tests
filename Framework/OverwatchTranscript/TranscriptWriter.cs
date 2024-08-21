@@ -49,7 +49,7 @@ namespace OverwatchTranscript
             CheckClosed();
             lock (_lock)
             {
-                header.Add(key, JsonConvert.SerializeObject(value));
+                header.Add(key, Json.Serialize(value));
             }
         }
 
@@ -70,11 +70,11 @@ namespace OverwatchTranscript
             var momentReferences = builder.Build(bucketSet.FinalizeBuckets());
             var model = CreateModel(momentReferences);
 
-            File.WriteAllText(transcriptFile, JsonConvert.SerializeObject(model, Formatting.Indented));
+            File.WriteAllText(transcriptFile, Json.Serialize(model, Formatting.Indented));
 
             ZipFile.CreateFromDirectory(workingDir, outputFilename);
             log.Debug($"Transcript written to {outputFilename}");
-            log.Debug($"Common header: {JsonConvert.SerializeObject(model.Header.Common, Formatting.Indented)}");
+            log.Debug($"Common header: {Json.Serialize(model.Header.Common, Formatting.Indented)}");
 
             Directory.Delete(workingDir, true);
             log.Debug($"Workdir {workingDir} deleted");

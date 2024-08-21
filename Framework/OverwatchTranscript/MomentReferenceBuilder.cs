@@ -132,7 +132,7 @@ namespace OverwatchTranscript
                 {
                     File.AppendAllLines(filePath, new[]
                     {
-                        JsonConvert.SerializeObject(moment)
+                        Json.Serialize(moment)
                     });
                 });
             }
