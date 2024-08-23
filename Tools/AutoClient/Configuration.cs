@@ -16,10 +16,10 @@ namespace AutoClient
         [Uniform("purchases", "np", "PURCHASES", false, "Number of concurrent purchases.")]
         public int NumConcurrentPurchases { get; set; } = 10;
 
-        [Uniform("contract-duration", "cd", "CONTRACTDURATION", false, "contract duration in minutes. (default 30)")]
-        public int ContractDurationMinutes { get; set; } = 30;
+        [Uniform("contract-duration", "cd", "CONTRACTDURATION", false, "contract duration in minutes. (default 6 hours)")]
+        public int ContractDurationMinutes { get; set; } = 60 * 6;
 
-        [Uniform("contract-expiry", "ce", "CONTRACTEXPIRY", false, "contract expiry in minutes. (default 15)")]
+        [Uniform("contract-expiry", "ce", "CONTRACTEXPIRY", false, "contract expiry in minutes. (default 15 minutes)")]
         public int ContractExpiryMinutes { get; set; } = 15;
 
         [Uniform("num-hosts", "nh", "NUMHOSTS", false, "Number of hosts for contract. (default 5)")]
@@ -33,6 +33,9 @@ namespace AutoClient
 
         [Uniform("collateral", "c", "COLLATERAL", false, "Required collateral. (default 1)")]
         public int RequiredCollateral { get; set; } = 1;
+
+        [Uniform("filesizemb", "smb", "FILESIZEMB", false, "When greater than zero, size of file generated and uploaded. When zero, random images are used instead.")]
+        public int FileSizeMb { get; set; } = 0;
 
         public string LogPath
         {

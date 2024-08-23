@@ -13,10 +13,10 @@ namespace AutoClient
         private readonly Address address;
         private readonly CodexApi codex;
         private readonly Configuration config;
-        private readonly ImageGenerator generator;
+        private readonly IFileGenerator generator;
         private readonly CancellationToken ct;
 
-        public Purchaser(ILog log, HttpClient client, Address address, CodexApi codex, Configuration config, ImageGenerator generator, CancellationToken ct)
+        public Purchaser(ILog log, HttpClient client, Address address, CodexApi codex, Configuration config, IFileGenerator generator, CancellationToken ct)
         {
             this.log = log;
             this.client = client;
@@ -50,7 +50,7 @@ namespace AutoClient
 
         private async Task<string> CreateFile()
         {
-            return await generator.GenerateImage();
+            return await generator.Generate();
         }
 
         private async Task<ContentId> UploadFile(string filename)

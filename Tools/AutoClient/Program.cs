@@ -3,6 +3,7 @@ using AutoClient;
 using CodexOpenApi;
 using Core;
 using Logging;
+using Utils;
 
 public static class Program
 {
@@ -25,14 +26,14 @@ public static class Program
             new ConsoleLog()
         );
 
-        var address = new Utils.Address(
+        var address = new Address(
             host: config.CodexHost,
             port: config.CodexPort
         );
 
         log.Log($"Start. Address: {address}");
 
-        var imgGenerator = new ImageGenerator();
+        var generator = CreateGenerator(config, log);
 
         var client = new HttpClient();
         var codex = new CodexApi(client);
@@ -44,7 +45,7 @@ public static class Program
         for (var i = 0; i < config.NumConcurrentPurchases; i++)
         {
             purchasers.Add(
-                new Purchaser(new LogPrefixer(log, $"({i}) "), client, address, codex, config, imgGenerator, cancellationToken)
+                new Purchaser(new LogPrefixer(log, $"({i}) "), client, address, codex, config, generator, cancellationToken)
             );
         }
 
@@ -58,6 +59,15 @@ public static class Program
         cancellationToken.WaitHandle.WaitOne();
 
         log.Log("Done.");
+    }
+
+    private static IFileGenerator CreateGenerator(Configuration config, LogSplitter log)
+    {
+        if (config.FileSizeMb > 0)
+        {
+            return new RandomFileGenerator(config, log);
+        }
+        return new ImageGenerator(log);
     }
 
     private static async Task CheckCodex(CodexApi codex, ILog log)

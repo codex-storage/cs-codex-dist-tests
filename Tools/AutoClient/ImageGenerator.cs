@@ -1,9 +1,26 @@
-﻿namespace AutoClient
+﻿using FileUtils;
+using Logging;
+using Utils;
+
+namespace AutoClient
 {
-    public class ImageGenerator
+    public interface IFileGenerator
     {
-        public async Task<string> GenerateImage()
+        Task<string> Generate();
+    }
+
+    public class ImageGenerator : IFileGenerator
+    {
+        private LogSplitter log;
+
+        public ImageGenerator(LogSplitter log)
         {
+            this.log = log;
+        }
+
+        public async Task<string> Generate()
+        {
+            log.Log("Fetching random image from picsum.photos...");
             var httpClient = new HttpClient();
             var thing = await httpClient.GetStreamAsync("https://picsum.photos/3840/2160");
 
@@ -12,6 +29,27 @@
             await thing.CopyToAsync(file);
 
             return filename;
+        }
+    }
+
+    public class RandomFileGenerator : IFileGenerator
+    {
+        private readonly ByteSize size;
+        private readonly FileManager fileManager;
+
+        public RandomFileGenerator(Configuration config, ILog log)
+        {
+            size = config.FileSizeMb.MB();
+            fileManager = new FileManager(log, config.DataPath);
+        }
+
+        public Task<string> Generate()
+        {
+            return Task.Run(() =>
+            {
+                var file = fileManager.GenerateFile(size);
+                return file.Filename;
+            });
         }
     }
 }
