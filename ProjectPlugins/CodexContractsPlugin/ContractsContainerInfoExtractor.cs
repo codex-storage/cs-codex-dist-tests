@@ -62,7 +62,10 @@ namespace CodexContractsPlugin
                 .ToLowerInvariant()
                 .Replace("\"", "") != MarketplaceDeploymentBase.BYTECODE.ToLowerInvariant())
             {
-                throw new Exception("BYTECODE in CodexContractsPlugin does not match BYTECODE deployed by container. Update Marketplace.cs generated code?");
+                //throw new Exception("BYTECODE in CodexContractsPlugin does not match BYTECODE deployed by container. Update Marketplace.cs generated code?");
+
+                var selfUpdater = new SelfUpdater();
+                selfUpdater.Update(abiResult, byteCodeResult);
             }
 
             return abiResult;

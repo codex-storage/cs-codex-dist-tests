@@ -7,6 +7,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Nethereum.Generators" Version="4.21.4" />
+    <PackageReference Include="Nethereum.Generators.Net" Version="4.21.4" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\Framework\Core\Core.csproj" />
     <ProjectReference Include="..\GethPlugin\GethPlugin.csproj" />
   </ItemGroup>
