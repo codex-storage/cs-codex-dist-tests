@@ -31,14 +31,14 @@ namespace CodexContractsPlugin
             return marketplaceAddress;
         }
 
-        public string ExtractMarketplaceAbi()
+        public (string, string) ExtractMarketplaceAbiAndByteCode()
         {
             log.Debug();
-            var marketplaceAbi = Retry(FetchMarketplaceAbi);
-            if (string.IsNullOrEmpty(marketplaceAbi)) throw new InvalidOperationException("Unable to fetch marketplace artifacts from codex-contracts node. Test infra failure.");
+            var (abi, bytecode) = Retry(FetchMarketplaceAbiAndByteCode);
+            if (string.IsNullOrEmpty(abi)) throw new InvalidOperationException("Unable to fetch marketplace artifacts from codex-contracts node. Test infra failure.");
 
-            log.Debug("Got Marketplace ABI: " + marketplaceAbi);
-            return marketplaceAbi;
+            log.Debug("Got Marketplace ABI: " + abi);
+            return (abi, bytecode);
         }
 
         private string FetchMarketplaceAddress()
@@ -48,7 +48,7 @@ namespace CodexContractsPlugin
             return marketplace!.address;
         }
 
-        private string FetchMarketplaceAbi()
+        private (string, string) FetchMarketplaceAbiAndByteCode()
         {
             var json = workflow.ExecuteCommand(container, "cat", CodexContractsContainerRecipe.MarketplaceArtifactFilename);
 
@@ -56,19 +56,12 @@ namespace CodexContractsPlugin
             var abi = artifact["abi"];
             var byteCode = artifact["bytecode"];
             var abiResult = abi!.ToString(Formatting.None);
-            var byteCodeResult = byteCode!.ToString(Formatting.None);
-
-            if (byteCodeResult
-                .ToLowerInvariant()
-                .Replace("\"", "") != MarketplaceDeploymentBase.BYTECODE.ToLowerInvariant())
-            {
-                throw new Exception("BYTECODE in CodexContractsPlugin does not match BYTECODE deployed by container. Update Marketplace.cs generated code?");
-            }
-
-            return abiResult;
+            var byteCodeResult = byteCode!.ToString(Formatting.None).ToLowerInvariant().Replace("\"", "");
+          
+            return (abiResult, byteCodeResult);
         }
 
-        private static string Retry(Func<string> fetch)
+        private static T Retry<T>(Func<T> fetch)
         {
             return Time.Retry(fetch, nameof(ContractsContainerInfoExtractor));
         }
