@@ -56,11 +56,10 @@ namespace CodexContractsPlugin
             var abi = artifact["abi"];
             var byteCode = artifact["bytecode"];
             var abiResult = abi!.ToString(Formatting.None);
-            var byteCodeResult = byteCode!.ToString(Formatting.None);
+            var byteCodeResult = byteCode!.ToString(Formatting.None).ToLowerInvariant().Replace("\"", "");
+            var expectedByteCode = MarketplaceDeploymentBase.BYTECODE.ToLowerInvariant();
 
-            if (byteCodeResult
-                .ToLowerInvariant()
-                .Replace("\"", "") != MarketplaceDeploymentBase.BYTECODE.ToLowerInvariant())
+            if (byteCodeResult != expectedByteCode)
             {
                 //throw new Exception("BYTECODE in CodexContractsPlugin does not match BYTECODE deployed by container. Update Marketplace.cs generated code?");
 
