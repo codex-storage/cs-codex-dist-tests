@@ -1,4 +1,5 @@
-﻿using Core;
+﻿using CodexContractsPlugin.Marketplace;
+using Core;
 using GethPlugin;
 using KubernetesWorkflow;
 using KubernetesWorkflow.Types;
@@ -64,7 +65,8 @@ namespace CodexContractsPlugin
 
             var extractor = new ContractsContainerInfoExtractor(tools.GetLog(), workflow, container);
             var marketplaceAddress = extractor.ExtractMarketplaceAddress();
-            var abi = extractor.ExtractMarketplaceAbi();
+            var (abi, bytecode) = extractor.ExtractMarketplaceAbiAndByteCode();
+            EnsureCompatbility(abi, bytecode);
 
             var interaction = new ContractInteractions(tools.GetLog(), gethNode);
             var tokenAddress = interaction.GetTokenAddress(marketplaceAddress);
@@ -76,6 +78,18 @@ namespace CodexContractsPlugin
             Log("Synced. Codex SmartContracts deployed.");
 
             return new CodexContractsDeployment(marketplaceAddress, abi, tokenAddress);
+        }
+
+        private void EnsureCompatbility(string abi, string bytecode)
+        {
+            var expectedByteCode = MarketplaceDeploymentBase.BYTECODE.ToLowerInvariant();
+
+            if (bytecode != expectedByteCode)
+            {
+                Log("Deployed contract is incompatible with current build of CodexContracts plugin. Running self-updater...");
+                var selfUpdater = new SelfUpdater();
+                selfUpdater.Update(abi, bytecode);
+            }
         }
 
         private void Log(string msg)
