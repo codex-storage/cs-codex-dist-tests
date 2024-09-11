@@ -7,6 +7,14 @@ namespace AutoClientCenter
         {
             var builder = WebApplication.CreateBuilder(args);
 
+            var listenPort = Environment.GetEnvironmentVariable("APIPORT");
+            if (string.IsNullOrEmpty(listenPort)) listenPort = "31090";
+
+            builder.WebHost.ConfigureKestrel((context, options) =>
+            {
+                options.ListenAnyIP(Convert.ToInt32(listenPort));
+            });
+
             builder.Services.AddSingleton<ITaskService>(new TaskService());
             builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();
@@ -26,6 +34,8 @@ namespace AutoClientCenter
 
 
             app.MapControllers();
+
+            Console.WriteLine("AutoClientCenter listening on port " + listenPort);
 
             app.Run();
         }
