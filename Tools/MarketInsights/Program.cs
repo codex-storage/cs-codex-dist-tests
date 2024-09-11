@@ -1,6 +1,4 @@
 using ArgsUniform;
-using Microsoft.Extensions.Options;
-using Nethereum.Model;
 using System.Reflection;
 
 namespace MarketInsights
@@ -28,6 +26,14 @@ namespace MarketInsights
 
             var builder = WebApplication.CreateBuilder(args);
 
+            var listenPort = Environment.GetEnvironmentVariable("APIPORT");
+            if (string.IsNullOrEmpty(listenPort)) listenPort = "31090";
+
+            builder.WebHost.ConfigureKestrel((context, options) =>
+            {
+                options.ListenAnyIP(Convert.ToInt32(listenPort));
+            });
+
             builder.Services.AddSingleton(appState);
 
             builder.Services.AddControllers();
@@ -53,6 +59,8 @@ namespace MarketInsights
             app.UseAuthorization();
 
             app.MapControllers();
+
+            Console.WriteLine("MarketInsights listening on port " + listenPort);
 
             updater.Run();
             app.Run();

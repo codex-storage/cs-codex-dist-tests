@@ -1,0 +1,24 @@
+name: Docker - AutoClientCenter
+
+on:
+  push:
+    branches:
+      - master
+    tags:
+      - 'v*.*.*'
+    paths:
+      - 'Tools/AutoClientCenter/**'
+      - '!Tools/AutoClientCenter/Dockerfile'
+      - .github/workflows/docker-autoclientcenter.yml
+      - .github/workflows/docker-reusable.yml
+  workflow_dispatch:
+
+jobs:
+  build-and-push:
+    name: Build and Push
+    uses: ./.github/workflows/docker-reusable.yml
+    with:
+      docker_file: Tools/AutoClientCenter/Dockerfile
+      docker_repo: codexstorage/codex-autoclientcenter
+    secrets: inherit
+
