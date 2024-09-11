@@ -21,6 +21,16 @@ public static class Program
             throw new Exception("Number of concurrent purchases must be > 0");
         }
 
+        var c = new AutoClientCenterAPI.swaggerClient("", new HttpClient());
+        var tasks = await c.TasksAsync();
+        foreach (var task in tasks.Tasks)
+        {
+            foreach (var step in task.Steps)
+            {
+
+            }
+        }
+
         var log = new LogSplitter(
             new FileLog(Path.Combine(config.LogPath, "autoclient")),
             new ConsoleLog()
