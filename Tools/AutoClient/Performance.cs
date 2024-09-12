@@ -1,45 +1,63 @@
-﻿namespace AutoClient
+﻿using Logging;
+
+namespace AutoClient
 {
     public class Performance
     {
-        internal void DownloadFailed(Exception ex)
+        private readonly ILog log;
+
+        public Performance(ILog log)
         {
-            throw new NotImplementedException();
+            this.log = log;
         }
 
-        internal void DownloadSuccessful(long? size, TimeSpan time)
+        public void DownloadFailed(Exception ex)
         {
-            throw new NotImplementedException();
+            Log($"Download failed: {ex}");
         }
 
-        internal void StorageContractCancelled()
+        public void DownloadSuccessful(long size, TimeSpan time)
         {
-            throw new NotImplementedException();
+            long seconds = Convert.ToInt64(time.TotalSeconds);
+            long bytesPerSecond = size / seconds;
+            Log($"Download successful: {bytesPerSecond} bytes per second");
         }
 
-        internal void StorageContractErrored(string error)
+        public void StorageContractCancelled()
         {
-            throw new NotImplementedException();
+            Log("Contract cancelled");
         }
 
-        internal void StorageContractFinished()
+        public void StorageContractErrored(string error)
         {
-            throw new NotImplementedException();
+            Log($"Contract errored: {error}");
         }
 
-        internal void StorageContractStarted()
+        public void StorageContractFinished()
         {
-            throw new NotImplementedException();
+            Log("Contract finished");
         }
 
-        internal void UploadFailed(Exception exc)
+        public void StorageContractStarted()
         {
-            throw new NotImplementedException();
+            Log("Contract started");
         }
 
-        internal void UploadSuccessful(long length, TimeSpan time)
+        public void UploadFailed(Exception ex)
         {
-            throw new NotImplementedException();
+            Log($"Upload failed: {ex}");
+        }
+
+        public void UploadSuccessful(long size, TimeSpan time)
+        {
+            long seconds = Convert.ToInt64(time.TotalSeconds);
+            long bytesPerSecond = size / seconds;
+            Log($"Upload successful: {bytesPerSecond} bytes per second");
+        }
+
+        private void Log(string msg)
+        {
+            log.Log(msg);
         }
     }
 }

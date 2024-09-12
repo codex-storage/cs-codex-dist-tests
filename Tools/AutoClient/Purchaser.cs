@@ -60,7 +60,7 @@ namespace AutoClient
             var cid = app.CidRepo.GetForeignCid(nodeId);
             if (cid == null) return;
             var size = app.CidRepo.GetSizeForCid(cid);
-            if (cid == null) return;
+            if (size == null) return;
 
             try
             {
@@ -73,7 +73,7 @@ namespace AutoClient
                 }
                 var time = sw.Elapsed;
                 File.Delete(filename);
-                app.Performance.DownloadSuccessful(size, time);
+                app.Performance.DownloadSuccessful(size.Value, time);
             }
             catch (Exception ex)
             {

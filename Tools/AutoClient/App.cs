@@ -15,6 +15,10 @@ namespace AutoClient
 
             Generator = CreateGenerator();
             CidRepo = new CidRepo(config);
+            Performance = new Performance(new LogSplitter(
+                new FileLog(Path.Combine(config.LogPath, "performance")),
+                new ConsoleLog()
+            ));
         }
 
         public Configuration Config { get; }
@@ -22,7 +26,7 @@ namespace AutoClient
         public IFileGenerator Generator { get; }
         public CancellationTokenSource Cts { get; } = new CancellationTokenSource();
         public CidRepo CidRepo { get; }
-        public Performance Performance { get; } = new Performance();
+        public Performance Performance { get; }
 
         private IFileGenerator CreateGenerator()
         {
