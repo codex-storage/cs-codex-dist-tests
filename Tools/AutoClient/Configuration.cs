@@ -19,11 +19,11 @@ namespace AutoClient
         [Uniform("contract-expiry", "ce", "CONTRACTEXPIRY", false, "contract expiry in minutes. (default 15 minutes)")]
         public int ContractExpiryMinutes { get; set; } = 15;
 
-        [Uniform("num-hosts", "nh", "NUMHOSTS", false, "Number of hosts for contract. (default 5)")]
-        public int NumHosts { get; set; } = 5;
+        [Uniform("num-hosts", "nh", "NUMHOSTS", false, "Number of hosts for contract. (default 10)")]
+        public int NumHosts { get; set; } = 10;
 
-        [Uniform("num-hosts-tolerance", "nt", "NUMTOL", false, "Number of host tolerance for contract. (default 2)")]
-        public int HostTolerance { get; set; } = 2;
+        [Uniform("num-hosts-tolerance", "nt", "NUMTOL", false, "Number of host tolerance for contract. (default 5)")]
+        public int HostTolerance { get; set; } = 5;
 
         [Uniform("price","p", "PRICE", false, "Price of contract. (default 10)")]
         public int Price { get; set; } = 10;
