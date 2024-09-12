@@ -18,8 +18,9 @@ namespace AutoClient
 
         public void DownloadSuccessful(long size, TimeSpan time)
         {
-            long seconds = Convert.ToInt64(time.TotalSeconds);
-            long bytesPerSecond = size / seconds;
+            long milliseconds = Convert.ToInt64(time.TotalMilliseconds);
+            if (milliseconds < 1) milliseconds = 1;
+            long bytesPerSecond = 1000 * (size / milliseconds);
             Log($"Download successful: {bytesPerSecond} bytes per second");
         }
 
@@ -50,8 +51,9 @@ namespace AutoClient
 
         public void UploadSuccessful(long size, TimeSpan time)
         {
-            long seconds = Convert.ToInt64(time.TotalSeconds);
-            long bytesPerSecond = size / seconds;
+            long milliseconds = Convert.ToInt64(time.TotalMilliseconds);
+            if (milliseconds < 1) milliseconds = 1;
+            long bytesPerSecond = 1000 * (size / milliseconds);
             Log($"Upload successful: {bytesPerSecond} bytes per second");
         }
 
