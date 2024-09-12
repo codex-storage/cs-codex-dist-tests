@@ -1,24 +1,15 @@
 ﻿using ArgsUniform;
 using AutoClient;
 using CodexOpenApi;
-using Core;
-using Logging;
-using Nethereum.Model;
 using Utils;
 
 public class Program
 {
-    private readonly CancellationTokenSource cts;
-    private readonly Configuration config;
-    private readonly LogSplitter log;
-    private readonly IFileGenerator generator;
+    private readonly App app;
 
-    public Program(CancellationTokenSource cts, Configuration config, LogSplitter log, IFileGenerator generator)
+    public Program(Configuration config)
     {
-        this.cts = cts;
-        this.config = config;
-        this.log = log;
-        this.generator = generator;
+        app = new App(config);
     }
 
     public static async Task Main(string[] args)
@@ -34,30 +25,31 @@ public class Program
             throw new Exception("Number of concurrent purchases must be > 0");
         }
 
-        var log = new LogSplitter(
-            new FileLog(Path.Combine(config.LogPath, "autoclient")),
-            new ConsoleLog()
-        );
-
-        var generator = CreateGenerator(config, log);
-
-        var p = new Program(cts, config, log, generator);
-        await p.Run(args);
-        cts.Token.WaitHandle.WaitOne();
-        log.Log("Done.");
+        var p = new Program(config);
+        await p.Run();
     }
 
-    public async Task Run(string[] args)
+    public async Task Run()
     {
-        var codexUsers = CreateUsers();
+        var codexUsers = await CreateUsers();
 
+        var i = 0;
+        foreach (var user in codexUsers)
+        {
+            user.Start(i);
+            i++;
+        }
 
-        
+        app.Cts.Token.WaitHandle.WaitOne();
+
+        foreach (var user in codexUsers) user.Stop();
+
+        app.Log.Log("Done");
     }
 
     private async Task<CodexUser[]> CreateUsers()
     {
-        var endpointStrs = config.CodexEndpoints.Split(";", StringSplitOptions.RemoveEmptyEntries);
+        var endpointStrs = app.Config.CodexEndpoints.Split(";", StringSplitOptions.RemoveEmptyEntries);
         var result = new List<CodexUser>();
 
         foreach (var e in endpointStrs)
@@ -79,21 +71,24 @@ public class Program
             port: port
         );
 
-        log.Log($"Start. Address: {address}");
-
-
         var client = new HttpClient();
         var codex = new CodexApi(client);
         codex.BaseUrl = $"{address.Host}:{address.Port}/api/codex/v1";
 
+        app.Log.Log($"Checking Codex at {address}...");
         await CheckCodex(codex);
+        app.Log.Log("OK");
 
-        return new CodexUser();
+        return new CodexUser(
+            app,
+            codex,
+            client,
+            address
+        );
     }
 
     private async Task CheckCodex(CodexApi codex)
     {
-        log.Log("Checking Codex...");
         try
         {
             var info = await codex.GetDebugInfoAsync();
@@ -101,18 +96,9 @@ public class Program
         }
         catch (Exception ex)
         {
-            log.Log($"Codex not OK: {ex}");
+            app.Log.Error($"Codex not OK: {ex}");
             throw;
         }
-    }
-
-    private static IFileGenerator CreateGenerator(Configuration config, LogSplitter log)
-    {
-        if (config.FileSizeMb > 0)
-        {
-            return new RandomFileGenerator(config, log);
-        }
-        return new ImageGenerator(log);
     }
 
     private static void PrintHelp()

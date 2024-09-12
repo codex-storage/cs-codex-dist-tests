@@ -1,44 +1,56 @@
 ﻿using CodexOpenApi;
 using Logging;
-using static Org.BouncyCastle.Math.EC.ECCurve;
 using Utils;
 
 namespace AutoClient
 {
     public class CodexUser
     {
-        private readonly ILog log;
+        private readonly App app;
         private readonly CodexApi codex;
         private readonly HttpClient client;
         private readonly Address address;
-        private readonly IFileGenerator generator;
-        private readonly Configuration config;
-        private readonly CancellationToken cancellationToken;
+        private readonly List<Purchaser> purchasers = new List<Purchaser>();
+        private Task starterTask = Task.CompletedTask;
+        private readonly string nodeId = Guid.NewGuid().ToString();
 
-        public CodexUser(ILog log, CodexApi codex, HttpClient client, Address address, IFileGenerator generator, Configuration config, CancellationToken cancellationToken)
+        public CodexUser(App app, CodexApi codex, HttpClient client, Address address)
         {
-            this.log = log;
+            this.app = app;
             this.codex = codex;
             this.client = client;
             this.address = address;
-            this.generator = generator;
-            this.config = config;
-            this.cancellationToken = cancellationToken;
         }
 
-        public async Task Run()
+        public void Start(int index)
         {
-            var purchasers = new List<Purchaser>();
-            for (var i = 0; i < config.NumConcurrentPurchases; i++)
+            for (var i = 0; i < app.Config.NumConcurrentPurchases; i++)
             {
-                purchasers.Add(new Purchaser(new LogPrefixer(log, $"({i}) "), client, address, codex, config, generator, cancellationToken));
+                purchasers.Add(new Purchaser(app, nodeId, new LogPrefixer(app.Log, $"({i}) "), client, address, codex));
             }
 
-            var delayPerPurchaser = TimeSpan.FromMinutes(config.ContractDurationMinutes) / config.NumConcurrentPurchases;
+            var delayPerPurchaser =
+                TimeSpan.FromSeconds(10 * index) +
+                TimeSpan.FromMinutes(app.Config.ContractDurationMinutes) / app.Config.NumConcurrentPurchases;
+
+            starterTask = Task.Run(() => StartPurchasers(delayPerPurchaser));
+        }
+
+        private async Task StartPurchasers(TimeSpan delayPerPurchaser)
+        {
             foreach (var purchaser in purchasers)
             {
                 purchaser.Start();
                 await Task.Delay(delayPerPurchaser);
+            }
+        }
+
+        public void Stop()
+        {
+            starterTask.Wait();
+            foreach (var purchaser in purchasers)
+            {
+                purchaser.Stop();
             }
         }
     }

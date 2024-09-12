@@ -8,36 +8,76 @@ namespace AutoClient
 {
     public class Purchaser
     {
+        private readonly App app;
+        private readonly string nodeId;
         private readonly ILog log;
         private readonly HttpClient client;
         private readonly Address address;
         private readonly CodexApi codex;
-        private readonly Configuration config;
-        private readonly IFileGenerator generator;
-        private readonly CancellationToken ct;
+        private Task workerTask = Task.CompletedTask;
 
-        public Purchaser(ILog log, HttpClient client, Address address, CodexApi codex, Configuration config, IFileGenerator generator, CancellationToken ct)
+        public Purchaser(App app, string nodeId, ILog log, HttpClient client, Address address, CodexApi codex)
         {
+            this.app = app;
+            this.nodeId = nodeId;
             this.log = log;
             this.client = client;
             this.address = address;
             this.codex = codex;
-            this.config = config;
-            this.generator = generator;
-            this.ct = ct;
         }
 
         public void Start()
         {
-            Task.Run(Worker);
+            workerTask = Task.Run(Worker);
+        }
+
+        public void Stop()
+        {
+            workerTask.Wait();
         }
 
         private async Task Worker()
         {
-            while (!ct.IsCancellationRequested)
+            log.Log("Worker started.");
+            while (!app.Cts.Token.IsCancellationRequested)
             {
-                var pid = await StartNewPurchase();
-                await WaitTillFinished(pid);
+                try
+                {
+                    var pid = await StartNewPurchase();
+                    await WaitTillFinished(pid);
+                    await DownloadForeignCid();
+                }
+                catch (Exception ex)
+                {
+                    log.Error("Worker failed with: " + ex);
+                    await Task.Delay(TimeSpan.FromHours(6));
+                }
+            }
+        }
+
+        private async Task DownloadForeignCid()
+        {
+            var cid = app.CidRepo.GetForeignCid(nodeId);
+            if (cid == null) return;
+            var size = app.CidRepo.GetSizeForCid(cid);
+            if (cid == null) return;
+
+            try
+            {
+                var sw = System.Diagnostics.Stopwatch.StartNew();
+                var filename = Guid.NewGuid().ToString().ToLowerInvariant();
+                {
+                    using var fileStream = File.OpenWrite(filename);
+                    var fileResponse = await codex.DownloadNetworkAsync(cid);
+                    fileResponse.Stream.CopyTo(fileStream);
+                }
+                var time = sw.Elapsed;
+                File.Delete(filename);
+                app.Performance.DownloadSuccessful(size, time);
+            }
+            catch (Exception ex)
+            {
+                app.Performance.DownloadFailed(ex);
             }
         }
 
@@ -50,72 +90,96 @@ namespace AutoClient
 
         private async Task<string> CreateFile()
         {
-            return await generator.Generate();
+            return await app.Generator.Generate();
         }
 
         private async Task<ContentId> UploadFile(string filename)
         {
-            // Copied from CodexNode :/
             using var fileStream = File.OpenRead(filename);
+            try
+            {
+                var info = new FileInfo(filename);
+                var sw = System.Diagnostics.Stopwatch.StartNew();
+                var cid = await UploadStream(fileStream);
+                var time = sw.Elapsed;
+                app.Performance.UploadSuccessful(info.Length, time);
+                app.CidRepo.Add(nodeId, cid.Id, info.Length);
+                return cid;
+            }
+            catch (Exception exc)
+            {
+                app.Performance.UploadFailed(exc);
+                throw;
+            }
+        }
 
-            log.Log($"Uploading file {filename}...");
-            var response = await codex.UploadAsync(fileStream, ct);
+        private async Task<ContentId> UploadStream(FileStream fileStream)
+        {
+            log.Debug($"Uploading file...");
+            var response = await codex.UploadAsync(fileStream, app.Cts.Token);
 
             if (string.IsNullOrEmpty(response)) FrameworkAssert.Fail("Received empty response.");
             if (response.StartsWith("Unable to store block")) FrameworkAssert.Fail("Node failed to store block.");
 
-            log.Log($"Uploaded file. Received contentId: '{response}'.");
+            log.Debug($"Uploaded file. Received contentId: '{response}'.");
             return new ContentId(response);
         }
 
         private async Task<string> RequestStorage(ContentId cid)
         {
-            log.Log("Requesting storage for " + cid.Id);
+            log.Debug("Requesting storage for " + cid.Id);
             var result = await codex.CreateStorageRequestAsync(cid.Id, new StorageRequestCreation()
             {
-                Collateral = config.RequiredCollateral.ToString(),
-                Duration = (config.ContractDurationMinutes * 60).ToString(),
-                Expiry = (config.ContractExpiryMinutes * 60).ToString(),
-                Nodes = config.NumHosts,
-                Reward = config.Price.ToString(),
+                Collateral = app.Config.RequiredCollateral.ToString(),
+                Duration = (app.Config.ContractDurationMinutes * 60).ToString(),
+                Expiry = (app.Config.ContractExpiryMinutes * 60).ToString(),
+                Nodes = app.Config.NumHosts,
+                Reward = app.Config.Price.ToString(),
                 ProofProbability = "15",
-                Tolerance = config.HostTolerance
-            }, ct);
+                Tolerance = app.Config.HostTolerance
+            }, app.Cts.Token);
 
-            log.Log("Purchase ID: " + result);
+            log.Debug("Purchase ID: " + result);
+
+            var encoded = await GetEncodedCid(result);
+            app.CidRepo.AddEncoded(cid.Id, encoded);
 
             return result;
         }
 
-        private async Task<string?> GetPurchaseState(string pid)
+        private async Task<string> GetEncodedCid(string pid)
         {
             try
             {
-                // openapi still don't match code.
-                var str = await client.GetStringAsync($"{address.Host}:{address.Port}/api/codex/v1/storage/purchases/{pid}");
-                if (string.IsNullOrEmpty(str)) return null;
-                var sp = JsonConvert.DeserializeObject<StoragePurchase>(str)!;
-                log.Log($"Purchase {pid} is {sp.State}");
-                if (!string.IsNullOrEmpty(sp.Error)) log.Log($"Purchase {pid} error is {sp.Error}");
-                return sp.State;
+                var sp = await GetStoragePurchase(pid)!;
+                return sp.Request.Content.Cid;
             }
-            catch
+            catch (Exception ex)
             {
-                return null;
+                log.Error(ex.ToString());
+                throw;
             }
+        }
+
+        private async Task<StoragePurchase?> GetStoragePurchase(string pid)
+        {
+            // openapi still don't match code.
+            var str = await client.GetStringAsync($"{address.Host}:{address.Port}/api/codex/v1/storage/purchases/{pid}");
+            if (string.IsNullOrEmpty(str)) return null;
+            return JsonConvert.DeserializeObject<StoragePurchase>(str);
         }
 
         private async Task WaitTillFinished(string pid)
         {
-            log.Log("Waiting...");
             try
             {
                 var emptyResponseTolerance = 10;
-                while (true)
+                while (!app.Cts.Token.IsCancellationRequested)
                 {
-                    var status = (await GetPurchaseState(pid))?.ToLowerInvariant();
-                    if (string.IsNullOrEmpty(status))
+                    var purchase = await GetStoragePurchase(pid);
+                    if (purchase == null)
                     {
+                        await FixedShortDelay();
                         emptyResponseTolerance--;
                         if (emptyResponseTolerance == 0)
                         {
@@ -123,19 +187,28 @@ namespace AutoClient
                             await ExpiryTimeDelay();
                             return;
                         }
+                        continue;
                     }
-                    else
+                    var status = purchase.State.ToLowerInvariant();
+                    if (status.Contains("cancel"))
                     {
-                        if (status.Contains("cancel") ||
-                            status.Contains("error") ||
-                            status.Contains("finished"))
-                        {
-                            return;
-                        }
-                        if (status.Contains("started"))
-                        {
-                            await FixedDurationDelay();
-                        }
+                        app.Performance.StorageContractCancelled();
+                        return;
+                    }
+                    if (status.Contains("error"))
+                    {
+                        app.Performance.StorageContractErrored(purchase.Error);
+                        return;
+                    }
+                    if (status.Contains("finished"))
+                    {
+                        app.Performance.StorageContractFinished();
+                        return;
+                    }
+                    if (status.Contains("started"))
+                    {
+                        app.Performance.StorageContractStarted();
+                        await FixedDurationDelay();
                     }
 
                     await FixedShortDelay();
@@ -150,17 +223,17 @@ namespace AutoClient
 
         private async Task FixedDurationDelay()
         {
-            await Task.Delay(config.ContractDurationMinutes * 60 * 1000, ct);
+            await Task.Delay(app.Config.ContractDurationMinutes * 60 * 1000, app.Cts.Token);
         }
 
         private async Task ExpiryTimeDelay()
         {
-            await Task.Delay(config.ContractExpiryMinutes * 60 * 1000, ct);
+            await Task.Delay(app.Config.ContractExpiryMinutes * 60 * 1000, app.Cts.Token);
         }
 
         private async Task FixedShortDelay()
         {
-            await Task.Delay(15 * 1000, ct);
+            await Task.Delay(15 * 1000, app.Cts.Token);
         }
     }
 }
