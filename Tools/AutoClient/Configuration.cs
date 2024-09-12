@@ -5,7 +5,7 @@ namespace AutoClient
     public class Configuration
     {
         [Uniform("codex-endpoints", "ce", "CODEXENDPOINTS", false, "Codex endpoints. Semi-colon separated. (default 'http://localhost:8080')")]
-        public string CodexEndpoints { get; set; } = "http://localhost";
+        public string CodexEndpoints { get; set; } = "http://localhost:8080";
 
         [Uniform("datapath", "dp", "DATAPATH", false, "Root path where all data files will be saved.")]
         public string DataPath { get; set; } = "datapath";
