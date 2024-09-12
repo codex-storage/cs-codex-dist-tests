@@ -3,14 +3,27 @@ using AutoClient;
 using CodexOpenApi;
 using Core;
 using Logging;
+using Nethereum.Model;
 using Utils;
 
-public static class Program
+public class Program
 {
+    private readonly CancellationTokenSource cts;
+    private readonly Configuration config;
+    private readonly LogSplitter log;
+    private readonly IFileGenerator generator;
+
+    public Program(CancellationTokenSource cts, Configuration config, LogSplitter log, IFileGenerator generator)
+    {
+        this.cts = cts;
+        this.config = config;
+        this.log = log;
+        this.generator = generator;
+    }
+
     public static async Task Main(string[] args)
     {
         var cts = new CancellationTokenSource();
-        var cancellationToken = cts.Token;
         Console.CancelKeyPress += (sender, args) => cts.Cancel();
 
         var uniformArgs = new ArgsUniform<Configuration>(PrintHelp, args);
@@ -21,66 +34,64 @@ public static class Program
             throw new Exception("Number of concurrent purchases must be > 0");
         }
 
-        var c = new AutoClientCenterAPI.swaggerClient("", new HttpClient());
-        var tasks = await c.TasksAsync();
-        foreach (var task in tasks.Tasks)
-        {
-            foreach (var step in task.Steps)
-            {
-
-            }
-        }
-
         var log = new LogSplitter(
             new FileLog(Path.Combine(config.LogPath, "autoclient")),
             new ConsoleLog()
         );
 
+        var generator = CreateGenerator(config, log);
+
+        var p = new Program(cts, config, log, generator);
+        await p.Run(args);
+        cts.Token.WaitHandle.WaitOne();
+        log.Log("Done.");
+    }
+
+    public async Task Run(string[] args)
+    {
+        var codexUsers = CreateUsers();
+
+
+        
+    }
+
+    private async Task<CodexUser[]> CreateUsers()
+    {
+        var endpointStrs = config.CodexEndpoints.Split(";", StringSplitOptions.RemoveEmptyEntries);
+        var result = new List<CodexUser>();
+
+        foreach (var e in endpointStrs)
+        {
+            result.Add(await CreateUser(e));
+        }
+
+        return result.ToArray();
+    }
+
+    private async Task<CodexUser> CreateUser(string endpoint)
+    {
+        var splitIndex = endpoint.LastIndexOf(':');
+        var host = endpoint.Substring(0, splitIndex);
+        var port = Convert.ToInt32(endpoint.Substring(splitIndex + 1));
+
         var address = new Address(
-            host: config.CodexHost,
-            port: config.CodexPort
+            host: host,
+            port: port
         );
 
         log.Log($"Start. Address: {address}");
 
-        var generator = CreateGenerator(config, log);
 
         var client = new HttpClient();
         var codex = new CodexApi(client);
         codex.BaseUrl = $"{address.Host}:{address.Port}/api/codex/v1";
 
-        await CheckCodex(codex, log);
+        await CheckCodex(codex);
 
-        var purchasers = new List<Purchaser>();
-        for (var i = 0; i < config.NumConcurrentPurchases; i++)
-        {
-            purchasers.Add(
-                new Purchaser(new LogPrefixer(log, $"({i}) "), client, address, codex, config, generator, cancellationToken)
-            );
-        }
-
-        var delayPerPurchaser = TimeSpan.FromMinutes(config.ContractDurationMinutes) / config.NumConcurrentPurchases;
-        foreach (var purchaser in purchasers) 
-        {
-            purchaser.Start();
-            await Task.Delay(delayPerPurchaser);
-        }
-
-        cancellationToken.WaitHandle.WaitOne();
-
-        log.Log("Done.");
+        return new CodexUser();
     }
 
-    private static IFileGenerator CreateGenerator(Configuration config, LogSplitter log)
-    {
-        if (config.FileSizeMb > 0)
-        {
-            return new RandomFileGenerator(config, log);
-        }
-        return new ImageGenerator(log);
-    }
-
-    private static async Task CheckCodex(CodexApi codex, ILog log)
+    private async Task CheckCodex(CodexApi codex)
     {
         log.Log("Checking Codex...");
         try
@@ -93,6 +104,15 @@ public static class Program
             log.Log($"Codex not OK: {ex}");
             throw;
         }
+    }
+
+    private static IFileGenerator CreateGenerator(Configuration config, LogSplitter log)
+    {
+        if (config.FileSizeMb > 0)
+        {
+            return new RandomFileGenerator(config, log);
+        }
+        return new ImageGenerator(log);
     }
 
     private static void PrintHelp()
