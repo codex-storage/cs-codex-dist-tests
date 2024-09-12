@@ -1,16 +1,20 @@
 ﻿using ArgsUniform;
 using AutoClient;
 using CodexOpenApi;
-using Core;
-using Logging;
 using Utils;
 
-public static class Program
+public class Program
 {
+    private readonly App app;
+
+    public Program(Configuration config)
+    {
+        app = new App(config);
+    }
+
     public static async Task Main(string[] args)
     {
         var cts = new CancellationTokenSource();
-        var cancellationToken = cts.Token;
         Console.CancelKeyPress += (sender, args) => cts.Cancel();
 
         var uniformArgs = new ArgsUniform<Configuration>(PrintHelp, args);
@@ -21,58 +25,70 @@ public static class Program
             throw new Exception("Number of concurrent purchases must be > 0");
         }
 
-        var log = new LogSplitter(
-            new FileLog(Path.Combine(config.LogPath, "autoclient")),
-            new ConsoleLog()
-        );
+        var p = new Program(config);
+        await p.Run();
+    }
+
+    public async Task Run()
+    {
+        var codexUsers = await CreateUsers();
+
+        var i = 0;
+        foreach (var user in codexUsers)
+        {
+            user.Start(i);
+            i++;
+        }
+
+        app.Cts.Token.WaitHandle.WaitOne();
+
+        foreach (var user in codexUsers) user.Stop();
+
+        app.Log.Log("Done");
+    }
+
+    private async Task<CodexUser[]> CreateUsers()
+    {
+        var endpointStrs = app.Config.CodexEndpoints.Split(";", StringSplitOptions.RemoveEmptyEntries);
+        var result = new List<CodexUser>();
+
+        foreach (var e in endpointStrs)
+        {
+            result.Add(await CreateUser(e));
+        }
+
+        return result.ToArray();
+    }
+
+    private async Task<CodexUser> CreateUser(string endpoint)
+    {
+        var splitIndex = endpoint.LastIndexOf(':');
+        var host = endpoint.Substring(0, splitIndex);
+        var port = Convert.ToInt32(endpoint.Substring(splitIndex + 1));
 
         var address = new Address(
-            host: config.CodexHost,
-            port: config.CodexPort
+            host: host,
+            port: port
         );
-
-        log.Log($"Start. Address: {address}");
-
-        var generator = CreateGenerator(config, log);
 
         var client = new HttpClient();
         var codex = new CodexApi(client);
         codex.BaseUrl = $"{address.Host}:{address.Port}/api/codex/v1";
 
-        await CheckCodex(codex, log);
+        app.Log.Log($"Checking Codex at {address}...");
+        await CheckCodex(codex);
+        app.Log.Log("OK");
 
-        var purchasers = new List<Purchaser>();
-        for (var i = 0; i < config.NumConcurrentPurchases; i++)
-        {
-            purchasers.Add(
-                new Purchaser(new LogPrefixer(log, $"({i}) "), client, address, codex, config, generator, cancellationToken)
-            );
-        }
-
-        var delayPerPurchaser = TimeSpan.FromMinutes(config.ContractDurationMinutes) / config.NumConcurrentPurchases;
-        foreach (var purchaser in purchasers) 
-        {
-            purchaser.Start();
-            await Task.Delay(delayPerPurchaser);
-        }
-
-        cancellationToken.WaitHandle.WaitOne();
-
-        log.Log("Done.");
+        return new CodexUser(
+            app,
+            codex,
+            client,
+            address
+        );
     }
 
-    private static IFileGenerator CreateGenerator(Configuration config, LogSplitter log)
+    private async Task CheckCodex(CodexApi codex)
     {
-        if (config.FileSizeMb > 0)
-        {
-            return new RandomFileGenerator(config, log);
-        }
-        return new ImageGenerator(log);
-    }
-
-    private static async Task CheckCodex(CodexApi codex, ILog log)
-    {
-        log.Log("Checking Codex...");
         try
         {
             var info = await codex.GetDebugInfoAsync();
@@ -80,7 +96,7 @@ public static class Program
         }
         catch (Exception ex)
         {
-            log.Log($"Codex not OK: {ex}");
+            app.Log.Error($"Codex not OK: {ex}");
             throw;
         }
     }

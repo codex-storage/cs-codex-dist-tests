@@ -11,16 +11,16 @@ namespace AutoClient
 
     public class ImageGenerator : IFileGenerator
     {
-        private LogSplitter log;
+        private readonly ILog log;
 
-        public ImageGenerator(LogSplitter log)
+        public ImageGenerator(ILog log)
         {
             this.log = log;
         }
 
         public async Task<string> Generate()
         {
-            log.Log("Fetching random image from picsum.photos...");
+            log.Debug("Fetching random image from picsum.photos...");
             var httpClient = new HttpClient();
             var thing = await httpClient.GetStreamAsync("https://picsum.photos/3840/2160");
 

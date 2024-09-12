@@ -4,11 +4,8 @@ namespace AutoClient
 {
     public class Configuration
     {
-        [Uniform("codex-host", "ch", "CODEXHOST", false, "Codex Host address. (default 'http://localhost')")]
-        public string CodexHost { get; set; } = "http://localhost";
-
-        [Uniform("codex-port", "cp", "CODEXPORT", false, "port number of Codex API. (8080 by default)")]
-        public int CodexPort { get; set; } = 8080;
+        [Uniform("codex-endpoints", "ce", "CODEXENDPOINTS", false, "Codex endpoints. Semi-colon separated. (default 'http://localhost:8080')")]
+        public string CodexEndpoints { get; set; } = "http://localhost:8080";
 
         [Uniform("datapath", "dp", "DATAPATH", false, "Root path where all data files will be saved.")]
         public string DataPath { get; set; } = "datapath";

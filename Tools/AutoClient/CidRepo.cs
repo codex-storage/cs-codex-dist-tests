@@ -1,16 +1,22 @@
-﻿namespace AutoClientCenter
+﻿namespace AutoClient
 {
     public class CidRepo
     {
         private readonly Random random = new Random();
         private readonly object _lock = new object();
         private readonly List<CidEntry> entries = new List<CidEntry>();
+        private readonly Configuration config;
 
-        public void Add(string cid, long knownSize)
+        public CidRepo(Configuration config)
+        {
+            this.config = config;
+        }
+
+        public void Add(string nodeId, string cid, long knownSize)
         {
             lock (_lock)
             {
-                entries.Add(new CidEntry(cid, knownSize));
+                entries.Add(new CidEntry(nodeId, cid, knownSize));
             }
         }
 
@@ -25,31 +31,32 @@
             }
         }
 
-        public void Assign(AcDownloadStep downloadStep)
+        public string? GetForeignCid(string myNodeId)
         {
             lock (_lock)
             {
                 while (true)
                 {
-                    if (!entries.Any()) return;
+                    if (!entries.Any()) return null;
+                    var available = entries.Where(e => e.NodeId != myNodeId).ToArray();
+                    if (!available.Any()) return null;
 
-                    var i = random.Next(0, entries.Count);
-                    var entry = entries[i];
+                    var i = random.Next(0, available.Length);
+                    var entry = available[i];
 
-                    if (entry.CreatedUtc < (DateTime.UtcNow + TimeSpan.FromHours(18)))
+                    if (entry.CreatedUtc < (DateTime.UtcNow + TimeSpan.FromMinutes(config.ContractDurationMinutes)))
                     {
-                        entries.RemoveAt(i);
+                        entries.Remove(entry);
                     }
                     else
                     {
-                        downloadStep.Cid = entry.Cid;
-                        return;
+                        return entry.Cid;
                     }
                 }
             }
         }
 
-        public long? GetSizeKbsForCid(string cid)
+        public long? GetSizeForCid(string cid)
         {
             lock (_lock)
             {
@@ -62,12 +69,14 @@
 
     public class CidEntry
     {
-        public CidEntry(string cid, long knownSize)
+        public CidEntry(string nodeId, string cid, long knownSize)
         {
+            NodeId = nodeId;
             Cid = cid;
             KnownSize = knownSize;
         }
 
+        public string NodeId { get; }
         public string Cid { get; }
         public string Encoded { get; set; } = string.Empty;
         public long KnownSize { get; }
