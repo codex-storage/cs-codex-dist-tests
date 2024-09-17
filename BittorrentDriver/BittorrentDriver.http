@@ -1,0 +1,6 @@
+@BittorrentDriver_HostAddress = http://localhost:5160
+
+GET {{BittorrentDriver_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
