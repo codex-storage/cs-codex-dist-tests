@@ -119,7 +119,8 @@ namespace Core
         {
             return http.OnClient(client =>
             {
-                var response = Time.Wait(client.PutAsync(GetUrl() + route, new StringContent(body)));
+                var response = Time.Wait(client.PutAsync(GetUrl() + route,
+                    new StringContent(body, MediaTypeHeaderValue.Parse("application/json"))));
                 return Time.Wait(response.Content.ReadAsStringAsync());
             }, $"HTTP-PUT-STR: {route}");
         }

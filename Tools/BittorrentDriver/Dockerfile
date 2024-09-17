@@ -1,37 +1,33 @@
-#See https://aka.ms/customizecontainer to learn how to customize your debug container and how Visual Studio uses this Dockerfile to build your images for faster debugging.
+# Variables
+ARG IMAGE=ubuntu:24.10
+ARG APP_HOME=/app
 
-FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
-USER app
-WORKDIR /app
-EXPOSE 8080
-EXPOSE 8081
 
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
-ARG BUILD_CONFIGURATION=Release
-WORKDIR /src
-COPY ["Tools/BittorrentDriver/", "Tools/BittorrentDriver/"]
-COPY ["Framework", "Framework/"]
-RUN dotnet restore "./Tools/BittorrentDriver/BittorrentDriver.csproj"
-COPY . .
-WORKDIR "/src/Tools/BittorrentDriver"
-RUN dotnet build "./BittorrentDriver.csproj" -c $BUILD_CONFIGURATION -o /app/build
+# Build
+FROM ${IMAGE} AS builder
+ARG APP_HOME
+RUN apt-get update
+RUN apt-get install dotnet-sdk-8.0 -y
 
-FROM build AS publish
-ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "./BittorrentDriver.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+WORKDIR ${APP_HOME}
+COPY ./Tools/BittorrentDriver ./Tools/BittorrentDriver
+COPY ./Framework ./Framework
+RUN dotnet restore Tools/BittorrentDriver
+RUN dotnet publish Tools/BittorrentDriver -c Release -o out
 
-FROM base AS final
+# Create
+FROM ${IMAGE}
 ARG DEBIAN_FRONTEND=noninteractive
+ARG APP_HOME
+ENV APP_HOME=${APP_HOME}
 
-USER root
 # Set up npm and bittorrent-tracker
 RUN apt-get update
-RUN apt-get install npm software-properties-common -y
+RUN apt-get install npm aspnetcore-runtime-8.0 -y
 RUN npm install -g bittorrent-tracker
 # Set up transmission
 RUN apt-get install transmission-cli transmission-common transmission-daemon -y
 
-USER app
-WORKDIR /app
-COPY --from=publish /app/publish .
-ENTRYPOINT ["dotnet", "BittorrentDriver.dll"]
+WORKDIR ${APP_HOME}
+COPY --from=builder ${APP_HOME}/out .
+CMD dotnet ${APP_HOME}/BittorrentDriver.dll

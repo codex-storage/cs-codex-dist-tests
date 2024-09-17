@@ -37,7 +37,7 @@ namespace BittorrentPlugin
             var torrent = endpoint.HttpPostJson("create", new CreateTorrentRequest
             {
                 Size = Convert.ToInt32(size.SizeInBytes),
-                TrackerUrl = trackerUrl.ToString()
+                TrackerUrl = $"{trackerUrl}/announce"
             });
 
             return torrent;
@@ -46,22 +46,27 @@ namespace BittorrentPlugin
         public string StartDaemon()
         {
             var endpoint = GetEndpoint();
-            return endpoint.HttpPutString("daemon", BittorrentContainerRecipe.PeerPort.ToString());
+            var peerPortAddress = container.GetInternalAddress(BittorrentContainerRecipe.PeerPortTag);
+            return endpoint.HttpPutString("daemon", peerPortAddress.Port.ToString());
         }
 
         public string DownloadTorrent(string torrent)
         {
             var endpoint = GetEndpoint();
 
-            return endpoint.HttpPostString<string>("download", torrent);
+            return endpoint.HttpPostJson("download", new DownloadTorrentRequest
+            {
+                TorrentBase64 = torrent
+            });
         }
 
         public string StartAsTracker()
         {
-            TrackerAddress = container.GetAddress(tools.GetLog(), BittorrentContainerRecipe.TrackerPortTag);
+            TrackerAddress = container.GetInternalAddress(BittorrentContainerRecipe.TrackerPortTag);
             var endpoint = GetEndpoint();
 
-            return endpoint.HttpPutString("tracker", BittorrentContainerRecipe.TrackerPort.ToString());
+            var trackerAddress = container.GetInternalAddress(BittorrentContainerRecipe.TrackerPortTag);
+            return endpoint.HttpPutString("tracker", trackerAddress.Port.ToString());
         }
 
         public Address TrackerAddress { get; private set; } = new Address("", 0);
@@ -70,6 +75,11 @@ namespace BittorrentPlugin
         {
             public int Size { get; set; }
             public string TrackerUrl { get; set; } = string.Empty;
+        }
+
+        public class DownloadTorrentRequest
+        {
+            public string TorrentBase64 { get; set; } = string.Empty;
         }
 
         private IEndpoint GetEndpoint()

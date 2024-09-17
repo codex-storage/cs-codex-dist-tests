@@ -71,7 +71,17 @@ namespace CodexTests.BasicTests
         [Test]
         public void BittorrentPluginTest()
         {
-            
+            var tracker = Ci.StartBittorrentNode();
+            var msg = tracker.StartAsTracker();
+
+            var seeder = Ci.StartBittorrentNode();
+            var torrent = seeder.CreateTorrent(10.MB(), tracker);
+            msg = seeder.StartDaemon();
+
+            var leecher = Ci.StartBittorrentNode();
+            msg = leecher.DownloadTorrent(torrent);
+
+            var yay = 0;
         }
     }
 }

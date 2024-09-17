@@ -20,29 +20,54 @@ namespace BittorrentDriver.Controllers
         [HttpPut("tracker")]
         public string StartTracker([FromBody] int port)
         {
-            Log("Starting tracker...");
-            return tracker.Start(port);
+            return Try(() =>
+            {
+                Log("Starting tracker...");
+                return tracker.Start(port);
+            });
         }
 
         [HttpPut("daemon")]
         public string StartDaemon([FromBody] int peerPort)
         {
-            Log("Starting daemon...");
-            return transmission.StartDaemon(peerPort);
+            return Try(() =>
+            {
+                Log("Starting daemon...");
+                return transmission.StartDaemon(peerPort);
+            });
         }
 
         [HttpPost("create")]
         public string CreateTorrent([FromBody] CreateTorrentInput input)
         {
-            Log("Creating torrent file...");
-            return transmission.CreateNew(input.Size, input.TrackerUrl);
+            return Try(() =>
+            {
+                Log("Creating torrent file...");
+                return transmission.CreateNew(input.Size, input.TrackerUrl);
+            });
         }
 
         [HttpPost("download")]
-        public string DownloadTorrent([FromBody] string torrentBase64)
+        public string DownloadTorrent([FromBody] DownloadTorrentInput input)
         {
-            Log("Downloading torrent...");
-            return transmission.Download(torrentBase64);
+            return Try(() =>
+            {
+                Log("Downloading torrent...");
+                return transmission.Download(input.TorrentBase64);
+            });
+        }
+
+        private string Try(Func<string> value)
+        {
+            try
+            {
+                return value();
+            }
+            catch (Exception exc)
+            {
+                log.Error(exc.ToString());
+                return exc.ToString();
+            }
         }
 
         private void Log(string v)
@@ -55,5 +80,10 @@ namespace BittorrentDriver.Controllers
     {
         public int Size { get; set; }
         public string TrackerUrl { get; set; } = string.Empty;
+    }
+
+    public class DownloadTorrentInput
+    {
+        public string TorrentBase64 { get; set; } = string.Empty;
     }
 }
