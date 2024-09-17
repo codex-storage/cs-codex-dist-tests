@@ -32,6 +32,18 @@ namespace BittorrentDriver
             return base64;
         }
 
+        public string StartDaemon(int peerPort)
+        {
+            var info = new ProcessStartInfo
+            {
+                FileName = "transmission-daemon",
+                Arguments = $"--peerport={peerPort} --download-dir={dataDir}"
+            };
+            RunToComplete(info);
+
+            return "OK";
+        }
+
         public string Download(string torrentBase64)
         {
             var torrentFile = Path.Combine(Directory.GetCurrentDirectory(), Guid.NewGuid().ToString() + ".torrent");
@@ -85,7 +97,9 @@ namespace BittorrentDriver
             try
             {
                 var fileManager = new FileManager(log, dataDir);
-                return fileManager.GenerateFile(size.Bytes());
+                var file = fileManager.GenerateFile(size.Bytes());
+                log.Log("Generated file: " + file.Filename);
+                return file;
             }
             catch (Exception ex)
             {

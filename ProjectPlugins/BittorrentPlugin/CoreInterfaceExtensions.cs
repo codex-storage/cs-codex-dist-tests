@@ -4,9 +4,9 @@ namespace BittorrentPlugin
 {
     public static class CoreInterfaceExtensions
     {
-        public static void RunThing(this CoreInterface ci)
+        public static IBittorrentNode StartNode(this CoreInterface ci)
         {
-            Plugin(ci).Run();
+            return Plugin(ci).StartNode();
         }
 
         private static BittorrentPlugin Plugin(CoreInterface ci)

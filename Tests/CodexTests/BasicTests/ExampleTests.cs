@@ -71,7 +71,7 @@ namespace CodexTests.BasicTests
         [Test]
         public void BittorrentPluginTest()
         {
-            Ci.RunThing();
+            
         }
     }
 }

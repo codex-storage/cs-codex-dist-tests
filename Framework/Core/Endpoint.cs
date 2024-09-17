@@ -16,6 +16,7 @@ namespace Core
         TResponse HttpPostString<TResponse>(string route, string body);
         string HttpPostStream(string route, Stream stream);
         Stream HttpGetStream(string route);
+        string HttpPutString(string route, string body);
         T Deserialize<T>(string json);
     }
 
@@ -112,6 +113,15 @@ namespace Core
                 Log(url, "~ STREAM ~");
                 return Time.Wait(client.GetStreamAsync(url));
             }, $"HTTP-GET-STREAM: {route}");
+        }
+
+        public string HttpPutString(string route, string body)
+        {
+            return http.OnClient(client =>
+            {
+                var response = Time.Wait(client.PutAsync(GetUrl() + route, new StringContent(body)));
+                return Time.Wait(response.Content.ReadAsStringAsync());
+            }, $"HTTP-PUT-STR: {route}");
         }
 
         public T Deserialize<T>(string json)

@@ -9,10 +9,11 @@ EXPOSE 8081
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-COPY ["BittorrentDriver/BittorrentDriver.csproj", "BittorrentDriver/"]
-RUN dotnet restore "./BittorrentDriver/BittorrentDriver.csproj"
+COPY ["Tools/BittorrentDriver/", "Tools/BittorrentDriver/"]
+COPY ["Framework", "Framework/"]
+RUN dotnet restore "./Tools/BittorrentDriver/BittorrentDriver.csproj"
 COPY . .
-WORKDIR "/src/BittorrentDriver"
+WORKDIR "/src/Tools/BittorrentDriver"
 RUN dotnet build "./BittorrentDriver.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
 FROM build AS publish
