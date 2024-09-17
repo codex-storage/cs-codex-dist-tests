@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net7.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>4d58719c-20df-4407-bfb4-0f65a324a118</UserSecretsId>
@@ -14,7 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Framework\FileUtils\FileUtils.csproj" />
+    <ProjectReference Include="..\..\Framework\FileUtils\FileUtils.csproj" />
   </ItemGroup>
 
 </Project>
