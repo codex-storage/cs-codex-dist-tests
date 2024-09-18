@@ -19,17 +19,16 @@ namespace BittorrentDriver
             this.log = log;
         }
 
-        public string CreateNew(int size, string trackerUrl)
+        public CreateTorrentResult CreateNew(int size, string trackerUrl)
         {
             var file = CreateFile(size);
-
-            var outFile = Path.Combine(Directory.GetCurrentDirectory(), Guid.NewGuid().ToString());
-
+            var outFile = Path.Combine(dataDir, Guid.NewGuid().ToString());
             var base64 = CreateTorrentFile(file, outFile, trackerUrl);
-
-            if (File.Exists(outFile)) File.Delete(outFile);
-
-            return base64;
+            return new CreateTorrentResult
+            {
+                LocalFilePath = outFile,
+                TorrentBase64 = base64
+            };
         }
 
         public string StartDaemon(int peerPort)
@@ -37,22 +36,48 @@ namespace BittorrentDriver
             var info = new ProcessStartInfo
             {
                 FileName = "transmission-daemon",
-                Arguments = $"--peerport={peerPort} --download-dir={dataDir}"
+                Arguments = $"--peerport={peerPort} " +
+                $"--download-dir={dataDir} " +
+                $"--watch-dir={dataDir} " +
+                $"--no-global-seedratio " +
+                $"--bind-address-ipv4=0.0.0.0 " +
+                $"--dht"
+            };
+            RunToComplete(info);
+
+            return "OK";
+        }
+        
+        public string AddTracker(string trackerUrl, string localFile)
+        {
+            var info = new ProcessStartInfo
+            {
+                FileName = "transmission-edit",
+                Arguments = $"--add={trackerUrl} {localFile}"
             };
             RunToComplete(info);
 
             return "OK";
         }
 
-        public string Download(string torrentBase64)
+        public string PutLocalFile(string torrentBase64)
         {
-            var torrentFile = Path.Combine(Directory.GetCurrentDirectory(), Guid.NewGuid().ToString() + ".torrent");
+            var torrentFile = Path.Combine(dataDir, Guid.NewGuid().ToString() + ".torrent");
             File.WriteAllBytes(torrentFile, Convert.FromBase64String(torrentBase64));
+            return torrentFile;
+        }
+
+        public string Download(string localFile)
+        {
+            var peerPort = Environment.GetEnvironmentVariable("PEERPORT");
 
             var info = new ProcessStartInfo
             {
                 FileName = "transmission-cli",
-                Arguments = torrentFile
+                Arguments = 
+                    $"--port={peerPort} " +
+                    $"--download-dir={dataDir} " +
+                    $"{localFile}"
             };
             RunToComplete(info);
 
@@ -86,6 +111,7 @@ namespace BittorrentDriver
 
         private Process RunToComplete(ProcessStartInfo info)
         {
+            log.Log($"Running: {info.FileName} ({info.Arguments})");
             var process = Process.Start(info);
             if (process == null) throw new Exception("Failed to start");
             process.WaitForExit(TimeSpan.FromMinutes(3));
@@ -96,7 +122,7 @@ namespace BittorrentDriver
         {
             try
             {
-                var fileManager = new FileManager(log, dataDir);
+                var fileManager = new FileManager(log, dataDir, numberSubfolders: false);
                 var file = fileManager.GenerateFile(size.Bytes());
                 log.Log("Generated file: " + file.Filename);
                 return file;
@@ -108,4 +134,10 @@ namespace BittorrentDriver
             }
         }
     }
+
+    public class CreateTorrentResult
+    {
+        public string LocalFilePath { get; set; } = string.Empty;
+        public string TorrentBase64 { get; set; } = string.Empty;
+    } 
 }

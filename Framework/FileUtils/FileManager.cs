@@ -31,9 +31,16 @@ namespace FileUtils
 
         public const int ChunkSize = 1024 * 1024 * 100;
 
-        public FileManager(ILog log, string rootFolder)
+        public FileManager(ILog log, string rootFolder, bool numberSubfolders = true)
         {
-            folder = Path.Combine(rootFolder, folderNumberSource.GetNextNumber().ToString("D5"));
+            if (numberSubfolders)
+            {
+                folder = Path.Combine(rootFolder, folderNumberSource.GetNextNumber().ToString("D5"));
+            }
+            else
+            {
+                folder = rootFolder;
+            }
 
             this.log = log;
         }

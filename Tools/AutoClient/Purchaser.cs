@@ -151,7 +151,7 @@ namespace AutoClient
         {
             try
             {
-                var sp = await GetStoragePurchase(pid)!;
+                var sp = (await GetStoragePurchase(pid))!;
                 return sp.Request.Content.Cid;
             }
             catch (Exception ex)

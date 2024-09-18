@@ -15,7 +15,7 @@ namespace MetricsPlugin
         {
             RunningContainer = runningContainer;
             log = tools.GetLog();
-            var address = RunningContainer.GetAddress(log, PrometheusContainerRecipe.PortTag);
+            var address = RunningContainer.GetAddress(PrometheusContainerRecipe.PortTag);
             endpoint = tools
                 .CreateHttp(address.ToString())
                 .CreateEndpoint(address, "/api/v1/");
@@ -126,7 +126,7 @@ namespace MetricsPlugin
 
         private string GetInstanceNameForNode(IMetricsScrapeTarget target)
         {
-            return ScrapeTargetHelper.FormatTarget(log, target);
+            return ScrapeTargetHelper.FormatTarget(target);
         }
 
         private string GetInstanceStringForNode(IMetricsScrapeTarget target)

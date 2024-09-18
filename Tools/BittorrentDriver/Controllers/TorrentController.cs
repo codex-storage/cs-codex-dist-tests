@@ -17,13 +17,35 @@ namespace BittorrentDriver.Controllers
             transmission = new Transmission(log);
         }
 
-        [HttpPut("tracker")]
+        [HttpPut("starttracker")]
         public string StartTracker([FromBody] int port)
         {
             return Try(() =>
             {
                 Log("Starting tracker...");
                 return tracker.Start(port);
+            });
+        }
+
+        [HttpPost("addtracker")]
+        public string AddTracker([FromBody] AddTrackerInput input)
+        {
+            return Try(() =>
+            {
+                Log("Adding tracker: " + input.TrackerUrl + " - " + input.LocalFile);
+                return transmission.AddTracker(input.TrackerUrl, input.LocalFile);
+            });
+        }
+
+        [HttpPost("postfile")]
+        public string PostFile([FromBody] PostFileInput input)
+        {
+            return Try(() =>
+            {
+                Log("Creating file..");
+                var file = transmission.PutLocalFile(input.Base64Content);
+                Log("File: " + file);
+                return file;
             });
         }
 
@@ -38,7 +60,7 @@ namespace BittorrentDriver.Controllers
         }
 
         [HttpPost("create")]
-        public string CreateTorrent([FromBody] CreateTorrentInput input)
+        public CreateTorrentResult CreateTorrent([FromBody] CreateTorrentInput input)
         {
             return Try(() =>
             {
@@ -53,11 +75,11 @@ namespace BittorrentDriver.Controllers
             return Try(() =>
             {
                 Log("Downloading torrent...");
-                return transmission.Download(input.TorrentBase64);
+                return transmission.Download(input.LocalFile);
             });
         }
 
-        private string Try(Func<string> value)
+        private T Try<T>(Func<T> value)
         {
             try
             {
@@ -66,7 +88,7 @@ namespace BittorrentDriver.Controllers
             catch (Exception exc)
             {
                 log.Error(exc.ToString());
-                return exc.ToString();
+                throw;
             }
         }
 
@@ -82,8 +104,19 @@ namespace BittorrentDriver.Controllers
         public string TrackerUrl { get; set; } = string.Empty;
     }
 
+    public class AddTrackerInput
+    {
+        public string TrackerUrl { get; set; } = string.Empty;
+        public string LocalFile { get; set; } = string.Empty;
+    }
+
     public class DownloadTorrentInput
     {
-        public string TorrentBase64 { get; set; } = string.Empty;
+        public string LocalFile { get; set; } = string.Empty;
+    }
+
+    public class PostFileInput
+    {
+        public string Base64Content { get; set; } = string.Empty;
     }
 }

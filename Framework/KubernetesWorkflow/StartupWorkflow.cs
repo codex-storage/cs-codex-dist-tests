@@ -170,7 +170,7 @@ namespace KubernetesWorkflow
                 var addresses = CreateContainerAddresses(startResult, r);
                 log.Debug($"{r}={name} -> container addresses: {string.Join(Environment.NewLine, addresses.Select(a => a.ToString()))}");
 
-                return new RunningContainer(Guid.NewGuid().ToString(), name, r, addresses);
+                return new RunningContainer(log, Guid.NewGuid().ToString(), name, r, addresses);
 
             }).ToArray();
         }

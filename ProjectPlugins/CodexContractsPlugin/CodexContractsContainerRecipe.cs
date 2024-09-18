@@ -19,7 +19,7 @@ namespace CodexContractsPlugin
         {
             var config = startupConfig.Get<CodexContractsContainerConfig>();
 
-            var address = config.GethNode.StartResult.Container.GetAddress(new NullLog(), GethContainerRecipe.HttpPortTag);
+            var address = config.GethNode.StartResult.Container.GetAddress(GethContainerRecipe.HttpPortTag);
 
             SetSchedulingAffinity(notIn: "false");
 

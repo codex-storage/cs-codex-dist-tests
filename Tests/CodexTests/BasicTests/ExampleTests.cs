@@ -73,13 +73,21 @@ namespace CodexTests.BasicTests
         {
             var tracker = Ci.StartBittorrentNode();
             var msg = tracker.StartAsTracker();
+            msg = tracker.GetTrackerStats();
 
             var seeder = Ci.StartBittorrentNode();
             var torrent = seeder.CreateTorrent(10.MB(), tracker);
+            msg = seeder.AddTracker(tracker, torrent.LocalFilePath);
             msg = seeder.StartDaemon();
 
+            Thread.Sleep(5000);
+
+            msg = tracker.GetTrackerStats();
+
             var leecher = Ci.StartBittorrentNode();
-            msg = leecher.DownloadTorrent(torrent);
+            var local = leecher.PutFile(torrent.TorrentBase64);
+            leecher.AddTracker(tracker, local);
+            msg = leecher.DownloadTorrent(local);
 
             var yay = 0;
         }

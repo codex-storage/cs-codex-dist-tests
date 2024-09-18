@@ -6,7 +6,7 @@ namespace BittorrentPlugin
     public class BittorrentContainerRecipe : ContainerRecipeFactory
     {
         public override string AppName => "bittorrent";
-        public override string Image => "thatbenbierens/bittorrentdriver:init6";
+        public override string Image => "thatbenbierens/bittorrentdriver:init11";
 
         public static string ApiPortTag = "API_PORT";
         public static string TrackerPortTag = "TRACKER_PORT";

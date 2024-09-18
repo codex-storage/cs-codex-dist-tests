@@ -7,8 +7,11 @@ namespace KubernetesWorkflow.Types
 {
     public class RunningContainer
     {
-        public RunningContainer(string id, string name, ContainerRecipe recipe, ContainerAddress[] addresses)
+        private readonly ILog log;
+
+        public RunningContainer(ILog log, string id, string name, ContainerRecipe recipe, ContainerAddress[] addresses)
         {
+            this.log = log;
             Id = id;
             Name = name;
             Recipe = recipe;
@@ -24,7 +27,7 @@ namespace KubernetesWorkflow.Types
         [JsonIgnore]
         public RunningPod RunningPod { get; internal set; } = null!;
 
-        public Address GetAddress(ILog log, string portTag)
+        public Address GetAddress(string portTag)
         {
             var addresses = Addresses.Where(a => a.PortTag == portTag).ToArray();
             if (!addresses.Any()) throw new Exception("No addresses found for portTag: " + portTag);

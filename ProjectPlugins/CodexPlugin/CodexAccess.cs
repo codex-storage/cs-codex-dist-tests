@@ -189,7 +189,7 @@ namespace CodexPlugin
 
         private Address GetAddress()
         {
-            return Container.Containers.Single().GetAddress(log, CodexContainerRecipe.ApiPortTag);
+            return Container.Containers.Single().GetAddress(CodexContainerRecipe.ApiPortTag);
         }
 
         private string GetHttpId()
