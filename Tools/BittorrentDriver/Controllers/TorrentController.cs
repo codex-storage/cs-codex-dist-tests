@@ -37,6 +37,15 @@ namespace BittorrentDriver.Controllers
             });
         }
 
+        [HttpGet("stats")]
+        public string GetTrackerStats()
+        {
+            return Try(() =>
+            {
+                return tracker.GetStats();
+            });
+        }
+
         [HttpPost("postfile")]
         public string PostFile([FromBody] PostFileInput input)
         {

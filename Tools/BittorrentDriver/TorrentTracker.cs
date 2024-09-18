@@ -5,10 +5,13 @@ namespace BittorrentDriver
     public class TorrentTracker
     {
         private Process? process;
+        private int? trackerPort;
 
         public string Start(int port)
         {
             if (process != null) throw new Exception("Already started");
+            trackerPort = port;
+
             var info = new ProcessStartInfo
             {
                 FileName = "bittorrent-tracker",
@@ -47,6 +50,18 @@ namespace BittorrentDriver
                     $"STDERR: {process.StandardError.ReadToEnd()}";
             }
             return "OK";
+        }
+
+        public string GetStats()
+        {
+            if (!trackerPort.HasValue) throw new Exception("Port value not set");
+
+            using var client = new HttpClient();
+            var task = client.GetAsync($"http://localhost:{trackerPort.Value}/stats");
+            task.Wait();
+            var strTask = task.Result.Content.ReadAsStringAsync();
+            strTask.Wait();
+            return strTask.Result;
         }
     }
 }

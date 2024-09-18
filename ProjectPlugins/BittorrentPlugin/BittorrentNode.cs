@@ -96,10 +96,8 @@ namespace BittorrentPlugin
 
         public string GetTrackerStats()
         {
-            //var http = tools.CreateHttp(TrackerAddress.ToString(), c => { });
-            //var endpoint = http.CreateEndpoint(TrackerAddress, "/", container.Name);
-            //return endpoint.HttpGetString("stats");
-            return "no";
+            var endpoint = GetEndpoint();
+            return endpoint.HttpGetString("stats");
         }
 
         //public Address TrackerAddress { get; private set; } = new Address("", 0);
