@@ -7,6 +7,7 @@ namespace CodexPlugin
     public interface IMarketplaceAccess
     {
         string MakeStorageAvailable(StorageAvailability availability);
+        StorageAvailability[] GetAvailabilities();
         IStoragePurchaseContract RequestStorage(StoragePurchaseRequest purchase);
     }
 
@@ -61,6 +62,14 @@ namespace CodexPlugin
             return response.Id;
         }
 
+        public StorageAvailability[] GetAvailabilities()
+        {
+            var result = codexAccess.GetAvailabilities();
+            Log($"Got {result.Length} availabilities:");
+            foreach (var a in result) a.Log(log);
+            return result;
+        }
+
         private void Log(string msg)
         {
             log.Log($"{codexAccess.Container.Containers.Single().Name} {msg}");
@@ -76,6 +85,12 @@ namespace CodexPlugin
         }
 
         public IStoragePurchaseContract RequestStorage(StoragePurchaseRequest purchase)
+        {
+            Unavailable();
+            throw new NotImplementedException();
+        }
+
+        public StorageAvailability[] GetAvailabilities()
         {
             Unavailable();
             throw new NotImplementedException();

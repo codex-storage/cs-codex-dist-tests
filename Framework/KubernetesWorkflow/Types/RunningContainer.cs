@@ -24,13 +24,12 @@ namespace KubernetesWorkflow.Types
         [JsonIgnore]
         public RunningPod RunningPod { get; internal set; } = null!;
 
-        public Address GetAddress(ILog log, string portTag)
+        public Address GetAddress(string portTag)
         {
             var addresses = Addresses.Where(a => a.PortTag == portTag).ToArray();
             if (!addresses.Any()) throw new Exception("No addresses found for portTag: " + portTag);
 
             var select = SelectAddress(addresses);
-            log.Debug($"Container '{Name}' selected for tag '{portTag}' address: '{select}'");
             return select.Address;
         }
 

@@ -87,7 +87,7 @@ namespace CodexPlugin
 
         public void Log(ILog log)
         {
-            log.Log($"Making storage available... (" +
+            log.Log($"Storage Availability: (" +
                 $"totalSize: {TotalSpace}, " +
                 $"maxDuration: {Time.FormatDuration(MaxDuration)}, " + 
                 $"minPriceForTotalSpace: {MinPriceForTotalSpace}, " +

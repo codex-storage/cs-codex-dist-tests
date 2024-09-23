@@ -63,6 +63,25 @@ namespace CodexPlugin
             };
         }
 
+        public StorageAvailability[] Map(ICollection<SalesAvailability> availabilities)
+        {
+            return availabilities.Select(a => Map(a)).ToArray();
+        }
+
+        public StorageAvailability Map(SalesAvailability availability)
+        {
+            return new StorageAvailability
+            (
+                ToByteSize(availability.TotalSize),
+                ToTimespan(availability.Duration),
+                new TestToken(ToBigIng(availability.MinPrice)),
+                new TestToken(ToBigIng(availability.MaxCollateral))
+            )
+            {
+                Id = availability.Id,
+            };
+        }
+
         // TODO: Fix openapi spec for this call.
         //public StoragePurchase Map(CodexOpenApi.Purchase purchase)
         //{
@@ -221,6 +240,21 @@ namespace CodexPlugin
         private string ToDecInt(TestToken t)
         {
             return t.TstWei.ToString("D");
+        }
+
+        private BigInteger ToBigIng(string tokens)
+        {
+            return BigInteger.Parse(tokens);
+        }
+
+        private TimeSpan ToTimespan(string duration)
+        {
+            return TimeSpan.FromSeconds(Convert.ToInt32(duration));
+        }
+
+        private ByteSize ToByteSize(string size)
+        {
+            return new ByteSize(Convert.ToInt64(size));
         }
     }
 }

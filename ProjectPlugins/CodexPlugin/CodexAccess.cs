@@ -92,6 +92,12 @@ namespace CodexPlugin
             return mapper.Map(read);
         }
 
+        public StorageAvailability[] GetAvailabilities()
+        {
+            var collection = OnCodex<ICollection<SalesAvailability>>(api => api.GetOfferedStorageAsync());
+            return mapper.Map(collection);
+        }
+
         public string RequestStorage(StoragePurchaseRequest request)
         {
             var body = mapper.Map(request);
@@ -189,7 +195,7 @@ namespace CodexPlugin
 
         private Address GetAddress()
         {
-            return Container.Containers.Single().GetAddress(log, CodexContainerRecipe.ApiPortTag);
+            return Container.Containers.Single().GetAddress(CodexContainerRecipe.ApiPortTag);
         }
 
         private string GetHttpId()

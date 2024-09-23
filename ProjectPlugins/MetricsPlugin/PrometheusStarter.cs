@@ -80,7 +80,7 @@ namespace MetricsPlugin
     {
         public static string FormatTarget(ILog log, IMetricsScrapeTarget target)
         {
-            var a = target.Container.GetAddress(log, target.MetricsPortTag);
+            var a = target.Container.GetAddress(target.MetricsPortTag);
             var host = a.Host.Replace("http://", "").Replace("https://", "");
             return $"{host}:{a.Port}";
         }

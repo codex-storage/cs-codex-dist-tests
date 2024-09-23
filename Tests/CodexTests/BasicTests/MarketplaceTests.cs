@@ -97,6 +97,8 @@ namespace CodexTests.BasicTests
 
             purchaseContract.WaitForStorageContractStarted();
 
+            var availabilities = hosts.Select(h => h.Marketplace.GetAvailabilities());
+
             var request = GetOnChainStorageRequest(contracts, geth);
             AssertStorageRequest(request, purchase, contracts, client);
             AssertContractSlot(contracts, request, 0);
