@@ -97,7 +97,11 @@ namespace CodexTests.BasicTests
 
             purchaseContract.WaitForStorageContractStarted();
 
-            var availabilities = hosts.Select(h => h.Marketplace.GetAvailabilities());
+            var availabilities = hosts.Select(h => h.Marketplace.GetAvailabilities()).ToArray();
+            if (availabilities.All(h => h.All(a => a.FreeSpace.SizeInBytes == a.TotalSpace.SizeInBytes)))
+            {
+                Assert.Fail("Host availabilities were not used.");
+            }
 
             var request = GetOnChainStorageRequest(contracts, geth);
             AssertStorageRequest(request, purchase, contracts, client);
@@ -107,47 +111,6 @@ namespace CodexTests.BasicTests
 
             AssertBalance(contracts, client, Is.LessThan(clientInitialBalance), "Buyer was not charged for storage.");
             Assert.That(contracts.GetRequestState(request), Is.EqualTo(RequestState.Finished));
-        }
-
-        [Test]
-        [Ignore("Integrated into MarketplaceExample to speed up testing.")]
-        public void CanDownloadContentFromContractCid()
-        {
-            var fileSize = 10.MB();
-            var geth = Ci.StartGethNode(s => s.IsMiner().WithName("disttest-geth"));
-            var contracts = Ci.StartCodexContracts(geth);
-            var testFile = CreateFile(fileSize);
-
-            var client = StartCodex(s => s
-                .WithName("Client")
-                .EnableMarketplace(geth, contracts, m => m
-                    .WithInitial(10.Eth(), 10.Tst())));
-
-            var uploadCid = client.UploadFile(testFile);
-
-            var purchase = new StoragePurchaseRequest(uploadCid)
-            {
-                PricePerSlotPerSecond = 2.TstWei(),
-                RequiredCollateral = 10.TstWei(),
-                MinRequiredNumberOfNodes = 5,
-                NodeFailureTolerance = 2,
-                ProofProbability = 5,
-                Duration = TimeSpan.FromMinutes(5),
-                Expiry = TimeSpan.FromMinutes(4)
-            };
-
-            var purchaseContract = client.Marketplace.RequestStorage(purchase);
-            var contractCid = purchaseContract.ContentId;
-            Assert.That(uploadCid.Id, Is.Not.EqualTo(contractCid.Id));
-
-            // Download both from client.
-            testFile.AssertIsEqual(client.DownloadContent(uploadCid));
-            testFile.AssertIsEqual(client.DownloadContent(contractCid));
-
-            // Download both from another node.
-            var downloader = StartCodex(s => s.WithName("Downloader"));
-            testFile.AssertIsEqual(downloader.DownloadContent(uploadCid));
-            testFile.AssertIsEqual(downloader.DownloadContent(contractCid));
         }
 
         private TrackedFile CreateFile(ByteSize fileSize)

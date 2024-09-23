@@ -84,6 +84,7 @@ namespace CodexPlugin
         public TimeSpan MaxDuration { get; }
         public TestToken MinPriceForTotalSpace { get; }
         public TestToken MaxCollateral { get; } 
+        public ByteSize FreeSpace { get; set; } = ByteSize.Zero;
 
         public void Log(ILog log)
         {
