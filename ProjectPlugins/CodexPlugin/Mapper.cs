@@ -63,12 +63,12 @@ namespace CodexPlugin
             };
         }
 
-        public StorageAvailability[] Map(ICollection<SalesAvailability> availabilities)
+        public StorageAvailability[] Map(ICollection<SalesAvailabilityREAD> availabilities)
         {
             return availabilities.Select(a => Map(a)).ToArray();
         }
 
-        public StorageAvailability Map(SalesAvailability availability)
+        public StorageAvailability Map(SalesAvailabilityREAD availability)
         {
             var freeSize = (string)availability.AdditionalProperties["freeSize"];
 
@@ -126,19 +126,6 @@ namespace CodexPlugin
         //        Cid = content.Cid
         //    };
         //}
-
-        public StorageAvailability Map(CodexOpenApi.SalesAvailabilityREAD read)
-        {
-            return new StorageAvailability(
-                totalSpace: new ByteSize(Convert.ToInt64(read.TotalSize)),
-                maxDuration: TimeSpan.FromSeconds(Convert.ToDouble(read.Duration)),
-                minPriceForTotalSpace: new TestToken(BigInteger.Parse(read.MinPrice)),
-                maxCollateral: new TestToken(BigInteger.Parse(read.MaxCollateral))
-            )
-            {
-                Id = read.Id
-            };
-        }
 
         public CodexSpace Map(Space space)
         {

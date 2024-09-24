@@ -94,7 +94,7 @@ namespace CodexPlugin
 
         public StorageAvailability[] GetAvailabilities()
         {
-            var collection = OnCodex<ICollection<SalesAvailability>>(api => api.GetOfferedStorageAsync());
+            var collection = OnCodex<ICollection<SalesAvailabilityREAD>>(api => api.GetAvailabilitiesAsync());
             return mapper.Map(collection);
         }
 
