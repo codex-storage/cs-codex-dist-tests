@@ -70,8 +70,6 @@ namespace CodexPlugin
 
         public StorageAvailability Map(SalesAvailabilityREAD availability)
         {
-            var freeSize = (string)availability.AdditionalProperties["freeSize"];
-
             return new StorageAvailability
             (
                 ToByteSize(availability.TotalSize),
@@ -81,7 +79,7 @@ namespace CodexPlugin
             )
             {
                 Id = availability.Id,
-                FreeSpace = ToByteSize(freeSize)
+                FreeSpace = ToByteSize(availability.FreeSize),
             };
         }
 
