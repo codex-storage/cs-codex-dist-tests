@@ -244,6 +244,11 @@ namespace CodexPlugin
             Version = debugInfo.Version;
         }
 
+        public override string ToString()
+        {
+            return $"CodexNode:{GetName()}";
+        }
+
         private string[] GetPeerMultiAddresses(CodexNode peer, DebugInfo peerInfo)
         {
             // The peer we want to connect is in a different pod.

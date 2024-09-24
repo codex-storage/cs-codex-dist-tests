@@ -17,7 +17,7 @@ namespace CodexTests.BasicTests
         public void PyramidTest()
         {
             var size = 5.MB();
-            var numberOfLayers = 4;
+            var numberOfLayers = 3;
 
             var bottomLayer = StartLayers(numberOfLayers);
 

@@ -22,6 +22,7 @@ namespace DistTestCore
             Log = log;
             Configuration = configuration;
             TimeSet = timeSet;
+            TestNamespace = testNamespace;
             TestStart = DateTime.UtcNow;
 
             entryPoint = new EntryPoint(log, configuration.GetK8sConfiguration(timeSet, this, testNamespace), configuration.GetFileManagerFolder(), timeSet);
@@ -36,6 +37,7 @@ namespace DistTestCore
         public TestLog Log { get; }
         public Configuration Configuration { get; }
         public ITimeSet TimeSet { get; }
+        public string TestNamespace { get; }
         public bool WaitForCleanup { get; }
         public CoreInterface CoreInterface { get; }
 

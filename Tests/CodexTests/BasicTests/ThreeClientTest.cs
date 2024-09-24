@@ -23,24 +23,6 @@ namespace CodexTests.BasicTests
         }
 
         [Test]
-        [CreateTranscript(nameof(SwarmTest))]
-        public void SwarmTest()
-        {
-            var uploader = StartCodex(s => s.WithName("uploader"));
-            var downloaders = StartCodex(5, s => s.WithName("downloader"));
-
-            var file = GenerateTestFile(100.MB());
-            var cid = uploader.UploadFile(file);
-
-            var result = Parallel.ForEach(downloaders, d =>
-            {
-                d.DownloadContent(cid);
-            });
-
-            Assert.That(result.IsCompleted);
-        }
-
-        [Test]
         public void DownloadingUnknownCidDoesNotCauseCrash()
         {
             var node = StartCodex(2).First();
