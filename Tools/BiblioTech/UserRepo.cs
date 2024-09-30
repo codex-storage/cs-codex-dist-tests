@@ -10,7 +10,7 @@ namespace BiblioTech
         private readonly object repoLock = new object();
         private readonly Dictionary<ulong, UserData> cache = new Dictionary<ulong, UserData>();
 
-        public bool AssociateUserWithAddress(IUser user, EthAddress address)
+        public SetAddressResponse AssociateUserWithAddress(IUser user, EthAddress address)
         {
             lock (repoLock)
             {
@@ -134,18 +134,19 @@ namespace BiblioTech
             return null;
         }
 
-        private bool SetUserAddress(IUser user, EthAddress? address)
+        private SetAddressResponse SetUserAddress(IUser user, EthAddress? address)
         {
             if (GetUserDataForAddress(address) != null)
             {
-                return false;
+                return SetAddressResponse.AddressAlreadyInUse;
             }
 
             var userData = GetOrCreate(user);
+            if (userData == null) return SetAddressResponse.CreateUserFailed;
             userData.CurrentAddress = address;
             userData.AssociateEvents.Add(new UserAssociateAddressEvent(DateTime.UtcNow, address));
             SaveUserData(userData);
-            return true;
+            return SetAddressResponse.OK;
         }
 
         private void SetUserNotification(IUser user, bool notifyEnabled)
@@ -244,5 +245,12 @@ namespace BiblioTech
                 Program.Log.Error("Exception while trying to load all user data: " + ex);
             }
         }
+    }
+
+    public enum SetAddressResponse
+    {
+        OK,
+        AddressAlreadyInUse,
+        CreateUserFailed
     }
 }

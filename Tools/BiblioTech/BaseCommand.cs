@@ -1,6 +1,7 @@
 ﻿using Discord.WebSocket;
 using BiblioTech.Options;
 using Discord;
+using k8s.KubeConfigModels;
 
 namespace BiblioTech
 {
@@ -25,16 +26,13 @@ namespace BiblioTech
             catch (Exception ex)
             {
                 var msg = "Failed with exception: " + ex;
-                if (IsInAdminChannel(command))
-                {
-                    await command.FollowupAsync(msg.Substring(0, Math.Min(1900, msg.Length)));
-                }
-                else
-                {
-                    await command.FollowupAsync("Something failed while trying to do that...", ephemeral: true);
-                    await Program.AdminChecker.GetAdminChannel().SendMessageAsync(msg);
-                }
                 Program.Log.Error(msg);
+
+                if (!IsInAdminChannel(command))
+                {
+                    await command.FollowupAsync("Something failed while trying to do that... (error details posted in admin channel)", ephemeral: true);
+                }
+                await Program.AdminChecker.SendInAdminChannel(msg);
             }
         }
 
@@ -61,6 +59,21 @@ namespace BiblioTech
             var targetUser = userOption.GetUser(context);
             if (IsSenderAdmin(context.Command) && targetUser != null) return targetUser;
             return context.Command.User;
+        }
+
+        protected string Mention(SocketUser user)
+        {
+            return Mention(user.Id);
+        }
+
+        protected string Mention(IUser user)
+        {
+            return Mention(user.Id);
+        }
+
+        protected string Mention(ulong userId)
+        {
+            return $"<@{userId}>";
         }
     }
 }

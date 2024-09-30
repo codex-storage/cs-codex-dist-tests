@@ -28,6 +28,7 @@ namespace BiblioTech.Commands
             if (addr == null)
             {
                 await context.Followup($"No address has been set for this user. Please use '/{userAssociateCommand.Name}' to set it first.");
+                await Program.AdminChecker.SendInAdminChannel($"User {Mention(userId)} used '/{Name}' but address has not been set.");
                 return;
             }
 
@@ -42,9 +43,17 @@ namespace BiblioTech.Commands
                 mintedTokens = ProcessTokens(contracts, addr, report);
             });
 
+            var reportLine = string.Join(Environment.NewLine, report);
             Program.UserRepo.AddMintEventForUser(userId, addr, sentEth, mintedTokens);
+            await Program.AdminChecker.SendInAdminChannel($"User {Mention(userId)} used '/{Name}' successfully. ({reportLine})");
 
-            await context.Followup(string.Join(Environment.NewLine, report));
+            await context.Followup(reportLine);
+        }
+
+        private string Format<T>(Transaction<T>? transaction)
+        {
+            if (transaction == null) return "-";
+            return transaction.ToString();
         }
 
         private Transaction<TestToken>? ProcessTokens(ICodexContracts contracts, EthAddress addr, List<string> report)

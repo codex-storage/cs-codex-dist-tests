@@ -28,6 +28,7 @@ namespace BiblioTech.Commands
             if (addr == null)
             {
                 await context.Followup($"No address has been set for this user. Please use '/{userAssociateCommand.Name}' to set it first.");
+                await Program.AdminChecker.SendInAdminChannel($"User {Mention(userId)} used '/{Name}' but address has not been set.");
                 return;
             }
 

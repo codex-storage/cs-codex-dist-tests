@@ -27,9 +27,9 @@ namespace BiblioTech
             return channel.Id == Program.Config.AdminChannelId;
         }
 
-        public ISocketMessageChannel GetAdminChannel()
+        public async Task SendInAdminChannel(string msg)
         {
-            return adminChannel;
+            await adminChannel.SendMessageAsync(msg);
         }
 
         public void SetAdminChannel(ISocketMessageChannel adminChannel)

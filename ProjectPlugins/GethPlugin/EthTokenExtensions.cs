@@ -28,7 +28,13 @@
 
         public override string ToString()
         {
-            return $"{Eth} Eth";
+            var weiOnly = Wei % TokensIntExtensions.WeiPerEth;
+
+            var tokens = new List<string>();
+            if (Eth > 0) tokens.Add($"{Eth} Eth");
+            if (weiOnly > 0) tokens.Add($"{weiOnly} Wei");
+
+            return string.Join(" + ", tokens);
         }
     }
 
