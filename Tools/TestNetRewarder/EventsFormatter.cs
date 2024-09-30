@@ -1,6 +1,7 @@
 ﻿using CodexContractsPlugin;
 using CodexContractsPlugin.ChainMonitor;
 using GethPlugin;
+using System.Globalization;
 using System.Numerics;
 using Utils;
 
@@ -76,7 +77,7 @@ namespace TestNetRewarder
 
         private void AddRequestBlock(RequestEvent requestEvent, string eventName, params string[] content)
         {
-            var blockNumber = $"[{requestEvent.Block.BlockNumber}]";
+            var blockNumber = $"[{requestEvent.Block.BlockNumber} {FormatDateTime(requestEvent.Block.Utc)}]";
             var title = $"{blockNumber} **{eventName}** `{requestEvent.Request.Request.Id}`";
             AddBlock(title, content);
         }
@@ -105,6 +106,11 @@ namespace TestNetRewarder
                     "```"
                 })
             ) + nl + nl;
+        }
+
+        private string FormatDateTime(DateTime utc)
+        {
+            return utc.ToString("yyyy-MM-dd HH:mm:ss UTC", CultureInfo.InvariantCulture);
         }
 
         private string BigIntToDuration(BigInteger big)

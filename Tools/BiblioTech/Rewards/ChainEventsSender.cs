@@ -31,7 +31,7 @@ namespace BiblioTech.Rewards
                         {
                             var @event = ApplyReplacements(users, e);
                             await eventsChannel.SendMessageAsync(@event);
-                            await Task.Delay(3000);
+                            await Task.Delay(1000);
                         }
                     }
                 });
