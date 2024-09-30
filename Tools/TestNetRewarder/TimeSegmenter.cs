@@ -59,7 +59,9 @@ namespace TestNetRewarder
         {
             if (IsRealtime) return latest + segmentSize;
             var segment = segmentSize * currentSegmentMult;
-            return latest + segment;
+            var end = latest + segment;
+            if (end > DateTime.UtcNow) return DateTime.UtcNow + segmentSize;
+            return end;
         }
 
         private void HandleResponse(TimeSegmentResponse response)
@@ -87,6 +89,7 @@ namespace TestNetRewarder
             var now = DateTime.UtcNow;
             while (end > now)
             {
+                currentSegmentMult = 1;
                 var delay = (end - now) + TimeSpan.FromSeconds(3);
                 await Task.Delay(delay, Program.CancellationToken);
                 return true;
