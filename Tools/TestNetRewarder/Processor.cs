@@ -31,19 +31,18 @@ namespace TestNetRewarder
             chainState = new ChainState(log, contracts, handler, config.HistoryStartUtc);
         }
 
-        public async Task OnNewSegment(TimeRange timeRange)
+        public async Task<TimeSegmentResponse> OnNewSegment(TimeRange timeRange)
         {
             try
             {
-                chainState.Update(timeRange.To);
+                var sw = System.Diagnostics.Stopwatch.StartNew();
+                var numberOfChainEvents = await ProcessEvents(timeRange);
+                var duration = sw.Elapsed;
 
-                var events = eventsFormatter.GetEvents();
-
-                var request = builder.Build(events);
-                if (request.HasAny())
-                {
-                    await client.SendRewards(request);
-                }
+                if (numberOfChainEvents == 0) return TimeSegmentResponse.Underload;
+                if (numberOfChainEvents > 10) return TimeSegmentResponse.Overload;
+                if (duration > TimeSpan.FromSeconds(1)) return TimeSegmentResponse.Overload;
+                return TimeSegmentResponse.OK;
             }
             catch (Exception ex)
             {
@@ -52,6 +51,20 @@ namespace TestNetRewarder
                 eventsFormatter.AddError(msg);
                 throw;
             }
+        }
+
+        private async Task<int> ProcessEvents(TimeRange timeRange)
+        {
+            var numberOfChainEvents = chainState.Update(timeRange.To);
+
+            var events = eventsFormatter.GetEvents();
+
+            var request = builder.Build(events);
+            if (request.HasAny())
+            {
+                await client.SendRewards(request);
+            }
+            return numberOfChainEvents;
         }
     }
 }

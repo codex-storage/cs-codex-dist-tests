@@ -48,18 +48,19 @@ namespace CodexContractsPlugin.ChainMonitor
         public TimeRange TotalSpan { get; private set; }
         public IChainStateRequest[] Requests => requests.ToArray();
 
-        public void Update()
+        public int Update()
         {
-            Update(DateTime.UtcNow);
+            return Update(DateTime.UtcNow);
         }
 
-        public void Update(DateTime toUtc)
+        public int Update(DateTime toUtc)
         {
             var span = new TimeRange(TotalSpan.To, toUtc);
             var events = ChainEvents.FromTimeRange(contracts, span);
             Apply(events);
 
             TotalSpan = new TimeRange(TotalSpan.From, span.To);
+            return events.All.Length;
         }
 
         private void Apply(ChainEvents events)

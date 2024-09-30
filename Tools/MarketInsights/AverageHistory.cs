@@ -23,7 +23,7 @@ namespace MarketInsights
 
         public MarketTimeSegment[] Segments { get; private set; } = Array.Empty<MarketTimeSegment>();
 
-        public Task OnNewSegment(TimeRange timeRange)
+        public Task<TimeSegmentResponse> OnNewSegment(TimeRange timeRange)
         {
             var contribution = BuildContribution(timeRange);
             contributions.Add(contribution);
@@ -35,7 +35,7 @@ namespace MarketInsights
 
             Segments = contributions.ToArray();
 
-            return Task.CompletedTask;
+            return Task.FromResult(TimeSegmentResponse.OK);
         }
 
         private MarketTimeSegment BuildContribution(TimeRange timeRange)
