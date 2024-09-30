@@ -24,8 +24,8 @@
                 .Replace("]", "-")
                 .Replace(",", "-");
 
-            result = result.Trim('-');
             if (result.Length > maxLength) result = result.Substring(0, maxLength);
+            result = result.Trim('-');
 
             return result;
         }
