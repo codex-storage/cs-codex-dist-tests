@@ -12,10 +12,11 @@ namespace KubernetesWorkflow
         private readonly ILog log;
         private readonly K8sCluster cluster;
         private readonly WorkflowNumberSource workflowNumberSource;
+        private readonly Func<string?, string?> replacer;
         private readonly K8sClient client;
         public const string PodLabelKey = "pod-uuid";
 
-        public K8sController(ILog log, K8sCluster cluster, WorkflowNumberSource workflowNumberSource, string k8sNamespace)
+        public K8sController(ILog log, K8sCluster cluster, WorkflowNumberSource workflowNumberSource, string k8sNamespace, Func<string?, string?> replacer)
         {
             this.log = log;
             this.cluster = cluster;
@@ -23,6 +24,7 @@ namespace KubernetesWorkflow
             client = new K8sClient(cluster.GetK8sClientConfig());
 
             K8sNamespace = k8sNamespace;
+            this.replacer = replacer;
         }
 
         public void Dispose()
@@ -64,7 +66,7 @@ namespace KubernetesWorkflow
             if (waitTillStopped) WaitUntilPodsForDeploymentAreOffline(startResult.Deployment);
         }
 
-        public void DownloadPodLog(RunningContainer container, ILogHandler logHandler, int? tailLines, bool? previous)
+        public void DownloadPodLog(RunningContainer container, ILogHandler logHandler, int? tailLines, bool? previous, Func<string?, string?> replacer)
         {
             log.Debug();
 
@@ -72,7 +74,7 @@ namespace KubernetesWorkflow
             var recipeName = container.Recipe.Name;
 
             using var stream = client.Run(c => c.ReadNamespacedPodLog(podName, K8sNamespace, recipeName, tailLines: tailLines, previous: previous));
-            logHandler.Log(stream);
+            logHandler.Log(stream, replacer);
         }
 
         public string ExecuteCommand(RunningContainer container, string command, params string[] args)
@@ -906,7 +908,7 @@ namespace KubernetesWorkflow
                 var msg = $"Pod crash detected for deployment {deploymentName} (pod:{podName})";
                 log.Error(msg);
 
-                DownloadPodLog(container, new WriteToFileLogHandler(log, msg), tailLines: null, previous: true);
+                DownloadPodLog(container, new WriteToFileLogHandler(log, msg), tailLines: null, previous: true, replacer);
 
                 throw new Exception(msg);
             }
@@ -952,7 +954,7 @@ namespace KubernetesWorkflow
             var podName = GetPodName(container);
             var recipeName = container.Recipe.Name;
 
-            return new CrashWatcher(log, cluster.GetK8sClientConfig(), containerName, podName, recipeName, K8sNamespace);
+            return new CrashWatcher(log, cluster.GetK8sClientConfig(), containerName, podName, recipeName, K8sNamespace, replacer);
         }
 
         private V1Pod[] FindPodsByLabel(string podLabel)

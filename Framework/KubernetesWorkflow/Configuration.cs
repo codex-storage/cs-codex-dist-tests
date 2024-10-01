@@ -21,5 +21,8 @@ namespace KubernetesWorkflow
 
         [JsonIgnore]
         public IK8sHooks Hooks { get; set; } = new DoNothingK8sHooks();
+
+        [JsonIgnore]
+        public Func<string?, string?> Replacer { get; set; } = s => s;
     }
 }

@@ -11,11 +11,13 @@ namespace KubernetesWorkflow
         private readonly string podName;
         private readonly string recipeName;
         private readonly string k8sNamespace;
+        private readonly Func<string?, string?> replacer;
         private CancellationTokenSource cts;
         private Task? worker;
         private Exception? workerException;
 
-        public CrashWatcher(ILog log, KubernetesClientConfiguration config, string containerName, string podName, string recipeName, string k8sNamespace)
+        public CrashWatcher(ILog log, KubernetesClientConfiguration config, string containerName, string podName, string recipeName, string k8sNamespace,
+            Func<string?, string?> replacer)
         {
             this.log = log;
             this.config = config;
@@ -23,6 +25,7 @@ namespace KubernetesWorkflow
             this.podName = podName;
             this.recipeName = recipeName;
             this.k8sNamespace = k8sNamespace;
+            this.replacer = replacer;
             cts = new CancellationTokenSource();
         }
 
@@ -92,7 +95,7 @@ namespace KubernetesWorkflow
         {
             using var stream = client.ReadNamespacedPodLog(podName, k8sNamespace, recipeName, previous: true);
             var handler = new WriteToFileLogHandler(log, "Crash detected for " + containerName);
-            handler.Log(stream);
+            handler.Log(stream, replacer);
         }
     }
 }

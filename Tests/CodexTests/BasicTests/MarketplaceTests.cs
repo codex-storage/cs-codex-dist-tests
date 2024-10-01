@@ -1,4 +1,5 @@
 ﻿using CodexContractsPlugin;
+using CodexContractsPlugin.ChainMonitor;
 using CodexContractsPlugin.Marketplace;
 using CodexPlugin;
 using FileUtils;
@@ -111,6 +112,119 @@ namespace CodexTests.BasicTests
 
             AssertBalance(contracts, client, Is.LessThan(clientInitialBalance), "Buyer was not charged for storage.");
             Assert.That(contracts.GetRequestState(request), Is.EqualTo(RequestState.Finished));
+        }
+
+        [Test]
+        [Combinatorial]
+        public void FindBug(
+            [Values(64)] int numBlocks,
+            [Values(0)] int plusSizeKb,
+            [Values(0)] int plusSizeBytes
+        )
+        {
+            var numberOfHosts = 15;
+
+            var hostInitialBalance = 234.Tst();
+            var clientInitialBalance = 100000.Tst();
+            var fileSize = new ByteSize(
+                numBlocks * (64 * 1024) +
+                plusSizeKb * 1024 +
+                plusSizeBytes
+            );
+
+            var geth = Ci.StartGethNode(s => s.IsMiner().WithName("disttest-geth"));
+            var contracts = Ci.StartCodexContracts(geth);
+
+            var hosts = StartCodex(numberOfHosts, s => s
+                .WithName("Host")
+                .WithLogLevel(CodexLogLevel.Trace, new CodexLogCustomTopics(CodexLogLevel.Error, CodexLogLevel.Error, CodexLogLevel.Warn)
+                {
+                    ContractClock = CodexLogLevel.Trace,
+                })
+                .WithStorageQuota(11.GB())
+                .EnableMarketplace(geth, contracts, m => m
+                    .WithInitial(10.Eth(), hostInitialBalance)
+                    .AsStorageNode()
+                    .AsValidator()));
+
+            foreach (var host in hosts)
+            {
+                AssertBalance(contracts, host, Is.EqualTo(hostInitialBalance));
+
+                var availability = new StorageAvailability(
+                    totalSpace: 10.GB(),
+                    maxDuration: TimeSpan.FromMinutes(30),
+                    minPriceForTotalSpace: 1.TstWei(),
+                    maxCollateral: 20.TstWei()
+                );
+                host.Marketplace.MakeStorageAvailable(availability);
+            }
+
+            var client = StartCodex(s => s
+                .WithName("Client")
+                .EnableMarketplace(geth, contracts, m => m
+                    .WithInitial(10.Eth(), clientInitialBalance)));
+
+            var nameMap = new Dictionary<string, string>();
+            AddNameMapping(nameMap, client);
+            foreach (var host in hosts) AddNameMapping(nameMap, host);
+
+            Get().Replacer = line =>
+            {
+                if (line == null) return null;
+                foreach (var pair in nameMap)
+                {
+                    line = line.Replace(pair.Key, pair.Value);
+                }
+                return line;
+            };
+
+            var handler = new EventLogginHandler(GetTestLog());
+            var chainState = new ChainState(GetTestLog(), contracts, handler, GetTestRunTimeRange().From);
+
+            Task.Run(() =>
+            {
+                while (true)
+                {
+                    chainState.Update();
+                    Thread.Sleep(2000);
+                }
+            });
+
+            while (true)
+            {
+                var testFile = CreateFile(fileSize);
+                var uploadCid = client.UploadFile(testFile);
+
+                var purchase = new StoragePurchaseRequest(uploadCid)
+                {
+                    PricePerSlotPerSecond = 2.TstWei(),
+                    RequiredCollateral = 10.TstWei(),
+                    MinRequiredNumberOfNodes = 5,
+                    NodeFailureTolerance = 2,
+                    ProofProbability = 5,
+                    Duration = TimeSpan.FromMinutes(20),
+                    Expiry = TimeSpan.FromMinutes(10)
+                };
+
+                var purchaseContract = client.Marketplace.RequestStorage(purchase);
+                purchaseContract.WaitForStorageContractStarted();
+            }
+        }
+
+        private void AddNameMapping(Dictionary<string, string> nameMap, ICodexNode node)
+        {
+            var name = node.GetName();
+            var info = node.GetDebugInfo();
+            var nodeId = info.Table.LocalNode.NodeId;
+            var peerId = info.Table.LocalNode.PeerId;
+
+            nameMap.Add(nodeId, name);
+            nameMap.Add(peerId, name);
+            nameMap.Add(CodexUtils.ToShortId(nodeId), name);
+            nameMap.Add(CodexUtils.ToShortId(peerId), name);
+            nameMap.Add(CodexUtils.ToNodeIdShortId(nodeId), name);
+            nameMap.Add(CodexUtils.ToNodeIdShortId(peerId), name);
         }
 
         private TrackedFile CreateFile(ByteSize fileSize)

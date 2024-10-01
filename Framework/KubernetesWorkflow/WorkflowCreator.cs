@@ -25,7 +25,7 @@ namespace KubernetesWorkflow
             var workflowNumberSource = new WorkflowNumberSource(numberSource.GetNextNumber(),
                                                                     containerNumberSource);
 
-            return new StartupWorkflow(log, workflowNumberSource, cluster, GetNamespace(namespaceOverride));
+            return new StartupWorkflow(log, workflowNumberSource, cluster, GetNamespace(namespaceOverride), configuration.Replacer);
         }
 
         private string GetNamespace(string? namespaceOverride)

@@ -28,16 +28,17 @@ namespace KubernetesWorkflow
         private readonly WorkflowNumberSource numberSource;
         private readonly K8sCluster cluster;
         private readonly string k8sNamespace;
+        private readonly Func<string?, string?> replacer;
         private readonly RecipeComponentFactory componentFactory = new RecipeComponentFactory();
         private readonly LocationProvider locationProvider;
 
-        internal StartupWorkflow(ILog log, WorkflowNumberSource numberSource, K8sCluster cluster, string k8sNamespace)
+        internal StartupWorkflow(ILog log, WorkflowNumberSource numberSource, K8sCluster cluster, string k8sNamespace, Func<string?, string?> replacer)
         {
             this.log = log;
             this.numberSource = numberSource;
             this.cluster = cluster;
             this.k8sNamespace = k8sNamespace;
-
+            this.replacer = replacer;
             locationProvider = new LocationProvider(log, K8s);
         }
 
@@ -119,7 +120,7 @@ namespace KubernetesWorkflow
         {
             K8s(controller =>
             {
-                controller.DownloadPodLog(container, logHandler, tailLines, previous);
+                controller.DownloadPodLog(container, logHandler, tailLines, previous, replacer);
             });
         }
 
@@ -131,7 +132,7 @@ namespace KubernetesWorkflow
 
             K8s(controller =>
             {
-                controller.DownloadPodLog(container, logHandler, tailLines, previous);
+                controller.DownloadPodLog(container, logHandler, tailLines, previous, replacer);
             });
 
             return new DownloadedLog(logHandler, container.Name);
@@ -257,7 +258,7 @@ namespace KubernetesWorkflow
         {
             try
             {
-                var controller = new K8sController(log, cluster, numberSource, k8sNamespace);
+                var controller = new K8sController(log, cluster, numberSource, k8sNamespace, replacer);
                 action(controller);
                 controller.Dispose();
             }
@@ -272,7 +273,7 @@ namespace KubernetesWorkflow
         {
             try
             {
-                var controller = new K8sController(log, cluster, numberSource, k8sNamespace);
+                var controller = new K8sController(log, cluster, numberSource, k8sNamespace, replacer);
                 var result = action(controller);
                 controller.Dispose();
                 return result;

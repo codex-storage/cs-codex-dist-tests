@@ -23,6 +23,26 @@ namespace CodexTests.BasicTests
         }
 
         [Test]
+        public void FindBug()
+        {
+            var uploader = StartCodex();
+            var downloaders = StartCodex(10);
+
+            var start = DateTime.UtcNow;
+            while ((DateTime.UtcNow - start) < TimeSpan.FromMinutes(15))
+            {
+                var cid = uploader.UploadFile(GenerateTestFile(5.MB()));
+
+                var loop = Parallel.ForEach(downloaders, d =>
+                {
+                    d.DownloadContent(cid);
+                });
+
+                Assert.That(loop.IsCompleted);
+            }
+        }
+
+        [Test]
         public void DownloadingUnknownCidDoesNotCauseCrash()
         {
             var node = StartCodex(2).First();

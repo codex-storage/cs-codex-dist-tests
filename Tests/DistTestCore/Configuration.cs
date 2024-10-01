@@ -29,12 +29,12 @@ namespace DistTestCore
         /// </summary>
         public bool AlwaysDownloadContainerLogs { get; set; }
 
-        public KubernetesWorkflow.Configuration GetK8sConfiguration(ITimeSet timeSet, string k8sNamespace)
+        public KubernetesWorkflow.Configuration GetK8sConfiguration(ITimeSet timeSet, string k8sNamespace, Func<string?, string?> replacer)
         {
-            return GetK8sConfiguration(timeSet, new DoNothingK8sHooks(), k8sNamespace);
+            return GetK8sConfiguration(timeSet, new DoNothingK8sHooks(), k8sNamespace, replacer);
         }
 
-        public KubernetesWorkflow.Configuration GetK8sConfiguration(ITimeSet timeSet, IK8sHooks hooks, string k8sNamespace)
+        public KubernetesWorkflow.Configuration GetK8sConfiguration(ITimeSet timeSet, IK8sHooks hooks, string k8sNamespace, Func<string?, string?> replacer)
         {
             var config = new KubernetesWorkflow.Configuration(
                 kubeConfigFile: kubeConfigFile,
@@ -45,6 +45,7 @@ namespace DistTestCore
 
             config.AllowNamespaceOverride = false;
             config.Hooks = hooks;
+            config.Replacer = replacer;
 
             return config;
         }

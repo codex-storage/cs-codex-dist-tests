@@ -25,12 +25,17 @@ namespace DistTestCore
             TestNamespace = testNamespace;
             TestStart = DateTime.UtcNow;
 
-            entryPoint = new EntryPoint(log, configuration.GetK8sConfiguration(timeSet, this, testNamespace), configuration.GetFileManagerFolder(), timeSet);
+            entryPoint = new EntryPoint(log, configuration.GetK8sConfiguration(timeSet, this, testNamespace, InternalReplacer), configuration.GetFileManagerFolder(), timeSet);
             metadata = entryPoint.GetPluginMetadata();
             CoreInterface = entryPoint.CreateInterface();
             this.deployId = deployId;
             WaitForCleanup = waitForCleanup;
             log.WriteLogTag();
+        }
+
+        private string? InternalReplacer(string? arg)
+        {
+            return Replacer(arg);
         }
 
         public DateTime TestStart { get; }
@@ -40,6 +45,7 @@ namespace DistTestCore
         public string TestNamespace { get; }
         public bool WaitForCleanup { get; }
         public CoreInterface CoreInterface { get; }
+        public Func<string?, string?> Replacer { get; set; } = s => s;
 
         public void DeleteAllResources()
         {

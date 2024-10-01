@@ -4,19 +4,19 @@ namespace KubernetesWorkflow
 {
     public interface ILogHandler
     {
-        void Log(Stream log);
+        void Log(Stream log, Func<string?, string?> replacer);
     }
 
     public abstract class LogHandler : ILogHandler
     {
-        public void Log(Stream log)
+        public void Log(Stream log, Func<string?, string?> replacer)
         {
             using var reader = new StreamReader(log);
             var line = reader.ReadLine();
             while (line != null)
             {
-                ProcessLine(line);
-                line = reader.ReadLine();
+                line = replacer(reader.ReadLine());
+                if (line != null) ProcessLine(line);
             }
         }
 

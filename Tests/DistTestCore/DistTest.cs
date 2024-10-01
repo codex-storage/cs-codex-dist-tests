@@ -35,7 +35,7 @@ namespace DistTestCore
             fixtureLog = new FixtureLog(logConfig, startTime, deployId);
             statusLog = new StatusLog(logConfig, startTime, "dist-tests", deployId);
 
-            globalEntryPoint = new EntryPoint(fixtureLog, configuration.GetK8sConfiguration(new DefaultTimeSet(), TestNamespacePrefix), configuration.GetFileManagerFolder());
+            globalEntryPoint = new EntryPoint(fixtureLog, configuration.GetK8sConfiguration(new DefaultTimeSet(), TestNamespacePrefix, s => s), configuration.GetFileManagerFolder());
 
             Initialize(fixtureLog);
         }
