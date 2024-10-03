@@ -35,10 +35,7 @@ namespace CodexTests.BasicTests
             var numberOfHosts = 5;
             var hosts = StartCodex(numberOfHosts, s => s
                 .WithName("Host")
-                .WithLogLevel(CodexLogLevel.Trace, new CodexLogCustomTopics(CodexLogLevel.Error, CodexLogLevel.Error, CodexLogLevel.Warn)
-                {
-                    ContractClock = CodexLogLevel.Trace,
-                })
+                .WithLogLevel(CodexLogLevel.Trace, new CodexLogCustomTopics(CodexLogLevel.Info, CodexLogLevel.Info, CodexLogLevel.Info))
                 .WithStorageQuota(11.GB())
                 .EnableMarketplace(geth, contracts, m => m
                     .WithInitial(10.Eth(), hostInitialBalance)
@@ -137,10 +134,7 @@ namespace CodexTests.BasicTests
 
             var hosts = StartCodex(numberOfHosts, s => s
                 .WithName("Host")
-                .WithLogLevel(CodexLogLevel.Trace, new CodexLogCustomTopics(CodexLogLevel.Error, CodexLogLevel.Error, CodexLogLevel.Warn)
-                {
-                    ContractClock = CodexLogLevel.Trace,
-                })
+                .WithLogLevel(CodexLogLevel.Trace, new CodexLogCustomTopics(CodexLogLevel.Info, CodexLogLevel.Info, CodexLogLevel.Trace))
                 .WithStorageQuota(11.GB())
                 .EnableMarketplace(geth, contracts, m => m
                     .WithInitial(10.Eth(), hostInitialBalance)
@@ -178,18 +172,6 @@ namespace CodexTests.BasicTests
                 }
                 return line;
             };
-
-            var handler = new EventLogginHandler(GetTestLog());
-            var chainState = new ChainState(GetTestLog(), contracts, handler, GetTestRunTimeRange().From);
-
-            Task.Run(() =>
-            {
-                while (true)
-                {
-                    chainState.Update();
-                    Thread.Sleep(2000);
-                }
-            });
 
             while (true)
             {
