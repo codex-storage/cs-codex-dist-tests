@@ -1,5 +1,6 @@
 ﻿using System.Security.Cryptography;
 using System.Text;
+using Utils;
 
 public static class Program
 {
@@ -40,32 +41,9 @@ public static class Program
 
     private static string FindCodexPluginFolder()
     {
-        var current = Directory.GetCurrentDirectory();
-
-        while (true)
-        {
-            var localFolders = Directory.GetDirectories(current);
-            var projectPluginsFolders = localFolders.Where(l => l.EndsWith(ProjectPluginsFolderName)).ToArray();
-            if (projectPluginsFolders.Length == 1)
-            {
-                return Path.Combine(projectPluginsFolders.Single(), CodexPluginFolderName);
-            }
-            var codexPluginFolders = localFolders.Where(l => l.EndsWith(CodexPluginFolderName)).ToArray();
-            if (codexPluginFolders.Length == 1)
-            {
-                return codexPluginFolders.Single();
-            }
-
-            var parent = Directory.GetParent(current);
-            if (parent == null)
-            {
-                var msg = $"Unable to locate '{CodexPluginFolderName}' folder. Travelled up from: '{Directory.GetCurrentDirectory()}'";
-                Console.WriteLine(msg);
-                throw new Exception(msg);
-            }
-
-            current = parent.FullName;
-        }
+        var folder = Path.Combine(PluginPathUtils.ProjectPluginsDir, "CodexPlugin");
+        if (!Directory.Exists(folder)) throw new Exception("CodexPlugin folder not found. Expected: " + folder);
+        return folder;
     }
 
     private static string CreateHash(string openApiFile)

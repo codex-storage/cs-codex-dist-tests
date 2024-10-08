@@ -3,13 +3,14 @@ using KubernetesWorkflow.Types;
 using Logging;
 using System.Security.Cryptography;
 using System.Text;
+using Utils;
 
 namespace CodexPlugin
 {
     public class ApiChecker
     {
         // <INSERT-OPENAPI-YAML-HASH>
-        private const string OpenApiYamlHash = "6B-94-24-A4-D5-01-6F-12-E9-34-74-36-80-57-7A-3A-79-8C-E8-02-68-B7-05-DA-50-A0-5C-B1-02-B9-AE-C6";
+        private const string OpenApiYamlHash = "8B-C5-3F-BF-E6-6C-6A-4F-1C-70-29-19-46-AA-E6-71-DC-56-0A-A0-BC-73-A5-11-9E-66-CE-09-1E-86-20-FC";
         private const string OpenApiFilePath = "/codex/openapi.yaml";
         private const string DisableEnvironmentVariable = "CODEXPLUGIN_DISABLE_APICHECK";
 
@@ -21,8 +22,9 @@ namespace CodexPlugin
 
         private const string Failure =
             "Codex API compatibility check failed! " +
-            "openapi.yaml used by CodexPlugin does not match openapi.yaml in Codex container. Please update the openapi.yaml in " +
-            "'ProjectPlugins/CodexPlugin' and rebuild this project. If you wish to disable API compatibility checking, please set " +
+            "openapi.yaml used by CodexPlugin does not match openapi.yaml in Codex container. The openapi.yaml in " +
+            "'ProjectPlugins/CodexPlugin' has been overwritten with the container one. " +
+            "Please and rebuild this project. If you wish to disable API compatibility checking, please set " +
             $"the environment variable '{DisableEnvironmentVariable}' or set the disable bool in 'ProjectPlugins/CodexPlugin/ApiChecker.cs'.";
 
         private static bool checkPassed = false;
@@ -71,8 +73,21 @@ namespace CodexPlugin
                 return;
             }
 
+            OverwriteOpenApiYaml(containerApi);
+
             log.Error(Failure);
             throw new Exception(Failure);
+        }
+
+        private void OverwriteOpenApiYaml(string containerApi)
+        {
+            Log("API compatibility check failed. Updating CodexPlugin...");
+            var openApiFilePath = Path.Combine(PluginPathUtils.ProjectPluginsDir, "CodexPlugin", "openapi.yaml");
+            if (!File.Exists(openApiFilePath)) throw new Exception("Unable to locate CodexPlugin/openapi.yaml. Expected: " + openApiFilePath);
+
+            File.Delete(openApiFilePath);
+            File.WriteAllText(openApiFilePath, containerApi);
+            Log("CodexPlugin/openapi.yaml has been updated.");
         }
 
         private string Hash(string file)

@@ -1,4 +1,6 @@
-﻿namespace CodexContractsPlugin
+﻿using Utils;
+
+namespace CodexContractsPlugin
 {
     public class SelfUpdater
     {
@@ -41,24 +43,10 @@
 
         private string GetMarketplaceFilePath()
         {
-            var here = Directory.GetCurrentDirectory();
-            while (true)
-            {
-                var path = GetMarketplaceFile(here);
-                if (path != null) return path;
-
-                var parent = Directory.GetParent(here);
-                var up = parent?.FullName;
-                if (up == null || up == here) throw new Exception("Unable to locate ProjectPlugins folder. Unable to update contracts.");
-                here = up;
-            }
-        }
-
-        private string? GetMarketplaceFile(string root)
-        {
-            var path = Path.Combine(root, "ProjectPlugins", "CodexContractsPlugin", "Marketplace", "Marketplace.cs");
-            if (File.Exists(path)) return path;
-            return null;
+            var projectPluginDir = PluginPathUtils.ProjectPluginsDir;
+            var path = Path.Combine(projectPluginDir, "CodexContractsPlugin", "Marketplace", "Marketplace.cs");
+            if (!File.Exists(path)) throw new Exception("Marketplace file not found. Expected: " + path);
+            return path;
         }
 
         private string GenerateContent(string abi, string bytecode)
