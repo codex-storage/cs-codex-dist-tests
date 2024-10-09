@@ -71,6 +71,10 @@
                         task();
                         return;
                     }
+                    catch (OperationCanceledException)
+                    {
+                        return;
+                    }
                     catch (Exception ex)
                     {
                         var failure = CaptureFailure(ex);
