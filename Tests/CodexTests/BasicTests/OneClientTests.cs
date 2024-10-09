@@ -22,19 +22,16 @@ namespace CodexTests.BasicTests
         [Test]
         public void InterruptUploadTest()
         {
-            var tasks = new List<Task<bool>>();
-            for (var i = 0; i < 10; i++)
-            {
-                tasks.Add(Task<bool>.Run(() => RunInterruptUploadTest()));
-            }
+            var nodes = StartCodex(10);
+
+            var tasks = nodes.Select(n => Task<bool>.Run(() => RunInterruptUploadTest(n)));
             Task.WaitAll(tasks.ToArray());
 
             Assert.That(tasks.Select(t => t.Result).All(r => r == true));
         }
 
-        private bool RunInterruptUploadTest()
+        private bool RunInterruptUploadTest(ICodexNode node)
         {
-            var node = StartCodex();
             var file = GenerateTestFile(300.MB());
 
             var process = StartCurlUploadProcess(node, file);
