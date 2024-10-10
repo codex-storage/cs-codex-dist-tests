@@ -104,7 +104,7 @@ GitHub --> CI --> Kubernetes -->  Job                  |
     spec:
       containers:
       - name: dotnet
-        image: mcr.microsoft.com/dotnet/sdk:7.0
+        image: mcr.microsoft.com/dotnet/sdk:8.0
         env:
         - name: RUNNERLOCATION
           value: InternalToCluster

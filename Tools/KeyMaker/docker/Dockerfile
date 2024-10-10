@@ -1,5 +1,5 @@
 # Variables
-ARG BUILDER=mcr.microsoft.com/dotnet/sdk:7.0
+ARG BUILDER=mcr.microsoft.com/dotnet/sdk:8.0
 ARG IMAGE=${BUILDER}
 ARG APP_HOME=/app
 

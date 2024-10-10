@@ -2,7 +2,7 @@
 
 This project allows you to write tools and tests that control and interact with container-based applications to form a distributed system in a controlled, reproducible environment.
 
-Dotnet: v7.0  
+Dotnet: v8.0  
 Kubernetes: v1.25.4  
 Dotnet-kubernetes SDK: v10.1.4 https://github.com/kubernetes-client/csharp  
 Nethereum: v4.14.0

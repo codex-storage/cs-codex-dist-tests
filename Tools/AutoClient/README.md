@@ -6,7 +6,7 @@ Can generate random images or random data of a specified size.
 
 ## How to run
 
-- dotnet 7.0 and CLI arguments: `dotnet run -- --codex-host=... --codex-port=...`
+- dotnet 8.0 and CLI arguments: `dotnet run -- --codex-host=... --codex-port=...`
 - docker and env-vars: `codexstorage/codex-autoclient:sha-88daab3`
 
 ## Configuration options
