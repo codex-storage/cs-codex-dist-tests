@@ -2,7 +2,7 @@
 using NUnit.Framework;
 using OverwatchTranscript;
 
-namespace FrameworkTests.OverwatchTranscript
+namespace FrameworkTests.OverwatchTranscriptTests
 {
     [TestFixture]
     public class TranscriptLargeTests
