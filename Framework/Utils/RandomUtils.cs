@@ -5,6 +5,16 @@
         private static readonly Random random = new Random();
         private static readonly object @lock = new object();
 
+        public static T GetOneRandom<T>(this T[] items)
+        {
+            lock (@lock)
+            {
+                var i = random.Next(0, items.Length);
+                var result = items[i];
+                return result;
+            }
+        }
+
         public static T PickOneRandom<T>(this List<T> remainingItems)
         {
             lock (@lock)

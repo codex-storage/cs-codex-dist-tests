@@ -11,6 +11,7 @@ namespace TestNetRewarder
     {
         private static readonly string nl = Environment.NewLine;
         private readonly List<string> events = new List<string>();
+        private readonly EmojiMaps emojiMaps = new EmojiMaps();
 
         public string[] GetEvents()
         {
@@ -27,7 +28,7 @@ namespace TestNetRewarder
         public void OnNewRequest(RequestEvent requestEvent)
         {
             var request = requestEvent.Request;
-            AddRequestBlock(requestEvent, "New Request",
+            AddRequestBlock(requestEvent, $"{C} New Request",
                 $"Client: {request.Client}",
                 $"Content: {request.Request.Content.Cid}",
                 $"Duration: {BigIntToDuration(request.Request.Ask.Duration)}",
@@ -42,27 +43,27 @@ namespace TestNetRewarder
 
         public void OnRequestCancelled(RequestEvent requestEvent)
         {
-            AddRequestBlock(requestEvent, "Cancelled");
+            AddRequestBlock(requestEvent, $"{N} Cancelled");
         }
 
         public void OnRequestFailed(RequestEvent requestEvent)
         {
-            AddRequestBlock(requestEvent, "Failed");
+            AddRequestBlock(requestEvent, $"{N} Failed");
         }
 
         public void OnRequestFinished(RequestEvent requestEvent)
         {
-            AddRequestBlock(requestEvent, "Finished");
+            AddRequestBlock(requestEvent, $"{P} Finished");
         }
 
         public void OnRequestFulfilled(RequestEvent requestEvent)
         {
-            AddRequestBlock(requestEvent, "Started");
+            AddRequestBlock(requestEvent, $"{P} Started");
         }
 
         public void OnSlotFilled(RequestEvent requestEvent, EthAddress host, BigInteger slotIndex)
         {
-            AddRequestBlock(requestEvent, "Slot Filled",
+            AddRequestBlock(requestEvent, $"{P} Slot Filled",
                 $"Host: {host}",
                 $"Slot Index: {slotIndex}"
             );
@@ -70,14 +71,14 @@ namespace TestNetRewarder
 
         public void OnSlotFreed(RequestEvent requestEvent, BigInteger slotIndex)
         {
-            AddRequestBlock(requestEvent, "Slot Freed",
+            AddRequestBlock(requestEvent, $"{S} Slot Freed",
                 $"Slot Index: {slotIndex}"
             );
         }
 
         public void OnSlotReservationsFull(RequestEvent requestEvent, BigInteger slotIndex)
         {
-            AddRequestBlock(requestEvent, "Slot Reservations Full",
+            AddRequestBlock(requestEvent, $"{P} Slot Reservations Full",
                 $"Slot Index: {slotIndex}"
             );
         }
@@ -137,5 +138,10 @@ namespace TestNetRewarder
             var tt = new TestToken(big);
             return tt.ToString();
         }
+
+        private string C => emojiMaps.GetCreate();
+        private string P => emojiMaps.GetPositive();
+        private string S => emojiMaps.GetSurprise();
+        private string N => emojiMaps.GetNegative();
     }
 }
