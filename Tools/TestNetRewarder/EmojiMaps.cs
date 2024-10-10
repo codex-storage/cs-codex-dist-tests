@@ -4,50 +4,80 @@ namespace TestNetRewarder
 {
     public class EmojiMaps
     {
-        private readonly string[] create = new[]
+        private readonly string[] emojis = new[]
         {
+            // yellow
+            "😀",
+            "🌻",
+            "🍋",
+            "🧀",
+            "🌔",
+            "⭐",
+            "⚡",
+            "🏆",
+            // red
+            "💘",
+            "🦞",
+            "🌹",
+            "🍒",
+            "🫖", // teapot
+            "⛩",
+            "🚗",
+            "🔥",
+            // green
+            "🐊",
+            "🦎",
+            "🐛",
+            "🌳",
+            "🍀",
+            "🧩",
+            "🔋",
+            "♻",
+            // blue
+            "💙",
+            "🐳",
             "🐟",
-            "🔵",
-            "🟦" // blue square
-        };
-        private readonly string[] positive = new[]
-        {
-            "🟢", // green circle
-            "🟩" // green square
-        };
-        private readonly string[] surprise = new[]
-        {
-            "🧐",
-            "🤨",
-            "🟡", // yellow circle
-            "🟨" // yellow square
-        };
-        private readonly string[] negative = new[]
-        {
-            "⛔",
-            "🚫",
-            "🔴",
-            "🟥" // red square
+            "🍉",
+            "🧊",
+            "🌐",
+            "⚓",
+            "🌀",
         };
 
-        public string GetCreate()
+        public string NewRequest => "🐟";
+        public string Started => "🦈";
+        public string SlotFilled => "🟢";
+        public string SlotFreed => "⭕";
+        public string SlotReservationsFull => "☑️";
+        public string Finished => "✅";
+        public string Cancelled => "🚫";
+        public string Failed => "❌";
+
+        public string StringToEmojis(string input, int outLength)
         {
-            return RandomUtils.GetOneRandom(create);
+            if (outLength < 1) outLength = 1;
+
+            var result = "";
+            var segmentLength = input.Length / outLength;
+            if (segmentLength < 1)
+            {
+                return StringToEmojis(input + input, outLength);
+            }
+            for (var i = 0; i < outLength; i++)
+            {
+                var segment = input.Substring(i * segmentLength, segmentLength);
+                result += SelectOne(segment);
+            }
+
+            return result;
         }
 
-        public string GetPositive()
+        private string SelectOne(string segment)
         {
-            return RandomUtils.GetOneRandom(positive);
-        }
-
-        public string GetSurprise()
-        {
-            return RandomUtils.GetOneRandom(surprise);
-        }
-
-        public string GetNegative()
-        {
-            return RandomUtils.GetOneRandom(negative);
+            var index = 0;
+            foreach (var c in segment) index += Convert.ToInt32(c);
+            index = index % emojis.Length;
+            return emojis[index];
         }
     }
 }

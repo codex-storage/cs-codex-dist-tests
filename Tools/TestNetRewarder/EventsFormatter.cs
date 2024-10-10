@@ -28,7 +28,7 @@ namespace TestNetRewarder
         public void OnNewRequest(RequestEvent requestEvent)
         {
             var request = requestEvent.Request;
-            AddRequestBlock(requestEvent, $"{C} New Request",
+            AddRequestBlock(requestEvent, $"{emojiMaps.NewRequest} New Request",
                 $"Client: {request.Client}",
                 $"Content: {request.Request.Content.Cid}",
                 $"Duration: {BigIntToDuration(request.Request.Ask.Duration)}",
@@ -43,27 +43,27 @@ namespace TestNetRewarder
 
         public void OnRequestCancelled(RequestEvent requestEvent)
         {
-            AddRequestBlock(requestEvent, $"{N} Cancelled");
+            AddRequestBlock(requestEvent, $"{emojiMaps.Cancelled} Cancelled");
         }
 
         public void OnRequestFailed(RequestEvent requestEvent)
         {
-            AddRequestBlock(requestEvent, $"{N} Failed");
+            AddRequestBlock(requestEvent, $"{emojiMaps.Failed} Failed");
         }
 
         public void OnRequestFinished(RequestEvent requestEvent)
         {
-            AddRequestBlock(requestEvent, $"{P} Finished");
+            AddRequestBlock(requestEvent, $"{emojiMaps.Finished} Finished");
         }
 
         public void OnRequestFulfilled(RequestEvent requestEvent)
         {
-            AddRequestBlock(requestEvent, $"{P} Started");
+            AddRequestBlock(requestEvent, $"{emojiMaps.Started} Started");
         }
 
         public void OnSlotFilled(RequestEvent requestEvent, EthAddress host, BigInteger slotIndex)
         {
-            AddRequestBlock(requestEvent, $"{P} Slot Filled",
+            AddRequestBlock(requestEvent, $"{emojiMaps.SlotFilled} Slot Filled",
                 $"Host: {host}",
                 $"Slot Index: {slotIndex}"
             );
@@ -71,14 +71,14 @@ namespace TestNetRewarder
 
         public void OnSlotFreed(RequestEvent requestEvent, BigInteger slotIndex)
         {
-            AddRequestBlock(requestEvent, $"{S} Slot Freed",
+            AddRequestBlock(requestEvent, $"{emojiMaps.SlotFreed} Slot Freed",
                 $"Slot Index: {slotIndex}"
             );
         }
 
         public void OnSlotReservationsFull(RequestEvent requestEvent, BigInteger slotIndex)
         {
-            AddRequestBlock(requestEvent, $"{P} Slot Reservations Full",
+            AddRequestBlock(requestEvent, $"{emojiMaps.SlotReservationsFull} Slot Reservations Full",
                 $"Slot Index: {slotIndex}"
             );
         }
@@ -86,7 +86,7 @@ namespace TestNetRewarder
         private void AddRequestBlock(RequestEvent requestEvent, string eventName, params string[] content)
         {
             var blockNumber = $"[{requestEvent.Block.BlockNumber} {FormatDateTime(requestEvent.Block.Utc)}]";
-            var title = $"{blockNumber} **{eventName}** `{requestEvent.Request.Request.Id}`";
+            var title = $"{blockNumber} **{eventName}** {FormatRequestId(requestEvent)}";
             AddBlock(title, content);
         }
 
@@ -121,6 +121,13 @@ namespace TestNetRewarder
             return utc.ToString("yyyy-MM-dd HH:mm:ss UTC", CultureInfo.InvariantCulture);
         }
 
+        private string FormatRequestId(RequestEvent requestEvent)
+        {
+            return
+                $"({emojiMaps.StringToEmojis(requestEvent.Request.Request.Id, 3)})" +
+                $"`{requestEvent.Request.Request.Id}`";
+        }
+
         private string BigIntToDuration(BigInteger big)
         {
             var span = TimeSpan.FromSeconds((int)big);
@@ -138,10 +145,5 @@ namespace TestNetRewarder
             var tt = new TestToken(big);
             return tt.ToString();
         }
-
-        private string C => emojiMaps.GetCreate();
-        private string P => emojiMaps.GetPositive();
-        private string S => emojiMaps.GetSurprise();
-        private string N => emojiMaps.GetNegative();
     }
 }

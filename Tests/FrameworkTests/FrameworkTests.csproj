@@ -18,6 +18,7 @@
     <ProjectReference Include="..\..\Framework\OverwatchTranscript\OverwatchTranscript.csproj" />
     <ProjectReference Include="..\..\Framework\Utils\Utils.csproj" />
     <ProjectReference Include="..\..\ProjectPlugins\CodexContractsPlugin\CodexContractsPlugin.csproj" />
+    <ProjectReference Include="..\..\Tools\TestNetRewarder\TestNetRewarder.csproj" />
   </ItemGroup>
 
 </Project>
