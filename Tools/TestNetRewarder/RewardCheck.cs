@@ -72,6 +72,10 @@ namespace TestNetRewarder
         {
         }
 
+        public void OnSlotReservationsFull(RequestEvent requestEvent, BigInteger slotIndex)
+        {
+        }
+
         private void GiveReward(RewardConfig reward, EthAddress receiver)
         {
             giver.Give(reward, receiver);

@@ -16,6 +16,7 @@ namespace CodexContractsPlugin.ChainMonitor
         void OnRequestFailed(RequestEvent requestEvent);
         void OnSlotFilled(RequestEvent requestEvent, EthAddress host, BigInteger slotIndex);
         void OnSlotFreed(RequestEvent requestEvent, BigInteger slotIndex);
+        void OnSlotReservationsFull(RequestEvent requestEvent, BigInteger slotIndex);
     }
 
     public class RequestEvent
@@ -147,6 +148,14 @@ namespace CodexContractsPlugin.ChainMonitor
             r.Hosts.RemoveHost((int)@event.SlotIndex);
             r.Log($"[{@event.Block.BlockNumber}] SlotFreed (slotIndex:{@event.SlotIndex})");
             handler.OnSlotFreed(new RequestEvent(@event.Block, r), @event.SlotIndex);
+        }
+
+        private void ApplyEvent(SlotReservationsFullEventDTO @event)
+        {
+            var r = FindRequest(@event.RequestId);
+            if (r == null) return;
+            r.Log($"[{@event.Block.BlockNumber}] SlotReservationsFull (slotIndex:{@event.SlotIndex})");
+            handler.OnSlotReservationsFull(new RequestEvent(@event.Block, r), @event.SlotIndex);
         }
 
         private void ApplyTimeImplicitEvents(ulong blockNumber, DateTime eventsUtc)

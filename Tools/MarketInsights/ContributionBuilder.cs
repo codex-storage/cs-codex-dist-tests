@@ -51,6 +51,10 @@ namespace MarketInsights
         {
         }
 
+        public void OnSlotReservationsFull(RequestEvent requestEvent, BigInteger slotIndex)
+        {
+        }
+
         public MarketTimeSegment GetSegment()
         {
             return segment;

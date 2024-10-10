@@ -1,6 +1,7 @@
 ﻿using CodexContractsPlugin.Marketplace;
 using GethPlugin;
 using Logging;
+using Nethereum.Contracts;
 using Nethereum.Hex.HexTypes;
 using NethereumWorkflow.BlockUtils;
 using Utils;
@@ -16,6 +17,7 @@ namespace CodexContractsPlugin
         RequestFailedEventDTO[] GetRequestFailedEvents();
         SlotFilledEventDTO[] GetSlotFilledEvents();
         SlotFreedEventDTO[] GetSlotFreedEvents();
+        SlotReservationsFullEventDTO[] GetSlotReservationsFull();
     }
 
     public class CodexContractsEvents : ICodexContractsEvents
@@ -38,49 +40,32 @@ namespace CodexContractsPlugin
         {
             var events = gethNode.GetEvents<StorageRequestedEventDTO>(deployment.MarketplaceAddress, BlockInterval);
             var i = new ContractInteractions(log, gethNode);
-            return events
-            .Select(e =>
+            return events.Select(e =>
             {
-                        var requestEvent = i.GetRequest(deployment.MarketplaceAddress, e.Event.RequestId);
-                        var result = requestEvent.ReturnValue1;
-                        result.Block = GetBlock(e.Log.BlockNumber.ToUlong());
-                        result.RequestId = e.Event.RequestId;
-                        return result;
-                    })
-                    .ToArray();
+                var requestEvent = i.GetRequest(deployment.MarketplaceAddress, e.Event.RequestId);
+                var result = requestEvent.ReturnValue1;
+                result.Block = GetBlock(e.Log.BlockNumber.ToUlong());
+                result.RequestId = e.Event.RequestId;
+                return result;
+            }).ToArray();
         }
 
         public RequestFulfilledEventDTO[] GetRequestFulfilledEvents()
         {
             var events = gethNode.GetEvents<RequestFulfilledEventDTO>(deployment.MarketplaceAddress, BlockInterval);
-            return events.Select(e =>
-            {
-                var result = e.Event;
-                result.Block = GetBlock(e.Log.BlockNumber.ToUlong());
-                return result;
-            }).ToArray();
+            return events.Select(SetBlockOnEvent).ToArray();
         }
 
         public RequestCancelledEventDTO[] GetRequestCancelledEvents()
         {
             var events = gethNode.GetEvents<RequestCancelledEventDTO>(deployment.MarketplaceAddress, BlockInterval);
-            return events.Select(e =>
-            {
-                var result = e.Event;
-                result.Block = GetBlock(e.Log.BlockNumber.ToUlong());
-                return result;
-            }).ToArray();
+            return events.Select(SetBlockOnEvent).ToArray();
         }
 
         public RequestFailedEventDTO[] GetRequestFailedEvents()
         {
             var events = gethNode.GetEvents<RequestFailedEventDTO>(deployment.MarketplaceAddress, BlockInterval);
-            return events.Select(e =>
-            {
-                var result = e.Event;
-                result.Block = GetBlock(e.Log.BlockNumber.ToUlong());
-                return result;
-            }).ToArray();
+            return events.Select(SetBlockOnEvent).ToArray();
         }
 
         public SlotFilledEventDTO[] GetSlotFilledEvents()
@@ -98,12 +83,20 @@ namespace CodexContractsPlugin
         public SlotFreedEventDTO[] GetSlotFreedEvents()
         {
             var events = gethNode.GetEvents<SlotFreedEventDTO>(deployment.MarketplaceAddress, BlockInterval);
-            return events.Select(e =>
-            {
-                var result = e.Event;
-                result.Block = GetBlock(e.Log.BlockNumber.ToUlong());
-                return result;
-            }).ToArray();
+            return events.Select(SetBlockOnEvent).ToArray();
+        }
+
+        public SlotReservationsFullEventDTO[] GetSlotReservationsFull()
+        {
+            var events = gethNode.GetEvents<SlotReservationsFullEventDTO>(deployment.MarketplaceAddress, BlockInterval);
+            return events.Select(SetBlockOnEvent).ToArray();
+        }
+
+        private T SetBlockOnEvent<T>(EventLog<T> e) where T : IHasBlock
+        {
+            var result = e.Event;
+            result.Block = GetBlock(e.Log.BlockNumber.ToUlong());
+            return result;
         }
 
         private BlockTimeEntry GetBlock(ulong number)

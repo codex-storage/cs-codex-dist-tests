@@ -32,5 +32,9 @@ namespace CodexContractsPlugin.ChainMonitor
         public void OnSlotFreed(RequestEvent requestEvent, BigInteger slotIndex)
         {
         }
+
+        public void OnSlotReservationsFull(RequestEvent requestEvent, BigInteger slotIndex)
+        {
+        }
     }
 }

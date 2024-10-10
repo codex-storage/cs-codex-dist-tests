@@ -75,6 +75,13 @@ namespace TestNetRewarder
             );
         }
 
+        public void OnSlotReservationsFull(RequestEvent requestEvent, BigInteger slotIndex)
+        {
+            AddRequestBlock(requestEvent, "Slot Reservations Full",
+                $"Slot Index: {slotIndex}"
+            );
+        }
+
         private void AddRequestBlock(RequestEvent requestEvent, string eventName, params string[] content)
         {
             var blockNumber = $"[{requestEvent.Block.BlockNumber} {FormatDateTime(requestEvent.Block.Utc)}]";

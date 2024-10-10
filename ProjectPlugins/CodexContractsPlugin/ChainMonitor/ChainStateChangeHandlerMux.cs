@@ -51,5 +51,10 @@ namespace CodexContractsPlugin.ChainMonitor
         {
             foreach (var handler in Handlers) handler.OnSlotFreed(requestEvent, slotIndex);
         }
+
+        public void OnSlotReservationsFull(RequestEvent requestEvent, BigInteger slotIndex)
+        {
+            foreach (var handler in Handlers) handler.OnSlotReservationsFull(requestEvent, slotIndex);
+        }
     }
 }

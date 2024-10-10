@@ -1,4 +1,5 @@
 ﻿using CodexContractsPlugin.Marketplace;
+using System.Collections.Generic;
 using Utils;
 
 namespace CodexContractsPlugin.ChainMonitor
@@ -12,7 +13,8 @@ namespace CodexContractsPlugin.ChainMonitor
             RequestCancelledEventDTO[] cancelled,
             RequestFailedEventDTO[] failed,
             SlotFilledEventDTO[] slotFilled,
-            SlotFreedEventDTO[] slotFreed
+            SlotFreedEventDTO[] slotFreed,
+            SlotReservationsFullEventDTO[] slotReservationsFull
             )
         {
             BlockInterval = blockInterval;
@@ -22,6 +24,9 @@ namespace CodexContractsPlugin.ChainMonitor
             Failed = failed;
             SlotFilled = slotFilled;
             SlotFreed = slotFreed;
+            SlotReservationsFull = slotReservationsFull;
+
+            All = ConcatAll<IHasBlock>(requests, fulfilled, cancelled, failed, slotFilled, SlotFreed, SlotReservationsFull);
         }
 
         public BlockInterval BlockInterval { get; }
@@ -31,21 +36,8 @@ namespace CodexContractsPlugin.ChainMonitor
         public RequestFailedEventDTO[] Failed { get; }
         public SlotFilledEventDTO[] SlotFilled { get; }
         public SlotFreedEventDTO[] SlotFreed { get; }
-
-        public IHasBlock[] All
-        {
-            get
-            {
-                var all = new List<IHasBlock>();
-                all.AddRange(Requests);
-                all.AddRange(Fulfilled);
-                all.AddRange(Cancelled);
-                all.AddRange(Failed);
-                all.AddRange(SlotFilled);
-                all.AddRange(SlotFreed);
-                return all.ToArray();
-            }
-        }
+        public SlotReservationsFullEventDTO[] SlotReservationsFull { get; }
+        public IHasBlock[] All { get; }
 
         public static ChainEvents FromBlockInterval(ICodexContracts contracts, BlockInterval blockInterval)
         {
@@ -66,8 +58,19 @@ namespace CodexContractsPlugin.ChainMonitor
                 events.GetRequestCancelledEvents(),
                 events.GetRequestFailedEvents(),
                 events.GetSlotFilledEvents(),
-                events.GetSlotFreedEvents()
+                events.GetSlotFreedEvents(),
+                events.GetSlotReservationsFull()
             );
+        }
+
+        private T[] ConcatAll<T>(params T[][] arrays)
+        {
+            var result = Array.Empty<T>();
+            foreach (var array in arrays)
+            {
+                result = result.Concat(array).ToArray();
+            }
+            return result;
         }
     }
 }
