@@ -54,6 +54,7 @@ namespace TranscriptAnalysis.Receivers
             if (@event.Payload.DialSuccessful != null)
             {
                 var peerId = GetPeerId(@event.Payload.NodeIdentity);
+                if (peerId == null) return;
                 AddDial(peerId, @event.Payload.DialSuccessful.TargetPeerId);
             }
         }

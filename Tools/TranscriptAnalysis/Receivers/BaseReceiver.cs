@@ -19,18 +19,19 @@ namespace TranscriptAnalysis.Receivers
             Header = header;
         }
 
-        protected string GetPeerId(int nodeIndex)
+        protected string? GetPeerId(int nodeIndex)
         {
-            return GetIdentity(nodeIndex).PeerId;
+            return GetIdentity(nodeIndex)?.PeerId;
         }
 
-        protected string GetName(int nodeIndex)
+        protected string? GetName(int nodeIndex)
         {
-            return GetIdentity(nodeIndex).Name;
+            return GetIdentity(nodeIndex)?.Name;
         }
 
-        protected CodexNodeIdentity GetIdentity(int nodeIndex)
+        protected CodexNodeIdentity? GetIdentity(int nodeIndex)
         {
+            if (nodeIndex < 0) return null;
             return Header.Nodes[nodeIndex];
         }
 

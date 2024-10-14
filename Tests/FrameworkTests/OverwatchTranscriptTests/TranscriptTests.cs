@@ -117,10 +117,10 @@ namespace FrameworkTests.OverwatchTranscriptTests
             var e = events.SingleOrDefault(e => e.Moment.Utc == utc && e.Payload.EventData == data);
             if (e == null) Assert.Fail("Event not found");
 
-            Assert.That(e.Moment.Utc, Is.EqualTo(utc));
-            Assert.That(e.Moment.Duration, Is.EqualTo(duration));
-            Assert.That(e.Moment.Index, Is.EqualTo(index));
-            Assert.That(e.Payload.EventData, Is.EqualTo(data));
+            Assert.That(e!.Moment.Utc, Is.EqualTo(utc));
+            Assert.That(e!.Moment.Duration, Is.EqualTo(duration));
+            Assert.That(e!.Moment.Index, Is.EqualTo(index));
+            Assert.That(e!.Payload.EventData, Is.EqualTo(data));
         }
 
         private void AssertFileContent()
