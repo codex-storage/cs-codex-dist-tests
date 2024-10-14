@@ -1,6 +1,4 @@
 ﻿using NUnit.Framework;
-using NUnit.Framework.Interfaces;
-using static FrameworkTests.Utils.RunLengthEncodingTests;
 
 namespace FrameworkTests.Utils
 {
