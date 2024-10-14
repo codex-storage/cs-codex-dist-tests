@@ -115,6 +115,19 @@ namespace FrameworkTests.Utils
         }
 
         [Test]
+        public void SetIndexBetweenRuns()
+        {
+            var set = new IndexSet(new[] {8, 9, 10, 12, 13, 14 });
+            set.Set(11);
+            var encoded = set.RunLengthEncoded();
+
+            CollectionAssert.AreEqual(new[]
+            {
+                8, 7
+            }, encoded);
+        }
+
+        [Test]
         public void SetIndexAfterRun()
         {
             var set = new IndexSet(new[] { 12, 13, 14 });
@@ -228,20 +241,43 @@ namespace FrameworkTests.Utils
         {
             if (runs.ContainsKey(index)) return true;
 
-            var run = GetRunBefore(index);
+            var run = GetRunAt(index);
             if (run == null) return false;
-
-            return run.Includes(index);
+            return true;
         }
 
         public void Set(int index)
         {
-            if (runs.ContainsKey(index)) return;
+            if (IsSet(index)) return;
 
-            var run = GetRunBefore(index);
-            if (run == null || !run.ExpandToInclude(index))
+            var runBefore = GetRunAt(index - 1);
+            var runAfter = GetRunExact(index + 1);
+
+            if (runBefore == null)
             {
-                CreateNewRun(index);
+                if (runAfter == null)
+                {
+                    CreateNewRun(index);
+                }
+                else
+                {
+                    HandleUpdate(runAfter.ExpandToInclude(index));
+                }
+            }
+            else
+            {
+                if (runAfter == null)
+                {
+                    HandleUpdate(runBefore.ExpandToInclude(index));
+                }
+                else
+                {
+                    // new index will connect runBefore with runAfter. We merge!
+                    HandleUpdate(new RunUpdate(
+                        newRuns: [new Run(runBefore.Start, runBefore.Length + 1 + runAfter.Length)],
+                        removeRuns: [runBefore, runAfter]
+                    ));
+                }
             }
         }
 
@@ -253,7 +289,7 @@ namespace FrameworkTests.Utils
             }
             else
             {
-                var run = GetRunBefore(index);
+                var run = GetRunAt(index);
                 if (run == null) return;
                 HandleUpdate(run.Unset(index));
             }
@@ -274,13 +310,7 @@ namespace FrameworkTests.Utils
 
         public override string ToString()
         {
-            var result = "";
-            var encoded = RunLengthEncoded();
-            foreach (var pair in runs)
-            {
-                result += $"[{pair.Value.Start},{pair.Value.Length}]]";
-            }
-            return result;
+            return string.Join("&", runs.Select(r => r.ToString()).ToArray());
         }
 
         private IEnumerable<int> Encode()
@@ -292,21 +322,25 @@ namespace FrameworkTests.Utils
             }
         }
 
-        private Run? GetRunBefore(int index)
+        private Run? GetRunAt(int index)
         {
-            Run? result = null;
-            foreach (var pair in runs)
+            foreach (var run in runs.Values)
             {
-                if (pair.Key < index) result = pair.Value;
-                else return result;
+                if (run.Includes(index)) return run;
             }
-            return result;
+            return null;
+        }
+
+        private Run? GetRunExact(int index)
+        {
+            if (runs.ContainsKey(index)) return runs[index];
+            return null;
         }
 
         private void HandleUpdate(RunUpdate runUpdate)
         {
-            foreach (var newRun in runUpdate.NewRuns) runs.Add(newRun.Start, newRun);
             foreach (var removeRun in runUpdate.RemoveRuns) runs.Remove(removeRun.Start);
+            foreach (var newRun in runUpdate.NewRuns) runs.Add(newRun.Start, newRun);
         }
 
         private void CreateNewRun(int index)
