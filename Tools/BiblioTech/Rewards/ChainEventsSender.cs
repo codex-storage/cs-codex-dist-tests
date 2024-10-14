@@ -1,5 +1,7 @@
 ﻿using Discord.WebSocket;
+using DiscordRewards;
 using Logging;
+using Microsoft.IdentityModel.Tokens;
 
 namespace BiblioTech.Rewards
 {
@@ -16,7 +18,7 @@ namespace BiblioTech.Rewards
             this.eventsChannel = eventsChannel;
         }
 
-        public async Task ProcessChainEvents(string[] eventsOverview)
+        public async Task ProcessChainEvents(ChainEventMessage[] eventsOverview)
         {
             if (eventsChannel == null || eventsOverview == null || !eventsOverview.Any()) return;
             try
@@ -24,21 +26,27 @@ namespace BiblioTech.Rewards
                 await Task.Run(async () =>
                 {
                     var users = Program.UserRepo.GetAllUserData();
-
-                    foreach (var e in eventsOverview)
-                    {
-                        if (!string.IsNullOrEmpty(e))
-                        {
-                            var @event = ApplyReplacements(users, e);
-                            await eventsChannel.SendMessageAsync(@event);
-                            await Task.Delay(1000);
-                        }
-                    }
+                    await SendChainEventsInOrder(eventsOverview, eventsChannel, users);
                 });
             }
             catch (Exception ex)
             {
                 log.Error("Failed to process chain events: " + ex);
+            }
+        }
+
+        private async Task SendChainEventsInOrder(ChainEventMessage[] eventsOverview, SocketTextChannel eventsChannel, UserData[] users)
+        {
+            eventsOverview = eventsOverview.OrderBy(e => e.BlockNumber).ToArray();
+            foreach (var e in eventsOverview)
+            {
+                var msg = e.Message;
+                if (!string.IsNullOrEmpty(msg))
+                {
+                    var @event = ApplyReplacements(users, msg);
+                    await eventsChannel.SendMessageAsync(@event);
+                    await Task.Delay(300);
+                }
             }
         }
 

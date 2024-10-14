@@ -1,5 +1,6 @@
 ﻿using CodexContractsPlugin;
 using CodexContractsPlugin.ChainMonitor;
+using DiscordRewards;
 using GethPlugin;
 using System.Globalization;
 using System.Numerics;
@@ -10,10 +11,10 @@ namespace TestNetRewarder
     public class EventsFormatter : IChainStateChangeHandler
     {
         private static readonly string nl = Environment.NewLine;
-        private readonly List<string> events = new List<string>();
+        private readonly List<ChainEventMessage> events = new List<ChainEventMessage>();
         private readonly EmojiMaps emojiMaps = new EmojiMaps();
 
-        public string[] GetEvents()
+        public ChainEventMessage[] GetEvents()
         {
             var result = events.ToArray();
             events.Clear();
@@ -22,7 +23,7 @@ namespace TestNetRewarder
 
         public void AddError(string error)
         {
-            AddBlock("📢 **Error**", error);
+            AddBlock(1, "📢 **Error**", error);
         }
 
         public void OnNewRequest(RequestEvent requestEvent)
@@ -87,15 +88,25 @@ namespace TestNetRewarder
         {
             var blockNumber = $"[{requestEvent.Block.BlockNumber} {FormatDateTime(requestEvent.Block.Utc)}]";
             var title = $"{blockNumber} **{eventName}** {FormatRequestId(requestEvent)}";
-            AddBlock(title, content);
+            AddBlock(requestEvent.Block.BlockNumber, title, content);
         }
 
-        private void AddBlock(string title, params string[] content)
+        private void AddBlock(ulong blockNumber, string title, params string[] content)
         {
-            events.Add(FormatBlock(title, content));
+            events.Add(FormatBlock(blockNumber, title, content));
         }
 
-        private string FormatBlock(string title, params string[] content)
+        private ChainEventMessage FormatBlock(ulong blockNumber, string title, params string[] content)
+        {
+            var msg = FormatBlockMessage(title, content);
+            return new ChainEventMessage
+            {
+                BlockNumber = blockNumber,
+                Message = msg
+            };
+        }
+
+        private string FormatBlockMessage(string title, string[] content)
         {
             if (content == null || !content.Any())
             {

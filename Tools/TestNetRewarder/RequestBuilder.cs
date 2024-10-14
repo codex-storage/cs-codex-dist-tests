@@ -19,7 +19,7 @@ namespace TestNetRewarder
             }
         }
 
-        public GiveRewardsCommand Build(string[] lines)
+        public GiveRewardsCommand Build(ChainEventMessage[] lines)
         {
             var result = new GiveRewardsCommand
             {
