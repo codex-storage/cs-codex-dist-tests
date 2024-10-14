@@ -5,6 +5,8 @@ namespace TranscriptAnalysis.Receivers
 {
     public class DuplicateBlocksReceived : BaseReceiver<OverwatchCodexEvent>
     {
+        public static List<int> Counts = new List<int>();
+
         public override string Name => "BlocksReceived";
 
         public override void Receive(ActivateEvent<OverwatchCodexEvent> @event)
@@ -31,13 +33,17 @@ namespace TranscriptAnalysis.Receivers
                 }
             }
 
+            if (Counts.Any()) throw new Exception("Should be empty");
+
             float t = totalReceived;
             occurances.PrintContinous((i, count) =>
             {
                 float n = count;
                 float p = 100.0f * (n / t);
                 Log($"Block received {i} times = {count}x ({p}%)");
+                Counts.Add(count);
             });
+
         }
 
         private int seen = 0;
@@ -46,6 +52,7 @@ namespace TranscriptAnalysis.Receivers
         private void Handle(OverwatchCodexEvent payload, BlockReceivedEvent blockReceived)
         {
             var receiverPeerId = GetPeerId(payload.NodeIdentity);
+            if (receiverPeerId == null) return;
             var blockAddress = blockReceived.BlockAddress;
             seen++;
 
