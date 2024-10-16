@@ -68,7 +68,7 @@ namespace AutoClient
                 var filename = Guid.NewGuid().ToString().ToLowerInvariant();
                 {
                     using var fileStream = File.OpenWrite(filename);
-                    var fileResponse = await codex.DownloadNetworkAsync(cid);
+                    var fileResponse = await codex.DownloadNetworkStreamAsync(cid);
                     fileResponse.Stream.CopyTo(fileStream);
                 }
                 var time = sw.Elapsed;

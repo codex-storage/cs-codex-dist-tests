@@ -3,7 +3,6 @@ using BiblioTech.Commands;
 using BiblioTech.Rewards;
 using Discord;
 using Discord.WebSocket;
-using DiscordRewards;
 using Logging;
 
 namespace BiblioTech
@@ -81,6 +80,7 @@ namespace BiblioTech
             client = new DiscordSocketClient();
             client.Log += ClientLog;
 
+            var checker = new CodexCidChecker(Config);
             var notifyCommand = new NotifyCommand();
             var associateCommand = new UserAssociateCommand(notifyCommand);
             var sprCommand = new SprCommand();
@@ -90,6 +90,7 @@ namespace BiblioTech
                 sprCommand,
                 associateCommand,
                 notifyCommand,
+                new CheckCidCommand(checker),
                 new AdminCommand(sprCommand, replacement)
             );
 

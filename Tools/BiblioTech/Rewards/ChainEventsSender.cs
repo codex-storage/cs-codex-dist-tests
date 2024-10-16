@@ -1,7 +1,6 @@
 ﻿using Discord.WebSocket;
 using DiscordRewards;
 using Logging;
-using Microsoft.IdentityModel.Tokens;
 
 namespace BiblioTech.Rewards
 {
