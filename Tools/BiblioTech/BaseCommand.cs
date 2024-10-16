@@ -1,7 +1,6 @@
 ﻿using Discord.WebSocket;
 using BiblioTech.Options;
 using Discord;
-using k8s.KubeConfigModels;
 
 namespace BiblioTech
 {

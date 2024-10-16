@@ -73,7 +73,7 @@ namespace CodexPlugin
         public Stream DownloadFile(string contentId, Action<Failure> onFailure)
         {
             var fileResponse = OnCodex(
-                api => api.DownloadNetworkAsync(contentId),
+                api => api.DownloadNetworkStreamAsync(contentId),
                 CreateRetryConfig(nameof(DownloadFile), onFailure));
 
             if (fileResponse.StatusCode != 200) throw new Exception("Download failed with StatusCode: " + fileResponse.StatusCode);
@@ -88,25 +88,25 @@ namespace CodexPlugin
         public StorageAvailability SalesAvailability(StorageAvailability request)
         {
             var body = mapper.Map(request);
-            var read = OnCodex<SalesAvailabilityREAD>(api => api.OfferStorageAsync(body));
+            var read = OnCodex(api => api.OfferStorageAsync(body));
             return mapper.Map(read);
         }
 
         public StorageAvailability[] GetAvailabilities()
         {
-            var collection = OnCodex<ICollection<SalesAvailabilityREAD>>(api => api.GetAvailabilitiesAsync());
+            var collection = OnCodex(api => api.GetAvailabilitiesAsync());
             return mapper.Map(collection);
         }
 
         public string RequestStorage(StoragePurchaseRequest request)
         {
             var body = mapper.Map(request);
-            return OnCodex<string>(api => api.CreateStorageRequestAsync(request.ContentId.Id, body));
+            return OnCodex(api => api.CreateStorageRequestAsync(request.ContentId.Id, body));
         }
 
         public CodexSpace Space()
         {
-            var space = OnCodex<Space>(api => api.SpaceAsync());
+            var space = OnCodex(api => api.SpaceAsync());
             return mapper.Map(space);
         }
 

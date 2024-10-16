@@ -38,6 +38,12 @@ namespace BiblioTech
         [Uniform("no-discord", "nd", "NODISCORD", false, "For debugging: Bypasses all Discord API calls.")]
         public int NoDiscord { get; set; } = 0;
 
+        [Uniform("codex-endpoint", "ce", "CODEXENDPOINT", false, "Codex endpoint. (default 'http://localhost:8080')")]
+        public string CodexEndpoint { get; set; } = "http://localhost:8080";
+
+        [Uniform("codex-endpoint-auth", "cea", "CODEXENDPOINTAUTH", false, "Codex endpoint basic auth. Colon separated username and password. (default: empty, no auth used.)")]
+        public string CodexEndpointAuth { get; set; } = "";
+
         public string EndpointsPath => Path.Combine(DataPath, "endpoints");
         public string UserDataPath => Path.Combine(DataPath, "users");
         public string LogPath => Path.Combine(DataPath, "logs");
