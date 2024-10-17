@@ -61,6 +61,8 @@ namespace TranscriptAnalysis.Receivers
 
         public override void Finish()
         {
+            var csv = CsvWriter.CreateNew();
+
             var numNodes = dialingNodes.Count;
             var redialOccurances = new OccuranceMap();
             foreach (var dial in dials.Values)
@@ -81,12 +83,21 @@ namespace TranscriptAnalysis.Receivers
             });
 
             float tot = numNodes;
+            csv.GetColumn("numNodes", Header.Nodes.Length);
+            var degreeColumn = csv.GetColumn("degree", 0.0f);
+            var occuranceColumn = csv.GetColumn("occurance", 0.0f);
             degreeOccurances.Print((i, count) =>
             {
                 float n = count;
                 float p = 100.0f * (n / tot);
                 Log($"Degree: {i} = {count}x ({p}%)");
+                csv.AddRow(
+                    new CsvCell(degreeColumn, i),
+                    new CsvCell(occuranceColumn, n)
+                );
             });
+
+            CsvWriter.Write(csv, SourceFilename + "_nodeDegrees.csv");
         }
 
         private void AddDial(string peerId, string targetPeerId)
