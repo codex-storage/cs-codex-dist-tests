@@ -17,8 +17,10 @@ namespace BiblioTech.Rewards
             this.eventsChannel = eventsChannel;
         }
 
-        public async Task ProcessChainEvents(ChainEventMessage[] eventsOverview)
+        public async Task ProcessChainEvents(ChainEventMessage[] eventsOverview, string[] errors)
         {
+            await SendErrorsToAdminChannel(errors);
+
             if (eventsChannel == null || eventsOverview == null || !eventsOverview.Any()) return;
             try
             {
@@ -31,6 +33,22 @@ namespace BiblioTech.Rewards
             catch (Exception ex)
             {
                 log.Error("Failed to process chain events: " + ex);
+            }
+        }
+
+        private async Task SendErrorsToAdminChannel(string[] errors)
+        {
+            try
+            {
+                foreach (var error in errors)
+                {
+                    await Program.AdminChecker.SendInAdminChannel(error);
+                }
+            }
+            catch (Exception exc)
+            {
+                log.Error("Failed to send error messages to admin channel. " + exc);
+                Environment.Exit(1);
             }
         }
 

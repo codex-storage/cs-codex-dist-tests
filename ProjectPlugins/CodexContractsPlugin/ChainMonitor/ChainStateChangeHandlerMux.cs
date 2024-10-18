@@ -1,10 +1,5 @@
 ﻿using GethPlugin;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Numerics;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace CodexContractsPlugin.ChainMonitor
 {
@@ -55,6 +50,11 @@ namespace CodexContractsPlugin.ChainMonitor
         public void OnSlotReservationsFull(RequestEvent requestEvent, BigInteger slotIndex)
         {
             foreach (var handler in Handlers) handler.OnSlotReservationsFull(requestEvent, slotIndex);
+        }
+
+        public void OnError(string msg)
+        {
+            foreach (var handler in Handlers) handler.OnError(msg);
         }
     }
 }

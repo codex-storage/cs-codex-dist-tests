@@ -12,6 +12,7 @@ namespace TestNetRewarder
     {
         private static readonly string nl = Environment.NewLine;
         private readonly List<ChainEventMessage> events = new List<ChainEventMessage>();
+        private readonly List<string> errors = new List<string>();
         private readonly EmojiMaps emojiMaps = new EmojiMaps();
 
         public ChainEventMessage[] GetEvents()
@@ -21,9 +22,11 @@ namespace TestNetRewarder
             return result;
         }
 
-        public void AddError(string error)
+        public string[] GetErrors()
         {
-            AddBlock(1, "📢 **Error**", error);
+            var result = errors.ToArray();
+            errors.Clear();
+            return result;
         }
 
         public void OnNewRequest(RequestEvent requestEvent)
@@ -82,6 +85,11 @@ namespace TestNetRewarder
             AddRequestBlock(requestEvent, $"{emojiMaps.SlotReservationsFull} Slot Reservations Full",
                 $"Slot Index: {slotIndex}"
             );
+        }
+        
+        public void OnError(string msg)
+        {
+            errors.Add(msg);
         }
 
         private void AddRequestBlock(RequestEvent requestEvent, string eventName, params string[] content)

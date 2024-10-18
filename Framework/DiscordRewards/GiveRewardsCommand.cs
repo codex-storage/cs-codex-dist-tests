@@ -4,6 +4,7 @@
     {
         public RewardUsersCommand[] Rewards { get; set; } = Array.Empty<RewardUsersCommand>();
         public ChainEventMessage[] EventsOverview { get; set; } = Array.Empty<ChainEventMessage>();
+        public string[] Errors { get; set; } = Array.Empty<string>();
 
         public bool HasAny()
         {

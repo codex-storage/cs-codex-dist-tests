@@ -48,7 +48,7 @@ namespace TestNetRewarder
             {
                 var msg = "Exception processing time segment: " + ex;
                 log.Error(msg); 
-                eventsFormatter.AddError(msg);
+                eventsFormatter.OnError(msg);
                 throw;
             }
         }
@@ -58,8 +58,9 @@ namespace TestNetRewarder
             var numberOfChainEvents = chainState.Update(timeRange.To);
 
             var events = eventsFormatter.GetEvents();
+            var errors = eventsFormatter.GetErrors();
 
-            var request = builder.Build(events);
+            var request = builder.Build(events, errors);
             if (request.HasAny())
             {
                 await client.SendRewards(request);
