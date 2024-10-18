@@ -18,7 +18,6 @@ namespace TestNetRewarder
         public async Task<bool> IsOnline()
         {
             var result = await HttpGet();
-            log.Log("Is DiscordBot online: " + result);
             return result == "Pong";
         }
 

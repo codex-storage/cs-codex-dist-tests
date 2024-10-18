@@ -19,11 +19,20 @@ namespace FrameworkTests.NethereumWorkflow
         {
             var start = DateTime.UtcNow.AddDays(-1).AddSeconds(-30);
             blocks = new Dictionary<ulong, Block>();
-            
+
+            Block? prev = null;
             for (ulong i = 0; i < 30; i++)
             {
                 ulong d = 100 + i;
-                blocks.Add(d, new Block(d, start + TimeSpan.FromSeconds(i * 2)));
+                var newBlock = new Block(d, start + TimeSpan.FromSeconds(i * 2));
+                blocks.Add(d, newBlock);
+
+                if (prev != null)
+                {
+                    prev.Next = newBlock;
+                    newBlock.Previous = prev;
+                }
+                prev = newBlock;
             }
         }
 
@@ -99,23 +108,23 @@ namespace FrameworkTests.NethereumWorkflow
         }
 
         [Test]
-        public void FailsToFindBlockBeforeFrontOfChain()
+        public void FindsGenesisBlockAtFrontOfChain()
         {
             var first = blocks.First().Value;
 
-            var notFound = finder.GetHighestBlockNumberBefore(first.Time);
+            var firstNumber = finder.GetHighestBlockNumberBefore(first.Time);
 
-            Assert.That(notFound, Is.Null);
+            Assert.That(firstNumber, Is.EqualTo(first.Number));
         }
 
         [Test]
-        public void FailsToFindBlockAfterTailOfChain()
+        public void FindsCurrentBlockAtTailOfChain()
         {
             var last = blocks.Last().Value;
 
-            var notFound = finder.GetLowestBlockNumberAfter(last.Time);
+            var lastNumber = finder.GetLowestBlockNumberAfter(last.Time);
 
-            Assert.That(notFound, Is.Null);
+            Assert.That(lastNumber, Is.EqualTo(last.Number));
         }
 
         [Test]
@@ -143,13 +152,27 @@ namespace FrameworkTests.NethereumWorkflow
         {
             foreach (var pair in blocks)
             {
-                finder.GetHighestBlockNumberBefore(pair.Value.JustBefore);
-                finder.GetHighestBlockNumberBefore(pair.Value.Time);
-                finder.GetHighestBlockNumberBefore(pair.Value.JustAfter);
+                var block = pair.Value;
 
-                finder.GetLowestBlockNumberAfter(pair.Value.JustBefore);
-                finder.GetLowestBlockNumberAfter(pair.Value.Time);
-                finder.GetLowestBlockNumberAfter(pair.Value.JustAfter);
+                AssertLink(block.Previous, finder.GetHighestBlockNumberBefore(block.JustBefore));
+                AssertLink(block, finder.GetHighestBlockNumberBefore(block.Time));
+                AssertLink(block, finder.GetHighestBlockNumberBefore(block.JustAfter));
+
+                AssertLink(block, finder.GetLowestBlockNumberAfter(block.JustBefore));
+                AssertLink(block, finder.GetLowestBlockNumberAfter(block.Time));
+                AssertLink(block.Next, finder.GetLowestBlockNumberAfter(block.JustAfter));
+            }
+        }
+
+        private void AssertLink(Block? expected, ulong? actual)
+        {
+            if (expected == null)
+            {
+                Assert.That(actual, Is.Null);
+            }
+            else
+            {
+                Assert.That(expected.Number, Is.EqualTo(actual!.Value));
             }
         }
     }
@@ -166,6 +189,9 @@ namespace FrameworkTests.NethereumWorkflow
         public DateTime Time { get; }
         public DateTime JustBefore { get { return Time.AddSeconds(-1); } }
         public DateTime JustAfter { get { return Time.AddSeconds(1); } }
+
+        public Block? Next { get; set; }
+        public Block? Previous { get; set; }
 
         public override string ToString()
         {
