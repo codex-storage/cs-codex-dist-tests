@@ -8,12 +8,17 @@ namespace TranscriptAnalysis.Receivers
     {
         protected ILog log { get; private set; } = new NullLog();
         protected OverwatchCodexHeader Header { get; private set; } = null!;
-        protected CsvWriter CsvWriter { get; private set; } = new CsvWriter();
+        protected CsvWriter CsvWriter { get; private set; }
         protected string SourceFilename { get; private set; } = string.Empty;
 
         public abstract string Name { get; }
         public abstract void Receive(ActivateEvent<T> @event);
         public abstract void Finish();
+
+        protected BaseReceiver()
+        {
+            CsvWriter = new CsvWriter(log);
+        }
 
         public void Init(string sourceFilename, ILog log, OverwatchCodexHeader header)
         {

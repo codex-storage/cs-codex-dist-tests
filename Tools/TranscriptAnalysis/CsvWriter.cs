@@ -1,7 +1,16 @@
-﻿namespace TranscriptAnalysis
+﻿using Logging;
+
+namespace TranscriptAnalysis
 {
     public class CsvWriter
     {
+        private readonly ILog log;
+
+        public CsvWriter(ILog log)
+        {
+            this.log = log;
+        }
+
         public ICsv CreateNew()
         {
             return new Csv();
@@ -14,6 +23,8 @@
             using var file = File.OpenWrite(filename);
             using var writer = new StreamWriter(file);
             c.CreateLines(writer.WriteLine);
+
+            log.Log($"CSV written to: '{filename}'");
         }
     }
 

@@ -46,6 +46,7 @@ namespace TranscriptAnalysis.Receivers
 
         private readonly Dictionary<string, Node> dialingNodes = new Dictionary<string, Node>();
         private readonly Dictionary<string, Dial> dials = new Dictionary<string, Dial>();
+        private long uploadSize;
 
         public override string Name => "NodesDegree";
 
@@ -56,6 +57,11 @@ namespace TranscriptAnalysis.Receivers
                 var peerId = GetPeerId(@event.Payload.NodeIdentity);
                 if (peerId == null) return;
                 AddDial(peerId, @event.Payload.DialSuccessful.TargetPeerId);
+            }
+            if (@event.Payload.FileUploaded != null)
+            {
+                var uploadEvent = @event.Payload.FileUploaded;
+                uploadSize = uploadEvent.ByteSize;
             }
         }
 
@@ -84,6 +90,7 @@ namespace TranscriptAnalysis.Receivers
 
             float tot = numNodes;
             csv.GetColumn("numNodes", Header.Nodes.Length);
+            csv.GetColumn("filesize", uploadSize.ToString());
             var degreeColumn = csv.GetColumn("degree", 0.0f);
             var occuranceColumn = csv.GetColumn("occurance", 0.0f);
             degreeOccurances.Print((i, count) =>
