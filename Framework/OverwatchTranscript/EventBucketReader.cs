@@ -7,6 +7,7 @@ namespace OverwatchTranscript
     public interface IFinalizedBucket
     {
         bool IsEmpty { get; }
+        void Update();
         DateTime? SeeTopUtc();
         BucketTop? TakeTop();
     }
@@ -28,7 +29,8 @@ namespace OverwatchTranscript
         private readonly string bucketFile;
         private readonly ConcurrentQueue<BucketTop> topQueue = new ConcurrentQueue<BucketTop>();
         private readonly AutoResetEvent itemDequeued = new AutoResetEvent(false);
-        private bool stopping;
+        private readonly AutoResetEvent itemEnqueued = new AutoResetEvent(false);
+        private bool sourceIsEmpty;
 
         public EventBucketReader(ILog log, string bucketFile)
         {
@@ -42,34 +44,38 @@ namespace OverwatchTranscript
         
         public bool IsEmpty { get; private set; }
 
+        public void Update()
+        {
+            if (IsEmpty) return;
+            while (topQueue.Count == 0)
+            {
+                UpdateIsEmpty();
+                if (IsEmpty) return;
+
+                itemDequeued.Set();
+                itemEnqueued.WaitOne(200);
+            }
+        }
+
         public DateTime? SeeTopUtc()
         {
             if (IsEmpty) return null;
-            while (true)
+            if (topQueue.TryPeek(out BucketTop? top))
             {
-                UpdateIsEmpty();
-                if (IsEmpty) return null;
-                if (topQueue.TryPeek(out BucketTop? top))
-                {
-                    return top.Utc;
-                }
+                return top.Utc;
             }
+            return null;
         }
 
         public BucketTop? TakeTop()
         {
             if (IsEmpty) return null;
-
-            while (true)
+            if (topQueue.TryDequeue(out BucketTop? top))
             {
-                UpdateIsEmpty();
-                if (IsEmpty) return null;
-                if (topQueue.TryDequeue(out BucketTop? top))
-                {
-                    itemDequeued.Set();
-                    return top;
-                }
+                itemDequeued.Set();
+                return top;
             }
+            return null;
         }
 
         private void ReadBucket()
@@ -85,23 +91,25 @@ namespace OverwatchTranscript
                     if (top != null)
                     {
                         topQueue.Enqueue(top);
+                        itemEnqueued.Set();
                     }
                     else
                     {
-                        stopping = true;
+                        sourceIsEmpty = true;
+                        UpdateIsEmpty();
                         return;
                     }
                 }
 
                 itemDequeued.Reset();
-                itemDequeued.WaitOne();
+                itemDequeued.WaitOne(5000);
             }
         }
 
         private void UpdateIsEmpty()
         {
-            var empty = stopping && topQueue.IsEmpty;
-            if (!IsEmpty && empty)
+            var allEmpty = sourceIsEmpty && topQueue.IsEmpty;
+            if (!IsEmpty && allEmpty)
             {
                 File.Delete(bucketFile);
                 IsEmpty = true;

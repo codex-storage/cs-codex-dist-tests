@@ -68,6 +68,7 @@ namespace OverwatchTranscript
             {
                 if (bucket.IsEmpty) continue;
 
+                bucket.Update();
                 var utc = bucket.SeeTopUtc();
                 if (utc == null) continue;
 
