@@ -24,6 +24,8 @@ namespace OverwatchTranscript
             log.Debug($"Building references for {buckets.Count} buckets.");
             while (buckets.Any())
             {
+                foreach (var b in buckets) b.Update();
+
                 buckets.RemoveAll(b => b.IsEmpty);
                 if (!buckets.Any()) break;
 
@@ -68,7 +70,6 @@ namespace OverwatchTranscript
             {
                 if (bucket.IsEmpty) continue;
 
-                bucket.Update();
                 var utc = bucket.SeeTopUtc();
                 if (utc == null) continue;
 
