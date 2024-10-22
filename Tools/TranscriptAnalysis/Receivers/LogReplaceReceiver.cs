@@ -14,6 +14,8 @@ namespace TranscriptAnalysis.Receivers
         {
             var peerId = GetPeerId(@event.Payload.NodeIdentity);
             var name = GetName(@event.Payload.NodeIdentity);
+            if (peerId == null) return;
+            if (name == null) return;
 
             if (!seen.Contains(peerId))
             {

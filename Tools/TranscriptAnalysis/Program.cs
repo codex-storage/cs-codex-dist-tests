@@ -31,7 +31,7 @@ public static class Program
         };
 
         var header = reader.GetHeader<OverwatchCodexHeader>("cdx_h");
-        var receivers = new ReceiverSet(log, reader, header);
+        var receivers = new ReceiverSet(args[0], log, reader, header);
         receivers.InitAll();
 
         var processor = new Processor(log, reader);

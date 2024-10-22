@@ -46,6 +46,7 @@ namespace TranscriptAnalysis.Receivers
 
         private readonly Dictionary<string, Node> dialingNodes = new Dictionary<string, Node>();
         private readonly Dictionary<string, Dial> dials = new Dictionary<string, Dial>();
+        private long uploadSize;
 
         public override string Name => "NodesDegree";
 
@@ -54,12 +55,20 @@ namespace TranscriptAnalysis.Receivers
             if (@event.Payload.DialSuccessful != null)
             {
                 var peerId = GetPeerId(@event.Payload.NodeIdentity);
+                if (peerId == null) return;
                 AddDial(peerId, @event.Payload.DialSuccessful.TargetPeerId);
+            }
+            if (@event.Payload.FileUploaded != null)
+            {
+                var uploadEvent = @event.Payload.FileUploaded;
+                uploadSize = uploadEvent.ByteSize;
             }
         }
 
         public override void Finish()
         {
+            var csv = CsvWriter.CreateNew();
+
             var numNodes = dialingNodes.Count;
             var redialOccurances = new OccuranceMap();
             foreach (var dial in dials.Values)
@@ -80,12 +89,22 @@ namespace TranscriptAnalysis.Receivers
             });
 
             float tot = numNodes;
+            csv.GetColumn("numNodes", Header.Nodes.Length);
+            csv.GetColumn("filesize", uploadSize.ToString());
+            var degreeColumn = csv.GetColumn("degree", 0.0f);
+            var occuranceColumn = csv.GetColumn("occurance", 0.0f);
             degreeOccurances.Print((i, count) =>
             {
                 float n = count;
                 float p = 100.0f * (n / tot);
                 Log($"Degree: {i} = {count}x ({p}%)");
+                csv.AddRow(
+                    new CsvCell(degreeColumn, i),
+                    new CsvCell(occuranceColumn, n)
+                );
             });
+
+            CsvWriter.Write(csv, SourceFilename + "_nodeDegrees.csv");
         }
 
         private void AddDial(string peerId, string targetPeerId)

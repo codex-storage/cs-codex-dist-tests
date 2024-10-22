@@ -7,7 +7,7 @@ namespace TranscriptAnalysis
 {
     public interface IEventReceiver
     {
-        void Init(ILog log, OverwatchCodexHeader header);
+        void Init(string sourceFilename, ILog log, OverwatchCodexHeader header);
         void Finish();
     }
 
@@ -18,13 +18,15 @@ namespace TranscriptAnalysis
 
     public class ReceiverSet
     {
+        private readonly string sourceFilename;
         private readonly ILog log;
         private readonly ITranscriptReader reader;
         private readonly OverwatchCodexHeader header;
         private readonly List<IEventReceiver> receivers = new List<IEventReceiver>();
 
-        public ReceiverSet(ILog log, ITranscriptReader reader, OverwatchCodexHeader header)
+        public ReceiverSet(string sourceFilename, ILog log, ITranscriptReader reader, OverwatchCodexHeader header)
         {
+            this.sourceFilename = sourceFilename;
             this.log = log;
             this.reader = reader;
             this.header = header;
@@ -53,7 +55,7 @@ namespace TranscriptAnalysis
             mux.Add(receiver);
 
             receivers.Add(receiver);
-            receiver.Init(log, header);
+            receiver.Init(sourceFilename, log, header);
         }
 
         // We use a mux here because, for each time we call reader.AddEventHandler,
