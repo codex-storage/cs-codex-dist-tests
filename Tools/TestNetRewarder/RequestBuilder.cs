@@ -19,7 +19,7 @@ namespace TestNetRewarder
             }
         }
 
-        public GiveRewardsCommand Build(string[] lines)
+        public GiveRewardsCommand Build(ChainEventMessage[] lines, string[] errors)
         {
             var result = new GiveRewardsCommand
             {
@@ -28,7 +28,8 @@ namespace TestNetRewarder
                     RewardId = p.Key,
                     UserAddresses = p.Value.Select(v => v.Address).ToArray()
                 }).ToArray(),
-                EventsOverview = lines
+                EventsOverview = lines,
+                Errors = errors
             };
 
             rewards.Clear();

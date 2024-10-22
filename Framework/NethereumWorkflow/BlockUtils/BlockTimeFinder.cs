@@ -29,7 +29,8 @@ namespace NethereumWorkflow.BlockUtils
         public ulong? GetHighestBlockNumberBefore(DateTime moment)
         {
             bounds.Initialize();
-            if (moment <= bounds.Genesis.Utc) return null;
+            if (moment < bounds.Genesis.Utc) return null;
+            if (moment == bounds.Genesis.Utc) return bounds.Genesis.BlockNumber;
             if (moment >= bounds.Current.Utc) return bounds.Current.BlockNumber;
 
             return Log(() => Search(bounds.Genesis, bounds.Current, moment, HighestBeforeSelector));
@@ -38,7 +39,8 @@ namespace NethereumWorkflow.BlockUtils
         public ulong? GetLowestBlockNumberAfter(DateTime moment)
         {
             bounds.Initialize();
-            if (moment >= bounds.Current.Utc) return null;
+            if (moment > bounds.Current.Utc) return null;
+            if (moment == bounds.Current.Utc) return bounds.Current.BlockNumber;
             if (moment <= bounds.Genesis.Utc) return bounds.Genesis.BlockNumber;
 
             return Log(()=> Search(bounds.Genesis, bounds.Current, moment, LowestAfterSelector)); ;

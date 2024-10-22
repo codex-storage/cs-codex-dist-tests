@@ -1,9 +1,4 @@
-﻿using Logging;
-using Microsoft.VisualStudio.TestPlatform.Common;
-using NuGet.Frameworks;
-using NUnit.Framework;
-using System.Collections.Concurrent;
-using System.Numerics;
+﻿using NUnit.Framework;
 using Utils;
 
 namespace FrameworkTests.Utils
@@ -120,6 +115,19 @@ namespace FrameworkTests.Utils
         }
 
         [Test]
+        public void SetIndexBetweenRuns()
+        {
+            var set = new IndexSet(new[] {8, 9, 10, 12, 13, 14 });
+            set.Set(11);
+            var encoded = set.RunLengthEncoded();
+
+            CollectionAssert.AreEqual(new[]
+            {
+                8, 7
+            }, encoded);
+        }
+
+        [Test]
         public void SetIndexAfterRun()
         {
             var set = new IndexSet(new[] { 12, 13, 14 });
@@ -200,121 +208,6 @@ namespace FrameworkTests.Utils
 
             all.Sort();
             return all.ToArray();
-        }
-
-        public class IndexSet
-        {
-            private readonly SortedList<int, Run> runs = new SortedList<int, Run>();
-
-            public IndexSet()
-            {
-            }
-
-            public IndexSet(int[] indices)
-            {
-                foreach (var i in indices) Set(i);
-            }
-
-            public static IndexSet FromRunLengthEncoded(int[] rle)
-            {
-                var set = new IndexSet();
-                for (var i = 0; i < rle.Length; i += 2)
-                {
-                    var start = rle[i];
-                    var length = rle[i + 1];
-                    set.runs.Add(start, new Run(start, length));
-                }
-
-                return set;
-            }
-
-            public bool IsSet(int index)
-            {
-                if (runs.ContainsKey(index)) return true;
-
-                var run = GetRunBefore(index);
-                if (run == null) return false;
-
-                return run.Includes(index);
-            }
-
-            public void Set(int index)
-            {
-                if (runs.ContainsKey(index)) return;
-
-                var run = GetRunBefore(index);
-                if (run == null || !run.ExpandToInclude(index))
-                {
-                    CreateNewRun(index);
-                }
-            }
-
-            public void Unset(int index)
-            {
-                if (runs.ContainsKey(index))
-                {
-                    HandleUpdate(runs[index].Unset(index));
-                }
-                else
-                {
-                    var run = GetRunBefore(index);
-                    if (run == null) return;
-                    HandleUpdate(run.Unset(index));
-                }
-            }
-
-            public void Iterate(Action<int> onIndex)
-            {
-                foreach (var run in runs.Values)
-                {
-                    run.Iterate(onIndex);
-                }
-            }
-
-            public int[] RunLengthEncoded()
-            {
-                return Encode().ToArray();
-            }
-
-            private IEnumerable<int> Encode()
-            {
-                foreach (var pair in runs)
-                {
-                    yield return pair.Value.Start;
-                    yield return pair.Value.Length;
-                }
-            }
-
-            private Run? GetRunBefore(int index)
-            {
-                Run? result = null;
-                foreach (var pair in runs)
-                {
-                    if (pair.Key < index) result = pair.Value;
-                    else return result;
-                }
-                return result;
-            }
-
-            private void HandleUpdate(RunUpdate runUpdate)
-            {
-                foreach (var newRun in runUpdate.NewRuns) runs.Add(newRun.Start, newRun);
-                foreach (var removeRun in runUpdate.RemoveRuns) runs.Remove(removeRun.Start);
-            }
-
-            private void CreateNewRun(int index)
-            {
-                if (runs.ContainsKey(index + 1))
-                {
-                    var length = runs[index + 1].Length + 1;
-                    runs.Add(index, new Run(index, length));
-                    runs.Remove(index + 1);
-                }
-                else
-                {
-                    runs.Add(index, new Run(index, 1));
-                }
-            }
         }
     }
 }

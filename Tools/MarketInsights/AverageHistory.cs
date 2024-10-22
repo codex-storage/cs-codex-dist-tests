@@ -1,6 +1,5 @@
 ﻿using CodexContractsPlugin;
 using CodexContractsPlugin.ChainMonitor;
-using Nethereum.Model;
 using TestNetRewarder;
 using Utils;
 
@@ -40,7 +39,7 @@ namespace MarketInsights
 
         private MarketTimeSegment BuildContribution(TimeRange timeRange)
         {
-            var builder = new ContributionBuilder(timeRange);
+            var builder = new ContributionBuilder(appState.Log, timeRange);
             mux.Handlers.Add(builder);
             chainState.Update(timeRange.To);
             mux.Handlers.Remove(builder);

@@ -23,7 +23,7 @@ namespace CodexTests.UtilityTests
         private readonly List<EthAccount> hostAccounts = new List<EthAccount>();
         private readonly List<ulong> rewardsSeen = new List<ulong>();
         private readonly TimeSpan rewarderInterval = TimeSpan.FromMinutes(1);
-        private readonly List<string> receivedEvents = new List<string>();
+        private readonly List<ChainEventMessage> receivedEvents = new List<ChainEventMessage>();
  
         [Test]
         [DontDownloadLogs]
@@ -73,13 +73,18 @@ namespace CodexTests.UtilityTests
 
         private void AssertEventOccurance(string msg, int expectedCount)
         {
-            Assert.That(receivedEvents.Count(e => e.Contains(msg)), Is.EqualTo(expectedCount),
+            Assert.That(receivedEvents.Count(e => e.Message.Contains(msg)), Is.EqualTo(expectedCount),
                 $"Event '{msg}' did not occure correct number of times.");
         }
 
         private void OnCommand(string timestamp, GiveRewardsCommand call)
         {
             Log($"<API call {timestamp}>");
+            foreach (var e in call.EventsOverview)
+            {
+                Assert.That(receivedEvents.All(r => r.BlockNumber < e.BlockNumber), "Received event out of order.");
+            }
+
             receivedEvents.AddRange(call.EventsOverview);
             foreach (var e in call.EventsOverview)
             {

@@ -36,5 +36,9 @@ namespace CodexContractsPlugin.ChainMonitor
         public void OnSlotReservationsFull(RequestEvent requestEvent, BigInteger slotIndex)
         {
         }
+
+        public void OnError(string msg)
+        {
+        }
     }
 }

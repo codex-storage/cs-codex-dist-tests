@@ -1,5 +1,6 @@
 ﻿using CodexContractsPlugin.ChainMonitor;
 using GethPlugin;
+using Logging;
 using System.Numerics;
 using Utils;
 
@@ -8,14 +9,16 @@ namespace MarketInsights
     public class ContributionBuilder : IChainStateChangeHandler
     {
         private readonly MarketTimeSegment segment = new MarketTimeSegment();
+        private readonly ILog log;
 
-        public ContributionBuilder(TimeRange timeRange)
+        public ContributionBuilder(ILog log, TimeRange timeRange)
         {
             segment = new MarketTimeSegment
             {
                 FromUtc = timeRange.From,
                 ToUtc = timeRange.To
             };
+            this.log = log;
         }
 
         public void OnNewRequest(RequestEvent requestEvent)
@@ -53,6 +56,11 @@ namespace MarketInsights
 
         public void OnSlotReservationsFull(RequestEvent requestEvent, BigInteger slotIndex)
         {
+        }
+
+        public void OnError(string msg)
+        {
+            log.Error(msg);
         }
 
         public MarketTimeSegment GetSegment()

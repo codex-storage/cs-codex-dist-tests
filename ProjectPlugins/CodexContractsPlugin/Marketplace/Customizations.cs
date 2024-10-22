@@ -10,7 +10,12 @@ namespace CodexContractsPlugin.Marketplace
         BlockTimeEntry Block { get; set; }
     }
 
-    public partial class Request : RequestBase, IHasBlock
+    public interface IHasRequestId
+    {
+        byte[] RequestId { get; set; }
+    }
+
+    public partial class Request : RequestBase, IHasBlock, IHasRequestId
     {
         [JsonIgnore]
         public BlockTimeEntry Block { get; set; }
@@ -28,38 +33,38 @@ namespace CodexContractsPlugin.Marketplace
         }
     }
 
-    public partial class RequestFulfilledEventDTO : IHasBlock
+    public partial class RequestFulfilledEventDTO : IHasBlock, IHasRequestId
     {
         [JsonIgnore]
         public BlockTimeEntry Block { get; set; }
     }
 
-    public partial class RequestCancelledEventDTO : IHasBlock
+    public partial class RequestCancelledEventDTO : IHasBlock, IHasRequestId
     {
         [JsonIgnore]
         public BlockTimeEntry Block { get; set; }
     }
 
-    public partial class RequestFailedEventDTO : IHasBlock
+    public partial class RequestFailedEventDTO : IHasBlock, IHasRequestId
     {
         [JsonIgnore]
         public BlockTimeEntry Block { get; set; }
     }
 
-    public partial class SlotFilledEventDTO : IHasBlock
+    public partial class SlotFilledEventDTO : IHasBlock, IHasRequestId
     {
         [JsonIgnore]
         public BlockTimeEntry Block { get; set; }
         public EthAddress Host { get; set; }
     }
 
-    public partial class SlotFreedEventDTO : IHasBlock
+    public partial class SlotFreedEventDTO : IHasBlock, IHasRequestId
     {
         [JsonIgnore]
         public BlockTimeEntry Block { get; set; }
     }
 
-    public partial class SlotReservationsFullEventDTO : IHasBlock
+    public partial class SlotReservationsFullEventDTO : IHasBlock, IHasRequestId
     {
         [JsonIgnore]
         public BlockTimeEntry Block { get; set; }

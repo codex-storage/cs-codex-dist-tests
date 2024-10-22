@@ -31,7 +31,7 @@ namespace BiblioTech.Rewards
                 await ProcessRewards(rewards);
             }
 
-            await eventsSender.ProcessChainEvents(rewards.EventsOverview);
+            await eventsSender.ProcessChainEvents(rewards.EventsOverview, rewards.Errors);
         }
 
         private async Task ProcessRewards(GiveRewardsCommand rewards)

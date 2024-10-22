@@ -1,12 +1,40 @@
 ﻿using NUnit.Framework;
-using NUnit.Framework.Interfaces;
-using static FrameworkTests.Utils.RunLengthEncodingTests;
 
 namespace FrameworkTests.Utils
 {
     [TestFixture]
     public class RunLengthEncodingRunTests
     {
+        [Test]
+        public void EqualityTest()
+        {
+            var runA = new Run(1, 4);
+            var runB = new Run(1, 4);
+
+            Assert.That(runA, Is.EqualTo(runB));
+            Assert.That(runA == runB);
+        }
+
+        [Test]
+        public void InequalityTest1()
+        {
+            var runA = new Run(1, 4);
+            var runB = new Run(1, 5);
+
+            Assert.That(runA, Is.Not.EqualTo(runB));
+            Assert.That(runA != runB);
+        }
+
+        [Test]
+        public void InequalityTest2()
+        {
+            var runA = new Run(1, 4);
+            var runB = new Run(2, 4);
+
+            Assert.That(runA, Is.Not.EqualTo(runB));
+            Assert.That(runA != runB);
+        }
+
         [Test]
         [Combinatorial]
         public void RunIncludes(
@@ -33,21 +61,56 @@ namespace FrameworkTests.Utils
         }
 
         [Test]
-        public void RunExpandToInclude()
+        public void RunExpandThrowsWhenIndexNotAdjacent()
         {
             var run = new Run(2, 3);
+            Assert.That(!run.Includes(1));
             Assert.That(run.Includes(2));
             Assert.That(run.Includes(4));
             Assert.That(!run.Includes(5));
 
-            Assert.That(run.ExpandToInclude(1), Is.False);
-            Assert.That(run.ExpandToInclude(2), Is.False);
-            Assert.That(run.ExpandToInclude(4), Is.False);
-            Assert.That(run.ExpandToInclude(6), Is.False);
+            Assert.That(() => run.ExpandToInclude(0), Throws.TypeOf<Exception>());
+            Assert.That(() => run.ExpandToInclude(6), Throws.TypeOf<Exception>());
+        }
 
-            Assert.That(run.ExpandToInclude(5), Is.True);
+        [Test]
+        public void RunExpandThrowsWhenIndexAlreadyIncluded()
+        {
+            var run = new Run(2, 3);
+            Assert.That(!run.Includes(1));
+            Assert.That(run.Includes(2));
+            Assert.That(run.Includes(4));
+            Assert.That(!run.Includes(5));
+
+            Assert.That(() => run.ExpandToInclude(2), Throws.TypeOf<Exception>());
+            Assert.That(() => run.ExpandToInclude(3), Throws.TypeOf<Exception>());
+        }
+
+        [Test]
+        public void RunExpandToIncludeAfter()
+        {
+            var run = new Run(2, 3);
+            var update = run.ExpandToInclude(5);
+            Assert.That(update, Is.Not.Null);
+            Assert.That(update.NewRuns.Length, Is.EqualTo(0));
+            Assert.That(update.RemoveRuns.Length, Is.EqualTo(0));
             Assert.That(run.Includes(5));
             Assert.That(!run.Includes(6));
+        }
+
+        [Test]
+        public void RunExpandToIncludeBefore()
+        {
+            var run = new Run(2, 3);
+            var update = run.ExpandToInclude(1);
+
+            Assert.That(update, Is.Not.Null);
+            Assert.That(update.NewRuns.Length, Is.EqualTo(1));
+            Assert.That(update.RemoveRuns.Length, Is.EqualTo(1));
+
+            Assert.That(update.RemoveRuns[0], Is.SameAs(run));
+            Assert.That(update.NewRuns[0].Start, Is.EqualTo(1));
+            Assert.That(update.NewRuns[0].Length, Is.EqualTo(4));
         }
 
         [Test]
@@ -100,94 +163,9 @@ namespace FrameworkTests.Utils
         {
             var run = new Run(2, 4);
             var seen = new List<int>();
-            run.Iterate(i => seen.Add(i));
+            run.Iterate(seen.Add);
 
             CollectionAssert.AreEqual(new[] { 2, 3, 4, 5 }, seen);
         }
-    }
-
-    public class Run
-    {
-        public Run(int start, int length)
-        {
-            Start = start;
-            Length = length;
-        }
-
-        public int Start { get; }
-        public int Length { get; private set; }
-
-        public bool Includes(int index)
-        {
-            return index >= Start && index < (Start + Length);
-        }
-
-        public bool ExpandToInclude(int index)
-        {
-            if (index == (Start + Length))
-            {
-                Length++;
-                return true;
-            }
-            return false;
-        }
-
-        public RunUpdate Unset(int index)
-        {
-            if (!Includes(index))
-            {
-                return new RunUpdate();
-            }
-
-            if (index == Start)
-            {
-                // First index: Replace self with new run at next index, unless empty.
-                if (Length == 1)
-                {
-                    return new RunUpdate(Array.Empty<Run>(), new[] { this });
-                }
-                return new RunUpdate(
-                    newRuns: new[] { new Run(Start + 1, Length - 1) },
-                    removeRuns: new[] { this }
-                );
-            }
-
-            if (index == (Start + Length - 1))
-            {
-                // Last index: Become one smaller.
-                Length--;
-                return new RunUpdate();
-            }
-
-            // Split:
-            var newRunLength = (Start + Length - 1) - index;
-            Length = index - Start;
-            return new RunUpdate(new[] { new Run(index + 1, newRunLength) }, Array.Empty<Run>());
-        }
-        
-        public void Iterate(Action<int> action)
-        {
-            for (var i = 0; i < Length; i++)
-            {
-                action(Start + i);
-            }
-        }
-    }
-
-    public class RunUpdate
-    {
-        public RunUpdate()
-            : this(Array.Empty<Run>(), Array.Empty<Run>())
-        {
-        }
-
-        public RunUpdate(Run[] newRuns, Run[] removeRuns)
-        {
-            NewRuns = newRuns;
-            RemoveRuns = removeRuns;
-        }
-
-        public Run[] NewRuns { get; }
-        public Run[] RemoveRuns { get; }
     }
 }

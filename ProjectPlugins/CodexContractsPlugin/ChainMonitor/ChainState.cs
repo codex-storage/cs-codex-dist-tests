@@ -17,6 +17,8 @@ namespace CodexContractsPlugin.ChainMonitor
         void OnSlotFilled(RequestEvent requestEvent, EthAddress host, BigInteger slotIndex);
         void OnSlotFreed(RequestEvent requestEvent, BigInteger slotIndex);
         void OnSlotReservationsFull(RequestEvent requestEvent, BigInteger slotIndex);
+
+        void OnError(string msg);
     }
 
     public class RequestEvent
@@ -67,7 +69,11 @@ namespace CodexContractsPlugin.ChainMonitor
         private void Apply(ChainEvents events)
         {
             if (events.BlockInterval.TimeRange.From < TotalSpan.From)
-                throw new Exception("Attempt to update ChainState with set of events from before its current record.");
+            {
+                var msg = "Attempt to update ChainState with set of events from before its current record.";
+                handler.OnError(msg);
+                throw new Exception(msg);
+            }
 
             log.Log($"ChainState updating: {events.BlockInterval}");
 
@@ -110,7 +116,7 @@ namespace CodexContractsPlugin.ChainMonitor
 
         private void ApplyEvent(RequestFulfilledEventDTO @event)
         {
-            var r = FindRequest(@event.RequestId);
+            var r = FindRequest(@event);
             if (r == null) return;
             r.UpdateState(@event.Block.BlockNumber, RequestState.Started);
             handler.OnRequestFulfilled(new RequestEvent(@event.Block, r));
@@ -118,7 +124,7 @@ namespace CodexContractsPlugin.ChainMonitor
 
         private void ApplyEvent(RequestCancelledEventDTO @event)
         {
-            var r = FindRequest(@event.RequestId);
+            var r = FindRequest(@event);
             if (r == null) return;
             r.UpdateState(@event.Block.BlockNumber, RequestState.Cancelled);
             handler.OnRequestCancelled(new RequestEvent(@event.Block, r));
@@ -126,7 +132,7 @@ namespace CodexContractsPlugin.ChainMonitor
 
         private void ApplyEvent(RequestFailedEventDTO @event)
         {
-            var r = FindRequest(@event.RequestId);
+            var r = FindRequest(@event);
             if (r == null) return;
             r.UpdateState(@event.Block.BlockNumber, RequestState.Failed);
             handler.OnRequestFailed(new RequestEvent(@event.Block, r));
@@ -134,7 +140,7 @@ namespace CodexContractsPlugin.ChainMonitor
 
         private void ApplyEvent(SlotFilledEventDTO @event)
         {
-            var r = FindRequest(@event.RequestId);
+            var r = FindRequest(@event);
             if (r == null) return;
             r.Hosts.Add(@event.Host, (int)@event.SlotIndex);
             r.Log($"[{@event.Block.BlockNumber}] SlotFilled (host:'{@event.Host}', slotIndex:{@event.SlotIndex})");
@@ -143,7 +149,7 @@ namespace CodexContractsPlugin.ChainMonitor
 
         private void ApplyEvent(SlotFreedEventDTO @event)
         {
-            var r = FindRequest(@event.RequestId);
+            var r = FindRequest(@event);
             if (r == null) return;
             r.Hosts.RemoveHost((int)@event.SlotIndex);
             r.Log($"[{@event.Block.BlockNumber}] SlotFreed (slotIndex:{@event.SlotIndex})");
@@ -152,7 +158,7 @@ namespace CodexContractsPlugin.ChainMonitor
 
         private void ApplyEvent(SlotReservationsFullEventDTO @event)
         {
-            var r = FindRequest(@event.RequestId);
+            var r = FindRequest(@event);
             if (r == null) return;
             r.Log($"[{@event.Block.BlockNumber}] SlotReservationsFull (slotIndex:{@event.SlotIndex})");
             handler.OnSlotReservationsFull(new RequestEvent(@event.Block, r), @event.SlotIndex);
@@ -171,10 +177,23 @@ namespace CodexContractsPlugin.ChainMonitor
             }
         }
 
-        private ChainStateRequest? FindRequest(byte[] requestId)
+        private ChainStateRequest? FindRequest(IHasRequestId request)
         {
-            var r = requests.SingleOrDefault(r => Equal(r.Request.RequestId, requestId));
-            if (r == null) log.Log("Unable to find request by ID!");
+            var r = requests.SingleOrDefault(r => Equal(r.Request.RequestId, request.RequestId));
+            if (r == null)
+            {
+                var blockNumber = "unknown";
+                if (request is IHasBlock blk)
+                {
+                    blockNumber = blk.Block.BlockNumber.ToString();
+                }
+
+                var msg = $"Received event of type '{request.GetType()}' in block '{blockNumber}' for request by Id: '{request.RequestId}'. " +
+                    $"Failed to find request. Request creation event not seen! (Tracker start time: {TotalSpan.From})";
+
+                log.Error(msg);
+                handler.OnError(msg);
+            }
             return r;
         }
 

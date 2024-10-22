@@ -68,7 +68,7 @@ namespace AutoClient
                 var filename = Guid.NewGuid().ToString().ToLowerInvariant();
                 {
                     using var fileStream = File.OpenWrite(filename);
-                    var fileResponse = await codex.DownloadNetworkAsync(cid);
+                    var fileResponse = await codex.DownloadNetworkStreamAsync(cid);
                     fileResponse.Stream.CopyTo(fileStream);
                 }
                 var time = sw.Elapsed;
@@ -84,13 +84,32 @@ namespace AutoClient
         private async Task<string> StartNewPurchase()
         {
             var file = await CreateFile();
-            var cid = await UploadFile(file);
-            return await RequestStorage(cid);
+            try
+            {
+                var cid = await UploadFile(file);
+                return await RequestStorage(cid);
+            }
+            finally
+            {
+                DeleteFile(file);
+            }
         }
 
         private async Task<string> CreateFile()
         {
             return await app.Generator.Generate();
+        }
+
+        private void DeleteFile(string file)
+        {
+            try
+            {
+                File.Delete(file);
+            }
+            catch (Exception exc)
+            {
+                app.Log.Error($"Failed to delete file '{file}': {exc}");
+            }
         }
 
         private async Task<ContentId> UploadFile(string filename)

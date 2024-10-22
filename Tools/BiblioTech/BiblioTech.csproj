@@ -12,6 +12,7 @@
     <ProjectReference Include="..\..\Framework\ArgsUniform\ArgsUniform.csproj" />
     <ProjectReference Include="..\..\Framework\DiscordRewards\DiscordRewards.csproj" />
     <ProjectReference Include="..\..\Framework\GethConnector\GethConnector.csproj" />
+    <ProjectReference Include="..\..\ProjectPlugins\CodexPlugin\CodexPlugin.csproj" />
   </ItemGroup>
 
 </Project>

@@ -76,6 +76,10 @@ namespace TestNetRewarder
         {
         }
 
+        public void OnError(string msg)
+        {
+        }
+
         private void GiveReward(RewardConfig reward, EthAddress receiver)
         {
             giver.Give(reward, receiver);
