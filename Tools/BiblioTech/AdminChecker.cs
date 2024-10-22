@@ -1,5 +1,7 @@
-﻿using Discord;
+﻿using BiblioTech.Options;
+using Discord;
 using Discord.WebSocket;
+using Org.BouncyCastle.Utilities;
 
 namespace BiblioTech
 {
@@ -29,7 +31,19 @@ namespace BiblioTech
 
         public async Task SendInAdminChannel(string msg)
         {
-            await adminChannel.SendMessageAsync(msg);
+            await SendInAdminChannel(msg.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries));
+        }
+
+        public async Task SendInAdminChannel(string[] lines)
+        {
+            var chunker = new LineChunker(lines);
+            var chunks = chunker.GetChunks();
+            if (!chunks.Any()) return;
+
+            foreach (var chunk in chunks)
+            {
+                await adminChannel.SendMessageAsync(string.Join(Environment.NewLine, chunk));
+            }
         }
 
         public void SetAdminChannel(ISocketMessageChannel adminChannel)
