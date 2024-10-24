@@ -7,7 +7,7 @@ namespace MetricsPlugin
     public interface IMetricsAccess : IHasContainer
     {
         string TargetName { get; }
-        Metrics? GetAllMetrics();
+        Metrics GetAllMetrics();
         MetricsSet GetMetric(string metricName);
         MetricsSet GetMetric(string metricName, TimeSpan timeout);
     }
@@ -27,7 +27,7 @@ namespace MetricsPlugin
         public string TargetName { get; }
         public RunningContainer Container => query.RunningContainer;
 
-        public Metrics? GetAllMetrics()
+        public Metrics GetAllMetrics()
         {
             return query.GetAllMetricsForNode(target);
         }
@@ -54,11 +54,10 @@ namespace MetricsPlugin
             }
         }
 
-        private MetricsSet? GetMostRecent(string metricName)
+        private MetricsSet GetMostRecent(string metricName)
         {
             var result = query.GetMostRecent(metricName, target);
-            if (result == null) return null;
-            return result.Sets.LastOrDefault();
+            return result.Sets.Last();
         }
     }
 }

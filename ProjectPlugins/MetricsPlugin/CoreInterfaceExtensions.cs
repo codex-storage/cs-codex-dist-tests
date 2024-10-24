@@ -6,14 +6,14 @@ namespace MetricsPlugin
 {
     public static class CoreInterfaceExtensions
     {
-        public static RunningPod DeployMetricsCollector(this CoreInterface ci, params IHasMetricsScrapeTarget[] scrapeTargets)
+        public static RunningPod DeployMetricsCollector(this CoreInterface ci, TimeSpan scrapeInterval, params IHasMetricsScrapeTarget[] scrapeTargets)
         {
-            return Plugin(ci).DeployMetricsCollector(scrapeTargets.Select(t => t.MetricsScrapeTarget).ToArray());
+            return Plugin(ci).DeployMetricsCollector(scrapeTargets.Select(t => t.MetricsScrapeTarget).ToArray(), scrapeInterval);
         }
 
-        public static RunningPod DeployMetricsCollector(this CoreInterface ci, params IMetricsScrapeTarget[] scrapeTargets)
+        public static RunningPod DeployMetricsCollector(this CoreInterface ci, TimeSpan scrapeInterval, params IMetricsScrapeTarget[] scrapeTargets)
         {
-            return Plugin(ci).DeployMetricsCollector(scrapeTargets);
+            return Plugin(ci).DeployMetricsCollector(scrapeTargets, scrapeInterval);
         }
 
         public static IMetricsAccess WrapMetricsCollector(this CoreInterface ci, RunningPod metricsPod, IHasMetricsScrapeTarget scrapeTarget)
@@ -26,19 +26,19 @@ namespace MetricsPlugin
             return Plugin(ci).WrapMetricsCollectorDeployment(metricsPod, scrapeTarget);
         }
 
-        public static IMetricsAccess[] GetMetricsFor(this CoreInterface ci, params IHasManyMetricScrapeTargets[] manyScrapeTargets)
+        public static IMetricsAccess[] GetMetricsFor(this CoreInterface ci, TimeSpan scrapeInterval, params IHasManyMetricScrapeTargets[] manyScrapeTargets)
         {
-            return ci.GetMetricsFor(manyScrapeTargets.SelectMany(t => t.ScrapeTargets).ToArray());
+            return ci.GetMetricsFor(scrapeInterval, manyScrapeTargets.SelectMany(t => t.ScrapeTargets).ToArray());
         }
 
-        public static IMetricsAccess[] GetMetricsFor(this CoreInterface ci, params IHasMetricsScrapeTarget[] scrapeTargets)
+        public static IMetricsAccess[] GetMetricsFor(this CoreInterface ci, TimeSpan scrapeInterval, params IHasMetricsScrapeTarget[] scrapeTargets)
         {
-            return ci.GetMetricsFor(scrapeTargets.Select(t => t.MetricsScrapeTarget).ToArray());
+            return ci.GetMetricsFor(scrapeInterval, scrapeTargets.Select(t => t.MetricsScrapeTarget).ToArray());
         }
 
-        public static IMetricsAccess[] GetMetricsFor(this CoreInterface ci, params IMetricsScrapeTarget[] scrapeTargets)
+        public static IMetricsAccess[] GetMetricsFor(this CoreInterface ci, TimeSpan scrapeInterval, params IMetricsScrapeTarget[] scrapeTargets)
         {
-            var rc = ci.DeployMetricsCollector(scrapeTargets);
+            var rc = ci.DeployMetricsCollector(scrapeInterval, scrapeTargets);
             return scrapeTargets.Select(t => ci.WrapMetricsCollector(rc, t)).ToArray();
         }
 

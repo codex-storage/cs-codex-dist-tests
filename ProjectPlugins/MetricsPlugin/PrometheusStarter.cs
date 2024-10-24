@@ -16,13 +16,13 @@ namespace MetricsPlugin
             this.tools = tools;
         }
 
-        public RunningPod CollectMetricsFor(IMetricsScrapeTarget[] targets)
+        public RunningPod CollectMetricsFor(IMetricsScrapeTarget[] targets, TimeSpan scrapeInterval)
         {
             if (!targets.Any()) throw new ArgumentException(nameof(targets) + " must not be empty.");
 
             Log($"Starting metrics server for {targets.Length} targets...");
             var startupConfig = new StartupConfig();
-            startupConfig.Add(new PrometheusStartupConfig(GeneratePrometheusConfig(targets)));
+            startupConfig.Add(new PrometheusStartupConfig(GeneratePrometheusConfig(targets, scrapeInterval)));
 
             var workflow = tools.CreateWorkflow();
             var runningContainers = workflow.Start(1, recipe, startupConfig).WaitForOnline();
@@ -48,12 +48,16 @@ namespace MetricsPlugin
             tools.GetLog().Log(msg);
         }
 
-        private string GeneratePrometheusConfig(IMetricsScrapeTarget[] targets)
+        private string GeneratePrometheusConfig(IMetricsScrapeTarget[] targets, TimeSpan scrapeInterval)
         {
+            var secs = Convert.ToInt32(scrapeInterval.TotalSeconds);
+            if (secs < 1) throw new Exception("ScrapeInterval can't be < 1s");
+            if (secs > 60) throw new Exception("ScrapeInterval can't be > 60s");
+
             var config = "";
             config += "global:\n";
-            config += "  scrape_interval: 10s\n";
-            config += "  scrape_timeout: 10s\n";
+            config += $"  scrape_interval: {secs}s\n";
+            config += $"  scrape_timeout: {secs}s\n";
             config += "\n";
             config += "scrape_configs:\n";
             config += "  - job_name: services\n";

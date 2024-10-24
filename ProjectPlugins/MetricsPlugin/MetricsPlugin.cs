@@ -31,9 +31,9 @@ namespace MetricsPlugin
         {
         }
 
-        public RunningPod DeployMetricsCollector(IMetricsScrapeTarget[] scrapeTargets)
+        public RunningPod DeployMetricsCollector(IMetricsScrapeTarget[] scrapeTargets, TimeSpan scrapeInterval)
         {
-            return starter.CollectMetricsFor(scrapeTargets);
+            return starter.CollectMetricsFor(scrapeTargets, scrapeInterval);
         }
 
         public IMetricsAccess WrapMetricsCollectorDeployment(RunningPod runningPod, IMetricsScrapeTarget target)

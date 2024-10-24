@@ -36,7 +36,7 @@ namespace CodexTests.BasicTests
             var primary2 = group2[0];
             var secondary2 = group2[1];
 
-            var metrics = Ci.GetMetricsFor(primary, primary2);
+            var metrics = Ci.GetMetricsFor(scrapeInterval: TimeSpan.FromSeconds(10), primary, primary2);
 
             primary.ConnectToPeer(secondary);
             primary2.ConnectToPeer(secondary2);

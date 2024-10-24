@@ -161,7 +161,7 @@ namespace CodexNetDeployer
 
             Log("Starting metrics service...");
 
-            var runningContainer = ci.DeployMetricsCollector(startResults.Select(r => r.CodexNode).ToArray());
+            var runningContainer = ci.DeployMetricsCollector(scrapeInterval: TimeSpan.FromSeconds(10.0), startResults.Select(r => r.CodexNode).ToArray());
 
             Log("Metrics service started.");
 

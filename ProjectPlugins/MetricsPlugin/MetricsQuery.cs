@@ -23,10 +23,10 @@ namespace MetricsPlugin
 
         public RunningContainer RunningContainer { get; }
 
-        public Metrics? GetMostRecent(string metricName, IMetricsScrapeTarget target)
+        public Metrics GetMostRecent(string metricName, IMetricsScrapeTarget target)
         {
             var response = GetLastOverTime(metricName, GetInstanceStringForNode(target));
-            if (response == null) return null;
+            if (response == null) throw new Exception($"Failed to get most recent metric: {metricName}");
 
             var result = new Metrics
             {
@@ -44,19 +44,20 @@ namespace MetricsPlugin
             return result;
         }
 
-        public Metrics? GetMetrics(string metricName)
+        public Metrics GetMetrics(string metricName)
         {
             var response = GetAll(metricName);
-            if (response == null) return null;
+            if (response == null) throw new Exception($"Failed to get metrics by name: {metricName}");
             var result = MapResponseToMetrics(response);
             Log(metricName, result);
             return result;
         }
 
-        public Metrics? GetAllMetricsForNode(IMetricsScrapeTarget target)
+        public Metrics GetAllMetricsForNode(IMetricsScrapeTarget target)
         {
-            var response = endpoint.HttpGetJson<PrometheusQueryResponse>($"query?query={GetInstanceStringForNode(target)}{GetQueryTimeRange()}");
-            if (response.status != "success") return null;
+            var instanceString = GetInstanceStringForNode(target);
+            var response = endpoint.HttpGetJson<PrometheusQueryResponse>($"query?query={instanceString}{GetQueryTimeRange()}");
+            if (response.status != "success") throw new Exception($"Failed to get metrics for target: {instanceString}");
             var result = MapResponseToMetrics(response);
             Log(target, result);
             return result;
@@ -80,16 +81,30 @@ namespace MetricsPlugin
         {
             return new Metrics
             {
-                Sets = response.data.result.Select(r =>
-                {
-                    return new MetricsSet
-                    {
-                        Name = r.metric.__name__,
-                        Instance = r.metric.instance,
-                        Values = MapMultipleValues(r.values)
-                    };
-                }).ToArray()
+                Sets = response.data.result.Select(CreateMetricsSet).ToArray()
             };
+        }
+
+        private MetricsSet CreateMetricsSet(PrometheusQueryResponseDataResultEntry r)
+        {
+            var result = new MetricsSet
+            {
+                Name = r.metric.__name__,
+                Instance = r.metric.instance,
+                Values = MapMultipleValues(r.values)
+            };
+
+            if (!string.IsNullOrEmpty(r.metric.file) && !string.IsNullOrEmpty(r.metric.line) && !string.IsNullOrEmpty(r.metric.proc))
+            {
+                result.AsyncProfiler = new AsyncProfilerMetrics
+                {
+                    File = r.metric.file,
+                    Line = r.metric.line,
+                    Proc = r.metric.proc
+                };
+            }
+
+            return result;
         }
 
         private MetricsSetValue[] MapSingleValue(object[] value)
@@ -220,12 +235,26 @@ namespace MetricsPlugin
     {
         public string Name { get; set; } = string.Empty;
         public string Instance { get; set; } = string.Empty;
+        public AsyncProfilerMetrics? AsyncProfiler { get; set; } = null;
         public MetricsSetValue[] Values { get; set; } = Array.Empty<MetricsSetValue>();
 
         public override string ToString()
         {
-            return $"{Name} ({Instance}) : {{{string.Join(",", Values.Select(v => v.ToString()))}}}";
+            var prefix = "";
+            if (AsyncProfiler != null)
+            {
+                prefix = $"proc: '{AsyncProfiler.Proc}' in '{AsyncProfiler.File}:{AsyncProfiler.Line}'";
+            }
+
+            return $"{prefix}{Name} ({Instance}) : {{{string.Join(",", Values.Select(v => v.ToString()))}}}";
         }
+    }
+
+    public class AsyncProfilerMetrics
+    {
+        public string File { get; set; } = string.Empty;
+        public string Line { get; set; } = string.Empty;
+        public string Proc { get; set; } = string.Empty;
     }
 
     public class MetricsSetValue
@@ -263,6 +292,10 @@ namespace MetricsPlugin
         public string __name__ { get; set; } = string.Empty;
         public string instance { get; set; } = string.Empty;
         public string job { get; set; } = string.Empty;
+        // Async profiler output.
+        public string? file { get; set; } = null;
+        public string? line { get; set; } = null;
+        public string? proc { get; set; } = null;
     }
 
     public class PrometheusAllNamesResponse
