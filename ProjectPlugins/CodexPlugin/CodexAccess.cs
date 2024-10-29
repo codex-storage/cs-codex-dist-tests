@@ -82,7 +82,7 @@ namespace CodexPlugin
 
         public LocalDatasetList LocalFiles()
         {
-            return mapper.Map(OnCodex(api => api.ListDataAsync()));
+            return mapper.Map(OnCodex(api => api.ListDataAsync("", "")));
         }
 
         public StorageAvailability SalesAvailability(StorageAvailability request)
