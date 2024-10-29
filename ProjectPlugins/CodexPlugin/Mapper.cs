@@ -16,8 +16,8 @@ namespace CodexPlugin
                 Spr = debugInfo.Spr,
                 Addrs = debugInfo.Addrs.ToArray(),
                 AnnounceAddresses = JArray(debugInfo.AdditionalProperties, "announceAddresses").Select(x => x.ToString()).ToArray(),
-                Version = MapDebugInfoVersion(JObject(debugInfo.AdditionalProperties, "codex")),
-                Table = MapDebugInfoTable(JObject(debugInfo.AdditionalProperties, "table"))
+                Version = Map(debugInfo.Codex),
+                Table = Map(debugInfo.Table)
             };
         }
 
@@ -136,47 +136,45 @@ namespace CodexPlugin
             };
         }
 
-        private DebugInfoVersion MapDebugInfoVersion(JObject obj)
+        private DebugInfoVersion Map(CodexVersion obj)
         {
             return new DebugInfoVersion
             {
-                Version = StringOrEmpty(obj, "version"),
-                Revision = StringOrEmpty(obj, "revision")
+                Version = obj.Version,
+                Revision = obj.Revision
             };
         }
 
-        private DebugInfoTable MapDebugInfoTable(JObject obj)
+        private DebugInfoTable Map(PeersTable obj)
         {
             return new DebugInfoTable
             {
-                LocalNode = MapDebugInfoTableNode(obj.GetValue("localNode")),
-                Nodes = MapDebugInfoTableNodeArray(obj.GetValue("nodes") as JArray)
+                LocalNode = Map(obj.LocalNode),
+                Nodes = Map(obj.Nodes)
             };
         }
 
-        private DebugInfoTableNode MapDebugInfoTableNode(JToken? token)
+        private DebugInfoTableNode Map(Node? token)
         {
-            var obj = token as JObject;
-            if (obj == null) return new DebugInfoTableNode();
-
+            if (token == null) return new DebugInfoTableNode();
             return new DebugInfoTableNode
             {
-                Address = StringOrEmpty(obj, "address"),
-                NodeId = StringOrEmpty(obj, "nodeId"),
-                PeerId = StringOrEmpty(obj, "peerId"),
-                Record = StringOrEmpty(obj, "record"),
-                Seen = Bool(obj, "seen")
+                Address = token.Address,
+                NodeId = token.NodeId,
+                PeerId = token.PeerId,
+                Record = token.Record,
+                Seen = token.Seen
             };
         }
 
-        private DebugInfoTableNode[] MapDebugInfoTableNodeArray(JArray? nodes)
+        private DebugInfoTableNode[] Map(ICollection<Node> nodes)
         {
             if (nodes == null || nodes.Count == 0)
             {
                 return new DebugInfoTableNode[0];
             }
 
-            return nodes.Select(MapDebugInfoTableNode).ToArray();
+            return nodes.Select(Map).ToArray();
         }
 
         private Manifest MapManifest(CodexOpenApi.ManifestItem manifest)
