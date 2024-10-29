@@ -16,7 +16,7 @@ namespace Logging
         public static bool EnableDebugLogging { get; set; } = false;
 
         private readonly NumberSource subfileNumberSource = new NumberSource(0);
-        private readonly List<BaseLogStringReplacement> replacements = new List<BaseLogStringReplacement>();
+        public static List<BaseLogStringReplacement> replacements = new List<BaseLogStringReplacement>();
         private LogFile? logFile;
 
         public BaseLog()

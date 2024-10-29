@@ -1,4 +1,5 @@
 ﻿using Logging;
+using Utils;
 
 namespace KubernetesWorkflow
 {
@@ -40,6 +41,11 @@ namespace KubernetesWorkflow
 
         protected override void ProcessLine(string line)
         {
+            foreach (var replacement in BaseLog.replacements)
+            {
+                line = replacement.Apply(line);
+            }
+
             LogFile.WriteRaw(line);
         }
     }

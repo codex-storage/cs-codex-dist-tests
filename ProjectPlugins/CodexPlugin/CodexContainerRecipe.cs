@@ -8,17 +8,18 @@ namespace CodexPlugin
     public class CodexContainerRecipe : ContainerRecipeFactory
     {
         private const string DefaultDockerImage =
-            //"codexstorage/nim-codex:0.1.7-dist-tests"; // => 20/20: 17 seconds 10/10: 3 seconds
-            //"codexstorage/nim-codex:sha-2a25460-dist-tests"; // PR => 20/20: 17 seconds
-            //"thatbenbierens/nim-codex:blockexcpr1"; // PR with revert of "Fixes issue where only wants of type block are stored in peerContext" => 20/20: 17 seconds
-            //"thatbenbierens/nim-codex:blockexprecreate"; // v0.1.7 with patch => 20/20: 19 seconds
-            //"thatbenbierens/nim-codex:blockexprecreate016"; // v0.1.6 with patch => 20/20: 19 seconds 10/10: 2 seconds
-            "thatbenbierens/nim-codex:blockexchprtinker7";
-            //"thatbenbierens/nim-codex:blkexc9"; // wow-fast
+        //"codexstorage/nim-codex:0.1.7-dist-tests"; // => 20/20: 17 seconds 10/10: 3 seconds
+        //"codexstorage/nim-codex:sha-2a25460-dist-tests"; // PR => 20/20: 17 seconds
+        //"thatbenbierens/nim-codex:blockexcpr1"; // PR with revert of "Fixes issue where only wants of type block are stored in peerContext" => 20/20: 17 seconds
+        //"thatbenbierens/nim-codex:blockexprecreate"; // v0.1.7 with patch => 20/20: 19 seconds
+        //"thatbenbierens/nim-codex:blockexprecreate016"; // v0.1.6 with patch => 20/20: 19 seconds 10/10: 2 seconds
+        //"thatbenbierens/nim-codex:blockexchprtinker7";
+        //"thatbenbierens/nim-codex:blkexc9"; // wow-fast
 
+        "thatbenbierens/nim-codex:asyncprofile5break"; // asynced trees.
 
-        blocks are stored, blocks are resolved
-        store-stream does not continue. node too busy???
+        //blocks are stored, blocks are resolved
+        //store-stream does not continue. node too busy???
 
         public const string ApiPortTag = "codex_api_port";
         public const string ListenPortTag = "codex_listen_port";
