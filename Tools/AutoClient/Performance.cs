@@ -16,11 +16,13 @@ namespace AutoClient
             Log($"Download failed: {ex}");
         }
 
-        public void DownloadSuccessful(long size, TimeSpan time)
+        public void DownloadSuccessful(long? size, TimeSpan time)
         {
+            if (!size.HasValue) return;
+
             long milliseconds = Convert.ToInt64(time.TotalMilliseconds);
             if (milliseconds < 1) milliseconds = 1;
-            long bytesPerSecond = 1000 * (size / milliseconds);
+            long bytesPerSecond = 1000 * (size.Value / milliseconds);
             Log($"Download successful: {bytesPerSecond} bytes per second");
         }
 

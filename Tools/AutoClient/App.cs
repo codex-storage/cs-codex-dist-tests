@@ -1,4 +1,5 @@
-﻿using Logging;
+﻿using AutoClient.Modes;
+using Logging;
 
 namespace AutoClient
 {
@@ -19,6 +20,15 @@ namespace AutoClient
                 new FileLog(Path.Combine(config.LogPath, "performance")),
                 new ConsoleLog()
             ));
+
+            if (!string.IsNullOrEmpty(config.FolderToStore))
+            {
+                FolderWorkDispatcher = new FolderWorkDispatcher(config.FolderToStore);
+            }
+            else
+            {
+                FolderWorkDispatcher = null!;
+            }
         }
 
         public Configuration Config { get; }
@@ -27,6 +37,7 @@ namespace AutoClient
         public CancellationTokenSource Cts { get; } = new CancellationTokenSource();
         public CidRepo CidRepo { get; }
         public Performance Performance { get; }
+        public FolderWorkDispatcher FolderWorkDispatcher { get; }
 
         private IFileGenerator CreateGenerator()
         {

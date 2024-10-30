@@ -34,6 +34,9 @@ namespace AutoClient
         [Uniform("filesizemb", "smb", "FILESIZEMB", false, "When greater than zero, size of file generated and uploaded. When zero, random images are used instead.")]
         public int FileSizeMb { get; set; } = 0;
 
+        [Uniform("folderToStore", "fts", "FOLDERTOSTORE", false, "When set, autoclient will attempt to upload and purchase storage for every non-JSON file in the provided folder.")]
+        public string FolderToStore { get; set; } = string.Empty;
+
         public string LogPath
         {
             get

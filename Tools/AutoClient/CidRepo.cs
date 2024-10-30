@@ -17,6 +17,7 @@
             lock (_lock)
             {
                 entries.Add(new CidEntry(nodeId, cid, knownSize));
+                if (entries.Count > 1000) entries.Clear();
             }
         }
 

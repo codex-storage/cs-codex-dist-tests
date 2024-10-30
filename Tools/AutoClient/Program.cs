@@ -55,7 +55,23 @@ public class Program
 
     private IMode CreateMode()
     {
+        if (!string.IsNullOrEmpty(app.Config.FolderToStore))
+        {
+            return CreateFolderStoreMode();
+        }
+
         return new PurchasingMode(app);
+    }
+
+    private IMode CreateFolderStoreMode()
+    {
+        if (app.Config.ContractDurationMinutes - 1 < 5) throw new Exception("Contract duration config option not long enough!");
+
+        return new FolderStoreMode(app, app.Config.FolderToStore, new PurchaseInfo
+        {
+            PurchaseDurationTotal = TimeSpan.FromMinutes(app.Config.ContractDurationMinutes),
+            PurchaseDurationSafe = TimeSpan.FromMinutes(app.Config.ContractDurationMinutes - 1),
+        });
     }
 
     private async Task<CodexInstance[]> CreateCodexInstances()

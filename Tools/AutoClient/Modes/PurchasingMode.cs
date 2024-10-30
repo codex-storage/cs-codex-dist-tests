@@ -17,7 +17,7 @@ namespace AutoClient.Modes
         {
             for (var i = 0; i < app.Config.NumConcurrentPurchases; i++)
             {
-                purchasers.Add(new AutomaticPurchaser(new LogPrefixer(app.Log, $"({i}) "), instance));
+                purchasers.Add(new AutomaticPurchaser(new LogPrefixer(app.Log, $"({i}) "), instance, new CodexNode(app, instance)));
             }
 
             var delayPerPurchaser =

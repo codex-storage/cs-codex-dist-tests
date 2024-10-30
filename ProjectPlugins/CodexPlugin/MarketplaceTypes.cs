@@ -40,6 +40,12 @@ namespace CodexPlugin
         public string State { get; set; } = string.Empty;
         public string Error { get; set; } = string.Empty;
         public StorageRequest Request { get; set; } = null!;
+
+        public bool IsCancelled => State.ToLowerInvariant().Contains("cancel");
+        public bool IsError => State.ToLowerInvariant().Contains("error");
+        public bool IsFinished => State.ToLowerInvariant().Contains("finished");
+        public bool IsStarted => State.ToLowerInvariant().Contains("started");
+        public bool IsSubmitted => State.ToLowerInvariant().Contains("submitted");
     }
 
     public class StorageRequest
