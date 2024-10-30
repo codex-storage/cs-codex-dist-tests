@@ -6,23 +6,16 @@ using Utils;
 
 namespace AutoClient
 {
-    public class Purchaser
+    public class AutomaticPurchaser
     {
-        private readonly App app;
-        private readonly string nodeId;
         private readonly ILog log;
-        private readonly HttpClient client;
-        private readonly Address address;
-        private readonly CodexApi codex;
+        private readonly ICodexInstance codex;
         private Task workerTask = Task.CompletedTask;
+        private App app => codex.App;
 
-        public Purchaser(App app, string nodeId, ILog log, HttpClient client, Address address, CodexApi codex)
+        public AutomaticPurchaser(ILog log, ICodexInstance codex)
         {
-            this.app = app;
-            this.nodeId = nodeId;
             this.log = log;
-            this.client = client;
-            this.address = address;
             this.codex = codex;
         }
 
@@ -57,7 +50,7 @@ namespace AutoClient
 
         private async Task DownloadForeignCid()
         {
-            var cid = app.CidRepo.GetForeignCid(nodeId);
+            var cid = app.CidRepo.GetForeignCid(codex.NodeId);
             if (cid == null) return;
             var size = app.CidRepo.GetSizeForCid(cid);
             if (size == null) return;
@@ -68,7 +61,7 @@ namespace AutoClient
                 var filename = Guid.NewGuid().ToString().ToLowerInvariant();
                 {
                     using var fileStream = File.OpenWrite(filename);
-                    var fileResponse = await codex.DownloadNetworkStreamAsync(cid);
+                    var fileResponse = await codex.Codex.DownloadNetworkStreamAsync(cid);
                     fileResponse.Stream.CopyTo(fileStream);
                 }
                 var time = sw.Elapsed;
@@ -122,7 +115,7 @@ namespace AutoClient
                 var cid = await UploadStream(fileStream, filename);
                 var time = sw.Elapsed;
                 app.Performance.UploadSuccessful(info.Length, time);
-                app.CidRepo.Add(nodeId, cid.Id, info.Length);
+                app.CidRepo.Add(codex.NodeId, cid.Id, info.Length);
                 return cid;
             }
             catch (Exception exc)
@@ -135,7 +128,7 @@ namespace AutoClient
         private async Task<ContentId> UploadStream(FileStream fileStream, string filename)
         {
             log.Debug($"Uploading file...");
-            var response = await codex.UploadAsync(
+            var response = await codex.Codex.UploadAsync(
                 content_type: "application/x-binary",
                 content_disposition: $"attachment; filename=\"{filename}\"",
                 fileStream, app.Cts.Token);
@@ -150,7 +143,7 @@ namespace AutoClient
         private async Task<string> RequestStorage(ContentId cid)
         {
             log.Debug("Requesting storage for " + cid.Id);
-            var result = await codex.CreateStorageRequestAsync(cid.Id, new StorageRequestCreation()
+            var result = await codex.Codex.CreateStorageRequestAsync(cid.Id, new StorageRequestCreation()
             {
                 Collateral = app.Config.RequiredCollateral.ToString(),
                 Duration = (app.Config.ContractDurationMinutes * 60).ToString(),
@@ -186,7 +179,7 @@ namespace AutoClient
         private async Task<StoragePurchase?> GetStoragePurchase(string pid)
         {
             // openapi still don't match code.
-            var str = await client.GetStringAsync($"{address.Host}:{address.Port}/api/codex/v1/storage/purchases/{pid}");
+            var str = await codex.Client.GetStringAsync($"{codex.Address.Host}:{codex.Address.Port}/api/codex/v1/storage/purchases/{pid}");
             if (string.IsNullOrEmpty(str)) return null;
             return JsonConvert.DeserializeObject<StoragePurchase>(str);
         }
