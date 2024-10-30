@@ -64,7 +64,10 @@ namespace AutoClient.Modes
         {
             var file = app.FolderWorkDispatcher.GetFileToCheck();
             var worker = new FileWorker(app, purchaseInfo, folder, file);
-            await worker.Update(instance);
+            await worker.Update(instance, () =>
+            {
+                app.FolderWorkDispatcher.RevisitSoon(file);
+            });
         }
 
         public void Stop()
@@ -94,13 +97,13 @@ namespace AutoClient.Modes
             sourceFilename = filename;
         }
 
-        public async Task Update(ICodexInstance instance)
+        public async Task Update(ICodexInstance instance, Action shouldRevisitSoon)
         {
             try
             {
                 var codex = new CodexNode(app, instance);
                 await EnsureCid(instance, codex);
-                await EnsureRecentPurchase(instance, codex);
+                await EnsureRecentPurchase(instance, codex, shouldRevisitSoon);
                 SaveState();
             }
             catch (Exception exc)
@@ -110,13 +113,14 @@ namespace AutoClient.Modes
             }
         }
 
-        private async Task EnsureRecentPurchase(ICodexInstance instance, CodexNode codex)
+        private async Task EnsureRecentPurchase(ICodexInstance instance, CodexNode codex, Action shouldRevisitSoon)
         {
             var recent = GetMostRecent();
             if (recent == null)
             {
                 app.Log.Log($"No recent purchase for '{sourceFilename}'.");
                 await MakeNewPurchase(instance, codex);
+                shouldRevisitSoon();
                 return;
             }
 
@@ -126,6 +130,7 @@ namespace AutoClient.Modes
             {
                 app.Log.Log($"Recent purchase for '{sourceFilename}' has expired or finished.");
                 await MakeNewPurchase(instance, codex);
+                shouldRevisitSoon();
                 return;
             }
 
@@ -134,6 +139,7 @@ namespace AutoClient.Modes
             {
                 app.Log.Log($"Recent purchase for '{sourceFilename}' is going to expire soon.");
                 await MakeNewPurchase(instance, codex);
+                shouldRevisitSoon();
                 return;
             }
 
@@ -250,10 +256,8 @@ namespace AutoClient.Modes
         private WorkerPurchase? GetMostRecent()
         {
             if (!State.Purchases.Any()) return null;
-            var submitted = State.Purchases.Where(p => p.Submitted.HasValue).ToArray();
-            if (submitted.Length == 0) return null;
-            var maxSubmitted = submitted.Max(p => p.Submitted!.Value);
-            return State.Purchases.SingleOrDefault(p => p.Submitted.HasValue && p.Submitted.Value == maxSubmitted);
+            var maxCreated = State.Purchases.Max(p => p.Created);
+            return State.Purchases.SingleOrDefault(p => p.Created == maxCreated);
         }
 
         public bool IsCurrentlyRunning()
@@ -301,6 +305,9 @@ namespace AutoClient.Modes
     public class FolderWorkDispatcher
     {
         private readonly List<string> files = new List<string>();
+        private readonly List<string> revisitSoon = new List<string>();
+        private bool revisiting = false;
+
         public FolderWorkDispatcher(string folder)
         {
             var fs = Directory.GetFiles(folder);
@@ -319,10 +326,32 @@ namespace AutoClient.Modes
 
         public string GetFileToCheck()
         {
-            var file = files.First();
-            files.RemoveAt(0);
-            files.Add(file);
-            return file;
+            if (revisiting)
+            {
+                if (!revisitSoon.Any())
+                {
+                    revisiting = false;
+                    return GetFileToCheck();
+                }
+
+                var file = revisitSoon.First();
+                revisitSoon.RemoveAt(0);
+                return file;
+            }
+            else
+            {
+                var file = files.First();
+                files.RemoveAt(0);
+                files.Add(file);
+
+                if (revisitSoon.Count > 5) revisiting = true;
+                return file;
+            }
+        }
+
+        public void RevisitSoon(string file)
+        {
+            revisitSoon.Add(file);
         }
     }
 
@@ -350,7 +379,7 @@ namespace AutoClient.Modes
             {
                 try
                 {
-                    var worker = new FileWorker(app, purchaseInfo, Folder, file);
+                    var worker = new FileWorker(app, purchaseInfo, Folder, file.Substring(0, file.Length - 5));
                     total++;
                     if (worker.IsCurrentlyRunning()) successful++;
                     if (worker.IsCurrentlyFailed()) failed++;
