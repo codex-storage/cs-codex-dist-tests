@@ -119,7 +119,7 @@ namespace AutoClient
             {
                 var info = new FileInfo(filename);
                 var sw = System.Diagnostics.Stopwatch.StartNew();
-                var cid = await UploadStream(fileStream);
+                var cid = await UploadStream(fileStream, filename);
                 var time = sw.Elapsed;
                 app.Performance.UploadSuccessful(info.Length, time);
                 app.CidRepo.Add(nodeId, cid.Id, info.Length);
@@ -132,12 +132,12 @@ namespace AutoClient
             }
         }
 
-        private async Task<ContentId> UploadStream(FileStream fileStream)
+        private async Task<ContentId> UploadStream(FileStream fileStream, string filename)
         {
             log.Debug($"Uploading file...");
             var response = await codex.UploadAsync(
-                content_type: "autoclient-test-content",
-                content_disposition: "autoclient-test-content",
+                content_type: "application/x-binary",
+                content_disposition: $"attachment; filename=\"{filename}\"",
                 fileStream, app.Cts.Token);
 
             if (string.IsNullOrEmpty(response)) FrameworkAssert.Fail("Received empty response.");
