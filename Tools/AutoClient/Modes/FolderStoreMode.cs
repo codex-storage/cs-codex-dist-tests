@@ -178,6 +178,12 @@ namespace AutoClient.Modes
                 if (!recent.Started.HasValue) recent.Started = now;
                 if (!recent.Finish.HasValue) recent.Finish = now;
             }
+
+            app.Log.Log($"Updated purchase information for PID '{recent.Pid}' for file '{sourceFilename}': " +
+                $"Submitted: {recent.Submitted.HasValue} " +
+                $"Started: {recent.Started.HasValue} " +
+                $"Expiry: {recent.Expiry.HasValue} " +
+                $"Finish: {recent.Finish.HasValue}");
         }
 
         private async Task MakeNewPurchase(ICodexInstance instance, CodexNode codex)
@@ -202,6 +208,8 @@ namespace AutoClient.Modes
                     Pid = response
                 }
             ]).ToArray();
+
+            app.Log.Log($"New purchase created for '{sourceFilename}'. PID: '{response}'");
         }
 
         private async Task EnsureCid(ICodexInstance instance, CodexNode codex)
@@ -223,6 +231,10 @@ namespace AutoClient.Modes
                 {
                     app.Log.Log($"Existing CID '{State.Cid}' for '{sourceFilename}' could not be found in the network.");
                     State.Cid = "";
+                }
+                else
+                {
+                    app.Log.Log($"Existing CID '{State.Cid}' for '{sourceFilename}' was successfully found in the network.");
                 }
             }
 
