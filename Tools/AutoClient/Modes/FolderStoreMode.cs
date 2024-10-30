@@ -237,7 +237,10 @@ namespace AutoClient.Modes
 
         private WorkerPurchase? GetMostRecent()
         {
-            var maxSubmitted = State.Purchases.Where(p => p.Submitted.HasValue).Max(p => p.Submitted!.Value);
+            if (!State.Purchases.Any()) return null;
+            var submitted = State.Purchases.Where(p => p.Submitted.HasValue).ToArray();
+            if (submitted.Length == 0) return null;
+            var maxSubmitted = submitted.Max(p => p.Submitted!.Value);
             return State.Purchases.SingleOrDefault(p => p.Submitted.HasValue && p.Submitted.Value == maxSubmitted);
         }
 
@@ -291,9 +294,13 @@ namespace AutoClient.Modes
             var fs = Directory.GetFiles(folder);
             foreach (var f in fs)
             {
-                if (!f.ToLowerInvariant().EndsWith(".json"))
+                if (!f.ToLowerInvariant().Contains(".json"))
                 {
-                    files.Add(f);
+                    var info = new FileInfo(f);
+                    if (info.Exists && info.Length > (1024 * 1024)) // larger than 1MB
+                    {
+                        files.Add(f);
+                    }
                 }
             }
         }
