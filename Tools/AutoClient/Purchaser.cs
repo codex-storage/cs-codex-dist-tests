@@ -135,7 +135,10 @@ namespace AutoClient
         private async Task<ContentId> UploadStream(FileStream fileStream)
         {
             log.Debug($"Uploading file...");
-            var response = await codex.UploadAsync(fileStream, app.Cts.Token);
+            var response = await codex.UploadAsync(
+                content_type: "autoclient-test-content",
+                content_disposition: "autoclient-test-content",
+                fileStream, app.Cts.Token);
 
             if (string.IsNullOrEmpty(response)) FrameworkAssert.Fail("Received empty response.");
             if (response.StartsWith("Unable to store block")) FrameworkAssert.Fail("Node failed to store block.");

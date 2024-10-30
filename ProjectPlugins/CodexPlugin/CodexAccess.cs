@@ -63,10 +63,10 @@ namespace CodexPlugin
             });
         }
 
-        public string UploadFile(FileStream fileStream, Action<Failure> onFailure)
+        public string UploadFile(UploadInput uploadInput, Action<Failure> onFailure)
         {
             return OnCodex(
-                api => api.UploadAsync(fileStream),
+                api => api.UploadAsync(uploadInput.ContentType, uploadInput.ContentDisposition, uploadInput.FileStream),
                 CreateRetryConfig(nameof(UploadFile), onFailure));
         }
 
@@ -82,7 +82,7 @@ namespace CodexPlugin
 
         public LocalDatasetList LocalFiles()
         {
-            return mapper.Map(OnCodex(api => api.ListDataAsync("", "")));
+            return mapper.Map(OnCodex(api => api.ListDataAsync()));
         }
 
         public StorageAvailability SalesAvailability(StorageAvailability request)
@@ -260,5 +260,19 @@ namespace CodexPlugin
         {
             log.Log($"{GetName()} {msg}");
         }
+    }
+
+    public class UploadInput
+    {
+        public UploadInput(string contentType, string contentDisposition, FileStream fileStream)
+        {
+            ContentType = contentType;
+            ContentDisposition = contentDisposition;
+            FileStream = fileStream;
+        }
+
+        public string ContentType { get; }
+        public string ContentDisposition { get; }
+        public FileStream FileStream { get; }
     }
 }

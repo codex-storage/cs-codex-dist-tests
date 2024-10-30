@@ -80,7 +80,7 @@ namespace BiblioTech
             client = new DiscordSocketClient();
             client.Log += ClientLog;
 
-            var checker = new CodexCidChecker(Config);
+            var checker = new CodexCidChecker(Config, Log);
             var notifyCommand = new NotifyCommand();
             var associateCommand = new UserAssociateCommand(notifyCommand);
             var sprCommand = new SprCommand();

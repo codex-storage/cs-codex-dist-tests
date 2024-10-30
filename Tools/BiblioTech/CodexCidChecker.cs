@@ -1,5 +1,6 @@
 ﻿using CodexOpenApi;
 using IdentityModel.Client;
+using Logging;
 using Utils;
 
 namespace BiblioTech
@@ -8,11 +9,13 @@ namespace BiblioTech
     {
         private static readonly string nl = Environment.NewLine;
         private readonly Configuration config;
+        private readonly ILog log;
         private CodexApi? currentCodexNode;
 
-        public CodexCidChecker(Configuration config)
+        public CodexCidChecker(Configuration config, ILog log)
         {
             this.config = config;
+            this.log = log;
         }
 
         public async Task<CheckResponse> PerformCheck(string cid)
@@ -150,6 +153,7 @@ namespace BiblioTech
             }
             catch (Exception e)
             {
+                log.Error(e.ToString());
                 return false;
             }
         }

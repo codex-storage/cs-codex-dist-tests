@@ -18,6 +18,7 @@ namespace CodexPlugin
         DebugPeer GetDebugPeer(string peerId);
         ContentId UploadFile(TrackedFile file);
         ContentId UploadFile(TrackedFile file, Action<Failure> onFailure);
+        ContentId UploadFile(TrackedFile file, string contentType, string contentDisposition, Action<Failure> onFailure);
         TrackedFile? DownloadContent(ContentId contentId, string fileLabel = "");
         TrackedFile? DownloadContent(ContentId contentId, Action<Failure> onFailure, string fileLabel = "");
         LocalDatasetList LocalFiles();
@@ -139,16 +140,22 @@ namespace CodexPlugin
 
         public ContentId UploadFile(TrackedFile file, Action<Failure> onFailure)
         {
+            return UploadFile(file, "random-test-data", "random-test-data", onFailure);
+        }
+
+        public ContentId UploadFile(TrackedFile file, string contentType, string contentDisposition, Action<Failure> onFailure)
+        {
             using var fileStream = File.OpenRead(file.Filename);
             var uniqueId = Guid.NewGuid().ToString();
             var size = file.GetFilesize();
 
             hooks.OnFileUploading(uniqueId, size);
 
-            var logMessage = $"Uploading file {file.Describe()}...";
+            var input = new UploadInput(contentType, contentDisposition, fileStream);
+            var logMessage = $"Uploading file {file.Describe()} with contentType: '{input.ContentType}' and disposition: '{input.ContentDisposition}'...";
             var measurement = Stopwatch.Measure(log, logMessage, () =>
             {
-                return CodexAccess.UploadFile(fileStream, onFailure);
+                return CodexAccess.UploadFile(input, onFailure);
             });
 
             var response = measurement.Value;
