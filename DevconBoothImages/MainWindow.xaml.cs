@@ -111,7 +111,7 @@ namespace DevconBoothImages
                 $"Public Testnet CID: `{currentPublicCid}`{nl}" +
                 $"Local Devcon network CID: `{currentLocalCid}`{nl}" +
                 $"Setup instructions: [Here](https://docs.codex.storage){nl}" +
-                $"Local Devcon network information: [Here](todo)";
+                $"Local Devcon network information: [Here](https://github.com/codex-storage/codex-testnet-starter/blob/master/SETUP_DEVCONNET.md)";
 
             Clipboard.SetText(msg);
             Log("CID info copied to clipboard. Paste it in Discord plz!");
