@@ -14,8 +14,10 @@
 
         <Image Grid.Row="0" Name="Img" />
         <StackPanel Grid.Row="1">
-            <Button Content="Generate image -> Upload to Codex -> Put CID info in clipboard" Padding="10"/>
-            <Button Content="Put last CID info in clipboard" Padding="10"/>
+            <TextBlock Name="Txt" HorizontalAlignment="Center" />
+            <Button Content="Check Codex connections" Click="Button_Click_2" />
+            <Button Content="Generate image -> Upload to Codex -> Put CID info in clipboard" Padding="10" Click="Button_Click"/>
+            <Button Content="Put last CID info in clipboard" Padding="10" Click="Button_Click_1"/>
         </StackPanel>
     </Grid>
 </Window>
