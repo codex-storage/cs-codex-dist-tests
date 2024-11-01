@@ -5,32 +5,46 @@ using Utils;
 
 namespace DevconBoothImages
 {
+    public class Codexes
+    {
+        public Codexes(CodexApi local, CodexApi testnet)
+        {
+            Local = local;
+            Testnet = testnet;
+        }
+
+        public CodexApi Local { get; }
+        public CodexApi Testnet { get; }
+    }
+
     public class CodexWrapper
     {
-        public async Task<List<CodexApi>> GetCodexes()
+        public async Task<Codexes> GetCodexes()
         {
             var config = new Configuration();
-            var result = new List<CodexApi>();
+            return new Codexes(
+                await GetCodex(config.CodexLocalEndpoint),
+                await GetCodex(config.CodexPublicEndpoint)
+            );
+        }
 
-            foreach (var endpoint in config.CodexEndpoints)
-            {
-                var splitIndex = endpoint.LastIndexOf(':');
-                var host = endpoint.Substring(0, splitIndex);
-                var port = Convert.ToInt32(endpoint.Substring(splitIndex + 1));
+        private async Task<CodexApi> GetCodex(string endpoint)
+        {
+            var splitIndex = endpoint.LastIndexOf(':');
+            var host = endpoint.Substring(0, splitIndex);
+            var port = Convert.ToInt32(endpoint.Substring(splitIndex + 1));
 
-                var address = new Address(
-                    host: host,
-                    port: port
-                );
+            var address = new Address(
+                host: host,
+                port: port
+            );
 
-                var client = new HttpClient();
-                var codex = new CodexApi(client);
-                codex.BaseUrl = $"{address.Host}:{address.Port}/api/codex/v1";
+            var client = new HttpClient();
+            var codex = new CodexApi(client);
+            codex.BaseUrl = $"{address.Host}:{address.Port}/api/codex/v1";
 
-                await CheckCodex(codex, endpoint);
-            }
-
-            return result;
+            await CheckCodex(codex, endpoint);
+            return codex;
         }
 
         private async Task CheckCodex(CodexApi codex, string endpoint)

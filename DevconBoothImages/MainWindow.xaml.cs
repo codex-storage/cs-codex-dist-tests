@@ -1,4 +1,5 @@
 ﻿using AutoClient;
+using CodexOpenApi;
 using Logging;
 using System.IO;
 using System.Windows;
@@ -11,7 +12,8 @@ namespace DevconBoothImages
         private readonly Configuration config = new Configuration();
         private readonly CodexWrapper codexWrapper = new CodexWrapper();
         private readonly ImageGenerator imageGenerator = new ImageGenerator(new NullLog());
-        private string[] currentCids = Array.Empty<string>();
+        private string currentLocalCid = string.Empty;
+        private string currentPublicCid = string.Empty;
 
         public MainWindow()
         {
@@ -62,52 +64,54 @@ namespace DevconBoothImages
 
         private async Task UploadToCodexes(string filename, string shortName)
         {
-            var result = new List<string>();
             var codexes = await codexWrapper.GetCodexes();
             try
             {
-                foreach (var codex in codexes)
-                {
-                    using (var fileStream = File.OpenRead(filename))
-                    {
-                        var response = await codex.UploadAsync(
-                            "application/image??",
-                            "attachement filanem???",
-                            fileStream);
-
-                        if (string.IsNullOrEmpty(response) ||
-                            response.ToLowerInvariant().Contains("unable to store block"))
-                        {
-                            MessageBox.Show("Unable to upload image. Response empty or error message.");
-                        }
-                        else
-                        {
-                            result.Add(response);
-                        }
-                    }
-                }
+                currentLocalCid = await UploadFile(filename, shortName, codexes.Local);
+                currentPublicCid = await UploadFile(filename, shortName, codexes.Testnet);
             }
             catch (Exception ex)
             {
                 MessageBox.Show("Upload failed: " + ex);
             }
-            Log($"Generated {result.Count} CIDs");
-            currentCids = result.ToArray();
+            Log($"Generated CIDs");
+        }
+
+        private async Task<string> UploadFile(string filename, string shortName, CodexApi codex)
+        {
+            using (var fileStream = File.OpenRead(filename))
+            {
+                var response = await codex.UploadAsync(
+                    "image/jpeg",
+                    $"attachment; filename=\"{shortName}\"",
+                    fileStream);
+
+                if (string.IsNullOrEmpty(response) ||
+                    response.ToLowerInvariant().Contains("unable to store block"))
+                {
+                    throw new Exception("Unable to upload image. Response empty or error message.");
+                }
+                return response;
+            }
         }
 
         private void InfoToClipboard()
         {
             Clipboard.Clear();
-            if (!currentCids.Any())
+            if (string.IsNullOrEmpty(currentLocalCid) || string.IsNullOrEmpty(currentPublicCid))
             {
                 Log("No CIDs were generated! Clipboard cleared.");
                 return;
             }
 
+            var nl = Environment.NewLine;
             var msg = 
-                "";
-
-
+                $"** Codex@Devcon 💻 Raspberry Pi Challenge **{nl}" +
+                $"📢 A new image is available. Download it and bring it to the booth!{nl}" +
+                $"Public Testnet CID: `{currentPublicCid}`{nl}" +
+                $"Local Devcon network CID: `{currentLocalCid}`{nl}" +
+                $"Setup instructions: [Here](https://docs.codex.storage){nl}" +
+                $"Local Devcon network information: [Here](todo)";
 
             Clipboard.SetText(msg);
             Log("CID info copied to clipboard. Paste it in Discord plz!");
