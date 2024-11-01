@@ -1,11 +1,4 @@
-﻿using CodexOpenApi;
-using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Text.Json.Serialization;
-using System.Threading.Tasks;
+﻿using Newtonsoft.Json;
 using static AutoClient.Modes.FileWorker;
 using static AutoClient.Modes.FolderWorkOverview;
 
@@ -47,7 +40,9 @@ namespace AutoClient.Modes
             var i = 0;
             while (!cts.IsCancellationRequested)
             {
-                Thread.Sleep(5000);
+                if (app.FolderWorkDispatcher.Revisiting) Thread.Sleep(500);
+                else Thread.Sleep(2000);
+
                 await ProcessWorkItem(instance);
                 i++;
 
@@ -105,6 +100,7 @@ namespace AutoClient.Modes
                 await EnsureCid(instance, codex);
                 await EnsureRecentPurchase(instance, codex, shouldRevisitSoon);
                 SaveState();
+                app.Log.Log("");
             }
             catch (Exception exc)
             {
@@ -128,7 +124,7 @@ namespace AutoClient.Modes
             
             if (recent.Expiry.HasValue || recent.Finish.HasValue)
             {
-                app.Log.Log($"Recent purchase for '{sourceFilename}' has expired or finished.");
+                app.Log.Log($"Purchase for '{sourceFilename}' has expired or finished.");
                 await MakeNewPurchase(instance, codex);
                 shouldRevisitSoon();
                 return;
@@ -137,13 +133,27 @@ namespace AutoClient.Modes
             if (recent.Started.HasValue &&
                 (recent.Created + purchaseInfo.PurchaseDurationSafe) > DateTime.UtcNow)
             {
-                app.Log.Log($"Recent purchase for '{sourceFilename}' is going to expire soon.");
+                app.Log.Log($"Purchase for '{sourceFilename}' is going to expire soon.");
                 await MakeNewPurchase(instance, codex);
                 shouldRevisitSoon();
                 return;
             }
 
-            app.Log.Log($"No new purchase needed for '{sourceFilename}'.");
+            if (!recent.Submitted.HasValue)
+            {
+                app.Log.Log($"Purchase for '{sourceFilename}' is waiting to be submitted.");
+                shouldRevisitSoon();
+                return;
+            }
+
+            if (recent.Submitted.HasValue && !recent.Started.HasValue)
+            {
+                app.Log.Log($"Purchase for '{sourceFilename}' is submitted and waiting to start.");
+                shouldRevisitSoon();
+                return;
+            }
+
+            app.Log.Log($"Purchase for '{sourceFilename}' is running.");
         }
 
         private async Task UpdatePurchase(WorkerPurchase recent, ICodexInstance instance, CodexNode codex)
@@ -216,6 +226,7 @@ namespace AutoClient.Modes
             ]).ToArray();
 
             app.Log.Log($"New purchase created for '{sourceFilename}'. PID: '{response}'");
+            Thread.Sleep(500);
         }
 
         private async Task EnsureCid(ICodexInstance instance, CodexNode codex)
@@ -250,6 +261,7 @@ namespace AutoClient.Modes
                 var cid = await codex.UploadFile(sourceFilename);
                 app.Log.Log("Got CID: " + cid);
                 State.Cid = cid.Id;
+                Thread.Sleep(1000);
             }
         }
 
@@ -306,7 +318,7 @@ namespace AutoClient.Modes
     {
         private readonly List<string> files = new List<string>();
         private readonly List<string> revisitSoon = new List<string>();
-        private bool revisiting = false;
+        public bool Revisiting { get; private set; } = false;
 
         public FolderWorkDispatcher(string folder)
         {
@@ -326,11 +338,11 @@ namespace AutoClient.Modes
 
         public string GetFileToCheck()
         {
-            if (revisiting)
+            if (Revisiting)
             {
                 if (!revisitSoon.Any())
                 {
-                    revisiting = false;
+                    Revisiting = false;
                     return GetFileToCheck();
                 }
 
@@ -344,7 +356,7 @@ namespace AutoClient.Modes
                 files.RemoveAt(0);
                 files.Add(file);
 
-                if (revisitSoon.Count > 5) revisiting = true;
+                if (revisitSoon.Count > 3) Revisiting = true;
                 return file;
             }
         }
