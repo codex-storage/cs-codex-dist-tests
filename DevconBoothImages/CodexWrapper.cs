@@ -1,4 +1,5 @@
 ﻿using CodexOpenApi;
+using IdentityModel.Client;
 using System.Net.Http;
 using System.Windows;
 using Utils;
@@ -23,12 +24,12 @@ namespace DevconBoothImages
         {
             var config = new Configuration();
             return new Codexes(
-                await GetCodex(config.CodexLocalEndpoint),
-                await GetCodex(config.CodexPublicEndpoint)
+                await GetCodexWithPort(config.CodexLocalEndpoint),
+                await GetCodexWithoutPort(config.CodexPublicEndpoint, config.AuthUser, config.AuthPw)
             );
         }
 
-        private async Task<CodexApi> GetCodex(string endpoint)
+        private async Task<CodexApi> GetCodexWithPort(string endpoint)
         {
             var splitIndex = endpoint.LastIndexOf(':');
             var host = endpoint.Substring(0, splitIndex);
@@ -42,6 +43,17 @@ namespace DevconBoothImages
             var client = new HttpClient();
             var codex = new CodexApi(client);
             codex.BaseUrl = $"{address.Host}:{address.Port}/api/codex/v1";
+
+            await CheckCodex(codex, endpoint);
+            return codex;
+        }
+
+        private async Task<CodexApi> GetCodexWithoutPort(string endpoint, string user, string pw)
+        {
+            var client = new HttpClient();
+            client.SetBasicAuthentication(user, pw);
+            var codex = new CodexApi(client);
+            codex.BaseUrl = $"{endpoint}/api/codex/v1";
 
             await CheckCodex(codex, endpoint);
             return codex;
