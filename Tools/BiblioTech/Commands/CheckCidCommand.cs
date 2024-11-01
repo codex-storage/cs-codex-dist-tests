@@ -14,7 +14,6 @@ namespace BiblioTech.Commands
             isRequired: true);
         private readonly CodexCidChecker checker;
         private readonly CidStorage cidStorage;
-        private const ulong ALTRUISTIC_ROLE_ID = 1286134120379977860;
 
         public CheckCidCommand(CodexCidChecker checker)
         {
@@ -42,36 +41,52 @@ namespace BiblioTech.Commands
 
             if (response.Success)
             {
-                if (cidStorage.IsCidUsed(cid))
-                {
-                    await context.Followup($"{response.Message}\n\nThis CID has already been used by another user. No role will be granted.");
-                    return;
-                }
-
-                if (cidStorage.AddCid(cid, user.Id))
-                {
-                    var guildUser = context.Command.User as IGuildUser;
-                    if (guildUser != null)
-                    {
-                        try
-                        {
-                            var role = context.Command.Guild.GetRole(ALTRUISTIC_ROLE_ID);
-                            if (role != null)
-                            {
-                                await guildUser.AddRoleAsync(role);
-                                await context.Followup($"{response.Message}\n\nCongratulations! You've been granted the Altruistic Mode role for checking a valid CID!");
-                                return;
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            await Program.AdminChecker.SendInAdminChannel($"Failed to grant Altruistic Mode role to user {Mention(user)}: {ex.Message}");
-                        }
-                    }
-                }
+                await CheckAltruisticRole(context, user, cid, response.Message);
+                return;
             }
 
             await context.Followup(response.Message);
+        }
+
+        private async Task CheckAltruisticRole(CommandContext context, IUser user, string cid, string responseMessage)
+        {
+            if (cidStorage.TryAddCid(cid, user.Id))
+            {
+                if (await GiveAltruisticRole(context, user, responseMessage))
+                {
+                    return;
+                }
+            }
+            else
+            {
+                await context.Followup($"{responseMessage}\n\nThis CID has already been used by another user. No role will be granted.");
+                return;
+            }
+
+            await context.Followup(responseMessage);
+        }
+
+        private async Task<bool> GiveAltruisticRole(CommandContext context, IUser user, string responseMessage)
+        {
+            var guildUser = context.Command.User as IGuildUser;
+            if (guildUser != null)
+            {
+                try
+                {
+                    var role = context.Command.Guild.GetRole(Program.Config.AltruisticRoleId);
+                    if (role != null)
+                    {
+                        await guildUser.AddRoleAsync(role);
+                        await context.Followup($"{responseMessage}\n\nCongratulations! You've been granted the Altruistic Mode role for checking a valid CID!");
+                        return true;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    await Program.AdminChecker.SendInAdminChannel($"Failed to grant Altruistic Mode role to user {Mention(user)}: {ex.Message}");
+                }
+            }
+            return false;
         }
     }
 
@@ -89,7 +104,7 @@ namespace BiblioTech.Commands
             }
         }
 
-        public bool AddCid(string cid, ulong userId)
+        public bool TryAddCid(string cid, ulong userId)
         {
             lock (_lock)
             {
@@ -99,17 +114,8 @@ namespace BiblioTech.Commands
                     return false;
                 }
 
-                File.AppendAllText(filePath, $"{cid},{userId}{Environment.NewLine}");
+                File.AppendAllLines(filePath, new[] { $"{cid},{userId}" });
                 return true;
-            }
-        }
-
-        public bool IsCidUsed(string cid)
-        {
-            lock (_lock)
-            {
-                var existingEntries = File.ReadAllLines(filePath);
-                return existingEntries.Any(line => line.Split(',')[0] == cid);
             }
         }
     }
