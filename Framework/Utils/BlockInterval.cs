@@ -15,12 +15,13 @@
                 To = from;
             }
             TimeRange = timeRange;
+            NumberOfBlocks = (To - From) + 1;
         }
 
         public ulong From { get; }
         public ulong To { get; }
         public TimeRange TimeRange { get; }
-        public ulong NumberOfBlocks => To - From;
+        public ulong NumberOfBlocks { get; }
 
         public override string ToString()
         {
