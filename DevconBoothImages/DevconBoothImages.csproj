@@ -9,6 +9,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="QRCoder" Version="1.6.0" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\ProjectPlugins\CodexPlugin\CodexPlugin.csproj" />
     <ProjectReference Include="..\Tools\AutoClient\AutoClient.csproj" />
   </ItemGroup>

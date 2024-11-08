@@ -5,14 +5,27 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:DevconBoothImages"
         mc:Ignorable="d"
-        Title="DevconBoothImages" Height="450" Width="800" WindowState="Maximized">
+        Title="CodexBoothImages" Height="450" Width="800" WindowState="Maximized">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <Image Grid.Row="0" Name="Img" />
+        <Grid Grid.Row="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <Image Grid.Column="0" Name="Img" />
+            <StackPanel Grid.Column="1">
+                <TextBlock Text="Local CID:"/>
+                <Image Name="ImgLocalCid" />
+                <TextBlock Text="TestNet CID:"/>
+                <Image Name="ImgTestnetCid" />
+            </StackPanel>
+        </Grid>
+        
         <StackPanel Grid.Row="1">
             <TextBlock Name="Txt" HorizontalAlignment="Center" />
             <Button Content="Check Codex connections" Click="Button_Click_2" />

@@ -1,8 +1,12 @@
 ﻿using AutoClient;
 using CodexOpenApi;
 using Logging;
+using QRCoder;
+using System.Drawing;
+using System.Drawing.Imaging;
 using System.IO;
 using System.Windows;
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
 namespace DevconBoothImages
@@ -29,6 +33,7 @@ namespace DevconBoothImages
 
         private async void Button_Click(object sender, RoutedEventArgs e)
         {
+
             // image
             Log("Getting image...");
             var file = await imageGenerator.Generate();
@@ -47,6 +52,33 @@ namespace DevconBoothImages
 
             // clipboard info
             InfoToClipboard();
+        }
+
+        private BitmapImage GenerateQr(string text)
+        {
+            using (QRCodeGenerator qrGenerator = new QRCodeGenerator())
+            using (QRCodeData qrCodeData = qrGenerator.CreateQrCode(text, QRCodeGenerator.ECCLevel.Default))
+            using (PngByteQRCode qrCode = new PngByteQRCode(qrCodeData))
+            {
+                byte[] qrCodeImage = qrCode.GetGraphic(12);
+                using (var ms = new MemoryStream(qrCodeImage))
+                {
+                    var img = Image.FromStream(ms);
+                    using (var ms2 = new MemoryStream())
+                    {
+                        img.Save(ms2, ImageFormat.Png);
+                        ms.Seek(0, SeekOrigin.Begin);
+
+                        var bitmapImage = new BitmapImage();
+                        bitmapImage.BeginInit();
+                        bitmapImage.CacheOption = BitmapCacheOption.OnLoad;
+                        bitmapImage.StreamSource = ms2;
+                        bitmapImage.EndInit();
+
+                        return bitmapImage;
+                    }
+                }
+            }
         }
 
         private async void Button_Click_1(object sender, RoutedEventArgs e)
@@ -115,6 +147,9 @@ namespace DevconBoothImages
 
             Clipboard.SetText(msg);
             Log("CID info copied to clipboard. Paste it in Discord plz!");
+
+            ImgLocalCid.Source = GenerateQr(currentLocalCid);
+            ImgTestnetCid.Source = GenerateQr(currentPublicCid);
         }
 
         private void Log(string v)
