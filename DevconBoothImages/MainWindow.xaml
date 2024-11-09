@@ -19,6 +19,8 @@
             </Grid.ColumnDefinitions>
             <Image Grid.Column="0" Name="Img" />
             <StackPanel Grid.Column="1">
+                <TextBlock Text="Instructions:"/>
+                <Image Name="ImgInstructions" />
                 <TextBlock Text="Local CID:"/>
                 <Image Name="ImgLocalCid" />
                 <TextBlock Text="TestNet CID:"/>

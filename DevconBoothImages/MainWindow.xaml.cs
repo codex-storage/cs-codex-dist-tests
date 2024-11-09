@@ -33,7 +33,6 @@ namespace DevconBoothImages
 
         private async void Button_Click(object sender, RoutedEventArgs e)
         {
-
             // image
             Log("Getting image...");
             var file = await imageGenerator.Generate();
@@ -60,7 +59,7 @@ namespace DevconBoothImages
             using (QRCodeData qrCodeData = qrGenerator.CreateQrCode(text, QRCodeGenerator.ECCLevel.Default))
             using (PngByteQRCode qrCode = new PngByteQRCode(qrCodeData))
             {
-                byte[] qrCodeImage = qrCode.GetGraphic(12);
+                byte[] qrCodeImage = qrCode.GetGraphic(7);
                 using (var ms = new MemoryStream(qrCodeImage))
                 {
                     var img = Image.FromStream(ms);
@@ -150,6 +149,7 @@ namespace DevconBoothImages
 
             ImgLocalCid.Source = GenerateQr(currentLocalCid);
             ImgTestnetCid.Source = GenerateQr(currentPublicCid);
+            ImgInstructions.Source = GenerateQr("https://github.com/codex-storage/codex-testnet-starter/blob/master/SETUP_DEVCONNET.md");
         }
 
         private void Log(string v)
