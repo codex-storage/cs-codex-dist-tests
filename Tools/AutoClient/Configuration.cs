@@ -6,8 +6,7 @@ namespace AutoClient
     {
         [Uniform("codex-endpoints", "ce", "CODEXENDPOINTS", false, "Codex endpoints. Semi-colon separated. (default 'http://localhost:8080')")]
         public string CodexEndpoints { get; set; } =
-            "http://192.168.178.171:8080";
-            //"http://localhost:8080";
+            "http://localhost:8080";
 
         [Uniform("datapath", "dp", "DATAPATH", false, "Root path where all data files will be saved.")]
         public string DataPath { get; set; } = "datapath";
@@ -40,7 +39,7 @@ namespace AutoClient
         public int FileSizeMb { get; set; } = 0;
 
         [Uniform("folderToStore", "fts", "FOLDERTOSTORE", false, "When set, autoclient will attempt to upload and purchase storage for every non-JSON file in the provided folder.")]
-        public string FolderToStore { get; set; } = "D:\\Transmission\\EthereumMainnetPreMergeEraFiles";
+        public string FolderToStore { get; set; } = "/data/EthereumMainnetPreMergeEraFiles";
 
         public string LogPath
         {
