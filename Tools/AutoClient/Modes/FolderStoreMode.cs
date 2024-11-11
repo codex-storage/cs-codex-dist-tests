@@ -40,10 +40,14 @@ namespace AutoClient.Modes
             var i = 0;
             while (!cts.IsCancellationRequested)
             {
-                if (app.FolderWorkDispatcher.Revisiting) Thread.Sleep(500);
-                else Thread.Sleep(2000);
+                if (app.FolderWorkDispatcher.Revisiting) Thread.Sleep(2000);
+                else Thread.Sleep(5000);
 
-                await ProcessWorkItem(instance);
+                var worker = await ProcessWorkItem(instance);
+                if (worker.FailureCounter > 5)
+                {
+                    throw new Exception("Worker  has failure count > 5. Stopping AutoClient...");
+                }
                 i++;
 
                 if (i > 5)
@@ -55,7 +59,7 @@ namespace AutoClient.Modes
             }
         }
 
-        private async Task ProcessWorkItem(ICodexInstance instance)
+        private async Task<FileWorker> ProcessWorkItem(ICodexInstance instance)
         {
             var file = app.FolderWorkDispatcher.GetFileToCheck();
             var worker = new FileWorker(app, purchaseInfo, folder, file);
@@ -63,6 +67,8 @@ namespace AutoClient.Modes
             {
                 app.FolderWorkDispatcher.RevisitSoon(file);
             });
+
+            return worker;
         }
 
         public void Stop()
@@ -91,6 +97,8 @@ namespace AutoClient.Modes
             this.purchaseInfo = purchaseInfo;
             sourceFilename = filename;
         }
+
+        public int FailureCounter => State.FailureCounter;
 
         public async Task Update(ICodexInstance instance, Action shouldRevisitSoon)
         {
@@ -122,9 +130,18 @@ namespace AutoClient.Modes
 
             await UpdatePurchase(recent, instance, codex);
             
-            if (recent.Expiry.HasValue || recent.Finish.HasValue)
+            if (recent.Expiry.HasValue)
             {
-                app.Log.Log($"Purchase for '{sourceFilename}' has expired or finished.");
+                app.Log.Log($"Purchase for '{sourceFilename}' has failed or expired.");
+                await MakeNewPurchase(instance, codex);
+                shouldRevisitSoon();
+                State.FailureCounter++;
+                return;
+            }
+
+            if (recent.Finish.HasValue)
+            {
+                app.Log.Log($"Purchase for '{sourceFilename}' has finished.");
                 await MakeNewPurchase(instance, codex);
                 shouldRevisitSoon();
                 return;
@@ -299,6 +316,7 @@ namespace AutoClient.Modes
         public class WorkerStatus
         {
             public string Cid { get; set; } = string.Empty;
+            public int FailureCounter { get; set; } = 0;
             public WorkerPurchase[] Purchases { get; set; } = Array.Empty<WorkerPurchase>();
         }
 
