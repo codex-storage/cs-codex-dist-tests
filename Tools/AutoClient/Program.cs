@@ -81,13 +81,13 @@ public class Program
 
         foreach (var e in endpointStrs)
         {
-            result.Add(await CreateUser(e));
+            result.Add(await CreateCodexInstance(e));
         }
 
         return result.ToArray();
     }
 
-    private async Task<CodexInstance> CreateUser(string endpoint)
+    private async Task<CodexInstance> CreateCodexInstance(string endpoint)
     {
         var splitIndex = endpoint.LastIndexOf(':');
         var host = endpoint.Substring(0, splitIndex);
@@ -99,6 +99,7 @@ public class Program
         );
 
         var client = new HttpClient();
+        client.Timeout = TimeSpan.FromMinutes(60.0);
         var codex = new CodexApi(client);
         codex.BaseUrl = $"{address.Host}:{address.Port}/api/codex/v1";
 
