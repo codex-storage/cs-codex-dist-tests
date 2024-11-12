@@ -21,6 +21,14 @@ namespace CodexPlugin
             };
         }
 
+        public LocalDatasetList Map(LocalDatasetListJson json)
+        {
+            return new LocalDatasetList
+            {
+                Content = json.Content.Select(Map).ToArray()
+            };
+        }
+
         public LocalDatasetList Map(CodexOpenApi.DataList dataList)
         {
             return new LocalDatasetList
@@ -35,6 +43,15 @@ namespace CodexPlugin
             {
                 Cid = new ContentId(dataItem.Cid),
                 Manifest = MapManifest(dataItem.Manifest)
+            };
+        }
+
+        public LocalDataset Map(LocalDatasetListJsonItem item)
+        {
+            return new LocalDataset
+            {
+                Cid = new ContentId(item.Cid),
+                Manifest = MapManifest(item.Manifest)
             };
         }
 
@@ -188,6 +205,18 @@ namespace CodexPlugin
             };
         }
 
+        public Manifest MapManifest(LocalDatasetListJsonItemManifest manifest)
+        {
+            return new Manifest
+            {
+                // needs update
+                BlockSize = new ByteSize(Convert.ToInt64(manifest.BlockSize)),
+                OriginalBytes = new ByteSize(Convert.ToInt64(manifest.DatasetSize)),
+                RootHash = manifest.TreeCid,
+                Protected = manifest.Protected
+            };
+        }
+
         private JArray JArray(IDictionary<string, object> map, string name)
         {
             return (JArray)map[name];
@@ -242,5 +271,43 @@ namespace CodexPlugin
         {
             return new ByteSize(Convert.ToInt64(size));
         }
+    }
+
+
+//"content": [
+//        {
+//            "cid": "zDvZRwzkxLxVaGces3kpkHjo8EcTPXudvYMfNxdoH21Ask1Js5fJ",
+//            "manifest": {
+//                "treeCid": "zDzSvJTf8GBRyEDNuAzXS9VnRfh8cNuYuRPwTLW6RUQReSgKnhCt",
+//                "datasetSize": 5242880,
+//                "blockSize": 65536,
+//                "filename": null,
+//                "mimetype": "application/octet-stream",
+//                "uploadedAt": 1731426230,
+//                "protected": false
+//            }
+//        }
+//    ]
+
+    public class LocalDatasetListJson
+    {
+        public LocalDatasetListJsonItem[] Content { get; set; } = Array.Empty<LocalDatasetListJsonItem>();
+    }
+
+    public class LocalDatasetListJsonItem
+    {
+        public string Cid { get; set; } = string.Empty;
+        public LocalDatasetListJsonItemManifest Manifest { get; set; } = new();
+    }
+
+    public class LocalDatasetListJsonItemManifest
+    {
+        public string TreeCid { get; set; } = string.Empty;
+        public int DatasetSize { get; set; }
+        public int BlockSize { get; set; }
+        public string? Filename { get; set; } = string.Empty;
+        public string? MimeType { get; set; } = string.Empty;
+        public int? UploadedAt { get; set; } 
+        public bool Protected { get; set; }
     }
 }
