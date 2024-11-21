@@ -15,6 +15,7 @@ namespace CodexPlugin
         string GetName();
         string GetPeerId();
         DebugInfo GetDebugInfo();
+        string GetSpr();
         DebugPeer GetDebugPeer(string peerId);
         ContentId UploadFile(TrackedFile file);
         ContentId UploadFile(TrackedFile file, Action<Failure> onFailure);
@@ -128,6 +129,11 @@ namespace CodexPlugin
             var known = string.Join(",", debugInfo.Table.Nodes.Select(n => n.PeerId));
             Log($"Got DebugInfo with id: {debugInfo.Id}. This node knows: [{known}]");
             return debugInfo;
+        }
+
+        public string GetSpr()
+        {
+            return CodexAccess.GetSpr();
         }
 
         public DebugPeer GetDebugPeer(string peerId)

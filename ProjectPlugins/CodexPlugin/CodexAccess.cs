@@ -32,6 +32,22 @@ namespace CodexPlugin
             return mapper.Map(OnCodex(api => api.GetDebugInfoAsync()));
         }
 
+        public string GetSpr()
+        {
+            return CrashCheck(() =>
+            {
+                var endpoint = GetEndpoint();
+                var json = endpoint.HttpGetString("spr");
+                var response = JsonConvert.DeserializeObject<SprResponse>(json);
+                return response!.Spr;
+            });
+        }
+
+        private class SprResponse
+        {
+            public string Spr { get; set; } = string.Empty;
+        }
+
         public DebugPeer GetDebugPeer(string peerId)
         {
             // Cannot use openAPI: debug/peer endpoint is not specified there.
