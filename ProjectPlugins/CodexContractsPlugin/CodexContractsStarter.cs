@@ -4,6 +4,7 @@ using GethPlugin;
 using KubernetesWorkflow;
 using KubernetesWorkflow.Types;
 using Logging;
+using Newtonsoft.Json;
 using Utils;
 
 namespace CodexContractsPlugin
@@ -34,6 +35,7 @@ namespace CodexContractsPlugin
             try
             {
                 var result = DeployContract(container, workflow, gethNode);
+
                 workflow.Stop(containers, waitTillStopped: false);
                 Log("Container stopped.");
                 return result;
@@ -75,9 +77,20 @@ namespace CodexContractsPlugin
 
             Time.WaitUntil(() => interaction.IsSynced(marketplaceAddress, abi), nameof(DeployContract));
 
-            Log("Synced. Codex SmartContracts deployed.");
+            Log("Synced. Codex SmartContracts deployed. Getting configuration...");
 
-            return new CodexContractsDeployment(marketplaceAddress, abi, tokenAddress);
+            var config = GetMarketplaceConfiguration(marketplaceAddress, gethNode);
+
+            Log("Got config: " + JsonConvert.SerializeObject(config));
+
+            return new CodexContractsDeployment(config, marketplaceAddress, abi, tokenAddress);
+        }
+
+        private MarketplaceConfig GetMarketplaceConfiguration(string marketplaceAddress, IGethNode gethNode)
+        {
+            var func = new ConfigurationFunctionBase();
+            var response = gethNode.Call<ConfigurationFunctionBase, ConfigurationOutputDTO>(marketplaceAddress, func);
+            return response.ReturnValue1;
         }
 
         private void EnsureCompatbility(string abi, string bytecode)
