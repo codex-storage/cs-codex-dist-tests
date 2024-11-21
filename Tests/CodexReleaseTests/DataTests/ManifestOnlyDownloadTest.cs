@@ -8,13 +8,13 @@ namespace CodexReleaseTests.DataTests
     public class ManifestOnlyDownloadTest : CodexDistTest
     {
         [Test]
-        public void StreamlessTest()
+        public void ManifestOnlyTest()
         {
             var uploader = StartCodex();
             var downloader = StartCodex(s => s.WithBootstrapNode(uploader));
 
             var file = GenerateTestFile(2.GB());
-            var size = Convert.ToInt64(file.GetFilesize());
+            var size = file.GetFilesize().SizeInBytes;
             var cid = uploader.UploadFile(file);
 
             var startSpace = downloader.Space();

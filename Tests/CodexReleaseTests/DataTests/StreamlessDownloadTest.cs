@@ -14,7 +14,7 @@ namespace CodexReleaseTests.DataTests
             var downloader = StartCodex(s => s.WithBootstrapNode(uploader));
 
             var file = GenerateTestFile(10.MB());
-            var size = Convert.ToInt64(file.GetFilesize());
+            var size = file.GetFilesize().SizeInBytes;
             var cid = uploader.UploadFile(file);
 
             var startSpace = downloader.Space();
@@ -34,7 +34,8 @@ namespace CodexReleaseTests.DataTests
             retry.Run(() =>
             {
                 var space = downloader.Space();
-                Assert.That(space.FreeBytes, Is.LessThanOrEqualTo(startSpace.FreeBytes - size));
+                var expected = startSpace.FreeBytes - size;
+                if (space.FreeBytes > expected) throw new Exception("Expected free space not reached.");
             });
 
             // Stop the uploader node and verify that the downloader has the data.

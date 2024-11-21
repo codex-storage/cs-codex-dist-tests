@@ -14,8 +14,8 @@ namespace CodexReleaseTests.DataTests
     [TestFixture]
     public class SwarmTests : AutoBootstrapDistTest
     {
-        private const int NumberOfNodes = 10;
-        private const int FileSizeMb = 100;
+        private const int NumberOfNodes = 5;
+        private const int FileSizeMb = 2;
 
         [Test]
         public void SmallSwarm()

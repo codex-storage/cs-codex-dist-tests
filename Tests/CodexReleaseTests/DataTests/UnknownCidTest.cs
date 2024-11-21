@@ -28,10 +28,8 @@ namespace CodexReleaseTests.DataTests
             }
             catch (Exception ex)
             {
-                if (!ex.Message.StartsWith("Retry 'DownloadFile' timed out"))
-                {
-                    throw;
-                }
+                var expectedMessage = $"Download of '{unknownCid.Id}' timed out";
+                if (!ex.Message.StartsWith(expectedMessage)) throw;
             }
 
             WaitAndCheckNodesStaysAlive(TimeSpan.FromMinutes(2), node);
