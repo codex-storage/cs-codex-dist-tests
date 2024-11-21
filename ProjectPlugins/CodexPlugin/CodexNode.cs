@@ -37,6 +37,8 @@ namespace CodexPlugin
         /// </summary>
         void DeleteRepoFolder();
         void Stop(bool waitTillStopped);
+        void DownloadStreamless(ContentId cid);
+        Manifest DownloadManifestOnly(ContentId cid);
     }
 
     public class CodexNode : ICodexNode
