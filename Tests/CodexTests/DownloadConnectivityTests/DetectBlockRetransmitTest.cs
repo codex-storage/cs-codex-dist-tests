@@ -4,7 +4,7 @@ using Utils;
 namespace CodexTests.DownloadConnectivityTests
 {
     [TestFixture]
-    public class SwarmTests : AutoBootstrapDistTest
+    public class DetectBlockRetransmitTest : AutoBootstrapDistTest
     {
         [Test]
         [Combinatorial]

@@ -108,6 +108,39 @@ namespace CodexTests
                 GetBasicNodeStatus(node));
         }
 
+        public void WaitAndCheckNodesStaysAlive(TimeSpan duration, ICodexNodeGroup nodes)
+        {
+            WaitAndCheckNodesStaysAlive(duration, nodes.ToArray());
+        }
+
+        public void WaitAndCheckNodesStaysAlive(TimeSpan duration, params ICodexNode[] nodes)
+        {
+            var start = DateTime.UtcNow;
+            while ((DateTime.UtcNow - start) < duration)
+            {
+                Thread.Sleep(5000);
+                foreach (var node in nodes)
+                {
+                    var info = node.GetDebugInfo();
+                    Assert.That(!string.IsNullOrEmpty(info.Id));
+                }
+            }
+        }
+
+        public void AssertNodesContainFile(ContentId cid, ICodexNodeGroup nodes)
+        {
+            AssertNodesContainFile(cid, nodes.ToArray());
+        }
+
+        public void AssertNodesContainFile(ContentId cid, params ICodexNode[] nodes)
+        {
+            foreach (var node in nodes)
+            {
+                var localDatasets = node.LocalFiles();
+                CollectionAssert.Contains(localDatasets.Content.Select(c => c.Cid), cid);
+            }
+        }
+
         private string GetBasicNodeStatus(ICodexNode node)
         {
             return JsonConvert.SerializeObject(node.GetDebugInfo(), Formatting.Indented) + Environment.NewLine +
