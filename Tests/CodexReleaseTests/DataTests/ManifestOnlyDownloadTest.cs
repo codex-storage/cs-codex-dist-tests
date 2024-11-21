@@ -18,14 +18,16 @@ namespace CodexReleaseTests.DataTests
             var cid = uploader.UploadFile(file);
 
             var startSpace = downloader.Space();
-            var manifest = downloader.DownloadManifestOnly(cid);
+            var localDataset = downloader.DownloadManifestOnly(cid);
 
             Thread.Sleep(1000);
 
             var spaceDiff = startSpace.FreeBytes - downloader.Space().FreeBytes;
 
             Assert.That(spaceDiff, Is.LessThan(64.KB().SizeInBytes));
-            Assert.That(manifest.OriginalBytes.SizeInBytes, Is.EqualTo(file.GetFilesize().SizeInBytes));
+
+            Assert.That(localDataset.Cid, Is.EqualTo(cid));
+            Assert.That(localDataset.Manifest.OriginalBytes.SizeInBytes, Is.EqualTo(file.GetFilesize().SizeInBytes));
         }
     }
 }

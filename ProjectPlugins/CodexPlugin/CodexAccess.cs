@@ -80,6 +80,18 @@ namespace CodexPlugin
             return fileResponse.Stream;
         }
 
+        public LocalDataset DownloadStreamless(ContentId cid)
+        {
+            var response = OnCodex(api => api.DownloadNetworkAsync(cid.Id));
+            return mapper.Map(response);
+        }
+
+        public LocalDataset DownloadManifestOnly(ContentId cid)
+        {
+            var response = OnCodex(api => api.DownloadNetworkManifestAsync(cid.Id));
+            return mapper.Map(response);
+        }
+
         public LocalDatasetList LocalFiles()
         {
             return mapper.Map(OnCodex(api => api.ListDataAsync()));

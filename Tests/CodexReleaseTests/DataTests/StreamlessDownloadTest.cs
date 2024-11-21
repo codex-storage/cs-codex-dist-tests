@@ -19,7 +19,10 @@ namespace CodexReleaseTests.DataTests
 
             var startSpace = downloader.Space();
             var start = DateTime.UtcNow;
-            downloader.DownloadStreamless(cid);
+            var localDataset = downloader.DownloadStreamless(cid);
+
+            Assert.That(localDataset.Cid, Is.EqualTo(cid));
+            Assert.That(localDataset.Manifest.OriginalBytes.SizeInBytes, Is.EqualTo(file.GetFilesize().SizeInBytes));
 
             // TODO: We have no way to inspect the status or progress of the download.
             // We use local space information to estimate.
