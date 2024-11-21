@@ -66,7 +66,7 @@ namespace BiblioTech
                 success: true,
                 title: $"Success: '{content.Cid}'",
                 error: "",
-                $"size: {content.Manifest.OriginalBytes} bytes",
+                $"size: {content.Manifest.DatasetSize} bytes",
                 $"blockSize: {content.Manifest.BlockSize} bytes",
                 $"protected: {content.Manifest.Protected}"
             );
