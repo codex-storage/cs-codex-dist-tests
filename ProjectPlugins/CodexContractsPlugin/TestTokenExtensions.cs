@@ -46,6 +46,16 @@ namespace CodexContractsPlugin
             return new TestToken(a.TstWei + b.TstWei);
         }
 
+        public static TestToken operator -(TestToken a, TestToken b)
+        {
+            return new TestToken(a.TstWei - b.TstWei);
+        }
+
+        public static TestToken operator *(TestToken a, int b)
+        {
+            return new TestToken(a.TstWei * b);
+        }
+
         public static bool operator <(TestToken a, TestToken b)
         {
             return a.TstWei < b.TstWei;

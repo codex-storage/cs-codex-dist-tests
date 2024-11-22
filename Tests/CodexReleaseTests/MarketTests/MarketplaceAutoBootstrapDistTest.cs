@@ -1,8 +1,10 @@
 ﻿using CodexContractsPlugin;
+using CodexContractsPlugin.Marketplace;
 using CodexPlugin;
 using CodexTests;
 using DistTestCore;
 using GethPlugin;
+using Nethereum.Hex.HexConvertors.Extensions;
 
 namespace CodexReleaseTests.MarketTests
 {
@@ -39,6 +41,37 @@ namespace CodexReleaseTests.MarketTests
         protected ICodexContracts GetContracts()
         {
             return handles[Get()].Contracts;
+        }
+
+        public SlotFill[] GetOnChainSlotFills(ICodexNodeGroup possibleHosts, string purchaseId)
+        {
+            return GetOnChainSlotFills(possibleHosts)
+                .Where(f => f.SlotFilledEvent.RequestId.ToHex(true) == purchaseId)
+                .ToArray();
+        }
+
+        public SlotFill[] GetOnChainSlotFills(ICodexNodeGroup possibleHosts)
+        {
+            var events = GetContracts().GetEvents(GetTestRunTimeRange());
+            var fills = events.GetSlotFilledEvents();
+            return fills.Select(f =>
+            {
+                var host = possibleHosts.Single(h => h.EthAddress == f.Host);
+                return new SlotFill(f, host);
+
+            }).ToArray();
+        }
+
+        public class SlotFill
+        {
+            public SlotFill(SlotFilledEventDTO slotFilledEvent, ICodexNode host)
+            {
+                SlotFilledEvent = slotFilledEvent;
+                Host = host;
+            }
+
+            public SlotFilledEventDTO SlotFilledEvent { get; }
+            public ICodexNode Host { get; }
         }
 
         private class MarketplaceHandle
