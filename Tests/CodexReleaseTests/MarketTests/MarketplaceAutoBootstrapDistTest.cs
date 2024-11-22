@@ -5,6 +5,7 @@ using CodexTests;
 using DistTestCore;
 using GethPlugin;
 using Nethereum.Hex.HexConvertors.Extensions;
+using Utils;
 
 namespace CodexReleaseTests.MarketTests
 {
@@ -27,12 +28,6 @@ namespace CodexReleaseTests.MarketTests
             handles.Remove(lifecycle);
         }
 
-        protected override void OnCodexSetup(ICodexSetup setup)
-        {
-            base.OnCodexSetup(setup);
-            setup.EnableMarketplace(GetGeth(), GetContracts(), m => m.WithInitial(10.Eth(), StartingBalanceTST.Tst()));
-        }
-
         protected IGethNode GetGeth()
         {
             return handles[Get()].Geth;
@@ -43,10 +38,49 @@ namespace CodexReleaseTests.MarketTests
             return handles[Get()].Contracts;
         }
 
+        protected abstract int NumberOfHosts { get; }
+        protected abstract int NumberOfClients { get; }
+        protected abstract ByteSize HostAvailabilitySize { get; }
+        protected abstract TimeSpan HostAvailabilityMaxDuration { get; }
+
+        public ICodexNodeGroup StartHosts()
+        {
+            var hosts = StartCodex(NumberOfHosts, s => s
+                .WithName("host")
+                .EnableMarketplace(GetGeth(), GetContracts(), m => m
+                    .WithInitial(10.Eth(), StartingBalanceTST.Tst())
+                    .AsStorageNode()
+                )
+            );
+
+            var config = GetContracts().Deployment.Config;
+            foreach (var host in hosts)
+            {
+                host.Marketplace.MakeStorageAvailable(new CodexPlugin.StorageAvailability(
+                    totalSpace: HostAvailabilitySize,
+                    maxDuration: HostAvailabilityMaxDuration,
+                    minPriceForTotalSpace: 1.TstWei(),
+                    maxCollateral: 999999.Tst())
+                );
+            }
+            return hosts;
+        }
+
+        public ICodexNodeGroup StartClients()
+        {
+            return StartCodex(NumberOfClients, s => s
+                .WithName("client")
+                .EnableMarketplace(GetGeth(), GetContracts(), m => m
+                    .WithInitial(10.Eth(), StartingBalanceTST.Tst())
+                )
+            );
+        }
+
         public SlotFill[] GetOnChainSlotFills(ICodexNodeGroup possibleHosts, string purchaseId)
         {
-            return GetOnChainSlotFills(possibleHosts)
-                .Where(f => f.SlotFilledEvent.RequestId.ToHex(true) == purchaseId)
+            var fills = GetOnChainSlotFills(possibleHosts);
+            return fills.Where(f => f
+                .SlotFilledEvent.RequestId.ToHex(false).ToLowerInvariant() == purchaseId.ToLowerInvariant())
                 .ToArray();
         }
 
@@ -56,7 +90,7 @@ namespace CodexReleaseTests.MarketTests
             var fills = events.GetSlotFilledEvents();
             return fills.Select(f =>
             {
-                var host = possibleHosts.Single(h => h.EthAddress == f.Host);
+                var host = possibleHosts.Single(h => h.EthAddress.Address == f.Host.Address);
                 return new SlotFill(f, host);
 
             }).ToArray();

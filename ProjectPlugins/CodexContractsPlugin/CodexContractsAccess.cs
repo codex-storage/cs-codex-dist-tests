@@ -2,6 +2,7 @@
 using GethPlugin;
 using Logging;
 using Nethereum.ABI;
+using Nethereum.Hex.HexConvertors.Extensions;
 using Nethereum.Util;
 using NethereumWorkflow;
 using Newtonsoft.Json;
@@ -24,6 +25,7 @@ namespace CodexContractsPlugin
         ICodexContractsEvents GetEvents(BlockInterval blockInterval);
         EthAddress? GetSlotHost(Request storageRequest, decimal slotIndex);
         RequestState GetRequestState(Request request);
+        void WithdrawFunds(string purchaseId, EthAddress address);
     }
 
     [JsonConverter(typeof(StringEnumConverter))]
@@ -112,6 +114,26 @@ namespace CodexContractsPlugin
                 RequestId = request.RequestId
             };
             return gethNode.Call<RequestStateFunction, RequestState>(Deployment.MarketplaceAddress, func);
+        }
+
+        public void WithdrawFunds(string purchaseId, EthAddress address)
+        {
+            try
+            {
+                log.Log("withdrawing funds....");
+                var func = new WithdrawFundsFunction
+                {
+                    RequestId = purchaseId.HexToByteArray(),
+                    FromAddress = address.Address
+                };
+                var response = gethNode.Call<WithdrawFundsFunction, string>(Deployment.MarketplaceAddress, func);
+
+                log.Log("got response: " + response);
+            }
+            catch (Exception ex)
+            {
+                log.Log("Got exception: " + ex);
+            }
         }
 
         private ContractInteractions StartInteraction()
