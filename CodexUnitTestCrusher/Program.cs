@@ -17,6 +17,7 @@
             "vendor"
         ];
 
+        private readonly List<string> scriptPaths = new List<string>();
         private readonly string Include = "import std/random";
         private readonly string SleepLine = "await sleepAsync(rand(10))";
         private readonly int NumCompiles = 10;
@@ -38,6 +39,25 @@
         public void Run()
         {
             TraverseFolder(Root);
+            CreateRunScripts();
+        }
+
+        private void CreateRunScripts()
+        {
+            var lineLines = new List<List<string>>();
+            lineLines.Add(new List<string>());
+            lineLines.Add(new List<string>());
+            lineLines.Add(new List<string>());
+
+            var i = 0;
+            foreach (var script in scriptPaths)
+            {
+                lineLines[i].Add($"sh \"{script}\"");
+                i = (i + 1) % lineLines.Count;
+            }
+            File.WriteAllLines(@"C:\Projects\nim-codex\runall1.sh", lineLines[0]);
+            File.WriteAllLines(@"C:\Projects\nim-codex\runall2.sh", lineLines[1]);
+            File.WriteAllLines(@"C:\Projects\nim-codex\runall3.sh", lineLines[2]);
         }
 
         private void TraverseFolder(string root)
@@ -83,7 +103,9 @@
 
             }).ToArray();
 
-            File.WriteAllLines(Path.Combine(path, scriptFile), lines);
+            var fullPath = Path.Combine(path, scriptFile);
+            File.WriteAllLines(fullPath, lines);
+            scriptPaths.Add(fullPath);
         }
 
         private void AddRandomSleepsToNimFile(string file)
