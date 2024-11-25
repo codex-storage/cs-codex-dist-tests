@@ -20,7 +20,7 @@ namespace CodexPlugin
 
         public void Announce()
         {
-            tools.GetLog().Log($"Loaded with Codex ID: '{codexStarter.GetCodexId()}' - Revision: {codexStarter.GetCodexRevision()}");
+            Log($"Loaded with Codex ID: '{codexStarter.GetCodexId()}' - Revision: {codexStarter.GetCodexRevision()}");
         }
 
         public void AddMetadata(IAddMetadata metadata)
@@ -55,6 +55,10 @@ namespace CodexPlugin
             {
                 mconfig.GethNode.SendEth(node, mconfig.MarketplaceSetup.InitialEth);
                 mconfig.CodexContracts.MintTestTokens(node, mconfig.MarketplaceSetup.InitialTestTokens);
+
+                Log($"Send {mconfig.MarketplaceSetup.InitialEth} and " +
+                    $"minted {mconfig.MarketplaceSetup.InitialTestTokens} for " +
+                    $"{node.GetName()} (address: {node.EthAddress})");
             }
         }
 
@@ -69,6 +73,11 @@ namespace CodexPlugin
             codexSetup.LogLevel = defaultLogLevel;
             setup(codexSetup);
             return codexSetup;
+        }
+
+        private void Log(string msg)
+        {
+            tools.GetLog().Log(msg);
         }
     }
 }

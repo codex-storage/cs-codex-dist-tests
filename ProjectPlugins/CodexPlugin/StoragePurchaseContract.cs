@@ -1,4 +1,6 @@
-﻿using CodexPlugin.Hooks;
+﻿using CodexContractsPlugin;
+using CodexPlugin.Hooks;
+using GethPlugin;
 using Logging;
 using Newtonsoft.Json;
 using Utils;
@@ -12,7 +14,7 @@ namespace CodexPlugin
         ContentId ContentId { get; }
         void WaitForStorageContractSubmitted();
         void WaitForStorageContractStarted();
-        void WaitForStorageContractFinished();
+        void WaitForStorageContractFinished(ICodexContracts contracts);
     }
 
     public class StoragePurchaseContract : IStoragePurchaseContract
@@ -62,7 +64,7 @@ namespace CodexPlugin
             AssertDuration(SubmittedToStarted, timeout, nameof(SubmittedToStarted));
         }
 
-        public void WaitForStorageContractFinished()
+        public void WaitForStorageContractFinished(ICodexContracts contracts)
         {
             if (!contractStartedUtc.HasValue)
             {
@@ -74,6 +76,12 @@ namespace CodexPlugin
             contractFinishedUtc = DateTime.UtcNow;
             LogFinishedDuration();
             AssertDuration(SubmittedToFinished, timeout, nameof(SubmittedToFinished));
+
+            contracts.WaitUntilNextPeriod();
+
+            var blocks = 3;
+            Log($"Waiting {blocks} blocks for nodes to process payouts...");
+            Thread.Sleep(GethContainerRecipe.BlockInterval * blocks);
         }
 
         public StoragePurchase GetPurchaseStatus(string purchaseId)

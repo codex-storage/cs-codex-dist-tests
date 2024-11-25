@@ -25,7 +25,7 @@ namespace CodexContractsPlugin
         ICodexContractsEvents GetEvents(BlockInterval blockInterval);
         EthAddress? GetSlotHost(Request storageRequest, decimal slotIndex);
         RequestState GetRequestState(Request request);
-        void WithdrawFunds(string purchaseId, EthAddress address);
+        void WaitUntilNextPeriod();
     }
 
     [JsonConverter(typeof(StringEnumConverter))]
@@ -116,24 +116,13 @@ namespace CodexContractsPlugin
             return gethNode.Call<RequestStateFunction, RequestState>(Deployment.MarketplaceAddress, func);
         }
 
-        public void WithdrawFunds(string purchaseId, EthAddress address)
+        public void WaitUntilNextPeriod()
         {
-            try
-            {
-                log.Log("withdrawing funds....");
-                var func = new WithdrawFundsFunction
-                {
-                    RequestId = purchaseId.HexToByteArray(),
-                    FromAddress = address.Address
-                };
-                var response = gethNode.Call<WithdrawFundsFunction, string>(Deployment.MarketplaceAddress, func);
-
-                log.Log("got response: " + response);
-            }
-            catch (Exception ex)
-            {
-                log.Log("Got exception: " + ex);
-            }
+            log.Log("Waiting until next proof period...");
+            var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            var periodSeconds = (int)Deployment.Config.Proofs.Period;
+            var secondsLeft = now % periodSeconds;
+            Thread.Sleep(TimeSpan.FromSeconds(secondsLeft + 1));
         }
 
         private ContractInteractions StartInteraction()

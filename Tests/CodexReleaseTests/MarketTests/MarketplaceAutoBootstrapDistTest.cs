@@ -5,6 +5,7 @@ using CodexTests;
 using DistTestCore;
 using GethPlugin;
 using Nethereum.Hex.HexConvertors.Extensions;
+using NUnit.Framework;
 using Utils;
 
 namespace CodexReleaseTests.MarketTests
@@ -13,6 +14,7 @@ namespace CodexReleaseTests.MarketTests
     {
         private readonly Dictionary<TestLifecycle, MarketplaceHandle> handles = new Dictionary<TestLifecycle, MarketplaceHandle>();
         protected const int StartingBalanceTST = 1000;
+        protected const int StartingBalanceEth = 10;
 
         protected override void LifecycleStart(TestLifecycle lifecycle)
         {
@@ -48,7 +50,7 @@ namespace CodexReleaseTests.MarketTests
             var hosts = StartCodex(NumberOfHosts, s => s
                 .WithName("host")
                 .EnableMarketplace(GetGeth(), GetContracts(), m => m
-                    .WithInitial(10.Eth(), StartingBalanceTST.Tst())
+                    .WithInitial(StartingBalanceEth.Eth(), StartingBalanceTST.Tst())
                     .AsStorageNode()
                 )
             );
@@ -56,6 +58,9 @@ namespace CodexReleaseTests.MarketTests
             var config = GetContracts().Deployment.Config;
             foreach (var host in hosts)
             {
+                Assert.That(GetTstBalance(host).TstWei, Is.EqualTo(StartingBalanceTST.Tst().TstWei));
+                Assert.That(GetEthBalance(host).Wei, Is.EqualTo(StartingBalanceEth.Eth().Wei));
+
                 host.Marketplace.MakeStorageAvailable(new CodexPlugin.StorageAvailability(
                     totalSpace: HostAvailabilitySize,
                     maxDuration: HostAvailabilityMaxDuration,
@@ -66,12 +71,32 @@ namespace CodexReleaseTests.MarketTests
             return hosts;
         }
 
+        public TestToken GetTstBalance(ICodexNode node)
+        {
+            return GetContracts().GetTestTokenBalance(node);
+        }
+
+        public TestToken GetTstBalance(EthAddress address)
+        {
+            return GetContracts().GetTestTokenBalance(address);
+        }
+
+        public Ether GetEthBalance(ICodexNode node)
+        {
+            return GetGeth().GetEthBalance(node);
+        }
+
+        public Ether GetEthBalance(EthAddress address)
+        {
+            return GetGeth().GetEthBalance(address);
+        }
+
         public ICodexNodeGroup StartClients()
         {
             return StartCodex(NumberOfClients, s => s
                 .WithName("client")
                 .EnableMarketplace(GetGeth(), GetContracts(), m => m
-                    .WithInitial(10.Eth(), StartingBalanceTST.Tst())
+                    .WithInitial(StartingBalanceEth.Eth(), StartingBalanceTST.Tst())
                 )
             );
         }
