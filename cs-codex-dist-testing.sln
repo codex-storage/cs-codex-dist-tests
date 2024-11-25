@@ -78,6 +78,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MarketInsights", "Tools\Mar
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CsvCombiner", "Tools\CsvCombiner\CsvCombiner.csproj", "{6230347F-5045-4E25-8E7A-13D7221B7444}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CodexUnitTestCrusher", "CodexUnitTestCrusher\CodexUnitTestCrusher.csproj", "{E1B15D68-7055-42C9-B3DC-3130CA1CFBBE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -208,6 +210,10 @@ Global
 		{6230347F-5045-4E25-8E7A-13D7221B7444}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6230347F-5045-4E25-8E7A-13D7221B7444}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6230347F-5045-4E25-8E7A-13D7221B7444}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E1B15D68-7055-42C9-B3DC-3130CA1CFBBE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E1B15D68-7055-42C9-B3DC-3130CA1CFBBE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E1B15D68-7055-42C9-B3DC-3130CA1CFBBE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E1B15D68-7055-42C9-B3DC-3130CA1CFBBE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -244,6 +250,7 @@ Global
 		{C0EEBD32-23CB-45EC-A863-79FB948508C8} = {7591C5B3-D86E-4AE4-8ED2-B272D17FE7E3}
 		{004614DF-1C65-45E3-882D-59AE44282573} = {7591C5B3-D86E-4AE4-8ED2-B272D17FE7E3}
 		{6230347F-5045-4E25-8E7A-13D7221B7444} = {7591C5B3-D86E-4AE4-8ED2-B272D17FE7E3}
+		{E1B15D68-7055-42C9-B3DC-3130CA1CFBBE} = {7591C5B3-D86E-4AE4-8ED2-B272D17FE7E3}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {237BF0AA-9EC4-4659-AD9A-65DEB974250C}
