@@ -84,6 +84,7 @@ namespace AutoClient.Modes.FolderStore
                 onFileUploaded();
                 Log("Got CID: " + cid);
                 State.Cid = cid.Id;
+                SaveState();
                 Thread.Sleep(1000);
             }
         }
@@ -201,6 +202,7 @@ namespace AutoClient.Modes.FolderStore
                 Pid = response
             };
             State.Purchases = State.Purchases.Concat([newPurchase]).ToArray();
+            SaveState();
 
             Log($"New purchase created. PID: '{response}'. Waiting for submit...");
             Thread.Sleep(500);
