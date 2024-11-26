@@ -4,6 +4,8 @@ namespace TestNetRewarder
 {
     public class Configuration
     {
+        private readonly DateTime AppStartUct = DateTime.UtcNow;
+
         [Uniform("datapath", "dp", "DATAPATH", true, "Root path where all data files will be saved.")]
         public string DataPath { get; set; } = "datapath";
 
@@ -16,8 +18,8 @@ namespace TestNetRewarder
         [Uniform("interval-minutes", "im", "INTERVALMINUTES", true, "time in minutes between reward updates.")]
         public int IntervalMinutes { get; set; } = 15;
 
-        [Uniform("check-history", "ch", "CHECKHISTORY", true, "Unix epoc timestamp of a moment in history on which processing begins. Required for hosting rewards. Should be 'launch of the testnet'.")]
-        public int CheckHistoryTimestamp { get; set; } = 0;
+        [Uniform("relative-history", "rh", "RELATIVEHISTORY", false, "Number of seconds into the past (from app start) that checking of chain history will start. Default: 3 hours ago.")]
+        public int RelativeHistorySeconds { get; set; } = 3600 * 3;
 
         [Uniform("market-insights", "mi", "MARKETINSIGHTS", false, "Semi-colon separated integers. Each represents a multiple of intervals, for which a market insights average will be generated.")]
         public string MarketInsights { get; set; } = "1;96";
@@ -45,8 +47,7 @@ namespace TestNetRewarder
         {
             get
             {
-                if (CheckHistoryTimestamp == 0) throw new Exception("'check-history' unix timestamp is required. Set it to the start/launch moment of the testnet.");
-                return DateTimeOffset.FromUnixTimeSeconds(CheckHistoryTimestamp).UtcDateTime;
+                return AppStartUct - TimeSpan.FromSeconds(RelativeHistorySeconds);
             }
         }
     }
