@@ -119,6 +119,7 @@ namespace AutoClient.Modes
 
         private async Task EnsureRecentPurchase(ICodexInstance instance, CodexNode codex, Action shouldRevisitSoon)
         {
+            app.Log.Log($"Ensuring recent purchase for '{sourceFilename}'...");
             var recent = GetMostRecent();
             if (recent == null)
             {
@@ -248,6 +249,7 @@ namespace AutoClient.Modes
 
         private async Task EnsureCid(ICodexInstance instance, CodexNode codex)
         {
+            app.Log.Log($"Ensuring CID for '{sourceFilename}'...");
             if (!string.IsNullOrEmpty(State.Cid))
             {
                 var found = true;
