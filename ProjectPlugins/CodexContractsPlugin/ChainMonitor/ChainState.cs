@@ -75,11 +75,12 @@ namespace CodexContractsPlugin.ChainMonitor
                 throw new Exception(msg);
             }
 
-            log.Log($"ChainState updating: {events.BlockInterval}");
+            log.Log($"ChainState updating: {events.BlockInterval} = {events.All.Length} events.");
 
             // Run through each block and apply the events to the state in order.
             var span = events.BlockInterval.TimeRange.Duration;
             var numBlocks = events.BlockInterval.NumberOfBlocks;
+            if (numBlocks == 0) return;
             var spanPerBlock = span / numBlocks;
 
             var eventUtc = events.BlockInterval.TimeRange.From;

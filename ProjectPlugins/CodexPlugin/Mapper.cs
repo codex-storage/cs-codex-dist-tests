@@ -199,8 +199,8 @@ namespace CodexPlugin
             return new Manifest
             {
                 BlockSize = new ByteSize(Convert.ToInt64(manifest.BlockSize)),
-                OriginalBytes = new ByteSize(Convert.ToInt64(manifest.OriginalBytes)),
-                RootHash = manifest.RootHash,
+                OriginalBytes = new ByteSize(Convert.ToInt64(manifest.DatasetSize)),
+                RootHash = manifest.TreeCid,
                 Protected = manifest.Protected
             };
         }
