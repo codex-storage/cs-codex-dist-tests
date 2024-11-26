@@ -9,6 +9,7 @@ namespace AutoClient.Modes
         private readonly PurchaseInfo purchaseInfo;
         private readonly CancellationTokenSource cts = new CancellationTokenSource();
         private Task checkTask = Task.CompletedTask;
+        private int uncommitedChanges;
 
         public FolderStoreMode(App app, string folder, PurchaseInfo purchaseInfo)
         {
@@ -51,7 +52,9 @@ namespace AutoClient.Modes
                 {
                     i = 0;
                     var overview = new FolderWorkOverview(app, purchaseInfo, folder);
-                    overview.Update();
+                    var uploadNewOverview = uncommitedChanges > 10;
+                    await overview.Update(uploadNewOverview, instance);
+                    if (uploadNewOverview) uncommitedChanges = 0;
                 }
             }
         }
@@ -59,9 +62,14 @@ namespace AutoClient.Modes
         private async Task<FileWorker> ProcessWorkItem(ICodexInstance instance)
         {
             var file = app.FolderWorkDispatcher.GetFileToCheck();
-            var worker = new FileWorker(app, instance, purchaseInfo, folder, file, OnNewPurchase);
+            var worker = new FileWorker(app, instance, purchaseInfo, folder, file, OnFileUploaded, OnNewPurchase);
             await worker.Update();
             return worker;
+        }
+
+        private void OnFileUploaded()
+        {
+            uncommitedChanges++;
         }
 
         private void OnNewPurchase()

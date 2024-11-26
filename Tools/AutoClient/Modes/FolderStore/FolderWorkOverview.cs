@@ -1,4 +1,6 @@
-﻿using static AutoClient.Modes.FolderStore.FolderWorkOverview;
+﻿using CodexOpenApi;
+using System.IO.Compression;
+using static AutoClient.Modes.FolderStore.FolderWorkOverview;
 
 namespace AutoClient.Modes.FolderStore
 {
@@ -15,7 +17,7 @@ namespace AutoClient.Modes.FolderStore
             this.purchaseInfo = purchaseInfo;
         }
 
-        public void Update()
+        public async Task Update(bool createNewJsonZip, ICodexInstance instance)
         {
             var jsonFiles = Directory.GetFiles(Folder).Where(f => f.ToLowerInvariant().EndsWith(".json") && !f.Contains(OverviewFilename)).ToList();
 
@@ -41,6 +43,65 @@ namespace AutoClient.Modes.FolderStore
             State.SuccessfulStored = successful;
             State.StoreFailed = failed;
             SaveState();
+
+            if (createNewJsonZip)
+            {
+                await CreateNewOverviewZip(jsonFiles, FilePath, instance);
+            }
+        }
+
+        private async Task CreateNewOverviewZip(List<string> jsonFiles, string filePath, ICodexInstance instance)
+        {
+            Log("");
+            Log("");
+            Log("Creating new overview zipfile...");
+            var zipFilename = CreateZipFile(jsonFiles, filePath);
+
+            Log("Uploading to Codex...");
+            try
+            {
+                var codex = new CodexNode(app, instance);
+                var cid = await codex.UploadFile(zipFilename);
+                Log($"Upload successful: New overview zipfile CID = '{cid.Id}'");
+                Log("Requesting storage for it...");
+                var result = await codex.RequestStorage(cid);
+                Log("Storage requested. Purchase ID: " + result);
+            }
+            catch (Exception exc)
+            {
+                Log("Failed to upload new overview zipfile: " + exc);
+            }
+            Log("");
+            Log("");
+        }
+
+        private string CreateZipFile(List<string> jsonFiles, string filePath)
+        {
+            var zipFilename = Guid.NewGuid().ToString() + ".zip";
+
+            using (var memoryStream = new MemoryStream())
+            {
+                using (var archive = new ZipArchive(memoryStream, ZipArchiveMode.Create, true))
+                {
+                    archive.CreateEntryFromFile(filePath, "overview.json");
+                    foreach (var file in jsonFiles)
+                    {
+                        archive.CreateEntryFromFile(file, Path.GetFileName(file));
+                    }
+                }
+
+                using (var fileStream = new FileStream(zipFilename, FileMode.Create))
+                {
+                    memoryStream.Seek(0, SeekOrigin.Begin);
+                    memoryStream.CopyTo(fileStream);
+                }
+            }
+            return zipFilename;
+        }
+
+        private void Log(string msg)
+        {
+            app.Log.Log(msg);
         }
 
         [Serializable]

@@ -10,10 +10,11 @@ namespace AutoClient.Modes.FolderStore
         private readonly ICodexInstance instance;
         private readonly PurchaseInfo purchaseInfo;
         private readonly string sourceFilename;
+        private readonly Action onFileUploaded;
         private readonly Action onNewPurchase;
         private readonly CodexNode codex;
 
-        public FileWorker(App app, ICodexInstance instance, PurchaseInfo purchaseInfo, string folder, string filename, Action onNewPurchase)
+        public FileWorker(App app, ICodexInstance instance, PurchaseInfo purchaseInfo, string folder, string filename, Action onFileUploaded, Action onNewPurchase)
             : base(app, folder, filename + ".json", purchaseInfo)
         {
             this.app = app;
@@ -21,6 +22,7 @@ namespace AutoClient.Modes.FolderStore
             this.instance = instance;
             this.purchaseInfo = purchaseInfo;
             sourceFilename = filename;
+            this.onFileUploaded = onFileUploaded;
             this.onNewPurchase = onNewPurchase;
             codex = new CodexNode(app, instance);
         }
@@ -75,6 +77,7 @@ namespace AutoClient.Modes.FolderStore
             {
                 Log($"Uploading...");
                 var cid = await codex.UploadFile(sourceFilename);
+                onFileUploaded();
                 Log("Got CID: " + cid);
                 State.Cid = cid.Id;
                 Thread.Sleep(1000);
