@@ -1,30 +1,39 @@
-﻿using static AutoClient.Modes.FolderStore.FileWorker;
+﻿using Logging;
+using Nethereum.Contracts;
 
 namespace AutoClient.Modes.FolderStore
 {
-    public class FileWorker : JsonBacked<WorkerStatus>
+    public class FileWorker : FileStatus
     {
         private readonly App app;
+        private readonly ILog log;
+        private readonly ICodexInstance instance;
         private readonly PurchaseInfo purchaseInfo;
         private readonly string sourceFilename;
+        private readonly Action onNewPurchase;
+        private readonly CodexNode codex;
 
-        public FileWorker(App app, PurchaseInfo purchaseInfo, string folder, string filename)
-            : base(app, folder, filename + ".json")
+        public FileWorker(App app, ICodexInstance instance, PurchaseInfo purchaseInfo, string folder, string filename, Action onNewPurchase)
+            : base(app, folder, filename + ".json", purchaseInfo)
         {
             this.app = app;
+            log = new LogPrefixer(app.Log, GetFileTag(filename));
+            this.instance = instance;
             this.purchaseInfo = purchaseInfo;
             sourceFilename = filename;
+            this.onNewPurchase = onNewPurchase;
+            codex = new CodexNode(app, instance);
         }
 
         public int FailureCounter => State.FailureCounter;
 
-        public async Task Update(ICodexInstance instance, Action shouldRevisitSoon)
+        public async Task Update()
         {
             try
             {
-                var codex = new CodexNode(app, instance);
-                await EnsureCid(instance, codex);
-                await EnsureRecentPurchase(instance, codex, shouldRevisitSoon);
+                Log($"Updating for '{sourceFilename}'...");
+                await EnsureCid();
+                await EnsureRecentPurchase();
                 SaveState();
                 app.Log.Log("");
             }
@@ -35,64 +44,95 @@ namespace AutoClient.Modes.FolderStore
             }
         }
 
-        private async Task EnsureRecentPurchase(ICodexInstance instance, CodexNode codex, Action shouldRevisitSoon)
+        private async Task EnsureCid()
         {
-            app.Log.Log($"Ensuring recent purchase for '{sourceFilename}'...");
+            Log($"Ensuring CID...");
+            if (!string.IsNullOrEmpty(State.Cid))
+            {
+                var found = true;
+                try
+                {
+                    var manifest = await instance.Codex.DownloadNetworkManifestAsync(State.Cid);
+                    if (manifest == null) found = false;
+                }
+                catch
+                {
+                    found = false;
+                }
+
+                if (!found)
+                {
+                    Log($"Existing CID '{State.Cid}' could not be found in the network.");
+                    State.Cid = "";
+                }
+                else
+                {
+                    Log($"Existing CID '{State.Cid}' was successfully found in the network.");
+                }
+            }
+
+            if (string.IsNullOrEmpty(State.Cid))
+            {
+                Log($"Uploading...");
+                var cid = await codex.UploadFile(sourceFilename);
+                Log("Got CID: " + cid);
+                State.Cid = cid.Id;
+                Thread.Sleep(1000);
+            }
+        }
+
+        private async Task EnsureRecentPurchase()
+        {
+            Log($"Ensuring recent purchase...");
             var recent = GetMostRecent();
             if (recent == null)
             {
-                app.Log.Log($"No recent purchase for '{sourceFilename}'.");
-                await MakeNewPurchase(instance, codex);
-                shouldRevisitSoon();
+                Log($"No recent purchase.");
+                await MakeNewPurchase();
                 return;
             }
 
-            await UpdatePurchase(recent, instance, codex);
+            await UpdatePurchase(recent);
 
             if (recent.Expiry.HasValue)
             {
-                app.Log.Log($"Purchase for '{sourceFilename}' has failed or expired.");
-                await MakeNewPurchase(instance, codex);
-                shouldRevisitSoon();
+                Log($"Purchase has failed or expired.");
+                await MakeNewPurchase();
                 State.FailureCounter++;
                 return;
             }
 
             if (recent.Finish.HasValue)
             {
-                app.Log.Log($"Purchase for '{sourceFilename}' has finished.");
-                await MakeNewPurchase(instance, codex);
-                shouldRevisitSoon();
+                Log($"Purchase has finished.");
+                await MakeNewPurchase();
                 return;
             }
 
-            if (recent.Started.HasValue &&
-                recent.Created + purchaseInfo.PurchaseDurationSafe > DateTime.UtcNow)
+            var safeEnd = recent.Created + purchaseInfo.PurchaseDurationSafe;
+            if (recent.Started.HasValue && DateTime.UtcNow > safeEnd)
             {
-                app.Log.Log($"Purchase for '{sourceFilename}' is going to expire soon.");
-                await MakeNewPurchase(instance, codex);
-                shouldRevisitSoon();
+                Log($"Purchase is going to expire soon.");
+                await MakeNewPurchase();
                 return;
             }
 
             if (!recent.Submitted.HasValue)
             {
-                app.Log.Log($"Purchase for '{sourceFilename}' is waiting to be submitted.");
-                shouldRevisitSoon();
+                Log($"Purchase is waiting to be submitted.");
                 return;
             }
 
             if (recent.Submitted.HasValue && !recent.Started.HasValue)
             {
-                app.Log.Log($"Purchase for '{sourceFilename}' is submitted and waiting to start.");
-                shouldRevisitSoon();
+                Log($"Purchase is submitted and waiting to start.");
                 return;
             }
 
-            app.Log.Log($"Purchase for '{sourceFilename}' is running.");
+            Log($"Purchase is running.");
         }
 
-        private async Task UpdatePurchase(WorkerPurchase recent, ICodexInstance instance, CodexNode codex)
+        private async Task UpdatePurchase(WorkerPurchase recent)
         {
             if (string.IsNullOrEmpty(recent.Pid)) throw new Exception("No purchaseID!");
             var now = DateTime.UtcNow;
@@ -100,7 +140,7 @@ namespace AutoClient.Modes.FolderStore
             var purchase = await codex.GetStoragePurchase(recent.Pid);
             if (purchase == null)
             {
-                app.Log.Log($"No purchase information found for PID '{recent.Pid}' for file '{sourceFilename}'. Consider this one expired.");
+                Log($"No purchase information found for PID '{recent.Pid}'. Consider this one expired.");
                 recent.Expiry = now;
                 return;
             }
@@ -131,17 +171,14 @@ namespace AutoClient.Modes.FolderStore
                 if (!recent.Finish.HasValue) recent.Finish = now;
             }
 
-            app.Log.Log($"Updated purchase information for PID '{recent.Pid}' for file '{sourceFilename}': " +
-                $"Submitted: {recent.Submitted.HasValue} " +
-                $"Started: {recent.Started.HasValue} " +
-                $"Expiry: {recent.Expiry.HasValue} " +
-                $"Finish: {recent.Finish.HasValue}");
+            Log($"Updated purchase information for PID '{recent.Pid}'.");
         }
 
-        private async Task MakeNewPurchase(ICodexInstance instance, CodexNode codex)
+        private async Task MakeNewPurchase()
         {
             if (string.IsNullOrEmpty(State.Cid)) throw new Exception("No cid!");
 
+            Log($"Creating new purchase...");
             var response = await codex.RequestStorage(new CodexPlugin.ContentId(State.Cid));
             if (string.IsNullOrEmpty(response) ||
                 response == "Unable to encode manifest" ||
@@ -153,83 +190,39 @@ namespace AutoClient.Modes.FolderStore
                 throw new InvalidOperationException(response);
             }
 
-            State.Purchases = State.Purchases.Concat([
-                new WorkerPurchase
-                {
-                    Created = DateTime.UtcNow,
-                    Pid = response
-                }
-            ]).ToArray();
+            var newPurchase = new WorkerPurchase
+            {
+                Created = DateTime.UtcNow,
+                Pid = response
+            };
+            State.Purchases = State.Purchases.Concat([newPurchase]).ToArray();
 
-            app.Log.Log($"New purchase created for '{sourceFilename}'. PID: '{response}'");
+            Log($"New purchase created. PID: '{response}'. Waiting for submit...");
             Thread.Sleep(500);
-        }
+            onNewPurchase();
 
-        private async Task EnsureCid(ICodexInstance instance, CodexNode codex)
-        {
-            app.Log.Log($"Ensuring CID for '{sourceFilename}'...");
-            if (!string.IsNullOrEmpty(State.Cid))
+            var timeout = DateTime.UtcNow + TimeSpan.FromMinutes(5);
+            while (DateTime.UtcNow < timeout)
             {
-                var found = true;
-                try
+                await UpdatePurchase(newPurchase);
+                if (newPurchase.Submitted.HasValue)
                 {
-                    var manifest = await instance.Codex.DownloadNetworkManifestAsync(State.Cid);
-                    if (manifest == null) found = false;
-                }
-                catch
-                {
-                    found = false;
-                }
-
-                if (!found)
-                {
-                    app.Log.Log($"Existing CID '{State.Cid}' for '{sourceFilename}' could not be found in the network.");
-                    State.Cid = "";
-                }
-                else
-                {
-                    app.Log.Log($"Existing CID '{State.Cid}' for '{sourceFilename}' was successfully found in the network.");
+                    Log("New purchase successfully submitted.");
+                    return;
                 }
             }
-
-            if (string.IsNullOrEmpty(State.Cid))
-            {
-                app.Log.Log($"Uploading '{sourceFilename}'...");
-                var cid = await codex.UploadFile(sourceFilename);
-                app.Log.Log("Got CID: " + cid);
-                State.Cid = cid.Id;
-                Thread.Sleep(1000);
-            }
+            Log("New purchase was not submitted within 5-minute timeout. Will check again later...");
         }
 
-        private WorkerPurchase? GetMostRecent()
+        private void Log(string msg)
         {
-            if (!State.Purchases.Any()) return null;
-            var maxCreated = State.Purchases.Max(p => p.Created);
-            return State.Purchases.SingleOrDefault(p => p.Created == maxCreated);
+            log.Log(msg);
         }
 
-        public bool IsCurrentlyRunning()
+        private string GetFileTag(string filename)
         {
-            if (!State.Purchases.Any()) return false;
-
-            return State.Purchases.Any(p =>
-                p.Submitted.HasValue &&
-                p.Started.HasValue &&
-                !p.Expiry.HasValue &&
-                !p.Finish.HasValue &&
-                p.Started.Value > DateTime.UtcNow - purchaseInfo.PurchaseDurationTotal
-            );
-        }
-
-        public bool IsCurrentlyFailed()
-        {
-            if (!State.Purchases.Any()) return false;
-
-            var mostRecent = GetMostRecent();
-            if (mostRecent == null) return false;
-
-            return mostRecent.Expiry.HasValue;
+            var i = Math.Abs(filename.GetHashCode() % 9999);
+            return $"({i.ToString("0000")}) ";
         }
 
         [Serializable]

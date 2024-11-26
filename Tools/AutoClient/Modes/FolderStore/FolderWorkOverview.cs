@@ -26,7 +26,7 @@ namespace AutoClient.Modes.FolderStore
             {
                 try
                 {
-                    var worker = new FileWorker(app, purchaseInfo, Folder, file.Substring(0, file.Length - 5));
+                    var worker = new FileStatus(app, Folder, file.Substring(0, file.Length - 5), purchaseInfo);
                     total++;
                     if (worker.IsCurrentlyRunning()) successful++;
                     if (worker.IsCurrentlyFailed()) failed++;

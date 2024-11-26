@@ -2,13 +2,13 @@
 {
     public class FolderWorkDispatcher
     {
-        private readonly List<string> files = new List<string>();
-        private readonly List<string> revisitSoon = new List<string>();
-        public bool Revisiting { get; private set; } = false;
+        private readonly string[] files = Array.Empty<string>();
+        private int index = 0;
 
         public FolderWorkDispatcher(string folder)
         {
             var fs = Directory.GetFiles(folder);
+            var result = new List<string>();
             foreach (var f in fs)
             {
                 if (!f.ToLowerInvariant().Contains(".json"))
@@ -16,40 +16,23 @@
                     var info = new FileInfo(f);
                     if (info.Exists && info.Length > 1024 * 1024) // larger than 1MB
                     {
-                        files.Add(f);
+                        result.Add(f);
                     }
                 }
             }
+            files = result.ToArray();
         }
 
         public string GetFileToCheck()
         {
-            if (Revisiting)
-            {
-                if (!revisitSoon.Any())
-                {
-                    Revisiting = false;
-                    return GetFileToCheck();
-                }
-
-                var file = revisitSoon.First();
-                revisitSoon.RemoveAt(0);
-                return file;
-            }
-            else
-            {
-                var file = files.First();
-                files.RemoveAt(0);
-                files.Add(file);
-
-                if (revisitSoon.Count > 3) Revisiting = true;
-                return file;
-            }
+            var file = files[index];
+            index = (index + 1) % files.Length;
+            return file;
         }
 
-        public void RevisitSoon(string file)
+        public void ResetIndex()
         {
-            revisitSoon.Add(file);
+            index = 0;
         }
     }
 }

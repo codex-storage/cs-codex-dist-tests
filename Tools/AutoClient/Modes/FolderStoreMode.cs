@@ -38,8 +38,7 @@ namespace AutoClient.Modes
             var i = 0;
             while (!cts.IsCancellationRequested)
             {
-                if (app.FolderWorkDispatcher.Revisiting) Thread.Sleep(2000);
-                else Thread.Sleep(5000);
+                Thread.Sleep(2000);
 
                 var worker = await ProcessWorkItem(instance);
                 if (worker.FailureCounter > 5)
@@ -60,13 +59,14 @@ namespace AutoClient.Modes
         private async Task<FileWorker> ProcessWorkItem(ICodexInstance instance)
         {
             var file = app.FolderWorkDispatcher.GetFileToCheck();
-            var worker = new FileWorker(app, purchaseInfo, folder, file);
-            await worker.Update(instance, () =>
-            {
-                app.FolderWorkDispatcher.RevisitSoon(file);
-            });
-
+            var worker = new FileWorker(app, instance, purchaseInfo, folder, file, OnNewPurchase);
+            await worker.Update();
             return worker;
+        }
+
+        private void OnNewPurchase()
+        {
+            app.FolderWorkDispatcher.ResetIndex();
         }
 
         public void Stop()
