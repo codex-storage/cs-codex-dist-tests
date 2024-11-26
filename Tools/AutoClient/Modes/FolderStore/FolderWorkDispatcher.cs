@@ -23,9 +23,9 @@
             files = result.ToArray();
         }
 
-        public string GetFileToCheck()
+        public FileIndex GetFileToCheck()
         {
-            var file = files[index];
+            var file = new FileIndex(files[index], index);
             index = (index + 1) % files.Length;
             return file;
         }
@@ -34,5 +34,17 @@
         {
             index = 0;
         }
+    }
+
+    public class FileIndex
+    {
+        public FileIndex(string file, int index)
+        {
+            File = file;
+            Index = index;
+        }
+
+        public string File { get; }
+        public int Index { get; }
     }
 }

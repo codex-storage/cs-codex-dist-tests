@@ -14,14 +14,14 @@ namespace AutoClient.Modes.FolderStore
         private readonly Action onNewPurchase;
         private readonly CodexNode codex;
 
-        public FileWorker(App app, ICodexInstance instance, PurchaseInfo purchaseInfo, string folder, string filename, Action onFileUploaded, Action onNewPurchase)
+        public FileWorker(App app, ICodexInstance instance, PurchaseInfo purchaseInfo, string folder, FileIndex filename, Action onFileUploaded, Action onNewPurchase)
             : base(app, folder, filename + ".json", purchaseInfo)
         {
             this.app = app;
             log = new LogPrefixer(app.Log, GetFileTag(filename));
             this.instance = instance;
             this.purchaseInfo = purchaseInfo;
-            sourceFilename = filename;
+            sourceFilename = filename.File;
             this.onFileUploaded = onFileUploaded;
             this.onNewPurchase = onNewPurchase;
             codex = new CodexNode(app, instance);
@@ -225,10 +225,9 @@ namespace AutoClient.Modes.FolderStore
             log.Log(msg);
         }
 
-        private string GetFileTag(string filename)
+        private string GetFileTag(FileIndex filename)
         {
-            var i = Math.Abs(filename.GetHashCode() % 9999);
-            return $"({i.ToString("0000")}) ";
+            return $"({filename.Index.ToString("00000")}) ";
         }
 
         [Serializable]
