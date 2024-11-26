@@ -72,6 +72,10 @@ namespace AutoClient.Modes.FolderStore
                     Log($"Existing CID '{State.Cid}' was successfully found in the network.");
                 }
             }
+            else
+            {
+                Log("File was not previously uploaded.");
+            }
 
             if (string.IsNullOrEmpty(State.Cid))
             {
@@ -173,8 +177,6 @@ namespace AutoClient.Modes.FolderStore
                 if (!recent.Started.HasValue) recent.Started = now;
                 if (!recent.Finish.HasValue) recent.Finish = now;
             }
-
-            Log($"Updated purchase information for PID '{recent.Pid}'.");
         }
 
         private async Task MakeNewPurchase()
@@ -207,6 +209,7 @@ namespace AutoClient.Modes.FolderStore
             var timeout = DateTime.UtcNow + TimeSpan.FromMinutes(5);
             while (DateTime.UtcNow < timeout)
             {
+                Thread.Sleep(5000);
                 await UpdatePurchase(newPurchase);
                 if (newPurchase.Submitted.HasValue)
                 {
