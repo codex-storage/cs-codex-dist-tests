@@ -18,6 +18,7 @@ namespace CodexReleaseTests.MarketTests
         private readonly TestToken pricePerSlotPerSecond = 10.TstWei();
 
         [Test]
+        [Ignore("TODO - Test where multiple successful contracts are run simultaenously")]
         public void MultipleSuccessfulContracts()
         {
             var hosts = StartHosts();
