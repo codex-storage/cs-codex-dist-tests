@@ -1,5 +1,4 @@
 ﻿using Logging;
-using Nethereum.Contracts;
 
 namespace AutoClient.Modes.FolderStore
 {
@@ -22,6 +21,7 @@ namespace AutoClient.Modes.FolderStore
             this.instance = instance;
             this.purchaseInfo = purchaseInfo;
             sourceFilename = filename.File;
+            if (sourceFilename.ToLowerInvariant().EndsWith(".json")) throw new Exception("Not an era file.");
             this.onFileUploaded = onFileUploaded;
             this.onNewPurchase = onNewPurchase;
             codex = new CodexNode(app, instance);
