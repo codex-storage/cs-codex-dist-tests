@@ -29,11 +29,22 @@ namespace AutoClient.Modes.FolderStore
 
         public int FailureCounter => State.FailureCounter;
 
+        protected override void OnNewState(WorkerStatus newState)
+        {
+            newState.LastUpdate = DateTime.MinValue;
+        }
+
         public async Task Update()
         {
             try
             {
                 Log($"Updating for '{sourceFilename}'...");
+                if (IsCurrentlyRunning() && UpdatedRecently())
+                {
+                    Log("Is running, was recently checked. Skip.");
+                    return;
+                }
+
                 var cid = await EnsureCid();
                 await EnsureRecentPurchase(cid);
                 SaveState();
@@ -46,6 +57,12 @@ namespace AutoClient.Modes.FolderStore
                 SaveState();
                 throw;
             }
+        }
+
+        private bool UpdatedRecently()
+        {
+            var now = DateTime.UtcNow;
+            return State.LastUpdate + TimeSpan.FromHours(1) > now;
         }
 
         private async Task<string> EnsureCid()
@@ -186,6 +203,7 @@ namespace AutoClient.Modes.FolderStore
                 if (!recent.Started.HasValue) recent.Started = now;
                 if (!recent.Finish.HasValue) recent.Finish = now;
             }
+            State.LastUpdate = now;
             SaveState();
         }
 
@@ -249,6 +267,7 @@ namespace AutoClient.Modes.FolderStore
         [Serializable]
         public class WorkerStatus
         {
+            public DateTime LastUpdate { get; set; }
             public string Cid { get; set; } = string.Empty;
             public string EncodedCid { get; set; } = string.Empty;
             public int FailureCounter { get; set; } = 0;

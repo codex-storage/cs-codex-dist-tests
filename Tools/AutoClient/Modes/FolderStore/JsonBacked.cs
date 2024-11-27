@@ -21,6 +21,7 @@ namespace AutoClient.Modes.FolderStore
                 if (!File.Exists(FilePath))
                 {
                     State = new T();
+                    OnNewState(State);
                     SaveState();
                 }
                 var text = File.ReadAllText(FilePath);
@@ -36,6 +37,10 @@ namespace AutoClient.Modes.FolderStore
         protected string Folder { get; }
         protected string FilePath { get; }
         protected T State { get; private set; } = default!;
+
+        protected virtual void OnNewState(T newState)
+        {
+        }
 
         protected void SaveState()
         {
