@@ -70,7 +70,8 @@ namespace AutoClient
             try
             {
                 var cid = await codex.UploadFile(file);
-                return await codex.RequestStorage(cid);
+                var response = await codex.RequestStorage(cid);
+                return response.PurchaseId;
             }
             finally
             {

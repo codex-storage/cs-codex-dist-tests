@@ -186,25 +186,26 @@ namespace AutoClient.Modes.FolderStore
 
             Log($"Creating new purchase...");
             var response = await codex.RequestStorage(new CodexPlugin.ContentId(State.Cid));
-            if (string.IsNullOrEmpty(response) ||
-                response == "Unable to encode manifest" ||
-                response == "Purchasing not available" ||
-                response == "Expiry required" ||
-                response == "Expiry needs to be in future" ||
-                response == "Expiry has to be before the request's end (now + duration)")
+            var purchaseId = response.PurchaseId;
+            if (string.IsNullOrEmpty(purchaseId) ||
+                purchaseId == "Unable to encode manifest" ||
+                purchaseId == "Purchasing not available" ||
+                purchaseId == "Expiry required" ||
+                purchaseId == "Expiry needs to be in future" ||
+                purchaseId == "Expiry has to be before the request's end (now + duration)")
             {
-                throw new InvalidOperationException(response);
+                throw new InvalidOperationException(purchaseId);
             }
 
             var newPurchase = new WorkerPurchase
             {
                 Created = DateTime.UtcNow,
-                Pid = response
+                Pid = purchaseId
             };
             State.Purchases = State.Purchases.Concat([newPurchase]).ToArray();
             SaveState();
 
-            Log($"New purchase created. PID: '{response}'. Waiting for submit...");
+            Log($"New purchase created. PID: '{purchaseId}'. Waiting for submit...");
             Thread.Sleep(500);
             onNewPurchase();
 

@@ -66,6 +66,9 @@ namespace AutoClient.Modes.FolderStore
                 Log("Requesting storage for it...");
                 var result = await codex.RequestStorage(cid);
                 Log("Storage requested. Purchase ID: " + result);
+
+                var outFile = Path.Combine(app.Config.DataPath, "OverviewZip.cid");
+                File.WriteAllLines(outFile, [DateTime.UtcNow.ToString("o") + " - " + result.EncodedCid.Id]);
             }
             catch (Exception exc)
             {

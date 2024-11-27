@@ -82,7 +82,7 @@ namespace AutoClient
             }
         }
 
-        public async Task<string> RequestStorage(ContentId cid)
+        public async Task<RequestStorageResult> RequestStorage(ContentId cid)
         {
             app.Log.Debug("Requesting storage for " + cid.Id);
             var result = await codex.Codex.CreateStorageRequestAsync(cid.Id, new StorageRequestCreation()
@@ -101,7 +101,24 @@ namespace AutoClient
             var encoded = await GetEncodedCid(result);
             app.CidRepo.AddEncoded(cid.Id, encoded);
 
-            return result;
+            return new RequestStorageResult(result, new ContentId(encoded));
+        }
+
+        public class RequestStorageResult
+        {
+            public RequestStorageResult(string purchaseId, ContentId encodedCid)
+            {
+                PurchaseId = purchaseId;
+                EncodedCid = encodedCid;
+            }
+
+            public string PurchaseId { get; }
+            public ContentId EncodedCid { get; }
+
+            public override string ToString()
+            {
+                return $"{PurchaseId} (cid: {EncodedCid})";
+            }
         }
 
         public async Task<StoragePurchase?> GetStoragePurchase(string pid)
