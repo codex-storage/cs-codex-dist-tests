@@ -13,14 +13,14 @@ namespace AutoClient.Modes.FolderStore
         private readonly Action onNewPurchase;
         private readonly CodexNode codex;
 
-        public FileWorker(App app, ICodexInstance instance, PurchaseInfo purchaseInfo, string folder, FileIndex filename, Action onFileUploaded, Action onNewPurchase)
-            : base(app, folder, filename + ".json", purchaseInfo)
+        public FileWorker(App app, ICodexInstance instance, PurchaseInfo purchaseInfo, string folder, FileIndex fileIndex, Action onFileUploaded, Action onNewPurchase)
+            : base(app, folder, fileIndex.File + ".json", purchaseInfo)
         {
             this.app = app;
-            log = new LogPrefixer(app.Log, GetFileTag(filename));
+            log = new LogPrefixer(app.Log, GetFileTag(fileIndex));
             this.instance = instance;
             this.purchaseInfo = purchaseInfo;
-            sourceFilename = filename.File;
+            sourceFilename = fileIndex.File;
             if (sourceFilename.ToLowerInvariant().EndsWith(".json")) throw new Exception("Not an era file.");
             this.onFileUploaded = onFileUploaded;
             this.onNewPurchase = onNewPurchase;

@@ -12,8 +12,6 @@ namespace AutoClient.Modes.FolderStore
             Folder = folder;
             FilePath = filePath;
             LoadState();
-
-            app.Log.Debug("Deserialized state: " + JsonConvert.SerializeObject(State));
         }
 
         private void LoadState()
