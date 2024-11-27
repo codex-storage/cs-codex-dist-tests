@@ -35,6 +35,7 @@ namespace AutoClient.Modes.FolderStore
                 log.Log("");
                 log.Log("Max number of busy workers reached. Waiting until contracts are started before creating any more.");
                 log.Log("");
+                Thread.Sleep(10000);
                 ResetIndex();
             }
 

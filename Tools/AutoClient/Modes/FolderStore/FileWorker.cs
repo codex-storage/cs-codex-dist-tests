@@ -215,10 +215,12 @@ namespace AutoClient.Modes.FolderStore
             State.Purchases = State.Purchases.Concat([newPurchase]).ToArray();
             State.EncodedCid = encodedCid.Id;
             SaveState();
-
-            Log($"New purchase created. PID: '{purchaseId}'. Waiting for submit...");
-            Thread.Sleep(500);
             onNewPurchase();
+
+            Log($"New purchase created. PID: '{purchaseId}'.");
+            Log("Got Encoded-CID: " + encodedCid);
+            Log("Waiting for submit...");
+            Thread.Sleep(500);
 
             var timeout = DateTime.UtcNow + TimeSpan.FromMinutes(5);
             while (DateTime.UtcNow < timeout)
