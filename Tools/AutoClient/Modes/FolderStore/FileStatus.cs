@@ -12,6 +12,19 @@ namespace AutoClient.Modes.FolderStore
             this.purchaseInfo = purchaseInfo;
         }
 
+        public bool IsBusy()
+        {
+            if (!State.Purchases.Any()) return false;
+
+            return State.Purchases.Any(p =>
+                p.Submitted.HasValue &&
+                !p.Started.HasValue &&
+                !p.Expiry.HasValue &&
+                !p.Finish.HasValue &&
+                p.Created > DateTime.UtcNow - purchaseInfo.PurchaseDurationTotal
+            );
+        }
+
         public bool IsCurrentlyRunning()
         {
             if (!State.Purchases.Any()) return false;

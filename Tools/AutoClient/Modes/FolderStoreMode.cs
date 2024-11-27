@@ -64,6 +64,7 @@ namespace AutoClient.Modes
             var file = app.FolderWorkDispatcher.GetFileToCheck();
             var worker = new FileWorker(app, instance, purchaseInfo, folder, file, OnFileUploaded, OnNewPurchase);
             await worker.Update();
+            if (worker.IsBusy()) app.FolderWorkDispatcher.WorkerIsBusy();
             return worker;
         }
 

@@ -23,7 +23,7 @@ namespace AutoClient
 
             if (!string.IsNullOrEmpty(config.FolderToStore))
             {
-                FolderWorkDispatcher = new FolderWorkDispatcher(config.FolderToStore);
+                FolderWorkDispatcher = new FolderWorkDispatcher(Log, config.FolderToStore);
             }
             else
             {
