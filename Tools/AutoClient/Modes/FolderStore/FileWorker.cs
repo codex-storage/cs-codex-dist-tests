@@ -38,13 +38,9 @@ namespace AutoClient.Modes.FolderStore
         {
             try
             {
-                Log($"Updating for '{sourceFilename}'...");
-                if (IsCurrentlyRunning() && UpdatedRecently())
-                {
-                    Log("Is running, was recently checked. Skip.");
-                    return;
-                }
+                if (IsCurrentlyRunning() && UpdatedRecently()) return;
 
+                Log($"Updating for '{sourceFilename}'...");
                 var cid = await EnsureCid();
                 await EnsureRecentPurchase(cid);
                 SaveState();
@@ -62,7 +58,7 @@ namespace AutoClient.Modes.FolderStore
         private bool UpdatedRecently()
         {
             var now = DateTime.UtcNow;
-            return State.LastUpdate + TimeSpan.FromHours(1) > now;
+            return State.LastUpdate + TimeSpan.FromMinutes(15) > now;
         }
 
         private async Task<string> EnsureCid()

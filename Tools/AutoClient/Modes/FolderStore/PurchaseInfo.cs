@@ -2,7 +2,17 @@
 {
     public class PurchaseInfo
     {
-        public TimeSpan PurchaseDurationTotal { get; set; }
-        public TimeSpan PurchaseDurationSafe { get; set; }
+        public PurchaseInfo(TimeSpan purchaseDurationTotal, TimeSpan purchaseDurationSafe)
+        {
+            PurchaseDurationTotal = purchaseDurationTotal;
+            PurchaseDurationSafe = purchaseDurationSafe;
+
+            if (PurchaseDurationTotal < TimeSpan.Zero) throw new Exception(nameof(PurchaseDurationTotal));
+            if (PurchaseDurationSafe < TimeSpan.Zero) throw new Exception(nameof(PurchaseDurationSafe));
+            if (PurchaseDurationTotal < PurchaseDurationSafe) throw new Exception("TotalDuration < SafeDuration");
+        }
+
+        public TimeSpan PurchaseDurationTotal { get; }
+        public TimeSpan PurchaseDurationSafe { get; }
     }
 }

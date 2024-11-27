@@ -68,11 +68,10 @@ public class Program
     {
         if (app.Config.ContractDurationMinutes - 1 < 5) throw new Exception("Contract duration config option not long enough!");
 
-        return new FolderStoreMode(app, app.Config.FolderToStore, new PurchaseInfo
-        {
-            PurchaseDurationTotal = TimeSpan.FromMinutes(app.Config.ContractDurationMinutes),
-            PurchaseDurationSafe = TimeSpan.FromMinutes(app.Config.ContractDurationMinutes - 1),
-        });
+        return new FolderStoreMode(app, app.Config.FolderToStore, new PurchaseInfo(
+            purchaseDurationTotal: TimeSpan.FromMinutes(app.Config.ContractDurationMinutes),
+            purchaseDurationSafe: TimeSpan.FromMinutes(app.Config.ContractDurationMinutes - 120)
+        ));
     }
 
     private async Task<CodexInstance[]> CreateCodexInstances()
