@@ -34,69 +34,77 @@ namespace AutoClient.Modes.FolderStore
             try
             {
                 Log($"Updating for '{sourceFilename}'...");
-                await EnsureCid();
-                await EnsureRecentPurchase();
+                var cid = await EnsureCid();
+                await EnsureRecentPurchase(cid);
                 SaveState();
                 app.Log.Log("");
             }
             catch (Exception exc)
             {
                 app.Log.Error("Exception during fileworker update: " + exc);
+                State.Error = exc.ToString();
+                SaveState();
                 throw;
             }
         }
 
-        private async Task EnsureCid()
+        private async Task<string> EnsureCid()
         {
-            Log($"Ensuring CID...");
-            if (!string.IsNullOrEmpty(State.Cid))
-            {
-                var found = true;
-                try
-                {
-                    var manifest = await instance.Codex.DownloadNetworkManifestAsync(State.Cid);
-                    if (manifest == null) found = false;
-                }
-                catch
-                {
-                    found = false;
-                }
+            Log($"Checking CID...");
 
-                if (!found)
-                {
-                    Log($"Existing CID '{State.Cid}' could not be found in the network.");
-                    State.Cid = "";
-                }
-                else
-                {
-                    Log($"Existing CID '{State.Cid}' was successfully found in the network.");
-                }
-            }
-            else
+            if (!string.IsNullOrEmpty(State.EncodedCid) &&
+                await DoesCidExistInNetwork(State.EncodedCid))
             {
-                Log("File was not previously uploaded.");
+                Log("Encoded-CID successfully found in the network.");
+                // TODO: Using the encoded CID currently would result in double-encoding of the dataset.
+                // See: https://github.com/codex-storage/nim-codex/issues/1005
+                // Always use the basic CID for now, even though we have to repeat the encoding.
+                // When using encoded CID works: return State.EncodedCid;
+            }
+
+            if (!string.IsNullOrEmpty(State.Cid) &&
+                await DoesCidExistInNetwork(State.Cid))
+            {
+                Log("Basic-CID successfully found in the network.");
+                return State.Cid;
             }
 
             if (string.IsNullOrEmpty(State.Cid))
             {
-                Log($"Uploading...");
-                var cid = await codex.UploadFile(sourceFilename);
-                onFileUploaded();
-                Log("Got CID: " + cid);
-                State.Cid = cid.Id;
-                SaveState();
-                Thread.Sleep(1000);
+                Log("File was not previously uploaded.");
             }
+
+            Log($"Uploading...");
+            var cid = await codex.UploadFile(sourceFilename);
+            onFileUploaded();
+            Log("Got Basic-CID: " + cid);
+            State.Cid = cid.Id;
+            SaveState();
+            return State.Cid;
         }
 
-        private async Task EnsureRecentPurchase()
+        private async Task<bool> DoesCidExistInNetwork(string cid)
         {
-            Log($"Ensuring recent purchase...");
+            try
+            {
+                var manifest = await instance.Codex.DownloadNetworkManifestAsync(cid);
+                if (manifest == null) return false;
+            }
+            catch
+            {
+                return false;
+            }
+            return true;
+        }
+
+        private async Task EnsureRecentPurchase(string cid)
+        {
+            Log($"Checking recent purchase...");
             var recent = GetMostRecent();
             if (recent == null)
             {
                 Log($"No recent purchase.");
-                await MakeNewPurchase();
+                await MakeNewPurchase(cid);
                 return;
             }
 
@@ -105,7 +113,7 @@ namespace AutoClient.Modes.FolderStore
             if (recent.Expiry.HasValue)
             {
                 Log($"Purchase has failed or expired.");
-                await MakeNewPurchase();
+                await MakeNewPurchase(cid);
                 State.FailureCounter++;
                 return;
             }
@@ -113,7 +121,7 @@ namespace AutoClient.Modes.FolderStore
             if (recent.Finish.HasValue)
             {
                 Log($"Purchase has finished.");
-                await MakeNewPurchase();
+                await MakeNewPurchase(cid);
                 return;
             }
 
@@ -121,7 +129,7 @@ namespace AutoClient.Modes.FolderStore
             if (recent.Started.HasValue && DateTime.UtcNow > safeEnd)
             {
                 Log($"Purchase is going to expire soon.");
-                await MakeNewPurchase();
+                await MakeNewPurchase(cid);
                 return;
             }
 
@@ -178,15 +186,17 @@ namespace AutoClient.Modes.FolderStore
                 if (!recent.Started.HasValue) recent.Started = now;
                 if (!recent.Finish.HasValue) recent.Finish = now;
             }
+            SaveState();
         }
 
-        private async Task MakeNewPurchase()
+        private async Task MakeNewPurchase(string cid)
         {
-            if (string.IsNullOrEmpty(State.Cid)) throw new Exception("No cid!");
+            if (string.IsNullOrEmpty(cid)) throw new Exception("No cid!");
 
             Log($"Creating new purchase...");
-            var response = await codex.RequestStorage(new CodexPlugin.ContentId(State.Cid));
+            var response = await codex.RequestStorage(new CodexPlugin.ContentId(cid));
             var purchaseId = response.PurchaseId;
+            var encodedCid = response.EncodedCid;
             if (string.IsNullOrEmpty(purchaseId) ||
                 purchaseId == "Unable to encode manifest" ||
                 purchaseId == "Purchasing not available" ||
@@ -203,6 +213,7 @@ namespace AutoClient.Modes.FolderStore
                 Pid = purchaseId
             };
             State.Purchases = State.Purchases.Concat([newPurchase]).ToArray();
+            State.EncodedCid = encodedCid.Id;
             SaveState();
 
             Log($"New purchase created. PID: '{purchaseId}'. Waiting for submit...");
@@ -237,7 +248,9 @@ namespace AutoClient.Modes.FolderStore
         public class WorkerStatus
         {
             public string Cid { get; set; } = string.Empty;
+            public string EncodedCid { get; set; } = string.Empty;
             public int FailureCounter { get; set; } = 0;
+            public string Error { get; set; } = string.Empty;
             public WorkerPurchase[] Purchases { get; set; } = Array.Empty<WorkerPurchase>();
         }
 
