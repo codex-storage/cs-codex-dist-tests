@@ -1,0 +1,105 @@
+name: Run Release Tests
+
+
+on:
+  workflow_dispatch:
+    inputs:
+      codexdockerimage:
+        description: "Codex Docker image (example: 'codexstorage/nim-codex:0.1.8-dist-tests')"
+        required: true
+        type: string
+  workflow_call:
+    inputs:
+      codexdockerimage:
+        description: "Codex Docker image (example: 'codexstorage/nim-codex:0.1.8-dist-tests')"
+        required: true
+        type: string
+
+
+env:
+  SOURCE: ${{ format('{0}/{1}', github.server_url, github.repository) }}
+  BRANCH: ${{ github.ref_name }}
+  CODEXDOCKERIMAGE: codexstorage/nim-codex:latest-dist-tests
+  TEST_TYPE: release-tests
+  NAMEPREFIX: r-tests
+  NAMESPACE: default
+  JOB_MANIFEST: docker/job-release-tests.yaml
+  COMMAND: dotnet test Tests/CodexReleaseTests
+  DURATION: 7200
+  KUBE_CONFIG: ${{ secrets.KUBE_CONFIG }}
+  KUBE_VERSION: v1.30.5
+
+
+jobs:
+  run_tests:
+    name: Run Release Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ inputs.workflow_source }}
+
+      - name: Variables
+        run: |
+          RUNID=$(date +%Y%m%d-%H%M%S)
+          echo "RUNID=${RUNID}" >> $GITHUB_ENV
+          echo "TESTID=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+          [[ -n "${{ inputs.source }}" ]] && echo "SOURCE=${{ inputs.source }}" >>"$GITHUB_ENV" || echo "SOURCE=${{ env.SOURCE }}" >>"$GITHUB_ENV"
+          [[ -n "${{ inputs.branch }}" ]] && echo "BRANCH=${{ inputs.branch }}" >>"$GITHUB_ENV" || echo "BRANCH=${{ env.BRANCH }}" >>"$GITHUB_ENV"
+          [[ -n "${{ inputs.codexdockerimage }}" ]] && echo "CODEXDOCKERIMAGE=${{ inputs.codexdockerimage }}" >>"$GITHUB_ENV" || echo "CODEXDOCKERIMAGE=${{ env.CODEXDOCKERIMAGE }}" >>"$GITHUB_ENV"
+          [[ -n "${{ inputs.nameprefix }}" ]] && NAMEPREFIX="`awk '{ print tolower($0) }' <<< ${{ inputs.nameprefix }}`" || NAMEPREFIX="`awk '{ print tolower($0) }' <<< ${{ env.NAMEPREFIX }}`"
+          echo "NAMEPREFIX=${NAMEPREFIX}-${RUNID}" >>"$GITHUB_ENV"
+          [[ -n "${{ inputs.namespace }}" ]] && echo "NAMESPACE=${{ inputs.namespace }}" >>"$GITHUB_ENV" || echo "NAMESPACE=${{ env.NAMESPACE }}" >>"$GITHUB_ENV"
+          [[ -n "${{ inputs.command }}" ]] && COMMAND="${{ inputs.command }}" || COMMAND="${{ env.COMMAND }}"
+          echo "COMMAND=$(jq -c 'split(" ")' <<< '"'${COMMAND}'"')" >>"$GITHUB_ENV"
+
+      - name: Kubectl - Install ${{ env.KUBE_VERSION }}
+        uses: azure/setup-kubectl@v4
+        with:
+          version: ${{ env.KUBE_VERSION }}
+
+      - name: Kubectl - Kubeconfig
+        run: |
+          mkdir -p "${HOME}"/.kube
+          echo "${{ env.KUBE_CONFIG }}" | base64 -d > "${HOME}"/.kube/config
+
+      - name: Kubectl - Create Job to run tests
+        run: |
+          envsubst < ${{ env.JOB_MANIFEST }} | kubectl apply -f -
+
+      - name: Tests Identification
+        run: |
+          echo "----"
+          echo "Repository: ${{ env.SOURCE }}"
+          echo "Branch: ${{ env.BRANCH }}"
+          echo "Runner job: ${{ env.NAMEPREFIX }}"
+          echo "Runner pod: $(kubectl get pod --selector job-name=${{ env.NAMEPREFIX }} -ojsonpath='{.items[0].metadata.name}')"
+          echo "Runner namespace: ${{ env.NAMESPACE }}"
+          echo "----"
+
+      - name: Show Runner logs
+        run: |
+          # Variables
+          # We need more than 300 seconds because Auto Scaler may take 3 minutes to tun a node 
+          duration=${{ env.DURATION }}
+          namespace="${{ env.NAMESPACE }}"
+          pod=$(kubectl get pod --selector job-name=${{ env.NAMEPREFIX }} -o jsonpath="{.items[0].metadata.name}")
+
+          # Check Pod status
+          WAIT=120
+          SECONDS=0
+          sleep=1
+          while (( SECONDS < WAIT )); do
+            phase=$(kubectl get pod ${pod} -n ${namespace} -o jsonpath="{.status.phase}")
+            [[ "${phase}" == "Running" ]] && { echo "Pod $pod is in $phase state - Get the logs"; break; } || { echo "Pod $pod is in $phase state - Retry in $sleep seconds / $((WAIT - SECONDS))"; }
+            sleep $sleep
+          done
+
+          # Get logs
+          timeout $duration \
+            kubectl logs $pod \
+              -n $namespace \
+              -f \
+              --tail=-1 \
+              --timestamps || true
