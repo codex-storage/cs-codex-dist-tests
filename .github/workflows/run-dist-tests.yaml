@@ -32,7 +32,7 @@ env:
   NAMEPREFIX: d-tests-runner
   NAMESPACE: default
   COMMAND: dotnet test Tests/CodexTests
-  JOB_MANIFEST: docker/dist-tests-job.yaml
+  JOB_MANIFEST: docker/job-dist-tests.yaml
   KUBE_CONFIG: ${{ secrets.KUBE_CONFIG }}
   KUBE_VERSION: v1.28.2
 

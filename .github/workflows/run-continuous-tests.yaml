@@ -80,7 +80,7 @@ env:
   TESTS_TARGET_DURATION: 2d
   TESTS_FILTER: ""
   TESTS_CLEANUP: true
-  JOB_MANIFEST: docker/continuous-tests-job.yaml
+  JOB_MANIFEST: docker/job-continuous-tests.yaml
   KUBE_CONFIG: ${{ secrets.KUBE_CONFIG }}
   KUBE_VERSION: v1.28.2
 
@@ -146,7 +146,7 @@ jobs:
         if: false
         run: |
           # Variables
-          # We need more than 300 seconds because Auto Scaler may take 3 minutes to tun a node 
+          # We need more than 300 seconds because Auto Scaler may take 3 minutes to run a node
           duration=600
           namespace="${{ env.NAMESPACE }}"
           pod=$(kubectl get pod --selector job-name=${{ env.NAMEPREFIX }} -o jsonpath="{.items[0].metadata.name}")
