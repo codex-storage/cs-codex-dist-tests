@@ -1,35 +1,33 @@
 #!/bin/bash
 
-# Common
+# Variables
+## Common
 SOURCE="${SOURCE:-https://github.com/codex-storage/cs-codex-dist-tests.git}"
 BRANCH="${BRANCH:-master}"
 FOLDER="${FOLDER:-/opt/cs-codex-dist-tests}"
 
-# Continuous Tests
+## Tests specific
 DEPLOYMENT_CODEXNETDEPLOYER_PATH="${DEPLOYMENT_CODEXNETDEPLOYER_PATH:-Tools/CodexNetDeployer}"
 DEPLOYMENT_CODEXNETDEPLOYER_RUNNER="${DEPLOYMENT_CODEXNETDEPLOYER_RUNNER:-deploy-continuous-testnet.sh}"
 CONTINUOUS_TESTS_FOLDER="${CONTINUOUS_TESTS_FOLDER:-Tests/CodexContinuousTests}"
 CONTINUOUS_TESTS_RUNNER="${CONTINUOUS_TESTS_RUNNER:-run.sh}"
 
-
 # Get code
-echo "`date` - Clone ${SOURCE}"
+echo -e "Cloning ${SOURCE} to ${FOLDER}\n"
 git clone -b "${BRANCH}" "${SOURCE}" "${FOLDER}"
-echo "`date` - Change folder to ${FOLDER}"
+echo -e "\nChanging folder to ${FOLDER}\n"
 cd "${FOLDER}"
 
-# Run
-echo "Run tests from branch '`git branch --show-current` / `git rev-parse HEAD`'"
+# Run tests
+echo -e "Running tests from branch '$(git branch --show-current) ($(git rev-parse --short HEAD))'\n"
 
 if [[ "${TESTS_TYPE}" == "continuous-tests" ]]; then
-  echo "`date` - Running Continuous Tests"
-  echo
-  echo "`date` - Running CodexNetDeployer"
+  echo -e "Running CodexNetDeployer\n"
   bash "${DEPLOYMENT_CODEXNETDEPLOYER_PATH}"/"${DEPLOYMENT_CODEXNETDEPLOYER_RUNNER}"
   echo
-  echo "`date` - Running Tests"
+  echo -e "Running continuous-tests\n"
   bash "${CONTINUOUS_TESTS_FOLDER}"/"${CONTINUOUS_TESTS_RUNNER}"
 else
-  echo "`date` - Running Dist Tests"
+  echo -e "Running ${TESTS_TYPE}\n"
   exec "$@"
 fi
