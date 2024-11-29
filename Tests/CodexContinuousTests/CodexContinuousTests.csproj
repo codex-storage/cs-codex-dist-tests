@@ -14,8 +14,8 @@
   <ItemGroup>
     <ProjectReference Include="..\..\Framework\ArgsUniform\ArgsUniform.csproj" />
     <ProjectReference Include="..\..\ProjectPlugins\CodexPlugin\CodexPlugin.csproj" />
-    <ProjectReference Include="..\CodexTests\CodexTests.csproj" />
     <ProjectReference Include="..\DistTestCore\DistTestCore.csproj" />
+    <ProjectReference Include="..\ExperimentalTests\ExperimentalTests.csproj" />
   </ItemGroup>
 
 </Project>

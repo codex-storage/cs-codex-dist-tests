@@ -32,6 +32,22 @@ namespace CodexPlugin
             return mapper.Map(OnCodex(api => api.GetDebugInfoAsync()));
         }
 
+        public string GetSpr()
+        {
+            return CrashCheck(() =>
+            {
+                var endpoint = GetEndpoint();
+                var json = endpoint.HttpGetString("spr");
+                var response = JsonConvert.DeserializeObject<SprResponse>(json);
+                return response!.Spr;
+            });
+        }
+
+        private class SprResponse
+        {
+            public string Spr { get; set; } = string.Empty;
+        }
+
         public DebugPeer GetDebugPeer(string peerId)
         {
             // Cannot use openAPI: debug/peer endpoint is not specified there.
@@ -78,6 +94,18 @@ namespace CodexPlugin
 
             if (fileResponse.StatusCode != 200) throw new Exception("Download failed with StatusCode: " + fileResponse.StatusCode);
             return fileResponse.Stream;
+        }
+
+        public LocalDataset DownloadStreamless(ContentId cid)
+        {
+            var response = OnCodex(api => api.DownloadNetworkAsync(cid.Id));
+            return mapper.Map(response);
+        }
+
+        public LocalDataset DownloadManifestOnly(ContentId cid)
+        {
+            var response = OnCodex(api => api.DownloadNetworkManifestAsync(cid.Id));
+            return mapper.Map(response);
         }
 
         public LocalDatasetList LocalFiles()

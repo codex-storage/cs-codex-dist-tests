@@ -1,7 +1,5 @@
 ﻿using CodexContractsPlugin;
-using CodexOpenApi;
 using Logging;
-using System.Data;
 using Utils;
 
 namespace CodexPlugin

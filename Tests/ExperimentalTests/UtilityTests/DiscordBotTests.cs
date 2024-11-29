@@ -45,7 +45,7 @@ namespace CodexTests.UtilityTests
 
             var purchaseContract = ClientPurchasesStorage(client);
             purchaseContract.WaitForStorageContractStarted();
-            purchaseContract.WaitForStorageContractFinished();
+            purchaseContract.WaitForStorageContractFinished(contracts);
             Thread.Sleep(rewarderInterval * 3);
 
             apiCalls.Stop();

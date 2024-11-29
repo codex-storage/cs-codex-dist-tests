@@ -23,9 +23,8 @@ namespace CodexContractsPlugin
         public string GetTokenAddress(string marketplaceAddress)
         {
             log.Debug(marketplaceAddress);
-            var function = new GetTokenFunction();
-
-            return gethNode.Call<GetTokenFunction, string>(marketplaceAddress, function);
+            var function = new TokenFunctionBase();
+            return gethNode.Call<TokenFunctionBase, string>(marketplaceAddress, function);
         }
 
         public string GetTokenName(string tokenAddress)
@@ -109,11 +108,6 @@ namespace CodexContractsPlugin
         {
             return gethNode.IsContractAvailable(marketplaceAbi, marketplaceAddress);
         }
-    }
-
-    [Function("token", "address")]
-    public class GetTokenFunction : FunctionMessage
-    {
     }
 
     [Function("name", "string")]

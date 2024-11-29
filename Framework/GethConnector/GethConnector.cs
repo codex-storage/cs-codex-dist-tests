@@ -1,4 +1,5 @@
 ﻿using CodexContractsPlugin;
+using CodexContractsPlugin.Marketplace;
 using GethPlugin;
 using Logging;
 
@@ -18,16 +19,27 @@ namespace GethConnector
                 return null;
             }
 
+            var gethNode = new CustomGethNode(log, GethInput.GethHost, GethInput.GethPort, GethInput.PrivateKey);
+
+            var config = GetCodexMarketplaceConfig(gethNode, GethInput.MarketplaceAddress);
+
             var contractsDeployment = new CodexContractsDeployment(
+                config: config,
                 marketplaceAddress: GethInput.MarketplaceAddress,
                 abi: GethInput.ABI,
                 tokenAddress: GethInput.TokenAddress
             );
 
-            var gethNode = new CustomGethNode(log, GethInput.GethHost, GethInput.GethPort, GethInput.PrivateKey);
             var contracts = new CodexContractsAccess(log, gethNode, contractsDeployment);
 
             return new GethConnector(gethNode, contracts);
+        }
+
+        private static MarketplaceConfig GetCodexMarketplaceConfig(IGethNode gethNode, string marketplaceAddress)
+        {
+            var func = new ConfigurationFunctionBase();
+            var response = gethNode.Call<ConfigurationFunctionBase, ConfigurationOutputDTO>(marketplaceAddress, func);
+            return response.ReturnValue1;
         }
 
         private GethConnector(IGethNode gethNode, ICodexContracts codexContracts)

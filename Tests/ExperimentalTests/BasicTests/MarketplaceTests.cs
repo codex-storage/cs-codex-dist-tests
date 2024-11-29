@@ -107,7 +107,7 @@ namespace CodexTests.BasicTests
             AssertStorageRequest(request, purchase, contracts, client);
             AssertContractSlot(contracts, request, 0);
 
-            purchaseContract.WaitForStorageContractFinished();
+            purchaseContract.WaitForStorageContractFinished(contracts);
 
             AssertBalance(contracts, client, Is.LessThan(clientInitialBalance), "Buyer was not charged for storage.");
             Assert.That(contracts.GetRequestState(request), Is.EqualTo(RequestState.Finished));

@@ -1,8 +1,14 @@
 ﻿using CodexPlugin;
+using CodexTests;
 using NUnit.Framework;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 using Utils;
 
-namespace CodexTests.BasicTests
+namespace CodexReleaseTests.DataTests
 {
     [TestFixture]
     public class TwoClientTests : CodexDistTest
@@ -42,8 +48,10 @@ namespace CodexTests.BasicTests
             var testFile = GenerateTestFile(size);
 
             var contentId = uploader.UploadFile(testFile);
+            AssertNodesContainFile(contentId, uploader);
 
             var downloadedFile = downloader.DownloadContent(contentId);
+            AssertNodesContainFile(contentId, uploader, downloader);
 
             testFile.AssertIsEqual(downloadedFile);
             CheckLogForErrors(uploader, downloader);

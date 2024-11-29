@@ -15,12 +15,15 @@ namespace CodexPlugin
         string GetName();
         string GetPeerId();
         DebugInfo GetDebugInfo();
+        string GetSpr();
         DebugPeer GetDebugPeer(string peerId);
         ContentId UploadFile(TrackedFile file);
         ContentId UploadFile(TrackedFile file, Action<Failure> onFailure);
         ContentId UploadFile(TrackedFile file, string contentType, string contentDisposition, Action<Failure> onFailure);
         TrackedFile? DownloadContent(ContentId contentId, string fileLabel = "");
         TrackedFile? DownloadContent(ContentId contentId, Action<Failure> onFailure, string fileLabel = "");
+        LocalDataset DownloadStreamless(ContentId cid);
+        LocalDataset DownloadManifestOnly(ContentId cid);
         LocalDatasetList LocalFiles();
         CodexSpace Space();
         void ConnectToPeer(ICodexNode node);
@@ -128,6 +131,11 @@ namespace CodexPlugin
             return debugInfo;
         }
 
+        public string GetSpr()
+        {
+            return CodexAccess.GetSpr();
+        }
+
         public DebugPeer GetDebugPeer(string peerId)
         {
             return CodexAccess.GetDebugPeer(peerId);
@@ -190,6 +198,16 @@ namespace CodexPlugin
             hooks.OnFileDownloaded(size, contentId);
 
             return file;
+        }
+
+        public LocalDataset DownloadStreamless(ContentId cid)
+        {
+            return CodexAccess.DownloadStreamless(cid);
+        }
+
+        public LocalDataset DownloadManifestOnly(ContentId cid)
+        {
+            return CodexAccess.DownloadManifestOnly(cid);
         }
 
         public LocalDatasetList LocalFiles()

@@ -1,26 +1,16 @@
 ﻿using CodexPlugin;
+using CodexTests;
 using FileUtils;
 using NUnit.Framework;
 using System.Diagnostics;
 using Utils;
 
-namespace CodexTests.BasicTests
+namespace CodexReleaseTests.DataTests
 {
-    [TestFixture]
-    public class OneClientTests : CodexDistTest
+    public class InterruptUploadTest : CodexDistTest
     {
         [Test]
-        public void OneClientTest()
-        {
-            var node = StartCodex();
-
-            PerformOneClientTest(node);
-
-            LogNodeStatus(node);
-        }
-
-        [Test]
-        public void InterruptUploadTest()
+        public void UploadInterruptTest()
         {
             var nodes = StartCodex(10);
 
@@ -28,6 +18,8 @@ namespace CodexTests.BasicTests
             Task.WaitAll(tasks.ToArray());
 
             Assert.That(tasks.Select(t => t.Result).All(r => r == true));
+
+            WaitAndCheckNodesStaysAlive(TimeSpan.FromMinutes(2), nodes);
         }
 
         private bool RunInterruptUploadTest(ICodexNode node)
@@ -50,17 +42,6 @@ namespace CodexTests.BasicTests
             var codexUrl = $"{apiAddress}/api/codex/v1/data";
             var filePath = file.Filename;
             return Process.Start("curl", $"-X POST {codexUrl} -H \"Content-Type: application/octet-stream\" -T {filePath}");
-        }
-
-        private void PerformOneClientTest(ICodexNode primary)
-        {
-            var testFile = GenerateTestFile(1.MB());
-
-            var contentId = primary.UploadFile(testFile);
-
-            var downloadedFile = primary.DownloadContent(contentId);
-
-            testFile.AssertIsEqual(downloadedFile);
         }
     }
 }
