@@ -92,14 +92,9 @@ jobs:
           sleep=1
           while (( SECONDS < WAIT )); do
             phase=$(kubectl get pod ${pod} -n ${namespace} -o jsonpath="{.status.phase}")
-            [[ "${phase}" == "Running" ]] && { echo "Pod $pod is in $phase state - Get the logs"; break; } || { echo "Pod $pod is in $phase state - Retry in $sleep seconds / $((WAIT - SECONDS))"; }
+            [[ "${phase}" == "Running" ]] && { echo "Pod $pod is in the $phase state - Get the logs"; break; } || { echo "Pod $pod is in the $phase state - Retry in $sleep second(s) / $((WAIT - SECONDS))"; }
             sleep $sleep
           done
 
           # Get logs
-          timeout $duration \
-            kubectl logs $pod \
-              -n $namespace \
-              -f \
-              --tail=-1 \
-              --timestamps || true
+          timeout $duration kubectl logs $pod -n $namespace -f || true
