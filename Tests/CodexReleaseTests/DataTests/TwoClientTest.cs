@@ -23,6 +23,7 @@ namespace CodexReleaseTests.DataTests
         }
 
         [Test]
+        [Ignore("Location selection is currently unavailable.")]
         public void TwoClientsTwoLocationsTest()
         {
             var locations = Ci.GetKnownLocations();
