@@ -41,8 +41,7 @@ namespace AutoClient.Modes.FolderStore
                 if (IsCurrentlyRunning() && UpdatedRecently()) return;
 
                 Log($"Updating for '{sourceFilename}'...");
-                var cid = await EnsureCid();
-                await EnsureRecentPurchase(cid);
+                await EnsureRecentPurchase();
                 SaveState();
                 app.Log.Log("");
             }
@@ -100,7 +99,15 @@ namespace AutoClient.Modes.FolderStore
         {
             try
             {
-                var manifest = await instance.Codex.DownloadNetworkManifestAsync(cid);
+                // This should not take longer than a few seconds. If it does, cancel it.
+                var cts = new CancellationTokenSource();
+                var cancelTask = Task.Run(() =>
+                {
+                    Thread.Sleep(TimeSpan.FromSeconds(15));
+                    cts.Cancel();
+                });
+
+                var manifest = await instance.Codex.DownloadNetworkManifestAsync(cid, cts.Token);
                 if (manifest == null) return false;
             }
             catch
@@ -110,14 +117,14 @@ namespace AutoClient.Modes.FolderStore
             return true;
         }
 
-        private async Task EnsureRecentPurchase(string cid)
+        private async Task EnsureRecentPurchase()
         {
             Log($"Checking recent purchase...");
             var recent = GetMostRecent();
             if (recent == null)
             {
                 Log($"No recent purchase.");
-                await MakeNewPurchase(cid);
+                await MakeNewPurchase();
                 return;
             }
 
@@ -126,7 +133,7 @@ namespace AutoClient.Modes.FolderStore
             if (recent.Expiry.HasValue)
             {
                 Log($"Purchase has failed or expired.");
-                await MakeNewPurchase(cid);
+                await MakeNewPurchase();
                 State.FailureCounter++;
                 return;
             }
@@ -134,7 +141,7 @@ namespace AutoClient.Modes.FolderStore
             if (recent.Finish.HasValue)
             {
                 Log($"Purchase has finished.");
-                await MakeNewPurchase(cid);
+                await MakeNewPurchase();
                 return;
             }
 
@@ -142,7 +149,7 @@ namespace AutoClient.Modes.FolderStore
             if (recent.Started.HasValue && DateTime.UtcNow > safeEnd)
             {
                 Log($"Purchase is going to expire soon.");
-                await MakeNewPurchase(cid);
+                await MakeNewPurchase();
                 return;
             }
 
@@ -203,8 +210,9 @@ namespace AutoClient.Modes.FolderStore
             SaveState();
         }
 
-        private async Task MakeNewPurchase(string cid)
+        private async Task MakeNewPurchase()
         {
+            var cid = await EnsureCid();
             if (string.IsNullOrEmpty(cid)) throw new Exception("No cid!");
 
             Log($"Creating new purchase...");
