@@ -26,6 +26,9 @@ namespace BiblioTech
         [Uniform("chain-events-channel-id", "cc", "CHAINEVENTSCHANNELID", false, "ID of the Discord server channel where chain events will be posted.")]
         public ulong ChainEventsChannelId { get; set; }
 
+        [Uniform("altruistic-role-id", "ar", "ALTRUISTICROLE", true, "ID of the Discord server role for Altruistic Mode.")]
+        public ulong AltruisticRoleId { get; set; }
+
         [Uniform("reward-api-port", "rp", "REWARDAPIPORT", true, "TCP listen port for the reward API.")]
         public int RewardApiPort { get; set; } = 31080;
 

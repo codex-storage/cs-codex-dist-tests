@@ -1,4 +1,8 @@
 ﻿using BiblioTech.Options;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
+using Discord;
 
 namespace BiblioTech.Commands
 {
@@ -9,10 +13,12 @@ namespace BiblioTech.Commands
             description: "Codex Content-Identifier",
             isRequired: true);
         private readonly CodexCidChecker checker;
+        private readonly CidStorage cidStorage;
 
         public CheckCidCommand(CodexCidChecker checker)
         {
             this.checker = checker;
+            this.cidStorage = new CidStorage(Path.Combine(Program.Config.DataPath, "valid_cids.txt"));
         }
 
         public override string Name => "check";
@@ -32,7 +38,85 @@ namespace BiblioTech.Commands
 
             var response = await checker.PerformCheck(cid);
             await Program.AdminChecker.SendInAdminChannel($"User {Mention(user)} used '/{Name}' for cid '{cid}'. Lookup-success: {response.Success}. Message: '{response.Message}' Error: '{response.Error}'");
+
+            if (response.Success)
+            {
+                await CheckAltruisticRole(context, user, cid, response.Message);
+                return;
+            }
+
             await context.Followup(response.Message);
+        }
+
+        private async Task CheckAltruisticRole(CommandContext context, IUser user, string cid, string responseMessage)
+        {
+            if (cidStorage.TryAddCid(cid, user.Id))
+            {
+                if (await GiveAltruisticRole(context, user, responseMessage))
+                {
+                    return;
+                }
+            }
+            else
+            {
+                await context.Followup($"{responseMessage}\n\nThis CID has already been used by another user. No role will be granted.");
+                return;
+            }
+
+            await context.Followup(responseMessage);
+        }
+
+        private async Task<bool> GiveAltruisticRole(CommandContext context, IUser user, string responseMessage)
+        {
+            var guildUser = context.Command.User as IGuildUser;
+            if (guildUser != null)
+            {
+                try
+                {
+                    var role = context.Command.Guild.GetRole(Program.Config.AltruisticRoleId);
+                    if (role != null)
+                    {
+                        await guildUser.AddRoleAsync(role);
+                        await context.Followup($"{responseMessage}\n\nCongratulations! You've been granted the Altruistic Mode role for checking a valid CID!");
+                        return true;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    await Program.AdminChecker.SendInAdminChannel($"Failed to grant Altruistic Mode role to user {Mention(user)}: {ex.Message}");
+                }
+            }
+            return false;
+        }
+    }
+
+    public class CidStorage
+    {
+        private readonly string filePath;
+        private static readonly object _lock = new object();
+
+        public CidStorage(string filePath)
+        {
+            this.filePath = filePath;
+            if (!File.Exists(filePath))
+            {
+                File.WriteAllText(filePath, string.Empty);
+            }
+        }
+
+        public bool TryAddCid(string cid, ulong userId)
+        {
+            lock (_lock)
+            {
+                var existingEntries = File.ReadAllLines(filePath);
+                if (existingEntries.Any(line => line.Split(',')[0] == cid))
+                {
+                    return false;
+                }
+
+                File.AppendAllLines(filePath, new[] { $"{cid},{userId}" });
+                return true;
+            }
         }
     }
 }
