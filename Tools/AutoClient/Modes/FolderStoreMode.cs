@@ -9,7 +9,6 @@ namespace AutoClient.Modes
         private readonly PurchaseInfo purchaseInfo;
         private readonly CancellationTokenSource cts = new CancellationTokenSource();
         private Task checkTask = Task.CompletedTask;
-        private int uncommitedChanges;
 
         public FolderStoreMode(App app, string folder, PurchaseInfo purchaseInfo)
         {
@@ -52,9 +51,7 @@ namespace AutoClient.Modes
                 {
                     i = 0;
                     var overview = new FolderWorkOverview(app, purchaseInfo, folder);
-                    var uploadNewOverview = uncommitedChanges > 10;
-                    await overview.Update(uploadNewOverview, instance);
-                    if (uploadNewOverview) uncommitedChanges = 0;
+                    await overview.Update(instance);
                 }
             }
         }
@@ -70,7 +67,8 @@ namespace AutoClient.Modes
 
         private void OnFileUploaded()
         {
-            uncommitedChanges++;
+            var overview = new FolderWorkOverview(app, purchaseInfo, folder);
+            overview.MarkUncommitedChange();
         }
 
         private void OnNewPurchase()

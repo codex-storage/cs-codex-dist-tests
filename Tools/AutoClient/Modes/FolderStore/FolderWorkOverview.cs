@@ -17,7 +17,12 @@ namespace AutoClient.Modes.FolderStore
             this.purchaseInfo = purchaseInfo;
         }
 
-        public async Task Update(bool createNewJsonZip, ICodexInstance instance)
+        protected override void OnNewState(WorkMonitorStatus newState)
+        {
+            newState.LastOverviewUpdate = DateTime.MinValue;
+        }
+
+        public async Task Update(ICodexInstance instance)
         {
             var jsonFiles = Directory.GetFiles(Folder).Where(f => f.ToLowerInvariant().EndsWith(".json") && !f.Contains(OverviewFilename)).ToList();
 
@@ -48,6 +53,11 @@ namespace AutoClient.Modes.FolderStore
             {
                 await CreateNewOverviewZip(jsonFiles, FilePath, instance);
             }
+        }
+
+        public void MarkUncommitedChange()
+        {
+            save this. consider this.
         }
 
         private async Task CreateNewOverviewZip(List<string> jsonFiles, string filePath, ICodexInstance instance)
@@ -113,6 +123,9 @@ namespace AutoClient.Modes.FolderStore
             public int TotalFiles { get; set; }
             public int SuccessfulStored { get; set; }
             public int StoreFailed { get; set; }
+
+            public DateTime LastOverviewUpdate { get; set; }
+            public int UncommitedChanges { get; set; }
         }
     }
 }

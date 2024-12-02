@@ -30,7 +30,7 @@ namespace AutoClient.Modes.FolderStore
 
         public FileIndex GetFileToCheck()
         {
-            if (busyCount > 1)
+            if (busyCount > 0)
             {
                 log.Log("");
                 log.Log("Max number of busy workers reached. Waiting until contracts are started before creating any more.");
