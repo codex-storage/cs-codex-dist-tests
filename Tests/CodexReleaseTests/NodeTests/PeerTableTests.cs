@@ -1,5 +1,6 @@
 ﻿using CodexPlugin;
 using CodexTests;
+using CodexTests.Helpers;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
@@ -18,43 +19,13 @@ namespace CodexReleaseTests.NodeTests
         {
             var nodes = StartCodex(10);
 
-            var retry = new Retry(
-                description: nameof(PeerTableCompleteness),
-                maxTimeout: TimeSpan.FromMinutes(2),
-                sleepAfterFail: TimeSpan.FromSeconds(5),
-                onFail: f => { }
-            );
-
-            retry.Run(() => AssertAllNodesSeeEachOther(nodes));
+            AssertAllNodesSeeEachOther(nodes.Concat([BootstrapNode!]));
         }
 
-        private void AssertAllNodesSeeEachOther(ICodexNodeGroup nodes)
+        private void AssertAllNodesSeeEachOther(IEnumerable<ICodexNode> nodes)
         {
-            foreach (var a in nodes)
-            {
-                AssertHasSeenAllOtherNodes(a, nodes);
-            }
-        }
-
-        private void AssertHasSeenAllOtherNodes(ICodexNode node, ICodexNodeGroup nodes)
-        {
-            var localNode = node.GetDebugInfo().Table.LocalNode;
-
-            foreach (var other in nodes)
-            {
-                var info = other.GetDebugInfo();
-                if (info.Table.LocalNode.PeerId != localNode.PeerId)
-                {
-                    AssertContainsPeerId(info, localNode.PeerId);
-                }
-            }
-        }
-
-        private void AssertContainsPeerId(DebugInfo info, string peerId)
-        {
-            var entry = info.Table.Nodes.SingleOrDefault(n => n.PeerId == peerId);
-            if (entry == null) throw new Exception("Table entry not found.");
-            if (!entry.Seen) throw new Exception("Peer not seen.");
+            var helper = new PeerConnectionTestHelpers(GetTestLog());
+            helper.AssertFullyConnected(nodes);
         }
     }
 }

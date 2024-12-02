@@ -14,7 +14,7 @@ namespace CodexPlugin
     {
         string GetName();
         string GetPeerId();
-        DebugInfo GetDebugInfo();
+        DebugInfo GetDebugInfo(bool log = false);
         string GetSpr();
         DebugPeer GetDebugPeer(string peerId);
         ContentId UploadFile(TrackedFile file);
@@ -123,11 +123,14 @@ namespace CodexPlugin
             return peerId;
         }
 
-        public DebugInfo GetDebugInfo()
+        public DebugInfo GetDebugInfo(bool log = false)
         {
             var debugInfo = CodexAccess.GetDebugInfo();
-            var known = string.Join(",", debugInfo.Table.Nodes.Select(n => n.PeerId));
-            Log($"Got DebugInfo with id: {debugInfo.Id}. This node knows: [{known}]");
+            if (log)
+            {
+                var known = string.Join(",", debugInfo.Table.Nodes.Select(n => n.PeerId));
+                Log($"Got DebugInfo with id: {debugInfo.Id}. This node knows: [{known}]");
+            }
             return debugInfo;
         }
 
