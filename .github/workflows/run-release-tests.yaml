@@ -25,7 +25,6 @@ env:
   NAMESPACE: default
   JOB_MANIFEST: docker/job-release-tests.yaml
   COMMAND: dotnet test Tests/CodexReleaseTests
-  DURATION: 7200
   KUBE_CONFIG: ${{ secrets.KUBE_CONFIG }}
   KUBE_VERSION: v1.30.5
 
@@ -82,7 +81,6 @@ jobs:
         run: |
           # Variables
           # We need more than 300 seconds because Auto Scaler may take 3 minutes to tun a node 
-          duration=${{ env.DURATION }}
           namespace="${{ env.NAMESPACE }}"
           pod=$(kubectl get pod --selector job-name=${{ env.NAMEPREFIX }} -o jsonpath='{.items[0].metadata.name}')
 
@@ -97,7 +95,11 @@ jobs:
           done
 
           # Get logs
-          timeout $duration kubectl logs $pod -n $namespace -f || true
+          while [[ $(kubectl get pod ${pod} -n ${namespace} -o jsonpath='{.status.phase}') == "Running" ]]; do
+            echo "Show ${pod} logs ..."
+            kubectl logs $pod -n $namespace -f || true
+            sleep 1
+          done
 
       - name: Set workflow status from job status
         run: |
