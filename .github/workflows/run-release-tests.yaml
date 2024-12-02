@@ -84,17 +84,23 @@ jobs:
           # We need more than 300 seconds because Auto Scaler may take 3 minutes to tun a node 
           duration=${{ env.DURATION }}
           namespace="${{ env.NAMESPACE }}"
-          pod=$(kubectl get pod --selector job-name=${{ env.NAMEPREFIX }} -o jsonpath="{.items[0].metadata.name}")
+          pod=$(kubectl get pod --selector job-name=${{ env.NAMEPREFIX }} -o jsonpath='{.items[0].metadata.name}')
 
           # Check Pod status
           WAIT=120
           SECONDS=0
           sleep=1
           while (( SECONDS < WAIT )); do
-            phase=$(kubectl get pod ${pod} -n ${namespace} -o jsonpath="{.status.phase}")
+            phase=$(kubectl get pod ${pod} -n ${namespace} -o jsonpath='{.status.phase}')
             [[ "${phase}" == "Running" ]] && { echo "Pod $pod is in the $phase state - Get the logs"; break; } || { echo "Pod $pod is in the $phase state - Retry in $sleep second(s) / $((WAIT - SECONDS))"; }
             sleep $sleep
           done
 
           # Get logs
           timeout $duration kubectl logs $pod -n $namespace -f || true
+
+      - name: Set workflow status from job status
+        run: |
+          job_status=$(kubectl get jobs {{ env.NAMEPREFIX }} -n ${{ env.NAMESPACE }} -o jsonpath='{.status.conditions[0].type}')
+          echo "Job status: $job_status"
+          [[ "${job_status}" != "Complete" ]] && exit 1
