@@ -78,6 +78,7 @@ namespace CodexPlugin
             AssertDuration(SubmittedToFinished, timeout, nameof(SubmittedToFinished));
 
             contracts.WaitUntilNextPeriod();
+            contracts.WaitUntilNextPeriod();
 
             var blocks = 3;
             Log($"Waiting {blocks} blocks for nodes to process payouts...");
