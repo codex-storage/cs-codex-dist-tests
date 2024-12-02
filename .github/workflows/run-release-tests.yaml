@@ -105,4 +105,4 @@ jobs:
         run: |
           job_status=$(kubectl get jobs ${{ env.NAMEPREFIX }} -n ${{ env.NAMESPACE }} -o jsonpath='{.status.conditions[0].type}')
           echo "Job status: $job_status"
-          [[ "${job_status}" != "Complete" ]] && exit 1
+          if [[ "${job_status}" != "Complete" ]]; then exit 1; fi
