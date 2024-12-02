@@ -103,6 +103,7 @@ jobs:
 
       - name: Set workflow status from job status
         run: |
+          sleep 5
           job_status=$(kubectl get jobs ${{ env.NAMEPREFIX }} -n ${{ env.NAMESPACE }} -o jsonpath='{.status.conditions[0].type}')
           echo "Job status: $job_status"
           if [[ "${job_status}" != "Complete" ]]; then exit 1; fi
