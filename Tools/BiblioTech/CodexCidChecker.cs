@@ -10,6 +10,7 @@ namespace BiblioTech
         private static readonly string nl = Environment.NewLine;
         private readonly Configuration config;
         private readonly ILog log;
+        private readonly Mutex checkMutex = new Mutex();
         private CodexApi? currentCodexNode;
 
         public CodexCidChecker(Configuration config, ILog log)
@@ -27,6 +28,7 @@ namespace BiblioTech
 
             try
             {
+                checkMutex.WaitOne();
                 var codex = GetCodex();
                 var nodeCheck = await CheckCodex(codex);
                 if (!nodeCheck) return new CheckResponse(false, "Codex node is not available. Cannot perform check.", $"Codex node at '{config.CodexEndpoint}' did not respond correctly to debug/info.");
@@ -36,6 +38,10 @@ namespace BiblioTech
             catch (Exception ex)
             {
                 return new CheckResponse(false, "Internal server error", ex.ToString());
+            }
+            finally
+            {
+                checkMutex.ReleaseMutex();
             }
         }
 
