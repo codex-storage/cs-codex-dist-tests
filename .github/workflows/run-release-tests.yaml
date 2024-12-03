@@ -14,6 +14,11 @@ on:
         description: "Codex Docker image (example: 'codexstorage/nim-codex:0.1.8-dist-tests')"
         required: true
         type: string
+      workflow_source:
+        description: Workflow source
+        required: false
+        type: string
+        default: ''
 
 
 env:
