@@ -10,6 +10,14 @@ on:
         type: string
   workflow_call:
     inputs:
+      source:
+        description: Repository with tests (current)
+        required: false
+        type: string
+      branch:
+        description: Branch with tests (master)
+        required: false
+        type: string
       codexdockerimage:
         description: "Codex Docker image (example: 'codexstorage/nim-codex:0.1.8-dist-tests')"
         required: true
@@ -19,7 +27,6 @@ on:
         required: false
         type: string
         default: ''
-
 
 env:
   SOURCE: ${{ format('{0}/{1}', github.server_url, github.repository) }}
