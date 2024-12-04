@@ -23,5 +23,21 @@ namespace DistTestCore
             }
             CollectionAssert.IsEmpty(errors);
         }
+
+        public static void AssertLogDoesNotContainLinesStartingWith(this IDownloadedLog log, params string[] unexpectedStrings)
+        {
+            var errors = new List<string>();
+            log.IterateLines(line =>
+            {
+                foreach (var str in unexpectedStrings)
+                {
+                    if (line.StartsWith(str))
+                    {
+                        errors.Add($"Found '{str}' at start of line '{line}'.");
+                    }
+                }
+            });
+            CollectionAssert.IsEmpty(errors);
+        }
     }
 }

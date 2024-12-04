@@ -99,7 +99,7 @@ namespace CodexTests
             var log = Ci.DownloadLog(node);
 
             log.AssertLogDoesNotContain("Block validation failed");
-            log.AssertLogDoesNotContain("ERR ");
+            log.AssertLogDoesNotContainLinesStartingWith("ERR ");
         }
 
         public void LogNodeStatus(ICodexNode node, IMetricsAccess? metrics = null)

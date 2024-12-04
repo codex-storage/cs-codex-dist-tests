@@ -6,6 +6,7 @@ namespace KubernetesWorkflow
     {
         string ContainerName { get; }
 
+        void IterateLines(Action<string> action);
         void IterateLines(Action<string> action, params string[] thatContain);
         string[] GetLinesContaining(string expectedString);
         string[] FindLinesThatContain(params string[] tags);
@@ -25,58 +26,39 @@ namespace KubernetesWorkflow
 
         public string ContainerName { get; }
 
-        public void IterateLines(Action<string> action, params string[] thatContain)
+        public void IterateLines(Action<string> action)
         {
             using var file = File.OpenRead(logFile.FullFilename);
             using var streamReader = new StreamReader(file);
 
             var line = streamReader.ReadLine();
             while (line != null)
+            {
+                action(line);
+                line = streamReader.ReadLine();
+            }
+        }
+
+        public void IterateLines(Action<string> action, params string[] thatContain)
+        {
+            IterateLines(line =>
             {
                 if (thatContain.All(line.Contains))
                 {
                     action(line);
                 }
-                line = streamReader.ReadLine();
-            }
+            });
         }
 
         public string[] GetLinesContaining(string expectedString)
         {
-            using var file = File.OpenRead(logFile.FullFilename);
-            using var streamReader = new StreamReader(file);
-            var lines = new List<string>();
-
-            var line = streamReader.ReadLine();
-            while (line != null)
-            {
-                if (line.Contains(expectedString))
-                {
-                    lines.Add(line);
-                }
-                line = streamReader.ReadLine();
-            }
-
-            return lines.ToArray(); ;
+            return FindLinesThatContain([expectedString]);
         }
 
         public string[] FindLinesThatContain(params string[] tags)
         {
             var result = new List<string>();
-            using var file = File.OpenRead(logFile.FullFilename);
-            using var streamReader = new StreamReader(file);
-
-            var line = streamReader.ReadLine();
-            while (line != null)
-            {
-                if (tags.All(line.Contains))
-                {
-                    result.Add(line);
-                }
-
-                line = streamReader.ReadLine();
-            }
-
+            IterateLines(result.Add, tags);
             return result.ToArray();
         }
 
