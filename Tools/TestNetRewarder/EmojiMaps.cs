@@ -1,22 +1,11 @@
-﻿using Utils;
-
-namespace TestNetRewarder
+﻿namespace TestNetRewarder
 {
     public class EmojiMaps
     {
         private readonly string[] emojis = new[]
         {
-            // yellow
-            "😀",
-            "🌻",
-            "🍋",
-            "🧀",
-            "🌔",
-            "⭐",
-            "⚡",
-            "🏆",
             // red
-            "💘",
+            "❤",
             "🦞",
             "🌹",
             "🍒",
@@ -24,8 +13,29 @@ namespace TestNetRewarder
             "⛩",
             "🚗",
             "🔥",
+
+            // orange
+            "🧡",
+            "🏀",
+            "🦊",
+            "🏵",
+            "🍊",
+            "🥕",
+            "🧱",
+            "🎃",
+
+            // yellow
+            "💛",
+            "🌻",
+            "🍋",
+            "🧀",
+            "🌔",
+            "⭐",
+            "⚡",
+            "🏆",
+
             // green
-            "🐊",
+            "💚",
             "🦎",
             "🐛",
             "🌳",
@@ -33,19 +43,40 @@ namespace TestNetRewarder
             "🧩",
             "🔋",
             "♻",
+
             // blue
             "💙",
             "🐳",
-            "🐟",
+            "♂",
             "🍉",
             "🧊",
             "🌐",
             "⚓",
             "🌀",
+
+            // purple
+            "💜",
+            "🪀", //yo-yo
+            "🔮",
+            "😈",
+            "👾",
+            "🪻", // plant hyacinth
+            "🍇",
+            "🍆",
+
+            // pink
+            "🩷", // pink heart
+            "👚",
+            "♀",
+            "🧠",
+            "🐷",
+            "🦩",
+            "🌸",
+            "🌷"
         };
 
-        public string NewRequest => "🐟";
-        public string Started => "🦈";
+        public string NewRequest => "🌱";
+        public string Started => "🌳";
         public string SlotFilled => "🟢";
         public string SlotFreed => "⭕";
         public string SlotReservationsFull => "☑️";
