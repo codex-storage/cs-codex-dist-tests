@@ -2,11 +2,6 @@
 using CodexTests;
 using FileUtils;
 using NUnit.Framework;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Utils;
 
 namespace CodexReleaseTests.DataTests
@@ -42,26 +37,33 @@ namespace CodexReleaseTests.DataTests
 
             foreach (var node in nodes)
             {
-                foreach (var file in files)
-                {
-                    tasks.Add(StartDownload(node, file));
-                }
+                tasks.Add(StartDownload(node, files));
             }
 
             return tasks.ToArray();
         }
 
-        private Task StartDownload(ICodexNode node, SwarmTestNetworkFile file)
+        private Task StartDownload(ICodexNode node, SwarmTestNetworkFile[] files)
         {
             return Task.Run(() =>
             {
-                try
+                var remaining = files.ToList();
+
+                while (remaining.Count > 0)
                 {
-                    file.Downloaded = node.DownloadContent(file.Cid);
-                }
-                catch (Exception ex)
-                {
-                    file.Error = ex;
+                    var file = remaining.PickOneRandom();
+                    try
+                    {
+                        var dl = node.DownloadContent(file.Cid);
+                        lock (file.Lock)
+                        {
+                            file.Downloaded.Add(dl);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        file.Error = ex;
+                    }
                 }
             });
         }
@@ -71,7 +73,13 @@ namespace CodexReleaseTests.DataTests
             foreach (var file in files)
             {
                 if (file.Error != null) throw file.Error;
-                file.Original.AssertIsEqual(file.Downloaded);
+                lock (file.Lock)
+                {
+                    foreach (var dl in file.Downloaded)
+                    {
+                        file.Original.AssertIsEqual(dl);
+                    }
+                }
             }
         }
 
@@ -85,7 +93,8 @@ namespace CodexReleaseTests.DataTests
 
             public TrackedFile Original { get; }
             public ContentId Cid { get; }
-            public TrackedFile? Downloaded { get; set; }
+            public object Lock { get; } = new object();
+            public List<TrackedFile?> Downloaded { get; } = new List<TrackedFile?>();
             public Exception? Error { get; set; } = null;
         }
     }
