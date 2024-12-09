@@ -1,4 +1,5 @@
-﻿using DiscordRewards;
+﻿using Discord;
+using DiscordRewards;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BiblioTech.Rewards
@@ -6,6 +7,7 @@ namespace BiblioTech.Rewards
     public interface IDiscordRoleDriver
     {
         Task GiveRewards(GiveRewardsCommand rewards);
+        Task GiveAltruisticRole(IUser user);
     }
 
     [Route("api/[controller]")]

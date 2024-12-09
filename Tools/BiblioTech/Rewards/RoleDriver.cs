@@ -34,6 +34,18 @@ namespace BiblioTech.Rewards
             await eventsSender.ProcessChainEvents(rewards.EventsOverview, rewards.Errors);
         }
 
+        public async Task GiveAltruisticRole(IUser user)
+        {
+            var guild = GetGuild();
+            var role = guild.Roles.SingleOrDefault(r => r.Id == Program.Config.AltruisticRoleId);
+            if (role == null) return;
+
+            var guildUser = guild.Users.SingleOrDefault(u => u.Id == user.Id);
+            if (guildUser == null) return;
+
+            await guildUser.AddRoleAsync(role);
+        }
+
         private async Task ProcessRewards(GiveRewardsCommand rewards)
         {
             try

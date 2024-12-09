@@ -3,6 +3,8 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Discord;
+using BiblioTech.Rewards;
+using System.Data;
 
 namespace BiblioTech.Commands
 {
@@ -68,25 +70,17 @@ namespace BiblioTech.Commands
 
         private async Task<bool> GiveAltruisticRole(CommandContext context, IUser user, string responseMessage)
         {
-            var guildUser = context.Command.User as IGuildUser;
-            if (guildUser != null)
+            try
             {
-                try
-                {
-                    var role = context.Command.Guild.GetRole(Program.Config.AltruisticRoleId);
-                    if (role != null)
-                    {
-                        await guildUser.AddRoleAsync(role);
-                        await context.Followup($"{responseMessage}\n\nCongratulations! You've been granted the Altruistic Mode role for checking a valid CID!");
-                        return true;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    await Program.AdminChecker.SendInAdminChannel($"Failed to grant Altruistic Mode role to user {Mention(user)}: {ex.Message}");
-                }
+                await Program.RoleDriver.GiveAltruisticRole(user);
+                await context.Followup($"{responseMessage}\n\nCongratulations! You've been granted the Altruistic Mode role for checking a valid CID!");
+                return true;
             }
-            return false;
+            catch (Exception ex)
+            {
+                await Program.AdminChecker.SendInAdminChannel($"Failed to grant Altruistic Mode role to user {Mention(user)}: {ex.Message}");
+                return false;
+            }
         }
     }
 
