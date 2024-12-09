@@ -15,6 +15,16 @@ namespace TestNetRewarder
         private readonly List<string> errors = new List<string>();
         private readonly EmojiMaps emojiMaps = new EmojiMaps();
 
+        public ChainEventMessage[] GetInitializationEvents(Configuration config)
+        {
+            return [
+                FormatBlock(0, "Bot initializing...",
+                    $"History-check start (UTC) = {Time.FormatTimestamp(config.HistoryStartUtc)}",
+                    $"Update interval = {Time.FormatDuration(config.Interval)}"
+                )
+            ];
+        }
+
         public ChainEventMessage[] GetEvents()
         {
             var result = events.ToArray();

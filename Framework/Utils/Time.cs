@@ -33,6 +33,11 @@
             result += $"{d.Seconds} secs";
             return result;
         }
+
+        public static string FormatTimestamp(DateTime d)
+        {
+            return d.ToString("o");
+        }
         
         public static TimeSpan ParseTimespan(string span)
         {

@@ -1,4 +1,6 @@
-﻿namespace Logging
+﻿using Utils;
+
+namespace Logging
 {
     public class LogFile
     {
@@ -49,7 +51,7 @@
 
         private static string GetTimestamp()
         {
-            return $"[{DateTime.UtcNow.ToString("o")}]";
+            return $"[{Time.FormatTimestamp(DateTime.UtcNow)}]";
         }
 
         private void EnsurePathExists(string filename)

@@ -11,11 +11,13 @@ namespace TestNetRewarder
         private readonly RewardChecker rewardChecker;
         private readonly EventsFormatter eventsFormatter;
         private readonly ChainState chainState;
+        private readonly Configuration config;
         private readonly BotClient client;
         private readonly ILog log;
 
         public Processor(Configuration config, BotClient client, ICodexContracts contracts, ILog log)
         {
+            this.config = config;
             this.client = client;
             this.log = log;
 
@@ -29,6 +31,16 @@ namespace TestNetRewarder
             );
 
             chainState = new ChainState(log, contracts, handler, config.HistoryStartUtc);
+        }
+
+        public async Task Initialize()
+        {
+            var events = eventsFormatter.GetInitializationEvents(config);
+            var request = builder.Build(events, Array.Empty<string>());
+            if (request.HasAny())
+            {
+                await client.SendRewards(request);
+            }
         }
 
         public async Task<TimeSegmentResponse> OnNewSegment(TimeRange timeRange)
