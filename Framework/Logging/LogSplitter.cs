@@ -14,9 +14,9 @@
             OnAll(l => l.AddStringReplace(from, to));
         }
 
-        public LogFile CreateSubfile(string ext = "log")
+        public LogFile CreateSubfile(string addName, string ext = "log")
         {
-            return targetLogs.First().CreateSubfile(ext);
+            return targetLogs.First().CreateSubfile(addName, ext);
         }
 
         public void Debug(string message = "", int skipFrames = 0)

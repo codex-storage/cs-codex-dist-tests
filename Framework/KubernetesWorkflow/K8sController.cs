@@ -906,7 +906,7 @@ namespace KubernetesWorkflow
                 var msg = $"Pod crash detected for deployment {deploymentName} (pod:{podName})";
                 log.Error(msg);
 
-                DownloadPodLog(container, new WriteToFileLogHandler(log, msg), tailLines: null, previous: true);
+                DownloadPodLog(container, new WriteToFileLogHandler(log, msg, deploymentName), tailLines: null, previous: true);
 
                 throw new Exception(msg);
             }

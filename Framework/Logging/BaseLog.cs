@@ -8,7 +8,7 @@ namespace Logging
         void Debug(string message = "", int skipFrames = 0);
         void Error(string message);
         void AddStringReplace(string from, string to);
-        LogFile CreateSubfile(string ext = "log");
+        LogFile CreateSubfile(string addName, string ext = "log");
     }
 
     public abstract class BaseLog : ILog
@@ -72,9 +72,13 @@ namespace Logging
             File.Delete(LogFile.FullFilename);
         }
 
-        public LogFile CreateSubfile(string ext = "log")
+        public LogFile CreateSubfile(string addName, string ext = "log")
         {
-            return new LogFile($"{GetFullName()}_{GetSubfileNumber()}", ext);
+            addName = addName
+                .Replace("<", "")
+                .Replace(">", "");
+
+            return new LogFile($"{GetFullName()}_{GetSubfileNumber()}_{addName}", ext);
         }
 
         protected string ApplyReplacements(string str)

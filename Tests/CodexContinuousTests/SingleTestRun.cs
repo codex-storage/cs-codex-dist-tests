@@ -130,7 +130,7 @@ namespace ContinuousTests
                 var namespaceName = container.RunningPod.StartResult.Cluster.Configuration.KubernetesNamespace;
                 var openingLine =
                     $"{namespaceName} - {deploymentName} = {node.Container.Name} = {node.GetDebugInfo().Id}";
-                elasticSearchLogDownloader.Download(fixtureLog.CreateSubfile(), node.Container, effectiveStart,
+                elasticSearchLogDownloader.Download(fixtureLog.CreateSubfile(node.GetName()), node.Container, effectiveStart,
                     effectiveEnd, openingLine);
             }
         }

@@ -18,9 +18,9 @@
         public string Prefix { get; set; } = string.Empty;
 
 
-        public LogFile CreateSubfile(string ext = "log")
+        public LogFile CreateSubfile(string addName, string ext = "log")
         {
-            return backingLog.CreateSubfile(ext);
+            return backingLog.CreateSubfile(addName, ext);
         }
 
         public void Debug(string message = "", int skipFrames = 0)

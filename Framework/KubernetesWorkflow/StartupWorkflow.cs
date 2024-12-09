@@ -127,7 +127,7 @@ namespace KubernetesWorkflow
         {
             var msg = $"Downloading container log for '{container.Name}'";
             log.Log(msg);
-            var logHandler = new WriteToFileLogHandler(log, msg);
+            var logHandler = new WriteToFileLogHandler(log, msg, container.Name);
 
             K8s(controller =>
             {

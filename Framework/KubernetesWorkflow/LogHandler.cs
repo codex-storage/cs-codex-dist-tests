@@ -25,9 +25,9 @@ namespace KubernetesWorkflow
 
     public class WriteToFileLogHandler : LogHandler, ILogHandler
     {
-        public WriteToFileLogHandler(ILog sourceLog, string description)
+        public WriteToFileLogHandler(ILog sourceLog, string description, string addFileName)
         {
-            LogFile = sourceLog.CreateSubfile();
+            LogFile = sourceLog.CreateSubfile(addFileName);
 
             var msg = $"{description} -->> {LogFile.FullFilename}";
             sourceLog.Log(msg);

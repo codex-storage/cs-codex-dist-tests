@@ -91,7 +91,7 @@ namespace KubernetesWorkflow
         private void DownloadCrashedContainerLogs(Kubernetes client)
         {
             using var stream = client.ReadNamespacedPodLog(podName, k8sNamespace, recipeName, previous: true);
-            var handler = new WriteToFileLogHandler(log, "Crash detected for " + containerName);
+            var handler = new WriteToFileLogHandler(log, "Crash detected for " + containerName, containerName);
             handler.Log(stream);
         }
     }
