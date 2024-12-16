@@ -49,15 +49,19 @@ namespace AutoClient.Modes.FolderStore
             State.StoreFailed = failed;
             SaveState();
 
-            if (createNewJsonZip)
+            if (State.UncommitedChanges > 3)
             {
+                State.UncommitedChanges = 0;
+                SaveState();
+
                 await CreateNewOverviewZip(jsonFiles, FilePath, instance);
             }
         }
 
         public void MarkUncommitedChange()
         {
-            save this. consider this.
+            State.UncommitedChanges++;
+            SaveState();
         }
 
         private async Task CreateNewOverviewZip(List<string> jsonFiles, string filePath, ICodexInstance instance)
@@ -78,7 +82,8 @@ namespace AutoClient.Modes.FolderStore
                 Log("Storage requested. Purchase ID: " + result);
 
                 var outFile = Path.Combine(app.Config.DataPath, "OverviewZip.cid");
-                File.WriteAllLines(outFile, [DateTime.UtcNow.ToString("o") + " - " + result.EncodedCid.Id]);
+                File.AppendAllLines(outFile, [DateTime.UtcNow.ToString("o") + " - " + result.EncodedCid.Id]);
+                Log($">>> [{outFile}] has been updated. <<<");
             }
             catch (Exception exc)
             {

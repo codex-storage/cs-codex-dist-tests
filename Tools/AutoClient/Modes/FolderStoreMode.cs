@@ -67,13 +67,14 @@ namespace AutoClient.Modes
 
         private void OnFileUploaded()
         {
-            var overview = new FolderWorkOverview(app, purchaseInfo, folder);
-            overview.MarkUncommitedChange();
         }
 
         private void OnNewPurchase()
         {
             app.FolderWorkDispatcher.ResetIndex();
+
+            var overview = new FolderWorkOverview(app, purchaseInfo, folder);
+            overview.MarkUncommitedChange();
         }
 
         public void Stop()
