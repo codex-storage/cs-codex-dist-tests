@@ -1,11 +1,14 @@
 ﻿using ArgsUniform;
 using AutoClient;
+using AutoClient.Modes;
+using AutoClient.Modes.FolderStore;
 using CodexOpenApi;
 using Utils;
 
 public class Program
 {
     private readonly App app;
+    private readonly List<IMode> modes = new List<IMode>();
 
     public Program(Configuration config)
     {
@@ -31,36 +34,60 @@ public class Program
 
     public async Task Run()
     {
-        var codexUsers = await CreateUsers();
+        var codexInstances = await CreateCodexInstances();
 
         var i = 0;
-        foreach (var user in codexUsers)
+        foreach (var cdx in codexInstances)
         {
-            user.Start(i);
+            var mode = CreateMode();
+            modes.Add(mode);
+
+            mode.Start(cdx, i);
             i++;
         }
 
         app.Cts.Token.WaitHandle.WaitOne();
 
-        foreach (var user in codexUsers) user.Stop();
+        foreach (var mode in modes) mode.Stop();
+        modes.Clear();
 
         app.Log.Log("Done");
     }
 
-    private async Task<CodexUser[]> CreateUsers()
+    private IMode CreateMode()
+    {
+        if (!string.IsNullOrEmpty(app.Config.FolderToStore))
+        {
+            return CreateFolderStoreMode();
+        }
+
+        return new PurchasingMode(app);
+    }
+
+    private IMode CreateFolderStoreMode()
+    {
+        if (app.Config.ContractDurationMinutes - 1 < 5) throw new Exception("Contract duration config option not long enough!");
+
+        return new FolderStoreMode(app, app.Config.FolderToStore, new PurchaseInfo(
+            purchaseDurationTotal: TimeSpan.FromMinutes(app.Config.ContractDurationMinutes),
+            purchaseDurationSafe: TimeSpan.FromMinutes(app.Config.ContractDurationMinutes - 120)
+        ));
+    }
+
+    private async Task<CodexInstance[]> CreateCodexInstances()
     {
         var endpointStrs = app.Config.CodexEndpoints.Split(";", StringSplitOptions.RemoveEmptyEntries);
-        var result = new List<CodexUser>();
+        var result = new List<CodexInstance>();
 
         foreach (var e in endpointStrs)
         {
-            result.Add(await CreateUser(e));
+            result.Add(await CreateCodexInstance(e));
         }
 
         return result.ToArray();
     }
 
-    private async Task<CodexUser> CreateUser(string endpoint)
+    private async Task<CodexInstance> CreateCodexInstance(string endpoint)
     {
         var splitIndex = endpoint.LastIndexOf(':');
         var host = endpoint.Substring(0, splitIndex);
@@ -72,6 +99,7 @@ public class Program
         );
 
         var client = new HttpClient();
+        client.Timeout = TimeSpan.FromMinutes(60.0);
         var codex = new CodexApi(client);
         codex.BaseUrl = $"{address.Host}:{address.Port}/api/codex/v1";
 
@@ -79,7 +107,7 @@ public class Program
         await CheckCodex(codex);
         app.Log.Log("OK");
 
-        return new CodexUser(
+        return new CodexInstance(
             app,
             codex,
             client,

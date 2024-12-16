@@ -151,7 +151,7 @@ namespace CodexPlugin
 
         public ContentId UploadFile(TrackedFile file, Action<Failure> onFailure)
         {
-            return UploadFile(file, "application/x-binary", $"attachment; filename=\"{file.Filename}\"", onFailure);
+            return UploadFile(file, "application/octet-stream", $"attachment; filename=\"{Path.GetFileName(file.Filename)}\"", onFailure);
         }
 
         public ContentId UploadFile(TrackedFile file, string contentType, string contentDisposition, Action<Failure> onFailure)

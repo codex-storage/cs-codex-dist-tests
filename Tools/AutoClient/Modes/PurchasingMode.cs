@@ -1,32 +1,23 @@
-﻿using CodexOpenApi;
-using Logging;
-using Utils;
+﻿using Logging;
 
-namespace AutoClient
+namespace AutoClient.Modes
 {
-    public class CodexUser
+    public class PurchasingMode : IMode
     {
+        private readonly List<AutomaticPurchaser> purchasers = new List<AutomaticPurchaser>();
         private readonly App app;
-        private readonly CodexApi codex;
-        private readonly HttpClient client;
-        private readonly Address address;
-        private readonly List<Purchaser> purchasers = new List<Purchaser>();
         private Task starterTask = Task.CompletedTask;
-        private readonly string nodeId = Guid.NewGuid().ToString();
 
-        public CodexUser(App app, CodexApi codex, HttpClient client, Address address)
+        public PurchasingMode(App app)
         {
             this.app = app;
-            this.codex = codex;
-            this.client = client;
-            this.address = address;
         }
 
-        public void Start(int index)
+        public void Start(ICodexInstance instance, int index)
         {
             for (var i = 0; i < app.Config.NumConcurrentPurchases; i++)
             {
-                purchasers.Add(new Purchaser(app, nodeId, new LogPrefixer(app.Log, $"({i}) "), client, address, codex));
+                purchasers.Add(new AutomaticPurchaser(new LogPrefixer(app.Log, $"({i}) "), instance, new CodexNode(app, instance)));
             }
 
             var delayPerPurchaser =

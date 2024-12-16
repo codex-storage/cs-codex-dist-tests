@@ -110,7 +110,20 @@ namespace CodexPlugin
 
         public LocalDatasetList LocalFiles()
         {
-            return mapper.Map(OnCodex(api => api.ListDataAsync()));
+            // API for listData mismatches.
+            //return mapper.Map(OnCodex(api => api.ListDataAsync()));
+
+            return mapper.Map(CrashCheck(() =>
+            {
+                var endpoint = GetEndpoint();
+                return Time.Retry(() =>
+                {
+                    var str = endpoint.HttpGetString("data");
+                    if (string.IsNullOrEmpty(str)) throw new Exception("Empty response.");
+                    return JsonConvert.DeserializeObject<LocalDatasetListJson>(str)!;
+                }, nameof(LocalFiles));
+            }));
+
         }
 
         public StorageAvailability SalesAvailability(StorageAvailability request)
