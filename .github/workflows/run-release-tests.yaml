@@ -109,6 +109,7 @@ jobs:
           # Get logs
           while [[ $(kubectl get pod ${pod} -n ${namespace} -o jsonpath='{.status.phase}') == "Running" ]]; do
             echo "Show ${pod} logs ..."
+            echo "----"
             kubectl logs $pod -n $namespace -f || true
             sleep 1
           done
