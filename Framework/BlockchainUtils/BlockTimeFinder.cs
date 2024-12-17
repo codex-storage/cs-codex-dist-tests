@@ -87,8 +87,6 @@ namespace BlockchainUtils
 
         private bool HighestBeforeSelector(DateTime target, BlockTimeEntry entry)
         {
-            if (entry.BlockNumber == bounds.Current.BlockNumber) return true;
-
             var next = GetBlock(entry.BlockNumber + 1);
             return
                 entry.Utc <= target &&
