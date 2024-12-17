@@ -1,4 +1,5 @@
-﻿using CodexContractsPlugin.Marketplace;
+﻿using BlockchainUtils;
+using CodexContractsPlugin.Marketplace;
 using GethPlugin;
 using Logging;
 using Nethereum.ABI;

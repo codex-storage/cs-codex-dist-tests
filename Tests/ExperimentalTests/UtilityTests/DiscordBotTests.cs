@@ -30,7 +30,7 @@ namespace CodexTests.UtilityTests
         [Ignore("Used to debug testnet bots.")]
         public void BotRewardTest()
         {
-            var geth = Ci.StartGethNode(s => s.IsMiner().WithName("disttest-geth"));
+            var geth = StartGethNode(s => s.IsMiner().WithName("disttest-geth"));
             var contracts = Ci.StartCodexContracts(geth);
             var gethInfo = CreateGethInfo(geth, contracts);
 

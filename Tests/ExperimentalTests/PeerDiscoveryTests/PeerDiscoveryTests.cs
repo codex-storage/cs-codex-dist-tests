@@ -29,7 +29,7 @@ namespace CodexTests.PeerDiscoveryTests
         [Test]
         public void MarketplaceDoesNotInterfereWithPeerDiscovery()
         {
-            var geth = Ci.StartGethNode(s => s.IsMiner());
+            var geth = StartGethNode(s => s.IsMiner());
             var contracts = Ci.StartCodexContracts(geth);
             var nodes = StartCodex(2, s => s.EnableMarketplace(geth, contracts, m => m
                 .WithInitial(10.Eth(), 1000.TstWei())));

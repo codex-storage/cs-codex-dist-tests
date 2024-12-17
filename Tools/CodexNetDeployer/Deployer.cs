@@ -1,4 +1,5 @@
-﻿using CodexContractsPlugin;
+﻿using BlockchainUtils;
+using CodexContractsPlugin;
 using CodexDiscordBotPlugin;
 using CodexPlugin;
 using Core;
@@ -59,7 +60,7 @@ namespace CodexNetDeployer
 
             Log("Deploying Geth instance...");
             var gethDeployment = DeployGeth(ci);
-            var gethNode = ci.WrapGethDeployment(gethDeployment);
+            var gethNode = ci.WrapGethDeployment(gethDeployment, new BlockCache());
 
             Log("Geth started. Deploying Codex contracts...");
             var contractsDeployment = ci.DeployCodexContracts(gethNode);

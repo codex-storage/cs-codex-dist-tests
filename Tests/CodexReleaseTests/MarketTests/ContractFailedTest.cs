@@ -21,8 +21,11 @@ namespace CodexReleaseTests.MarketTests
         private readonly TestToken pricePerSlotPerSecond = 10.TstWei();
 
         [Test]
-        [Ignore("TODO - Test in which hosts are punished for failing a contract")]
-        public void ContractFailed()
+        [Combinatorial]
+        public void ContractFailed(
+            [Values(0, 1, 2, 3)] int a,
+            [Values(0, 1, 2, 3)] int b
+        )
         {
             var hosts = StartHosts();
             var client = StartClients().Single();

@@ -1,7 +1,7 @@
-﻿using CodexContractsPlugin.Marketplace;
+﻿using BlockchainUtils;
+using CodexContractsPlugin.Marketplace;
 using GethPlugin;
 using Logging;
-using NethereumWorkflow.BlockUtils;
 using System.Numerics;
 using Utils;
 

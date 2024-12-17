@@ -1,11 +1,11 @@
-﻿using Core;
+﻿using BlockchainUtils;
+using Core;
 using KubernetesWorkflow.Types;
 using Logging;
 using Nethereum.ABI.FunctionEncoding.Attributes;
 using Nethereum.Contracts;
 using Nethereum.RPC.Eth.DTOs;
 using NethereumWorkflow;
-using NethereumWorkflow.BlockUtils;
 using Utils;
 
 namespace GethPlugin
@@ -34,10 +34,12 @@ namespace GethPlugin
     public class DeploymentGethNode : BaseGethNode, IGethNode
     {
         private readonly ILog log;
+        private readonly BlockCache blockCache;
 
-        public DeploymentGethNode(ILog log, GethDeployment startResult)
+        public DeploymentGethNode(ILog log, BlockCache blockCache, GethDeployment startResult)
         {
             this.log = log;
+            this.blockCache = blockCache;
             StartResult = startResult;
         }
 
@@ -60,7 +62,7 @@ namespace GethPlugin
             var address = StartResult.Container.GetAddress(GethContainerRecipe.HttpPortTag);
             var account = StartResult.Account;
 
-            var creator = new NethereumInteractionCreator(log, address.Host, address.Port, account.PrivateKey);
+            var creator = new NethereumInteractionCreator(log, blockCache, address.Host, address.Port, account.PrivateKey);
             return creator.CreateWorkflow();
         }
     }
@@ -68,6 +70,7 @@ namespace GethPlugin
     public class CustomGethNode : BaseGethNode, IGethNode
     {
         private readonly ILog log;
+        private readonly BlockCache blockCache;
         private readonly string gethHost;
         private readonly int gethPort;
         private readonly string privateKey;
@@ -75,9 +78,10 @@ namespace GethPlugin
         public GethDeployment StartResult => throw new NotImplementedException();
         public RunningContainer Container => throw new NotImplementedException();
 
-        public CustomGethNode(ILog log, string gethHost, int gethPort, string privateKey)
+        public CustomGethNode(ILog log, BlockCache blockCache, string gethHost, int gethPort, string privateKey)
         {
             this.log = log;
+            this.blockCache = blockCache;
             this.gethHost = gethHost;
             this.gethPort = gethPort;
             this.privateKey = privateKey;
@@ -90,7 +94,7 @@ namespace GethPlugin
 
         protected override NethereumInteraction StartInteraction()
         {
-            var creator = new NethereumInteractionCreator(log, gethHost, gethPort, privateKey);
+            var creator = new NethereumInteractionCreator(log, blockCache, gethHost, gethPort, privateKey);
             return creator.CreateWorkflow();
         }
     }

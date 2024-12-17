@@ -18,7 +18,11 @@ namespace CodexReleaseTests.MarketTests
         private readonly TestToken pricePerSlotPerSecond = 10.TstWei();
 
         [Test]
-        public void ContractSuccessful()
+        [Combinatorial]
+        public void ContractSuccessful(
+            [Values(0, 1, 2, 3)] int a,
+            [Values(0, 1, 2, 3)] int b
+        )
         {
             var hosts = StartHosts();
             var client = StartClients().Single();

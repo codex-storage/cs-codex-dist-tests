@@ -1,4 +1,5 @@
-﻿using Core;
+﻿using BlockchainUtils;
+using Core;
 using KubernetesWorkflow;
 
 namespace GethPlugin
@@ -41,10 +42,10 @@ namespace GethPlugin
             return new GethDeployment(containers, discoveryPort, httpPort, wsPort, account, pubKey);
         }
 
-        public IGethNode WrapGethContainer(GethDeployment startResult)
+        public IGethNode WrapGethContainer(GethDeployment startResult, BlockCache blockCache)
         {
             startResult = SerializeGate.Gate(startResult);
-            return new DeploymentGethNode(tools.GetLog(), startResult);
+            return new DeploymentGethNode(tools.GetLog(), blockCache, startResult);
         }
 
         private void Log(string msg)

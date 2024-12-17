@@ -1,4 +1,5 @@
-﻿using Core;
+﻿using BlockchainUtils;
+using Core;
 
 namespace GethPlugin
 {
@@ -36,10 +37,10 @@ namespace GethPlugin
             return starter.StartGeth(startupConfig);
         }
 
-        public IGethNode WrapGethDeployment(GethDeployment startResult)
+        public IGethNode WrapGethDeployment(GethDeployment startResult, BlockCache blockCache)
         {
             startResult = SerializeGate.Gate(startResult);
-            return starter.WrapGethContainer(startResult);
+            return starter.WrapGethContainer(startResult, blockCache);
         }
     }
 }

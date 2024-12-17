@@ -1,4 +1,5 @@
-﻿using CodexContractsPlugin;
+﻿using BlockchainUtils;
+using CodexContractsPlugin;
 using CodexNetDeployer;
 using CodexPlugin;
 using CodexPlugin.OverwatchSupport;
@@ -7,6 +8,7 @@ using Core;
 using DistTestCore;
 using DistTestCore.Helpers;
 using DistTestCore.Logs;
+using GethPlugin;
 using Logging;
 using MetricsPlugin;
 using Newtonsoft.Json;
@@ -19,6 +21,7 @@ namespace CodexTests
     public class CodexDistTest : DistTest
     {
         private static readonly Dictionary<TestLifecycle, CodexTranscriptWriter> writers = new Dictionary<TestLifecycle, CodexTranscriptWriter>();
+        private static readonly Dictionary<TestLifecycle, BlockCache> blockCaches = new Dictionary<TestLifecycle, BlockCache>();
 
         public CodexDistTest()
         {
@@ -71,6 +74,11 @@ namespace CodexTests
             });
 
             return group;
+        }
+
+        public IGethNode StartGethNode(Action<IGethSetup> setup)
+        {
+            return Ci.StartGethNode(GetBlockCache(), setup);
         }
 
         public PeerConnectionTestHelpers CreatePeerConnectionTestHelpers()
@@ -222,6 +230,16 @@ namespace CodexTests
             var outputFile = Path.Combine(outputPath, filename + "_" + attr.OutputFilename);
             if (!outputFile.EndsWith(".owts")) outputFile += ".owts";
             return outputFile;
+        }
+
+        private BlockCache GetBlockCache()
+        {
+            var lifecycle = Get();
+            if (!blockCaches.ContainsKey(lifecycle))
+            {
+                blockCaches[lifecycle] = new BlockCache();
+            }
+            return blockCaches[lifecycle];
         }
     }
 

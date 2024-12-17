@@ -10,15 +10,16 @@ namespace NethereumWorkflow
 {
     public class NethereumInteraction
     {
-        private readonly static BlockCache blockCache = new BlockCache(); // WRONG: parallel environments!
+        private readonly BlockCache blockCache;
 
         private readonly ILog log;
         private readonly Web3 web3;
 
-        internal NethereumInteraction(ILog log, Web3 web3)
+        internal NethereumInteraction(ILog log, Web3 web3, BlockCache blockCache)
         {
             this.log = log;
             this.web3 = web3;
+            this.blockCache = blockCache;
         }
 
         public string SendEth(string toAddress, decimal ethAmount)

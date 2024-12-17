@@ -1,4 +1,5 @@
-﻿using CodexContractsPlugin;
+﻿using BlockchainUtils;
+using CodexContractsPlugin;
 using CodexContractsPlugin.Marketplace;
 using GethPlugin;
 using Logging;
@@ -19,7 +20,7 @@ namespace GethConnector
                 return null;
             }
 
-            var gethNode = new CustomGethNode(log, GethInput.GethHost, GethInput.GethPort, GethInput.PrivateKey);
+            var gethNode = new CustomGethNode(log, new BlockCache(), GethInput.GethHost, GethInput.GethPort, GethInput.PrivateKey);
 
             var config = GetCodexMarketplaceConfig(gethNode, GethInput.MarketplaceAddress);
 

@@ -28,7 +28,7 @@ namespace CodexTests.BasicTests
                 plusSizeBytes
             );
 
-            var geth = Ci.StartGethNode(s => s.IsMiner().WithName("disttest-geth"));
+            var geth = StartGethNode(s => s.IsMiner().WithName("disttest-geth"));
             var contracts = Ci.StartCodexContracts(geth);
             
             var numberOfHosts = 5;

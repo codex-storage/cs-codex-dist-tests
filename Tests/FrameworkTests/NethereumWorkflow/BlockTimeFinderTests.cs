@@ -2,7 +2,6 @@
 using Logging;
 using Moq;
 using NethereumWorkflow;
-using NethereumWorkflow.BlockUtils;
 using NUnit.Framework;
 
 namespace FrameworkTests.NethereumWorkflow

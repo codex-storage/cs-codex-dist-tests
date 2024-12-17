@@ -1,9 +1,9 @@
-﻿using CodexContractsPlugin.Marketplace;
+﻿using BlockchainUtils;
+using CodexContractsPlugin.Marketplace;
 using GethPlugin;
 using Logging;
 using Nethereum.Contracts;
 using Nethereum.Hex.HexTypes;
-using NethereumWorkflow.BlockUtils;
 using Utils;
 
 namespace CodexContractsPlugin

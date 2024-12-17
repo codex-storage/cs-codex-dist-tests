@@ -19,7 +19,7 @@ namespace CodexReleaseTests.MarketTests
         protected override void LifecycleStart(TestLifecycle lifecycle)
         {
             base.LifecycleStart(lifecycle);
-            var geth = Ci.StartGethNode(s => s.IsMiner());
+            var geth = StartGethNode(s => s.IsMiner());
             var contracts = Ci.StartCodexContracts(geth);
             handles.Add(lifecycle, new MarketplaceHandle(geth, contracts));
         }
