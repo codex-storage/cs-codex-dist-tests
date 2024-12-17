@@ -1,16 +1,11 @@
-﻿using Logging;
+﻿using BlockchainUtils;
+using Logging;
 using Nethereum.RPC.Eth.DTOs;
 using Nethereum.Web3;
 using Utils;
 
 namespace NethereumWorkflow
 {
-    public interface IWeb3Blocks
-    {
-        ulong GetCurrentBlockNumber();
-        DateTime? GetTimestampForBlock(ulong blockNumber);
-    }
-
     public class Web3Wrapper : IWeb3Blocks
     {
         private readonly Web3 web3;

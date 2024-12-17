@@ -1,5 +1,11 @@
-﻿namespace NethereumWorkflow.BlockUtils
+﻿namespace BlockchainUtils
 {
+    public interface IWeb3Blocks
+    {
+        ulong GetCurrentBlockNumber();
+        DateTime? GetTimestampForBlock(ulong blockNumber);
+    }
+
     public class BlockchainBounds
     {
         private readonly BlockCache cache;

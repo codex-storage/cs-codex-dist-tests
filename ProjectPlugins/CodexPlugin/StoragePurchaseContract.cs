@@ -15,6 +15,7 @@ namespace CodexPlugin
         void WaitForStorageContractSubmitted();
         void WaitForStorageContractStarted();
         void WaitForStorageContractFinished(ICodexContracts contracts);
+        void WaitForContractFailed();
     }
 
     public class StoragePurchaseContract : IStoragePurchaseContract
@@ -83,6 +84,17 @@ namespace CodexPlugin
             var blocks = 3;
             Log($"Waiting {blocks} blocks for nodes to process payouts...");
             Thread.Sleep(GethContainerRecipe.BlockInterval * blocks);
+        }
+
+        public void WaitForContractFailed()
+        {
+            if (!contractStartedUtc.HasValue)
+            {
+                WaitForStorageContractStarted();
+            }
+            var currentContractTime = DateTime.UtcNow - contractSubmittedUtc!.Value;
+            var timeout = (Purchase.Duration - currentContractTime) + gracePeriod;
+            WaitForStorageContractState(timeout, "failed");
         }
 
         public StoragePurchase GetPurchaseStatus(string purchaseId)

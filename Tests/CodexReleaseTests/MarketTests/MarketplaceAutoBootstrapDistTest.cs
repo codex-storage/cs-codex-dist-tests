@@ -40,6 +40,12 @@ namespace CodexReleaseTests.MarketTests
             return handles[Get()].Contracts;
         }
 
+        protected TimeSpan GetPeriodDuration()
+        {
+            var config = GetContracts().Deployment.Config;
+            return TimeSpan.FromSeconds(((double)config.Proofs.Period));
+        }
+
         protected abstract int NumberOfHosts { get; }
         protected abstract int NumberOfClients { get; }
         protected abstract ByteSize HostAvailabilitySize { get; }
@@ -97,6 +103,17 @@ namespace CodexReleaseTests.MarketTests
                 .WithName("client")
                 .EnableMarketplace(GetGeth(), GetContracts(), m => m
                     .WithInitial(StartingBalanceEth.Eth(), StartingBalanceTST.Tst())
+                )
+            );
+        }
+
+        public ICodexNode StartValidator()
+        {
+            return StartCodex(s => s
+                .WithName("validator")
+                .EnableMarketplace(GetGeth(), GetContracts(), m => m
+                    .WithInitial(StartingBalanceEth.Eth(), StartingBalanceTST.Tst())
+                    .AsValidator()
                 )
             );
         }
@@ -177,9 +194,17 @@ namespace CodexReleaseTests.MarketTests
 
         private DateTime GetContractOnChainSubmittedUtc(IStoragePurchaseContract contract)
         {
-            var events = GetContracts().GetEvents(GetTestRunTimeRange());
-            var submitEvent = events.GetStorageRequests().Single(e => e.RequestId.ToHex(false) == contract.PurchaseId);
-            return submitEvent.Block.Utc;
+            return Time.Retry<DateTime>(() =>
+            {
+                var events = GetContracts().GetEvents(GetTestRunTimeRange());
+                var submitEvent = events.GetStorageRequests().SingleOrDefault(e => e.RequestId.ToHex(false) == contract.PurchaseId);
+                if (submitEvent == null)
+                {
+                    // We're too early.
+                    throw new TimeoutException(nameof(GetContractOnChainSubmittedUtc) + "StorageRequest not found on-chain.");
+                }
+                return submitEvent.Block.Utc;
+            }, nameof(GetContractOnChainSubmittedUtc));
         }
 
         private TestToken GetContractCostPerSlot(TestToken pricePerSlotPerSecond, TimeSpan slotDuration)

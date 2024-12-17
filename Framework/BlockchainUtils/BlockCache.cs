@@ -1,4 +1,4 @@
-﻿namespace NethereumWorkflow.BlockUtils
+﻿namespace BlockchainUtils
 {
     public class BlockCache
     {

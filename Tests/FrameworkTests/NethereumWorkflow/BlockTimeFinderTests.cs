@@ -1,4 +1,5 @@
-﻿using Logging;
+﻿using BlockchainUtils;
+using Logging;
 using Moq;
 using NethereumWorkflow;
 using NethereumWorkflow.BlockUtils;

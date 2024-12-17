@@ -1,17 +1,16 @@
-﻿using Logging;
+﻿using BlockchainUtils;
+using Logging;
 using Nethereum.ABI.FunctionEncoding.Attributes;
 using Nethereum.Contracts;
 using Nethereum.RPC.Eth.DTOs;
 using Nethereum.Web3;
-using NethereumWorkflow.BlockUtils;
 using Utils;
 
 namespace NethereumWorkflow
 {
     public class NethereumInteraction
     {
-        // BlockCache is a static instance: It stays alive for the duration of the application runtime.
-        private readonly static BlockCache blockCache = new BlockCache();
+        private readonly static BlockCache blockCache = new BlockCache(); // WRONG: parallel environments!
 
         private readonly ILog log;
         private readonly Web3 web3;

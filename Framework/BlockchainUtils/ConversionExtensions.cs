@@ -1,7 +1,7 @@
 ﻿using Nethereum.Hex.HexTypes;
 using System.Numerics;
 
-namespace NethereumWorkflow
+namespace BlockchainUtils
 {
     public static class ConversionExtensions
     {

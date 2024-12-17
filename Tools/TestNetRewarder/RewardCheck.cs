@@ -1,4 +1,5 @@
-﻿using CodexContractsPlugin.ChainMonitor;
+﻿using BlockchainUtils;
+using CodexContractsPlugin.ChainMonitor;
 using DiscordRewards;
 using GethPlugin;
 using NethereumWorkflow;

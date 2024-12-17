@@ -2,19 +2,15 @@
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
-	<RootNamespace>NethereumWorkflow</RootNamespace>
-	<ImplicitUsings>enable</ImplicitUsings>
-	<Nullable>enable</Nullable>
-
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
 	<ItemGroup>
 		<PackageReference Include="Nethereum.Web3" Version="4.14.0" />
 	</ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\BlockchainUtils\BlockchainUtils.csproj" />
     <ProjectReference Include="..\Logging\Logging.csproj" />
-    <ProjectReference Include="..\Utils\Utils.csproj" />
   </ItemGroup>
 
 </Project>
