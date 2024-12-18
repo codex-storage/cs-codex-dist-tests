@@ -9,14 +9,16 @@ namespace CodexReleaseTests.DataTests
     [TestFixture]
     public class SwarmTests : AutoBootstrapDistTest
     {
-        private const int NumberOfNodes = 2;
-        private const int FileSizeMb = 2;
-
         [Test]
-        public void SmallSwarm()
+        [Combinatorial]
+        public void SmallSwarm(
+            [Values(2)] int numberOfNodes,
+            [Values(10)] int filesizeMb
+        )
         {
-            var nodes = StartCodex(NumberOfNodes);
-            var files = nodes.Select(UploadUniqueFilePerNode).ToArray();
+            var filesize = filesizeMb.MB();
+            var nodes = StartCodex(numberOfNodes);
+            var files = nodes.Select(n => UploadUniqueFilePerNode(n, filesize)).ToArray();
 
             var tasks = ParallelDownloadEachFile(nodes, files);
             Task.WaitAll(tasks);
@@ -25,10 +27,15 @@ namespace CodexReleaseTests.DataTests
         }
 
         [Test]
-        public void StreamlessSmallSwarm()
+        [Combinatorial]
+        public void StreamlessSmallSwarm(
+            [Values(2)] int numberOfNodes,
+            [Values(10)] int filesizeMb
+        )
         {
-            var nodes = StartCodex(NumberOfNodes);
-            var files = nodes.Select(UploadUniqueFilePerNode).ToArray();
+            var filesize = filesizeMb.MB();
+            var nodes = StartCodex(numberOfNodes);
+            var files = nodes.Select(n => UploadUniqueFilePerNode(n, filesize)).ToArray();
 
             var tasks = ParallelStreamlessDownloadEachFile(nodes, files);
             Task.WaitAll(tasks);
@@ -36,11 +43,11 @@ namespace CodexReleaseTests.DataTests
             AssertAllFilesStreamlesslyDownloadedCorrectly(nodes, files);
         }
 
-        private SwarmTestNetworkFile UploadUniqueFilePerNode(ICodexNode node)
+        private SwarmTestNetworkFile UploadUniqueFilePerNode(ICodexNode node, ByteSize fileSize)
         {
-            var file = GenerateTestFile(FileSizeMb.MB());
+            var file = GenerateTestFile(fileSize);
             var cid = node.UploadFile(file);
-            return new SwarmTestNetworkFile(node, file, cid);
+            return new SwarmTestNetworkFile(node, fileSize, file, cid);
         }
 
         private Task[] ParallelDownloadEachFile(ICodexNodeGroup nodes, SwarmTestNetworkFile[] files)
@@ -106,7 +113,7 @@ namespace CodexReleaseTests.DataTests
                         try
                         {
                             var startSpace = node.Space();
-                            node.DownloadStreamlessWait(file.Cid, FileSizeMb.MB());
+                            node.DownloadStreamlessWait(file.Cid, file.OriginalSize);
                         }
                         catch (Exception ex)
                         {
@@ -150,14 +157,16 @@ namespace CodexReleaseTests.DataTests
 
         private class SwarmTestNetworkFile
         {
-            public SwarmTestNetworkFile(ICodexNode uploader, TrackedFile original, ContentId cid)
+            public SwarmTestNetworkFile(ICodexNode uploader, ByteSize originalSize, TrackedFile original, ContentId cid)
             {
                 Uploader = uploader;
+                OriginalSize = originalSize;
                 Original = original;
                 Cid = cid;
             }
 
             public ICodexNode Uploader { get; }
+            public ByteSize OriginalSize { get; }
             public TrackedFile Original { get; }
             public ContentId Cid { get; }
             public object Lock { get; } = new object();
