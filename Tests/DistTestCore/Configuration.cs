@@ -14,7 +14,7 @@ namespace DistTestCore
             kubeConfigFile = GetNullableEnvVarOrDefault("KUBECONFIG", null);
             logPath = GetEnvVarOrDefault("LOGPATH", "CodexTestLogs");
             dataFilesPath = GetEnvVarOrDefault("DATAFILEPATH", "TestDataFiles");
-            AlwaysDownloadContainerLogs = true; // !string.IsNullOrEmpty(GetEnvVarOrDefault("ALWAYS_LOGS", ""));
+            AlwaysDownloadContainerLogs = !string.IsNullOrEmpty(GetEnvVarOrDefault("ALWAYS_LOGS", ""));
         }
 
         public Configuration(string? kubeConfigFile, string logPath, string dataFilesPath)

@@ -55,12 +55,23 @@ namespace DistTestCore
         private static string FormatArguments(TestContext.TestAdapter test)
         {
             if (test.Arguments == null || !test.Arguments.Any()) return "";
-            return $"[{string.Join(',', test.Arguments)}]";
+            return $"[{string.Join(',', test.Arguments.Select(FormatArgument).ToArray())}]";
+        }
+        
+        private static string FormatArgument(object? obj)
+        {
+            if (obj == null) return "";
+            var str = obj.ToString();
+            if (string.IsNullOrEmpty(str)) return "";
+            return ReplaceInvalidCharacters(str);
         }
 
         private static string ReplaceInvalidCharacters(string name)
         {
-            return name.Replace(":", "_");
+            return name
+                .Replace(":", "_")
+                .Replace("/", "_")
+                .Replace("\\", "_");
         }
 
         private static string DetermineFolder(LogConfig config, DateTime start)
