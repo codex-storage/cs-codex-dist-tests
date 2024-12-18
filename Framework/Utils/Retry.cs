@@ -98,7 +98,7 @@
 
             private void Fail()
             {
-                throw new TimeoutException($"Retry '{description}' timed out after {tryNumber} tries over {Time.FormatDuration(Duration())}: {GetFailureReport}",
+                throw new TimeoutException($"Retry '{description}' timed out after {tryNumber} tries over {Time.FormatDuration(Duration())}: {GetFailureReport()}",
                         new AggregateException(failures.Select(f => f.Exception)));
             }
 

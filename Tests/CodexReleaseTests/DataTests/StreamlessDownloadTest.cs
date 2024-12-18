@@ -1,5 +1,7 @@
-﻿using CodexTests;
+﻿using CodexPlugin;
+using CodexTests;
 using NUnit.Framework;
+using System.Drawing;
 using Utils;
 
 namespace CodexReleaseTests.DataTests
@@ -13,30 +15,16 @@ namespace CodexReleaseTests.DataTests
             var uploader = StartCodex();
             var downloader = StartCodex(s => s.WithBootstrapNode(uploader));
 
-            var file = GenerateTestFile(10.MB());
-            var size = file.GetFilesize().SizeInBytes;
+            var size = 10.MB();
+            var file = GenerateTestFile(size);
             var cid = uploader.UploadFile(file);
 
             var startSpace = downloader.Space();
             var start = DateTime.UtcNow;
-            var localDataset = downloader.DownloadStreamless(cid);
+            var localDataset = downloader.DownloadStreamlessWait(cid, size);
 
             Assert.That(localDataset.Cid, Is.EqualTo(cid));
             Assert.That(localDataset.Manifest.OriginalBytes.SizeInBytes, Is.EqualTo(file.GetFilesize().SizeInBytes));
-
-            // TODO: We have no way to inspect the status or progress of the download.
-            // We use local space information to estimate.
-            var retry = new Retry("Checking local space",
-                maxTimeout: TimeSpan.FromMinutes(2),
-                sleepAfterFail: TimeSpan.FromSeconds(3),
-                onFail: f => { });
-
-            retry.Run(() =>
-            {
-                var space = downloader.Space();
-                var expected = startSpace.FreeBytes - size;
-                if (space.FreeBytes > expected) throw new Exception("Expected free space not reached.");
-            });
 
             // Stop the uploader node and verify that the downloader has the data.
             uploader.Stop(waitTillStopped: true);

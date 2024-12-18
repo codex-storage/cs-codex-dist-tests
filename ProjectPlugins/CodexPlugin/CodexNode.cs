@@ -23,6 +23,11 @@ namespace CodexPlugin
         TrackedFile? DownloadContent(ContentId contentId, string fileLabel = "");
         TrackedFile? DownloadContent(ContentId contentId, Action<Failure> onFailure, string fileLabel = "");
         LocalDataset DownloadStreamless(ContentId cid);
+        /// <summary>
+        /// TODO: This will monitor the quota-used of the node until 'size' bytes are added. That's a very bad way
+        /// to track the streamless download progress. Replace it once we have a good API for this.
+        /// </summary>
+        LocalDataset DownloadStreamlessWait(ContentId cid, ByteSize size);
         LocalDataset DownloadManifestOnly(ContentId cid);
         LocalDatasetList LocalFiles();
         CodexSpace Space();
@@ -205,11 +210,28 @@ namespace CodexPlugin
 
         public LocalDataset DownloadStreamless(ContentId cid)
         {
+            Log($"Downloading streamless '{cid}' (no-wait)");
             return CodexAccess.DownloadStreamless(cid);
+        }
+
+        public LocalDataset DownloadStreamlessWait(ContentId cid, ByteSize size)
+        {
+            Log($"Downloading streamless '{cid}' (wait till finished)");
+
+            var sw = Stopwatch.Measure(log, nameof(DownloadStreamlessWait), () =>
+            {
+                var startSpace = Space();
+                var result = CodexAccess.DownloadStreamless(cid);
+                WaitUntilQuotaUsedIncreased(startSpace, size);
+                return result;
+            });
+
+            return sw.Value;
         }
 
         public LocalDataset DownloadManifestOnly(ContentId cid)
         {
+            Log($"Downloading manifest-only '{cid}'");
             return CodexAccess.DownloadManifestOnly(cid);
         }
 
@@ -319,6 +341,39 @@ namespace CodexPlugin
                 Log($"Failed to download file '{contentId}'.");
                 throw;
             }
+        }
+
+        public void WaitUntilQuotaUsedIncreased(CodexSpace startSpace, ByteSize expectedIncreaseOfQuotaUsed)
+        {
+            WaitUntilQuotaUsedIncreased(startSpace, expectedIncreaseOfQuotaUsed, TimeSpan.FromMinutes(2));
+        }
+
+        public void WaitUntilQuotaUsedIncreased(
+            CodexSpace startSpace,
+            ByteSize expectedIncreaseOfQuotaUsed,
+            TimeSpan maxTimeout)
+        {
+            Log($"Waiting until quotaUsed " +
+                $"(start: {startSpace.QuotaUsedBytes}) " +
+                $"increases by {expectedIncreaseOfQuotaUsed} " +
+                $"to reach {startSpace.QuotaUsedBytes + expectedIncreaseOfQuotaUsed.SizeInBytes}");
+
+            var retry = new Retry($"Checking local space for quotaUsed increase of {expectedIncreaseOfQuotaUsed}",
+            maxTimeout: maxTimeout,
+            sleepAfterFail: TimeSpan.FromSeconds(3),
+            onFail: f => { });
+
+            retry.Run(() =>
+            {
+                var space = Space();
+                var increase = space.QuotaUsedBytes - startSpace.QuotaUsedBytes;
+
+                if (increase < expectedIncreaseOfQuotaUsed.SizeInBytes)
+                    throw new Exception($"Expected quota-used not reached. " +
+                        $"Expected increase: {expectedIncreaseOfQuotaUsed.SizeInBytes} " +
+                        $"Actual increase: {increase} " +
+                        $"Actual used: {space.QuotaUsedBytes}");
+            });
         }
 
         private void EnsureMarketplace()

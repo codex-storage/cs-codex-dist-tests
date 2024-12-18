@@ -15,6 +15,7 @@ using Newtonsoft.Json;
 using NUnit.Framework;
 using NUnit.Framework.Constraints;
 using OverwatchTranscript;
+using Utils;
 
 namespace CodexTests
 {
@@ -154,15 +155,6 @@ namespace CodexTests
             return JsonConvert.SerializeObject(node.GetDebugInfo(), Formatting.Indented) + Environment.NewLine +
                 node.Space().ToString() + Environment.NewLine;
         }
-
-        // Disabled for now: Makes huge log files!
-        //private string GetNodeMetrics(IMetricsAccess? metrics)
-        //{
-        //    if (metrics == null) return "No metrics enabled";
-        //    var m = metrics.GetAllMetrics();
-        //    if (m == null) return "No metrics received";
-        //    return m.AsCsv();
-        //}
 
         protected virtual void OnCodexSetup(ICodexSetup setup)
         {
