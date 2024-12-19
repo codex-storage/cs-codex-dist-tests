@@ -1,0 +1,29 @@
+﻿<Window x:Class="SeeTimeline.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:tl="clr-namespace:TimelinerNet;assembly=TimelinerNet"
+        xmlns:local="clr-namespace:SeeTimeline"
+        mc:Ignorable="d"
+        Title="SeeTimeline" Height="450" Width="800">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <Grid.LayoutTransform>
+            <ScaleTransform 
+                ScaleX="1.5"
+                ScaleY="1.5"/>
+        </Grid.LayoutTransform>
+        <Button Grid.Row="0" Content="Load Logs" Click="Button_Click"/>
+        <TextBlock Grid.Row="1" Name="Line1Name" HorizontalAlignment="Center"/>
+        <tl:Timeliner Name="Timeliner1" Grid.Row="2"/>
+        <TextBlock Grid.Row="3" Name="Line2Name" HorizontalAlignment="Center"/>
+        <tl:Timeliner Name="Timeliner2" Grid.Row="4"/>
+    </Grid>
+</Window>

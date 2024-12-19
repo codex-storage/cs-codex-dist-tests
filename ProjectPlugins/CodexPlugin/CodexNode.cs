@@ -22,6 +22,8 @@ namespace CodexPlugin
         ContentId UploadFile(TrackedFile file, string contentType, string contentDisposition, Action<Failure> onFailure);
         TrackedFile? DownloadContent(ContentId contentId, string fileLabel = "");
         TrackedFile? DownloadContent(ContentId contentId, Action<Failure> onFailure, string fileLabel = "");
+        (TrackedFile?, TimeSpan) DownloadContentT(ContentId contentId, string fileLabel = "");
+        (TrackedFile?, TimeSpan) DownloadContentT(ContentId contentId, Action<Failure> onFailure, string fileLabel = "");
         LocalDataset DownloadStreamless(ContentId cid);
         /// <summary>
         /// TODO: This will monitor the quota-used of the node until 'size' bytes are added. That's a very bad way
@@ -189,10 +191,20 @@ namespace CodexPlugin
 
         public TrackedFile? DownloadContent(ContentId contentId, string fileLabel = "")
         {
-            return DownloadContent(contentId, DoNothing, fileLabel);
+            return DownloadContentT(contentId, fileLabel).Item1;
         }
 
         public TrackedFile? DownloadContent(ContentId contentId, Action<Failure> onFailure, string fileLabel = "")
+        {
+            return DownloadContentT(contentId, onFailure, fileLabel).Item1;
+        }
+
+        public (TrackedFile?, TimeSpan) DownloadContentT(ContentId contentId, string fileLabel = "")
+        {
+            return DownloadContentT(contentId, DoNothing, fileLabel);
+        }
+
+        public (TrackedFile?, TimeSpan) DownloadContentT(ContentId contentId, Action<Failure> onFailure, string fileLabel = "")
         {
             var file = tools.GetFileManager().CreateEmptyFile(fileLabel);
             hooks.OnFileDownloading(contentId);
@@ -205,7 +217,7 @@ namespace CodexPlugin
             transferSpeeds.AddDownloadSample(size, measurement);
             hooks.OnFileDownloaded(size, contentId);
 
-            return file;
+            return (file, measurement);
         }
 
         public LocalDataset DownloadStreamless(ContentId cid)

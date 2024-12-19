@@ -14,8 +14,28 @@ namespace CodexReleaseTests.DataTests
     public class TwoClientTests : CodexDistTest
     {
         [Test]
-        public void TwoClientTest()
+        [Combinatorial]
+        public void TwoClientTest(
+            [Values(
+            "thatbenbierens/nim-codex:blkex-cancelpresence-2", // S don't send cancel-presence messages
+            "thatbenbierens/nim-codex:blkex-cancelpresence-1", // F ignore cancel-presence messages
+            "codexstorage/nim-codex:sha-4b5c355-dist-tests", // F unmodified
+
+            "thatbenbierens/nim-codex:blkex-cancelpresence-3", // F same as 1 but logging
+            "thatbenbierens/nim-codex:blkex-cancelpresence-4", // S no cancel-presence-msg, no fromCancel field
+            "thatbenbierens/nim-codex:blkex-cancelpresence-5", // F all-presence = cancel? return from handler
+            "thatbenbierens/nim-codex:blkex-cancelpresence-6", // F no cancel-presence-msg, but if any cancel send empty presence msg
+            "thatbenbierens/nim-codex:blkex-cancelpresence-7", // F same but logs outgoing empty presence message. (msg is empty structure)
+            "thatbenbierens/nim-codex:blkex-cancelpresence-8", // crashes F? eventtimelogging
+            "thatbenbierens/nim-codex:blkex-cancelpresence-9", // crashes S? eventtimelogging + no cancel-presence-msg (should be slow)
+
+            "thatbenbierens/nim-codex:blkex-cancelpresence-10", // F eventtimelogging (should be fast)
+            "thatbenbierens/nim-codex:blkex-cancelpresence-11" // S eventtimelogging + no cancel-presence-msg (should be slow)
+            )] string img
+        )
         {
+            CodexContainerRecipe.DockerImageOverride = img;
+
             var uploader = StartCodex(s => s.WithName("Uploader"));
             var downloader = StartCodex(s => s.WithName("Downloader").WithBootstrapNode(uploader));
 
@@ -23,25 +43,43 @@ namespace CodexReleaseTests.DataTests
         }
 
         [Test]
-        [Ignore("Location selection is currently unavailable.")]
-        public void TwoClientsTwoLocationsTest()
+        public void ParseLogs()
         {
-            var locations = Ci.GetKnownLocations();
-            if (locations.NumberOfLocations < 2)
+            var path = "";
+            var lines = File.ReadAllLines(path);
+            foreach (var line in lines)
             {
-                Assert.Inconclusive("Two-locations test requires 2 nodes to be available in the cluster.");
-                return;
+                var cline = CodexLogLine.Parse(line);
+                if (cline == null) continue;
+
+                if (cline.Message == "times for")
+                {
+                    ProcessTimes(cline);
+                }
             }
+        }
 
-            var uploader = Ci.StartCodexNode(s => s.WithName("Uploader").At(locations.Get(0)));
-            var downloader = Ci.StartCodexNode(s => s.WithName("Downloader").WithBootstrapNode(uploader).At(locations.Get(1)));
+        private void ProcessTimes(CodexLogLine cline)
+        {
+            // reqCreatedTime
+            // wantHaveSentTimes
+            // presenceRecvTimes
+            // wantBlkSentTimes
+            // blkRecvTimes
+            // cancelSentTimes
+            // resolveTimes
 
-            PerformTwoClientTest(uploader, downloader);
+        }
+
+        public class BlockReqTimes
+        {
+            public TimeSpan CreateToWantHaveSent { get; set; }
+
         }
 
         private void PerformTwoClientTest(ICodexNode uploader, ICodexNode downloader)
         {
-            PerformTwoClientTest(uploader, downloader, 10.MB());
+            PerformTwoClientTest(uploader, downloader, 100.MB());
         }
 
         private void PerformTwoClientTest(ICodexNode uploader, ICodexNode downloader, ByteSize size)
@@ -51,11 +89,12 @@ namespace CodexReleaseTests.DataTests
             var contentId = uploader.UploadFile(testFile);
             AssertNodesContainFile(contentId, uploader);
 
-            var downloadedFile = downloader.DownloadContent(contentId);
+            var (downloadedFile, timeTaken) = downloader.DownloadContentT(contentId);
             AssertNodesContainFile(contentId, uploader, downloader);
 
+            Assert.That(timeTaken, Is.LessThan(TimeSpan.FromSeconds(15.0)), "Too slow!");
+
             testFile.AssertIsEqual(downloadedFile);
-            CheckLogForErrors(uploader, downloader);
         }
     }
 }
