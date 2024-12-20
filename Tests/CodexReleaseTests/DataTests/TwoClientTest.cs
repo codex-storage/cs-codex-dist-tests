@@ -30,7 +30,17 @@ namespace CodexReleaseTests.DataTests
             "thatbenbierens/nim-codex:blkex-cancelpresence-9", // crashes S? eventtimelogging + no cancel-presence-msg (should be slow)
 
             "thatbenbierens/nim-codex:blkex-cancelpresence-10", // F eventtimelogging (should be fast)
-            "thatbenbierens/nim-codex:blkex-cancelpresence-11" // S eventtimelogging + no cancel-presence-msg (should be slow)
+            "thatbenbierens/nim-codex:blkex-cancelpresence-11", // S eventtimelogging + no cancel-presence-msg (should be slow)
+
+            "thatbenbierens/nim-codex:blkex-cancelpresence-12", // F upload and download event logging (should be fast)
+            "thatbenbierens/nim-codex:blkex-cancelpresence-13", // S same but with no cancel-presence-msg (should be slow)
+
+            "thatbenbierens/nim-codex:peerselecta-1", // F PR update (yes cancel-presence-msg)
+            "thatbenbierens/nim-codex:peerselecta-2", // S PR update (no cancel-presence-msg)
+
+            "thatbenbierens/nim-codex:blkex-cancelpresence-14", // F new logging
+            "thatbenbierens/nim-codex:blkex-cancelpresence-15" // S new logging
+
             )] string img
         )
         {
