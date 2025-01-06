@@ -17,11 +17,6 @@ namespace SeeTimeline
             Dt = dt;
         }
 
-        public void Move(TimeSpan timeSpan)
-        {
-            Dt = Dt + timeSpan;
-        }
-
         public void Scale(DateTime from, double factor)
         {
             var span = Dt - from;
@@ -50,17 +45,27 @@ namespace SeeTimeline
             if (e.Dt < Earliest) Earliest = e.Dt;
         }
 
+        public string[] Addresses => events.Keys.ToArray();
         public DateTime Earliest { get; private set; } = DateTime.MaxValue;
         public DateTime Latest { get; private set; } = DateTime.MinValue;
 
-        public void Iterate(int max, Action<string, CodexEvent[]> action)
+        public void KeepOnly(string[] addresses)
         {
-            var i = 0;
+            var keys = events.Keys.ToArray();
+            foreach (var key in keys)
+            {
+                if (!addresses.Contains(key))
+                {
+                    events.Remove(key);
+                }
+            }
+        }
+
+        public void Iterate(Action<string, CodexEvent[]> action)
+        {
             foreach (var pair in events)
             {
                 action(pair.Key, pair.Value.ToArray());
-                i++;
-                if (i >= max) return;
             }
         }
 
@@ -82,14 +87,6 @@ namespace SeeTimeline
             foreach (var pair in events)
             {
                 foreach (var e in pair.Value) e.Scale(from, factor);
-            }
-        }
-
-        public void Move(TimeSpan timeSpan)
-        {
-            foreach (var pair in events)
-            {
-                foreach (var e in pair.Value) e.Move(timeSpan);
             }
         }
     }
@@ -154,7 +151,19 @@ namespace SeeTimeline
                 //    isCancel = $e.cancel
                 //trace "Received wantHave".
                 //AddJobs(result, "WantHaveRecv", Colors.Red, req.WantHaveRecv);
-                else if (line.Message == "Received wantHave") AddEvent(line.Attributes["address"], "WantHaveRecv", Colors.Red);
+                else if (line.Message == "Received wantHave")
+                {
+                    var isCancel = line.Attributes["isCancel"];
+
+                    if (isCancel.ToLowerInvariant() == "true")
+                    {
+                        AddEvent(line.Attributes["address"], "CancelRecv", Colors.Red);
+                    }
+                    else
+                    {
+                        AddEvent(line.Attributes["address"], "WantHaveRecv", Colors.Red);
+                    }
+                }
 
                 //trace "Received wantBlock"
                 //AddJobs(result, "WantBlkRecv", Colors.Yellow, req.WantBlkRecv);

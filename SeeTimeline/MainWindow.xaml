@@ -10,20 +10,33 @@
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
-        <Grid.LayoutTransform>
-            <ScaleTransform 
-                ScaleX="1.5"
-                ScaleY="1.5"/>
-        </Grid.LayoutTransform>
         <Button Grid.Row="0" Content="Load Logs" Click="Button_Click"/>
-        <TextBlock Grid.Row="1" Name="Line1Name" HorizontalAlignment="Center"/>
-        <tl:Timeliner Name="Timeliner1" Grid.Row="2"/>
-        <TextBlock Grid.Row="3" Name="Line2Name" HorizontalAlignment="Center"/>
-        <tl:Timeliner Name="Timeliner2" Grid.Row="4"/>
+        <Grid Grid.Row="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+            <Grid.LayoutTransform>
+                <ScaleTransform 
+                    ScaleX="1.0"
+                    ScaleY="1.0"/>
+            </Grid.LayoutTransform>
+            <TextBlock Grid.Row="0" Name="Line1Name" HorizontalAlignment="Center"/>
+            <tl:Timeliner Name="Timeliner1" Grid.Row="1"/>
+            <TextBlock Grid.Row="2" Name="Line2Name" HorizontalAlignment="Center"/>
+            <tl:Timeliner Name="Timeliner2" Grid.Row="3"/>
+            <TextBlock Grid.Row="4" Name="Line3Name" HorizontalAlignment="Center"/>
+            <tl:Timeliner Name="Timeliner3" Grid.Row="5"/>
+            <TextBlock Grid.Row="6" Name="Line4Name" HorizontalAlignment="Center"/>
+            <tl:Timeliner Name="Timeliner4" Grid.Row="7"/>
+        </Grid>
     </Grid>
 </Window>
