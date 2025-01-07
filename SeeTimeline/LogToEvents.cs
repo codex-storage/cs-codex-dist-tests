@@ -31,13 +31,14 @@ namespace SeeTimeline
 
     public class EventSet
     {
+        public const string NoAddress = "-";
+        public const string MiscAddress = "~";
+
         private readonly Dictionary<string, List<CodexEvent>> events = new Dictionary<string, List<CodexEvent>>();
         private readonly LogLineAdder adder = new LogLineAdder();
 
         public void Add(string address, CodexEvent e)
         {
-            if (address != "-" && (!address.Contains("treeCid:") || !address.Contains("index:"))) return;
-
             if (!events.ContainsKey(address)) events.Add(address, new List<CodexEvent>());
             events[address].Add(e);
 
@@ -54,7 +55,7 @@ namespace SeeTimeline
             var keys = events.Keys.ToArray();
             foreach (var key in keys)
             {
-                if (!addresses.Contains(key))
+                if (key != NoAddress && key != MiscAddress && !addresses.Contains(key))
                 {
                     events.Remove(key);
                 }
@@ -112,13 +113,15 @@ namespace SeeTimeline
 
             public void Parse()
             {
+                //if (!line.Attributes.Any(a => a.Value.ToLowerInvariant().Contains("index: 5"))) return;
+
                 //AddJobs(result, "Created", Colors.Red, req.Created);
                 // trace "BlockRequest created", address
                 if (line.Message == "BlockRequest created") AddEvent(line.Attributes["address"], "ReqCreated", Colors.Red);
 
                 //AddJobs(result, "TaskScheduled", Colors.Purple, req.TaskScheduled);
                 //            trace "Task scheduled", peerId = task.id
-                else if (line.Message == "Task scheduled") AddEvent("-", "TaskScheduled", Colors.White);
+                else if (line.Message == "Task scheduled") AddEvent(EventSet.NoAddress, "TaskScheduled", Colors.Black);
 
                 //trace "Sending wantHave request", toAsk, peer = p.id
                 //AddJobs(result, "WantHaveSent", Colors.Orange, req.WantHaveSent);
@@ -128,9 +131,20 @@ namespace SeeTimeline
                 //AddJobs(result, "WantBlkSent", Colors.Green, req.WantBlkSent);
                 else if (line.Message == "Sending wantBlock request to") AddMultiple(line.Attributes["addresses"], "SentWantBlk", Colors.Green);
 
-                //trace "Handling blockPresences", addrs = blocks.mapIt(it.address)
+                //trace "Handling blockPresences", addrs = blocks.mapIt(it.address), anyCancel = blocks.anyIt(it.isCancel)
                 //AddJobs(result, "PresenceRecv", Colors.Yellow, req.PresenceRecv);
-                else if (line.Message == "Handling blockPresences") AddMultiple(line.Attributes["addrs"], "PresenceRecv", Colors.Yellow);
+                else if (line.Message == "Handling blockPresences")
+                {
+                    var anyCancel = line.Attributes["anyCancel"].ToLowerInvariant();
+                    if (anyCancel == "true")
+                    {
+                        AddMultiple(line.Attributes["addrs"], "CancelPresenceRecv", Colors.Red);
+                    }
+                    else
+                    {
+                        AddMultiple(line.Attributes["addrs"], "PresenceRecv", Colors.Yellow);
+                    }
+                }
 
                 //trace "Sending block request cancellations to peers", addrs, peers = b.peers.mapIt($it.id)
                 //AddJobs(result, "CancelSent", Colors.Purple, req.CancelSent);
@@ -169,9 +183,21 @@ namespace SeeTimeline
                 //AddJobs(result, "WantBlkRecv", Colors.Yellow, req.WantBlkRecv);
                 else if (line.Message == "Received wantBlock") AddEvent(line.Attributes["address"], "WantBlkRecv", Colors.Yellow);
 
-                //trace "Sending presence to remote", addrs = presence.mapIt(it.address)
+                //trace "Sending presence to remote", addrs = presence.mapIt(it.address), anyCancel = presence.anyIt(it.isCancel)
                 //AddJobs(result, "PresenceSent", Colors.Orange, req.PresenceSent);
-                else if (line.Message == "Sending presence") AddMultiple(line.Attributes["addrs"], "PresenceSent", Colors.Orange);
+                else if (line.Message == "Sending presence")
+                {
+                    var isCancel = line.Attributes["anyCancel"];
+
+                    if (isCancel.ToLowerInvariant() == "true")
+                    {
+                        AddMultiple(line.Attributes["addrs"], "CancelPresenceSent", Colors.Red);
+                    }
+                    else
+                    {
+                        AddMultiple(line.Attributes["addrs"], "PresenceSent", Colors.Orange);
+                    }
+                }
 
                 //trace "Begin sending blocks", addrs = wantAddresses
                 //AddJobs(result, "BlkSendStart", Colors.Green, req.BlkSendStart);
@@ -180,6 +206,32 @@ namespace SeeTimeline
                 //trace "Finished sending blocks", addrs = wantAddresses
                 //AddJobs(result, "BlkSendEnd", Colors.Blue, req.BlkSendEnd);
                 else if (line.Message == "Finished sending blocks") AddMultiple(line.Attributes["addrs"], "BlkSendEnd", Colors.Blue);
+
+                else if (line.Message == "tick") AddEvent(EventSet.MiscAddress, "tick", Colors.Black);
+
+                //// Discovery Started
+                //else if (line.Message == "Discovery Started") AddEvent(EventSet.NoAddress, "DiscoveryStart", Colors.Black);
+
+                //// Setting up peer
+                //else if (line.Message == "Setting up peer") AddEvent(EventSet.NoAddress, "NewPeer", Colors.Black);
+
+                //// Error block handle, disconnecting peer
+                //else if (line.Message == "Error block handle, disconnecting peer") AddEvent(EventSet.NoAddress, "DisconnectPeer", Colors.Black);
+
+                //// Dropping peer
+                //else if (line.Message == "Dropping peer") AddEvent(EventSet.NoAddress, "DisconnectPeer", Colors.Black);
+
+                //// Acquired slot
+                //else if (line.Message == "Acquired slot") AddEvent(EventSet.MiscAddress, "AcqSlot", Colors.Black);
+
+                //// Released slot
+                //else if (line.Message == "Released slot") AddEvent(EventSet.MiscAddress, "RlsSlot", Colors.Black);
+
+                //// Got discv5 lookup query response
+                //else if (line.Message == "Got discv5 lookup query response") AddEvent(EventSet.MiscAddress, "Discv5", Colors.Black);
+
+                //// waiting for data
+                //else if (line.Message == "waiting for data") AddEvent(EventSet.MiscAddress, "wait", Colors.Black);
             }
 
             private void AddMultiple(string addresses, string name, Color color)

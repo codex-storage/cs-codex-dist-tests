@@ -30,11 +30,11 @@ namespace SeeTimeline
         private void Button_Click(object sender, RoutedEventArgs e)
         {
             //var path = "d:\\Projects\\cs-codex-dist-tests\\Tests\\CodexReleaseTests\\bin\\Debug\\net8.0\\CodexTestLogs\\2024-12\\20\\09-57-01Z_TwoClientTests\\";
-            var path = "C:\\Projects\\cs-codex-dist-tests\\Tests\\CodexReleaseTests\\bin\\Debug\\net8.0\\CodexTestLogs\\2025-01\\06\\09-45-03Z_TwoClientTests\\";
-            var file1 = Path.Combine(path, "TwoClientTest[thatbenbierens_nim-codex_blkex-cancelpresence-14]_000001_Downloader1.log");
-            var file2 = Path.Combine(path, "TwoClientTest[thatbenbierens_nim-codex_blkex-cancelpresence-14]_000000_Uploader0.log");
-            var file3 = Path.Combine(path, "TwoClientTest[thatbenbierens_nim-codex_blkex-cancelpresence-15]_000001_Downloader1.log");
-            var file4 = Path.Combine(path, "TwoClientTest[thatbenbierens_nim-codex_blkex-cancelpresence-15]_000000_Uploader0.log");
+            var path = "c:\\Projects\\cs-codex-dist-tests\\Tests\\CodexReleaseTests\\bin\\Debug\\net8.0\\CodexTestLogs\\2025-01\\07\\14-09-39Z_TwoClientTests\\";
+            var file1 = Path.Combine(path, "TwoClientTest[thatbenbierens_nim-codex_blkex-cancelpresence-18-f]_000001_Downloader1.log");
+            var file2 = Path.Combine(path, "TwoClientTest[thatbenbierens_nim-codex_blkex-cancelpresence-18-f]_000000_Uploader0.log");
+            var file3 = Path.Combine(path, "TwoClientTest[thatbenbierens_nim-codex_blkex-cancelpresence-18-s]_000001_Downloader1.log");
+            var file4 = Path.Combine(path, "TwoClientTest[thatbenbierens_nim-codex_blkex-cancelpresence-18-s]_000000_Uploader0.log");
 
             Line1Name.Text = file1;
             Line2Name.Text = file2;
@@ -110,17 +110,23 @@ namespace SeeTimeline
 
             set.Iterate((addr, events) =>
             {
-                //result.Add(CreateItem(addr, events));
-                foreach (var e in events)
+                if (addr == EventSet.NoAddress || addr == EventSet.MiscAddress)
                 {
-                    result.Add(new TimelinerItem()
+                    result.Add(CreateItem(addr, events));
+                }
+                else
+                {
+                    foreach (var e in events)
                     {
-                        Name = addr + " " + e.Name,
-                        Jobs = new List<TimelinerJob>
+                        result.Add(new TimelinerItem()
+                        {
+                            Name = addr + " " + e.Name,
+                            Jobs = new List<TimelinerJob>
                         {
                             CreateJob(e)
                         }
-                    });
+                        });
+                    }
                 }
             });
 

@@ -48,6 +48,11 @@ namespace CodexPlugin
         public string Message { get; set; } = string.Empty;
         public Dictionary<string, string> Attributes { get; private set; } = new Dictionary<string, string>();
 
+        public override string ToString()
+        {
+            return Message;
+        }
+
         /// <summary>
         /// After too much time spent cursing at regexes, here's what I got:
         /// Parses input string into 'key=value' pair, considerate of quoted (") values.

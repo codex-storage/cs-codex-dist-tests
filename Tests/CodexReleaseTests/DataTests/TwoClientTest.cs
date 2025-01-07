@@ -39,15 +39,23 @@ namespace CodexReleaseTests.DataTests
             "thatbenbierens/nim-codex:peerselecta-2", // S PR update (no cancel-presence-msg)
 
             "thatbenbierens/nim-codex:blkex-cancelpresence-14", // F new logging
-            "thatbenbierens/nim-codex:blkex-cancelpresence-15" // S new logging
+            "thatbenbierens/nim-codex:blkex-cancelpresence-15", // S new logging
 
+            "thatbenbierens/nim-codex:blkex-cancelpresence-16-f", // F more logging
+            "thatbenbierens/nim-codex:blkex-cancelpresence-16-s",  // S more logging
+
+            "thatbenbierens/nim-codex:blkex-cancelpresence-17-f", // F "tick" every 100 milliseconds
+            "thatbenbierens/nim-codex:blkex-cancelpresence-17-s",  // S same but slow
+
+            "thatbenbierens/nim-codex:blkex-cancelpresence-18-f", // F "tick" every 10 milliseconds
+            "thatbenbierens/nim-codex:blkex-cancelpresence-18-s"  // S same but slow
             )] string img
         )
         {
             CodexContainerRecipe.DockerImageOverride = img;
 
-            var uploader = StartCodex(s => s.WithName("Uploader"));
-            var downloader = StartCodex(s => s.WithName("Downloader").WithBootstrapNode(uploader));
+            var uploader = StartCodex(s => s.WithName("Uploader").WithLogLevel(CodexLogLevel.Trace, new CodexLogCustomTopics(CodexLogLevel.Trace, CodexLogLevel.Trace, CodexLogLevel.Trace)));
+            var downloader = StartCodex(s => s.WithName("Downloader").WithLogLevel(CodexLogLevel.Trace, new CodexLogCustomTopics(CodexLogLevel.Trace, CodexLogLevel.Trace, CodexLogLevel.Trace)).WithBootstrapNode(uploader));
 
             PerformTwoClientTest(uploader, downloader);
         }
@@ -55,17 +63,59 @@ namespace CodexReleaseTests.DataTests
         [Test]
         public void ParseLogs()
         {
-            var path = "";
-            var lines = File.ReadAllLines(path);
+            var path = "c:\\Projects\\cs-codex-dist-tests\\Tests\\CodexReleaseTests\\bin\\Debug\\net8.0\\CodexTestLogs\\2025-01\\07\\10-32-44Z_TwoClientTests\\";
+            var file1 = Path.Combine(path, "TwoClientTest[thatbenbierens_nim-codex_blkex-cancelpresence-16-f]_000001_Downloader1.log");
+            var file2 = Path.Combine(path, "TwoClientTest[thatbenbierens_nim-codex_blkex-cancelpresence-16-f]_000000_Uploader0.log");
+            var file3 = Path.Combine(path, "TwoClientTest[thatbenbierens_nim-codex_blkex-cancelpresence-16-s]_000001_Downloader1.log");
+            var file4 = Path.Combine(path, "TwoClientTest[thatbenbierens_nim-codex_blkex-cancelpresence-16-s]_000000_Uploader0.log");
+
+            var lines = File.ReadAllLines(file3);
+            var clines = new List<CodexLogLine>();
             foreach (var line in lines)
             {
                 var cline = CodexLogLine.Parse(line);
-                if (cline == null) continue;
+                if (cline != null) clines.Add(cline);
+            }
 
-                if (cline.Message == "times for")
+            var gaps = new List<Gap>();
+            for (var i = 0; i < clines.Count; i++)
+            {
+                if (i + 1 < clines.Count)
                 {
-                    ProcessTimes(cline);
+                    var line = clines[i];
+                    var next = clines[i + 1];
+                    gaps.Add(new Gap(line, next));
                 }
+            }
+
+            gaps = gaps.OrderByDescending(g => g.GapSpan.TotalMilliseconds).ToList();
+
+            var iiii = 0;
+
+        }
+
+        public class Gap
+        {
+            public Gap(CodexLogLine line, CodexLogLine next)
+            {
+                Line = line;
+                Next = next;
+            }
+
+            public CodexLogLine Line { get; }
+            public CodexLogLine Next { get; }
+
+            public TimeSpan GapSpan
+            {
+                get
+                {
+                    return Next.TimestampUtc - Line.TimestampUtc;
+                }
+            }
+
+            public override string ToString()
+            {
+                return $"[{GapSpan.TotalMilliseconds} ms]";
             }
         }
 
