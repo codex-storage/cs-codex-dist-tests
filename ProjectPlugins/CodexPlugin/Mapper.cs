@@ -15,7 +15,7 @@ namespace CodexPlugin
                 Id = debugInfo.Id,
                 Spr = debugInfo.Spr,
                 Addrs = debugInfo.Addrs.ToArray(),
-                AnnounceAddresses = JArray(debugInfo.AdditionalProperties, "announceAddresses").Select(x => x.ToString()).ToArray(),
+                AnnounceAddresses = debugInfo.AnnounceAddresses.ToArray(),
                 Version = Map(debugInfo.Codex),
                 Table = Map(debugInfo.Table)
             };
