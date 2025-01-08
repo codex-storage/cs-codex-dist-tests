@@ -55,7 +55,7 @@ namespace SeeTimeline
             var keys = events.Keys.ToArray();
             foreach (var key in keys)
             {
-                if (key != NoAddress && key != MiscAddress && !addresses.Contains(key))
+                if (key != NoAddress && !key.StartsWith(MiscAddress) && !addresses.Contains(key))
                 {
                     events.Remove(key);
                 }
@@ -113,6 +113,21 @@ namespace SeeTimeline
 
             public void Parse()
             {
+                var colormap = new Dictionary<string, Color>
+                {
+                    { "0", Colors.Black },
+                    { "1", Colors.Red },
+                    { "2", Colors.Green },
+                    { "3", Colors.Blue },
+                    { "4", Colors.Red },
+                    { "5", Colors.Green },
+                    { "6", Colors.Blue },
+                    { "7", Colors.Red },
+                    { "8", Colors.Green },
+                    { "9", Colors.Blue },
+                    { "10", Colors.Black }
+                };
+
                 //if (!line.Attributes.Any(a => a.Value.ToLowerInvariant().Contains("index: 5"))) return;
 
                 //AddJobs(result, "Created", Colors.Red, req.Created);
@@ -232,6 +247,15 @@ namespace SeeTimeline
 
                 //// waiting for data
                 //else if (line.Message == "waiting for data") AddEvent(EventSet.MiscAddress, "wait", Colors.Black);
+
+
+                // MsgReceived
+                // MsgSending
+                // MsgSent
+
+                else if (line.Message == "MsgSending") AddEvent(EventSet.MiscAddress + "snd", line.Attributes["num"], colormap[line.Attributes["num"]]);
+                else if (line.Message == "MsgSent") AddEvent(EventSet.MiscAddress + "snt", line.Attributes["num"], colormap[line.Attributes["num"]]);
+                else if (line.Message == "MsgReceived") AddEvent(EventSet.MiscAddress + "rcv", line.Attributes["num"], colormap[line.Attributes["num"]]);
             }
 
             private void AddMultiple(string addresses, string name, Color color)

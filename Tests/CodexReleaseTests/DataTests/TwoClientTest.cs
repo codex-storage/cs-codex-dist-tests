@@ -48,14 +48,20 @@ namespace CodexReleaseTests.DataTests
             "thatbenbierens/nim-codex:blkex-cancelpresence-17-s",  // S same but slow
 
             "thatbenbierens/nim-codex:blkex-cancelpresence-18-f", // F "tick" every 10 milliseconds
-            "thatbenbierens/nim-codex:blkex-cancelpresence-18-s"  // S same but slow
+            "thatbenbierens/nim-codex:blkex-cancelpresence-18-s",  // S same but slow
+
+            "thatbenbierens/nim-codex:blkex-cancelpresence-19-f", // F sending/sent/received logs
+            "thatbenbierens/nim-codex:blkex-cancelpresence-19-s",  // S same but slow
+
+            "thatbenbierens/nim-codex:blkex-cancelpresence-20-f", // F sending/sent/received logs + number
+            "thatbenbierens/nim-codex:blkex-cancelpresence-20-s"  // S? same but slow
             )] string img
         )
         {
             CodexContainerRecipe.DockerImageOverride = img;
 
-            var uploader = StartCodex(s => s.WithName("Uploader").WithLogLevel(CodexLogLevel.Trace, new CodexLogCustomTopics(CodexLogLevel.Trace, CodexLogLevel.Trace, CodexLogLevel.Trace)));
-            var downloader = StartCodex(s => s.WithName("Downloader").WithLogLevel(CodexLogLevel.Trace, new CodexLogCustomTopics(CodexLogLevel.Trace, CodexLogLevel.Trace, CodexLogLevel.Trace)).WithBootstrapNode(uploader));
+            var uploader = StartCodex(s => s.WithName("Uploader"));
+            var downloader = StartCodex(s => s.WithName("Downloader").WithBootstrapNode(uploader));
 
             PerformTwoClientTest(uploader, downloader);
         }
