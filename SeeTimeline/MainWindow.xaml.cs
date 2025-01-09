@@ -29,12 +29,12 @@ namespace SeeTimeline
 
         private void Button_Click(object sender, RoutedEventArgs e)
         {
-            var path = "d:\\Projects\\cs-codex-dist-tests\\Tests\\CodexReleaseTests\\bin\\Debug\\net8.0\\CodexTestLogs\\2025-01\\08\\13-56-44Z_TwoClientTests\\";
-            //var path = "c:\\Projects\\cs-codex-dist-tests\\Tests\\CodexReleaseTests\\bin\\Debug\\net8.0\\CodexTestLogs\\2025-01\\07\\14-09-39Z_TwoClientTests\\";
-            var file1 = Path.Combine(path, "TwoClientTest[thatbenbierens_nim-codex_blkex-cancelpresence-20-f]_000001_Downloader1.log");
-            var file2 = Path.Combine(path, "TwoClientTest[thatbenbierens_nim-codex_blkex-cancelpresence-20-f]_000000_Uploader0.log");
-            var file3 = Path.Combine(path, "TwoClientTest[thatbenbierens_nim-codex_blkex-cancelpresence-20-s]_000001_Downloader1.log");
-            var file4 = Path.Combine(path, "TwoClientTest[thatbenbierens_nim-codex_blkex-cancelpresence-20-s]_000000_Uploader0.log");
+            //var path = "d:\\Projects\\cs-codex-dist-tests\\Tests\\CodexReleaseTests\\bin\\Debug\\net8.0\\CodexTestLogs\\2025-01\\08\\13-56-44Z_TwoClientTests\\";
+            var path = "c:\\Projects\\cs-codex-dist-tests\\Tests\\CodexReleaseTests\\bin\\Debug\\net8.0\\CodexTestLogs\\2025-01\\09\\10-45-20Z_TwoClientTests\\";
+            var file1 = Path.Combine(path, "TwoClientTest[thatbenbierens_nim-codex_blkex-cancelpresence-25-f]_000001_Downloader1.log");
+            var file2 = Path.Combine(path, "TwoClientTest[thatbenbierens_nim-codex_blkex-cancelpresence-25-f]_000000_Uploader0.log");
+            var file3 = Path.Combine(path, "TwoClientTest[thatbenbierens_nim-codex_blkex-cancelpresence-25-s]_000001_Downloader1.log");
+            var file4 = Path.Combine(path, "TwoClientTest[thatbenbierens_nim-codex_blkex-cancelpresence-25-s]_000000_Uploader0.log");
 
             Line1Name.Text = file1;
             Line2Name.Text = file2;

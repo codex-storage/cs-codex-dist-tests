@@ -253,9 +253,15 @@ namespace SeeTimeline
                 // MsgSending
                 // MsgSent
 
-                else if (line.Message == "MsgSending") AddEvent(EventSet.MiscAddress + "snd", line.Attributes["num"], colormap[line.Attributes["num"]]);
-                else if (line.Message == "MsgSent") AddEvent(EventSet.MiscAddress + "snt", line.Attributes["num"], colormap[line.Attributes["num"]]);
-                else if (line.Message == "MsgReceived") AddEvent(EventSet.MiscAddress + "rcv", line.Attributes["num"], colormap[line.Attributes["num"]]);
+                //else if (line.Message == "MsgSending") AddEvent(EventSet.MiscAddress + "snd", line.Attributes["num"], colormap[line.Attributes["num"]]);
+                //else if (line.Message == "MsgSent") AddEvent(EventSet.MiscAddress + "snt", line.Attributes["num"], colormap[line.Attributes["num"]]);
+                //else if (line.Message == "MsgReceived") AddEvent(EventSet.MiscAddress + "rcv", line.Attributes["num"], colormap[line.Attributes["num"]]);
+
+                //else if (line.Message == "lpc-write-fast") AddEvent(EventSet.MiscAddress + "f", "F", Colors.Black);
+                //else if (line.Message == "lpc-write-prepare") AddEvent(EventSet.MiscAddress + "p", "P", Colors.Black);
+
+                else if (line.Message == "chronoswrite") AddEvent(EventSet.MiscAddress + "chronos-write", line.Attributes["ticks"], Colors.Black);
+                else if (line.Message == "chronosread") AddEvent(EventSet.MiscAddress + "chronos-read", line.Attributes["ticks"], Colors.Black);
             }
 
             private void AddMultiple(string addresses, string name, Color color)

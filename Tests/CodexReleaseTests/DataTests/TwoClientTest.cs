@@ -42,19 +42,31 @@ namespace CodexReleaseTests.DataTests
             "thatbenbierens/nim-codex:blkex-cancelpresence-15", // S new logging
 
             "thatbenbierens/nim-codex:blkex-cancelpresence-16-f", // F more logging
-            "thatbenbierens/nim-codex:blkex-cancelpresence-16-s",  // S more logging
+            "thatbenbierens/nim-codex:blkex-cancelpresence-16-s", // S more logging
 
             "thatbenbierens/nim-codex:blkex-cancelpresence-17-f", // F "tick" every 100 milliseconds
-            "thatbenbierens/nim-codex:blkex-cancelpresence-17-s",  // S same but slow
+            "thatbenbierens/nim-codex:blkex-cancelpresence-17-s", // S same but slow
 
             "thatbenbierens/nim-codex:blkex-cancelpresence-18-f", // F "tick" every 10 milliseconds
-            "thatbenbierens/nim-codex:blkex-cancelpresence-18-s",  // S same but slow
+            "thatbenbierens/nim-codex:blkex-cancelpresence-18-s", // S same but slow
 
             "thatbenbierens/nim-codex:blkex-cancelpresence-19-f", // F sending/sent/received logs
-            "thatbenbierens/nim-codex:blkex-cancelpresence-19-s",  // S same but slow
+            "thatbenbierens/nim-codex:blkex-cancelpresence-19-s", // S same but slow
 
             "thatbenbierens/nim-codex:blkex-cancelpresence-20-f", // F sending/sent/received logs + number
-            "thatbenbierens/nim-codex:blkex-cancelpresence-20-s"  // S? same but slow
+            "thatbenbierens/nim-codex:blkex-cancelpresence-20-s", // S same but slow
+
+            "thatbenbierens/nim-codex:blkex-cancelpresence-21-f", // F libp2p lpchannel.write logs
+            "thatbenbierens/nim-codex:blkex-cancelpresence-21-s", // S same but slow
+
+            "thatbenbierens/nim-codex:blkex-cancelpresence-22-f", // F chronos stream write logs
+            "thatbenbierens/nim-codex:blkex-cancelpresence-22-s", // S same but slow
+
+            "thatbenbierens/nim-codex:blkex-cancelpresence-23-f", // F chronos stream write logs in libp2p hand-off
+            "thatbenbierens/nim-codex:blkex-cancelpresence-23-s", // S same but slow
+
+            "thatbenbierens/nim-codex:blkex-cancelpresence-25-f", // F chronos stream write logs in libp2p hand-off with ticks
+            "thatbenbierens/nim-codex:blkex-cancelpresence-25-s"  // S same but slow
             )] string img
         )
         {
