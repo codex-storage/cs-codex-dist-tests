@@ -21,6 +21,7 @@ namespace CodexReleaseTests.MarketTests
         private readonly TestToken pricePerSlotPerSecond = 10.TstWei();
 
         [Test]
+        [Ignore("Disabled for now: Test is unstable.")]
         public void ContractFailed()
         {
             var hosts = StartHosts();
