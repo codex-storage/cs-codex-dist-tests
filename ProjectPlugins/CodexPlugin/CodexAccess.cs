@@ -234,8 +234,15 @@ namespace CodexPlugin
                 .CreateEndpoint(GetAddress(), "/api/codex/v1/", Container.Name);
         }
 
+        public static Address? UploaderOverride { get; set; } = null;
+        public static Address? DownloaderOverride { get; set; } = null;
+
         private Address GetAddress()
         {
+            if (GetName().ToLowerInvariant().Contains("upload") && UploaderOverride != null) return UploaderOverride;
+            if (GetName().ToLowerInvariant().Contains("download") && DownloaderOverride != null) return DownloaderOverride;
+
+
             return Container.Containers.Single().GetAddress(CodexContainerRecipe.ApiPortTag);
         }
 
