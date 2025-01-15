@@ -1,5 +1,6 @@
 ﻿using CodexOpenApi;
 using Core;
+using GethPlugin;
 using Logging;
 using Newtonsoft.Json;
 using Utils;
@@ -10,12 +11,14 @@ namespace CodexPlugin
     {
         private readonly ILog log;
         private readonly IPluginTools tools;
-        private readonly ICodexInstance instance;
+        private readonly IProcessControl processControl;
+        private ICodexInstance instance;
         private readonly Mapper mapper = new Mapper();
 
-        public CodexAccess(IPluginTools tools, ICodexInstance instance, ICrashWatcher crashWatcher)
+        public CodexAccess(IPluginTools tools, IProcessControl processControl, ICodexInstance instance, ICrashWatcher crashWatcher)
         {
             this.tools = tools;
+            this.processControl = processControl;
             this.instance = instance;
             log = tools.GetLog();
             CrashWatcher = crashWatcher;
@@ -24,6 +27,14 @@ namespace CodexPlugin
         }
 
         public ICrashWatcher CrashWatcher { get; }
+
+        public void Stop(bool waitTillStopped)
+        {
+            CrashWatcher.Stop();
+            processControl.Stop(instance);
+            // Prevents accidental use after stop:
+            instance = null!;
+        }
 
         public string GetImageName()
         {
@@ -192,20 +203,18 @@ namespace CodexPlugin
             //);
         }
 
+        public Address? GetMetricsEndpoint()
+        {
+            return instance.GetMetricsEndpoint();
+        }
+
+        public EthAccount? GetEthAccount()
+        {
+            return instance.GetEthAccount();
+        }
+
         public void DeleteDataDirFolder()
         {
-            //try
-            //{
-            //    var containerNumber = Container.Containers.First().Recipe.Number;
-            //    var dataDir = $"datadir{containerNumber}";
-            //    var workflow = tools.CreateWorkflow();
-            //    workflow.ExecuteCommand(Container.Containers.First(), "rm", "-Rfv", $"/codex/{dataDir}/repo");
-            //    Log("Deleted repo folder.");
-            //}
-            //catch (Exception e)
-            //{
-            //    Log("Unable to delete repo folder: " + e);
-            //}
             instance.DeleteDataDirFolder();
         }
 

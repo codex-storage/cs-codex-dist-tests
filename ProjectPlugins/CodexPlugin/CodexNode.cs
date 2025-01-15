@@ -52,18 +52,15 @@ namespace CodexPlugin
         private readonly ILog log;
         private readonly IPluginTools tools;
         private readonly ICodexNodeHooks hooks;
-        private readonly EthAccount? ethAccount;
         private readonly TransferSpeeds transferSpeeds;
         private string peerId = string.Empty;
         private string nodeId = string.Empty;
         private readonly CodexAccess codexAccess;
 
-        public CodexNode(IPluginTools tools, CodexAccess codexAccess, CodexNodeGroup group, IMarketplaceAccess marketplaceAccess, ICodexNodeHooks hooks, EthAccount? ethAccount)
+        public CodexNode(IPluginTools tools, CodexAccess codexAccess, IMarketplaceAccess marketplaceAccess, ICodexNodeHooks hooks)
         {
             this.tools = tools;
-            this.ethAccount = ethAccount;
             this.codexAccess = codexAccess;
-            Group = group;
             Marketplace = marketplaceAccess;
             this.hooks = hooks;
             Version = new DebugInfoVersion();
@@ -74,15 +71,17 @@ namespace CodexPlugin
 
         public void Awake()
         {
-            hooks.OnNodeStarting(codexAccess.GetStartUtc(), codexAccess.GetImageName(), ethAccount);
+            hooks.OnNodeStarting(codexAccess.GetStartUtc(), codexAccess.GetImageName(), codexAccess.GetEthAccount());
         }
 
         public void Initialize()
         {
+            InitializePeerNodeId();
+            InitializeLogReplacements();
+
             hooks.OnNodeStarted(peerId, nodeId);
         }
 
-        public CodexNodeGroup Group { get; }
         public IMarketplaceAccess Marketplace { get; }
         public DebugInfoVersion Version { get; private set; }
         public ITransferSpeeds TransferSpeeds { get => transferSpeeds; }
@@ -91,8 +90,9 @@ namespace CodexPlugin
         {
             get
             {
-                throw new Exception("todo");
-                //return new MetricsScrapeTarget(CodexAccess.Container.Containers.First(), CodexContainerRecipe.MetricsPortTag);
+                var address = codexAccess.GetMetricsEndpoint();
+                if (address == null) throw new Exception("Metrics ScrapeTarget accessed, but node was not started with EnableMetrics()");
+                return address;
             }
         }
 
@@ -101,7 +101,7 @@ namespace CodexPlugin
             get
             {
                 EnsureMarketplace();
-                return ethAccount!.EthAddress;
+                return codexAccess.GetEthAccount()!.EthAddress;
             }
         }
 
@@ -110,7 +110,7 @@ namespace CodexPlugin
             get
             {
                 EnsureMarketplace();
-                return ethAccount!;
+                return codexAccess.GetEthAccount()!;
             }
         }
 
@@ -261,27 +261,7 @@ namespace CodexPlugin
         {
             Log("Stopping...");
             hooks.OnNodeStopping();
-            codexAccess.CrashWatcher.Stop();
-            Group.Stop(this, waitTillStopped);
-        }
-
-        public void EnsureOnlineGetVersionResponse()
-        {
-            var debugInfo = Time.Retry(codexAccess.GetDebugInfo, "ensure online");
-            peerId = debugInfo.Id;
-            nodeId = debugInfo.Table.LocalNode.NodeId;
-            var nodeName = codexAccess.Container.Name;
-
-            if (!debugInfo.Version.IsValid())
-            {
-                throw new Exception($"Invalid version information received from Codex node {GetName()}: {debugInfo.Version}");
-            }
-
-            log.AddStringReplace(peerId, nodeName);
-            log.AddStringReplace(CodexUtils.ToShortId(peerId), nodeName);
-            log.AddStringReplace(debugInfo.Table.LocalNode.NodeId, nodeName);
-            log.AddStringReplace(CodexUtils.ToShortId(debugInfo.Table.LocalNode.NodeId), nodeName);
-            Version = debugInfo.Version;
+            codexAccess.Stop(waitTillStopped);
         }
 
         public Address GetDiscoveryEndpoint()
@@ -297,6 +277,29 @@ namespace CodexPlugin
         public override string ToString()
         {
             return $"CodexNode:{GetName()}";
+        }
+
+        private void InitializePeerNodeId()
+        {
+            var debugInfo = Time.Retry(codexAccess.GetDebugInfo, "ensure online");
+            if (!debugInfo.Version.IsValid())
+            {
+                throw new Exception($"Invalid version information received from Codex node {GetName()}: {debugInfo.Version}");
+            }
+
+            peerId = debugInfo.Id;
+            nodeId = debugInfo.Table.LocalNode.NodeId;
+            Version = debugInfo.Version;
+        }
+
+        private void InitializeLogReplacements()
+        {
+            var nodeName = GetName();
+
+            log.AddStringReplace(peerId, nodeName);
+            log.AddStringReplace(CodexUtils.ToShortId(peerId), nodeName);
+            log.AddStringReplace(nodeId, nodeName);
+            log.AddStringReplace(CodexUtils.ToShortId(nodeId), nodeName);
         }
 
         private string[] GetPeerMultiAddresses(CodexNode peer, DebugInfo peerInfo)
@@ -377,7 +380,7 @@ namespace CodexPlugin
 
         private void EnsureMarketplace()
         {
-            if (ethAccount == null) throw new Exception("Marketplace is not enabled for this Codex node. Please start it with the option '.EnableMarketplace(...)' to enable it.");
+            if (codexAccess.GetEthAccount() == null) throw new Exception("Marketplace is not enabled for this Codex node. Please start it with the option '.EnableMarketplace(...)' to enable it.");
         }
 
         private void Log(string msg)

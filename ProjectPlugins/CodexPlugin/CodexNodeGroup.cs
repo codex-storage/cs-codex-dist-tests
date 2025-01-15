@@ -7,18 +7,16 @@ namespace CodexPlugin
 {
     public interface ICodexNodeGroup : IEnumerable<ICodexNode>, IHasManyMetricScrapeTargets
     {
-        void BringOffline(bool waitTillStopped);
+        void Stop(bool waitTillStopped);
         ICodexNode this[int index] { get; }
     }
 
     public class CodexNodeGroup : ICodexNodeGroup
     {
-        private readonly CodexStarter starter;
-        private CodexNode[] nodes;
+        private readonly CodexNode[] nodes;
 
-        public CodexNodeGroup(CodexStarter starter, IPluginTools tools, CodexNode[] nodes)
+        public CodexNodeGroup(IPluginTools tools, CodexNode[] nodes)
         {
-            this.starter = starter;
             this.nodes = nodes;
             Version = new DebugInfoVersion();
         }
@@ -31,17 +29,14 @@ namespace CodexPlugin
             }
         }
 
-        public void BringOffline(bool waitTillStopped)
+        public void Stop(bool waitTillStopped)
         {
-            starter.BringOffline(this, waitTillStopped);
-            // Clear everything. Prevent accidental use.
-            nodes = Array.Empty<CodexNode>();
+            foreach (var node in Nodes) node.Stop(waitTillStopped);
         }
 
         public void Stop(CodexNode node, bool waitTillStopped)
         {
-            starter.Stop(node, waitTillStopped);
-            nodes = nodes.Where(n => n != node).ToArray();
+            node.Stop(waitTillStopped);
         }
 
         public ICodexNode[] Nodes => nodes;
@@ -65,7 +60,7 @@ namespace CodexPlugin
 
         public void EnsureOnline()
         {
-            foreach (var node in nodes) node.EnsureOnlineGetVersionResponse();
+            foreach (var node in nodes) node.Initialize();
             var versionResponses = Nodes.Select(n => n.Version);
 
             var first = versionResponses.First();
@@ -76,7 +71,6 @@ namespace CodexPlugin
             }
 
             Version = first;
-            foreach (var node in nodes) node.Initialize();
         }
     }
 }

@@ -4,14 +4,16 @@ using GethPlugin;
 using KubernetesWorkflow;
 using KubernetesWorkflow.Types;
 using Logging;
+using Utils;
 
 namespace CodexPlugin
 {
-    public class CodexStarter
+    public class CodexStarter : IProcessControl
     {
         private readonly IPluginTools pluginTools;
         private readonly CodexContainerRecipe recipe = new CodexContainerRecipe();
         private readonly ApiChecker apiChecker;
+        private readonly Dictionary<ICodexInstance, RunningPod> podMap = new Dictionary<ICodexInstance, RunningPod>();
         private DebugInfoVersion? versionResponse;
 
         public CodexStarter(IPluginTools pluginTools)
@@ -46,6 +48,17 @@ namespace CodexPlugin
             return containers;
         }
 
+        public void Stop(ICodexInstance instance, bool waitTillStopped)
+        {
+            Log($"Stopping node...");
+            var pod = podMap[instance];
+            podMap.Remove(instance);
+
+            var workflow = pluginTools.CreateWorkflow();
+            workflow.Stop(pod, waitTillStopped);
+            Log("Stopped.");
+        }
+
         public ICodexNodeGroup WrapCodexContainers(CoreInterface coreInterface, RunningPod[] containers)
         {
             var codexNodeFactory = new CodexNodeFactory(pluginTools, HooksFactory);
@@ -56,24 +69,6 @@ namespace CodexPlugin
             versionResponse = group.Version;
 
             return group;
-        }
-
-        public void BringOffline(CodexNodeGroup group, bool waitTillStopped)
-        {
-            Log($"Stopping {group.Describe()}...");
-            foreach (var node in group)
-            {
-                node.Stop(waitTillStopped);
-            }
-            Log("Stopped.");
-        }
-
-        public void Stop(CodexNode pod, bool waitTillStopped)
-        {
-            Log($"Stopping node...");
-            var workflow = pluginTools.CreateWorkflow();
-            workflow.Stop(pod, waitTillStopped);
-            Log("Stopped.");
         }
 
         public string GetCodexId()
@@ -118,7 +113,10 @@ namespace CodexPlugin
 
         private CodexNodeGroup CreateCodexGroup(CoreInterface coreInterface, RunningPod[] runningContainers, CodexNodeFactory codexNodeFactory)
         {
-            var group = new CodexNodeGroup(this, pluginTools, runningContainers, codexNodeFactory);
+            var instances = runningContainers.Select(CreateInstance).ToArray();
+            var accesses = instances.Select(CreateAccess).ToArray();
+            var nodes = accesses.Select(codexNodeFactory.CreateOnlineCodexNode).ToArray();
+            var group = new CodexNodeGroup(pluginTools, nodes);
 
             try
             {
@@ -131,6 +129,25 @@ namespace CodexPlugin
             }
 
             return group;
+        }
+
+        private CodexAccess CreateAccess(ICodexInstance instance)
+        {
+            var crashWatcher = CreateCrashWatcher(instance);
+            return new CodexAccess(pluginTools, this, instance, crashWatcher);
+        }
+
+        private ICrashWatcher CreateCrashWatcher(ICodexInstance instance)
+        {
+            var pod = podMap[instance];
+            return pluginTools.CreateWorkflow().CreateCrashWatcher(pod.Containers.Single());
+        }
+
+        private ICodexInstance CreateInstance(RunningPod pod)
+        {
+            var instance = new CodexContainerInstance(pluginTools, pluginTools.GetLog(), pod);
+            podMap.Add(instance, pod);
+            return instance;
         }
 
         private void CodexNodesNotOnline(CoreInterface coreInterface, RunningPod[] runningContainers)

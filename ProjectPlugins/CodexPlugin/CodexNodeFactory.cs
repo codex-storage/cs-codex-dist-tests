@@ -1,15 +1,11 @@
 ﻿using CodexPlugin.Hooks;
 using Core;
-using GethPlugin;
-using KubernetesWorkflow;
-using KubernetesWorkflow.Types;
 
 namespace CodexPlugin
 {
     public interface ICodexNodeFactory
     {
-        CodexNode CreateOnlineCodexNode(CodexAccess access, CodexNodeGroup group);
-        ContainerCrashWatcher CreateCrashWatcher(RunningContainer c);
+        CodexNode CreateOnlineCodexNode(CodexAccess access);
     }
 
     public class CodexNodeFactory : ICodexNodeFactory
@@ -23,31 +19,17 @@ namespace CodexPlugin
             this.codexHooksFactory = codexHooksFactory;
         }
 
-        public CodexNode CreateOnlineCodexNode(CodexAccess access, CodexNodeGroup group)
+        public CodexNode CreateOnlineCodexNode(CodexAccess access)
         {
-            var ethAccount = GetEthAccount(access);
-            var hooks = codexHooksFactory.CreateHooks(access.Container.Name);
-
-            var marketplaceAccess = GetMarketplaceAccess(access, ethAccount, hooks);
-            return new CodexNode(tools, access, group, marketplaceAccess, hooks, ethAccount);
+            var hooks = codexHooksFactory.CreateHooks(access.GetName());
+            var marketplaceAccess = GetMarketplaceAccess(access, hooks);
+            return new CodexNode(tools, access, marketplaceAccess, hooks);
         }
 
-        private IMarketplaceAccess GetMarketplaceAccess(CodexAccess codexAccess, EthAccount? ethAccount, ICodexNodeHooks hooks)
+        private IMarketplaceAccess GetMarketplaceAccess(CodexAccess codexAccess, ICodexNodeHooks hooks)
         {
-            if (ethAccount == null) return new MarketplaceUnavailable();
+            if (codexAccess.GetEthAccount() == null) return new MarketplaceUnavailable();
             return new MarketplaceAccess(tools.GetLog(), codexAccess, hooks);
-        }
-
-        private EthAccount? GetEthAccount(CodexAccess access)
-        {
-            var ethAccount = access.Container.Containers.Single().Recipe.Additionals.Get<EthAccount>();
-            if (ethAccount == null) return null;
-            return ethAccount;
-        }
-
-        public ContainerCrashWatcher CreateCrashWatcher(RunningContainer c)
-        {
-            return tools.CreateWorkflow().CreateCrashWatcher(c);
         }
     }
 }
