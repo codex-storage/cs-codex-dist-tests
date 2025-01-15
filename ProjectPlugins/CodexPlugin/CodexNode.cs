@@ -34,10 +34,10 @@ namespace CodexPlugin
         void ConnectToPeer(ICodexNode node);
         DebugInfoVersion Version { get; }
         IMarketplaceAccess Marketplace { get; }
-        CrashWatcher CrashWatcher { get; }
-        PodInfo GetPodInfo();
         ITransferSpeeds TransferSpeeds { get; }
         EthAccount EthAccount { get; }
+
+        Address GetDiscoveryEndpoint();
 
         /// <summary>
         /// Warning! The node is not usable after this.
@@ -45,6 +45,7 @@ namespace CodexPlugin
         /// </summary>
         void DeleteRepoFolder();
         void Stop(bool waitTillStopped);
+        bool HasCrashed();
     }
 
     public class CodexNode : ICodexNode
@@ -256,11 +257,6 @@ namespace CodexPlugin
             Log($"Successfully connected to peer {peer.GetName()}.");
         }
 
-        public PodInfo GetPodInfo()
-        {
-            return CodexAccess.GetPodInfo();
-        }
-
         public void DeleteRepoFolder()
         {
             CodexAccess.DeleteRepoFolder();
@@ -292,6 +288,20 @@ namespace CodexPlugin
             log.AddStringReplace(debugInfo.Table.LocalNode.NodeId, nodeName);
             log.AddStringReplace(CodexUtils.ToShortId(debugInfo.Table.LocalNode.NodeId), nodeName);
             Version = debugInfo.Version;
+        }
+
+        public Address GetDiscoveryEndpoint()
+        {
+            var info = CodexAccess.GetPodInfo();
+            return new Address(
+                host: info.Ip,
+                port: Container.Recipe.GetPortByTag(CodexContainerRecipe.DiscoveryPortTag)!.Number
+            );
+        }
+
+        public bool HasCrashed()
+        {
+            return CrashWatcher.HasContainerCrashed();
         }
 
         public override string ToString()

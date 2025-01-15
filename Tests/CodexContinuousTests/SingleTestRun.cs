@@ -204,7 +204,6 @@ namespace ContinuousTests
             result.Add("testname", testName);
             result.Add("message", message);
             result.Add("involvedpods", string.Join(",", nodes.Select(n => n.GetName())));
-            result.Add("involvedpodnames", string.Join(",", nodes.Select(n => n.GetPodInfo().Name)));
 
             var error = message.Split(Environment.NewLine).First();
             if (error.Contains(":")) error = error.Substring(1 + error.LastIndexOf(":"));

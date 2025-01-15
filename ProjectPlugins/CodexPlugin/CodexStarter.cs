@@ -61,11 +61,9 @@ namespace CodexPlugin
         public void BringOffline(CodexNodeGroup group, bool waitTillStopped)
         {
             Log($"Stopping {group.Describe()}...");
-            StopCrashWatcher(group);
-            var workflow = pluginTools.CreateWorkflow();
-            foreach (var c in group.Containers)
+            foreach (var node in group)
             {
-                workflow.Stop(c, waitTillStopped);
+                node.Stop(waitTillStopped);
             }
             Log("Stopped.");
         }
@@ -156,14 +154,6 @@ namespace CodexPlugin
         private void Log(string message)
         {
             pluginTools.GetLog().Log(message);
-        }
-
-        private void StopCrashWatcher(CodexNodeGroup group)
-        {
-            foreach (var node in group)
-            {
-                node.CrashWatcher.Stop();
-            }
         }
     }
 }
