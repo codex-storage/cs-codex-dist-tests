@@ -24,7 +24,6 @@ namespace CodexPlugin
         private readonly RunningContainer container;
         private readonly IPluginTools tools;
         private readonly ILog log;
-        private readonly Address? metricsAddress = null;
         private readonly EthAccount? ethAccount = null;
 
         public CodexContainerInstance(IPluginTools tools, ILog log, RunningPod pod)
@@ -36,14 +35,9 @@ namespace CodexPlugin
             ImageName = container.Recipe.Image;
             StartUtc = container.Recipe.RecipeCreatedUtc;
 
-            DiscoveryEndpoint = container.GetAddress(CodexContainerRecipe.DiscoveryPortTag);
+            DiscoveryEndpoint = container.GetInternalAddress(CodexContainerRecipe.DiscoveryPortTag);
             ApiEndpoint = container.GetAddress(CodexContainerRecipe.ApiPortTag);
-            ListenEndpoint = container.GetAddress(CodexContainerRecipe.ListenPortTag);
-
-            if (pod.StartupConfig.Get<CodexSetup>().MetricsEnabled)
-            {
-                metricsAddress = container.GetAddress(CodexContainerRecipe.MetricsPortTag);
-            }
+            ListenEndpoint = container.GetInternalAddress(CodexContainerRecipe.ListenPortTag);
             ethAccount = container.Recipe.Additionals.Get<EthAccount>();
         }
 
@@ -77,7 +71,14 @@ namespace CodexPlugin
 
         public Address? GetMetricsEndpoint()
         {
-            return metricsAddress;
+            try
+            {
+                return container.GetInternalAddress(CodexContainerRecipe.MetricsPortTag);
+            }
+            catch
+            {
+                return null;
+            }
         }
     }
 }
