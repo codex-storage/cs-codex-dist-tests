@@ -1,32 +1,14 @@
-﻿using KubernetesWorkflow.Types;
+﻿using Utils;
 
 namespace MetricsPlugin
 {
-    public interface IMetricsScrapeTarget
-    {
-        RunningContainer Container { get; }
-        string MetricsPortTag { get; }
-    }
-
     public interface IHasMetricsScrapeTarget
     {
-        IMetricsScrapeTarget MetricsScrapeTarget { get; }
+        Address MetricsScrapeTarget { get; }
     }
 
     public interface IHasManyMetricScrapeTargets
     {
-        IMetricsScrapeTarget[] ScrapeTargets { get; }
-    }
-
-    public class MetricsScrapeTarget : IMetricsScrapeTarget
-    {
-        public MetricsScrapeTarget(RunningContainer container, string metricsPortTag)
-        {
-            Container = container;
-            MetricsPortTag = metricsPortTag;
-        }
-
-        public RunningContainer Container { get; }
-        public string MetricsPortTag { get; }
+        Address[] ScrapeTargets { get; }
     }
 }

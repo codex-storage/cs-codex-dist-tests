@@ -13,7 +13,7 @@ namespace KubernetesWorkflow
         FutureContainers Start(int numberOfContainers, ILocation location, ContainerRecipeFactory recipeFactory, StartupConfig startupConfig);
         PodInfo GetPodInfo(RunningContainer container);
         PodInfo GetPodInfo(RunningPod pod);
-        CrashWatcher CreateCrashWatcher(RunningContainer container);
+        ContainerCrashWatcher CreateCrashWatcher(RunningContainer container);
         void Stop(RunningPod pod, bool waitTillStopped);
         void DownloadContainerLog(RunningContainer container, ILogHandler logHandler, int? tailLines = null, bool? previous = null);
         IDownloadedLog DownloadContainerLog(RunningContainer container, int? tailLines = null, bool? previous = null);
@@ -93,7 +93,7 @@ namespace KubernetesWorkflow
             return K8s(c => c.GetPodInfo(pod.StartResult.Deployment));
         }
 
-        public CrashWatcher CreateCrashWatcher(RunningContainer container)
+        public ContainerCrashWatcher CreateCrashWatcher(RunningContainer container)
         {
             return K8s(c => c.CreateCrashWatcher(container));
         }
@@ -209,6 +209,7 @@ namespace KubernetesWorkflow
             var port = startResult.GetExternalServicePorts(recipe, tag);
 
             return new Address(
+                logName: $"{recipe.Name}:{tag}",
                 startResult.Cluster.HostAddress,
                 port.Number);
         }
@@ -220,6 +221,7 @@ namespace KubernetesWorkflow
             var port = startResult.GetInternalServicePorts(recipe, tag);
 
             return new Address(
+                logName: $"{serviceName}:{tag}",
                 $"http://{serviceName}.{namespaceName}.svc.cluster.local",
                 port.Number);
         }

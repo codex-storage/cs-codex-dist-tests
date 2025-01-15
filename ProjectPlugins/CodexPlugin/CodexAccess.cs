@@ -1,7 +1,5 @@
 ﻿using CodexOpenApi;
 using Core;
-using KubernetesWorkflow;
-using KubernetesWorkflow.Types;
 using Logging;
 using Newtonsoft.Json;
 using Utils;
@@ -12,20 +10,30 @@ namespace CodexPlugin
     {
         private readonly ILog log;
         private readonly IPluginTools tools;
+        private readonly ICodexInstance instance;
         private readonly Mapper mapper = new Mapper();
 
-        public CodexAccess(IPluginTools tools, RunningPod container, CrashWatcher crashWatcher)
+        public CodexAccess(IPluginTools tools, ICodexInstance instance, ICrashWatcher crashWatcher)
         {
             this.tools = tools;
+            this.instance = instance;
             log = tools.GetLog();
-            Container = container;
             CrashWatcher = crashWatcher;
 
             CrashWatcher.Start();
         }
 
-        public RunningPod Container { get; }
-        public CrashWatcher CrashWatcher { get; }
+        public ICrashWatcher CrashWatcher { get; }
+
+        public string GetImageName()
+        {
+            return instance.ImageName;
+        }
+
+        public DateTime GetStartUtc()
+        {
+            return instance.StartUtc;
+        }
 
         public DebugInfo GetDebugInfo()
         {
@@ -170,29 +178,35 @@ namespace CodexPlugin
 
         public string GetName()
         {
-            return Container.Name;
+            return instance.Name;
         }
 
-        public PodInfo GetPodInfo()
+        public Address GetDiscoveryEndpoint()
         {
-            var workflow = tools.CreateWorkflow();
-            return workflow.GetPodInfo(Container);
+            return instance.DiscoveryEndpoint;
+            //var info = codexAccess.GetPodInfo();
+            //return new Address(
+            //    logName: $"{GetName()}:DiscoveryPort",
+            //    host: info.Ip,
+            //    port: Container.Recipe.GetPortByTag(CodexContainerRecipe.DiscoveryPortTag)!.Number
+            //);
         }
 
-        public void DeleteRepoFolder()
+        public void DeleteDataDirFolder()
         {
-            try
-            {
-                var containerNumber = Container.Containers.First().Recipe.Number;
-                var dataDir = $"datadir{containerNumber}";
-                var workflow = tools.CreateWorkflow();
-                workflow.ExecuteCommand(Container.Containers.First(), "rm", "-Rfv", $"/codex/{dataDir}/repo");
-                Log("Deleted repo folder.");
-            }
-            catch (Exception e)
-            {
-                Log("Unable to delete repo folder: " + e);
-            }
+            //try
+            //{
+            //    var containerNumber = Container.Containers.First().Recipe.Number;
+            //    var dataDir = $"datadir{containerNumber}";
+            //    var workflow = tools.CreateWorkflow();
+            //    workflow.ExecuteCommand(Container.Containers.First(), "rm", "-Rfv", $"/codex/{dataDir}/repo");
+            //    Log("Deleted repo folder.");
+            //}
+            //catch (Exception e)
+            //{
+            //    Log("Unable to delete repo folder: " + e);
+            //}
+            instance.DeleteDataDirFolder();
         }
 
         private T OnCodex<T>(Func<CodexApi, Task<T>> action)
@@ -223,7 +237,7 @@ namespace CodexPlugin
             }
             finally
             {
-                CrashWatcher.HasContainerCrashed();
+                CrashWatcher.HasCrashed();
             }
         }
 
@@ -231,12 +245,12 @@ namespace CodexPlugin
         {
             return tools
                 .CreateHttp(GetHttpId(), CheckContainerCrashed)
-                .CreateEndpoint(GetAddress(), "/api/codex/v1/", Container.Name);
+                .CreateEndpoint(GetAddress(), "/api/codex/v1/", GetName());
         }
 
         private Address GetAddress()
         {
-            return Container.Containers.Single().GetAddress(CodexContainerRecipe.ApiPortTag);
+            return instance.ApiEndpoint;
         }
 
         private string GetHttpId()
@@ -246,7 +260,7 @@ namespace CodexPlugin
 
         private void CheckContainerCrashed(HttpClient client)
         {
-            if (CrashWatcher.HasContainerCrashed()) throw new Exception($"Container {GetName()} has crashed.");
+            if (CrashWatcher.HasCrashed()) throw new Exception($"Container {GetName()} has crashed.");
         }
 
         private Retry CreateRetryConfig(string description, Action<Failure> onFailure)

@@ -68,7 +68,7 @@ namespace CodexPlugin
             Log("Stopped.");
         }
 
-        public void Stop(RunningPod pod, bool waitTillStopped)
+        public void Stop(CodexNode pod, bool waitTillStopped)
         {
             Log($"Stopping node...");
             var workflow = pluginTools.CreateWorkflow();

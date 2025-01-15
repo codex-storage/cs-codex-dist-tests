@@ -1,6 +1,7 @@
 ﻿using Core;
 using KubernetesWorkflow.Types;
 using Logging;
+using Utils;
 
 namespace MetricsPlugin
 {
@@ -11,7 +12,7 @@ namespace MetricsPlugin
             return Plugin(ci).DeployMetricsCollector(scrapeTargets.Select(t => t.MetricsScrapeTarget).ToArray(), scrapeInterval);
         }
 
-        public static RunningPod DeployMetricsCollector(this CoreInterface ci, TimeSpan scrapeInterval, params IMetricsScrapeTarget[] scrapeTargets)
+        public static RunningPod DeployMetricsCollector(this CoreInterface ci, TimeSpan scrapeInterval, params Address[] scrapeTargets)
         {
             return Plugin(ci).DeployMetricsCollector(scrapeTargets, scrapeInterval);
         }
@@ -21,7 +22,7 @@ namespace MetricsPlugin
             return ci.WrapMetricsCollector(metricsPod, scrapeTarget.MetricsScrapeTarget);
         }
 
-        public static IMetricsAccess WrapMetricsCollector(this CoreInterface ci, RunningPod metricsPod, IMetricsScrapeTarget scrapeTarget)
+        public static IMetricsAccess WrapMetricsCollector(this CoreInterface ci, RunningPod metricsPod, Address scrapeTarget)
         {
             return Plugin(ci).WrapMetricsCollectorDeployment(metricsPod, scrapeTarget);
         }
@@ -36,7 +37,7 @@ namespace MetricsPlugin
             return ci.GetMetricsFor(scrapeInterval, scrapeTargets.Select(t => t.MetricsScrapeTarget).ToArray());
         }
 
-        public static IMetricsAccess[] GetMetricsFor(this CoreInterface ci, TimeSpan scrapeInterval, params IMetricsScrapeTarget[] scrapeTargets)
+        public static IMetricsAccess[] GetMetricsFor(this CoreInterface ci, TimeSpan scrapeInterval, params Address[] scrapeTargets)
         {
             var rc = ci.DeployMetricsCollector(scrapeInterval, scrapeTargets);
             return scrapeTargets.Select(t => ci.WrapMetricsCollector(rc, t)).ToArray();

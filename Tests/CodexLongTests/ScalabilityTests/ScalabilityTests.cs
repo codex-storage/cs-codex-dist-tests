@@ -47,7 +47,7 @@ public class ScalabilityTests : CodexDistTest
 
         downloadedFile!.AssertIsEqual(testFile);
 
-        uploader.DeleteRepoFolder();
+        uploader.DeleteDataDirFolder();
         uploader.Stop(true);
 
         var otherDownloader = nodes.PickOneRandom();
@@ -55,8 +55,8 @@ public class ScalabilityTests : CodexDistTest
 
         downloadedFile!.AssertIsEqual(testFile);
 
-        downloader.DeleteRepoFolder();
-        otherDownloader.DeleteRepoFolder();
+        downloader.DeleteDataDirFolder();
+        otherDownloader.DeleteDataDirFolder();
     }
 
     /// <summary>

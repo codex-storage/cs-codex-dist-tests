@@ -3,6 +3,7 @@ using KubernetesWorkflow;
 using KubernetesWorkflow.Types;
 using Logging;
 using System.Text;
+using Utils;
 
 namespace MetricsPlugin
 {
@@ -16,7 +17,7 @@ namespace MetricsPlugin
             this.tools = tools;
         }
 
-        public RunningPod CollectMetricsFor(IMetricsScrapeTarget[] targets, TimeSpan scrapeInterval)
+        public RunningPod CollectMetricsFor(Address[] targets, TimeSpan scrapeInterval)
         {
             if (!targets.Any()) throw new ArgumentException(nameof(targets) + " must not be empty.");
 
@@ -32,7 +33,7 @@ namespace MetricsPlugin
             return runningContainers;
         }
 
-        public MetricsAccess CreateAccessForTarget(RunningPod metricsPod, IMetricsScrapeTarget target)
+        public MetricsAccess CreateAccessForTarget(RunningPod metricsPod, Address target)
         {
             var metricsQuery = new MetricsQuery(tools, metricsPod.Containers.Single());
             return new MetricsAccess(metricsQuery, target);
@@ -48,7 +49,7 @@ namespace MetricsPlugin
             tools.GetLog().Log(msg);
         }
 
-        private string GeneratePrometheusConfig(IMetricsScrapeTarget[] targets, TimeSpan scrapeInterval)
+        private string GeneratePrometheusConfig(Address[] targets, TimeSpan scrapeInterval)
         {
             var secs = Convert.ToInt32(scrapeInterval.TotalSeconds);
             if (secs < 1) throw new Exception("ScrapeInterval can't be < 1s");
@@ -74,19 +75,18 @@ namespace MetricsPlugin
             return Convert.ToBase64String(bytes);
         }
 
-        private string FormatTarget(IMetricsScrapeTarget target)
+        private string FormatTarget(Address target)
         {
-            return ScrapeTargetHelper.FormatTarget(tools.GetLog(), target);
+            return ScrapeTargetHelper.FormatTarget(target);
         }
     }
 
     public static class ScrapeTargetHelper
     {
-        public static string FormatTarget(ILog log, IMetricsScrapeTarget target)
+        public static string FormatTarget(Address target)
         {
-            var a = target.Container.GetAddress(target.MetricsPortTag);
-            var host = a.Host.Replace("http://", "").Replace("https://", "");
-            return $"{host}:{a.Port}";
+            var host = target.Host.Replace("http://", "").Replace("https://", "");
+            return $"{host}:{target.Port}";
         }
     }
 }

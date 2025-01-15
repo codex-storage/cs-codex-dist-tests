@@ -1,9 +1,10 @@
 ﻿using k8s;
 using Logging;
+using Utils;
 
 namespace KubernetesWorkflow
 {
-    public class CrashWatcher
+    public class ContainerCrashWatcher : ICrashWatcher
     {
         private readonly ILog log;
         private readonly KubernetesClientConfiguration config;
@@ -15,7 +16,7 @@ namespace KubernetesWorkflow
         private Task? worker;
         private Exception? workerException;
 
-        public CrashWatcher(ILog log, KubernetesClientConfiguration config, string containerName, string podName, string recipeName, string k8sNamespace)
+        public ContainerCrashWatcher(ILog log, KubernetesClientConfiguration config, string containerName, string podName, string recipeName, string k8sNamespace)
         {
             this.log = log;
             this.config = config;
@@ -45,7 +46,7 @@ namespace KubernetesWorkflow
             if (workerException != null) throw new Exception("Exception occurred in CrashWatcher worker thread.", workerException);
         }
 
-        public bool HasContainerCrashed()
+        public bool HasCrashed()
         {
             using var client = new Kubernetes(config);
             var result = HasContainerBeenRestarted(client);

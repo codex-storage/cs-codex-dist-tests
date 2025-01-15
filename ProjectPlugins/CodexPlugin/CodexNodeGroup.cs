@@ -1,7 +1,7 @@
 ﻿using Core;
-using KubernetesWorkflow.Types;
 using MetricsPlugin;
 using System.Collections;
+using Utils;
 
 namespace CodexPlugin
 {
@@ -14,12 +14,12 @@ namespace CodexPlugin
     public class CodexNodeGroup : ICodexNodeGroup
     {
         private readonly CodexStarter starter;
+        private CodexNode[] nodes;
 
-        public CodexNodeGroup(CodexStarter starter, IPluginTools tools, RunningPod[] containers, ICodexNodeFactory codexNodeFactory)
+        public CodexNodeGroup(CodexStarter starter, IPluginTools tools, CodexNode[] nodes)
         {
             this.starter = starter;
-            Containers = containers;
-            Nodes = containers.Select(c => CreateOnlineCodexNode(c, tools, codexNodeFactory)).ToArray();
+            this.nodes = nodes;
             Version = new DebugInfoVersion();
         }
 
@@ -35,21 +35,18 @@ namespace CodexPlugin
         {
             starter.BringOffline(this, waitTillStopped);
             // Clear everything. Prevent accidental use.
-            Nodes = Array.Empty<CodexNode>();
-            Containers = null!;
+            nodes = Array.Empty<CodexNode>();
         }
 
         public void Stop(CodexNode node, bool waitTillStopped)
         {
-            starter.Stop(node.Pod, waitTillStopped);
-            Nodes = Nodes.Where(n => n != node).ToArray();
-            Containers = Containers.Where(c => c != node.Pod).ToArray();
+            starter.Stop(node, waitTillStopped);
+            nodes = nodes.Where(n => n != node).ToArray();
         }
 
-        public RunningPod[] Containers { get; private set; }
-        public CodexNode[] Nodes { get; private set; }
+        public ICodexNode[] Nodes => nodes;
         public DebugInfoVersion Version { get; private set; }
-        public IMetricsScrapeTarget[] ScrapeTargets => Nodes.Select(n => n.MetricsScrapeTarget).ToArray();
+        public Address[] ScrapeTargets => Nodes.Select(n => n.MetricsScrapeTarget).ToArray();
 
         public IEnumerator<ICodexNode> GetEnumerator()
         {
@@ -63,12 +60,12 @@ namespace CodexPlugin
 
         public string Describe()
         {
-            return $"group:[{Containers.Describe()}]";
+            return $"group:[{string.Join(",", Nodes.Select(n => n.GetName()))}]";
         }
 
         public void EnsureOnline()
         {
-            foreach (var node in Nodes) node.EnsureOnlineGetVersionResponse();
+            foreach (var node in nodes) node.EnsureOnlineGetVersionResponse();
             var versionResponses = Nodes.Select(n => n.Version);
 
             var first = versionResponses.First();
@@ -79,16 +76,7 @@ namespace CodexPlugin
             }
 
             Version = first;
-            foreach (var node in Nodes) node.Initialize();
-        }
-
-        private CodexNode CreateOnlineCodexNode(RunningPod c, IPluginTools tools, ICodexNodeFactory factory)
-        {
-            var watcher = factory.CreateCrashWatcher(c.Containers.Single());
-            var access = new CodexAccess(tools, c, watcher);
-            var node = factory.CreateOnlineCodexNode(access, this);
-            node.Awake();
-            return node;
+            foreach (var node in nodes) node.Initialize();
         }
     }
 }

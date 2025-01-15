@@ -2,15 +2,13 @@
 using Core;
 using FileUtils;
 using GethPlugin;
-using KubernetesWorkflow;
-using KubernetesWorkflow.Types;
 using Logging;
 using MetricsPlugin;
 using Utils;
 
 namespace CodexPlugin
 {
-    public interface ICodexNode : IHasContainer, IHasMetricsScrapeTarget, IHasEthAddress
+    public interface ICodexNode : IHasMetricsScrapeTarget, IHasEthAddress
     {
         string GetName();
         string GetPeerId();
@@ -43,7 +41,7 @@ namespace CodexPlugin
         /// Warning! The node is not usable after this.
         /// TODO: Replace with delete-blocks debug call once available in Codex.
         /// </summary>
-        void DeleteRepoFolder();
+        void DeleteDataDirFolder();
         void Stop(bool waitTillStopped);
         bool HasCrashed();
     }
@@ -58,12 +56,13 @@ namespace CodexPlugin
         private readonly TransferSpeeds transferSpeeds;
         private string peerId = string.Empty;
         private string nodeId = string.Empty;
+        private readonly CodexAccess codexAccess;
 
         public CodexNode(IPluginTools tools, CodexAccess codexAccess, CodexNodeGroup group, IMarketplaceAccess marketplaceAccess, ICodexNodeHooks hooks, EthAccount? ethAccount)
         {
             this.tools = tools;
             this.ethAccount = ethAccount;
-            CodexAccess = codexAccess;
+            this.codexAccess = codexAccess;
             Group = group;
             Marketplace = marketplaceAccess;
             this.hooks = hooks;
@@ -75,7 +74,7 @@ namespace CodexPlugin
 
         public void Awake()
         {
-            hooks.OnNodeStarting(Container.Recipe.RecipeCreatedUtc, Container.Recipe.Image, ethAccount);
+            hooks.OnNodeStarting(codexAccess.GetStartUtc(), codexAccess.GetImageName(), ethAccount);
         }
 
         public void Initialize()
@@ -83,21 +82,17 @@ namespace CodexPlugin
             hooks.OnNodeStarted(peerId, nodeId);
         }
 
-        public RunningPod Pod { get { return CodexAccess.Container; } }
-        
-        public RunningContainer Container { get { return Pod.Containers.Single(); } }
-        public CodexAccess CodexAccess { get; }
-        public CrashWatcher CrashWatcher { get => CodexAccess.CrashWatcher; }
         public CodexNodeGroup Group { get; }
         public IMarketplaceAccess Marketplace { get; }
         public DebugInfoVersion Version { get; private set; }
         public ITransferSpeeds TransferSpeeds { get => transferSpeeds; }
 
-        public IMetricsScrapeTarget MetricsScrapeTarget
+        public Address MetricsScrapeTarget
         {
             get
             {
-                return new MetricsScrapeTarget(CodexAccess.Container.Containers.First(), CodexContainerRecipe.MetricsPortTag);
+                throw new Exception("todo");
+                //return new MetricsScrapeTarget(CodexAccess.Container.Containers.First(), CodexContainerRecipe.MetricsPortTag);
             }
         }
 
@@ -121,7 +116,7 @@ namespace CodexPlugin
 
         public string GetName()
         {
-            return Container.Name;
+            return codexAccess.GetName();
         }
 
         public string GetPeerId()
@@ -131,7 +126,7 @@ namespace CodexPlugin
 
         public DebugInfo GetDebugInfo(bool log = false)
         {
-            var debugInfo = CodexAccess.GetDebugInfo();
+            var debugInfo = codexAccess.GetDebugInfo();
             if (log)
             {
                 var known = string.Join(",", debugInfo.Table.Nodes.Select(n => n.PeerId));
@@ -142,12 +137,12 @@ namespace CodexPlugin
 
         public string GetSpr()
         {
-            return CodexAccess.GetSpr();
+            return codexAccess.GetSpr();
         }
 
         public DebugPeer GetDebugPeer(string peerId)
         {
-            return CodexAccess.GetDebugPeer(peerId);
+            return codexAccess.GetDebugPeer(peerId);
         }
 
         public ContentId UploadFile(TrackedFile file)
@@ -172,7 +167,7 @@ namespace CodexPlugin
             var logMessage = $"Uploading file {file.Describe()} with contentType: '{input.ContentType}' and disposition: '{input.ContentDisposition}'...";
             var measurement = Stopwatch.Measure(log, logMessage, () =>
             {
-                return CodexAccess.UploadFile(input, onFailure);
+                return codexAccess.UploadFile(input, onFailure);
             });
 
             var response = measurement.Value;
@@ -212,7 +207,7 @@ namespace CodexPlugin
         public LocalDataset DownloadStreamless(ContentId cid)
         {
             Log($"Downloading streamless '{cid}' (no-wait)");
-            return CodexAccess.DownloadStreamless(cid);
+            return codexAccess.DownloadStreamless(cid);
         }
 
         public LocalDataset DownloadStreamlessWait(ContentId cid, ByteSize size)
@@ -222,7 +217,7 @@ namespace CodexPlugin
             var sw = Stopwatch.Measure(log, nameof(DownloadStreamlessWait), () =>
             {
                 var startSpace = Space();
-                var result = CodexAccess.DownloadStreamless(cid);
+                var result = codexAccess.DownloadStreamless(cid);
                 WaitUntilQuotaUsedIncreased(startSpace, size);
                 return result;
             });
@@ -233,17 +228,17 @@ namespace CodexPlugin
         public LocalDataset DownloadManifestOnly(ContentId cid)
         {
             Log($"Downloading manifest-only '{cid}'");
-            return CodexAccess.DownloadManifestOnly(cid);
+            return codexAccess.DownloadManifestOnly(cid);
         }
 
         public LocalDatasetList LocalFiles()
         {
-            return CodexAccess.LocalFiles();
+            return codexAccess.LocalFiles();
         }
 
         public CodexSpace Space()
         {
-            return CodexAccess.Space();
+            return codexAccess.Space();
         }
 
         public void ConnectToPeer(ICodexNode node)
@@ -252,31 +247,30 @@ namespace CodexPlugin
 
             Log($"Connecting to peer {peer.GetName()}...");
             var peerInfo = node.GetDebugInfo();
-            CodexAccess.ConnectToPeer(peerInfo.Id, GetPeerMultiAddresses(peer, peerInfo));
+            codexAccess.ConnectToPeer(peerInfo.Id, GetPeerMultiAddresses(peer, peerInfo));
 
             Log($"Successfully connected to peer {peer.GetName()}.");
         }
 
-        public void DeleteRepoFolder()
+        public void DeleteDataDirFolder()
         {
-            CodexAccess.DeleteRepoFolder();
+            codexAccess.DeleteDataDirFolder();
         }
 
         public void Stop(bool waitTillStopped)
         {
             Log("Stopping...");
             hooks.OnNodeStopping();
-
-            CrashWatcher.Stop();
+            codexAccess.CrashWatcher.Stop();
             Group.Stop(this, waitTillStopped);
         }
 
         public void EnsureOnlineGetVersionResponse()
         {
-            var debugInfo = Time.Retry(CodexAccess.GetDebugInfo, "ensure online");
+            var debugInfo = Time.Retry(codexAccess.GetDebugInfo, "ensure online");
             peerId = debugInfo.Id;
             nodeId = debugInfo.Table.LocalNode.NodeId;
-            var nodeName = CodexAccess.Container.Name;
+            var nodeName = codexAccess.Container.Name;
 
             if (!debugInfo.Version.IsValid())
             {
@@ -292,16 +286,12 @@ namespace CodexPlugin
 
         public Address GetDiscoveryEndpoint()
         {
-            var info = CodexAccess.GetPodInfo();
-            return new Address(
-                host: info.Ip,
-                port: Container.Recipe.GetPortByTag(CodexContainerRecipe.DiscoveryPortTag)!.Number
-            );
+            return codexAccess.GetDiscoveryEndpoint();
         }
 
         public bool HasCrashed()
         {
-            return CrashWatcher.HasContainerCrashed();
+            return codexAccess.CrashWatcher.HasCrashed();
         }
 
         public override string ToString()
@@ -311,13 +301,12 @@ namespace CodexPlugin
 
         private string[] GetPeerMultiAddresses(CodexNode peer, DebugInfo peerInfo)
         {
-            // The peer we want to connect is in a different pod.
-            // We must replace the default IP with the pod IP in the multiAddress.
-            var workflow = tools.CreateWorkflow();
-            var podInfo = workflow.GetPodInfo(peer.Pod);
+            var peerId = peer.GetDiscoveryEndpoint().Host
+                .Replace("http://", "")
+                .Replace("https://", "");
 
             return peerInfo.Addrs.Select(a => a
-                .Replace("0.0.0.0", podInfo.Ip))
+                .Replace("0.0.0.0", peerId))
                 .ToArray();
         }
 
@@ -330,11 +319,11 @@ namespace CodexPlugin
                 // Type of stream generated by openAPI client does not support timeouts.
                 var start = DateTime.UtcNow;
                 var cts = new CancellationTokenSource();
-                var downloadTask = Task.Run(() =>
+                var downloadTask = Task.Run((Action)(() =>
                 {
-                    using var downloadStream = CodexAccess.DownloadFile(contentId, onFailure);
-                    downloadStream.CopyTo(fileStream);
-                }, cts.Token);
+                    using var downloadStream = this.codexAccess.DownloadFile(contentId, onFailure);
+                    downloadStream.CopyTo((Stream)fileStream);
+                }), cts.Token);
                 
                 while (DateTime.UtcNow - start < timeout)
                 {

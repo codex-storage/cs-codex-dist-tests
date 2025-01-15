@@ -15,13 +15,13 @@ namespace MetricsPlugin
     public class MetricsAccess : IMetricsAccess
     {
         private readonly MetricsQuery query;
-        private readonly IMetricsScrapeTarget target;
+        private readonly Address target;
 
-        public MetricsAccess(MetricsQuery query, IMetricsScrapeTarget target)
+        public MetricsAccess(MetricsQuery query, Address target)
         {
             this.query = query;
             this.target = target;
-            TargetName = target.Container.Name;
+            TargetName = $"'{target.Host}'";
         }
 
         public string TargetName { get; }

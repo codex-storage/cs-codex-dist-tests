@@ -9,7 +9,7 @@ namespace CodexPlugin
     public interface ICodexNodeFactory
     {
         CodexNode CreateOnlineCodexNode(CodexAccess access, CodexNodeGroup group);
-        CrashWatcher CreateCrashWatcher(RunningContainer c);
+        ContainerCrashWatcher CreateCrashWatcher(RunningContainer c);
     }
 
     public class CodexNodeFactory : ICodexNodeFactory
@@ -45,7 +45,7 @@ namespace CodexPlugin
             return ethAccount;
         }
 
-        public CrashWatcher CreateCrashWatcher(RunningContainer c)
+        public ContainerCrashWatcher CreateCrashWatcher(RunningContainer c)
         {
             return tools.CreateWorkflow().CreateCrashWatcher(c);
         }

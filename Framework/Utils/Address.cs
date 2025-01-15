@@ -2,12 +2,14 @@
 {
     public class Address
     {
-        public Address(string host, int port)
+        public Address(string logName, string host, int port)
         {
+            LogName = logName;
             Host = host;
             Port = port;
         }
 
+        public string LogName { get; }
         public string Host { get; }
         public int Port { get; }
 
