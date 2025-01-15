@@ -285,7 +285,7 @@ namespace ContinuousTests
         private string GetContainerNames()
         {
             if (handle.Test.RequiredNumberOfNodes == -1) return "(All Nodes)";
-            return $"({string.Join(",", nodes.Select(n => n.Container.Name))})";
+            return $"({string.Join(",", nodes.Select(n => n.GetName()))})";
         }
 
         private ICodexNode[] CreateRandomNodes()

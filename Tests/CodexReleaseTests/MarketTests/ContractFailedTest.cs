@@ -36,7 +36,7 @@ namespace CodexReleaseTests.MarketTests
             request.WaitForStorageContractStarted();
             AssertContractSlotsAreFilledByHosts(request, hosts);
 
-            hosts.BringOffline(waitTillStopped: true);
+            hosts.Stop(waitTillStopped: true);
 
             WaitForSlotFreedEvents();
 

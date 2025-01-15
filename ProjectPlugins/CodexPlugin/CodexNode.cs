@@ -11,6 +11,7 @@ namespace CodexPlugin
     public interface ICodexNode : IHasMetricsScrapeTarget, IHasEthAddress
     {
         string GetName();
+        string GetImageName();
         string GetPeerId();
         DebugInfo GetDebugInfo(bool log = false);
         string GetSpr();
@@ -36,6 +37,8 @@ namespace CodexPlugin
         EthAccount EthAccount { get; }
 
         Address GetDiscoveryEndpoint();
+        Address GetApiEndpoint();
+        Address GetListenEndpoint();
 
         /// <summary>
         /// Warning! The node is not usable after this.
@@ -117,6 +120,11 @@ namespace CodexPlugin
         public string GetName()
         {
             return codexAccess.GetName();
+        }
+
+        public string GetImageName()
+        {
+            return codexAccess.GetImageName();
         }
 
         public string GetPeerId()
@@ -267,6 +275,16 @@ namespace CodexPlugin
         public Address GetDiscoveryEndpoint()
         {
             return codexAccess.GetDiscoveryEndpoint();
+        }
+
+        public Address GetApiEndpoint()
+        {
+            return codexAccess.GetApiEndpoint();
+        }
+
+        public Address GetListenEndpoint()
+        {
+            return codexAccess.GetListenEndpoint();
         }
 
         public bool HasCrashed()

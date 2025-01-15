@@ -13,6 +13,7 @@ namespace CodexPlugin
         DateTime StartUtc { get; }
         Address DiscoveryEndpoint { get; }
         Address ApiEndpoint { get; }
+        Address ListenEndpoint { get; }
         void DeleteDataDirFolder();
         EthAccount? GetEthAccount();
         Address? GetMetricsEndpoint();
@@ -37,6 +38,7 @@ namespace CodexPlugin
 
             DiscoveryEndpoint = container.GetAddress(CodexContainerRecipe.DiscoveryPortTag);
             ApiEndpoint = container.GetAddress(CodexContainerRecipe.ApiPortTag);
+            ListenEndpoint = container.GetAddress(CodexContainerRecipe.ListenPortTag);
 
             if (pod.StartupConfig.Get<CodexSetup>().MetricsEnabled)
             {
@@ -50,6 +52,7 @@ namespace CodexPlugin
         public DateTime StartUtc { get; }
         public Address DiscoveryEndpoint { get; }
         public Address ApiEndpoint { get; }
+        public Address ListenEndpoint { get; }
 
         public void DeleteDataDirFolder()
         {

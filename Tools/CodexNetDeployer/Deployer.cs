@@ -201,12 +201,12 @@ namespace CodexNetDeployer
 
         private void CheckContainerRestarts(List<CodexNodeStartResult> startResults)
         {
-            var crashes = new List<RunningContainer>();
+            var crashes = new List<ICodexNode>();
             Log("Starting container crash check...");
             foreach (var startResult in startResults)
             {
                 var hasCrashed = startResult.CodexNode.HasCrashed();
-                if (hasCrashed) crashes.Add(startResult.CodexNode.Container);
+                if (hasCrashed) crashes.Add(startResult.CodexNode);
             }
 
             if (!crashes.Any())
@@ -216,7 +216,7 @@ namespace CodexNetDeployer
             else
             {
                 Log(
-                    $"Check failed. The following containers have crashed: {string.Join(",", crashes.Select(c => c.Name))}");
+                    $"Check failed. The following containers have crashed: {string.Join(",", crashes.Select(c => c.GetName()))}");
                 throw new Exception("Deployment failed: One or more containers crashed.");
             }
         }

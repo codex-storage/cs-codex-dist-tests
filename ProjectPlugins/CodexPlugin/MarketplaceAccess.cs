@@ -72,7 +72,7 @@ namespace CodexPlugin
 
         private void Log(string msg)
         {
-            log.Log($"{codexAccess.Container.Containers.Single().Name} {msg}");
+            log.Log($"{codexAccess.GetName()} {msg}");
         }
     }
 

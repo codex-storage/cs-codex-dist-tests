@@ -31,7 +31,7 @@ namespace CodexPlugin
         public void Stop(bool waitTillStopped)
         {
             CrashWatcher.Stop();
-            processControl.Stop(instance);
+            processControl.Stop(instance, waitTillStopped);
             // Prevents accidental use after stop:
             instance = null!;
         }
@@ -201,6 +201,16 @@ namespace CodexPlugin
             //    host: info.Ip,
             //    port: Container.Recipe.GetPortByTag(CodexContainerRecipe.DiscoveryPortTag)!.Number
             //);
+        }
+
+        public Address GetApiEndpoint()
+        {
+            return instance.ApiEndpoint;
+        }
+
+        public Address GetListenEndpoint()
+        {
+            return instance.ListenEndpoint;
         }
 
         public Address? GetMetricsEndpoint()

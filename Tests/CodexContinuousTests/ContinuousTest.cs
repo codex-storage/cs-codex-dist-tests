@@ -4,6 +4,7 @@ using DistTestCore;
 using FileUtils;
 using Logging;
 using MetricsPlugin;
+using Utils;
 
 namespace ContinuousTests
 {
@@ -53,7 +54,7 @@ namespace ContinuousTests
             return CreateMetricsAccess(target.MetricsScrapeTarget);
         }
 
-        public IMetricsAccess CreateMetricsAccess(IMetricsScrapeTarget target)
+        public IMetricsAccess CreateMetricsAccess(Address target)
         {
             if (Configuration.CodexDeployment.PrometheusContainer == null) throw new Exception("Expected prometheus to be part of Codex deployment.");
 

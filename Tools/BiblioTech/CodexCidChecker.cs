@@ -172,6 +172,7 @@ namespace BiblioTech
             var port = Convert.ToInt32(endpoint.Substring(splitIndex + 1));
 
             var address = new Address(
+                logName: $"cdx@{host}:{port}",
                 host: host,
                 port: port
             );

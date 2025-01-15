@@ -98,8 +98,8 @@ namespace ContinuousTests
             {
                 cancelToken.ThrowIfCancellationRequested();
 
-                var address = n.Container.GetAddress(CodexContainerRecipe.ApiPortTag);
-                log.Log($"Checking {n.Container.Name} @ '{address}'...");
+                var address = n.GetApiEndpoint();
+                log.Log($"Checking {n.GetName()} @ '{address}'...");
 
                 if (EnsureOnline(log, n))
                 {
