@@ -123,7 +123,7 @@ namespace MetricsPlugin
         {
             if (values != null && values.Length > 0)
             {
-                return values.Select(v => MapValue(v)).ToArray();
+                return values.Select(MapValue).ToArray();
             }
             return Array.Empty<MetricsSetValue>();
         }
@@ -156,7 +156,14 @@ namespace MetricsPlugin
 
         private double ToValue(object v)
         {
-            return Convert.ToDouble(v, CultureInfo.InvariantCulture);
+            try
+            {
+                return Convert.ToDouble(v, CultureInfo.InvariantCulture);
+            }
+            catch
+            {
+                return double.NaN;
+            }
         }
 
         private DateTime ToTimestamp(object v)
@@ -215,7 +222,7 @@ namespace MetricsPlugin
                     {
                         var value = set.Values.SingleOrDefault(v => v.Timestamp == ts);
                         if (value == null) e.Add(" ");
-                        else e.Add(value.Value.ToString());
+                        else e.Add(value.Value.ToString(CultureInfo.InvariantCulture));
                     }
                 });
             }
