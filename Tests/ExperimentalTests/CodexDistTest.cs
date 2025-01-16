@@ -1,4 +1,5 @@
 ﻿using BlockchainUtils;
+using CodexClient;
 using CodexContractsPlugin;
 using CodexNetDeployer;
 using CodexPlugin;
@@ -15,7 +16,6 @@ using Newtonsoft.Json;
 using NUnit.Framework;
 using NUnit.Framework.Constraints;
 using OverwatchTranscript;
-using Utils;
 
 namespace CodexTests
 {

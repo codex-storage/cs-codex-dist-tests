@@ -1,7 +1,7 @@
 ﻿using CodexContractsPlugin;
 using CodexContractsPlugin.Marketplace;
-using GethPlugin;
 using Newtonsoft.Json;
+using Utils;
 
 namespace TestNetRewarder
 {

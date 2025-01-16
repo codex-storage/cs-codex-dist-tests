@@ -9,15 +9,15 @@ namespace CodexClient
     {
         private readonly ILog log;
         private readonly IFileManager fileManager;
-        private readonly ICodexHooksProvider hooksProvider;
+        private readonly CodexHooksFactory hooksFactor;
         private readonly IHttpFactory httpFactory;
         private readonly IIProcessControlFactory processControlFactory;
 
-        public CodexNodeFactory(ILog log, IFileManager fileManager, ICodexHooksProvider hooksProvider, IHttpFactory httpFactory, IIProcessControlFactory processControlFactory)
+        public CodexNodeFactory(ILog log, IFileManager fileManager, CodexHooksFactory hooksFactory, IHttpFactory httpFactory, IIProcessControlFactory processControlFactory)
         {
             this.log = log;
             this.fileManager = fileManager;
-            this.hooksProvider = hooksProvider;
+            this.hooksFactor = hooksFactory;
             this.httpFactory = httpFactory;
             this.processControlFactory = processControlFactory;
         }
@@ -26,9 +26,11 @@ namespace CodexClient
         {
             var processControl = processControlFactory.CreateProcessControl(instance);
             var access = new CodexAccess(log, httpFactory, processControl, instance);
-            var hooks = hooksProvider.CreateHooks(access.GetName());
+            var hooks = hooksFactor.CreateHooks(access.GetName());
             var marketplaceAccess = CreateMarketplaceAccess(instance, access, hooks);
-            return new CodexNode(log, access, fileManager, marketplaceAccess, hooks);
+            var node =  new CodexNode(log, access, fileManager, marketplaceAccess, hooks);
+            node.Initialize();
+            return node;
         }
 
         private IMarketplaceAccess CreateMarketplaceAccess(ICodexInstance instance, CodexAccess access, ICodexNodeHooks hooks)

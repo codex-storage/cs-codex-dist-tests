@@ -1,4 +1,6 @@
-﻿namespace CodexPlugin.OverwatchSupport
+﻿using CodexClient;
+
+namespace CodexPlugin.OverwatchSupport
 {
     public class IdentityMap
     {

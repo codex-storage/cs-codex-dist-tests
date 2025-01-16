@@ -1,9 +1,8 @@
 ﻿using BlockchainUtils;
 using CodexContractsPlugin.ChainMonitor;
 using DiscordRewards;
-using GethPlugin;
-using NethereumWorkflow;
 using System.Numerics;
+using Utils;
 
 namespace TestNetRewarder
 {

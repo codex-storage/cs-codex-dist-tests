@@ -1,6 +1,5 @@
 ﻿using CodexContractsPlugin;
-using CodexPlugin;
-using GethPlugin;
+using CodexClient;
 using NUnit.Framework;
 
 namespace CodexTests.PeerDiscoveryTests

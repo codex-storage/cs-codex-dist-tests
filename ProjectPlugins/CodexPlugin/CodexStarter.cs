@@ -1,4 +1,5 @@
-﻿using CodexPlugin.Hooks;
+﻿using CodexClient;
+using CodexClient.Hooks;
 using Core;
 using KubernetesWorkflow;
 using KubernetesWorkflow.Types;
@@ -7,7 +8,7 @@ using Utils;
 
 namespace CodexPlugin
 {
-    public class CodexStarter : IProcessControl
+    public class CodexStarter : IIProcessControlFactory
     {
         private readonly IPluginTools pluginTools;
         private readonly CodexContainerRecipe recipe = new CodexContainerRecipe();
@@ -23,6 +24,15 @@ namespace CodexPlugin
         }
 
         public CodexHooksFactory HooksFactory { get; } = new CodexHooksFactory();
+
+        public IProcessControl CreateProcessControl(ICodexInstance instance)
+        {
+            var pod = podMap[instance];
+            return new CodexContainerProcessControl(pluginTools, pod, onStop: () =>
+            {
+                podMap.Remove(instance);
+            });
+        }
 
         public RunningPod[] BringOnline(CodexSetup codexSetup)
         {
@@ -47,46 +57,14 @@ namespace CodexPlugin
             return containers;
         }
 
-        public void Stop(ICodexInstance instance, bool waitTillStopped)
-        {
-            Log($"Stopping node...");
-            var pod = podMap[instance];
-            podMap.Remove(instance);
-
-            var workflow = pluginTools.CreateWorkflow();
-            workflow.Stop(pod, waitTillStopped);
-            Log("Stopped.");
-        }
-
-        public IDownloadedLog DownloadLog(ICodexInstance instance, LogFile file)
-        {
-            var workflow = pluginTools.CreateWorkflow();
-            var pod = podMap[instance];
-            return workflow.DownloadContainerLog(pod.Containers.Single());
-        }
-
-        public void DeleteDataDirFolder(ICodexInstance instance)
-        {
-            var pod = podMap[instance];
-            var container = pod.Containers.Single();
-
-            try
-            {
-                var dataDirVar = container.Recipe.EnvVars.Single(e => e.Name == "CODEX_DATA_DIR");
-                var dataDir = dataDirVar.Value;
-                var workflow = pluginTools.CreateWorkflow();
-                workflow.ExecuteCommand(container, "rm", "-Rfv", $"/codex/{dataDir}/repo");
-                Log("Deleted repo folder.");
-            }
-            catch (Exception e)
-            {
-                Log("Unable to delete repo folder: " + e);
-            }
-        }
-
         public ICodexNodeGroup WrapCodexContainers(CoreInterface coreInterface, RunningPod[] containers)
         {
-            var codexNodeFactory = new CodexNodeFactory(pluginTools, HooksFactory);
+            var codexNodeFactory = new CodexNodeFactory(
+                log: pluginTools.GetLog(),
+                fileManager: pluginTools.GetFileManager(),
+                hooksFactory: HooksFactory,
+                httpFactory: pluginTools,
+                processControlFactory: this);
 
             var group = CreateCodexGroup(coreInterface, containers, codexNodeFactory);
 
@@ -139,8 +117,7 @@ namespace CodexPlugin
         private CodexNodeGroup CreateCodexGroup(CoreInterface coreInterface, RunningPod[] runningContainers, CodexNodeFactory codexNodeFactory)
         {
             var instances = runningContainers.Select(CreateInstance).ToArray();
-            var accesses = instances.Select(CreateAccess).ToArray();
-            var nodes = accesses.Select(codexNodeFactory.CreateOnlineCodexNode).ToArray();
+            var nodes = instances.Select(codexNodeFactory.CreateCodexNode).ToArray();
             var group = new CodexNodeGroup(pluginTools, nodes);
 
             try
@@ -154,18 +131,6 @@ namespace CodexPlugin
             }
 
             return group;
-        }
-
-        private CodexAccess CreateAccess(ICodexInstance instance)
-        {
-            var crashWatcher = CreateCrashWatcher(instance);
-            return new CodexAccess(pluginTools, this, instance, crashWatcher);
-        }
-
-        private ICrashWatcher CreateCrashWatcher(ICodexInstance instance)
-        {
-            var pod = podMap[instance];
-            return pluginTools.CreateWorkflow().CreateCrashWatcher(pod.Containers.Single());
         }
 
         private ICodexInstance CreateInstance(RunningPod pod)
@@ -196,6 +161,68 @@ namespace CodexPlugin
         private void Log(string message)
         {
             pluginTools.GetLog().Log(message);
+        }
+    }
+
+    public class CodexContainerProcessControl : IProcessControl
+    {
+        private readonly IPluginTools tools;
+        private readonly RunningPod pod;
+        private readonly Action onStop;
+        private readonly ContainerCrashWatcher crashWatcher;
+
+        public CodexContainerProcessControl(IPluginTools tools, RunningPod pod, Action onStop)
+        {
+            this.tools = tools;
+            this.pod = pod;
+            this.onStop = onStop;
+
+            crashWatcher = tools.CreateWorkflow().CreateCrashWatcher(pod.Containers.Single());
+            crashWatcher.Start();
+        }
+
+        public void Stop(bool waitTillStopped)
+        {
+            Log($"Stopping node...");
+            var workflow = tools.CreateWorkflow();
+            workflow.Stop(pod, waitTillStopped);
+            crashWatcher.Stop();
+            onStop();
+            Log("Stopped.");
+        }
+
+        public IDownloadedLog DownloadLog(LogFile file)
+        {
+            var workflow = tools.CreateWorkflow();
+            return workflow.DownloadContainerLog(pod.Containers.Single());
+        }
+
+        public void DeleteDataDirFolder()
+        {
+            var container = pod.Containers.Single();
+
+            try
+            {
+                var dataDirVar = container.Recipe.EnvVars.Single(e => e.Name == "CODEX_DATA_DIR");
+                var dataDir = dataDirVar.Value;
+                var workflow = tools.CreateWorkflow();
+                workflow.ExecuteCommand(container, "rm", "-Rfv", $"/codex/{dataDir}/repo");
+                Log("Deleted repo folder.");
+            }
+            catch (Exception e)
+            {
+                Log("Unable to delete repo folder: " + e);
+            }
+        }
+
+        public bool HasCrashed()
+        {
+            return crashWatcher.HasCrashed();
+        }
+
+        private void Log(string message)
+        {
+            tools.GetLog().Log(message);
         }
     }
 }

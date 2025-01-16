@@ -1,4 +1,4 @@
-﻿using CodexPlugin;
+﻿using CodexClient;
 using Logging;
 using static CodexTests.Helpers.FullConnectivityHelper;
 

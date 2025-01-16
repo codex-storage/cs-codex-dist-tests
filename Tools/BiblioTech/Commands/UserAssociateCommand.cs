@@ -1,8 +1,6 @@
 ﻿using BiblioTech.Options;
 using Discord;
-using GethPlugin;
-using k8s.KubeConfigModels;
-using NBitcoin.Secp256k1;
+using Utils;
 
 namespace BiblioTech.Commands
 {
@@ -67,14 +65,14 @@ namespace BiblioTech.Commands
             await Program.AdminChecker.SendInAdminChannel($"User {Mention(user)} used '/{Name}' but the provided address is already in use by another user. (address: {newAddress})");
         }
 
-        private async Task ResponseOK(CommandContext context, IUser user, GethPlugin.EthAddress newAddress)
+        private async Task ResponseOK(CommandContext context, IUser user, EthAddress newAddress)
         {
             await context.Followup(new string[]
-{
+            {
                     "Done! Thank you for joining the test net!",
                     "By default, the bot will @-mention you with test-net related notifications.",
                     $"You can enable/disable this behavior with the '/{notifyCommand.Name}' command."
-});
+            });
 
             await Program.AdminChecker.SendInAdminChannel($"User {Mention(user)} used '/{Name}' successfully. ({newAddress})");
         }

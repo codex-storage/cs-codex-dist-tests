@@ -15,7 +15,7 @@ public static class Program
         var pluginRoot = FindCodexPluginFolder();
         var clientRoot = FindCodexClientFolder();
         Console.WriteLine("Located CodexPlugin: " + pluginRoot);
-        var openApiFile = Path.Combine(pluginRoot, "openapi.yaml");
+        var openApiFile = Path.Combine(clientRoot, "openapi.yaml");
         var clientFile = Path.Combine(clientRoot, "obj", "openapiClient.cs");
         var targetFile = Path.Combine(pluginRoot, "ApiChecker.cs");
 

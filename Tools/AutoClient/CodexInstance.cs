@@ -1,4 +1,5 @@
-﻿using CodexOpenApi;
+﻿using CodexClient;
+using CodexOpenApi;
 using CodexPlugin;
 using Logging;
 using Nethereum.Model;

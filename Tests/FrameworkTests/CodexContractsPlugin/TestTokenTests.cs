@@ -1,6 +1,6 @@
-﻿using CodexContractsPlugin;
-using NUnit.Framework;
+﻿using NUnit.Framework;
 using System.Numerics;
+using Utils;
 
 namespace FrameworkTests.CodexContractsPlugin
 {

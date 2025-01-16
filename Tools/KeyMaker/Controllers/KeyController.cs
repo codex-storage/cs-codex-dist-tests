@@ -1,5 +1,5 @@
+using GethPlugin;
 using Microsoft.AspNetCore.Mvc;
-using Utils;
 
 namespace KeyMaker.Controllers
 {
@@ -10,7 +10,7 @@ namespace KeyMaker.Controllers
         [HttpGet]
         public KeyResponse Get()
         {
-            var account = EthAccount.GenerateNew();
+            var account = EthAccountGenerator.GenerateNew();
 
             return new KeyResponse
             {

@@ -1,4 +1,5 @@
-﻿using OverwatchTranscript;
+﻿using CodexClient;
+using OverwatchTranscript;
 
 namespace CodexPlugin.OverwatchSupport
 {

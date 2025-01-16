@@ -14,9 +14,9 @@ namespace CodexPlugin
 
     public class CodexNodeGroup : ICodexNodeGroup
     {
-        private readonly CodexNode[] nodes;
+        private readonly ICodexNode[] nodes;
 
-        public CodexNodeGroup(IPluginTools tools, CodexNode[] nodes)
+        public CodexNodeGroup(IPluginTools tools, ICodexNode[] nodes)
         {
             this.nodes = nodes;
             Version = new DebugInfoVersion();
@@ -61,7 +61,6 @@ namespace CodexPlugin
 
         public void EnsureOnline()
         {
-            foreach (var node in nodes) node.Initialize();
             var versionResponses = Nodes.Select(n => n.Version);
 
             var first = versionResponses.First();
