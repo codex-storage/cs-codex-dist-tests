@@ -14,31 +14,22 @@ namespace CodexPlugin
         Address DiscoveryEndpoint { get; }
         Address ApiEndpoint { get; }
         Address ListenEndpoint { get; }
-        void DeleteDataDirFolder();
-        EthAccount? GetEthAccount();
-        Address? GetMetricsEndpoint();
+        EthAccount? EthAccount { get; }
+        Address? MetricsEndpoint { get; }
     }
 
-    public class CodexContainerInstance : ICodexInstance
+    public class CodexInstance : ICodexInstance
     {
-        private readonly RunningContainer container;
-        private readonly IPluginTools tools;
-        private readonly ILog log;
-        private readonly EthAccount? ethAccount = null;
-
-        public CodexContainerInstance(IPluginTools tools, ILog log, RunningPod pod)
+        public CodexInstance(string name, string imageName, DateTime startUtc, Address discoveryEndpoint, Address apiEndpoint, Address listenEndpoint, EthAccount? ethAccount, Address? metricsEndpoint)
         {
-            container = pod.Containers.Single();
-            this.tools = tools;
-            this.log = log;
-            Name = container.Name;
-            ImageName = container.Recipe.Image;
-            StartUtc = container.Recipe.RecipeCreatedUtc;
-
-            DiscoveryEndpoint = container.GetInternalAddress(CodexContainerRecipe.DiscoveryPortTag);
-            ApiEndpoint = container.GetAddress(CodexContainerRecipe.ApiPortTag);
-            ListenEndpoint = container.GetInternalAddress(CodexContainerRecipe.ListenPortTag);
-            ethAccount = container.Recipe.Additionals.Get<EthAccount>();
+            Name = name;
+            ImageName = imageName;
+            StartUtc = startUtc;
+            DiscoveryEndpoint = discoveryEndpoint;
+            ApiEndpoint = apiEndpoint;
+            ListenEndpoint = listenEndpoint;
+            EthAccount = ethAccount;
+            MetricsEndpoint = metricsEndpoint;
         }
 
         public string Name { get; }
@@ -47,29 +38,37 @@ namespace CodexPlugin
         public Address DiscoveryEndpoint { get; }
         public Address ApiEndpoint { get; }
         public Address ListenEndpoint { get; }
+        public EthAccount? EthAccount { get; }
+        public Address? MetricsEndpoint { get; }
+    }
 
-        public void DeleteDataDirFolder()
+    public static class CodexInstanceContainerExtension
+    {
+        public static ICodexInstance CreateFromPod(RunningPod pod)
         {
-            try
-            {
-                var dataDirVar = container.Recipe.EnvVars.Single(e => e.Name == "CODEX_DATA_DIR");
-                var dataDir = dataDirVar.Value;
-                var workflow = tools.CreateWorkflow();
-                workflow.ExecuteCommand(container, "rm", "-Rfv", $"/codex/{dataDir}/repo");
-                log.Log("Deleted repo folder.");
-            }
-            catch (Exception e)
-            {
-                log.Log("Unable to delete repo folder: " + e);
-            }
+            var container = pod.Containers.Single();
+
+            return new CodexInstance(
+                name: container.Name,
+                imageName: container.Recipe.Image,
+                startUtc: container.Recipe.RecipeCreatedUtc,
+                discoveryEndpoint: container.GetInternalAddress(CodexContainerRecipe.DiscoveryPortTag),
+                apiEndpoint: container.GetAddress(CodexContainerRecipe.ApiPortTag),
+                listenEndpoint: container.GetInternalAddress(CodexContainerRecipe.ListenPortTag),
+                ethAccount: container.Recipe.Additionals.Get<EthAccount>(),
+                metricsEndpoint: GetMetricsEndpoint(container)
+            );
         }
 
-        public EthAccount? GetEthAccount()
-        {
-            return ethAccount;
-        }
+        // todo: is this needed for the discovery address??
+        //var info = codexAccess.GetPodInfo();
+        //return new Address(
+        //    logName: $"{GetName()}:DiscoveryPort",
+        //    host: info.Ip,
+        //    port: Container.Recipe.GetPortByTag(CodexContainerRecipe.DiscoveryPortTag)!.Number
+        //);
 
-        public Address? GetMetricsEndpoint()
+        private static Address? GetMetricsEndpoint(RunningContainer container)
         {
             try
             {

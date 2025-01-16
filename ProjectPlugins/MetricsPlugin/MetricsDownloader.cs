@@ -26,7 +26,7 @@ namespace MetricsPlugin
         private LogFile WriteToFile(string nodeName, string[] headers, Dictionary<DateTime, List<string>> map)
         {
             var file = log.CreateSubfile("csv");
-            log.Log($"Downloading metrics for {nodeName} to file {file.FullFilename}");
+            log.Log($"Downloading metrics for {nodeName} to file {file.Filename}");
 
             file.WriteRaw(string.Join(",", headers));
 

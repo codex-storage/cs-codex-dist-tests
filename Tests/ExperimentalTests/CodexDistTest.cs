@@ -105,7 +105,7 @@ namespace CodexTests
         public void CheckLogForErrors(ICodexNode node)
         {
             Log($"Checking {node.GetName()} log for errors.");
-            var log = Ci.DownloadLog(node);
+            var log = node.DownloadLog();
 
             log.AssertLogDoesNotContain("Block validation failed");
             log.AssertLogDoesNotContainLinesStartingWith("ERR ");
@@ -203,7 +203,7 @@ namespace CodexTests
 
                 Stopwatch.Measure(lifecycle.Log, $"Transcript.Finalize: {outputFilepath}", () =>
                 {
-                    writer.IncludeFile(lifecycle.Log.LogFile.FullFilename);
+                    writer.IncludeFile(lifecycle.Log.LogFile.Filename);
                     writer.Finalize(outputFilepath);
                 });
             }
@@ -215,9 +215,9 @@ namespace CodexTests
 
         private string GetOutputFullPath(TestLifecycle lifecycle, CreateTranscriptAttribute attr)
         {
-            var outputPath = Path.GetDirectoryName(lifecycle.Log.LogFile.FullFilename);
+            var outputPath = Path.GetDirectoryName(lifecycle.Log.LogFile.Filename);
             if (outputPath == null) throw new Exception("Logfile path is null");
-            var filename = Path.GetFileNameWithoutExtension(lifecycle.Log.LogFile.FullFilename);
+            var filename = Path.GetFileNameWithoutExtension(lifecycle.Log.LogFile.Filename);
             if (string.IsNullOrEmpty(filename)) throw new Exception("Logfile name is null or empty");
             var outputFile = Path.Combine(outputPath, filename + "_" + attr.OutputFilename);
             if (!outputFile.EndsWith(".owts")) outputFile += ".owts";

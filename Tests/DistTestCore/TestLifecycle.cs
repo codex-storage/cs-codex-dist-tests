@@ -4,6 +4,7 @@ using FileUtils;
 using KubernetesWorkflow;
 using KubernetesWorkflow.Recipe;
 using KubernetesWorkflow.Types;
+using Logging;
 using Utils;
 
 namespace DistTestCore

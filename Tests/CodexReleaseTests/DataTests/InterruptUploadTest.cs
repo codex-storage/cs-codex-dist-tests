@@ -32,7 +32,7 @@ namespace CodexReleaseTests.DataTests
             process.Kill();
             Thread.Sleep(1000);
 
-            var log = Ci.DownloadLog(node);
+            var log = node.DownloadLog();
             return !log.GetLinesContaining("Unhandled exception in async proc, aborting").Any();
         }
 

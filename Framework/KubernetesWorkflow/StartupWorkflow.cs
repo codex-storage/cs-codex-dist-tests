@@ -134,7 +134,7 @@ namespace KubernetesWorkflow
                 controller.DownloadPodLog(container, logHandler, tailLines, previous);
             });
 
-            return new DownloadedLog(logHandler, container.Name);
+            return new DownloadedLog(logHandler.LogFile, container.Name);
         }
 
         public string ExecuteCommand(RunningContainer container, string command, params string[] args)

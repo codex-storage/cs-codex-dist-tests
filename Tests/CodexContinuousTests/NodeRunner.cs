@@ -24,12 +24,6 @@ namespace ContinuousTests
             this.customNamespace = customNamespace;
         }
 
-        public IDownloadedLog DownloadLog(RunningContainer container, int? tailLines = null)
-        {
-            var entryPoint = CreateEntryPoint();
-            return entryPoint.CreateInterface().DownloadLog(container, tailLines);
-        }
-
         public void RunNode(Action<ICodexSetup> setup, Action<ICodexNode> operation)
         {
             RunNode(nodes.ToList().PickOneRandom(), setup, operation);
@@ -59,7 +53,7 @@ namespace ContinuousTests
                 }
                 catch
                 {
-                    DownloadLog(node.Container);
+                    node.DownloadLog();
                     throw;
                 }
             }

@@ -1,10 +1,8 @@
-﻿using Logging;
-
-namespace KubernetesWorkflow
+﻿namespace Logging
 {
     public interface IDownloadedLog
     {
-        string ContainerName { get; }
+        string SourceName { get; }
 
         void IterateLines(Action<string> action);
         void IterateLines(Action<string> action, params string[] thatContain);
@@ -14,21 +12,27 @@ namespace KubernetesWorkflow
         void DeleteFile();
     }
 
-    internal class DownloadedLog : IDownloadedLog
+    public class DownloadedLog : IDownloadedLog
     {
         private readonly LogFile logFile;
 
-        internal DownloadedLog(WriteToFileLogHandler logHandler, string containerName)
+        public DownloadedLog(string filepath, string sourceName)
         {
-            logFile = logHandler.LogFile;
-            ContainerName = containerName;
+            logFile = new LogFile(filepath);
+            SourceName = sourceName;
         }
 
-        public string ContainerName { get; }
+        public DownloadedLog(LogFile logFile, string sourceName)
+        {
+            this.logFile = logFile;
+            SourceName = sourceName;
+        }
+
+        public string SourceName { get; }
 
         public void IterateLines(Action<string> action)
         {
-            using var file = File.OpenRead(logFile.FullFilename);
+            using var file = File.OpenRead(logFile.Filename);
             using var streamReader = new StreamReader(file);
 
             var line = streamReader.ReadLine();
@@ -64,12 +68,12 @@ namespace KubernetesWorkflow
 
         public string GetFilepath()
         {
-            return logFile.FullFilename;
+            return logFile.Filename;
         }
 
         public void DeleteFile()
         {
-            File.Delete(logFile.FullFilename);
+            File.Delete(logFile.Filename);
         }
     }
 }

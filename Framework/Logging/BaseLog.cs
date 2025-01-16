@@ -34,7 +34,7 @@ namespace Logging
         {
             get
             {
-                if (logFile == null) logFile = new LogFile(GetFullName(), "log");
+                if (logFile == null) logFile = new LogFile(GetFullName() + ".log");
                 return logFile;
             }
         }
@@ -69,7 +69,7 @@ namespace Logging
 
         public virtual void Delete()
         {
-            File.Delete(LogFile.FullFilename);
+            File.Delete(LogFile.Filename);
         }
 
         public LogFile CreateSubfile(string addName, string ext = "log")
@@ -78,7 +78,7 @@ namespace Logging
                 .Replace("<", "")
                 .Replace(">", "");
 
-            return new LogFile($"{GetFullName()}_{GetSubfileNumber()}_{addName}", ext);
+            return new LogFile($"{GetFullName()}_{GetSubfileNumber()}_{addName}.{ext}");
         }
 
         protected string ApplyReplacements(string str)

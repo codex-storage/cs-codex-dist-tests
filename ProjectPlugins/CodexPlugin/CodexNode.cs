@@ -46,6 +46,7 @@ namespace CodexPlugin
         /// </summary>
         void DeleteDataDirFolder();
         void Stop(bool waitTillStopped);
+        IDownloadedLog DownloadLog(string additionalName = "");
         bool HasCrashed();
     }
 
@@ -270,6 +271,11 @@ namespace CodexPlugin
             Log("Stopping...");
             hooks.OnNodeStopping();
             codexAccess.Stop(waitTillStopped);
+        }
+
+        public IDownloadedLog DownloadLog(string additionalName = "")
+        {
+            return codexAccess.DownloadLog(additionalName);
         }
 
         public Address GetDiscoveryEndpoint()

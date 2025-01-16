@@ -125,13 +125,14 @@ namespace ContinuousTests
 
             foreach (var node in nodes)
             {
-                var container = node.Container;
-                var deploymentName = container.RunningPod.StartResult.Deployment.Name;
-                var namespaceName = container.RunningPod.StartResult.Cluster.Configuration.KubernetesNamespace;
-                var openingLine =
-                    $"{namespaceName} - {deploymentName} = {node.Container.Name} = {node.GetDebugInfo().Id}";
-                elasticSearchLogDownloader.Download(fixtureLog.CreateSubfile(node.GetName()), node.Container, effectiveStart,
-                    effectiveEnd, openingLine);
+                //var container = node.Container;
+                //var deploymentName = container.RunningPod.StartResult.Deployment.Name;
+                //var namespaceName = container.RunningPod.StartResult.Cluster.Configuration.KubernetesNamespace;
+                //var openingLine =
+                //    $"{namespaceName} - {deploymentName} = {node.Container.Name} = {node.GetDebugInfo().Id}";
+                //elasticSearchLogDownloader.Download(fixtureLog.CreateSubfile(node.GetName()), node.Container, effectiveStart,
+                //    effectiveEnd, openingLine);
+                throw new NotImplementedException("access to container info is unavilable.");
             }
         }
 

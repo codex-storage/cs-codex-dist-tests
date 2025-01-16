@@ -100,7 +100,7 @@ namespace CodexNetDeployer
             if (codexNode != null)
             {
                 Console.WriteLine("Downloading container log.");
-                ci.DownloadLog(codexNode);
+                codexNode.DownloadLog();
             }
 
             return null;

@@ -23,7 +23,6 @@ namespace DistTestCore.Logs
         {
             if (hasFailed) return;
             hasFailed = true;
-            LogFile.ConcatToFilename("_FAILED");
         }
     }
 }

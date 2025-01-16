@@ -20,7 +20,7 @@ namespace CodexTests.BasicTests
             var localDatasets = primary.LocalFiles();
             CollectionAssert.Contains(localDatasets.Content.Select(c => c.Cid), cid);
 
-            var log = Ci.DownloadLog(primary);
+            var log = primary.DownloadLog();
 
             log.AssertLogContains("Uploaded file");
         }

@@ -35,7 +35,7 @@ namespace CodexTests.UtilityTests
 
         private Dictionary<string, int> GetLogMap(ICodexNode node, DateTime? startUtc = null)
         {
-            var log = Ci.DownloadLog(node);
+            var log = node.DownloadLog();
             var map = new Dictionary<string, int>();
             log.IterateLines(line =>
             {

@@ -36,6 +36,11 @@ namespace CodexPlugin
             instance = null!;
         }
 
+        public IDownloadedLog DownloadLog(string additionalName = "")
+        {
+            return processControl.DownloadLog(instance, log.CreateSubfile(GetName() + additionalName));
+        }
+
         public string GetImageName()
         {
             return instance.ImageName;
@@ -195,12 +200,6 @@ namespace CodexPlugin
         public Address GetDiscoveryEndpoint()
         {
             return instance.DiscoveryEndpoint;
-            //var info = codexAccess.GetPodInfo();
-            //return new Address(
-            //    logName: $"{GetName()}:DiscoveryPort",
-            //    host: info.Ip,
-            //    port: Container.Recipe.GetPortByTag(CodexContainerRecipe.DiscoveryPortTag)!.Number
-            //);
         }
 
         public Address GetApiEndpoint()
@@ -215,17 +214,17 @@ namespace CodexPlugin
 
         public Address? GetMetricsEndpoint()
         {
-            return instance.GetMetricsEndpoint();
+            return instance.MetricsEndpoint;
         }
 
         public EthAccount? GetEthAccount()
         {
-            return instance.GetEthAccount();
+            return instance.EthAccount;
         }
 
         public void DeleteDataDirFolder()
         {
-            instance.DeleteDataDirFolder();
+            processControl.DeleteDataDirFolder(instance);
         }
 
         private T OnCodex<T>(Func<CodexApi, Task<T>> action)

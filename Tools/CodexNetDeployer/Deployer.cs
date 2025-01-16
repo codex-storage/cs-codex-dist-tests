@@ -181,7 +181,8 @@ namespace CodexNetDeployer
 
         private CodexInstance CreateCodexInstance(ICodexNode node)
         {
-            return new CodexInstance(node.Container.RunningPod, node.GetDebugInfo());
+            //return new CodexInstance(node.Container.RunningPod, node.GetDebugInfo());
+            throw new NotImplementedException();
         }
 
         private string? GetKubeConfig(string kubeConfigFile)

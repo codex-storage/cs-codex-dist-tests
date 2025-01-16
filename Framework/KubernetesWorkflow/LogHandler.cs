@@ -29,7 +29,7 @@ namespace KubernetesWorkflow
         {
             LogFile = sourceLog.CreateSubfile(addFileName);
 
-            var msg = $"{description} -->> {LogFile.FullFilename}";
+            var msg = $"{description} -->> {LogFile.Filename}";
             sourceLog.Log(msg);
 
             LogFile.Write(msg);

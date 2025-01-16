@@ -1,5 +1,6 @@
 ﻿using CodexPlugin.OverwatchSupport.LineConverters;
 using KubernetesWorkflow;
+using Logging;
 using OverwatchTranscript;
 using Utils;
 

@@ -31,7 +31,7 @@ namespace CodexTests.ScalabilityTests
             Task.WaitAll(uploadTasks);
             var cid = new ContentId(uploadTasks.Select(t => t.Result.Id).Distinct().Single());
 
-            var uploadLog = Ci.DownloadLog(hosts[0]);
+            var uploadLog = hosts[0].DownloadLog();
             var expectedNumberOfBlocks = RoundUp(fileSize.MB().SizeInBytes, 64.KB().SizeInBytes) + 1; // +1 for manifest block.
             var blockCids = uploadLog
                 .FindLinesThatContain("Block Stored")
@@ -50,7 +50,7 @@ namespace CodexTests.ScalabilityTests
             var resultFile = client.DownloadContent(cid);
             resultFile!.AssertIsEqual(file);
 
-            var downloadLog = Ci.DownloadLog(client);
+            var downloadLog = client.DownloadLog();
             var host = string.Empty;
             var blockAddressHostMap = new Dictionary<string, List<string>>();
             downloadLog

@@ -59,6 +59,32 @@ namespace CodexPlugin
             Log("Stopped.");
         }
 
+        public IDownloadedLog DownloadLog(ICodexInstance instance, LogFile file)
+        {
+            var workflow = pluginTools.CreateWorkflow();
+            var pod = podMap[instance];
+            return workflow.DownloadContainerLog(pod.Containers.Single());
+        }
+
+        public void DeleteDataDirFolder(ICodexInstance instance)
+        {
+            var pod = podMap[instance];
+            var container = pod.Containers.Single();
+
+            try
+            {
+                var dataDirVar = container.Recipe.EnvVars.Single(e => e.Name == "CODEX_DATA_DIR");
+                var dataDir = dataDirVar.Value;
+                var workflow = pluginTools.CreateWorkflow();
+                workflow.ExecuteCommand(container, "rm", "-Rfv", $"/codex/{dataDir}/repo");
+                Log("Deleted repo folder.");
+            }
+            catch (Exception e)
+            {
+                Log("Unable to delete repo folder: " + e);
+            }
+        }
+
         public ICodexNodeGroup WrapCodexContainers(CoreInterface coreInterface, RunningPod[] containers)
         {
             var codexNodeFactory = new CodexNodeFactory(pluginTools, HooksFactory);
@@ -145,7 +171,7 @@ namespace CodexPlugin
 
         private ICodexInstance CreateInstance(RunningPod pod)
         {
-            var instance = new CodexContainerInstance(pluginTools, pluginTools.GetLog(), pod);
+            var instance = CodexInstanceContainerExtension.CreateFromPod(pod);
             podMap.Add(instance, pod);
             return instance;
         }

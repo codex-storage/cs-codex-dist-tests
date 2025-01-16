@@ -29,17 +29,17 @@ namespace CodexPlugin
         public DeploymentMetadata Metadata { get; }
     }
 
-    public class CodexInstance
-    {
-        public CodexInstance(RunningPod pod, DebugInfo info)
-        {
-            Pod = pod;
-            Info = info;
-        }
+    //public class CodexInstance
+    //{
+    //    public CodexInstance(RunningPod pod, DebugInfo info)
+    //    {
+    //        Pod = pod;
+    //        Info = info;
+    //    }
 
-        public RunningPod Pod { get; }
-        public DebugInfo Info { get; }
-    }
+    //    public RunningPod Pod { get; }
+    //    public DebugInfo Info { get; }
+    //}
 
     public class DeploymentMetadata
     {

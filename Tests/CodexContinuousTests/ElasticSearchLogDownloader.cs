@@ -37,7 +37,7 @@ namespace ContinuousTests
             var endpoint = CreateElasticSearchEndpoint();
             var queryTemplate = CreateQueryTemplate(container, startUtc, endUtc);
 
-            targetFile.Write($"Downloading '{container.Name}' to '{targetFile.FullFilename}'.");
+            targetFile.Write($"Downloading '{container.Name}' to '{targetFile.Filename}'.");
             var reconstructor = new LogReconstructor(targetFile, endpoint, queryTemplate);
             reconstructor.DownloadFullLog();
 
