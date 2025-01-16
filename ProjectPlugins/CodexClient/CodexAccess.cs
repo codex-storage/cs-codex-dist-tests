@@ -1,4 +1,5 @@
-﻿using Logging;
+﻿using CodexOpenApi;
+using Logging;
 using Newtonsoft.Json;
 using Utils;
 using WebUtils;
@@ -218,22 +219,22 @@ namespace CodexClient
             processControl.DeleteDataDirFolder();
         }
 
-        private T OnCodex<T>(Func<openapiClient, Task<T>> action)
+        private T OnCodex<T>(Func<CodexApiClient, Task<T>> action)
         {
             var result = httpFactory.CreateHttp(GetHttpId(), h => CheckContainerCrashed()).OnClient(client => CallCodex(client, action));
             return result;
         }
 
-        private T OnCodex<T>(Func<openapiClient, Task<T>> action, Retry retry)
+        private T OnCodex<T>(Func<CodexApiClient, Task<T>> action, Retry retry)
         {
             var result = httpFactory.CreateHttp(GetHttpId(), h => CheckContainerCrashed()).OnClient(client => CallCodex(client, action), retry);
             return result;
         }
 
-        private T CallCodex<T>(HttpClient client, Func<openapiClient, Task<T>> action)
+        private T CallCodex<T>(HttpClient client, Func<CodexApiClient, Task<T>> action)
         {
             var address = GetAddress();
-            var api = new openapiClient(client);
+            var api = new CodexApiClient(client);
             api.BaseUrl = $"{address.Host}:{address.Port}/api/codex/v1";
             return CrashCheck(() => Time.Wait(action(api)));
         }

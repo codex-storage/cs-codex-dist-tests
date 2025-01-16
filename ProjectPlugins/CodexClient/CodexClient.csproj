@@ -11,11 +11,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <OpenApiReference Include="openapi.yaml">
-      <CodeGenerator>NSwagCSharp</CodeGenerator>
-      <Namespace>CodexOpenApi</Namespace>
-      <ClassName></ClassName>
-    </OpenApiReference>
+    <OpenApiReference Include="openapi.yaml" CodeGenerator="NSwagCSharp" Namespace="CodexOpenApi" ClassName="CodexApiClient" />
   </ItemGroup>
 
 <ItemGroup>
