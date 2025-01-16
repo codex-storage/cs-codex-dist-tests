@@ -1,7 +1,7 @@
 ﻿using Logging;
 using Utils;
 
-namespace Core
+namespace WebUtils
 {
     public interface IHttp
     {
@@ -16,16 +16,16 @@ namespace Core
         private static object lockLock = new object();
         private static readonly Dictionary<string, object> httpLocks = new Dictionary<string, object>();
         private readonly ILog log;
-        private readonly ITimeSet timeSet;
+        private readonly IWebCallTimeSet timeSet;
         private readonly Action<HttpClient> onClientCreated;
         private readonly string id;
 
-        internal Http(string id, ILog log, ITimeSet timeSet)
+        internal Http(string id, ILog log, IWebCallTimeSet timeSet)
             : this(id, log, timeSet, DoNothing)
         {
         }
 
-        internal Http(string id, ILog log, ITimeSet timeSet, Action<HttpClient> onClientCreated)
+        internal Http(string id, ILog log, IWebCallTimeSet timeSet, Action<HttpClient> onClientCreated)
         {
             this.id = id;
             this.log = log;

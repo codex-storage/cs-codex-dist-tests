@@ -1,7 +1,7 @@
 ﻿using Newtonsoft.Json;
 using Utils;
 
-namespace CodexPlugin
+namespace CodexClient
 {
     public class DebugInfo
     {

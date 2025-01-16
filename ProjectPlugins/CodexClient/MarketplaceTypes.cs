@@ -1,8 +1,7 @@
-﻿using CodexContractsPlugin;
-using Logging;
+﻿using Logging;
 using Utils;
 
-namespace CodexPlugin
+namespace CodexClient
 {
     public class StoragePurchaseRequest
     {

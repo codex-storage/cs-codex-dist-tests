@@ -1,4 +1,4 @@
-﻿namespace CodexPlugin
+﻿namespace CodexClient
 {
     public static class CodexUtils
     {

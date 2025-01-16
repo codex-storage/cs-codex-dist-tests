@@ -1,4 +1,5 @@
-﻿using CodexContractsPlugin;
+﻿using CodexClient;
+using CodexContractsPlugin;
 using CodexDiscordBotPlugin;
 using CodexPlugin;
 using Core;
@@ -46,6 +47,15 @@ namespace CodexTests.UtilityTests
             var purchaseContract = ClientPurchasesStorage(client);
             purchaseContract.WaitForStorageContractStarted();
             purchaseContract.WaitForStorageContractFinished(contracts);
+
+            // todo: removed from codexclient:
+            //contracts.WaitUntilNextPeriod();
+            //contracts.WaitUntilNextPeriod();
+
+            //var blocks = 3;
+            //Log($"Waiting {blocks} blocks for nodes to process payouts...");
+            //Thread.Sleep(GethContainerRecipe.BlockInterval * blocks);
+
             Thread.Sleep(rewarderInterval * 3);
 
             apiCalls.Stop();

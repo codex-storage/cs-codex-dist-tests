@@ -1,11 +1,9 @@
-﻿using CodexContractsPlugin;
-using CodexPlugin.Hooks;
-using GethPlugin;
+﻿using CodexClient.Hooks;
 using Logging;
 using Newtonsoft.Json;
 using Utils;
 
-namespace CodexPlugin
+namespace CodexClient
 {
     public interface IStoragePurchaseContract
     {
@@ -14,7 +12,7 @@ namespace CodexPlugin
         ContentId ContentId { get; }
         void WaitForStorageContractSubmitted();
         void WaitForStorageContractStarted();
-        void WaitForStorageContractFinished(ICodexContracts contracts);
+        void WaitForStorageContractFinished();
         void WaitForContractFailed();
     }
 
@@ -65,7 +63,7 @@ namespace CodexPlugin
             AssertDuration(SubmittedToStarted, timeout, nameof(SubmittedToStarted));
         }
 
-        public void WaitForStorageContractFinished(ICodexContracts contracts)
+        public void WaitForStorageContractFinished()
         {
             if (!contractStartedUtc.HasValue)
             {
@@ -77,13 +75,6 @@ namespace CodexPlugin
             contractFinishedUtc = DateTime.UtcNow;
             LogFinishedDuration();
             AssertDuration(SubmittedToFinished, timeout, nameof(SubmittedToFinished));
-
-            contracts.WaitUntilNextPeriod();
-            contracts.WaitUntilNextPeriod();
-
-            var blocks = 3;
-            Log($"Waiting {blocks} blocks for nodes to process payouts...");
-            Thread.Sleep(GethContainerRecipe.BlockInterval * blocks);
         }
 
         public void WaitForContractFailed()

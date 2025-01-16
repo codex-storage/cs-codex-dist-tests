@@ -12,11 +12,12 @@ public static class Program
     {
         Console.WriteLine("Injecting hash of 'openapi.yaml'...");
 
-        var root = FindCodexPluginFolder();
-        Console.WriteLine("Located CodexPlugin: " + root);
-        var openApiFile = Path.Combine(root, "openapi.yaml");
-        var clientFile = Path.Combine(root, "obj", "openapiClient.cs");
-        var targetFile = Path.Combine(root, "ApiChecker.cs");
+        var pluginRoot = FindCodexPluginFolder();
+        var clientRoot = FindCodexClientFolder();
+        Console.WriteLine("Located CodexPlugin: " + pluginRoot);
+        var openApiFile = Path.Combine(pluginRoot, "openapi.yaml");
+        var clientFile = Path.Combine(clientRoot, "obj", "openapiClient.cs");
+        var targetFile = Path.Combine(pluginRoot, "ApiChecker.cs");
 
         // Force client rebuild by deleting previous artifact.
         File.Delete(clientFile);
@@ -43,6 +44,13 @@ public static class Program
     {
         var folder = Path.Combine(PluginPathUtils.ProjectPluginsDir, "CodexPlugin");
         if (!Directory.Exists(folder)) throw new Exception("CodexPlugin folder not found. Expected: " + folder);
+        return folder;
+    }
+
+    private static string FindCodexClientFolder()
+    {
+        var folder = Path.Combine(PluginPathUtils.ProjectPluginsDir, "CodexClient");
+        if (!Directory.Exists(folder)) throw new Exception("CodexClient folder not found. Expected: " + folder);
         return folder;
     }
 

@@ -1,6 +1,6 @@
 ﻿using System.Globalization;
 
-namespace CodexPlugin
+namespace CodexClient
 {
     public class CodexLogLine
     {

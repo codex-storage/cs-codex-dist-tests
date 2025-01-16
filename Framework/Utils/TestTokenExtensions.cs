@@ -1,6 +1,6 @@
 ﻿using System.Numerics;
 
-namespace CodexContractsPlugin
+namespace Utils
 {
     public class TestToken : IComparable<TestToken>
     {

@@ -1,11 +1,10 @@
-﻿using Logging;
-using Newtonsoft.Json;
-using Serialization = Newtonsoft.Json.Serialization;
-using System.Net.Http.Headers;
+﻿using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using Logging;
+using Newtonsoft.Json;
 using Utils;
 
-namespace Core
+namespace WebUtils
 {
     public interface IEndpoint
     {
@@ -119,7 +118,7 @@ namespace Core
             var errors = new List<string>();
             var deserialized = JsonConvert.DeserializeObject<T>(json, new JsonSerializerSettings()
             {
-                Error = delegate (object? sender, Serialization.ErrorEventArgs args)
+                Error = delegate (object? sender, Newtonsoft.Json.Serialization.ErrorEventArgs args)
                 {
                     if (args.CurrentObject == args.ErrorContext.OriginalObject)
                     {

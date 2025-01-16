@@ -1,6 +1,5 @@
 ﻿using CodexPlugin.Hooks;
 using Core;
-using GethPlugin;
 using KubernetesWorkflow;
 using KubernetesWorkflow.Types;
 using Logging;

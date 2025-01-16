@@ -1,26 +1,25 @@
 ﻿using CodexOpenApi;
-using Core;
-using GethPlugin;
 using Logging;
 using Newtonsoft.Json;
 using Utils;
+using WebUtils;
 
-namespace CodexPlugin
+namespace CodexClient
 {
     public class CodexAccess
     {
         private readonly ILog log;
-        private readonly IPluginTools tools;
+        private readonly IHttpFactory httpFactory;
         private readonly IProcessControl processControl;
         private ICodexInstance instance;
         private readonly Mapper mapper = new Mapper();
 
-        public CodexAccess(IPluginTools tools, IProcessControl processControl, ICodexInstance instance, ICrashWatcher crashWatcher)
+        public CodexAccess(ILog log, IHttpFactory httpFactory, IProcessControl processControl, ICodexInstance instance, ICrashWatcher crashWatcher)
         {
-            this.tools = tools;
+            this.log = log;
+            this.httpFactory = httpFactory;
             this.processControl = processControl;
             this.instance = instance;
-            log = tools.GetLog();
             CrashWatcher = crashWatcher;
 
             CrashWatcher.Start();
@@ -103,19 +102,14 @@ namespace CodexPlugin
             });
         }
 
-        public string UploadFile(UploadInput uploadInput, Action<Failure> onFailure)
+        public string UploadFile(UploadInput uploadInput)
         {
-            return OnCodex(
-                api => api.UploadAsync(uploadInput.ContentType, uploadInput.ContentDisposition, uploadInput.FileStream),
-                CreateRetryConfig(nameof(UploadFile), onFailure));
+            return OnCodex(api => api.UploadAsync(uploadInput.ContentType, uploadInput.ContentDisposition, uploadInput.FileStream));
         }
 
-        public Stream DownloadFile(string contentId, Action<Failure> onFailure)
+        public Stream DownloadFile(string contentId)
         {
-            var fileResponse = OnCodex(
-                api => api.DownloadNetworkStreamAsync(contentId),
-                CreateRetryConfig(nameof(DownloadFile), onFailure));
-
+            var fileResponse = OnCodex(api => api.DownloadNetworkStreamAsync(contentId));
             if (fileResponse.StatusCode != 200) throw new Exception("Download failed with StatusCode: " + fileResponse.StatusCode);
             return fileResponse.Stream;
         }
@@ -147,7 +141,6 @@ namespace CodexPlugin
                     return JsonConvert.DeserializeObject<LocalDatasetListJson>(str)!;
                 }, nameof(LocalFiles));
             }));
-
         }
 
         public StorageAvailability SalesAvailability(StorageAvailability request)
@@ -227,22 +220,22 @@ namespace CodexPlugin
             processControl.DeleteDataDirFolder(instance);
         }
 
-        private T OnCodex<T>(Func<CodexApi, Task<T>> action)
+        private T OnCodex<T>(Func<openapiClient, Task<T>> action)
         {
-            var result = tools.CreateHttp(GetHttpId(), CheckContainerCrashed).OnClient(client => CallCodex(client, action));
+            var result = httpFactory.CreateHttp(GetHttpId(), CheckContainerCrashed).OnClient(client => CallCodex(client, action));
             return result;
         }
 
-        private T OnCodex<T>(Func<CodexApi, Task<T>> action, Retry retry)
+        private T OnCodex<T>(Func<openapiClient, Task<T>> action, Retry retry)
         {
-            var result = tools.CreateHttp(GetHttpId(), CheckContainerCrashed).OnClient(client => CallCodex(client, action), retry);
+            var result = httpFactory.CreateHttp(GetHttpId(), CheckContainerCrashed).OnClient(client => CallCodex(client, action), retry);
             return result;
         }
 
-        private T CallCodex<T>(HttpClient client, Func<CodexApi, Task<T>> action)
+        private T CallCodex<T>(HttpClient client, Func<openapiClient, Task<T>> action)
         {
             var address = GetAddress();
-            var api = new CodexApi(client);
+            var api = new openapiClient(client);
             api.BaseUrl = $"{address.Host}:{address.Port}/api/codex/v1";
             return CrashCheck(() => Time.Wait(action(api)));
         }
@@ -261,7 +254,7 @@ namespace CodexPlugin
 
         private IEndpoint GetEndpoint()
         {
-            return tools
+            return httpFactory
                 .CreateHttp(GetHttpId(), CheckContainerCrashed)
                 .CreateEndpoint(GetAddress(), "/api/codex/v1/", GetName());
         }
@@ -279,49 +272,6 @@ namespace CodexPlugin
         private void CheckContainerCrashed(HttpClient client)
         {
             if (CrashWatcher.HasCrashed()) throw new Exception($"Container {GetName()} has crashed.");
-        }
-
-        private Retry CreateRetryConfig(string description, Action<Failure> onFailure)
-        {
-            var timeSet = tools.TimeSet;
-
-            return new Retry(description, timeSet.HttpRetryTimeout(), timeSet.HttpCallRetryDelay(), failure =>
-            {
-                onFailure(failure);
-                Investigate(failure, timeSet);
-            });
-        }
-
-        private void Investigate(Failure failure, ITimeSet timeSet)
-        {
-            Log($"Retry {failure.TryNumber} took {Time.FormatDuration(failure.Duration)} and failed with '{failure.Exception}'. " +
-                $"(HTTP timeout = {Time.FormatDuration(timeSet.HttpCallTimeout())}) " +
-                $"Checking if node responds to debug/info...");
-
-            try
-            {
-                var debugInfo = GetDebugInfo();
-                if (string.IsNullOrEmpty(debugInfo.Spr))
-                {
-                    Log("Did not get value debug/info response.");
-                    Throw(failure);
-                }
-                else
-                {
-                    Log("Got valid response from debug/info.");
-                }
-            }
-            catch (Exception ex)
-            {
-                Log("Got exception from debug/info call: " + ex);
-                Throw(failure);
-            }
-
-            if (failure.Duration < timeSet.HttpCallTimeout())
-            {
-                Log("Retry failed within HTTP timeout duration.");
-                Throw(failure);
-            }
         }
 
         private void Throw(Failure failure)

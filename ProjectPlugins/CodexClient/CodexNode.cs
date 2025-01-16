@@ -1,14 +1,11 @@
-﻿using CodexPlugin.Hooks;
-using Core;
+﻿using CodexClient.Hooks;
 using FileUtils;
-using GethPlugin;
 using Logging;
-using MetricsPlugin;
 using Utils;
 
-namespace CodexPlugin
+namespace CodexClient
 {
-    public interface ICodexNode : IHasMetricsScrapeTarget, IHasEthAddress
+    public partial interface ICodexNode : IHasEthAddress
     {
         string GetName();
         string GetImageName();
@@ -17,10 +14,8 @@ namespace CodexPlugin
         string GetSpr();
         DebugPeer GetDebugPeer(string peerId);
         ContentId UploadFile(TrackedFile file);
-        ContentId UploadFile(TrackedFile file, Action<Failure> onFailure);
-        ContentId UploadFile(TrackedFile file, string contentType, string contentDisposition, Action<Failure> onFailure);
+        ContentId UploadFile(TrackedFile file, string contentType, string contentDisposition);
         TrackedFile? DownloadContent(ContentId contentId, string fileLabel = "");
-        TrackedFile? DownloadContent(ContentId contentId, Action<Failure> onFailure, string fileLabel = "");
         LocalDataset DownloadStreamless(ContentId cid);
         /// <summary>
         /// TODO: This will monitor the quota-used of the node until 'size' bytes are added. That's a very bad way
@@ -54,23 +49,23 @@ namespace CodexPlugin
     {
         private const string UploadFailedMessage = "Unable to store block";
         private readonly ILog log;
-        private readonly IPluginTools tools;
         private readonly ICodexNodeHooks hooks;
         private readonly TransferSpeeds transferSpeeds;
         private string peerId = string.Empty;
         private string nodeId = string.Empty;
         private readonly CodexAccess codexAccess;
+        private readonly IFileManager fileManager;
 
-        public CodexNode(IPluginTools tools, CodexAccess codexAccess, IMarketplaceAccess marketplaceAccess, ICodexNodeHooks hooks)
+        public CodexNode(ILog log, CodexAccess codexAccess, IFileManager fileManager, IMarketplaceAccess marketplaceAccess, ICodexNodeHooks hooks)
         {
-            this.tools = tools;
             this.codexAccess = codexAccess;
+            this.fileManager = fileManager;
             Marketplace = marketplaceAccess;
             this.hooks = hooks;
             Version = new DebugInfoVersion();
             transferSpeeds = new TransferSpeeds();
 
-            log = new LogPrefixer(tools.GetLog(), $"{GetName()} ");
+            this.log = new LogPrefixer(log, $"{GetName()} ");
         }
 
         public void Awake()
@@ -156,15 +151,10 @@ namespace CodexPlugin
 
         public ContentId UploadFile(TrackedFile file)
         {
-            return UploadFile(file, DoNothing);
+            return UploadFile(file, "application/octet-stream", $"attachment; filename=\"{Path.GetFileName(file.Filename)}\"");
         }
 
-        public ContentId UploadFile(TrackedFile file, Action<Failure> onFailure)
-        {
-            return UploadFile(file, "application/octet-stream", $"attachment; filename=\"{Path.GetFileName(file.Filename)}\"", onFailure);
-        }
-
-        public ContentId UploadFile(TrackedFile file, string contentType, string contentDisposition, Action<Failure> onFailure)
+        public ContentId UploadFile(TrackedFile file, string contentType, string contentDisposition)
         {
             using var fileStream = File.OpenRead(file.Filename);
             var uniqueId = Guid.NewGuid().ToString();
@@ -176,7 +166,7 @@ namespace CodexPlugin
             var logMessage = $"Uploading file {file.Describe()} with contentType: '{input.ContentType}' and disposition: '{input.ContentDisposition}'...";
             var measurement = Stopwatch.Measure(log, logMessage, () =>
             {
-                return codexAccess.UploadFile(input, onFailure);
+                return codexAccess.UploadFile(input);
             });
 
             var response = measurement.Value;
@@ -194,17 +184,12 @@ namespace CodexPlugin
 
         public TrackedFile? DownloadContent(ContentId contentId, string fileLabel = "")
         {
-            return DownloadContent(contentId, DoNothing, fileLabel);
-        }
-
-        public TrackedFile? DownloadContent(ContentId contentId, Action<Failure> onFailure, string fileLabel = "")
-        {
-            var file = tools.GetFileManager().CreateEmptyFile(fileLabel);
+            var file = fileManager.CreateEmptyFile(fileLabel);
             hooks.OnFileDownloading(contentId);
             Log($"Downloading '{contentId}'...");
 
             var logMessage = $"Downloaded '{contentId}' to '{file.Filename}'";
-            var measurement = Stopwatch.Measure(log, logMessage, () => DownloadToFile(contentId.Id, file, onFailure));
+            var measurement = Stopwatch.Measure(log, logMessage, () => DownloadToFile(contentId.Id, file));
 
             var size = file.GetFilesize();
             transferSpeeds.AddDownloadSample(size, measurement);
@@ -337,20 +322,20 @@ namespace CodexPlugin
                 .ToArray();
         }
 
-        private void DownloadToFile(string contentId, TrackedFile file, Action<Failure> onFailure)
+        private void DownloadToFile(string contentId, TrackedFile file)
         {
             using var fileStream = File.OpenWrite(file.Filename);
-            var timeout = tools.TimeSet.HttpCallTimeout();
+            var timeout = TimeSpan.FromMinutes(2.0); // todo: make this user-controllable.
             try
             {
                 // Type of stream generated by openAPI client does not support timeouts.
                 var start = DateTime.UtcNow;
                 var cts = new CancellationTokenSource();
-                var downloadTask = Task.Run((Action)(() =>
+                var downloadTask = Task.Run(() =>
                 {
-                    using var downloadStream = this.codexAccess.DownloadFile(contentId, onFailure);
-                    downloadStream.CopyTo((Stream)fileStream);
-                }), cts.Token);
+                    using var downloadStream = codexAccess.DownloadFile(contentId);
+                    downloadStream.CopyTo(fileStream);
+                }, cts.Token);
                 
                 while (DateTime.UtcNow - start < timeout)
                 {
@@ -410,10 +395,6 @@ namespace CodexPlugin
         private void Log(string msg)
         {
             log.Log(msg);
-        }
-
-        private void DoNothing(Failure failure)
-        {
         }
     }
 }

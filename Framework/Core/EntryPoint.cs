@@ -1,5 +1,6 @@
 ﻿using KubernetesWorkflow;
 using Logging;
+using WebUtils;
 
 namespace Core
 {
@@ -8,16 +9,16 @@ namespace Core
         private readonly IToolsFactory toolsFactory;
         private readonly PluginManager manager = new PluginManager();
 
-        public EntryPoint(ILog log, Configuration configuration, string fileManagerRootFolder, ITimeSet timeSet)
+        public EntryPoint(ILog log, Configuration configuration, string fileManagerRootFolder, IWebCallTimeSet webCallTimeSet, IK8sTimeSet k8STimeSet)
         {
-            toolsFactory = new ToolsFactory(log, configuration, fileManagerRootFolder, timeSet);
+            toolsFactory = new ToolsFactory(log, configuration, fileManagerRootFolder, webCallTimeSet, k8STimeSet);
 
             Tools = toolsFactory.CreateTools();
             manager.InstantiatePlugins(PluginFinder.GetPluginTypes(), toolsFactory);
         }
 
         public EntryPoint(ILog log, Configuration configuration, string fileManagerRootFolder)
-            : this(log, configuration, fileManagerRootFolder, new DefaultTimeSet())
+            : this(log, configuration, fileManagerRootFolder, new DefaultWebCallTimeSet(), new DefaultK8sTimeSet())
         {
         }
 

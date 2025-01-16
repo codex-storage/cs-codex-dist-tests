@@ -1,4 +1,4 @@
-﻿namespace GethPlugin
+﻿namespace Utils
 {
     public class Ether : IComparable<Ether>
     {

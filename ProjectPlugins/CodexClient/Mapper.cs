@@ -1,10 +1,8 @@
-﻿using CodexContractsPlugin;
-using CodexOpenApi;
-using Newtonsoft.Json.Linq;
+﻿using Newtonsoft.Json.Linq;
 using System.Numerics;
 using Utils;
 
-namespace CodexPlugin
+namespace CodexClient
 {
     public class Mapper
     {
@@ -80,12 +78,12 @@ namespace CodexPlugin
             };
         }
 
-        public StorageAvailability[] Map(ICollection<SalesAvailabilityREAD> availabilities)
+        public StorageAvailability[] Map(ICollection<CodexOpenApi.SalesAvailabilityREAD> availabilities)
         {
             return availabilities.Select(a => Map(a)).ToArray();
         }
 
-        public StorageAvailability Map(SalesAvailabilityREAD availability)
+        public StorageAvailability Map(CodexOpenApi.SalesAvailabilityREAD availability)
         {
             return new StorageAvailability
             (
@@ -142,7 +140,7 @@ namespace CodexPlugin
         //    };
         //}
 
-        public CodexSpace Map(Space space)
+        public CodexSpace Map(CodexOpenApi.Space space)
         {
             return new CodexSpace
             {
@@ -153,7 +151,7 @@ namespace CodexPlugin
             };
         }
 
-        private DebugInfoVersion Map(CodexVersion obj)
+        private DebugInfoVersion Map(CodexOpenApi.CodexVersion obj)
         {
             return new DebugInfoVersion
             {
@@ -162,7 +160,7 @@ namespace CodexPlugin
             };
         }
 
-        private DebugInfoTable Map(PeersTable obj)
+        private DebugInfoTable Map(CodexOpenApi.PeersTable obj)
         {
             return new DebugInfoTable
             {
@@ -171,7 +169,7 @@ namespace CodexPlugin
             };
         }
 
-        private DebugInfoTableNode Map(Node? token)
+        private DebugInfoTableNode Map(CodexOpenApi.Node? token)
         {
             if (token == null) return new DebugInfoTableNode();
             return new DebugInfoTableNode
@@ -184,7 +182,7 @@ namespace CodexPlugin
             };
         }
 
-        private DebugInfoTableNode[] Map(ICollection<Node> nodes)
+        private DebugInfoTableNode[] Map(ICollection<CodexOpenApi.Node> nodes)
         {
             if (nodes == null || nodes.Count == 0)
             {

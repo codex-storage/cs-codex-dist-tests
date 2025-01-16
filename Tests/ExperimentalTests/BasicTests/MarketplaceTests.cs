@@ -1,4 +1,5 @@
-﻿using CodexContractsPlugin;
+﻿using CodexClient;
+using CodexContractsPlugin;
 using CodexContractsPlugin.Marketplace;
 using CodexPlugin;
 using FileUtils;
@@ -108,6 +109,14 @@ namespace CodexTests.BasicTests
             AssertContractSlot(contracts, request, 0);
 
             purchaseContract.WaitForStorageContractFinished(contracts);
+
+            // todo: removed from codexclient:
+            //contracts.WaitUntilNextPeriod();
+            //contracts.WaitUntilNextPeriod();
+
+            //var blocks = 3;
+            //Log($"Waiting {blocks} blocks for nodes to process payouts...");
+            //Thread.Sleep(GethContainerRecipe.BlockInterval * blocks);
 
             AssertBalance(contracts, client, Is.LessThan(clientInitialBalance), "Buyer was not charged for storage.");
             Assert.That(contracts.GetRequestState(request), Is.EqualTo(RequestState.Finished));

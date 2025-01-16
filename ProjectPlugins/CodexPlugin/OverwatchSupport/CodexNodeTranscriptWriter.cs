@@ -1,5 +1,4 @@
 ﻿using CodexPlugin.Hooks;
-using GethPlugin;
 using OverwatchTranscript;
 using Utils;
 

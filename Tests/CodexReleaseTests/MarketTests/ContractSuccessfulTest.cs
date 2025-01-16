@@ -1,4 +1,5 @@
-﻿using CodexContractsPlugin;
+﻿using CodexClient;
+using CodexContractsPlugin;
 using CodexPlugin;
 using GethPlugin;
 using NUnit.Framework;

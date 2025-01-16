@@ -1,7 +1,6 @@
-﻿using GethPlugin;
-using Utils;
+﻿using Utils;
 
-namespace CodexPlugin.Hooks
+namespace CodexClient.Hooks
 {
     public interface ICodexHooksProvider
     {

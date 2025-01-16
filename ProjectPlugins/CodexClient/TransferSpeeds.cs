@@ -1,6 +1,6 @@
 ﻿using Utils;
 
-namespace CodexPlugin
+namespace CodexClient
 {
     public interface ITransferSpeeds
     {

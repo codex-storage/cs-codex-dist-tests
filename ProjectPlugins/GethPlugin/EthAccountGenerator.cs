@@ -1,20 +1,11 @@
 ﻿using Nethereum.Hex.HexConvertors.Extensions;
 using Nethereum.Web3.Accounts;
+using Utils;
 
 namespace GethPlugin
 {
-    [Serializable]
-    public class EthAccount
+    public static class EthAccountGenerator
     {
-        public EthAccount(EthAddress ethAddress, string privateKey)
-        {
-            EthAddress = ethAddress;
-            PrivateKey = privateKey;
-        }
-
-        public EthAddress EthAddress { get; }
-        public string PrivateKey { get; }
-
         public static EthAccount GenerateNew()
         {
             var ecKey = Nethereum.Signer.EthECKey.GenerateKey();
@@ -23,11 +14,6 @@ namespace GethPlugin
             var ethAddress = new EthAddress(account.Address);
 
             return new EthAccount(ethAddress, account.PrivateKey);
-        }
-
-        public override string ToString()
-        {
-            return EthAddress.ToString();
         }
     }
 }

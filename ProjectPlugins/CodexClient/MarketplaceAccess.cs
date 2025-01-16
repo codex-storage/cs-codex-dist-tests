@@ -1,8 +1,8 @@
-﻿using CodexPlugin.Hooks;
+﻿using CodexClient.Hooks;
 using Logging;
 using Utils;
 
-namespace CodexPlugin
+namespace CodexClient
 {
     public interface IMarketplaceAccess
     {

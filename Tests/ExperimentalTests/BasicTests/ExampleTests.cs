@@ -1,6 +1,5 @@
 ﻿using CodexPlugin;
 using DistTestCore;
-using GethPlugin;
 using MetricsPlugin;
 using NUnit.Framework;
 using Utils;
