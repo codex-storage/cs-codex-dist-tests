@@ -298,17 +298,18 @@ namespace ContinuousTests
 
         private RunningPod[] SelectRandomContainers()
         {
-            var number = handle.Test.RequiredNumberOfNodes;
-            var containers = config.CodexDeployment.CodexInstances.Select(i => i.Pod).ToList();
-            if (number == -1) return containers.ToArray();
+            throw new NotImplementedException();
+            //var number = handle.Test.RequiredNumberOfNodes;
+            //var containers = config.CodexDeployment.CodexInstances.Select(i => i.Pod).ToList();
+            //if (number == -1) return containers.ToArray();
 
-            var result = new RunningPod[number];
-            for (var i = 0; i < number; i++)
-            {
-                result[i] = containers.PickOneRandom();
-            }
+            //var result = new RunningPod[number];
+            //for (var i = 0; i < number; i++)
+            //{
+            //    result[i] = containers.PickOneRandom();
+            //}
 
-            return result;
+            //return result;
         }
     }
 }
