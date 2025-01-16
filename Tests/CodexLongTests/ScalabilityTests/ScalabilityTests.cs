@@ -1,4 +1,4 @@
-using CodexPlugin;
+using CodexClient;
 using DistTestCore;
 using FileUtils;
 using NUnit.Framework;
@@ -38,11 +38,11 @@ public class ScalabilityTests : CodexDistTest
         var testFile = GenerateTestFile(fileSizeInMb.MB());
 
         LogNodeStatus(uploader);
-        var contentId = uploader.UploadFile(testFile, f => LogNodeStatus(uploader));
+        var contentId = uploader.UploadFile(testFile);
         LogNodeStatus(uploader);
 
         LogNodeStatus(downloader);
-        var downloadedFile = downloader.DownloadContent(contentId, f => LogNodeStatus(downloader));
+        var downloadedFile = downloader.DownloadContent(contentId);
         LogNodeStatus(downloader);
 
         downloadedFile!.AssertIsEqual(testFile);

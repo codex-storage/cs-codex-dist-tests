@@ -1,8 +1,7 @@
-﻿using CodexPlugin;
+﻿using CodexClient;
 using Core;
 using DistTestCore.Logs;
 using Logging;
-using Newtonsoft.Json;
 
 namespace ContinuousTests
 {

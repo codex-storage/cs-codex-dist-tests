@@ -3,8 +3,7 @@ using Logging;
 using Utils;
 using Core;
 using CodexPlugin;
-using KubernetesWorkflow.Types;
-using KubernetesWorkflow;
+using CodexClient;
 
 namespace ContinuousTests
 {

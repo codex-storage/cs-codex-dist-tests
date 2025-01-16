@@ -14,6 +14,7 @@ namespace CodexClient
         void WaitForStorageContractStarted();
         void WaitForStorageContractFinished();
         void WaitForContractFailed();
+        StoragePurchase GetPurchaseStatus();
     }
 
     public class StoragePurchaseContract : IStoragePurchaseContract
@@ -88,9 +89,9 @@ namespace CodexClient
             WaitForStorageContractState(timeout, "failed");
         }
 
-        public StoragePurchase GetPurchaseStatus(string purchaseId)
+        public StoragePurchase GetPurchaseStatus()
         {
-            return codexAccess.GetPurchaseStatus(purchaseId);
+            return codexAccess.GetPurchaseStatus(PurchaseId);
         }
 
         private void WaitForStorageContractState(TimeSpan timeout, string desiredState, int sleep = 1000)

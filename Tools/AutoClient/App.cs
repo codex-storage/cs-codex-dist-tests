@@ -1,4 +1,5 @@
 ﻿using AutoClient.Modes.FolderStore;
+using CodexClient;
 using Logging;
 
 namespace AutoClient
@@ -15,7 +16,6 @@ namespace AutoClient
             );
 
             Generator = CreateGenerator();
-            CidRepo = new CidRepo(config);
             Performance = new Performance(new LogSplitter(
                 new FileLog(Path.Combine(config.LogPath, "performance")),
                 new ConsoleLog()
@@ -29,15 +29,17 @@ namespace AutoClient
             {
                 FolderWorkDispatcher = null!;
             }
+
+            CodexNodeFactory = new CodexNodeFactory(log: Log, dataDir: Config.DataPath);
         }
 
         public Configuration Config { get; }
         public ILog Log { get; }
         public IFileGenerator Generator { get; }
         public CancellationTokenSource Cts { get; } = new CancellationTokenSource();
-        public CidRepo CidRepo { get; }
         public Performance Performance { get; }
         public FolderWorkDispatcher FolderWorkDispatcher { get; }
+        public CodexNodeFactory CodexNodeFactory { get; }
 
         private IFileGenerator CreateGenerator()
         {

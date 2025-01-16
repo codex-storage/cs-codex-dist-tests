@@ -22,5 +22,21 @@
         {
             return !string.IsNullOrEmpty(Host) && Port > 0;
         }
+
+        public static Address Empty()
+        {
+            return new Address(string.Empty, string.Empty, 0);
+        }
     }
+
+    public interface IHasMetricsScrapeTarget
+    {
+        Address GetMetricsScrapeTarget();
+    }
+    
+    public interface IHasManyMetricScrapeTargets
+    {
+        Address[] GetMetricsScrapeTargets();
+    }
+
 }

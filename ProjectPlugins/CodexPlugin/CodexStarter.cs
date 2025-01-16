@@ -8,7 +8,7 @@ using Utils;
 
 namespace CodexPlugin
 {
-    public class CodexStarter : IIProcessControlFactory
+    public class CodexStarter : IProcessControlFactory
     {
         private readonly IPluginTools pluginTools;
         private readonly CodexContainerRecipe recipe = new CodexContainerRecipe();

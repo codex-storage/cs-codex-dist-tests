@@ -14,6 +14,12 @@ namespace FileUtils
             Label = label;
         }
 
+        public static TrackedFile FromPath(ILog log, string filepath)
+        {
+            // todo: I don't wanne have to do this to call upload.
+            return new TrackedFile(log, filepath, string.Empty);
+        }
+
         public string Filename { get; }
         public string Label { get; }
 

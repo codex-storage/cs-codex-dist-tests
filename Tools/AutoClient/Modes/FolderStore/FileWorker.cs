@@ -1,30 +1,29 @@
-﻿using Logging;
+﻿using CodexClient;
+using Logging;
 
 namespace AutoClient.Modes.FolderStore
 {
     public class FileWorker : FileStatus
     {
         private readonly App app;
+        private readonly CodexWrapper node;
         private readonly ILog log;
-        private readonly ICodexInstance instance;
         private readonly PurchaseInfo purchaseInfo;
         private readonly string sourceFilename;
         private readonly Action onFileUploaded;
         private readonly Action onNewPurchase;
-        private readonly CodexNode codex;
 
-        public FileWorker(App app, ICodexInstance instance, PurchaseInfo purchaseInfo, string folder, FileIndex fileIndex, Action onFileUploaded, Action onNewPurchase)
+        public FileWorker(App app, CodexWrapper node, PurchaseInfo purchaseInfo, string folder, FileIndex fileIndex, Action onFileUploaded, Action onNewPurchase)
             : base(app, folder, fileIndex.File + ".json", purchaseInfo)
         {
             this.app = app;
+            this.node = node;
             log = new LogPrefixer(app.Log, GetFileTag(fileIndex));
-            this.instance = instance;
             this.purchaseInfo = purchaseInfo;
             sourceFilename = fileIndex.File;
             if (sourceFilename.ToLowerInvariant().EndsWith(".json")) throw new Exception("Not an era file.");
             this.onFileUploaded = onFileUploaded;
             this.onNewPurchase = onNewPurchase;
-            codex = new CodexNode(app, instance);
         }
 
         public int FailureCounter => State.FailureCounter;
@@ -34,14 +33,14 @@ namespace AutoClient.Modes.FolderStore
             newState.LastUpdate = DateTime.MinValue;
         }
 
-        public async Task Update()
+        public void Update()
         {
             try
             {
                 if (IsCurrentlyRunning() && UpdatedRecently()) return;
 
                 Log($"Updating for '{sourceFilename}'...");
-                await EnsureRecentPurchase();
+                EnsureRecentPurchase();
                 SaveState();
                 app.Log.Log("");
             }
@@ -60,12 +59,12 @@ namespace AutoClient.Modes.FolderStore
             return State.LastUpdate + TimeSpan.FromMinutes(15) > now;
         }
 
-        private async Task<string> EnsureCid()
+        private string EnsureCid()
         {
             Log($"Checking CID...");
 
             if (!string.IsNullOrEmpty(State.EncodedCid) &&
-                await DoesCidExistInNetwork(State.EncodedCid))
+                DoesCidExistInNetwork(State.EncodedCid))
             {
                 Log("Encoded-CID successfully found in the network.");
                 // TODO: Using the encoded CID currently would result in double-encoding of the dataset.
@@ -75,7 +74,7 @@ namespace AutoClient.Modes.FolderStore
             }
 
             if (!string.IsNullOrEmpty(State.Cid) &&
-                await DoesCidExistInNetwork(State.Cid))
+                DoesCidExistInNetwork(State.Cid))
             {
                 Log("Basic-CID successfully found in the network.");
                 return State.Cid;
@@ -87,7 +86,7 @@ namespace AutoClient.Modes.FolderStore
             }
 
             Log($"Uploading...");
-            var cid = await codex.UploadFile(sourceFilename);
+            var cid = node.UploadFile(sourceFilename);
             onFileUploaded();
             Log("Got Basic-CID: " + cid);
             State.Cid = cid.Id;
@@ -95,7 +94,7 @@ namespace AutoClient.Modes.FolderStore
             return State.Cid;
         }
 
-        private async Task<bool> DoesCidExistInNetwork(string cid)
+        private bool DoesCidExistInNetwork(string cid)
         {
             try
             {
@@ -107,7 +106,7 @@ namespace AutoClient.Modes.FolderStore
                     cts.Cancel();
                 });
 
-                var manifest = await instance.Codex.DownloadNetworkManifestAsync(cid, cts.Token);
+                var manifest = node.Node.DownloadManifestOnly(new ContentId(cid));
                 if (manifest == null) return false;
             }
             catch
@@ -117,23 +116,23 @@ namespace AutoClient.Modes.FolderStore
             return true;
         }
 
-        private async Task EnsureRecentPurchase()
+        private void EnsureRecentPurchase()
         {
             Log($"Checking recent purchase...");
             var recent = GetMostRecent();
             if (recent == null)
             {
                 Log($"No recent purchase.");
-                await MakeNewPurchase();
+                MakeNewPurchase();
                 return;
             }
 
-            await UpdatePurchase(recent);
+            UpdatePurchase(recent);
 
             if (recent.Expiry.HasValue)
             {
                 Log($"Purchase has failed or expired.");
-                await MakeNewPurchase();
+                MakeNewPurchase();
                 State.FailureCounter++;
                 return;
             }
@@ -141,7 +140,7 @@ namespace AutoClient.Modes.FolderStore
             if (recent.Finish.HasValue)
             {
                 Log($"Purchase has finished.");
-                await MakeNewPurchase();
+                MakeNewPurchase();
                 return;
             }
 
@@ -149,7 +148,7 @@ namespace AutoClient.Modes.FolderStore
             if (recent.Started.HasValue && DateTime.UtcNow > safeEnd)
             {
                 Log($"Purchase is going to expire soon.");
-                await MakeNewPurchase();
+                MakeNewPurchase();
                 return;
             }
 
@@ -168,12 +167,12 @@ namespace AutoClient.Modes.FolderStore
             Log($"Purchase is running.");
         }
 
-        private async Task UpdatePurchase(WorkerPurchase recent)
+        private void UpdatePurchase(WorkerPurchase recent)
         {
             if (string.IsNullOrEmpty(recent.Pid)) throw new Exception("No purchaseID!");
             var now = DateTime.UtcNow;
 
-            var purchase = await codex.GetStoragePurchase(recent.Pid);
+            var purchase = node.GetStoragePurchase(recent.Pid);
             if (purchase == null)
             {
                 Log($"No purchase information found for PID '{recent.Pid}'. Consider this one expired.");
@@ -210,15 +209,15 @@ namespace AutoClient.Modes.FolderStore
             SaveState();
         }
 
-        private async Task MakeNewPurchase()
+        private void MakeNewPurchase()
         {
-            var cid = await EnsureCid();
+            var cid = EnsureCid();
             if (string.IsNullOrEmpty(cid)) throw new Exception("No cid!");
 
             Log($"Creating new purchase...");
-            var response = await codex.RequestStorage(new CodexPlugin.ContentId(cid));
+            var response = node.RequestStorage(new ContentId(cid));
             var purchaseId = response.PurchaseId;
-            var encodedCid = response.EncodedCid;
+            var encodedCid = response.ContentId;
             if (string.IsNullOrEmpty(purchaseId) ||
                 purchaseId == "Unable to encode manifest" ||
                 purchaseId == "Purchasing not available" ||
@@ -248,7 +247,7 @@ namespace AutoClient.Modes.FolderStore
             while (DateTime.UtcNow < timeout)
             {
                 Thread.Sleep(5000);
-                await UpdatePurchase(newPurchase);
+                UpdatePurchase(newPurchase);
                 if (newPurchase.Submitted.HasValue)
                 {
                     Log("New purchase successfully submitted.");

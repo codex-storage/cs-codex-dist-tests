@@ -2,6 +2,7 @@
 using KubernetesWorkflow.Types;
 using Logging;
 using Utils;
+using WebUtils;
 
 namespace ContinuousTests
 {

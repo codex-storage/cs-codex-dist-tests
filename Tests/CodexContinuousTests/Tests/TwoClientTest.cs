@@ -1,4 +1,4 @@
-﻿using CodexPlugin;
+﻿using CodexClient;
 using FileUtils;
 using Logging;
 using NUnit.Framework;

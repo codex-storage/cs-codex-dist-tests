@@ -1,13 +1,6 @@
-﻿using CodexContractsPlugin;
+﻿using CodexClient;
 using CodexContractsPlugin.Marketplace;
-using CodexPlugin;
-using CodexTests;
 using NUnit.Framework;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Utils;
 
 namespace CodexReleaseTests.MarketTests

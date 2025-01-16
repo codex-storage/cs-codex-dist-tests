@@ -1,4 +1,5 @@
-﻿using CodexContractsPlugin;
+﻿using CodexClient;
+using CodexContractsPlugin;
 using CodexContractsPlugin.Marketplace;
 using CodexPlugin;
 using CodexTests;
@@ -67,7 +68,7 @@ namespace CodexReleaseTests.MarketTests
                 Assert.That(GetTstBalance(host).TstWei, Is.EqualTo(StartingBalanceTST.Tst().TstWei));
                 Assert.That(GetEthBalance(host).Wei, Is.EqualTo(StartingBalanceEth.Eth().Wei));
 
-                host.Marketplace.MakeStorageAvailable(new CodexPlugin.StorageAvailability(
+                host.Marketplace.MakeStorageAvailable(new StorageAvailability(
                     totalSpace: HostAvailabilitySize,
                     maxDuration: HostAvailabilityMaxDuration,
                     minPriceForTotalSpace: 1.TstWei(),

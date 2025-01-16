@@ -1,4 +1,5 @@
 ﻿using BlockchainUtils;
+using CodexClient;
 using CodexContractsPlugin;
 using CodexDiscordBotPlugin;
 using CodexPlugin;
@@ -7,6 +8,7 @@ using GethPlugin;
 using KubernetesWorkflow.Types;
 using Logging;
 using MetricsPlugin;
+using WebUtils;
 
 namespace CodexNetDeployer
 {
@@ -100,7 +102,7 @@ namespace CodexNetDeployer
                 retryDelay: TimeSpan.FromSeconds(10),
                 kubernetesNamespace: config.KubeNamespace);
 
-            var result = new EntryPoint(log, configuration, string.Empty, new FastHttpTimeSet());
+            var result = new EntryPoint(log, configuration, string.Empty, new FastHttpTimeSet(), new DefaultK8sTimeSet());
             configuration.Hooks = new K8sHook(config.TestsTypePodLabel, config.DeployId, result.GetPluginMetadata());
 
             return result;
@@ -248,7 +250,7 @@ namespace CodexNetDeployer
         }
     }
 
-    public class FastHttpTimeSet : ITimeSet
+    public class FastHttpTimeSet : IWebCallTimeSet
     {
         public TimeSpan HttpCallRetryDelay()
         {
@@ -263,16 +265,6 @@ namespace CodexNetDeployer
         public TimeSpan HttpCallTimeout()
         {
             return TimeSpan.FromSeconds(10);
-        }
-
-        public TimeSpan K8sOperationTimeout()
-        {
-            return TimeSpan.FromMinutes(10);
-        }
-
-        public TimeSpan K8sOperationRetryDelay()
-        {
-            return TimeSpan.FromSeconds(30);
         }
     }
 }

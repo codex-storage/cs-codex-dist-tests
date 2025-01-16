@@ -1,5 +1,4 @@
-﻿using CodexOpenApi;
-using System.IO.Compression;
+﻿using System.IO.Compression;
 using static AutoClient.Modes.FolderStore.FolderWorkOverview;
 
 namespace AutoClient.Modes.FolderStore
@@ -22,7 +21,7 @@ namespace AutoClient.Modes.FolderStore
             newState.LastOverviewUpdate = DateTime.MinValue;
         }
 
-        public async Task Update(ICodexInstance instance)
+        public void Update(CodexWrapper instance)
         {
             var jsonFiles = Directory.GetFiles(Folder).Where(f => f.ToLowerInvariant().EndsWith(".json") && !f.Contains(OverviewFilename)).ToList();
 
@@ -54,7 +53,7 @@ namespace AutoClient.Modes.FolderStore
                 State.UncommitedChanges = 0;
                 SaveState();
 
-                await CreateNewOverviewZip(jsonFiles, FilePath, instance);
+                CreateNewOverviewZip(jsonFiles, FilePath, instance);
             }
         }
 
@@ -64,7 +63,7 @@ namespace AutoClient.Modes.FolderStore
             SaveState();
         }
 
-        private async Task CreateNewOverviewZip(List<string> jsonFiles, string filePath, ICodexInstance instance)
+        private void CreateNewOverviewZip(List<string> jsonFiles, string filePath, CodexWrapper node)
         {
             Log("");
             Log("");
@@ -74,15 +73,14 @@ namespace AutoClient.Modes.FolderStore
             Log("Uploading to Codex...");
             try
             {
-                var codex = new CodexNode(app, instance);
-                var cid = await codex.UploadFile(zipFilename);
+                var cid = node.UploadFile(zipFilename);
                 Log($"Upload successful: New overview zipfile CID = '{cid.Id}'");
                 Log("Requesting storage for it...");
-                var result = await codex.RequestStorage(cid);
-                Log("Storage requested. Purchase ID: " + result);
+                var result = node.RequestStorage(cid);
+                Log("Storage requested. Purchase ID: " + result.PurchaseId);
 
                 var outFile = Path.Combine(app.Config.DataPath, "OverviewZip.cid");
-                File.AppendAllLines(outFile, [DateTime.UtcNow.ToString("o") + " - " + result.EncodedCid.Id]);
+                File.AppendAllLines(outFile, [DateTime.UtcNow.ToString("o") + " - " + result.ContentId.Id]);
                 Log($">>> [{outFile}] has been updated. <<<");
             }
             catch (Exception exc)

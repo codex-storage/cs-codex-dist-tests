@@ -1,6 +1,5 @@
 ﻿using CodexClient;
 using Core;
-using MetricsPlugin;
 using System.Collections;
 using Utils;
 
@@ -42,7 +41,11 @@ namespace CodexPlugin
 
         public ICodexNode[] Nodes => nodes;
         public DebugInfoVersion Version { get; private set; }
-        public Address[] ScrapeTargets => Nodes.Select(n => n.GetMetricsScrapeTarget()).ToArray();
+
+        public Address[] GetMetricsScrapeTargets()
+        {
+            return Nodes.Select(n => n.GetMetricsScrapeTarget()).ToArray();
+        }
 
         public IEnumerator<ICodexNode> GetEnumerator()
         {

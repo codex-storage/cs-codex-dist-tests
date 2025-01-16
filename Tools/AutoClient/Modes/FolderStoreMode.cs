@@ -17,13 +17,13 @@ namespace AutoClient.Modes
             this.purchaseInfo = purchaseInfo;
         }
 
-        public void Start(ICodexInstance instance, int index)
+        public void Start(CodexWrapper instance, int index)
         {
-            checkTask = Task.Run(async () =>
+            checkTask = Task.Run(() =>
             {
                 try
                 {
-                    await RunChecker(instance);
+                    RunChecker(instance);
                 }
                 catch (Exception ex)
                 {
@@ -33,14 +33,14 @@ namespace AutoClient.Modes
             });
         }
 
-        private async Task RunChecker(ICodexInstance instance)
+        private void RunChecker(CodexWrapper instance)
         {
             var i = 0;
             while (!cts.IsCancellationRequested)
             {
                 Thread.Sleep(2000);
 
-                var worker = await ProcessWorkItem(instance);
+                var worker = ProcessWorkItem(instance);
                 if (worker.FailureCounter > 5)
                 {
                     throw new Exception("Worker has failure count > 5. Stopping AutoClient...");
@@ -51,16 +51,16 @@ namespace AutoClient.Modes
                 {
                     i = 0;
                     var overview = new FolderWorkOverview(app, purchaseInfo, folder);
-                    await overview.Update(instance);
+                    overview.Update(instance);
                 }
             }
         }
 
-        private async Task<FileWorker> ProcessWorkItem(ICodexInstance instance)
+        private FileWorker ProcessWorkItem(CodexWrapper instance)
         {
             var file = app.FolderWorkDispatcher.GetFileToCheck();
             var worker = new FileWorker(app, instance, purchaseInfo, folder, file, OnFileUploaded, OnNewPurchase);
-            await worker.Update();
+            worker.Update();
             if (worker.IsBusy()) app.FolderWorkDispatcher.WorkerIsBusy();
             return worker;
         }

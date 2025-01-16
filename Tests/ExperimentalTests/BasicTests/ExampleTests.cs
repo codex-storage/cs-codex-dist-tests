@@ -1,4 +1,5 @@
-﻿using CodexPlugin;
+﻿using CodexClient;
+using CodexPlugin;
 using DistTestCore;
 using MetricsPlugin;
 using NUnit.Framework;

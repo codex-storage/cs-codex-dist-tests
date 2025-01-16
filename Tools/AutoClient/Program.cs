@@ -2,7 +2,7 @@
 using AutoClient;
 using AutoClient.Modes;
 using AutoClient.Modes.FolderStore;
-using CodexOpenApi;
+using CodexClient;
 using Utils;
 
 public class Program
@@ -34,10 +34,11 @@ public class Program
 
     public async Task Run()
     {
-        var codexInstances = await CreateCodexInstances();
+        await Task.CompletedTask;
+        var codexNodes = CreateCodexWrappers();
 
         var i = 0;
-        foreach (var cdx in codexInstances)
+        foreach (var cdx in codexNodes)
         {
             var mode = CreateMode();
             modes.Add(mode);
@@ -74,20 +75,20 @@ public class Program
         ));
     }
 
-    private async Task<CodexInstance[]> CreateCodexInstances()
+    private CodexWrapper[] CreateCodexWrappers()
     {
         var endpointStrs = app.Config.CodexEndpoints.Split(";", StringSplitOptions.RemoveEmptyEntries);
-        var result = new List<CodexInstance>();
+        var result = new List<CodexWrapper>();
 
         foreach (var e in endpointStrs)
         {
-            result.Add(await CreateCodexInstance(e));
+            result.Add(CreateCodexWrapper(e));
         }
 
         return result.ToArray();
     }
 
-    private async Task<CodexInstance> CreateCodexInstance(string endpoint)
+    private CodexWrapper CreateCodexWrapper(string endpoint)
     {
         var splitIndex = endpoint.LastIndexOf(':');
         var host = endpoint.Substring(0, splitIndex);
@@ -99,35 +100,9 @@ public class Program
             port: port
         );
 
-        var client = new HttpClient();
-        client.Timeout = TimeSpan.FromMinutes(60.0);
-        var codex = new CodexApi(client);
-        codex.BaseUrl = $"{address.Host}:{address.Port}/api/codex/v1";
-
-        app.Log.Log($"Checking Codex at {address}...");
-        await CheckCodex(codex);
-        app.Log.Log("OK");
-
-        return new CodexInstance(
-            app,
-            codex,
-            client,
-            address
-        );
-    }
-
-    private async Task CheckCodex(CodexApi codex)
-    {
-        try
-        {
-            var info = await codex.GetDebugInfoAsync();
-            if (string.IsNullOrEmpty(info.Id)) throw new Exception("Failed to fetch Codex node id");
-        }
-        catch (Exception ex)
-        {
-            app.Log.Error($"Codex not OK: {ex}");
-            throw;
-        }
+        var instance = CodexInstance.CreateFromApiEndpoint("ac", address);
+        var node = app.CodexNodeFactory.CreateCodexNode(instance);
+        return new CodexWrapper(app, node);
     }
 
     private static void PrintHelp()

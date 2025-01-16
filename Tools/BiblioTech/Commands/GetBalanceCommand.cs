@@ -1,6 +1,7 @@
 ﻿using BiblioTech.Options;
 using CodexContractsPlugin;
 using GethPlugin;
+using Utils;
 
 namespace BiblioTech.Commands
 {

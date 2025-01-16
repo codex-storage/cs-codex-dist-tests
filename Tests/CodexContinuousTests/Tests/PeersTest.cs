@@ -1,4 +1,4 @@
-﻿using CodexPlugin;
+﻿using CodexClient;
 using CodexTests.Helpers;
 using ContinuousTests;
 using NUnit.Framework;

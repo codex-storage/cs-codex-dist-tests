@@ -36,5 +36,19 @@ namespace CodexClient
         public Address ListenEndpoint { get; }
         public EthAccount? EthAccount { get; }
         public Address? MetricsEndpoint { get; }
+
+        public static ICodexInstance CreateFromApiEndpoint(string name, Address apiEndpoint)
+        {
+            return new CodexInstance(
+                name,
+                imageName: "-",
+                startUtc: DateTime.UtcNow,
+                discoveryEndpoint: Address.Empty(),
+                apiEndpoint: apiEndpoint,
+                listenEndpoint: Address.Empty(),
+                ethAccount: null,
+                metricsEndpoint: null
+            );
+        }
     }
 }

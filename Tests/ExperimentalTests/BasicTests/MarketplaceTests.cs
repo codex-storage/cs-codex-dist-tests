@@ -108,7 +108,7 @@ namespace CodexTests.BasicTests
             AssertStorageRequest(request, purchase, contracts, client);
             AssertContractSlot(contracts, request, 0);
 
-            purchaseContract.WaitForStorageContractFinished(contracts);
+            purchaseContract.WaitForStorageContractFinished();
 
             // todo: removed from codexclient:
             //contracts.WaitUntilNextPeriod();

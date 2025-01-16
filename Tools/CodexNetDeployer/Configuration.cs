@@ -1,5 +1,5 @@
 ﻿using ArgsUniform;
-using CodexPlugin;
+using CodexClient;
 using DistTestCore;
 
 namespace CodexNetDeployer

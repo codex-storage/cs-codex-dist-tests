@@ -20,7 +20,7 @@ namespace CodexTests.UtilityTests
         private readonly RewardRepo repo = new RewardRepo();
         private readonly TestToken hostInitialBalance = 3000000.TstWei();
         private readonly TestToken clientInitialBalance = 1000000000.TstWei();
-        private readonly EthAccount clientAccount = EthAccount.GenerateNew();
+        private readonly EthAccount clientAccount = EthAccountGenerator.GenerateNew();
         private readonly List<EthAccount> hostAccounts = new List<EthAccount>();
         private readonly List<ulong> rewardsSeen = new List<ulong>();
         private readonly TimeSpan rewarderInterval = TimeSpan.FromMinutes(1);
@@ -46,7 +46,7 @@ namespace CodexTests.UtilityTests
 
             var purchaseContract = ClientPurchasesStorage(client);
             purchaseContract.WaitForStorageContractStarted();
-            purchaseContract.WaitForStorageContractFinished(contracts);
+            purchaseContract.WaitForStorageContractFinished();
 
             // todo: removed from codexclient:
             //contracts.WaitUntilNextPeriod();

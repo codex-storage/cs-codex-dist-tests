@@ -5,7 +5,7 @@ using Utils;
 
 namespace CodexClient
 {
-    public partial interface ICodexNode : IHasEthAddress
+    public partial interface ICodexNode : IHasEthAddress, IHasMetricsScrapeTarget
     {
         string GetName();
         string GetImageName();
@@ -30,11 +30,11 @@ namespace CodexClient
         IMarketplaceAccess Marketplace { get; }
         ITransferSpeeds TransferSpeeds { get; }
         EthAccount EthAccount { get; }
+        StoragePurchase GetPurchaseStatus(string purchaseId);
 
         Address GetDiscoveryEndpoint();
         Address GetApiEndpoint();
         Address GetListenEndpoint();
-        Address GetMetricsScrapeTarget();
 
         /// <summary>
         /// Warning! The node is not usable after this.
@@ -85,6 +85,11 @@ namespace CodexClient
         public IMarketplaceAccess Marketplace { get; }
         public DebugInfoVersion Version { get; private set; }
         public ITransferSpeeds TransferSpeeds { get => transferSpeeds; }
+
+        public StoragePurchase GetPurchaseStatus(string purchaseId)
+        {
+            return codexAccess.GetPurchaseStatus(purchaseId);
+        }
 
         public EthAddress EthAddress 
         {
