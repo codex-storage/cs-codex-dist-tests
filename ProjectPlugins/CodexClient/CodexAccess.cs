@@ -14,30 +14,24 @@ namespace CodexClient
         private ICodexInstance instance;
         private readonly Mapper mapper = new Mapper();
 
-        public CodexAccess(ILog log, IHttpFactory httpFactory, IProcessControl processControl, ICodexInstance instance, ICrashWatcher crashWatcher)
+        public CodexAccess(ILog log, IHttpFactory httpFactory, IProcessControl processControl, ICodexInstance instance)
         {
             this.log = log;
             this.httpFactory = httpFactory;
             this.processControl = processControl;
             this.instance = instance;
-            CrashWatcher = crashWatcher;
-
-            CrashWatcher.Start();
         }
-
-        public ICrashWatcher CrashWatcher { get; }
 
         public void Stop(bool waitTillStopped)
         {
-            CrashWatcher.Stop();
-            processControl.Stop(instance, waitTillStopped);
+            processControl.Stop(waitTillStopped);
             // Prevents accidental use after stop:
             instance = null!;
         }
 
         public IDownloadedLog DownloadLog(string additionalName = "")
         {
-            return processControl.DownloadLog(instance, log.CreateSubfile(GetName() + additionalName));
+            return processControl.DownloadLog(log.CreateSubfile(GetName() + additionalName));
         }
 
         public string GetImageName()
@@ -205,6 +199,11 @@ namespace CodexClient
             return instance.ListenEndpoint;
         }
 
+        public bool HasCrashed()
+        {
+            return processControl.HasCrashed();
+        }
+
         public Address? GetMetricsEndpoint()
         {
             return instance.MetricsEndpoint;
@@ -217,18 +216,18 @@ namespace CodexClient
 
         public void DeleteDataDirFolder()
         {
-            processControl.DeleteDataDirFolder(instance);
+            processControl.DeleteDataDirFolder();
         }
 
         private T OnCodex<T>(Func<openapiClient, Task<T>> action)
         {
-            var result = httpFactory.CreateHttp(GetHttpId(), CheckContainerCrashed).OnClient(client => CallCodex(client, action));
+            var result = httpFactory.CreateHttp(GetHttpId(), h => CheckContainerCrashed()).OnClient(client => CallCodex(client, action));
             return result;
         }
 
         private T OnCodex<T>(Func<openapiClient, Task<T>> action, Retry retry)
         {
-            var result = httpFactory.CreateHttp(GetHttpId(), CheckContainerCrashed).OnClient(client => CallCodex(client, action), retry);
+            var result = httpFactory.CreateHttp(GetHttpId(), h => CheckContainerCrashed()).OnClient(client => CallCodex(client, action), retry);
             return result;
         }
 
@@ -248,14 +247,14 @@ namespace CodexClient
             }
             finally
             {
-                CrashWatcher.HasCrashed();
+                CheckContainerCrashed();
             }
         }
 
         private IEndpoint GetEndpoint()
         {
             return httpFactory
-                .CreateHttp(GetHttpId(), CheckContainerCrashed)
+                .CreateHttp(GetHttpId(), h => CheckContainerCrashed())
                 .CreateEndpoint(GetAddress(), "/api/codex/v1/", GetName());
         }
 
@@ -269,9 +268,9 @@ namespace CodexClient
             return GetAddress().ToString();
         }
 
-        private void CheckContainerCrashed(HttpClient client)
+        private void CheckContainerCrashed()
         {
-            if (CrashWatcher.HasCrashed()) throw new Exception($"Container {GetName()} has crashed.");
+            if (processControl.HasCrashed()) throw new Exception($"Container {GetName()} has crashed.");
         }
 
         private void Throw(Failure failure)

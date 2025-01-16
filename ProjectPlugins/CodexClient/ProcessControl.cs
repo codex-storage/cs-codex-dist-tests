@@ -2,10 +2,16 @@
 
 namespace CodexClient
 {
+    public interface IIProcessControlFactory
+    {
+        IProcessControl CreateProcessControl(ICodexInstance instance);
+    }
+
     public interface IProcessControl
     {
-        void Stop(ICodexInstance instance, bool waitTillStopped);
-        IDownloadedLog DownloadLog(ICodexInstance instance, LogFile file);
-        void DeleteDataDirFolder(ICodexInstance instance);
+        void Stop(bool waitTillStopped);
+        IDownloadedLog DownloadLog(LogFile file);
+        void DeleteDataDirFolder();
+        bool HasCrashed();
     }
 }

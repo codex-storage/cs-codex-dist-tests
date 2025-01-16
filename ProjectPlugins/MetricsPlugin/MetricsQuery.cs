@@ -4,6 +4,7 @@ using KubernetesWorkflow.Types;
 using Logging;
 using System.Globalization;
 using Utils;
+using WebUtils;
 
 namespace MetricsPlugin
 {

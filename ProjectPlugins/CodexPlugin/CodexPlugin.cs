@@ -1,4 +1,5 @@
-using CodexPlugin.Hooks;
+using CodexClient;
+using CodexClient.Hooks;
 using Core;
 using KubernetesWorkflow.Types;
 

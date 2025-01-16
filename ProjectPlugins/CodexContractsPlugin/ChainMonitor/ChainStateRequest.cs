@@ -1,6 +1,6 @@
 ﻿using CodexContractsPlugin.Marketplace;
-using GethPlugin;
 using Logging;
+using Utils;
 
 namespace CodexContractsPlugin.ChainMonitor
 {

@@ -34,6 +34,7 @@ namespace CodexClient
         Address GetDiscoveryEndpoint();
         Address GetApiEndpoint();
         Address GetListenEndpoint();
+        Address GetMetricsScrapeTarget();
 
         /// <summary>
         /// Warning! The node is not usable after this.
@@ -84,16 +85,6 @@ namespace CodexClient
         public IMarketplaceAccess Marketplace { get; }
         public DebugInfoVersion Version { get; private set; }
         public ITransferSpeeds TransferSpeeds { get => transferSpeeds; }
-
-        public Address MetricsScrapeTarget
-        {
-            get
-            {
-                var address = codexAccess.GetMetricsEndpoint();
-                if (address == null) throw new Exception("Metrics ScrapeTarget accessed, but node was not started with EnableMetrics()");
-                return address;
-            }
-        }
 
         public EthAddress EthAddress 
         {
@@ -278,9 +269,16 @@ namespace CodexClient
             return codexAccess.GetListenEndpoint();
         }
 
+        public Address GetMetricsScrapeTarget()
+        {
+            var address = codexAccess.GetMetricsEndpoint();
+            if (address == null) throw new Exception("Metrics ScrapeTarget accessed, but node was not started with EnableMetrics()");
+            return address;
+        }
+
         public bool HasCrashed()
         {
-            return codexAccess.CrashWatcher.HasCrashed();
+            return codexAccess.HasCrashed();
         }
 
         public override string ToString()

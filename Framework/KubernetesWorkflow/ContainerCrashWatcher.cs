@@ -1,10 +1,9 @@
 ﻿using k8s;
 using Logging;
-using Utils;
 
 namespace KubernetesWorkflow
 {
-    public class ContainerCrashWatcher : ICrashWatcher
+    public class ContainerCrashWatcher
     {
         private readonly ILog log;
         private readonly KubernetesClientConfiguration config;
