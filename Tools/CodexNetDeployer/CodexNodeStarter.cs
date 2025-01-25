@@ -72,8 +72,8 @@ namespace CodexNetDeployer
                         var availability = new StorageAvailability(
                             totalSpace: config.StorageSell!.Value.MB(),
                             maxDuration: TimeSpan.FromSeconds(config.MaxDuration),
-                            minPriceForTotalSpace: config.MinPrice.TstWei(),
-                            maxCollateral: config.MaxCollateral.TstWei()
+                            minPricePerBytePerSecond: config.MinPricePerBytePerSecond.TstWei(),
+                            totalCollateral: config.MaxCollateral.TstWei()
                         );
 
                         var response = codexNode.Marketplace.MakeStorageAvailable(availability);

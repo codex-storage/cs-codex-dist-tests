@@ -29,11 +29,11 @@ namespace AutoClient
         [Uniform("num-hosts-tolerance", "nt", "NUMTOL", false, "Number of host tolerance for contract. (default 5)")]
         public int HostTolerance { get; set; } = 1;
 
-        [Uniform("price","p", "PRICE", false, "Price of contract. (default 10)")]
-        public int Price { get; set; } = 1000;
+        [Uniform("price","p", "PRICE", false, "Price per byte per second in TSTWEI. (default 1000)")]
+        public int PricePerBytePerSecond { get; set; } = 1000;
 
-        [Uniform("collateral", "c", "COLLATERAL", false, "Required collateral. (default 1)")]
-        public int RequiredCollateral { get; set; } = 1;
+        [Uniform("collateral", "c", "COLLATERAL", false, "Required collateral per byte in TSTWEI. (default 1)")]
+        public int CollateralPerByte { get; set; } = 1;
 
         [Uniform("filesizemb", "smb", "FILESIZEMB", false, "When greater than zero, size of file generated and uploaded. When zero, random images are used instead.")]
         public int FileSizeMb { get; set; } = 0;

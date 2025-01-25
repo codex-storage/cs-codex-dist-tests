@@ -11,8 +11,8 @@ namespace CodexClient
         }
 
         public ContentId ContentId { get; set; }
-        public TestToken PricePerSlotPerSecond { get; set; } = 1.TstWei();
-        public TestToken RequiredCollateral { get; set; } = 1.TstWei();
+        public TestToken PricePerBytePerSecond { get; set; } = 1.TstWei();
+        public TestToken CollateralPerByte { get; set; } = 1.TstWei();
         public uint MinRequiredNumberOfNodes { get; set; }
         public uint NodeFailureTolerance { get; set; }
         public int ProofProbability { get; set; }
@@ -22,8 +22,8 @@ namespace CodexClient
         public void Log(ILog log)
         {
             log.Log($"Requesting storage for: {ContentId.Id}... (" +
-                $"pricePerSlotPerSecond: {PricePerSlotPerSecond}, " +
-                $"requiredCollateral: {RequiredCollateral}, " +
+                $"pricePerBytePerSecond: {PricePerBytePerSecond}, " +
+                $"collateralPerByte: {CollateralPerByte}, " +
                 $"minRequiredNumberOfNodes: {MinRequiredNumberOfNodes}, " +
                 $"nodeFailureTolerance: {NodeFailureTolerance}, " +
                 $"proofProbability: {ProofProbability}, " +
@@ -74,19 +74,19 @@ namespace CodexClient
 
     public class StorageAvailability
     {
-        public StorageAvailability(ByteSize totalSpace, TimeSpan maxDuration, TestToken minPriceForTotalSpace, TestToken maxCollateral)
+        public StorageAvailability(ByteSize totalSpace, TimeSpan maxDuration, TestToken minPricePerBytePerSecond, TestToken totalCollateral)
         {
             TotalSpace = totalSpace;
             MaxDuration = maxDuration;
-            MinPriceForTotalSpace = minPriceForTotalSpace;
-            MaxCollateral = maxCollateral;
+            MinPricePerBytePerSecond = minPricePerBytePerSecond;
+            TotalCollateral = totalCollateral;
         }
 
         public string Id { get; set; } = string.Empty;
         public ByteSize TotalSpace { get; }
         public TimeSpan MaxDuration { get; }
-        public TestToken MinPriceForTotalSpace { get; }
-        public TestToken MaxCollateral { get; } 
+        public TestToken MinPricePerBytePerSecond { get; }
+        public TestToken TotalCollateral { get; } 
         public ByteSize FreeSpace { get; set; } = ByteSize.Zero;
 
         public void Log(ILog log)
@@ -94,8 +94,8 @@ namespace CodexClient
             log.Log($"Storage Availability: (" +
                 $"totalSize: {TotalSpace}, " +
                 $"maxDuration: {Time.FormatDuration(MaxDuration)}, " + 
-                $"minPriceForTotalSpace: {MinPriceForTotalSpace}, " +
-                $"maxCollateral: {MaxCollateral})");
+                $"minPricePerBytePerSecond: {MinPricePerBytePerSecond}, " +
+                $"totalCollateral: {TotalCollateral})");
         }
     }
 }

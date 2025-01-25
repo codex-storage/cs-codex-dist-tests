@@ -71,8 +71,8 @@ namespace CodexReleaseTests.MarketTests
                 host.Marketplace.MakeStorageAvailable(new StorageAvailability(
                     totalSpace: HostAvailabilitySize,
                     maxDuration: HostAvailabilityMaxDuration,
-                    minPriceForTotalSpace: 1.TstWei(),
-                    maxCollateral: 999999.Tst())
+                    minPricePerBytePerSecond: 1.TstWei(),
+                    totalCollateral: 999999.Tst())
                 );
             }
             return hosts;

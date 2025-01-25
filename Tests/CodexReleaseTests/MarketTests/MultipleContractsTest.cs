@@ -13,7 +13,7 @@ namespace CodexReleaseTests.MarketTests
         protected override int NumberOfClients => 3;
         protected override ByteSize HostAvailabilitySize => (5 * FilesizeMb).MB();
         protected override TimeSpan HostAvailabilityMaxDuration => Get8TimesConfiguredPeriodDuration();
-        private readonly TestToken pricePerSlotPerSecond = 10.TstWei();
+        private readonly TestToken pricePerBytePerSecond = 10.TstWei();
 
         [Test]
         [Ignore("TODO - Test where multiple successful contracts are run simultaenously")]
@@ -64,9 +64,9 @@ namespace CodexReleaseTests.MarketTests
                 Expiry = GetContractExpiry(),
                 MinRequiredNumberOfNodes = (uint)NumberOfHosts,
                 NodeFailureTolerance = (uint)(NumberOfHosts / 2),
-                PricePerSlotPerSecond = pricePerSlotPerSecond,
+                PricePerBytePerSecond = pricePerBytePerSecond,
                 ProofProbability = 20,
-                RequiredCollateral = 1.Tst()
+                CollateralPerByte = 1.Tst()
             });
         }
 

@@ -236,7 +236,7 @@ namespace CodexNetDeployer
                 storageQuotaMB: config.StorageQuota!.Value,
                 codexLogLevel: config.CodexLogLevel,
                 initialTestTokens: config.InitialTestTokens,
-                minPrice: config.MinPrice,
+                minPrice: config.MinPricePerBytePerSecond,
                 maxCollateral: config.MaxCollateral,
                 maxDuration: config.MaxDuration,
                 blockTTL: config.BlockTTL,

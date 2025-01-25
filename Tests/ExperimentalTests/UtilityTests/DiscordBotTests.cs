@@ -119,8 +119,8 @@ namespace CodexTests.UtilityTests
             var contentId = client.UploadFile(testFile);
             var purchase = new StoragePurchaseRequest(contentId)
             {
-                PricePerSlotPerSecond = 2.TstWei(),
-                RequiredCollateral = 10.TstWei(),
+                PricePerBytePerSecond = 2.TstWei(),
+                CollateralPerByte = 10.TstWei(),
                 MinRequiredNumberOfNodes = GetNumberOfRequiredHosts(),
                 NodeFailureTolerance = 2,
                 ProofProbability = 5,
@@ -200,8 +200,8 @@ namespace CodexTests.UtilityTests
             var availability = new StorageAvailability(
                 totalSpace: Mult(GetMinFileSize(), GetNumberOfLiveHosts()),
                 maxDuration: TimeSpan.FromMinutes(30),
-                minPriceForTotalSpace: 1.TstWei(),
-                maxCollateral: hostInitialBalance
+                minPricePerBytePerSecond: 1.TstWei(),
+                totalCollateral: hostInitialBalance
             );
 
             foreach (var host in hosts)

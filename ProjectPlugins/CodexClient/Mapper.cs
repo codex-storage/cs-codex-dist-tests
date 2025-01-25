@@ -58,8 +58,8 @@ namespace CodexClient
             return new CodexOpenApi.SalesAvailabilityCREATE
             {
                 Duration = ToDecInt(availability.MaxDuration.TotalSeconds),
-                MinPrice = ToDecInt(availability.MinPriceForTotalSpace),
-                MaxCollateral = ToDecInt(availability.MaxCollateral),
+                MinPricePerBytePerSecond = ToDecInt(availability.MinPricePerBytePerSecond),
+                TotalCollateral = ToDecInt(availability.TotalCollateral),
                 TotalSize = ToDecInt(availability.TotalSpace.SizeInBytes)
             };
         }
@@ -70,8 +70,8 @@ namespace CodexClient
             {
                 Duration = ToDecInt(purchase.Duration.TotalSeconds),
                 ProofProbability = ToDecInt(purchase.ProofProbability),
-                Reward = ToDecInt(purchase.PricePerSlotPerSecond),
-                Collateral = ToDecInt(purchase.RequiredCollateral),
+                PricePerBytePerSecond = ToDecInt(purchase.PricePerBytePerSecond),
+                CollateralPerByte = ToDecInt(purchase.CollateralPerByte),
                 Expiry = ToDecInt(purchase.Expiry.TotalSeconds),
                 Nodes = Convert.ToInt32(purchase.MinRequiredNumberOfNodes),
                 Tolerance = Convert.ToInt32(purchase.NodeFailureTolerance)
@@ -89,8 +89,8 @@ namespace CodexClient
             (
                 ToByteSize(availability.TotalSize),
                 ToTimespan(availability.Duration),
-                new TestToken(ToBigIng(availability.MinPrice)),
-                new TestToken(ToBigIng(availability.MaxCollateral))
+                new TestToken(ToBigIng(availability.MinPricePerBytePerSecond)),
+                new TestToken(ToBigIng(availability.TotalCollateral))
             )
             {
                 Id = availability.Id,

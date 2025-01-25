@@ -11,7 +11,7 @@ namespace CodexReleaseTests.MarketTests
         protected override int NumberOfClients => 1;
         protected override ByteSize HostAvailabilitySize => 1.GB();
         protected override TimeSpan HostAvailabilityMaxDuration => TimeSpan.FromDays(1.0);
-        private readonly TestToken pricePerSlotPerSecond = 10.TstWei();
+        private readonly TestToken pricePerBytePerSecond = 10.TstWei();
 
         [Test]
         [Ignore("Disabled for now: Test is unstable.")]
@@ -96,9 +96,9 @@ namespace CodexReleaseTests.MarketTests
                 Expiry = TimeSpan.FromHours(0.2),
                 MinRequiredNumberOfNodes = (uint)NumberOfHosts,
                 NodeFailureTolerance = (uint)(NumberOfHosts / 2),
-                PricePerSlotPerSecond = pricePerSlotPerSecond,
+                PricePerBytePerSecond = pricePerBytePerSecond,
                 ProofProbability = 1, // Require a proof every period
-                RequiredCollateral = 1.Tst()
+                CollateralPerByte = 1.Tst()
             });
         }
     }
