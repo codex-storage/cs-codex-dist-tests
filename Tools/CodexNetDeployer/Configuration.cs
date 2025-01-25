@@ -56,8 +56,8 @@ namespace CodexNetDeployer
         [Uniform("test-tokens", "tt", "TESTTOKENS", false, "Initial amount of test-tokens minted for each Codex node.")]
         public int InitialTestTokens { get; set; }
 
-        [Uniform("min-price", "mp", "MINPRICE", false, "Minimum price for the storage space for which contracts will be accepted.")]
-        public int MinPrice { get; set; }
+        [Uniform("min-price", "mp", "MINPRICE", false, "Minimum price per byte per second in TSTWEI for the storage space for which contracts will be accepted.")]
+        public int MinPricePerBytePerSecond { get; set; }
 
         [Uniform("max-collateral", "mc", "MAXCOLLATERAL", false, "Maximum collateral that will be placed for the total storage space.")]
         public int MaxCollateral { get; set; }
@@ -144,7 +144,7 @@ namespace CodexNetDeployer
             {
                 IntIsOverZero(nameof(StorageSell), StorageSell, errors);
                 IntIsOverZero(nameof(InitialTestTokens), InitialTestTokens, errors);
-                IntIsOverZero(nameof(MinPrice), MinPrice, errors);
+                IntIsOverZero(nameof(MinPricePerBytePerSecond), MinPricePerBytePerSecond, errors);
                 IntIsOverZero(nameof(MaxCollateral), MaxCollateral, errors);
                 IntIsOverZero(nameof(MaxDuration), MaxDuration, errors);
             }

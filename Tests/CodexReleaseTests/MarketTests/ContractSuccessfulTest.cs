@@ -15,7 +15,7 @@ namespace CodexReleaseTests.MarketTests
         protected override int NumberOfClients => 1;
         protected override ByteSize HostAvailabilitySize => (5 * FilesizeMb).MB();
         protected override TimeSpan HostAvailabilityMaxDuration => Get8TimesConfiguredPeriodDuration();
-        private readonly TestToken pricePerSlotPerSecond = 10.TstWei();
+        private readonly TestToken pricePerBytePerSecond = 10.TstWei();
 
         [Test]
         public void ContractSuccessful()
@@ -33,8 +33,8 @@ namespace CodexReleaseTests.MarketTests
 
             request.WaitForStorageContractFinished(GetContracts());
 
-            AssertClientHasPaidForContract(pricePerSlotPerSecond, client, request, hosts);
-            AssertHostsWerePaidForContract(pricePerSlotPerSecond, request, hosts);
+            AssertClientHasPaidForContract(pricePerBytePerSecond, client, request, hosts);
+            AssertHostsWerePaidForContract(pricePerBytePerSecond, request, hosts);
             AssertHostsCollateralsAreUnchanged(hosts);
         }
 
@@ -51,9 +51,9 @@ namespace CodexReleaseTests.MarketTests
                 // When it's resolved, we can reduce the number of hosts and slim down this test.
                 MinRequiredNumberOfNodes = 3,
                 NodeFailureTolerance = 1,
-                PricePerSlotPerSecond = pricePerSlotPerSecond,
+                PricePerBytePerSecond = pricePerBytePerSecond,
                 ProofProbability = 20,
-                RequiredCollateral = 1.Tst()
+                CollateralPerByte = 1.Tst()
             });
         }
 

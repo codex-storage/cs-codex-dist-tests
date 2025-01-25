@@ -87,11 +87,11 @@ namespace AutoClient
             app.Log.Debug("Requesting storage for " + cid.Id);
             var result = await codex.Codex.CreateStorageRequestAsync(cid.Id, new StorageRequestCreation()
             {
-                Collateral = app.Config.RequiredCollateral.ToString(),
+                CollateralPerByte = app.Config.CollateralPerByte.ToString(),
                 Duration = (app.Config.ContractDurationMinutes * 60).ToString(),
                 Expiry = (app.Config.ContractExpiryMinutes * 60).ToString(),
                 Nodes = app.Config.NumHosts,
-                Reward = app.Config.Price.ToString(),
+                PricePerBytePerSecond = app.Config.PricePerBytePerSecond.ToString(),
                 ProofProbability = "15",
                 Tolerance = app.Config.HostTolerance
             }, app.Cts.Token);

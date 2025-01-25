@@ -51,8 +51,8 @@ namespace CodexTests.BasicTests
                 var availability = new StorageAvailability(
                     totalSpace: 10.GB(),
                     maxDuration: TimeSpan.FromMinutes(30),
-                    minPriceForTotalSpace: 1.TstWei(),
-                    maxCollateral: 20.TstWei()
+                    minPricePerBytePerSecond: 1.TstWei(),
+                    totalCollateral: 20.TstWei()
                 );
                 host.Marketplace.MakeStorageAvailable(availability);
             }
@@ -70,8 +70,8 @@ namespace CodexTests.BasicTests
 
             var purchase = new StoragePurchaseRequest(uploadCid)
             {
-                PricePerSlotPerSecond = 2.TstWei(),
-                RequiredCollateral = 10.TstWei(),
+                PricePerBytePerSecond = 2.TstWei(),
+                CollateralPerByte = 10.TstWei(),
                 MinRequiredNumberOfNodes = 5,
                 NodeFailureTolerance = 2,
                 ProofProbability = 5,
