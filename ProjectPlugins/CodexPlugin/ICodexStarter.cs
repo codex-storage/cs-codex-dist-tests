@@ -2,11 +2,8 @@
 
 namespace CodexPlugin
 {
-    public interface ICodexStarter : IProcessControlFactory
+    public interface ICodexStarter
     {
-        string GetCodexId();
-        string GetCodexRevision();
         ICodexInstance[] BringOnline(CodexSetup codexSetup);
-        ICodexNodeGroup WrapCodexContainers(ICodexInstance[] instances);
     }
 }

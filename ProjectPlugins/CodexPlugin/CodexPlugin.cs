@@ -10,10 +10,13 @@ namespace CodexPlugin
         private readonly IPluginTools tools;
         private readonly CodexLogLevel defaultLogLevel = CodexLogLevel.Trace;
         private readonly CodexHooksFactory hooksFactory = new CodexHooksFactory();
+        private readonly ProcessControlMap processControlMap = new ProcessControlMap();
+        private readonly CodexWrapper codexWrapper;
 
         public CodexPlugin(IPluginTools tools)
         {
-            codexStarter = new ContainerCodexStarter(tools, hooksFactory);
+            codexStarter = new ContainerCodexStarter(tools, processControlMap);
+            codexWrapper = new CodexWrapper(tools, processControlMap, hooksFactory);
             this.tools = tools;
         }
 
@@ -21,13 +24,13 @@ namespace CodexPlugin
 
         public void Announce()
         {
-            Log($"Loaded with Codex ID: '{codexStarter.GetCodexId()}' - Revision: {codexStarter.GetCodexRevision()}");
+            Log($"Loaded with Codex ID: '{codexWrapper.GetCodexId()}' - Revision: {codexWrapper.GetCodexRevision()}");
         }
 
         public void AddMetadata(IAddMetadata metadata)
         {
-            metadata.Add("codexid", codexStarter.GetCodexId());
-            metadata.Add("codexrevision", codexStarter.GetCodexRevision());
+            metadata.Add("codexid", codexWrapper.GetCodexId());
+            metadata.Add("codexrevision", codexWrapper.GetCodexRevision());
         }
 
         public void Decommission()
@@ -43,7 +46,7 @@ namespace CodexPlugin
         public ICodexNodeGroup WrapCodexContainers(ICodexInstance[] instances)
         {
             instances = instances.Select(c => SerializeGate.Gate(c as CodexInstance)).ToArray();
-            return codexStarter.WrapCodexContainers(instances);
+            return codexWrapper.WrapCodexInstances(instances);
         }
 
         public void WireUpMarketplace(ICodexNodeGroup result, Action<ICodexSetup> setup)
