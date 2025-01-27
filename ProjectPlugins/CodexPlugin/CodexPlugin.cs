@@ -6,13 +6,14 @@ namespace CodexPlugin
 {
     public class CodexPlugin : IProjectPlugin, IHasLogPrefix, IHasMetadata
     {
-        private readonly CodexStarter codexStarter;
+        private readonly ICodexStarter codexStarter;
         private readonly IPluginTools tools;
         private readonly CodexLogLevel defaultLogLevel = CodexLogLevel.Trace;
+        private readonly CodexHooksFactory hooksFactory = new CodexHooksFactory();
 
         public CodexPlugin(IPluginTools tools)
         {
-            codexStarter = new CodexStarter(tools);
+            codexStarter = new ContainerCodexStarter(tools, hooksFactory);
             this.tools = tools;
         }
 
@@ -39,10 +40,10 @@ namespace CodexPlugin
             return codexStarter.BringOnline(codexSetup);
         }
 
-        public ICodexNodeGroup WrapCodexContainers(CoreInterface coreInterface, ICodexInstance[] instances)
+        public ICodexNodeGroup WrapCodexContainers(ICodexInstance[] instances)
         {
             instances = instances.Select(c => SerializeGate.Gate(c as CodexInstance)).ToArray();
-            return codexStarter.WrapCodexContainers(coreInterface, instances);
+            return codexStarter.WrapCodexContainers(instances);
         }
 
         public void WireUpMarketplace(ICodexNodeGroup result, Action<ICodexSetup> setup)
@@ -64,7 +65,7 @@ namespace CodexPlugin
 
         public void SetCodexHooksProvider(ICodexHooksProvider hooksProvider)
         {
-            codexStarter.HooksFactory.Provider = hooksProvider;
+            hooksFactory.Provider = hooksProvider;
         }
 
         private CodexSetup GetSetup(int numberOfNodes, Action<ICodexSetup> setup)

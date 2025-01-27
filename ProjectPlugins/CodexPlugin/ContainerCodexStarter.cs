@@ -8,22 +8,21 @@ using Utils;
 
 namespace CodexPlugin
 {
-    public class CodexStarter : IProcessControlFactory
+    public class ContainerCodexStarter : ICodexStarter
     {
         private readonly IPluginTools pluginTools;
+        private readonly CodexHooksFactory hooksFactory;
         private readonly CodexContainerRecipe recipe = new CodexContainerRecipe();
         private readonly ApiChecker apiChecker;
         private readonly Dictionary<string, CodexContainerProcessControl> processControlMap = new Dictionary<string, CodexContainerProcessControl>();
         private DebugInfoVersion? versionResponse;
 
-        public CodexStarter(IPluginTools pluginTools)
+        public ContainerCodexStarter(IPluginTools pluginTools, CodexHooksFactory hooksFactory)
         {
             this.pluginTools = pluginTools;
-
+            this.hooksFactory = hooksFactory;
             apiChecker = new ApiChecker(pluginTools);
         }
-
-        public CodexHooksFactory HooksFactory { get; } = new CodexHooksFactory();
 
         public IProcessControl CreateProcessControl(ICodexInstance instance)
         {
@@ -53,16 +52,16 @@ namespace CodexPlugin
             return containers.Select(CreateInstance).ToArray();
         }
 
-        public ICodexNodeGroup WrapCodexContainers(CoreInterface coreInterface, ICodexInstance[] instances)
+        public ICodexNodeGroup WrapCodexContainers(ICodexInstance[] instances)
         {
             var codexNodeFactory = new CodexNodeFactory(
                 log: pluginTools.GetLog(),
                 fileManager: pluginTools.GetFileManager(),
-                hooksFactory: HooksFactory,
+                hooksFactory: hooksFactory,
                 httpFactory: pluginTools,
                 processControlFactory: this);
 
-            var group = CreateCodexGroup(coreInterface, instances, codexNodeFactory);
+            var group = CreateCodexGroup(instances, codexNodeFactory);
 
             Log($"Codex version: {group.Version}");
             versionResponse = group.Version;
@@ -110,7 +109,7 @@ namespace CodexPlugin
             return workflow.GetPodInfo(rc);
         }
 
-        private CodexNodeGroup CreateCodexGroup(CoreInterface coreInterface, ICodexInstance[] instances, CodexNodeFactory codexNodeFactory)
+        private CodexNodeGroup CreateCodexGroup(ICodexInstance[] instances, CodexNodeFactory codexNodeFactory)
         {
             var nodes = instances.Select(codexNodeFactory.CreateCodexNode).ToArray();
             var group = new CodexNodeGroup(pluginTools, nodes);
@@ -121,7 +120,7 @@ namespace CodexPlugin
             }
             catch
             {
-                CodexNodesNotOnline(coreInterface, instances);
+                CodexNodesNotOnline(instances);
                 throw;
             }
 
@@ -139,7 +138,7 @@ namespace CodexPlugin
             return instance;
         }
 
-        private void CodexNodesNotOnline(CoreInterface coreInterface, ICodexInstance[] instances)
+        private void CodexNodesNotOnline(ICodexInstance[] instances)
         {
             Log("Codex nodes failed to start");
             var log = pluginTools.GetLog();

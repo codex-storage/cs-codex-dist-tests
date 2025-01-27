@@ -13,7 +13,7 @@ namespace CodexPlugin
 
         public static ICodexNodeGroup WrapCodexContainers(this CoreInterface ci, ICodexInstance[] instances)
         {
-            return Plugin(ci).WrapCodexContainers(ci, instances);
+            return Plugin(ci).WrapCodexContainers(instances);
         }
 
         public static ICodexNode StartCodexNode(this CoreInterface ci)
