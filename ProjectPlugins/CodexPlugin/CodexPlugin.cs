@@ -15,7 +15,8 @@ namespace CodexPlugin
 
         public CodexPlugin(IPluginTools tools)
         {
-            codexStarter = new ContainerCodexStarter(tools, processControlMap);
+            //codexStarter = new ContainerCodexStarter(tools, processControlMap);
+            codexStarter = new BinaryCodexStarter(tools, processControlMap);
             codexWrapper = new CodexWrapper(tools, processControlMap, hooksFactory);
             this.tools = tools;
         }
