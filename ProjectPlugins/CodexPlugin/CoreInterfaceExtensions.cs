@@ -1,20 +1,19 @@
 ﻿using CodexClient;
 using CodexClient.Hooks;
 using Core;
-using KubernetesWorkflow.Types;
 
 namespace CodexPlugin
 {
     public static class CoreInterfaceExtensions
     {
-        public static RunningPod[] DeployCodexNodes(this CoreInterface ci, int number, Action<ICodexSetup> setup)
+        public static ICodexInstance[] DeployCodexNodes(this CoreInterface ci, int number, Action<ICodexSetup> setup)
         {
             return Plugin(ci).DeployCodexNodes(number, setup);
         }
 
-        public static ICodexNodeGroup WrapCodexContainers(this CoreInterface ci, RunningPod[] containers)
+        public static ICodexNodeGroup WrapCodexContainers(this CoreInterface ci, ICodexInstance[] instances)
         {
-            return Plugin(ci).WrapCodexContainers(ci, containers);
+            return Plugin(ci).WrapCodexContainers(ci, instances);
         }
 
         public static ICodexNode StartCodexNode(this CoreInterface ci)

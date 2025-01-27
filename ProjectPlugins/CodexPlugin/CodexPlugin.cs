@@ -1,7 +1,6 @@
 using CodexClient;
 using CodexClient.Hooks;
 using Core;
-using KubernetesWorkflow.Types;
 
 namespace CodexPlugin
 {
@@ -34,16 +33,16 @@ namespace CodexPlugin
         {
         }
 
-        public RunningPod[] DeployCodexNodes(int numberOfNodes, Action<ICodexSetup> setup)
+        public ICodexInstance[] DeployCodexNodes(int numberOfNodes, Action<ICodexSetup> setup)
         {
             var codexSetup = GetSetup(numberOfNodes, setup);
             return codexStarter.BringOnline(codexSetup);
         }
 
-        public ICodexNodeGroup WrapCodexContainers(CoreInterface coreInterface, RunningPod[] containers)
+        public ICodexNodeGroup WrapCodexContainers(CoreInterface coreInterface, ICodexInstance[] instances)
         {
-            containers = containers.Select(c => SerializeGate.Gate(c)).ToArray();
-            return codexStarter.WrapCodexContainers(coreInterface, containers);
+            instances = instances.Select(c => SerializeGate.Gate(c as CodexInstance)).ToArray();
+            return codexStarter.WrapCodexContainers(coreInterface, instances);
         }
 
         public void WireUpMarketplace(ICodexNodeGroup result, Action<ICodexSetup> setup)

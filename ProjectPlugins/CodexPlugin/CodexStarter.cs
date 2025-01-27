@@ -13,7 +13,7 @@ namespace CodexPlugin
         private readonly IPluginTools pluginTools;
         private readonly CodexContainerRecipe recipe = new CodexContainerRecipe();
         private readonly ApiChecker apiChecker;
-        private readonly Dictionary<ICodexInstance, RunningPod> podMap = new Dictionary<ICodexInstance, RunningPod>();
+        private readonly Dictionary<string, CodexContainerProcessControl> processControlMap = new Dictionary<string, CodexContainerProcessControl>();
         private DebugInfoVersion? versionResponse;
 
         public CodexStarter(IPluginTools pluginTools)
@@ -27,14 +27,10 @@ namespace CodexPlugin
 
         public IProcessControl CreateProcessControl(ICodexInstance instance)
         {
-            var pod = podMap[instance];
-            return new CodexContainerProcessControl(pluginTools, pod, onStop: () =>
-            {
-                podMap.Remove(instance);
-            });
+            return processControlMap[instance.Name];
         }
 
-        public RunningPod[] BringOnline(CodexSetup codexSetup)
+        public ICodexInstance[] BringOnline(CodexSetup codexSetup)
         {
             LogSeparator();
             Log($"Starting {codexSetup.Describe()}...");
@@ -54,10 +50,10 @@ namespace CodexPlugin
             }
             LogSeparator();
 
-            return containers;
+            return containers.Select(CreateInstance).ToArray();
         }
 
-        public ICodexNodeGroup WrapCodexContainers(CoreInterface coreInterface, RunningPod[] containers)
+        public ICodexNodeGroup WrapCodexContainers(CoreInterface coreInterface, ICodexInstance[] instances)
         {
             var codexNodeFactory = new CodexNodeFactory(
                 log: pluginTools.GetLog(),
@@ -66,7 +62,7 @@ namespace CodexPlugin
                 httpFactory: pluginTools,
                 processControlFactory: this);
 
-            var group = CreateCodexGroup(coreInterface, containers, codexNodeFactory);
+            var group = CreateCodexGroup(coreInterface, instances, codexNodeFactory);
 
             Log($"Codex version: {group.Version}");
             versionResponse = group.Version;
@@ -114,9 +110,8 @@ namespace CodexPlugin
             return workflow.GetPodInfo(rc);
         }
 
-        private CodexNodeGroup CreateCodexGroup(CoreInterface coreInterface, RunningPod[] runningContainers, CodexNodeFactory codexNodeFactory)
+        private CodexNodeGroup CreateCodexGroup(CoreInterface coreInterface, ICodexInstance[] instances, CodexNodeFactory codexNodeFactory)
         {
-            var instances = runningContainers.Select(CreateInstance).ToArray();
             var nodes = instances.Select(codexNodeFactory.CreateCodexNode).ToArray();
             var group = new CodexNodeGroup(pluginTools, nodes);
 
@@ -126,7 +121,7 @@ namespace CodexPlugin
             }
             catch
             {
-                CodexNodesNotOnline(coreInterface, runningContainers);
+                CodexNodesNotOnline(coreInterface, instances);
                 throw;
             }
 
@@ -136,14 +131,23 @@ namespace CodexPlugin
         private ICodexInstance CreateInstance(RunningPod pod)
         {
             var instance = CodexInstanceContainerExtension.CreateFromPod(pod);
-            podMap.Add(instance, pod);
+            var processControl = new CodexContainerProcessControl(pluginTools, pod, onStop: () =>
+            {
+                processControlMap.Remove(instance.Name);
+            });
+            processControlMap.Add(instance.Name, processControl);
             return instance;
         }
 
-        private void CodexNodesNotOnline(CoreInterface coreInterface, RunningPod[] runningContainers)
+        private void CodexNodesNotOnline(CoreInterface coreInterface, ICodexInstance[] instances)
         {
             Log("Codex nodes failed to start");
-            foreach (var container in runningContainers.First().Containers) coreInterface.DownloadLog(container);
+            var log = pluginTools.GetLog();
+            foreach (var i in instances)
+            {
+                var pc = processControlMap[i.Name];
+                pc.DownloadLog(log.CreateSubfile(i.Name + "_failed_to_start"));
+            }
         }
 
         private void LogSeparator()
