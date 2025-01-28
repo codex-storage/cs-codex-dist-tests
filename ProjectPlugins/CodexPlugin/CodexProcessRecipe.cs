@@ -1,6 +1,5 @@
 ﻿using System.Net.Sockets;
 using System.Net;
-using Utils;
 using Nethereum.Util;
 
 namespace CodexPlugin
@@ -26,6 +25,10 @@ namespace CodexPlugin
             ListenPort = freePortFinder.GetNextFreePort();
             Name = name;
             DataDir = dataDir;
+            var host = Dns.GetHostEntry(Dns.GetHostName());
+            var addrs = host.AddressList.Where(a => a.AddressFamily == AddressFamily.InterNetwork).ToList();
+
+            LocalIpAddrs = addrs.First();
         }
 
         public int ApiPort { get; }
@@ -33,15 +36,18 @@ namespace CodexPlugin
         public int ListenPort { get; }
         public string Name { get; }
         public string DataDir { get; }
+        public IPAddress LocalIpAddrs { get; }
     }
 
     public class CodexProcessRecipe
     {
         private readonly CodexProcessConfig pc;
+        private readonly CodexExePath codexExePath;
 
-        public CodexProcessRecipe(CodexProcessConfig pc)
+        public CodexProcessRecipe(CodexProcessConfig pc, CodexExePath codexExePath)
         {
             this.pc = pc;
+            this.codexExePath = codexExePath;
         }
 
         public ProcessRecipe Initialize(CodexStartupConfig config)
@@ -57,11 +63,7 @@ namespace CodexPlugin
             AddArg("--log-level", config.LogLevelWithTopics());
 
             // This makes the node announce itself to its local IP address.
-            var host = Dns.GetHostEntry(Dns.GetHostName());
-            var addrs = host.AddressList.Where(a => a.AddressFamily == AddressFamily.InterNetwork).ToList();
-            var ipaddrs = addrs.First();
-
-            AddArg("--nat", $"extip:{ipaddrs.ToStringInvariant()}");
+            AddArg("--nat", $"extip:{pc.LocalIpAddrs.ToStringInvariant()}");
             
             AddArg("--listen-addrs", $"/ip4/0.0.0.0/tcp/{pc.ListenPort}");
 
@@ -139,13 +141,7 @@ namespace CodexPlugin
         private ProcessRecipe Create()
         {
             return new ProcessRecipe(
-                cmd: Path.Combine(
-                    "d:",
-                    "Dev",
-                    "nim-codex",
-                    "build",
-                    "codex.exe"
-                ),
+                cmd: codexExePath.Get(),
                 args: args.ToArray());
         }
 

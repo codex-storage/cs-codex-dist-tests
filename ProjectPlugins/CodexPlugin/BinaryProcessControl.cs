@@ -54,6 +54,7 @@ namespace CodexPlugin
 
             if (waitTillStopped)
             {
+                process.WaitForExit();
                 foreach (var t in streamTasks) t.Wait();
             }
 

@@ -9,8 +9,17 @@ namespace CodexPlugin
     {
         private readonly IPluginTools pluginTools;
         private readonly ProcessControlMap processControlMap;
-        private readonly NumberSource numberSource = new NumberSource(1);
-        private readonly FreePortFinder freePortFinder = new FreePortFinder();
+        private readonly static NumberSource numberSource = new NumberSource(1);
+        private readonly static FreePortFinder freePortFinder = new FreePortFinder();
+        private readonly static object _lock = new object();
+        private readonly static string dataParentDir = "codex_disttest_datadirs";
+        private readonly static CodexExePath codexExePath = new CodexExePath();
+
+        static BinaryCodexStarter()
+        {
+            StopAllCodexProcesses();
+            DeleteParentDataDir();
+        }
 
         public BinaryCodexStarter(IPluginTools pluginTools, ProcessControlMap processControlMap)
         {
@@ -20,15 +29,21 @@ namespace CodexPlugin
 
         public ICodexInstance[] BringOnline(CodexSetup codexSetup)
         {
-            LogSeparator();
-            Log($"Starting {codexSetup.Describe()}...");
+            lock (_lock)
+            {
+                LogSeparator();
+                Log($"Starting {codexSetup.Describe()}...");
 
-            return StartCodexBinaries(codexSetup, codexSetup.NumberOfNodes);
+                return StartCodexBinaries(codexSetup, codexSetup.NumberOfNodes);
+            }
         }
 
         public void Decommission()
         {
-            processControlMap.StopAll();
+            lock (_lock)
+            {
+                processControlMap.StopAll();
+            }
         }
 
         private ICodexInstance[] StartCodexBinaries(CodexStartupConfig startupConfig, int numberOfNodes)
@@ -45,9 +60,11 @@ namespace CodexPlugin
         private ICodexInstance StartBinary(CodexStartupConfig config)
         {
             var name = "codex_" + numberSource.GetNextNumber();
-            var dataDir = $"datadir_{numberSource.GetNextNumber()}";
+            var dataDir = Path.Combine(dataParentDir, $"datadir_{numberSource.GetNextNumber()}");
             var pconfig = new CodexProcessConfig(name, freePortFinder, dataDir);
-            var factory = new CodexProcessRecipe(pconfig);
+            Log(pconfig);
+
+            var factory = new CodexProcessRecipe(pconfig, codexExePath);
             var recipe = factory.Initialize(config);
 
             var startInfo = new ProcessStartInfo(
@@ -69,7 +86,7 @@ namespace CodexPlugin
                 name: name,
                 imageName: "binary",
                 startUtc: DateTime.UtcNow,
-                discoveryEndpoint: new Address("Disc", local, pconfig.DiscPort),
+                discoveryEndpoint: new Address("Disc", pconfig.LocalIpAddrs.ToString(), pconfig.DiscPort),
                 apiEndpoint: new Address("Api", "http://" + local, pconfig.ApiPort),
                 listenEndpoint: new Address("Listen", local, pconfig.ListenPort),
                 ethAccount: null,
@@ -87,9 +104,44 @@ namespace CodexPlugin
             Log("----------------------------------------------------------------------------");
         }
 
+        private void Log(CodexProcessConfig pconfig)
+        {
+            Log(
+                "NodeConfig:Name=" + pconfig.Name +
+                "ApiPort=" + pconfig.ApiPort +
+                "DiscPort=" + pconfig.DiscPort +
+                "ListenPort=" + pconfig.ListenPort +
+                "DataDir=" + pconfig.DataDir
+            );
+        }
+
         private void Log(string message)
         {
             pluginTools.GetLog().Log(message);
+        }
+
+        private static void DeleteParentDataDir()
+        {
+            if (Directory.Exists(dataParentDir))
+            {
+                Directory.Delete(dataParentDir, true);
+            }
+        }
+
+        private static void StopAllCodexProcesses()
+        {
+            var processes = Process.GetProcesses();
+            var codexes = processes.Where(p =>
+                p.ProcessName.ToLowerInvariant() == "codex" &&
+                p.MainModule != null &&
+                p.MainModule.FileName == codexExePath.Get()
+            ).ToArray();
+
+            foreach (var c in codexes)
+            {
+                c.Kill();
+                c.WaitForExit();
+            }
         }
     }
 }
