@@ -6,17 +6,17 @@ namespace CodexPlugin
 {
     public class BinaryProcessControl : IProcessControl
     {
-        private Process process;
-        private readonly string nodeName;
-        private bool running;
+        private readonly Process process;
+        private readonly CodexProcessConfig config;
         private readonly List<string> logLines = new List<string>();
         private readonly List<Task> streamTasks = new List<Task>();
+        private bool running;
 
-        public BinaryProcessControl(Process process, string nodeName)
+        public BinaryProcessControl(Process process, CodexProcessConfig config)
         {
             running = true;
             this.process = process;
-            this.nodeName = nodeName;
+            this.config = config;
             streamTasks.Add(Task.Run(() => ReadProcessStream(process.StandardOutput)));
             streamTasks.Add(Task.Run(() => ReadProcessStream(process.StandardError)));
         }
@@ -32,13 +32,14 @@ namespace CodexPlugin
 
         public void DeleteDataDirFolder()
         {
-            throw new NotImplementedException();
+            if (!Directory.Exists(config.DataDir)) throw new Exception("datadir not found");
+            Directory.Delete(config.DataDir, true);
         }
 
         public IDownloadedLog DownloadLog(LogFile file)
         {
             foreach (var line in logLines) file.WriteRaw(line);
-            return new DownloadedLog(file, nodeName);
+            return new DownloadedLog(file, config.Name);
         }
 
         public bool HasCrashed()
@@ -50,7 +51,13 @@ namespace CodexPlugin
         {
             running = false;
             process.Kill();
-            foreach (var t in streamTasks) t.Wait();
+
+            if (waitTillStopped)
+            {
+                foreach (var t in streamTasks) t.Wait();
+            }
+
+            DeleteDataDirFolder();
         }
     }
 }

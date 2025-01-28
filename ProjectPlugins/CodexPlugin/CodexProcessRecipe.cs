@@ -17,42 +17,43 @@ namespace CodexPlugin
         public string[] Args { get; }
     }
 
-    public class CodexPortMap
+    public class CodexProcessConfig
     {
-        public CodexPortMap(FreePortFinder freePortFinder)
+        public CodexProcessConfig(string name, FreePortFinder freePortFinder, string dataDir)
         {
             ApiPort = freePortFinder.GetNextFreePort();
             DiscPort = freePortFinder.GetNextFreePort();
             ListenPort = freePortFinder.GetNextFreePort();
+            Name = name;
+            DataDir = dataDir;
         }
 
         public int ApiPort { get; }
         public int DiscPort { get; }
         public int ListenPort { get; }
+        public string Name { get; }
+        public string DataDir { get; }
     }
 
     public class CodexProcessRecipe
     {
-        private readonly CodexPortMap portMap;
-        private readonly NumberSource numberSource;
+        private readonly CodexProcessConfig pc;
 
-        public CodexProcessRecipe(CodexPortMap portMap, NumberSource numberSource)
+        public CodexProcessRecipe(CodexProcessConfig pc)
         {
-            this.portMap = portMap;
-            this.numberSource = numberSource;
+            this.pc = pc;
         }
 
         public ProcessRecipe Initialize(CodexStartupConfig config)
         {
             args.Clear();
             
-            AddArg("--api-port", portMap.ApiPort);
+            AddArg("--api-port", pc.ApiPort);
             AddArg("--api-bindaddr", "0.0.0.0");
 
-            var dataDir = $"datadir_{numberSource.GetNextNumber()}";
-            AddArg("--data-dir", dataDir);
+            AddArg("--data-dir", pc.DataDir);
 
-            AddArg("--disc-port", portMap.DiscPort);
+            AddArg("--disc-port", pc.DiscPort);
             AddArg("--log-level", config.LogLevelWithTopics());
 
             // This makes the node announce itself to its local IP address.
@@ -62,7 +63,7 @@ namespace CodexPlugin
 
             AddArg("--nat", $"extip:{ipaddrs.ToStringInvariant()}");
             
-            AddArg("--listen-addrs", $"/ip4/0.0.0.0/tcp/{portMap.ListenPort}");
+            AddArg("--listen-addrs", $"/ip4/0.0.0.0/tcp/{pc.ListenPort}");
 
             if (!string.IsNullOrEmpty(config.BootstrapSpr))
             {

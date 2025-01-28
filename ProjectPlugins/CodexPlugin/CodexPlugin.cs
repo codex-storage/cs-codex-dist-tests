@@ -36,6 +36,7 @@ namespace CodexPlugin
 
         public void Decommission()
         {
+            codexStarter.Decommission();
         }
 
         public ICodexInstance[] DeployCodexNodes(int numberOfNodes, Action<ICodexSetup> setup)

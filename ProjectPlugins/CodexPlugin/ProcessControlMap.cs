@@ -25,5 +25,13 @@ namespace CodexPlugin
         {
             return processControlMap[instance.Name];
         }
+
+        public void StopAll()
+        {
+            var pcs = processControlMap.Values.ToArray();
+            processControlMap.Clear();
+
+            foreach (var c in pcs) c.Stop(waitTillStopped: true);
+        }
     }
 }

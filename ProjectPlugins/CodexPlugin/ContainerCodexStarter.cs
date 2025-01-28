@@ -43,6 +43,10 @@ namespace CodexPlugin
             return containers.Select(CreateInstance).ToArray();
         }
 
+        public void Decommission()
+        {
+        }
+
         private StartupConfig CreateStartupConfig(CodexSetup codexSetup)
         {
             var startupConfig = new StartupConfig();

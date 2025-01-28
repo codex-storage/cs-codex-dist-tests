@@ -26,6 +26,11 @@ namespace CodexPlugin
             return StartCodexBinaries(codexSetup, codexSetup.NumberOfNodes);
         }
 
+        public void Decommission()
+        {
+            processControlMap.StopAll();
+        }
+
         private ICodexInstance[] StartCodexBinaries(CodexStartupConfig startupConfig, int numberOfNodes)
         {
             var result = new List<ICodexInstance>();
@@ -39,11 +44,12 @@ namespace CodexPlugin
 
         private ICodexInstance StartBinary(CodexStartupConfig config)
         {
-            var portMap = new CodexPortMap(freePortFinder);
-            var factory = new CodexProcessRecipe(portMap, numberSource);
+            var name = "codex_" + numberSource.GetNextNumber();
+            var dataDir = $"datadir_{numberSource.GetNextNumber()}";
+            var pconfig = new CodexProcessConfig(name, freePortFinder, dataDir);
+            var factory = new CodexProcessRecipe(pconfig);
             var recipe = factory.Initialize(config);
 
-            var name = "codex_" + numberSource.GetNextNumber();
             var startInfo = new ProcessStartInfo(
                 fileName: recipe.Cmd,
                 arguments: recipe.Args
@@ -63,14 +69,14 @@ namespace CodexPlugin
                 name: name,
                 imageName: "binary",
                 startUtc: DateTime.UtcNow,
-                discoveryEndpoint: new Address("Disc", local, portMap.DiscPort),
-                apiEndpoint: new Address("Api", "http://" + local, portMap.ApiPort),
-                listenEndpoint: new Address("Listen", local, portMap.ListenPort),
+                discoveryEndpoint: new Address("Disc", local, pconfig.DiscPort),
+                apiEndpoint: new Address("Api", "http://" + local, pconfig.ApiPort),
+                listenEndpoint: new Address("Listen", local, pconfig.ListenPort),
                 ethAccount: null,
                 metricsEndpoint: null
             );
 
-            var pc = new BinaryProcessControl(process, name);
+            var pc = new BinaryProcessControl(process, pconfig);
             processControlMap.Add(instance, pc);
 
             return instance;
