@@ -292,25 +292,24 @@ namespace ContinuousTests
 
         private ICodexNode[] CreateRandomNodes()
         {
-            var containers = SelectRandomContainers();
-            fixtureLog.Log("Selected nodes: " + string.Join(",", containers.Select(c => c.Name)));
-            return entryPoint.CreateInterface().WrapCodexContainers(containers).ToArray();
+            var instances = SelectRandomInstance();
+            fixtureLog.Log("Selected nodes: " + string.Join(",", instances.Select(c => c.Name)));
+            return entryPoint.CreateInterface().WrapCodexContainers(instances).ToArray();
         }
 
-        private RunningPod[] SelectRandomContainers()
+        private ICodexInstance[] SelectRandomInstance()
         {
-            throw new NotImplementedException();
-            //var number = handle.Test.RequiredNumberOfNodes;
-            //var containers = config.CodexDeployment.CodexInstances.Select(i => i.Pod).ToList();
-            //if (number == -1) return containers.ToArray();
+            var number = handle.Test.RequiredNumberOfNodes;
+            var instances = config.CodexDeployment.CodexInstances.ToList();
+            if (number == -1) return instances.ToArray();
 
-            //var result = new RunningPod[number];
-            //for (var i = 0; i < number; i++)
-            //{
-            //    result[i] = containers.PickOneRandom();
-            //}
+            var result = new ICodexInstance[number];
+            for (var i = 0; i < number; i++)
+            {
+                result[i] = instances.PickOneRandom();
+            }
 
-            //return result;
+            return result;
         }
     }
 }
