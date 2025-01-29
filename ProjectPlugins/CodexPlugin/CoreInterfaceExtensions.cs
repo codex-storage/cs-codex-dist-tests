@@ -39,9 +39,9 @@ namespace CodexPlugin
             return ci.StartCodexNodes(number, s => { });
         }
 
-        public static void SetCodexHooksProvider(this CoreInterface ci, ICodexHooksProvider hooksProvider)
+        public static void AddCodexHooksProvider(this CoreInterface ci, ICodexHooksProvider hooksProvider)
         {
-            Plugin(ci).SetCodexHooksProvider(hooksProvider);
+            Plugin(ci).AddCodexHooksProvider(hooksProvider);
         }
 
         private static CodexPlugin Plugin(CoreInterface ci)

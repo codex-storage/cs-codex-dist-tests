@@ -9,11 +9,14 @@ namespace CodexClient.Hooks
 
     public class CodexHooksFactory
     {
-        public ICodexHooksProvider Provider { get; set; } = new DoNothingHooksProvider();
+        public List<ICodexHooksProvider> Providers { get; } = new List<ICodexHooksProvider>();
 
         public ICodexNodeHooks CreateHooks(string nodeName)
         {
-            return Provider.CreateHooks(nodeName);
+            if (Providers.Count == 0) return new DoNothingCodexHooks();
+
+            var hooks = Providers.Select(p => p.CreateHooks(nodeName)).ToArray();
+            return new MuxingCodexNodeHooks(hooks);
         }
     }
 
@@ -43,7 +46,7 @@ namespace CodexClient.Hooks
         {
         }
 
-        public void OnNodeStarted(string peerId, string nodeId)
+        public void OnNodeStarted(ICodexNode node, string peerId, string nodeId)
         {
         }
 

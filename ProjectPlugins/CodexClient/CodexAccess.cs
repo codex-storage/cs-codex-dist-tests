@@ -31,7 +31,9 @@ namespace CodexClient
 
         public IDownloadedLog DownloadLog(string additionalName = "")
         {
-            return processControl.DownloadLog(log.CreateSubfile(GetName() + additionalName));
+            var file = log.CreateSubfile(GetName() + additionalName);
+            Log($"Downloading logs for '{GetName()}' to '{file.Filename}'");
+            return processControl.DownloadLog(file);
         }
 
         public string GetImageName()

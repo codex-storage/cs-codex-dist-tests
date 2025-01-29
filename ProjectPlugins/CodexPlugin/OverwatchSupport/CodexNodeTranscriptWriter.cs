@@ -32,7 +32,7 @@ namespace CodexPlugin.OverwatchSupport
             });
         }
 
-        public void OnNodeStarted(string peerId, string nodeId)
+        public void OnNodeStarted(ICodexNode node, string peerId, string nodeId)
         {
             if (string.IsNullOrEmpty(peerId) || string.IsNullOrEmpty(nodeId))
             {

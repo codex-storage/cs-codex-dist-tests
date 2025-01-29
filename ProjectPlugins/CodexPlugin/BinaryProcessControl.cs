@@ -44,7 +44,7 @@ namespace CodexPlugin
 
         public bool HasCrashed()
         {
-            return false;
+            return process.HasExited;
         }
 
         public void Stop(bool waitTillStopped)

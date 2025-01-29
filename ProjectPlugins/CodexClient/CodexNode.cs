@@ -79,7 +79,7 @@ namespace CodexClient
             InitializePeerNodeId();
             InitializeLogReplacements();
 
-            hooks.OnNodeStarted(peerId, nodeId);
+            hooks.OnNodeStarted(this, peerId, nodeId);
         }
 
         public IMarketplaceAccess Marketplace { get; }
@@ -350,9 +350,9 @@ namespace CodexClient
                 cts.Cancel();
                 throw new TimeoutException($"Download of '{contentId}' timed out after {Time.FormatDuration(timeout)}");
             }
-            catch
+            catch (Exception ex)
             {
-                Log($"Failed to download file '{contentId}'.");
+                Log($"Failed to download file '{contentId}': {ex}");
                 throw;
             }
         }

@@ -1,10 +1,11 @@
 ﻿using CodexClient;
+using CodexTests;
 using FileUtils;
 using Logging;
 using NUnit.Framework;
 using Utils;
 
-namespace CodexTests.DownloadConnectivityTests
+namespace ExperimentalTests.DownloadConnectivityTests
 {
     [TestFixture]
     public class MultiswarmTests : AutoBootstrapDistTest
@@ -206,7 +207,7 @@ namespace CodexTests.DownloadConnectivityTests
             var available = NodePlans.Where(n =>
                 n.Downloads.Count < maxDownloadsPerNode && !n.Contains(notIn)
             ).ToArray();
-            if (available.Any()) return RandomUtils.GetOneRandom(available);
+            if (available.Any()) return available.GetOneRandom();
 
             var newNodePlan = new NodePlan(NodePlans.Count);
             NodePlans.Add(newNodePlan);
@@ -218,7 +219,7 @@ namespace CodexTests.DownloadConnectivityTests
             var available = NodePlans.Where(n =>
                 n.Uploads.Count < maxUploadsPerNode && !n.Contains(notIn)
             ).ToArray();
-            if (available.Any()) return RandomUtils.GetOneRandom(available);
+            if (available.Any()) return available.GetOneRandom();
 
             var newNodePlan = new NodePlan(NodePlans.Count);
             NodePlans.Add(newNodePlan);

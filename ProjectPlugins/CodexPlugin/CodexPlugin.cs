@@ -68,9 +68,10 @@ namespace CodexPlugin
             }
         }
 
-        public void SetCodexHooksProvider(ICodexHooksProvider hooksProvider)
+        public void AddCodexHooksProvider(ICodexHooksProvider hooksProvider)
         {
-            hooksFactory.Provider = hooksProvider;
+            if (hooksFactory.Providers.Contains(hooksProvider)) return;
+            hooksFactory.Providers.Add(hooksProvider);
         }
 
         private CodexSetup GetSetup(int numberOfNodes, Action<ICodexSetup> setup)
