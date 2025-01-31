@@ -59,7 +59,7 @@ namespace CodexPlugin
 
         private ICodexInstance StartBinary(CodexStartupConfig config)
         {
-            var name = "codex_" + numberSource.GetNextNumber();
+            var name = GetName(config);
             var dataDir = Path.Combine(dataParentDir, $"datadir_{numberSource.GetNextNumber()}");
             var pconfig = new CodexProcessConfig(name, freePortFinder, dataDir);
             Log(pconfig);
@@ -93,10 +93,19 @@ namespace CodexPlugin
                 metricsEndpoint: null
             );
 
-            var pc = new BinaryProcessControl(process, pconfig);
+            var pc = new BinaryProcessControl(pluginTools.GetLog(), process, pconfig);
             processControlMap.Add(instance, pc);
 
             return instance;
+        }
+
+        private string GetName(CodexStartupConfig config)
+        {
+            if (!string.IsNullOrEmpty(config.NameOverride))
+            {
+                return config.NameOverride + "_" + numberSource.GetNextNumber();
+            }
+            return "codex_" + numberSource.GetNextNumber();
         }
 
         private void LogSeparator()

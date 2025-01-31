@@ -32,7 +32,7 @@ namespace CodexClient
         public IDownloadedLog DownloadLog(string additionalName = "")
         {
             var file = log.CreateSubfile(GetName() + additionalName);
-            Log($"Downloading logs for '{GetName()}' to '{file.Filename}'");
+            Log($"Downloading logs to '{file.Filename}'");
             return processControl.DownloadLog(file);
         }
 
@@ -282,7 +282,7 @@ namespace CodexClient
 
         private void Log(string msg)
         {
-            log.Log($"{GetName()} {msg}");
+            log.Log($"({GetName()}) {msg}");
         }
     }
 

@@ -6,19 +6,24 @@ namespace CodexPlugin
 {
     public class BinaryProcessControl : IProcessControl
     {
+        private readonly LogFile logFile;
         private readonly Process process;
         private readonly CodexProcessConfig config;
-        private readonly List<string> logLines = new List<string>();
+        private readonly List<string> logBuffer = new List<string>();
+        private readonly object bufferLock = new object();
         private readonly List<Task> streamTasks = new List<Task>();
         private bool running;
 
-        public BinaryProcessControl(Process process, CodexProcessConfig config)
+        public BinaryProcessControl(ILog log, Process process, CodexProcessConfig config)
         {
+            logFile = log.CreateSubfile(config.Name);
+
             running = true;
             this.process = process;
             this.config = config;
             streamTasks.Add(Task.Run(() => ReadProcessStream(process.StandardOutput)));
             streamTasks.Add(Task.Run(() => ReadProcessStream(process.StandardError)));
+            streamTasks.Add(Task.Run(() => WriteLog()));
         }
 
         private void ReadProcessStream(StreamReader reader)
@@ -26,7 +31,32 @@ namespace CodexPlugin
             while (running)
             {
                 var line = reader.ReadLine();
-                if (!string.IsNullOrEmpty(line)) logLines.Add(line);
+                if (!string.IsNullOrEmpty(line))
+                {
+                    lock (bufferLock)
+                    {
+                        logBuffer.Add(line);
+                    }
+                }
+            }
+        }
+
+        private void WriteLog()
+        {
+            while (running || logBuffer.Count > 0)
+            {
+                if (logBuffer.Count > 0)
+                {
+                    var lines = Array.Empty<string>();
+                    lock (bufferLock)
+                    {
+                        lines = logBuffer.ToArray();
+                        logBuffer.Clear();
+                    }
+
+                    foreach (var l in lines) logFile.WriteRaw(l);
+                }
+                else Thread.Sleep(100);
             }
         }
 
@@ -38,8 +68,7 @@ namespace CodexPlugin
 
         public IDownloadedLog DownloadLog(LogFile file)
         {
-            foreach (var line in logLines) file.WriteRaw(line);
-            return new DownloadedLog(file, config.Name);
+            return new DownloadedLog(logFile, config.Name);
         }
 
         public bool HasCrashed()
