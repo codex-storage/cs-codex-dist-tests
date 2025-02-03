@@ -2,6 +2,7 @@
 using CodexContractsPlugin;
 using CodexDiscordBotPlugin;
 using CodexPlugin;
+using CodexTests;
 using Core;
 using DiscordRewards;
 using DistTestCore;
@@ -12,7 +13,7 @@ using Newtonsoft.Json;
 using NUnit.Framework;
 using Utils;
 
-namespace CodexTests.UtilityTests
+namespace ExperimentalTests.UtilityTests
 {
     [TestFixture]
     public class DiscordBotTests : AutoBootstrapDistTest
@@ -25,7 +26,7 @@ namespace CodexTests.UtilityTests
         private readonly List<ulong> rewardsSeen = new List<ulong>();
         private readonly TimeSpan rewarderInterval = TimeSpan.FromMinutes(1);
         private readonly List<ChainEventMessage> receivedEvents = new List<ChainEventMessage>();
- 
+
         [Test]
         [DontDownloadLogs]
         [Ignore("Used to debug testnet bots.")]
@@ -238,7 +239,7 @@ namespace CodexTests.UtilityTests
                 if (h > minNumHosts) minNumHosts = h;
             }
 
-            var minFileSize = ((minSlotSize + 1024) * minNumHosts);
+            var minFileSize = (minSlotSize + 1024) * minNumHosts;
             return new ByteSize(Convert.ToInt64(minFileSize));
         }
 

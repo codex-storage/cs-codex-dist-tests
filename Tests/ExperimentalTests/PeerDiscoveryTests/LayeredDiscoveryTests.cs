@@ -1,7 +1,8 @@
 ﻿using CodexClient;
+using CodexTests;
 using NUnit.Framework;
 
-namespace CodexTests.PeerDiscoveryTests
+namespace ExperimentalTests.PeerDiscoveryTests
 {
     [TestFixture]
     public class LayeredDiscoveryTests : CodexDistTest
@@ -36,7 +37,7 @@ namespace CodexTests.PeerDiscoveryTests
         {
             var nodes = new List<ICodexNode>();
             var node = StartCodex();
-            nodes.Add(node);    
+            nodes.Add(node);
 
             for (var i = 1; i < chainLength; i++)
             {

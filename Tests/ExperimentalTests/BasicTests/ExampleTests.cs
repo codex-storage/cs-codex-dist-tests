@@ -1,11 +1,12 @@
 ﻿using CodexClient;
 using CodexPlugin;
+using CodexTests;
 using DistTestCore;
 using MetricsPlugin;
 using NUnit.Framework;
 using Utils;
 
-namespace CodexTests.BasicTests
+namespace ExperimentalTests.BasicTests
 {
     [TestFixture]
     public class ExampleTests : CodexDistTest

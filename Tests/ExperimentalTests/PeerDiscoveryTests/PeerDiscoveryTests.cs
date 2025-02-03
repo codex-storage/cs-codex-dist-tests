@@ -2,8 +2,9 @@
 using CodexClient;
 using NUnit.Framework;
 using Utils;
+using CodexTests;
 
-namespace CodexTests.PeerDiscoveryTests
+namespace ExperimentalTests.PeerDiscoveryTests
 {
     [TestFixture]
     public class PeerDiscoveryTests : AutoBootstrapDistTest

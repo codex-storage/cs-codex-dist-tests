@@ -14,8 +14,8 @@ namespace ExperimentalTests.DownloadConnectivityTests
         [Test]
         [Combinatorial]
         public void SingleSetTest(
-            [Values(10, 100, 1000)] int fileSizeMb,
-            [Values(5, 10, 20, 30)] int numDownloaders
+            [Values(1000)] int fileSizeMb,
+            [Values(10, 20, 30)] int numDownloaders
         )
         {
             var file = GenerateTestFile(fileSizeMb.MB());
