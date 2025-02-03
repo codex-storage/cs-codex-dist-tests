@@ -35,6 +35,21 @@ namespace Logging
             }
         }
 
+        public void WriteRawMany(IEnumerable<string> lines)
+        {
+            try
+            {
+                lock (fileLock)
+                {
+                    File.AppendAllLines(Filename, lines);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Writing to log has failed: " + ex);
+            }
+        }
+
         private static string GetTimestamp()
         {
             return $"[{Time.FormatTimestamp(DateTime.UtcNow)}]";

@@ -9,7 +9,7 @@ namespace CodexPlugin
         private readonly LogFile logFile;
         private readonly Process process;
         private readonly CodexProcessConfig config;
-        private readonly List<string> logBuffer = new List<string>();
+        private List<string> logBuffer = new List<string>();
         private readonly object bufferLock = new object();
         private readonly List<Task> streamTasks = new List<Task>();
         private bool running;
@@ -47,14 +47,14 @@ namespace CodexPlugin
             {
                 if (logBuffer.Count > 0)
                 {
-                    var lines = Array.Empty<string>();
+                    List<string> lines = null!;
                     lock (bufferLock)
                     {
-                        lines = logBuffer.ToArray();
-                        logBuffer.Clear();
+                        lines = logBuffer;
+                        logBuffer = new List<string>();
                     }
 
-                    foreach (var l in lines) logFile.WriteRaw(l);
+                    logFile.WriteRawMany(lines);
                 }
                 else Thread.Sleep(100);
             }
