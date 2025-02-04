@@ -47,10 +47,10 @@ namespace MarketInsights
             float weight1 = result.Number;
             float weight2 = toAdd.Number;
 
-            result.Price = RollingAverage.GetWeightedAverage(result.Price, weight1, toAdd.Price, weight2);
+            result.PricePerBytePerSecond = RollingAverage.GetWeightedAverage(result.PricePerBytePerSecond, weight1, toAdd.PricePerBytePerSecond, weight2);
             result.Size = RollingAverage.GetWeightedAverage(result.Size, weight1, toAdd.Size, weight2);
             result.Duration = RollingAverage.GetWeightedAverage(result.Duration, weight1, toAdd.Duration, weight2);
-            result.Collateral = RollingAverage.GetWeightedAverage(result.Collateral, weight1, toAdd.Collateral, weight2);
+            result.CollateralPerByte = RollingAverage.GetWeightedAverage(result.CollateralPerByte, weight1, toAdd.CollateralPerByte, weight2);
             result.ProofProbability = RollingAverage.GetWeightedAverage(result.ProofProbability, weight1, toAdd.ProofProbability, weight2);
         }
 

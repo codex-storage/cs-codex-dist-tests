@@ -47,8 +47,8 @@ namespace TestNetRewarder
                 $"Content: {request.Request.Content.Cid}",
                 $"Duration: {BigIntToDuration(request.Request.Ask.Duration)}",
                 $"Expiry: {BigIntToDuration(request.Request.Expiry)}",
-                $"Collateral: {BitIntToTestTokens(request.Request.Ask.Collateral)}",
-                $"Reward: {BitIntToTestTokens(request.Request.Ask.Reward)}",
+                $"CollateralPerByte: {BitIntToTestTokens(request.Request.Ask.CollateralPerByte)}",
+                $"PricePerBytePerSecond: {BitIntToTestTokens(request.Request.Ask.PricePerBytePerSecond)}",
                 $"Number of Slots: {request.Request.Ask.Slots}",
                 $"Slot Tolerance: {request.Request.Ask.MaxSlotLoss}",
                 $"Slot Size: {BigIntToByteSize(request.Request.Ask.SlotSize)}"

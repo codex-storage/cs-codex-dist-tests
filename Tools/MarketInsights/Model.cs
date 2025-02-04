@@ -66,7 +66,7 @@
         /// <summary>
         /// Average price of contracts. (TSTWEI)
         /// </summary>
-        public float Price { get; set; }
+        public float PricePerBytePerSecond { get; set; }
 
         /// <summary>
         /// Average size of slots in contracts. (bytes)
@@ -81,7 +81,7 @@
         /// <summary>
         /// Average collateral of contracts. (TSTWEI)
         /// </summary>
-        public float Collateral { get; set; }
+        public float CollateralPerByte { get; set; }
 
         /// <summary>
         /// Average proof probability of contracts.

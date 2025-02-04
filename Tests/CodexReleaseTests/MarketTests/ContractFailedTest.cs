@@ -67,11 +67,8 @@ namespace CodexReleaseTests.MarketTests
         private TimeSpan CalculateContractFailTimespan()
         {
             var config = GetContracts().Deployment.Config;
-            var maxSlashesBeforeSlotFreed = Convert.ToInt32(config.Collateral.MaxNumberOfSlashes);
-            var numProofsMissedBeforeSlash = Convert.ToInt32(config.Collateral.SlashCriterion);
-
+            var requiredNumMissedProofs = Convert.ToInt32(config.Collateral.MaxNumberOfSlashes);
             var periodDuration = GetPeriodDuration();
-            var requiredNumMissedProofs = maxSlashesBeforeSlotFreed * numProofsMissedBeforeSlash;
 
             // Each host could miss 1 proof per period,
             // so the time we should wait is period time * requiredNum of missed proofs.

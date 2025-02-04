@@ -71,10 +71,10 @@ namespace MarketInsights
         private void AddRequestToAverage(ContractAverages average, RequestEvent requestEvent)
         {
             average.Number++;
-            average.Price = GetNewAverage(average.Price, average.Number, requestEvent.Request.Request.Ask.Reward);
+            average.PricePerBytePerSecond = GetNewAverage(average.PricePerBytePerSecond, average.Number, requestEvent.Request.Request.Ask.PricePerBytePerSecond);
             average.Size = GetNewAverage(average.Size, average.Number, requestEvent.Request.Request.Ask.SlotSize);
             average.Duration = GetNewAverage(average.Duration, average.Number, requestEvent.Request.Request.Ask.Duration);
-            average.Collateral = GetNewAverage(average.Collateral, average.Number, requestEvent.Request.Request.Ask.Collateral);
+            average.CollateralPerByte = GetNewAverage(average.CollateralPerByte, average.Number, requestEvent.Request.Request.Ask.CollateralPerByte);
             average.ProofProbability = GetNewAverage(average.ProofProbability, average.Number, requestEvent.Request.Request.Ask.ProofProbability);
         }
 
