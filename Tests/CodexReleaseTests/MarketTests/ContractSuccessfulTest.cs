@@ -53,7 +53,7 @@ namespace CodexReleaseTests.MarketTests
                 NodeFailureTolerance = 1,
                 PricePerBytePerSecond = pricePerBytePerSecond,
                 ProofProbability = 20,
-                CollateralPerByte = 1.Tst()
+                CollateralPerByte = 100.TstWei()
             });
         }
 
