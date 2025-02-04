@@ -12,6 +12,7 @@ namespace CodexPlugin
         string PurchaseId { get; }
         StoragePurchaseRequest Purchase { get; }
         ContentId ContentId { get; }
+        StoragePurchase GetStatus();
         void WaitForStorageContractSubmitted();
         void WaitForStorageContractStarted();
         void WaitForStorageContractFinished(ICodexContracts contracts);
@@ -46,6 +47,11 @@ namespace CodexPlugin
         public TimeSpan? PendingToSubmitted => contractSubmittedUtc - contractPendingUtc;
         public TimeSpan? SubmittedToStarted => contractStartedUtc - contractSubmittedUtc;
         public TimeSpan? SubmittedToFinished => contractFinishedUtc - contractSubmittedUtc;
+
+        public StoragePurchase GetStatus()
+        {
+            return codexAccess.GetPurchaseStatus(PurchaseId);
+        }
 
         public void WaitForStorageContractSubmitted()
         {

@@ -138,32 +138,43 @@ namespace CodexReleaseTests.MarketTests
             }).ToArray();
         }
 
-        protected void AssertClientHasPaidForContract(TestToken pricePerSlotPerSecond, ICodexNode client, IStoragePurchaseContract contract, ICodexNodeGroup hosts)
+        protected void AssertClientHasPaidForContract(TestToken pricePerBytePerSecond, ICodexNode client, IStoragePurchaseContract contract, ICodexNodeGroup hosts)
         {
             var balance = GetTstBalance(client);
-            var expectedBalance = StartingBalanceTST.Tst() - GetContractFinalCost(pricePerSlotPerSecond, contract, hosts);
+            var expectedBalance = StartingBalanceTST.Tst() - GetContractFinalCost(pricePerBytePerSecond, contract, hosts);
 
             Assert.That(balance, Is.EqualTo(expectedBalance), "Client balance incorrect.");
         }
 
-        protected void AssertHostsWerePaidForContract(TestToken pricePerSlotPerSecond, IStoragePurchaseContract contract, ICodexNodeGroup hosts)
+        protected void AssertHostsWerePaidForContract(TestToken pricePerBytePerSecond, IStoragePurchaseContract contract, ICodexNodeGroup hosts)
         {
             var fills = GetOnChainSlotFills(hosts);
             var submitUtc = GetContractOnChainSubmittedUtc(contract);
             var finishUtc = submitUtc + contract.Purchase.Duration;
+            var slotSize = Convert.ToInt64(contract.GetStatus().Request.Ask.SlotSize).Bytes();
             var expectedBalances = new Dictionary<EthAddress, TestToken>();
+
             foreach (var host in hosts) expectedBalances.Add(host.EthAddress, StartingBalanceTST.Tst());
             foreach (var fill in fills)
             {
                 var slotDuration = finishUtc - fill.SlotFilledEvent.Block.Utc;
-                expectedBalances[fill.Host.EthAddress] += GetContractCostPerSlot(pricePerSlotPerSecond, slotDuration);
+                expectedBalances[fill.Host.EthAddress] += GetContractCostPerSlot(pricePerBytePerSecond, slotSize, slotDuration);
             }
 
-            foreach (var pair in expectedBalances)
+            var retry = new Retry(nameof(AssertHostsWerePaidForContract),
+                maxTimeout: TimeSpan.FromMinutes(30),
+                sleepAfterFail: TimeSpan.FromSeconds(10),
+                onFail: f => { }
+            );
+
+            retry.Run(() =>
             {
-                var balance = GetTstBalance(pair.Key);
-                Assert.That(balance, Is.EqualTo(pair.Value), "Host was not paid for storage.");
-            }
+                foreach (var pair in expectedBalances)
+                {
+                    var balance = GetTstBalance(pair.Key);
+                    Assert.That(balance, Is.EqualTo(pair.Value), "Host was not paid for storage.");
+                }
+            });
         }
 
         protected void AssertHostsCollateralsAreUnchanged(ICodexNodeGroup hosts)
@@ -176,17 +187,18 @@ namespace CodexReleaseTests.MarketTests
             }
         }
 
-        private TestToken GetContractFinalCost(TestToken pricePerSlotPerSecond, IStoragePurchaseContract contract, ICodexNodeGroup hosts)
+        private TestToken GetContractFinalCost(TestToken pricePerBytePerSecond, IStoragePurchaseContract contract, ICodexNodeGroup hosts)
         {
             var fills = GetOnChainSlotFills(hosts);
             var result = 0.Tst();
             var submitUtc = GetContractOnChainSubmittedUtc(contract);
             var finishUtc = submitUtc + contract.Purchase.Duration;
+            var slotSize = Convert.ToInt64(contract.GetStatus().Request.Ask.SlotSize).Bytes();
 
             foreach (var fill in fills)
             {
                 var slotDuration = finishUtc - fill.SlotFilledEvent.Block.Utc;
-                result += GetContractCostPerSlot(pricePerSlotPerSecond, slotDuration);
+                result += GetContractCostPerSlot(pricePerBytePerSecond, slotSize, slotDuration);
             }
 
             return result;
@@ -207,9 +219,10 @@ namespace CodexReleaseTests.MarketTests
             }, nameof(GetContractOnChainSubmittedUtc));
         }
 
-        private TestToken GetContractCostPerSlot(TestToken pricePerSlotPerSecond, TimeSpan slotDuration)
+        private TestToken GetContractCostPerSlot(TestToken pricePerBytePerSecond, ByteSize slotSize, TimeSpan slotDuration)
         {
-            return pricePerSlotPerSecond * (int)slotDuration.TotalSeconds;
+            var cost = pricePerBytePerSecond.TstWei * slotSize.SizeInBytes * (int)slotDuration.TotalSeconds;
+            return cost.TstWei();
         }
 
         protected void AssertContractSlotsAreFilledByHosts(IStoragePurchaseContract contract, ICodexNodeGroup hosts)
