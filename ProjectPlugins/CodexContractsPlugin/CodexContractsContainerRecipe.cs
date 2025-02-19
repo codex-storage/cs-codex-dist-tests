@@ -1,7 +1,6 @@
 ﻿using GethPlugin;
 using KubernetesWorkflow;
 using KubernetesWorkflow.Recipe;
-using Logging;
 
 namespace CodexContractsPlugin
 {
