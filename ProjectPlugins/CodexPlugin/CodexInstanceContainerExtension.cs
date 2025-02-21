@@ -14,7 +14,7 @@ namespace CodexPlugin
                 name: container.Name,
                 imageName: container.Recipe.Image,
                 startUtc: container.Recipe.RecipeCreatedUtc,
-                discoveryEndpoint: container.GetInternalAddress(CodexContainerRecipe.DiscoveryPortTag),
+                discoveryEndpoint: SetClusterInternalIpAddress(pod, container.GetInternalAddress(CodexContainerRecipe.DiscoveryPortTag)),
                 apiEndpoint: container.GetAddress(CodexContainerRecipe.ApiPortTag),
                 listenEndpoint: container.GetInternalAddress(CodexContainerRecipe.ListenPortTag),
                 ethAccount: container.Recipe.Additionals.Get<EthAccount>(),
@@ -22,13 +22,14 @@ namespace CodexPlugin
             );
         }
 
-        // todo: is this needed for the discovery address??
-        //var info = codexAccess.GetPodInfo();
-        //return new Address(
-        //    logName: $"{GetName()}:DiscoveryPort",
-        //    host: info.Ip,
-        //    port: Container.Recipe.GetPortByTag(CodexContainerRecipe.DiscoveryPortTag)!.Number
-        //);
+        private static Address SetClusterInternalIpAddress(RunningPod pod, Address address)
+        {
+            return new Address(
+                logName: address.LogName,
+                host: pod.PodInfo.Ip,
+                port: address.Port
+            );
+        }
 
         private static Address? GetMetricsEndpoint(RunningContainer container)
         {

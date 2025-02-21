@@ -78,6 +78,11 @@ namespace MarketInsights
             average.ProofProbability = GetNewAverage(average.ProofProbability, average.Number, requestEvent.Request.Request.Ask.ProofProbability);
         }
 
+        private float GetNewAverage(float currentAverage, int newNumberOfValues, ulong newValue)
+        {
+            return GetNewAverage(currentAverage, newNumberOfValues, Convert.ToSingle(newValue));
+        }
+
         private float GetNewAverage(float currentAverage, int newNumberOfValues, BigInteger newValue)
         {
             return GetNewAverage(currentAverage, newNumberOfValues, (float)newValue);

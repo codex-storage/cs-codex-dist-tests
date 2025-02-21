@@ -95,8 +95,8 @@ namespace TestNetRewarder
 
         private bool MeetsSizeRequirement(IChainStateRequest r)
         {
-            var slotSize = r.Request.Ask.SlotSize.ToDecimal();
-            decimal min = reward.CheckConfig.MinSlotSize.SizeInBytes;
+            var slotSize = r.Request.Ask.SlotSize;
+            ulong min = Convert.ToUInt64(reward.CheckConfig.MinSlotSize.SizeInBytes);
             return slotSize >= min;
         }
 

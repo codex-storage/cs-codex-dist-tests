@@ -4,9 +4,10 @@ namespace KubernetesWorkflow.Types
 {
     public class RunningPod
     {
-        public RunningPod(string id, StartupConfig startupConfig, StartResult startResult, RunningContainer[] containers)
+        public RunningPod(string id, PodInfo podInfo, StartupConfig startupConfig, StartResult startResult, RunningContainer[] containers)
         {
             Id = id;
+            PodInfo = podInfo;
             StartupConfig = startupConfig;
             StartResult = startResult;
             Containers = containers;
@@ -15,6 +16,7 @@ namespace KubernetesWorkflow.Types
         }
 
         public string Id { get; }
+        public PodInfo PodInfo { get; }
         public StartupConfig StartupConfig { get; }
         public StartResult StartResult { get; }
         public RunningContainer[] Containers { get; }
