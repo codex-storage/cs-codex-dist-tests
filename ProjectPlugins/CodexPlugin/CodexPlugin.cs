@@ -6,6 +6,8 @@ namespace CodexPlugin
 {
     public class CodexPlugin : IProjectPlugin, IHasLogPrefix, IHasMetadata
     {
+        private const bool UseContainers = true;
+
         private readonly ICodexStarter codexStarter;
         private readonly IPluginTools tools;
         private readonly CodexLogLevel defaultLogLevel = CodexLogLevel.Trace;
@@ -15,10 +17,22 @@ namespace CodexPlugin
 
         public CodexPlugin(IPluginTools tools)
         {
-            //codexStarter = new ContainerCodexStarter(tools, processControlMap);
-            codexStarter = new BinaryCodexStarter(tools, processControlMap);
-            codexWrapper = new CodexWrapper(tools, processControlMap, hooksFactory);
             this.tools = tools;
+
+            codexStarter = CreateCodexStarter();
+            codexWrapper = new CodexWrapper(tools, processControlMap, hooksFactory);
+        }
+
+        private ICodexStarter CreateCodexStarter()
+        {
+            if (UseContainers)
+            {
+                Log("Using Containerized Codex instances");
+                return new ContainerCodexStarter(tools, processControlMap);
+            }
+
+            Log("Using Binary Codex instances");
+            return new BinaryCodexStarter(tools, processControlMap);
         }
 
         public string LogPrefix => "(Codex) ";
