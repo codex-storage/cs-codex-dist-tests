@@ -26,9 +26,9 @@ namespace CodexPlugin
         public void Stop(bool waitTillStopped)
         {
             Log($"Stopping node...");
+            crashWatcher.Stop();
             var workflow = tools.CreateWorkflow();
             workflow.Stop(pod, waitTillStopped);
-            crashWatcher.Stop();
             onStop();
             Log("Stopped.");
         }

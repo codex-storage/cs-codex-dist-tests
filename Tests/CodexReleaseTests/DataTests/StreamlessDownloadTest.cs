@@ -1,7 +1,5 @@
-﻿using CodexPlugin;
-using CodexTests;
+﻿using CodexTests;
 using NUnit.Framework;
-using System.Drawing;
 using Utils;
 
 namespace CodexReleaseTests.DataTests

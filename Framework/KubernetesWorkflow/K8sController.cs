@@ -735,7 +735,10 @@ namespace KubernetesWorkflow
                 throw new Exception($"Expected to find 1 pod by podLabel '{deployment.PodLabel}'. Found: {pods.Length}. " +
                     $"Total number of pods: {allPods.Items.Count}. Their labels: {string.Join(Environment.NewLine, allLabels)}");
             }
-            return pods[0];
+            var pod = pods[0];
+            if (pod.Status == null) throw new Exception("Pod status unknown");
+            if (string.IsNullOrEmpty(pod.Status.PodIP)) throw new Exception("Pod IP unknown");
+            return pod;
         }
 
         #endregion
