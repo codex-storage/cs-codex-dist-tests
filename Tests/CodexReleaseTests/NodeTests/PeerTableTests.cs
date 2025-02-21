@@ -1,13 +1,7 @@
-﻿using CodexPlugin;
+﻿using CodexClient;
 using CodexTests;
 using CodexTests.Helpers;
 using NUnit.Framework;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Utils;
 
 namespace CodexReleaseTests.NodeTests
 {

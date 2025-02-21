@@ -9,6 +9,7 @@
   <ItemGroup>
     <ProjectReference Include="..\FileUtils\FileUtils.csproj" />
     <ProjectReference Include="..\KubernetesWorkflow\KubernetesWorkflow.csproj" />
+    <ProjectReference Include="..\WebUtils\WebUtils.csproj" />
   </ItemGroup>
 
 </Project>

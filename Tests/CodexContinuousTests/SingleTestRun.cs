@@ -7,6 +7,7 @@ using DistTestCore.Logs;
 using Core;
 using KubernetesWorkflow.Types;
 using TaskFactory = Utils.TaskFactory;
+using CodexClient;
 
 namespace ContinuousTests
 {
@@ -125,13 +126,14 @@ namespace ContinuousTests
 
             foreach (var node in nodes)
             {
-                var container = node.Container;
-                var deploymentName = container.RunningPod.StartResult.Deployment.Name;
-                var namespaceName = container.RunningPod.StartResult.Cluster.Configuration.KubernetesNamespace;
-                var openingLine =
-                    $"{namespaceName} - {deploymentName} = {node.Container.Name} = {node.GetDebugInfo().Id}";
-                elasticSearchLogDownloader.Download(fixtureLog.CreateSubfile(node.GetName()), node.Container, effectiveStart,
-                    effectiveEnd, openingLine);
+                //var container = node.Container;
+                //var deploymentName = container.RunningPod.StartResult.Deployment.Name;
+                //var namespaceName = container.RunningPod.StartResult.Cluster.Configuration.KubernetesNamespace;
+                //var openingLine =
+                //    $"{namespaceName} - {deploymentName} = {node.Container.Name} = {node.GetDebugInfo().Id}";
+                //elasticSearchLogDownloader.Download(fixtureLog.CreateSubfile(node.GetName()), node.Container, effectiveStart,
+                //    effectiveEnd, openingLine);
+                throw new NotImplementedException("access to container info is unavilable.");
             }
         }
 
@@ -204,7 +206,6 @@ namespace ContinuousTests
             result.Add("testname", testName);
             result.Add("message", message);
             result.Add("involvedpods", string.Join(",", nodes.Select(n => n.GetName())));
-            result.Add("involvedpodnames", string.Join(",", nodes.Select(n => n.GetPodInfo().Name)));
 
             var error = message.Split(Environment.NewLine).First();
             if (error.Contains(":")) error = error.Substring(1 + error.LastIndexOf(":"));
@@ -286,26 +287,26 @@ namespace ContinuousTests
         private string GetContainerNames()
         {
             if (handle.Test.RequiredNumberOfNodes == -1) return "(All Nodes)";
-            return $"({string.Join(",", nodes.Select(n => n.Container.Name))})";
+            return $"({string.Join(",", nodes.Select(n => n.GetName()))})";
         }
 
         private ICodexNode[] CreateRandomNodes()
         {
-            var containers = SelectRandomContainers();
-            fixtureLog.Log("Selected nodes: " + string.Join(",", containers.Select(c => c.Name)));
-            return entryPoint.CreateInterface().WrapCodexContainers(containers).ToArray();
+            var instances = SelectRandomInstance();
+            fixtureLog.Log("Selected nodes: " + string.Join(",", instances.Select(c => c.Name)));
+            return entryPoint.CreateInterface().WrapCodexContainers(instances).ToArray();
         }
 
-        private RunningPod[] SelectRandomContainers()
+        private ICodexInstance[] SelectRandomInstance()
         {
             var number = handle.Test.RequiredNumberOfNodes;
-            var containers = config.CodexDeployment.CodexInstances.Select(i => i.Pod).ToList();
-            if (number == -1) return containers.ToArray();
+            var instances = config.CodexDeployment.CodexInstances.ToList();
+            if (number == -1) return instances.ToArray();
 
-            var result = new RunningPod[number];
+            var result = new ICodexInstance[number];
             for (var i = 0; i < number; i++)
             {
-                result[i] = containers.PickOneRandom();
+                result[i] = instances.PickOneRandom();
             }
 
             return result;

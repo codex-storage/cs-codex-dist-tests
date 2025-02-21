@@ -1,4 +1,4 @@
-using CodexPlugin;
+using CodexClient;
 using CodexTests;
 using DistTestCore;
 using FileUtils;

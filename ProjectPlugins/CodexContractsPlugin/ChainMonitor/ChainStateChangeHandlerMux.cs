@@ -1,5 +1,5 @@
-﻿using GethPlugin;
-using System.Numerics;
+﻿using System.Numerics;
+using Utils;
 
 namespace CodexContractsPlugin.ChainMonitor
 {

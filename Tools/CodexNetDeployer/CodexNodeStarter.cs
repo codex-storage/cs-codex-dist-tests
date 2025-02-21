@@ -1,4 +1,5 @@
-﻿using CodexContractsPlugin;
+﻿using CodexClient;
+using CodexContractsPlugin;
 using CodexPlugin;
 using Core;
 using GethPlugin;
@@ -100,7 +101,7 @@ namespace CodexNetDeployer
             if (codexNode != null)
             {
                 Console.WriteLine("Downloading container log.");
-                ci.DownloadLog(codexNode);
+                codexNode.DownloadLog();
             }
 
             return null;

@@ -3,8 +3,7 @@ using Logging;
 using Utils;
 using Core;
 using CodexPlugin;
-using KubernetesWorkflow.Types;
-using KubernetesWorkflow;
+using CodexClient;
 
 namespace ContinuousTests
 {
@@ -24,12 +23,6 @@ namespace ContinuousTests
             this.customNamespace = customNamespace;
         }
 
-        public IDownloadedLog DownloadLog(RunningContainer container, int? tailLines = null)
-        {
-            var entryPoint = CreateEntryPoint();
-            return entryPoint.CreateInterface().DownloadLog(container, tailLines);
-        }
-
         public void RunNode(Action<ICodexSetup> setup, Action<ICodexNode> operation)
         {
             RunNode(nodes.ToList().PickOneRandom(), setup, operation);
@@ -40,7 +33,7 @@ namespace ContinuousTests
             var entryPoint = CreateEntryPoint();
             // We have to be sure that the transient node we start is using the same image as whatever's already in the deployed network.
             // Therefore, we use the image of the bootstrap node.
-            CodexContainerRecipe.DockerImageOverride = bootstrapNode.Container.Recipe.Image;
+            CodexContainerRecipe.DockerImageOverride = bootstrapNode.GetImageName();
 
             try
             {
@@ -59,7 +52,7 @@ namespace ContinuousTests
                 }
                 catch
                 {
-                    DownloadLog(node.Container);
+                    node.DownloadLog();
                     throw;
                 }
             }

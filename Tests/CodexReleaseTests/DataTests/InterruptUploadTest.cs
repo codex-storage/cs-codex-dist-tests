@@ -1,4 +1,4 @@
-﻿using CodexPlugin;
+﻿using CodexClient;
 using CodexTests;
 using FileUtils;
 using NUnit.Framework;
@@ -32,13 +32,13 @@ namespace CodexReleaseTests.DataTests
             process.Kill();
             Thread.Sleep(1000);
 
-            var log = Ci.DownloadLog(node);
+            var log = node.DownloadLog();
             return !log.GetLinesContaining("Unhandled exception in async proc, aborting").Any();
         }
 
         private Process StartCurlUploadProcess(ICodexNode node, TrackedFile file)
         {
-            var apiAddress = node.Container.GetAddress(CodexContainerRecipe.ApiPortTag);
+            var apiAddress = node.GetApiEndpoint();
             var codexUrl = $"{apiAddress}/api/codex/v1/data";
             var filePath = file.Filename;
             return Process.Start("curl", $"-X POST {codexUrl} -H \"Content-Type: application/octet-stream\" -T {filePath}");

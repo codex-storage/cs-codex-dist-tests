@@ -1,6 +1,7 @@
 ﻿using Core;
 using KubernetesWorkflow.Types;
 using Logging;
+using Utils;
 
 namespace MetricsPlugin
 {
@@ -31,12 +32,12 @@ namespace MetricsPlugin
         {
         }
 
-        public RunningPod DeployMetricsCollector(IMetricsScrapeTarget[] scrapeTargets, TimeSpan scrapeInterval)
+        public RunningPod DeployMetricsCollector(Address[] scrapeTargets, TimeSpan scrapeInterval)
         {
             return starter.CollectMetricsFor(scrapeTargets, scrapeInterval);
         }
 
-        public IMetricsAccess WrapMetricsCollectorDeployment(RunningPod runningPod, IMetricsScrapeTarget target)
+        public IMetricsAccess WrapMetricsCollectorDeployment(RunningPod runningPod, Address target)
         {
             runningPod = SerializeGate.Gate(runningPod);
             return starter.CreateAccessForTarget(runningPod, target);

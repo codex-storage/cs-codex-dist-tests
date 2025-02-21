@@ -1,8 +1,9 @@
 ﻿using NUnit.Framework;
 using MetricsPlugin;
 using Utils;
+using CodexTests;
 
-namespace CodexTests.BasicTests
+namespace ExperimentalTests.BasicTests
 {
     [TestFixture]
     public class AsyncProfiling : CodexDistTest

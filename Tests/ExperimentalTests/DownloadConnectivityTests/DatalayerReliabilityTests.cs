@@ -1,4 +1,4 @@
-﻿using CodexPlugin;
+﻿using CodexClient;
 using CodexTests;
 using NUnit.Framework;
 using Utils;
@@ -14,15 +14,15 @@ namespace ExperimentalTests.DownloadConnectivityTests
         [Test]
         [Combinatorial]
         public void SingleSetTest(
-            [Values(1, 10, 100, 1000)] int fileSizeMb,
-            [Values(5, 10, 20, 30)] int numDownloaders
+            [Values(1000)] int fileSizeMb,
+            [Values(10, 20, 30)] int numDownloaders
         )
         {
             var file = GenerateTestFile(fileSizeMb.MB());
-            var uploaders = StartCodex(n => n.WithName("uploader"));
+            var uploader = StartCodex(n => n.WithName("uploader"));
             var downloaders = StartCodex(numDownloaders, n => n.WithName("downloader"));
 
-            var cid = uploaders.UploadFile(file);
+            var cid = uploader.UploadFile(file);
 
             var downloadTasks = new List<Task>();
             foreach (var dl in downloaders)

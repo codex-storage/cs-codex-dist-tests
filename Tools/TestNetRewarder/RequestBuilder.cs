@@ -1,5 +1,5 @@
 ﻿using DiscordRewards;
-using GethPlugin;
+using Utils;
 
 namespace TestNetRewarder
 {

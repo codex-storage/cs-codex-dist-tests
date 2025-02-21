@@ -1,4 +1,5 @@
-﻿using CodexContractsPlugin;
+﻿using CodexClient;
+using CodexContractsPlugin;
 using GethPlugin;
 using KubernetesWorkflow;
 using Utils;
@@ -223,7 +224,7 @@ namespace CodexPlugin
         {
             if (pinned) return accounts.Last();
 
-            var a = EthAccount.GenerateNew();
+            var a = EthAccountGenerator.GenerateNew();
             accounts.Add(a);
             return a;
         }

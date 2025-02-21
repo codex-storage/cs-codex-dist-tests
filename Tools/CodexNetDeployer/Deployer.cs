@@ -1,4 +1,5 @@
 ﻿using BlockchainUtils;
+using CodexClient;
 using CodexContractsPlugin;
 using CodexDiscordBotPlugin;
 using CodexPlugin;
@@ -7,6 +8,7 @@ using GethPlugin;
 using KubernetesWorkflow.Types;
 using Logging;
 using MetricsPlugin;
+using WebUtils;
 
 namespace CodexNetDeployer
 {
@@ -100,7 +102,7 @@ namespace CodexNetDeployer
                 retryDelay: TimeSpan.FromSeconds(10),
                 kubernetesNamespace: config.KubeNamespace);
 
-            var result = new EntryPoint(log, configuration, string.Empty, new FastHttpTimeSet());
+            var result = new EntryPoint(log, configuration, string.Empty, new FastHttpTimeSet(), new DefaultK8sTimeSet());
             configuration.Hooks = new K8sHook(config.TestsTypePodLabel, config.DeployId, result.GetPluginMetadata());
 
             return result;
@@ -181,7 +183,8 @@ namespace CodexNetDeployer
 
         private CodexInstance CreateCodexInstance(ICodexNode node)
         {
-            return new CodexInstance(node.Container.RunningPod, node.GetDebugInfo());
+            //return new CodexInstance(node.Container.RunningPod, node.GetDebugInfo());
+            throw new NotImplementedException();
         }
 
         private string? GetKubeConfig(string kubeConfigFile)
@@ -201,14 +204,12 @@ namespace CodexNetDeployer
 
         private void CheckContainerRestarts(List<CodexNodeStartResult> startResults)
         {
-            var crashes = new List<RunningContainer>();
+            var crashes = new List<ICodexNode>();
             Log("Starting container crash check...");
             foreach (var startResult in startResults)
             {
-                var watcher = startResult.CodexNode.CrashWatcher;
-                if (watcher == null)
-                    throw new Exception("Expected each CodexNode container to be created with a crash-watcher.");
-                if (watcher.HasContainerCrashed()) crashes.Add(startResult.CodexNode.Container);
+                var hasCrashed = startResult.CodexNode.HasCrashed();
+                if (hasCrashed) crashes.Add(startResult.CodexNode);
             }
 
             if (!crashes.Any())
@@ -218,7 +219,7 @@ namespace CodexNetDeployer
             else
             {
                 Log(
-                    $"Check failed. The following containers have crashed: {string.Join(",", crashes.Select(c => c.Name))}");
+                    $"Check failed. The following containers have crashed: {string.Join(",", crashes.Select(c => c.GetName()))}");
                 throw new Exception("Deployment failed: One or more containers crashed.");
             }
         }
@@ -249,7 +250,7 @@ namespace CodexNetDeployer
         }
     }
 
-    public class FastHttpTimeSet : ITimeSet
+    public class FastHttpTimeSet : IWebCallTimeSet
     {
         public TimeSpan HttpCallRetryDelay()
         {
@@ -264,16 +265,6 @@ namespace CodexNetDeployer
         public TimeSpan HttpCallTimeout()
         {
             return TimeSpan.FromSeconds(10);
-        }
-
-        public TimeSpan K8sOperationTimeout()
-        {
-            return TimeSpan.FromMinutes(10);
-        }
-
-        public TimeSpan K8sOperationRetryDelay()
-        {
-            return TimeSpan.FromSeconds(30);
         }
     }
 }

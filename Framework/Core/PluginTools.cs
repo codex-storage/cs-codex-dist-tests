@@ -1,12 +1,14 @@
 ﻿using FileUtils;
 using KubernetesWorkflow;
 using Logging;
+using WebUtils;
 
 namespace Core
 {
-    public interface IPluginTools : IWorkflowTool, ILogTool, IHttpFactoryTool, IFileTool
+    public interface IPluginTools : IWorkflowTool, ILogTool, IHttpFactory, IFileTool
     {
-        ITimeSet TimeSet { get; }
+        IWebCallTimeSet WebCallTimeSet { get; }
+        IK8sTimeSet K8STimeSet { get; }
 
         /// <summary>
         /// Deletes kubernetes and tracked file resources.
@@ -25,13 +27,6 @@ namespace Core
         ILog GetLog();
     }
 
-    public interface IHttpFactoryTool
-    {
-        IHttp CreateHttp(string id, Action<HttpClient> onClientCreated);
-        IHttp CreateHttp(string id, Action<HttpClient> onClientCreated, ITimeSet timeSet);
-        IHttp CreateHttp(string id);
-    }
-
     public interface IFileTool
     {
         IFileManager GetFileManager();
@@ -40,18 +35,22 @@ namespace Core
     internal class PluginTools : IPluginTools
     {
         private readonly WorkflowCreator workflowCreator;
+        private readonly HttpFactory httpFactory;
         private readonly IFileManager fileManager;
         private readonly LogPrefixer log;
 
-        internal PluginTools(ILog log, WorkflowCreator workflowCreator, string fileManagerRootFolder, ITimeSet timeSet)
+        internal PluginTools(ILog log, WorkflowCreator workflowCreator, string fileManagerRootFolder, IWebCallTimeSet webCallTimeSet, IK8sTimeSet k8STimeSet)
         {
             this.log = new LogPrefixer(log);
             this.workflowCreator = workflowCreator;
-            TimeSet = timeSet;
+            httpFactory = new HttpFactory(log, webCallTimeSet);
+            WebCallTimeSet = webCallTimeSet;
+            K8STimeSet = k8STimeSet;
             fileManager = new FileManager(log, fileManagerRootFolder);
         }
 
-        public ITimeSet TimeSet { get; }
+        public IWebCallTimeSet WebCallTimeSet { get; }
+        public IK8sTimeSet K8STimeSet { get; }
 
         public void ApplyLogPrefix(string prefix)
         {
@@ -60,17 +59,17 @@ namespace Core
 
         public IHttp CreateHttp(string id, Action<HttpClient> onClientCreated)
         {
-            return CreateHttp(id, onClientCreated, TimeSet);
+            return httpFactory.CreateHttp(id, onClientCreated);
         }
 
-        public IHttp CreateHttp(string id, Action<HttpClient> onClientCreated, ITimeSet ts)
+        public IHttp CreateHttp(string id, Action<HttpClient> onClientCreated, IWebCallTimeSet timeSet)
         {
-            return new Http(id, log, ts, onClientCreated);
+            return httpFactory.CreateHttp(id, onClientCreated, timeSet);
         }
 
         public IHttp CreateHttp(string id)
         {
-            return new Http(id, log, TimeSet);
+            return httpFactory.CreateHttp(id);
         }
 
         public IStartupWorkflow CreateWorkflow(string? namespaceOverride = null)

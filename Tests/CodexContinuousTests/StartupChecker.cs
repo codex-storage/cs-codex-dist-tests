@@ -1,8 +1,7 @@
-﻿using CodexPlugin;
+﻿using CodexClient;
 using Core;
 using DistTestCore.Logs;
 using Logging;
-using Newtonsoft.Json;
 
 namespace ContinuousTests
 {
@@ -39,25 +38,27 @@ namespace ContinuousTests
         private void IncludeDeploymentConfiguration(ILog log)
         {
             log.Log("");
-            var deployment = config.CodexDeployment;
-            var workflow = entryPoint.Tools.CreateWorkflow();
-            foreach (var instance in deployment.CodexInstances)
-            {
-                foreach (var container in instance.Pod.Containers)
-                {
-                    var podInfo = workflow.GetPodInfo(container);
-                    log.Log($"Codex environment variables for '{container.Name}':");
-                    log.Log(
-                        $"Namespace: {container.RunningPod.StartResult.Cluster.Configuration.KubernetesNamespace} - " +
-                        $"Pod name: {podInfo.Name} - Deployment name: {instance.Pod.StartResult.Deployment.Name}");
-                    var codexVars = container.Recipe.EnvVars;
-                    foreach (var vars in codexVars) log.Log(vars.ToString());
-                    log.Log("");
-                }
-            }
 
-            log.Log($"Deployment metadata: {JsonConvert.SerializeObject(deployment.Metadata)}");
-            log.Log("");
+            throw new NotImplementedException();
+            //var deployment = config.CodexDeployment;
+            //var workflow = entryPoint.Tools.CreateWorkflow();
+            //foreach (var instance in deployment.CodexInstances)
+            //{
+            //    foreach (var container in instance.Pod.Containers)
+            //    {
+            //        var podInfo = workflow.GetPodInfo(container);
+            //        log.Log($"Codex environment variables for '{container.Name}':");
+            //        log.Log(
+            //            $"Namespace: {container.RunningPod.StartResult.Cluster.Configuration.KubernetesNamespace} - " +
+            //            $"Pod name: {podInfo.Name} - Deployment name: {instance.Pod.StartResult.Deployment.Name}");
+            //        var codexVars = container.Recipe.EnvVars;
+            //        foreach (var vars in codexVars) log.Log(vars.ToString());
+            //        log.Log("");
+            //    }
+            //}
+
+            //log.Log($"Deployment metadata: {JsonConvert.SerializeObject(deployment.Metadata)}");
+            //log.Log("");
         }
 
         private void PreflightCheck(Configuration config)
@@ -91,31 +92,33 @@ namespace ContinuousTests
 
         private void CheckCodexNodes(BaseLog log, Configuration config)
         {
-            var nodes = entryPoint.CreateInterface()
-                .WrapCodexContainers(config.CodexDeployment.CodexInstances.Select(i => i.Pod).ToArray());
-            var pass = true;
-            foreach (var n in nodes)
-            {
-                cancelToken.ThrowIfCancellationRequested();
+            throw new NotImplementedException();
 
-                var address = n.Container.GetAddress(CodexContainerRecipe.ApiPortTag);
-                log.Log($"Checking {n.Container.Name} @ '{address}'...");
+            //var nodes = entryPoint.CreateInterface()
+            //    .WrapCodexContainers(config.CodexDeployment.CodexInstances.Select(i => i.Pod).ToArray());
+            //var pass = true;
+            //foreach (var n in nodes)
+            //{
+            //    cancelToken.ThrowIfCancellationRequested();
 
-                if (EnsureOnline(log, n))
-                {
-                    log.Log("OK");
-                }
-                else
-                {
-                    log.Error($"No response from '{address}'.");
-                    pass = false;
-                }
-            }
+            //    var address = n.GetApiEndpoint();
+            //    log.Log($"Checking {n.GetName()} @ '{address}'...");
 
-            if (!pass)
-            {
-                throw new Exception("Not all codex nodes responded.");
-            }
+            //    if (EnsureOnline(log, n))
+            //    {
+            //        log.Log("OK");
+            //    }
+            //    else
+            //    {
+            //        log.Error($"No response from '{address}'.");
+            //        pass = false;
+            //    }
+            //}
+
+            //if (!pass)
+            //{
+            //    throw new Exception("Not all codex nodes responded.");
+            //}
         }
 
         private bool EnsureOnline(BaseLog log, ICodexNode n)

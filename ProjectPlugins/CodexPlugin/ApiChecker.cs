@@ -82,12 +82,12 @@ namespace CodexPlugin
         private void OverwriteOpenApiYaml(string containerApi)
         {
             Log("API compatibility check failed. Updating CodexPlugin...");
-            var openApiFilePath = Path.Combine(PluginPathUtils.ProjectPluginsDir, "CodexPlugin", "openapi.yaml");
-            if (!File.Exists(openApiFilePath)) throw new Exception("Unable to locate CodexPlugin/openapi.yaml. Expected: " + openApiFilePath);
+            var openApiFilePath = Path.Combine(PluginPathUtils.ProjectPluginsDir, "CodexClient", "openapi.yaml");
+            if (!File.Exists(openApiFilePath)) throw new Exception("Unable to locate CodexClient/openapi.yaml. Expected: " + openApiFilePath);
 
             File.Delete(openApiFilePath);
             File.WriteAllText(openApiFilePath, containerApi);
-            Log("CodexPlugin/openapi.yaml has been updated.");
+            Log("CodexClient/openapi.yaml has been updated.");
         }
 
         private string Hash(string file)

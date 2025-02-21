@@ -1,5 +1,4 @@
-﻿using CodexContractsPlugin;
-using CodexPlugin;
+using CodexClient;
 using NUnit.Framework;
 using Utils;
 
@@ -30,7 +29,7 @@ namespace CodexReleaseTests.MarketTests
             request.WaitForStorageContractStarted();
             AssertContractSlotsAreFilledByHosts(request, hosts);
 
-            request.WaitForStorageContractFinished(GetContracts());
+            request.WaitForStorageContractFinished();
 
             AssertClientHasPaidForContract(pricePerBytePerSecond, client, request, hosts);
             AssertHostsWerePaidForContract(pricePerBytePerSecond, request, hosts);

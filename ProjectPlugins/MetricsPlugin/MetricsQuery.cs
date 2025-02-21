@@ -3,6 +3,8 @@ using IdentityModel;
 using KubernetesWorkflow.Types;
 using Logging;
 using System.Globalization;
+using Utils;
+using WebUtils;
 
 namespace MetricsPlugin
 {
@@ -23,7 +25,7 @@ namespace MetricsPlugin
 
         public RunningContainer RunningContainer { get; }
 
-        public Metrics GetMostRecent(string metricName, IMetricsScrapeTarget target)
+        public Metrics GetMostRecent(string metricName, Address target)
         {
             var response = GetLastOverTime(metricName, GetInstanceStringForNode(target));
             if (response == null) throw new Exception($"Failed to get most recent metric: {metricName}");
@@ -53,7 +55,7 @@ namespace MetricsPlugin
             return result;
         }
 
-        public Metrics GetAllMetricsForNode(IMetricsScrapeTarget target)
+        public Metrics GetAllMetricsForNode(Address target)
         {
             var instanceString = GetInstanceStringForNode(target);
             var response = endpoint.HttpGetJson<PrometheusQueryResponse>($"query?query={instanceString}{GetQueryTimeRange()}");
@@ -139,12 +141,12 @@ namespace MetricsPlugin
             };
         }
 
-        private string GetInstanceNameForNode(IMetricsScrapeTarget target)
+        private string GetInstanceNameForNode(Address target)
         {
-            return ScrapeTargetHelper.FormatTarget(log, target);
+            return ScrapeTargetHelper.FormatTarget(target);
         }
 
-        private string GetInstanceStringForNode(IMetricsScrapeTarget target)
+        private string GetInstanceStringForNode(Address target)
         {
             return "{instance=\"" + GetInstanceNameForNode(target) + "\"}";
         }
@@ -172,9 +174,9 @@ namespace MetricsPlugin
             return new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddSeconds(unixSeconds);
         }
 
-        private void Log(IMetricsScrapeTarget target, string metricName, Metrics result)
+        private void Log(Address target, string metricName, Metrics result)
         {
-            Log($"{target.Container.Name} '{metricName}' = {result}");
+            Log($"{target.LogName} '{metricName}' = {result}");
         }
 
         private void Log(string metricName, Metrics result)
@@ -182,9 +184,9 @@ namespace MetricsPlugin
             Log($"'{metricName}' = {result}");
         }
 
-        private void Log(IMetricsScrapeTarget target, Metrics result)
+        private void Log(Address target, Metrics result)
         {
-            Log($"{target.Container.Name} => {result}");
+            Log($"{target.LogName} => {result}");
         }
 
         private void Log(string msg)

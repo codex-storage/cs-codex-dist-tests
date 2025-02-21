@@ -4,20 +4,16 @@ namespace Logging
 {
     public class LogFile
     {
-        private readonly string extension;
         private readonly object fileLock = new object();
-        private string filename;
 
-        public LogFile(string filename, string extension)
+        public LogFile(string filename)
         {
-            this.filename = filename;
-            this.extension = extension;
-            FullFilename = filename + "." + extension;
+            Filename = filename;
 
             EnsurePathExists(filename);
         }
 
-        public string FullFilename { get; private set; }
+        public string Filename { get; private set; }
 
         public void Write(string message)
         {
@@ -30,7 +26,7 @@ namespace Logging
             {
                 lock (fileLock)
                 { 
-                    File.AppendAllLines(FullFilename, new[] { message });
+                    File.AppendAllLines(Filename, new[] { message });
                 }
             }
             catch (Exception ex)
@@ -39,14 +35,19 @@ namespace Logging
             }
         }
 
-        public void ConcatToFilename(string toAdd)
+        public void WriteRawMany(IEnumerable<string> lines)
         {
-            var oldFullName = FullFilename;
-
-            filename += toAdd;
-            FullFilename = filename + "." + extension;
-
-            File.Move(oldFullName, FullFilename);
+            try
+            {
+                lock (fileLock)
+                {
+                    File.AppendAllLines(Filename, lines);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Writing to log has failed: " + ex);
+            }
         }
 
         private static string GetTimestamp()

@@ -1,5 +1,5 @@
-﻿using GethPlugin;
-using Nethereum.Util;
+﻿using Nethereum.Util;
+using Utils;
 
 namespace BiblioTech.Options
 {

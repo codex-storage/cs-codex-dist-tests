@@ -1,11 +1,12 @@
-﻿using CodexPlugin;
+﻿using CodexClient;
+using CodexPlugin;
+using CodexTests;
 using DistTestCore;
-using GethPlugin;
 using MetricsPlugin;
 using NUnit.Framework;
 using Utils;
 
-namespace CodexTests.BasicTests
+namespace ExperimentalTests.BasicTests
 {
     [TestFixture]
     public class ExampleTests : CodexDistTest
@@ -20,7 +21,7 @@ namespace CodexTests.BasicTests
             var localDatasets = primary.LocalFiles();
             CollectionAssert.Contains(localDatasets.Content.Select(c => c.Cid), cid);
 
-            var log = Ci.DownloadLog(primary);
+            var log = primary.DownloadLog();
 
             log.AssertLogContains("Uploaded file");
         }

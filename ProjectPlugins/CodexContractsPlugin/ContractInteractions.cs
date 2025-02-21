@@ -5,8 +5,8 @@ using Logging;
 using Nethereum.ABI.FunctionEncoding.Attributes;
 using Nethereum.Contracts;
 using Nethereum.Hex.HexConvertors.Extensions;
-using NethereumWorkflow;
 using System.Numerics;
+using Utils;
 
 namespace CodexContractsPlugin
 {

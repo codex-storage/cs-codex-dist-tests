@@ -51,7 +51,7 @@ namespace CodexReleaseTests.NodeTests
         public void AnnounceAddress()
         {
             var node = StartCodex();
-            var addr = node.Container.GetInternalAddress(CodexContainerRecipe.ListenPortTag);
+            var addr = node.GetListenEndpoint();
 
             var info = node.GetDebugInfo();
 

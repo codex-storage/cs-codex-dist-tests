@@ -1,6 +1,4 @@
-﻿using CodexContractsPlugin;
-using CodexPlugin;
-using GethPlugin;
+﻿using CodexClient;
 using NUnit.Framework;
 using Utils;
 
@@ -35,7 +33,15 @@ namespace CodexReleaseTests.MarketTests
             All(requests, r => r.WaitForStorageContractStarted());
             All(requests, r => AssertContractSlotsAreFilledByHosts(r, hosts));
 
-            All(requests, r => r.WaitForStorageContractFinished(GetContracts()));
+            All(requests, r => r.WaitForStorageContractFinished());
+
+                // todo: removed from codexclient:
+                //contracts.WaitUntilNextPeriod();
+                //contracts.WaitUntilNextPeriod();
+
+                //var blocks = 3;
+                //Log($"Waiting {blocks} blocks for nodes to process payouts...");
+                //Thread.Sleep(GethContainerRecipe.BlockInterval * blocks);
 
             // todo:
             //AssertClientHasPaidForContract(pricePerSlotPerSecond, client, request, hosts);

@@ -13,11 +13,11 @@ namespace AutoClient.Modes
             this.app = app;
         }
 
-        public void Start(ICodexInstance instance, int index)
+        public void Start(CodexWrapper node, int index)
         {
             for (var i = 0; i < app.Config.NumConcurrentPurchases; i++)
             {
-                purchasers.Add(new AutomaticPurchaser(new LogPrefixer(app.Log, $"({i}) "), instance, new CodexNode(app, instance)));
+                purchasers.Add(new AutomaticPurchaser(app, new LogPrefixer(app.Log, $"({i}) "), node));
             }
 
             var delayPerPurchaser =

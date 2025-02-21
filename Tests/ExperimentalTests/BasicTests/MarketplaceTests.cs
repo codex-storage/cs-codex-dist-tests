@@ -1,12 +1,14 @@
-﻿using CodexContractsPlugin;
+﻿using CodexClient;
+using CodexContractsPlugin;
 using CodexContractsPlugin.Marketplace;
 using CodexPlugin;
+using CodexTests;
 using FileUtils;
 using GethPlugin;
 using NUnit.Framework;
 using Utils;
 
-namespace CodexTests.BasicTests
+namespace ExperimentalTests.BasicTests
 {
     [TestFixture]
     public class MarketplaceTests : AutoBootstrapDistTest
@@ -23,14 +25,14 @@ namespace CodexTests.BasicTests
             var hostInitialBalance = 234.TstWei();
             var clientInitialBalance = 100000.TstWei();
             var fileSize = new ByteSize(
-                numBlocks * (64 * 1024) +
+                numBlocks * 64 * 1024 +
                 plusSizeKb * 1024 +
                 plusSizeBytes
             );
 
             var geth = StartGethNode(s => s.IsMiner().WithName("disttest-geth"));
             var contracts = Ci.StartCodexContracts(geth);
-            
+
             var numberOfHosts = 5;
             var hosts = StartCodex(numberOfHosts, s => s
                 .WithName("Host")
@@ -80,7 +82,7 @@ namespace CodexTests.BasicTests
             };
 
             var purchaseContract = client.Marketplace.RequestStorage(purchase);
-            
+
             var contractCid = purchaseContract.ContentId;
             Assert.That(uploadCid.Id, Is.Not.EqualTo(contractCid.Id));
 
@@ -107,7 +109,15 @@ namespace CodexTests.BasicTests
             AssertStorageRequest(request, purchase, contracts, client);
             AssertContractSlot(contracts, request, 0);
 
-            purchaseContract.WaitForStorageContractFinished(contracts);
+            purchaseContract.WaitForStorageContractFinished();
+
+            // todo: removed from codexclient:
+            //contracts.WaitUntilNextPeriod();
+            //contracts.WaitUntilNextPeriod();
+
+            //var blocks = 3;
+            //Log($"Waiting {blocks} blocks for nodes to process payouts...");
+            //Thread.Sleep(GethContainerRecipe.BlockInterval * blocks);
 
             AssertBalance(contracts, client, Is.LessThan(clientInitialBalance), "Buyer was not charged for storage.");
             Assert.That(contracts.GetRequestState(request), Is.EqualTo(RequestState.Finished));

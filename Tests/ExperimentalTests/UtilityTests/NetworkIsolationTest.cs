@@ -1,9 +1,10 @@
-﻿using CodexPlugin;
+﻿using CodexClient;
+using CodexPlugin;
 using DistTestCore;
 using NUnit.Framework;
 using Utils;
 
-namespace CodexTests.UtilityTests
+namespace ExperimentalTests.UtilityTests
 {
     // Warning!
     // This is a test to check network-isolation in the test-infrastructure.

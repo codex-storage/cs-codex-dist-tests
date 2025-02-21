@@ -1,5 +1,4 @@
-﻿using CodexPlugin.Hooks;
-using KubernetesWorkflow;
+﻿using CodexClient.Hooks;
 using Logging;
 using OverwatchTranscript;
 using Utils;

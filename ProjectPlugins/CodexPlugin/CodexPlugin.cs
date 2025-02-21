@@ -1,48 +1,68 @@
-using CodexPlugin.Hooks;
+using CodexClient;
+using CodexClient.Hooks;
 using Core;
-using KubernetesWorkflow.Types;
 
 namespace CodexPlugin
 {
     public class CodexPlugin : IProjectPlugin, IHasLogPrefix, IHasMetadata
     {
-        private readonly CodexStarter codexStarter;
+        private const bool UseContainers = true;
+
+        private readonly ICodexStarter codexStarter;
         private readonly IPluginTools tools;
         private readonly CodexLogLevel defaultLogLevel = CodexLogLevel.Trace;
+        private readonly CodexHooksFactory hooksFactory = new CodexHooksFactory();
+        private readonly ProcessControlMap processControlMap = new ProcessControlMap();
+        private readonly CodexWrapper codexWrapper;
 
         public CodexPlugin(IPluginTools tools)
         {
-            codexStarter = new CodexStarter(tools);
             this.tools = tools;
+
+            codexStarter = CreateCodexStarter();
+            codexWrapper = new CodexWrapper(tools, processControlMap, hooksFactory);
+        }
+
+        private ICodexStarter CreateCodexStarter()
+        {
+            if (UseContainers)
+            {
+                Log("Using Containerized Codex instances");
+                return new ContainerCodexStarter(tools, processControlMap);
+            }
+
+            Log("Using Binary Codex instances");
+            return new BinaryCodexStarter(tools, processControlMap);
         }
 
         public string LogPrefix => "(Codex) ";
 
         public void Announce()
         {
-            Log($"Loaded with Codex ID: '{codexStarter.GetCodexId()}' - Revision: {codexStarter.GetCodexRevision()}");
+            Log($"Loaded with Codex ID: '{codexWrapper.GetCodexId()}' - Revision: {codexWrapper.GetCodexRevision()}");
         }
 
         public void AddMetadata(IAddMetadata metadata)
         {
-            metadata.Add("codexid", codexStarter.GetCodexId());
-            metadata.Add("codexrevision", codexStarter.GetCodexRevision());
+            metadata.Add("codexid", codexWrapper.GetCodexId());
+            metadata.Add("codexrevision", codexWrapper.GetCodexRevision());
         }
 
         public void Decommission()
         {
+            codexStarter.Decommission();
         }
 
-        public RunningPod[] DeployCodexNodes(int numberOfNodes, Action<ICodexSetup> setup)
+        public ICodexInstance[] DeployCodexNodes(int numberOfNodes, Action<ICodexSetup> setup)
         {
             var codexSetup = GetSetup(numberOfNodes, setup);
             return codexStarter.BringOnline(codexSetup);
         }
 
-        public ICodexNodeGroup WrapCodexContainers(CoreInterface coreInterface, RunningPod[] containers)
+        public ICodexNodeGroup WrapCodexContainers(ICodexInstance[] instances)
         {
-            containers = containers.Select(c => SerializeGate.Gate(c)).ToArray();
-            return codexStarter.WrapCodexContainers(coreInterface, containers);
+            instances = instances.Select(c => SerializeGate.Gate(c as CodexInstance)).ToArray();
+            return codexWrapper.WrapCodexInstances(instances);
         }
 
         public void WireUpMarketplace(ICodexNodeGroup result, Action<ICodexSetup> setup)
@@ -62,9 +82,10 @@ namespace CodexPlugin
             }
         }
 
-        public void SetCodexHooksProvider(ICodexHooksProvider hooksProvider)
+        public void AddCodexHooksProvider(ICodexHooksProvider hooksProvider)
         {
-            codexStarter.HooksFactory.Provider = hooksProvider;
+            if (hooksFactory.Providers.Contains(hooksProvider)) return;
+            hooksFactory.Providers.Add(hooksProvider);
         }
 
         private CodexSetup GetSetup(int numberOfNodes, Action<ICodexSetup> setup)

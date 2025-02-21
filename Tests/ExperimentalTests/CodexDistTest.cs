@@ -1,4 +1,6 @@
 ﻿using BlockchainUtils;
+using CodexClient;
+using CodexClient.Hooks;
 using CodexContractsPlugin;
 using CodexNetDeployer;
 using CodexPlugin;
@@ -19,10 +21,80 @@ using Utils;
 
 namespace CodexTests
 {
+    public class CodexLogTrackerProvider  : ICodexHooksProvider
+    {
+        private readonly Action<ICodexNode> addNode;
+
+        public CodexLogTrackerProvider(Action<ICodexNode> addNode)
+        {
+            this.addNode = addNode;
+        }
+
+        // See TestLifecycle.cs DownloadAllLogs()
+        public ICodexNodeHooks CreateHooks(string nodeName)
+        {
+            return new CodexLogTracker(addNode);
+        }
+
+        public class CodexLogTracker : ICodexNodeHooks
+        {
+            private readonly Action<ICodexNode> addNode;
+
+            public CodexLogTracker(Action<ICodexNode> addNode)
+            {
+                this.addNode = addNode;
+            }
+
+            public void OnFileDownloaded(ByteSize size, ContentId cid)
+            {
+            }
+
+            public void OnFileDownloading(ContentId cid)
+            {
+            }
+
+            public void OnFileUploaded(string uid, ByteSize size, ContentId cid)
+            {
+            }
+
+            public void OnFileUploading(string uid, ByteSize size)
+            {
+            }
+
+            public void OnNodeStarted(ICodexNode node, string peerId, string nodeId)
+            {
+                addNode(node);
+            }
+
+            public void OnNodeStarting(DateTime startUtc, string image, EthAccount? ethAccount)
+            {
+            }
+
+            public void OnNodeStopping()
+            {
+            }
+
+            public void OnStorageAvailabilityCreated(StorageAvailability response)
+            {
+            }
+
+            public void OnStorageContractSubmitted(StoragePurchaseContract storagePurchaseContract)
+            {
+            }
+
+            public void OnStorageContractUpdated(StoragePurchase purchaseStatus)
+            {
+            }
+        }
+    }
+
     public class CodexDistTest : DistTest
     {
         private static readonly Dictionary<TestLifecycle, CodexTranscriptWriter> writers = new Dictionary<TestLifecycle, CodexTranscriptWriter>();
         private static readonly Dictionary<TestLifecycle, BlockCache> blockCaches = new Dictionary<TestLifecycle, BlockCache>();
+
+        // this entire structure is not good and needs to be destroyed at the earliest convenience:
+        private static readonly Dictionary<TestLifecycle, List<ICodexNode>> nodes = new Dictionary<TestLifecycle, List<ICodexNode>>();
 
         public CodexDistTest()
         {
@@ -43,12 +115,24 @@ namespace CodexTests
         {
             base.LifecycleStart(lifecycle);
             SetupTranscript(lifecycle);
+
+            Ci.AddCodexHooksProvider(new CodexLogTrackerProvider(n =>
+            {
+                if (!nodes.ContainsKey(lifecycle)) nodes.Add(lifecycle, new List<ICodexNode>());
+                nodes[lifecycle].Add(n);
+            }));
         }
 
         protected override void LifecycleStop(TestLifecycle lifecycle, DistTestResult result)
         {
             base.LifecycleStop(lifecycle, result);
             TeardownTranscript(lifecycle, result);
+
+            if (!result.Success)
+            {
+                var codexNodes = nodes[lifecycle];
+                foreach (var node in codexNodes) node.DownloadLog();
+            }
         }
 
         public ICodexNode StartCodex()
@@ -105,7 +189,7 @@ namespace CodexTests
         public void CheckLogForErrors(ICodexNode node)
         {
             Log($"Checking {node.GetName()} log for errors.");
-            var log = Ci.DownloadLog(node);
+            var log = node.DownloadLog();
 
             log.AssertLogDoesNotContain("Block validation failed");
             log.AssertLogDoesNotContainLinesStartingWith("ERR ");
@@ -178,7 +262,7 @@ namespace CodexTests
 
             var log = new LogPrefixer(lifecycle.Log, "(Transcript) ");
             var writer = new CodexTranscriptWriter(log, config, Transcript.NewWriter(log));
-            Ci.SetCodexHooksProvider(writer);
+            Ci.AddCodexHooksProvider(writer);
             writers.Add(lifecycle, writer);
         }
 
@@ -203,7 +287,7 @@ namespace CodexTests
 
                 Stopwatch.Measure(lifecycle.Log, $"Transcript.Finalize: {outputFilepath}", () =>
                 {
-                    writer.IncludeFile(lifecycle.Log.LogFile.FullFilename);
+                    writer.IncludeFile(lifecycle.Log.LogFile.Filename);
                     writer.Finalize(outputFilepath);
                 });
             }
@@ -215,9 +299,9 @@ namespace CodexTests
 
         private string GetOutputFullPath(TestLifecycle lifecycle, CreateTranscriptAttribute attr)
         {
-            var outputPath = Path.GetDirectoryName(lifecycle.Log.LogFile.FullFilename);
+            var outputPath = Path.GetDirectoryName(lifecycle.Log.LogFile.Filename);
             if (outputPath == null) throw new Exception("Logfile path is null");
-            var filename = Path.GetFileNameWithoutExtension(lifecycle.Log.LogFile.FullFilename);
+            var filename = Path.GetFileNameWithoutExtension(lifecycle.Log.LogFile.Filename);
             if (string.IsNullOrEmpty(filename)) throw new Exception("Logfile name is null or empty");
             var outputFile = Path.Combine(outputPath, filename + "_" + attr.OutputFilename);
             if (!outputFile.EndsWith(".owts")) outputFile += ".owts";

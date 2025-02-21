@@ -3,6 +3,7 @@ using Discord.WebSocket;
 using DiscordRewards;
 using Logging;
 using Newtonsoft.Json;
+using Utils;
 
 namespace BiblioTech.Rewards
 {
@@ -138,7 +139,7 @@ namespace BiblioTech.Rewards
         {
             try
             {
-                var userData =  Program.UserRepo.GetUserDataForAddress(new GethPlugin.EthAddress(address));
+                var userData =  Program.UserRepo.GetUserDataForAddress(new EthAddress(address));
                 if (userData != null) log.Log($"User '{userData.Name}' was looked up.");
                 else log.Log($"Lookup for user was unsuccessful. EthAddress: '{address}'");
                 return userData;

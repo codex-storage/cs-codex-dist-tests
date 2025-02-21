@@ -2,6 +2,7 @@
 using KubernetesWorkflow.Types;
 using Logging;
 using Utils;
+using WebUtils;
 
 namespace ContinuousTests
 {
@@ -37,7 +38,7 @@ namespace ContinuousTests
             var endpoint = CreateElasticSearchEndpoint();
             var queryTemplate = CreateQueryTemplate(container, startUtc, endUtc);
 
-            targetFile.Write($"Downloading '{container.Name}' to '{targetFile.FullFilename}'.");
+            targetFile.Write($"Downloading '{container.Name}' to '{targetFile.Filename}'.");
             var reconstructor = new LogReconstructor(targetFile, endpoint, queryTemplate);
             reconstructor.DownloadFullLog();
 
@@ -68,7 +69,7 @@ namespace ContinuousTests
         {
             var serviceName = "elasticsearch";
             var k8sNamespace = "monitoring";
-            var address = new Address($"http://{serviceName}.{k8sNamespace}.svc.cluster.local", 9200);
+            var address = new Address("ElasticSearchEndpoint", $"http://{serviceName}.{k8sNamespace}.svc.cluster.local", 9200);
             var baseUrl = "";
 
             var http = tools.CreateHttp(address.ToString(), client =>

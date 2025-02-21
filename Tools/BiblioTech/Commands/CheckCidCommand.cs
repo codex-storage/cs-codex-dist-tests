@@ -1,10 +1,5 @@
 ﻿using BiblioTech.Options;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
 using Discord;
-using BiblioTech.Rewards;
-using System.Data;
 
 namespace BiblioTech.Commands
 {
@@ -38,7 +33,7 @@ namespace BiblioTech.Commands
                 return;
             }
 
-            var response = await checker.PerformCheck(cid);
+            var response = checker.PerformCheck(cid);
             await Program.AdminChecker.SendInAdminChannel($"User {Mention(user)} used '/{Name}' for cid '{cid}'. Lookup-success: {response.Success}. Message: '{response.Message}' Error: '{response.Error}'");
 
             if (response.Success)

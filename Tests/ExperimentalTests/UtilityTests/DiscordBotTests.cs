@@ -1,6 +1,8 @@
-﻿using CodexContractsPlugin;
+﻿using CodexClient;
+using CodexContractsPlugin;
 using CodexDiscordBotPlugin;
 using CodexPlugin;
+using CodexTests;
 using Core;
 using DiscordRewards;
 using DistTestCore;
@@ -11,7 +13,7 @@ using Newtonsoft.Json;
 using NUnit.Framework;
 using Utils;
 
-namespace CodexTests.UtilityTests
+namespace ExperimentalTests.UtilityTests
 {
     [TestFixture]
     public class DiscordBotTests : AutoBootstrapDistTest
@@ -19,12 +21,12 @@ namespace CodexTests.UtilityTests
         private readonly RewardRepo repo = new RewardRepo();
         private readonly TestToken hostInitialBalance = 3000000.TstWei();
         private readonly TestToken clientInitialBalance = 1000000000.TstWei();
-        private readonly EthAccount clientAccount = EthAccount.GenerateNew();
+        private readonly EthAccount clientAccount = EthAccountGenerator.GenerateNew();
         private readonly List<EthAccount> hostAccounts = new List<EthAccount>();
         private readonly List<ulong> rewardsSeen = new List<ulong>();
         private readonly TimeSpan rewarderInterval = TimeSpan.FromMinutes(1);
         private readonly List<ChainEventMessage> receivedEvents = new List<ChainEventMessage>();
- 
+
         [Test]
         [DontDownloadLogs]
         [Ignore("Used to debug testnet bots.")]
@@ -45,7 +47,16 @@ namespace CodexTests.UtilityTests
 
             var purchaseContract = ClientPurchasesStorage(client);
             purchaseContract.WaitForStorageContractStarted();
-            purchaseContract.WaitForStorageContractFinished(contracts);
+            purchaseContract.WaitForStorageContractFinished();
+
+            // todo: removed from codexclient:
+            //contracts.WaitUntilNextPeriod();
+            //contracts.WaitUntilNextPeriod();
+
+            //var blocks = 3;
+            //Log($"Waiting {blocks} blocks for nodes to process payouts...");
+            //Thread.Sleep(GethContainerRecipe.BlockInterval * blocks);
+
             Thread.Sleep(rewarderInterval * 3);
 
             apiCalls.Stop();
@@ -228,7 +239,7 @@ namespace CodexTests.UtilityTests
                 if (h > minNumHosts) minNumHosts = h;
             }
 
-            var minFileSize = ((minSlotSize + 1024) * minNumHosts);
+            var minFileSize = (minSlotSize + 1024) * minNumHosts;
             return new ByteSize(Convert.ToInt64(minFileSize));
         }
 

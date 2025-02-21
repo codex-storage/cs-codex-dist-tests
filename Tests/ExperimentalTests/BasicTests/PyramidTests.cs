@@ -1,13 +1,9 @@
-﻿using CodexPlugin;
+﻿using CodexClient;
+using CodexTests;
 using NUnit.Framework;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Utils;
 
-namespace CodexTests.BasicTests
+namespace ExperimentalTests.BasicTests
 {
     [TestFixture]
     public class PyramidTests : CodexDistTest
@@ -51,7 +47,7 @@ namespace CodexTests.BasicTests
             var uploadTasks = new List<Task<ContentId>>();
             foreach (var node in layer)
             {
-                uploadTasks.Add(Task.Run<ContentId>(() =>
+                uploadTasks.Add(Task.Run(() =>
                 {
                     var file = GenerateTestFile(size);
                     return node.UploadFile(file);

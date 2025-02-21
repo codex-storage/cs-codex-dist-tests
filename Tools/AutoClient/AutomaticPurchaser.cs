@@ -1,24 +1,19 @@
-﻿using CodexOpenApi;
-using CodexPlugin;
-using Logging;
-using Newtonsoft.Json;
-using Utils;
+﻿using Logging;
 
 namespace AutoClient
 {
     public class AutomaticPurchaser
     {
+        private readonly App app;
         private readonly ILog log;
-        private readonly ICodexInstance instance;
-        private readonly CodexNode codex;
+        private readonly CodexWrapper node;
         private Task workerTask = Task.CompletedTask;
-        private App app => instance.App;
 
-        public AutomaticPurchaser(ILog log, ICodexInstance instance, CodexNode codex)
+        public AutomaticPurchaser(App app, ILog log, CodexWrapper node)
         {
+            this.app = app;
             this.log = log;
-            this.instance = instance;
-            this.codex = codex;
+            this.node = node;
         }
 
         public void Start()
@@ -40,7 +35,6 @@ namespace AutoClient
                 {
                     var pid = await StartNewPurchase();
                     await WaitTillFinished(pid);
-                    await DownloadForeignCid();
                 }
                 catch (Exception ex)
                 {
@@ -50,27 +44,13 @@ namespace AutoClient
             }
         }
 
-        private async Task DownloadForeignCid()
-        {
-            var cid = app.CidRepo.GetForeignCid(instance.NodeId);
-            if (cid == null) return;
-
-            var size = app.CidRepo.GetSizeForCid(cid);
-            if (size == null) return;
-
-            var filename = Guid.NewGuid().ToString().ToLowerInvariant();
-            await codex.DownloadCid(filename, cid, size);
-
-            DeleteFile(filename);
-        }
-
         private async Task<string> StartNewPurchase()
         {
             var file = await CreateFile();
             try
             {
-                var cid = await codex.UploadFile(file);
-                var response = await codex.RequestStorage(cid);
+                var cid = node.UploadFile(file);
+                var response = node.RequestStorage(cid);
                 return response.PurchaseId;
             }
             finally
@@ -92,7 +72,7 @@ namespace AutoClient
             }
             catch (Exception exc)
             {
-                app.Log.Error($"Failed to delete file '{file}': {exc}");
+                log.Error($"Failed to delete file '{file}': {exc}");
             }
         }
 
@@ -103,7 +83,7 @@ namespace AutoClient
                 var emptyResponseTolerance = 10;
                 while (!app.Cts.Token.IsCancellationRequested)
                 {
-                    var purchase = await codex.GetStoragePurchase(pid);
+                    var purchase = node.GetStoragePurchase(pid);
                     if (purchase == null)
                     {
                         await FixedShortDelay();

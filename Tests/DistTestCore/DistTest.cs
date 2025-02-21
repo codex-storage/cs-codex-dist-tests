@@ -6,6 +6,7 @@ using NUnit.Framework;
 using NUnit.Framework.Interfaces;
 using System.Reflection;
 using Utils;
+using WebUtils;
 using Assert = NUnit.Framework.Assert;
 
 namespace DistTestCore
@@ -35,7 +36,7 @@ namespace DistTestCore
             fixtureLog = new FixtureLog(logConfig, startTime, deployId);
             statusLog = new StatusLog(logConfig, startTime, "dist-tests", deployId);
 
-            globalEntryPoint = new EntryPoint(fixtureLog, configuration.GetK8sConfiguration(new DefaultTimeSet(), TestNamespacePrefix), configuration.GetFileManagerFolder());
+            globalEntryPoint = new EntryPoint(fixtureLog, configuration.GetK8sConfiguration(new DefaultK8sTimeSet(), TestNamespacePrefix), configuration.GetFileManagerFolder());
 
             Initialize(fixtureLog);
         }
@@ -194,7 +195,8 @@ namespace DistTestCore
                     var lifecycle = new TestLifecycle(
                         fixtureLog.CreateTestLog(),
                         configuration,
-                        GetTimeSet(),
+                        GetWebCallTimeSet(),
+                        GetK8sTimeSet(),
                         testNamespace,
                         deployId,
                         ShouldWaitForCleanup());
@@ -241,10 +243,16 @@ namespace DistTestCore
             }
         }
 
-        private ITimeSet GetTimeSet()
+        private IWebCallTimeSet GetWebCallTimeSet()
         {
-            if (ShouldUseLongTimeouts()) return new LongTimeSet();
-            return new DefaultTimeSet();
+            if (ShouldUseLongTimeouts()) return new LongWebCallTimeSet();
+            return new DefaultWebCallTimeSet();
+        }
+
+        private IK8sTimeSet GetK8sTimeSet()
+        {
+            if (ShouldUseLongTimeouts()) return new LongK8sTimeSet();
+            return new DefaultK8sTimeSet();
         }
 
         private bool ShouldWaitForCleanup()

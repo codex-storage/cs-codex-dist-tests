@@ -1,4 +1,4 @@
-﻿using CodexPlugin;
+﻿using CodexClient;
 using Logging;
 using static CodexTests.Helpers.FullConnectivityHelper;
 
@@ -57,12 +57,7 @@ namespace CodexTests.Helpers
         {
             var peer = allEntries.SingleOrDefault(e => e.Response.Table.LocalNode.PeerId == node.PeerId);
             if (peer == null) return $"peerId: {node.PeerId} is not known.";
-
-            var container = peer.Node.Container;
-            var podInfo = peer.Node.GetPodInfo();
-            var ip = podInfo.Ip;
-            var discPort = container.Recipe.GetPortByTag(CodexContainerRecipe.DiscoveryPortTag)!;
-            return $"{ip}:{discPort.Number}";
+            return peer.Node.GetDiscoveryEndpoint().ToString();
         }
     }
 }

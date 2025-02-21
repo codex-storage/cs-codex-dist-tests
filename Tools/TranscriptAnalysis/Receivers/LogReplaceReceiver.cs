@@ -1,4 +1,4 @@
-﻿using CodexPlugin;
+﻿using CodexClient;
 using CodexPlugin.OverwatchSupport;
 using OverwatchTranscript;
 

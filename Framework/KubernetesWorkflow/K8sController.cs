@@ -946,13 +946,13 @@ namespace KubernetesWorkflow
 
         #endregion
 
-        public CrashWatcher CreateCrashWatcher(RunningContainer container)
+        public ContainerCrashWatcher CreateCrashWatcher(RunningContainer container)
         {
             var containerName = container.Name;
             var podName = GetPodName(container);
             var recipeName = container.Recipe.Name;
 
-            return new CrashWatcher(log, cluster.GetK8sClientConfig(), containerName, podName, recipeName, K8sNamespace);
+            return new ContainerCrashWatcher(log, cluster.GetK8sClientConfig(), containerName, podName, recipeName, K8sNamespace);
         }
 
         private V1Pod[] FindPodsByLabel(string podLabel)

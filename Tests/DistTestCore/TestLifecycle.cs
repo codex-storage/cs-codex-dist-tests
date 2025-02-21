@@ -4,7 +4,9 @@ using FileUtils;
 using KubernetesWorkflow;
 using KubernetesWorkflow.Recipe;
 using KubernetesWorkflow.Types;
+using Logging;
 using Utils;
+using WebUtils;
 
 namespace DistTestCore
 {
@@ -17,15 +19,16 @@ namespace DistTestCore
         private readonly string deployId;
         private readonly List<IDownloadedLog> stoppedContainerLogs = new List<IDownloadedLog>();
 
-        public TestLifecycle(TestLog log, Configuration configuration, ITimeSet timeSet, string testNamespace, string deployId, bool waitForCleanup)
+        public TestLifecycle(TestLog log, Configuration configuration, IWebCallTimeSet webCallTimeSet, IK8sTimeSet k8sTimeSet, string testNamespace, string deployId, bool waitForCleanup)
         {
             Log = log;
             Configuration = configuration;
-            TimeSet = timeSet;
+            WebCallTimeSet = webCallTimeSet;
+            K8STimeSet = k8sTimeSet;
             TestNamespace = testNamespace;
             TestStart = DateTime.UtcNow;
 
-            entryPoint = new EntryPoint(log, configuration.GetK8sConfiguration(timeSet, this, testNamespace), configuration.GetFileManagerFolder(), timeSet);
+            entryPoint = new EntryPoint(log, configuration.GetK8sConfiguration(k8sTimeSet, this, testNamespace), configuration.GetFileManagerFolder(), webCallTimeSet, k8sTimeSet);
             metadata = entryPoint.GetPluginMetadata();
             CoreInterface = entryPoint.CreateInterface();
             this.deployId = deployId;
@@ -36,7 +39,8 @@ namespace DistTestCore
         public DateTime TestStart { get; }
         public TestLog Log { get; }
         public Configuration Configuration { get; }
-        public ITimeSet TimeSet { get; }
+        public IWebCallTimeSet WebCallTimeSet { get; }
+        public IK8sTimeSet K8STimeSet { get; }
         public string TestNamespace { get; }
         public bool WaitForCleanup { get; }
         public CoreInterface CoreInterface { get; }
@@ -111,6 +115,9 @@ namespace DistTestCore
         {
             try
             {
+                // TODO: This code is built on k8s containers.
+                // It should be remapped to use the project plugin's support for downloading logs (via IProcessControl).
+                // For now, leave this. Add support for Codex non-container logs using the codex node hooks.
                 var result = new List<IDownloadedLog>();
                 result.AddRange(stoppedContainerLogs);
                 foreach (var rc in runningContainers)

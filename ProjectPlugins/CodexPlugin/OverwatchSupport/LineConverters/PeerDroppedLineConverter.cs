@@ -1,4 +1,6 @@
-﻿namespace CodexPlugin.OverwatchSupport.LineConverters
+﻿using CodexClient;
+
+namespace CodexPlugin.OverwatchSupport.LineConverters
 {
     public class PeerDroppedLineConverter : ILineConverter
     {

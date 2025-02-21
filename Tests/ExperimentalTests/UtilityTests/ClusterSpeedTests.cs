@@ -3,7 +3,7 @@ using Logging;
 using NUnit.Framework;
 using Utils;
 
-namespace CodexTests.UtilityTests
+namespace ExperimentalTests.UtilityTests
 {
     [TestFixture]
     public class ClusterDiscSpeedTests : DistTest

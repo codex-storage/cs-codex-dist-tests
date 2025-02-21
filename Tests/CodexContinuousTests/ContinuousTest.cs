@@ -1,15 +1,13 @@
-﻿using CodexPlugin;
-using Core;
-using DistTestCore;
+﻿using CodexClient;
 using FileUtils;
 using Logging;
 using MetricsPlugin;
+using Utils;
 
 namespace ContinuousTests
 {
     public abstract class ContinuousTestLongTimeouts : ContinuousTest
     {
-        public override ITimeSet TimeSet => new LongTimeSet();
     }
 
     public abstract class ContinuousTest
@@ -44,16 +42,15 @@ namespace ContinuousTests
         public ILog Log { get; private set; } = null!;
         public IFileManager FileManager { get; private set; } = null!;
         public Configuration Configuration { get; private set; } = null!;
-        public virtual ITimeSet TimeSet { get { return new DefaultTimeSet(); } }
         public CancellationToken CancelToken { get; private set; } = new CancellationToken();
         public NodeRunner NodeRunner { get; private set; } = null!;
 
         public IMetricsAccess CreateMetricsAccess(IHasMetricsScrapeTarget target)
         {
-            return CreateMetricsAccess(target.MetricsScrapeTarget);
+            return CreateMetricsAccess(target.GetMetricsScrapeTarget());
         }
 
-        public IMetricsAccess CreateMetricsAccess(IMetricsScrapeTarget target)
+        public IMetricsAccess CreateMetricsAccess(Address target)
         {
             if (Configuration.CodexDeployment.PrometheusContainer == null) throw new Exception("Expected prometheus to be part of Codex deployment.");
 
