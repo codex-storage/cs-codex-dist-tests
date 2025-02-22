@@ -3,6 +3,7 @@ using AutoClient;
 using AutoClient.Modes;
 using AutoClient.Modes.FolderStore;
 using CodexClient;
+using GethPlugin;
 using Utils;
 
 public class Program
@@ -100,7 +101,7 @@ public class Program
             port: port
         );
 
-        var instance = CodexInstance.CreateFromApiEndpoint("ac", address);
+        var instance = CodexInstance.CreateFromApiEndpoint("ac", address, EthAccountGenerator.GenerateNew());
         var node = app.CodexNodeFactory.CreateCodexNode(instance);
         return new CodexWrapper(app, node);
     }

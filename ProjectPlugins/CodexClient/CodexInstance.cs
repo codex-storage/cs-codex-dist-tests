@@ -37,7 +37,7 @@ namespace CodexClient
         public EthAccount? EthAccount { get; }
         public Address? MetricsEndpoint { get; }
 
-        public static ICodexInstance CreateFromApiEndpoint(string name, Address apiEndpoint)
+        public static ICodexInstance CreateFromApiEndpoint(string name, Address apiEndpoint, EthAccount? ethAccount = null)
         {
             return new CodexInstance(
                 name,
@@ -46,7 +46,7 @@ namespace CodexClient
                 discoveryEndpoint: Address.Empty(),
                 apiEndpoint: apiEndpoint,
                 listenEndpoint: Address.Empty(),
-                ethAccount: null,
+                ethAccount: ethAccount,
                 metricsEndpoint: null
             );
         }
