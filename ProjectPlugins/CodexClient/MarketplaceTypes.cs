@@ -61,7 +61,7 @@ namespace CodexClient
         public string SlotSize { get; set; } = string.Empty;
         public string Duration { get; set; } = string.Empty;
         public string ProofProbability { get; set; } = string.Empty;
-        public string Reward { get; set; } = string.Empty;
+        public string PricePerBytePerSecond { get; set; } = string.Empty;
         public int MaxSlotLoss { get; set; }
     }
 

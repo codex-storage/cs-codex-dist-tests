@@ -26,12 +26,12 @@ namespace AutoClient
             app.Log.Debug("Requesting storage for " + cid.Id);
             var result = Node.Marketplace.RequestStorage(new StoragePurchaseRequest(cid)
             {
-                CollateralPerByte = app.Config.CollateralPerByte.Tst(),
+                CollateralPerByte = app.Config.CollateralPerByte.TstWei(),
                 Duration = TimeSpan.FromMinutes(app.Config.ContractDurationMinutes),
                 Expiry = TimeSpan.FromMinutes(app.Config.ContractExpiryMinutes),
                 MinRequiredNumberOfNodes = Convert.ToUInt32(app.Config.NumHosts),
                 NodeFailureTolerance = Convert.ToUInt32(app.Config.HostTolerance),
-                PricePerBytePerSecond = app.Config.PricePerBytePerSecond.Tst(),
+                PricePerBytePerSecond = app.Config.PricePerBytePerSecond.TstWei(),
                 ProofProbability = 15
             });
             return result;
