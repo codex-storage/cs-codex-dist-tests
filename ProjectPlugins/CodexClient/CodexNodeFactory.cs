@@ -22,8 +22,13 @@ namespace CodexClient
             this.processControlFactory = processControlFactory;
         }
 
+        public CodexNodeFactory(ILog log, HttpFactory httpFactory, string dataDir)
+            : this(log, new FileManager(log, dataDir), new CodexHooksFactory(), httpFactory, new DoNothingProcessControlFactory())
+        {
+        }
+
         public CodexNodeFactory(ILog log, string dataDir)
-            : this(log, new FileManager(log, dataDir), new CodexHooksFactory(), new HttpFactory(log), new DoNothingProcessControlFactory())
+            : this(log, new HttpFactory(log), dataDir)
         {
         }
 

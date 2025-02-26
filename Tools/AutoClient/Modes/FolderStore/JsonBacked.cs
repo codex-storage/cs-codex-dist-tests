@@ -36,13 +36,13 @@ namespace AutoClient.Modes.FolderStore
 
         protected string Folder { get; }
         protected string FilePath { get; }
-        protected T State { get; private set; } = default!;
+        public T State { get; private set; } = default!;
 
         protected virtual void OnNewState(T newState)
         {
         }
 
-        protected void SaveState()
+        public void SaveState()
         {
             try
             {

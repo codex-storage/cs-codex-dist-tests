@@ -12,6 +12,11 @@ namespace AutoClient.Modes.FolderStore
             this.purchaseInfo = purchaseInfo;
         }
 
+        protected override void OnNewState(WorkerStatus newState)
+        {
+            newState.LastUpdate = DateTime.MinValue;
+        }
+
         public bool IsBusy()
         {
             if (!State.Purchases.Any()) return false;
@@ -48,7 +53,7 @@ namespace AutoClient.Modes.FolderStore
             return mostRecent.Expiry.HasValue;
         }
 
-        protected WorkerPurchase? GetMostRecent()
+        public WorkerPurchase? GetMostRecent()
         {
             if (!State.Purchases.Any()) return null;
             var maxCreated = State.Purchases.Max(p => p.Created);

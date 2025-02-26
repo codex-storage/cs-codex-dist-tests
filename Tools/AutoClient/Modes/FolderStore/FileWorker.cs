@@ -11,7 +11,7 @@ namespace AutoClient.Modes.FolderStore
         void OnPurchaseStarted();
     }
 
-    public class FileWorker : FileStatus
+    public class FileWorker
     {
         private readonly App app;
         private readonly CodexWrapper node;
@@ -19,9 +19,9 @@ namespace AutoClient.Modes.FolderStore
         private readonly PurchaseInfo purchaseInfo;
         private readonly string sourceFilename;
         private readonly IWorkEventHandler eventHandler;
+        private readonly FileStatus status;
 
         public FileWorker(App app, CodexWrapper node, PurchaseInfo purchaseInfo, string folder, FileIndex fileIndex, IWorkEventHandler eventHandler)
-            : base(app, folder, fileIndex.File + ".json", purchaseInfo)
         {
             this.app = app;
             this.node = node;
@@ -30,18 +30,17 @@ namespace AutoClient.Modes.FolderStore
             sourceFilename = fileIndex.File;
             if (sourceFilename.ToLowerInvariant().EndsWith(".json")) throw new Exception("Not an era file.");
             this.eventHandler = eventHandler;
+
+            status = new FileStatus(app, folder, fileIndex.File, purchaseInfo);
         }
 
-        protected override void OnNewState(WorkerStatus newState)
-        {
-            newState.LastUpdate = DateTime.MinValue;
-        }
+        public bool IsBusy => status.IsBusy();
 
         public void Update()
         {
             try
             {
-                if (IsCurrentlyRunning() && UpdatedRecently()) return;
+                if (status.IsCurrentlyRunning() && UpdatedRecently()) return;
 
                 Log($"Updating for '{sourceFilename}'...");
                 EnsureRecentPurchase();
@@ -269,6 +268,18 @@ namespace AutoClient.Modes.FolderStore
         private void Log(string msg)
         {
             log.Log(msg);
+        }
+
+        private WorkerStatus State => status.State;
+
+        private void SaveState()
+        {
+            status.SaveState();
+        }
+
+        private WorkerPurchase? GetMostRecent()
+        {
+            return status.GetMostRecent();
         }
 
         private string GetFileTag(FileIndex filename)
