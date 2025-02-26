@@ -60,7 +60,10 @@ namespace AutoClient.Modes.FolderStore
             var entry = status.Files.SingleOrDefault(f => f.Filename == localFilename);
             if (entry == null)
             {
-                entry = new FileStatus();
+                entry = new FileStatus
+                {
+                    Filename = localFilename
+                };
                 status.Files.Add(entry);
             }
             ProcessFileEntry(folderFile, entry);
