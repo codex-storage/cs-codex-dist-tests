@@ -22,15 +22,6 @@ namespace AutoClient
                 new ConsoleLog()
             ));
 
-            if (!string.IsNullOrEmpty(config.FolderToStore))
-            {
-                FolderWorkDispatcher = new FolderWorkDispatcher(Log, config.FolderToStore);
-            }
-            else
-            {
-                FolderWorkDispatcher = null!;
-            }
-
             var httpFactory = new HttpFactory(Log, new AutoClientWebTimeSet());
 
             CodexNodeFactory = new CodexNodeFactory(log: Log, httpFactory: httpFactory, dataDir: Config.DataPath);
@@ -41,7 +32,6 @@ namespace AutoClient
         public IFileGenerator Generator { get; }
         public CancellationTokenSource Cts { get; } = new CancellationTokenSource();
         public Performance Performance { get; }
-        public FolderWorkDispatcher FolderWorkDispatcher { get; }
         public CodexNodeFactory CodexNodeFactory { get; }
 
         private IFileGenerator CreateGenerator()

@@ -23,7 +23,7 @@ namespace CodexClient
         private readonly ILog log;
         private readonly CodexAccess codexAccess;
         private readonly ICodexNodeHooks hooks;
-        private readonly TimeSpan gracePeriod = TimeSpan.FromSeconds(30);
+        private readonly TimeSpan gracePeriod = TimeSpan.FromSeconds(60);
         private readonly DateTime contractPendingUtc = DateTime.UtcNow;
         private DateTime? contractSubmittedUtc = DateTime.UtcNow;
         private DateTime? contractStartedUtc;

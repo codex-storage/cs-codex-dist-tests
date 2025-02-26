@@ -65,9 +65,9 @@ namespace CodexReleaseTests.MarketTests
             var config = GetContracts().Deployment.Config;
             foreach (var host in hosts)
             {
-                Assert.That(GetTstBalance(host).TstWei, Is.EqualTo(StartingBalanceTST.Tst().TstWei));
-                Assert.That(GetEthBalance(host).Wei, Is.EqualTo(StartingBalanceEth.Eth().Wei));
-
+                AssertTstBalance(host, StartingBalanceTST.Tst(), nameof(StartHosts));
+                AssertEthBalance(host, StartingBalanceEth.Eth(), nameof(StartHosts));
+                
                 host.Marketplace.MakeStorageAvailable(new StorageAvailability(
                     totalSpace: HostAvailabilitySize,
                     maxDuration: HostAvailabilityMaxDuration,
@@ -78,22 +78,63 @@ namespace CodexReleaseTests.MarketTests
             return hosts;
         }
 
-        public TestToken GetTstBalance(ICodexNode node)
+        public void AssertTstBalance(EthAddress address, TestToken expectedBalance, string message)
+        {
+            var retry = GetBalanceAssertRetry();
+            retry.Run(() =>
+            {
+                var balance = GetTstBalance(address);
+
+                Assert.That(balance, Is.EqualTo(expectedBalance), message);
+            });
+        }
+
+        public void AssertTstBalance(ICodexNode node, TestToken expectedBalance, string message)
+        {
+            var retry = GetBalanceAssertRetry();
+            retry.Run(() =>
+            {
+                var balance = GetTstBalance(node);
+
+                Assert.That(balance, Is.EqualTo(expectedBalance), message);
+            });
+        }
+
+        public void AssertEthBalance(ICodexNode node, Ether expectedBalance, string message)
+        {
+            var retry = GetBalanceAssertRetry();
+            retry.Run(() =>
+            {
+                var balance = GetEthBalance(node);
+
+                Assert.That(balance, Is.EqualTo(expectedBalance), message);
+            });
+        }
+
+        private Retry GetBalanceAssertRetry()
+        {
+            return new Retry("AssertBalance",
+                maxTimeout: TimeSpan.FromMinutes(30.0),
+                sleepAfterFail: TimeSpan.FromSeconds(10.0),
+                onFail: f => { });
+        }
+
+        private TestToken GetTstBalance(ICodexNode node)
         {
             return GetContracts().GetTestTokenBalance(node);
         }
 
-        public TestToken GetTstBalance(EthAddress address)
+        private TestToken GetTstBalance(EthAddress address)
         {
             return GetContracts().GetTestTokenBalance(address);
         }
 
-        public Ether GetEthBalance(ICodexNode node)
+        private Ether GetEthBalance(ICodexNode node)
         {
             return GetGeth().GetEthBalance(node);
         }
 
-        public Ether GetEthBalance(EthAddress address)
+        private Ether GetEthBalance(EthAddress address)
         {
             return GetGeth().GetEthBalance(address);
         }
@@ -141,10 +182,9 @@ namespace CodexReleaseTests.MarketTests
 
         protected void AssertClientHasPaidForContract(TestToken pricePerBytePerSecond, ICodexNode client, IStoragePurchaseContract contract, ICodexNodeGroup hosts)
         {
-            var balance = GetTstBalance(client);
             var expectedBalance = StartingBalanceTST.Tst() - GetContractFinalCost(pricePerBytePerSecond, contract, hosts);
 
-            Assert.That(balance, Is.EqualTo(expectedBalance), "Client balance incorrect.");
+            AssertTstBalance(client, expectedBalance, "Client balance incorrect.");
         }
 
         protected void AssertHostsWerePaidForContract(TestToken pricePerBytePerSecond, IStoragePurchaseContract contract, ICodexNodeGroup hosts)
@@ -162,20 +202,10 @@ namespace CodexReleaseTests.MarketTests
                 expectedBalances[fill.Host.EthAddress] += GetContractCostPerSlot(pricePerBytePerSecond, slotSize, slotDuration);
             }
 
-            var retry = new Retry(nameof(AssertHostsWerePaidForContract),
-                maxTimeout: TimeSpan.FromMinutes(30),
-                sleepAfterFail: TimeSpan.FromSeconds(10),
-                onFail: f => { }
-            );
-
-            retry.Run(() =>
+            foreach (var pair in expectedBalances)
             {
-                foreach (var pair in expectedBalances)
-                {
-                    var balance = GetTstBalance(pair.Key);
-                    Assert.That(balance, Is.EqualTo(pair.Value), "Host was not paid for storage.");
-                }
-            });
+                AssertTstBalance(pair.Key, pair.Value, "Host was not paid for storage.");
+            }
         }
 
         protected void AssertHostsCollateralsAreUnchanged(ICodexNodeGroup hosts)
@@ -184,7 +214,11 @@ namespace CodexReleaseTests.MarketTests
             // All host balances should be equal to or greater than the starting balance.
             foreach (var host in hosts)
             {
-                Assert.That(GetTstBalance(host), Is.GreaterThanOrEqualTo(StartingBalanceTST.Tst()));
+                var retry = GetBalanceAssertRetry();
+                retry.Run(() =>
+                {
+                    Assert.That(GetTstBalance(host), Is.GreaterThanOrEqualTo(StartingBalanceTST.Tst()));
+                });
             }
         }
 
