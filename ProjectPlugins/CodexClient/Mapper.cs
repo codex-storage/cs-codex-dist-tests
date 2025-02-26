@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json.Linq;
+﻿using CodexOpenApi;
+using Newtonsoft.Json.Linq;
 using System.Numerics;
 using Utils;
 
@@ -19,14 +20,6 @@ namespace CodexClient
             };
         }
 
-        public LocalDatasetList Map(LocalDatasetListJson json)
-        {
-            return new LocalDatasetList
-            {
-                Content = json.Content.Select(Map).ToArray()
-            };
-        }
-
         public LocalDatasetList Map(CodexOpenApi.DataList dataList)
         {
             return new LocalDatasetList
@@ -41,15 +34,6 @@ namespace CodexClient
             {
                 Cid = new ContentId(dataItem.Cid),
                 Manifest = MapManifest(dataItem.Manifest)
-            };
-        }
-
-        public LocalDataset Map(LocalDatasetListJsonItem item)
-        {
-            return new LocalDataset
-            {
-                Cid = new ContentId(item.Cid),
-                Manifest = MapManifest(item.Manifest)
             };
         }
 
@@ -98,47 +82,78 @@ namespace CodexClient
             };
         }
 
-        // TODO: Fix openapi spec for this call.
-        //public StoragePurchase Map(CodexOpenApi.Purchase purchase)
-        //{
-        //    return new StoragePurchase(Map(purchase.Request))
-        //    {
-        //        State = purchase.State,
-        //        Error = purchase.Error
-        //    };
-        //}
+        public StoragePurchase Map(CodexOpenApi.Purchase purchase)
+        {
+            return new StoragePurchase
+            {
+                Request = Map(purchase.Request),
+                State = purchase.State.ToString(), //Map(purchase.State),
+                Error = purchase.Error
+            };
+        }
 
-        //public StorageRequest Map(CodexOpenApi.StorageRequest request)
-        //{
-        //    return new StorageRequest(Map(request.Ask), Map(request.Content))
-        //    {
-        //        Id = request.Id,
-        //        Client = request.Client,
-        //        Expiry = TimeSpan.FromSeconds(Convert.ToInt64(request.Expiry)),
-        //        Nonce = request.Nonce
-        //    };
-        //}
+        public StoragePurchaseState Map(PurchaseState purchaseState)
+        {
+            // TODO: to be re-enabled when marketplace api lines up with openapi.yaml.
 
-        //public StorageAsk Map(CodexOpenApi.StorageAsk ask)
-        //{
-        //    return new StorageAsk
-        //    {
-        //        Duration = TimeSpan.FromSeconds(Convert.ToInt64(ask.Duration)),
-        //        MaxSlotLoss = ask.MaxSlotLoss,
-        //        ProofProbability = ask.ProofProbability,
-        //        Reward = Convert.ToDecimal(ask.Reward).TstWei(),
-        //        Slots = ask.Slots,
-        //        SlotSize = new ByteSize(Convert.ToInt64(ask.SlotSize))
-        //    };
-        //}
+            // Explicit mapping: If the API changes, we will get compile errors here.
+            // That's what we want.
+            switch (purchaseState)
+            {
+                case PurchaseState.Cancelled:
+                    return StoragePurchaseState.Cancelled;
+                case PurchaseState.Error:
+                    return StoragePurchaseState.Error;
+                case PurchaseState.Failed:
+                    return StoragePurchaseState.Failed;
+                case PurchaseState.Finished:
+                    return StoragePurchaseState.Finished;
+                case PurchaseState.Pending:
+                    return StoragePurchaseState.Pending;
+                case PurchaseState.Started:
+                    return StoragePurchaseState.Started;
+                case PurchaseState.Submitted:
+                    return StoragePurchaseState.Submitted;
+                case PurchaseState.Unknown:
+                    return StoragePurchaseState.Unknown;
+            }
 
-        //public StorageContent Map(CodexOpenApi.Content content)
-        //{
-        //    return new StorageContent
-        //    {
-        //        Cid = content.Cid
-        //    };
-        //}
+            throw new Exception("API incompatibility detected. Unknown purchaseState: " + purchaseState.ToString());
+        }
+
+        public StorageRequest Map(CodexOpenApi.StorageRequest request)
+        {
+            return new StorageRequest
+            {
+                Ask = Map(request.Ask),
+                Content = Map(request.Content),
+                Id = request.Id,
+                Client = request.Client,
+                Expiry = request.Expiry,
+                Nonce = request.Nonce
+            };
+        }
+
+        public StorageAsk Map(CodexOpenApi.StorageAsk ask)
+        {
+            return new StorageAsk
+            {
+                Duration = ask.Duration,
+                MaxSlotLoss = ask.MaxSlotLoss,
+                ProofProbability = ask.ProofProbability,
+                PricePerBytePerSecond = ask.PricePerBytePerSecond,
+                Slots = ask.Slots,
+                SlotSize = ask.SlotSize
+            };
+        }
+
+        public StorageContent Map(CodexOpenApi.Content content)
+        {
+            return new StorageContent
+            {
+                Cid = content.Cid
+            };
+        }
 
         public CodexSpace Map(CodexOpenApi.Space space)
         {
@@ -203,18 +218,6 @@ namespace CodexClient
             };
         }
 
-        public Manifest MapManifest(LocalDatasetListJsonItemManifest manifest)
-        {
-            return new Manifest
-            {
-                // needs update
-                BlockSize = new ByteSize(Convert.ToInt64(manifest.BlockSize)),
-                OriginalBytes = new ByteSize(Convert.ToInt64(manifest.DatasetSize)),
-                RootHash = manifest.TreeCid,
-                Protected = manifest.Protected
-            };
-        }
-
         private JArray JArray(IDictionary<string, object> map, string name)
         {
             return (JArray)map[name];
@@ -269,43 +272,5 @@ namespace CodexClient
         {
             return new ByteSize(Convert.ToInt64(size));
         }
-    }
-
-
-//"content": [
-//        {
-//            "cid": "zDvZRwzkxLxVaGces3kpkHjo8EcTPXudvYMfNxdoH21Ask1Js5fJ",
-//            "manifest": {
-//                "treeCid": "zDzSvJTf8GBRyEDNuAzXS9VnRfh8cNuYuRPwTLW6RUQReSgKnhCt",
-//                "datasetSize": 5242880,
-//                "blockSize": 65536,
-//                "filename": null,
-//                "mimetype": "application/octet-stream",
-//                "uploadedAt": 1731426230,
-//                "protected": false
-//            }
-//        }
-//    ]
-
-    public class LocalDatasetListJson
-    {
-        public LocalDatasetListJsonItem[] Content { get; set; } = Array.Empty<LocalDatasetListJsonItem>();
-    }
-
-    public class LocalDatasetListJsonItem
-    {
-        public string Cid { get; set; } = string.Empty;
-        public LocalDatasetListJsonItemManifest Manifest { get; set; } = new();
-    }
-
-    public class LocalDatasetListJsonItemManifest
-    {
-        public string TreeCid { get; set; } = string.Empty;
-        public int DatasetSize { get; set; }
-        public int BlockSize { get; set; }
-        public string? Filename { get; set; } = string.Empty;
-        public string? MimeType { get; set; } = string.Empty;
-        public int? UploadedAt { get; set; } 
-        public bool Protected { get; set; }
     }
 }

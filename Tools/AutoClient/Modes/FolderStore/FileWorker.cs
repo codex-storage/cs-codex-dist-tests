@@ -3,6 +3,14 @@ using Logging;
 
 namespace AutoClient.Modes.FolderStore
 {
+    public interface IWorkEventHandler
+    {
+        void OnFileUploaded();
+        void OnNewPurchase();
+        void OnPurchaseExpired();
+        void OnPurchaseStarted();
+    }
+
     public class FileWorker : FileStatus
     {
         private readonly App app;
@@ -10,10 +18,9 @@ namespace AutoClient.Modes.FolderStore
         private readonly ILog log;
         private readonly PurchaseInfo purchaseInfo;
         private readonly string sourceFilename;
-        private readonly Action onFileUploaded;
-        private readonly Action onNewPurchase;
+        private readonly IWorkEventHandler eventHandler;
 
-        public FileWorker(App app, CodexWrapper node, PurchaseInfo purchaseInfo, string folder, FileIndex fileIndex, Action onFileUploaded, Action onNewPurchase)
+        public FileWorker(App app, CodexWrapper node, PurchaseInfo purchaseInfo, string folder, FileIndex fileIndex, IWorkEventHandler eventHandler)
             : base(app, folder, fileIndex.File + ".json", purchaseInfo)
         {
             this.app = app;
@@ -22,11 +29,8 @@ namespace AutoClient.Modes.FolderStore
             this.purchaseInfo = purchaseInfo;
             sourceFilename = fileIndex.File;
             if (sourceFilename.ToLowerInvariant().EndsWith(".json")) throw new Exception("Not an era file.");
-            this.onFileUploaded = onFileUploaded;
-            this.onNewPurchase = onNewPurchase;
+            this.eventHandler = eventHandler;
         }
-
-        public int FailureCounter => State.FailureCounter;
 
         protected override void OnNewState(WorkerStatus newState)
         {
@@ -87,7 +91,7 @@ namespace AutoClient.Modes.FolderStore
 
             Log($"Uploading...");
             var cid = node.UploadFile(sourceFilename);
-            onFileUploaded();
+            eventHandler.OnFileUploaded();
             Log("Got Basic-CID: " + cid);
             State.Cid = cid.Id;
             SaveState();
@@ -133,7 +137,7 @@ namespace AutoClient.Modes.FolderStore
             {
                 Log($"Purchase has failed or expired.");
                 MakeNewPurchase();
-                State.FailureCounter++;
+                eventHandler.OnPurchaseExpired();
                 return;
             }
 
@@ -187,7 +191,12 @@ namespace AutoClient.Modes.FolderStore
             if (purchase.IsStarted)
             {
                 if (!recent.Submitted.HasValue) recent.Submitted = now;
-                if (!recent.Started.HasValue) recent.Started = now;
+                if (!recent.Started.HasValue)
+                {
+                    Log($"Detected new purchase-start for '{recent.Pid}'.");
+                    recent.Started = now;
+                    eventHandler.OnPurchaseStarted();
+                }
             }
             if (purchase.IsCancelled)
             {
@@ -236,7 +245,7 @@ namespace AutoClient.Modes.FolderStore
             State.Purchases = State.Purchases.Concat([newPurchase]).ToArray();
             State.EncodedCid = encodedCid.Id;
             SaveState();
-            onNewPurchase();
+            eventHandler.OnNewPurchase();
 
             Log($"New purchase created. PID: '{purchaseId}'.");
             Log("Got Encoded-CID: " + encodedCid);
@@ -273,7 +282,6 @@ namespace AutoClient.Modes.FolderStore
             public DateTime LastUpdate { get; set; }
             public string Cid { get; set; } = string.Empty;
             public string EncodedCid { get; set; } = string.Empty;
-            public int FailureCounter { get; set; } = 0;
             public string Error { get; set; } = string.Empty;
             public WorkerPurchase[] Purchases { get; set; } = Array.Empty<WorkerPurchase>();
         }

@@ -2,13 +2,14 @@
 
 namespace AutoClient.Modes
 {
-    public class FolderStoreMode : IMode
+    public class FolderStoreMode : IMode, IWorkEventHandler
     {
         private readonly App app;
         private readonly string folder;
         private readonly PurchaseInfo purchaseInfo;
         private readonly CancellationTokenSource cts = new CancellationTokenSource();
         private Task checkTask = Task.CompletedTask;
+        private int failureCount = 0;
 
         public FolderStoreMode(App app, string folder, PurchaseInfo purchaseInfo)
         {
@@ -41,9 +42,9 @@ namespace AutoClient.Modes
                 Thread.Sleep(2000);
 
                 var worker = ProcessWorkItem(instance);
-                if (worker.FailureCounter > 5)
+                if (failureCount > 5)
                 {
-                    throw new Exception("Worker has failure count > 5. Stopping AutoClient...");
+                    throw new Exception("Failure count > 5. Stopping AutoClient...");
                 }
                 i++;
 
@@ -59,22 +60,32 @@ namespace AutoClient.Modes
         private FileWorker ProcessWorkItem(CodexWrapper instance)
         {
             var file = app.FolderWorkDispatcher.GetFileToCheck();
-            var worker = new FileWorker(app, instance, purchaseInfo, folder, file, OnFileUploaded, OnNewPurchase);
+            var worker = new FileWorker(app, instance, purchaseInfo, folder, file, this);
             worker.Update();
             if (worker.IsBusy()) app.FolderWorkDispatcher.WorkerIsBusy();
             return worker;
         }
 
-        private void OnFileUploaded()
+        public void OnFileUploaded()
         {
         }
 
-        private void OnNewPurchase()
+        public void OnNewPurchase()
         {
             app.FolderWorkDispatcher.ResetIndex();
 
             var overview = new FolderWorkOverview(app, purchaseInfo, folder);
             overview.MarkUncommitedChange();
+        }
+
+        public void OnPurchaseExpired()
+        {
+            failureCount++;
+        }
+
+        public void OnPurchaseStarted()
+        {
+            failureCount = 0;
         }
 
         public void Stop()

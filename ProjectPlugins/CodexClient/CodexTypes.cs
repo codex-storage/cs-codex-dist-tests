@@ -109,6 +109,16 @@ namespace CodexClient
         {
             return HashCode.Combine(Id);
         }
+
+        public static bool operator ==(ContentId a, ContentId b)
+        {
+            return a.Id == b.Id;
+        }
+
+        public static bool operator !=(ContentId a, ContentId b)
+        {
+            return a.Id != b.Id;
+        }
     }
 
     public class CodexSpace

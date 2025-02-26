@@ -45,6 +45,18 @@ namespace CodexClient
         public bool IsSubmitted => State.ToLowerInvariant().Contains("submitted");
     }
 
+    public enum StoragePurchaseState
+    {
+        Cancelled = 0,
+        Error = 1,
+        Failed = 2,
+        Finished = 3,
+        Pending = 4,
+        Started = 5,
+        Submitted = 6,
+        Unknown = 7,
+    }
+
     public class StorageRequest
     {
         public string Id { get; set; } = string.Empty;

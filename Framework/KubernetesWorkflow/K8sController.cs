@@ -122,6 +122,16 @@ namespace KubernetesWorkflow
             var all = client.Run(c => c.ListNamespace().Items);
             var namespaces = all.Select(n => n.Name()).Where(n => n.StartsWith(prefix));
 
+            if (wait)
+            {
+                // If we're going to wait, trigger the delete for all the namespaces immediately.
+                // Then wait for them to finish one by one.
+                foreach (var ns in namespaces)
+                {
+                    DeleteNamespace(ns, false);
+                }
+            }
+
             foreach (var ns in namespaces)
             {
                 DeleteNamespace(ns, wait);

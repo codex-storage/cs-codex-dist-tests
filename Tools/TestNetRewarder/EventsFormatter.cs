@@ -44,7 +44,7 @@ namespace TestNetRewarder
             var request = requestEvent.Request;
             AddRequestBlock(requestEvent, $"{emojiMaps.NewRequest} New Request",
                 $"Client: {request.Client}",
-                $"Content: {request.Request.Content.Cid}",
+                $"Content: {BytesToHexString(request.Request.Content.Cid)}",
                 $"Duration: {BigIntToDuration(request.Request.Ask.Duration)}",
                 $"Expiry: {BigIntToDuration(request.Request.Expiry)}",
                 $"CollateralPerByte: {BitIntToTestTokens(request.Request.Ask.CollateralPerByte)}",
@@ -155,6 +155,12 @@ namespace TestNetRewarder
             return
                 $"({emojiMaps.StringToEmojis(requestEvent.Request.Request.Id, 3)})" +
                 $"`{requestEvent.Request.Request.Id}`";
+        }
+
+        private string BytesToHexString(byte[] bytes)
+        {
+            // libp2p CIDs use MultiBase btcbase64 encoding, which is prefixed with 'z'.
+            return "z" + Base58.Encode(bytes);
         }
 
         private string BigIntToDuration(BigInteger big)

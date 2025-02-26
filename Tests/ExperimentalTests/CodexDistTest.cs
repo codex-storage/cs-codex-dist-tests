@@ -90,6 +90,7 @@ namespace CodexTests
 
     public class CodexDistTest : DistTest
     {
+        private static readonly object _lock = new object();
         private static readonly Dictionary<TestLifecycle, CodexTranscriptWriter> writers = new Dictionary<TestLifecycle, CodexTranscriptWriter>();
         private static readonly Dictionary<TestLifecycle, BlockCache> blockCaches = new Dictionary<TestLifecycle, BlockCache>();
 
@@ -118,8 +119,11 @@ namespace CodexTests
 
             Ci.AddCodexHooksProvider(new CodexLogTrackerProvider(n =>
             {
-                if (!nodes.ContainsKey(lifecycle)) nodes.Add(lifecycle, new List<ICodexNode>());
-                nodes[lifecycle].Add(n);
+                lock (_lock)
+                {
+                    if (!nodes.ContainsKey(lifecycle)) nodes.Add(lifecycle, new List<ICodexNode>());
+                    nodes[lifecycle].Add(n);
+                }
             }));
         }
 
@@ -263,7 +267,10 @@ namespace CodexTests
             var log = new LogPrefixer(lifecycle.Log, "(Transcript) ");
             var writer = new CodexTranscriptWriter(log, config, Transcript.NewWriter(log));
             Ci.AddCodexHooksProvider(writer);
-            writers.Add(lifecycle, writer);
+            lock (_lock)
+            {
+                writers.Add(lifecycle, writer);
+            }
         }
 
         private void TeardownTranscript(TestLifecycle lifecycle, DistTestResult result)
@@ -273,8 +280,12 @@ namespace CodexTests
 
             var outputFilepath = GetOutputFullPath(lifecycle, attr);
 
-            var writer = writers[lifecycle];
-            writers.Remove(lifecycle);
+            CodexTranscriptWriter writer = null!;
+            lock (_lock)
+            {
+                writer = writers[lifecycle];
+                writers.Remove(lifecycle);
+            }
 
             writer.AddResult(result.Success, result.Result);
 
@@ -311,9 +322,12 @@ namespace CodexTests
         private BlockCache GetBlockCache()
         {
             var lifecycle = Get();
-            if (!blockCaches.ContainsKey(lifecycle))
+            lock (_lock)
             {
-                blockCaches[lifecycle] = new BlockCache();
+                if (!blockCaches.ContainsKey(lifecycle))
+                {
+                    blockCaches[lifecycle] = new BlockCache();
+                }
             }
             return blockCaches[lifecycle];
         }

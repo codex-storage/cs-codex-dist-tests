@@ -124,19 +124,7 @@ namespace CodexClient
 
         public LocalDatasetList LocalFiles()
         {
-            // API for listData mismatches.
-            //return mapper.Map(OnCodex(api => api.ListDataAsync()));
-
-            return mapper.Map(CrashCheck(() =>
-            {
-                var endpoint = GetEndpoint();
-                return Time.Retry(() =>
-                {
-                    var str = endpoint.HttpGetString("data");
-                    if (string.IsNullOrEmpty(str)) throw new Exception("Empty response.");
-                    return JsonConvert.DeserializeObject<LocalDatasetListJson>(str)!;
-                }, nameof(LocalFiles));
-            }));
+            return mapper.Map(OnCodex(api => api.ListDataAsync()));
         }
 
         public StorageAvailability SalesAvailability(StorageAvailability request)
