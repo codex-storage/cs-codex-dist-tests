@@ -22,10 +22,12 @@ namespace AutoClient.Modes.FolderStore
         }
 
         public bool HasFailed { get; private set; }
+        public bool Changes { get; private set; }
 
         public void Process()
         {
             HasFailed = false;
+            Changes = false;
             if (HasRecentPurchase(entry))
             {
                 Log($"Purchase running: '{entry.PurchaseId}'");
@@ -86,6 +88,7 @@ namespace AutoClient.Modes.FolderStore
 
         private void UploadFile()
         {
+            Changes = true;
             try
             {
                 entry.BasicCid = instance.UploadFile(folderFile).Id;
@@ -105,6 +108,7 @@ namespace AutoClient.Modes.FolderStore
         {
             if (string.IsNullOrEmpty(entry.BasicCid)) return;
 
+            Changes = true;
             try
             {
                 var request = CreateNewStorageRequest();

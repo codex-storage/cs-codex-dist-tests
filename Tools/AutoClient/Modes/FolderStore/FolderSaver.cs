@@ -32,8 +32,10 @@ namespace AutoClient.Modes.FolderStore
 
                 if (!folderFile.ToLowerInvariant().EndsWith(FolderSaverFilename))
                 {
-                    SaveFile(folderFile);
-                    counter++;
+                    if (SaveFile(folderFile))
+                    {
+                        counter++;
+                    }
                 }
 
                 if (failureCount > 9)
@@ -54,7 +56,7 @@ namespace AutoClient.Modes.FolderStore
             }
         }
 
-        private void SaveFile(string folderFile)
+        private bool SaveFile(string folderFile)
         {
             var localFilename = Path.GetFileName(folderFile);
             var entry = status.Files.SingleOrDefault(f => f.Filename == localFilename);
@@ -66,14 +68,15 @@ namespace AutoClient.Modes.FolderStore
                 };
                 status.Files.Add(entry);
             }
-            ProcessFileEntry(folderFile, entry);
+            return ProcessFileEntry(folderFile, entry);
         }
 
-        private void ProcessFileEntry(string folderFile, FileStatus entry)
+        private bool ProcessFileEntry(string folderFile, FileStatus entry)
         {
             var fileSaver = CreateFileSaver(folderFile, entry);
             fileSaver.Process();
             if (fileSaver.HasFailed) failureCount++;
+            return fileSaver.Changes;
         }
 
         private void SaveFolderSaverJsonFile()
@@ -101,7 +104,7 @@ namespace AutoClient.Modes.FolderStore
             var min = MinCodexStorageFilesize * 2;
             if (info.Length < min)
             {
-                var required = min - info.Length;
+                var required = Math.Max(1024, min - info.Length);
                 status.Padding = paddingMessage + GenerateRandomString(required);
             }
         }
@@ -111,8 +114,7 @@ namespace AutoClient.Modes.FolderStore
             var result = "";
             while (result.Length < required)
             {
-                var diff = required - result.Length;
-                var bytes = new byte[diff];
+                var bytes = new byte[1024];
                 random.NextBytes(bytes);
                 result += string.Join("", bytes.Select(b => b.ToString()));
             }
