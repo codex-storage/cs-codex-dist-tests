@@ -27,8 +27,12 @@ namespace CodexClient
         public IStoragePurchaseContract RequestStorage(StoragePurchaseRequest purchase)
         {
             purchase.Log(log);
+            var swResult = Stopwatch.Measure(log, nameof(RequestStorage), () =>
+            {
+                return codexAccess.RequestStorage(purchase);
+            });
 
-            var response = codexAccess.RequestStorage(purchase);
+            var response = swResult.Value;
 
             if (string.IsNullOrEmpty(response) ||
                 response == "Unable to encode manifest" ||
