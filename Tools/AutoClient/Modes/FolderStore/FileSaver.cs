@@ -11,6 +11,7 @@ namespace AutoClient.Modes.FolderStore
         private readonly Stats stats;
         private readonly string folderFile;
         private readonly FileStatus entry;
+        private readonly QuotaCheck quotaCheck;
 
         public FileSaver(ILog log, CodexWrapper instance, Stats stats, string folderFile, FileStatus entry)
         {
@@ -19,6 +20,8 @@ namespace AutoClient.Modes.FolderStore
             this.stats = stats;
             this.folderFile = folderFile;
             this.entry = entry;
+
+            quotaCheck = new QuotaCheck(log, folderFile, instance);
         }
 
         public bool HasFailed { get; private set; }
@@ -45,13 +48,32 @@ namespace AutoClient.Modes.FolderStore
                 Log("BasicCid is available.");
                 return;
             }
-            UploadFile();
+            if (QuotaAvailable())
+            {
+                UploadFile();
+            }
         }
 
         private bool IsBasicCidAvailable()
         {
             if (string.IsNullOrEmpty(entry.BasicCid)) return false;
             return NodeContainsBasicCid();
+        }
+
+        private bool QuotaAvailable()
+        {
+            if (quotaCheck.IsLocalQuotaAvailable()) return true;
+            Log("Waiting for local storage quota to become available...");
+
+            var timeLimit = DateTime.UtcNow + TimeSpan.FromHours(1.0);
+            while (DateTime.UtcNow < timeLimit)
+            {
+                if (quotaCheck.IsLocalQuotaAvailable()) return true;
+                Thread.Sleep(TimeSpan.FromMinutes(1.0));
+            }
+            Log("Could not upload: Insufficient local storage quota.");
+            HasFailed = true;
+            return false;
         }
 
         private bool HasRecentPurchase(FileStatus entry)
