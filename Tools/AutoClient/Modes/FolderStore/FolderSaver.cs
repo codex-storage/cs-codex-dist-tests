@@ -1,5 +1,4 @@
-﻿using CodexClient;
-using Logging;
+﻿using Logging;
 
 namespace AutoClient.Modes.FolderStore
 {
@@ -50,6 +49,7 @@ namespace AutoClient.Modes.FolderStore
                     SaveFolderSaverJsonFile();
                 }
 
+                statusFile.Save(status);
                 Thread.Sleep(2000);
             }
         }
@@ -67,7 +67,6 @@ namespace AutoClient.Modes.FolderStore
                 status.Files.Add(entry);
             }
             ProcessFileEntry(folderFile, entry);
-            statusFile.Save(status);
         }
 
         private void ProcessFileEntry(string folderFile, FileStatus entry)
@@ -84,16 +83,48 @@ namespace AutoClient.Modes.FolderStore
                 Filename = FolderSaverFilename
             };
             var folderFile = Path.Combine(app.Config.FolderToStore, FolderSaverFilename);
+            ApplyPadding(folderFile);
             var fileSaver = CreateFileSaver(folderFile, entry);
             fileSaver.Process();
             if (fileSaver.HasFailed) failureCount++;
+        }
+
+        private const int MinCodexStorageFilesize = 262144;
+        private readonly Random random = new Random();
+        private readonly string paddingMessage = $"Codex currently requires a minimum filesize of {MinCodexStorageFilesize} bytes for datasets used in storage contracts. " +
+            $"Anything smaller, and the erasure-coding algorithms used for data durability won't function. Therefore, we apply this padding field to make sure this " +
+            $"file is larger than the minimal size. The following is pseudo-random: ";
+
+        private void ApplyPadding(string folderFile)
+        {
+            var info = new FileInfo(folderFile);
+            var min = MinCodexStorageFilesize * 2;
+            if (info.Length < min)
+            {
+                var required = min - info.Length;
+                status.Padding = paddingMessage + GenerateRandomString(required);
+            }
+        }
+
+        private string GenerateRandomString(long required)
+        {
+            var result = "";
+            while (result.Length < required)
+            {
+                var diff = required - result.Length;
+                var bytes = new byte[diff];
+                random.NextBytes(bytes);
+                result += string.Join("", bytes.Select(b => b.ToString()));
+            }
+
+            return result;
         }
 
         private FileSaver CreateFileSaver(string folderFile, FileStatus entry)
         {
             var fixedLength = entry.Filename.PadRight(35);
             var prefix = $"[{fixedLength}] ";
-            return new FileSaver(new LogPrefixer(app.Log, prefix), instance, folderFile, entry);
+            return new FileSaver(new LogPrefixer(app.Log, prefix), instance, status.Stats, folderFile, entry);
         }
     }
 }

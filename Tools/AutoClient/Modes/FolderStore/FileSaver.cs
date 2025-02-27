@@ -8,13 +8,15 @@ namespace AutoClient.Modes.FolderStore
     {
         private readonly ILog log;
         private readonly CodexWrapper instance;
+        private readonly Stats stats;
         private readonly string folderFile;
         private readonly FileStatus entry;
 
-        public FileSaver(ILog log, CodexWrapper instance, string folderFile, FileStatus entry)
+        public FileSaver(ILog log, CodexWrapper instance, Stats stats, string folderFile, FileStatus entry)
         {
             this.log = log;
             this.instance = instance;
+            this.stats = stats;
             this.folderFile = folderFile;
             this.entry = entry;
         }
@@ -87,11 +89,13 @@ namespace AutoClient.Modes.FolderStore
             try
             {
                 entry.BasicCid = instance.UploadFile(folderFile).Id;
+                stats.SuccessfulUploads++;
                 Log($"Successfully uploaded. BasicCid: '{entry.BasicCid}'");
             }
             catch (Exception exc)
             {
                 entry.BasicCid = string.Empty;
+                stats.FailedUploads++;
                 log.Error("Failed to upload: " + exc);
                 HasFailed = true;
             }
@@ -103,15 +107,14 @@ namespace AutoClient.Modes.FolderStore
 
             try
             {
-                var request = instance.RequestStorage(new ContentId(entry.BasicCid));
-                entry.EncodedCid = request.Purchase.ContentId.Id;
-                entry.PurchaseId = request.PurchaseId;
+                var request = CreateNewStorageRequest();
 
-                request.WaitForStorageContractSubmitted();
-                request.WaitForStorageContractStarted();
+                WaitForSubmitted(request);
+                WaitForStarted(request);
 
                 entry.PurchaseFinishedUtc = DateTime.UtcNow + request.Purchase.Duration;
-                Log($"Successfully started new purchase: '{entry.PurchaseId}' for {Time.FormatDuration(request.Purchase.Duration)}  ");
+                stats.StorageRequestStats.SuccessfullyStarted++;
+                Log($"Successfully started new purchase: '{entry.PurchaseId}' for {Time.FormatDuration(request.Purchase.Duration)}");
             }
             catch (Exception exc)
             {
@@ -119,6 +122,48 @@ namespace AutoClient.Modes.FolderStore
                 entry.PurchaseId = string.Empty;
                 log.Error("Failed to start new purchase: " + exc);
                 HasFailed = true;
+            }
+        }
+
+        private IStoragePurchaseContract CreateNewStorageRequest()
+        {
+            try
+            {
+                var request = instance.RequestStorage(new ContentId(entry.BasicCid));
+                entry.EncodedCid = request.Purchase.ContentId.Id;
+                entry.PurchaseId = request.PurchaseId;
+                return request;
+            }
+            catch
+            {
+                stats.StorageRequestStats.FailedToCreate++;
+                throw;
+            }
+        }
+
+        private void WaitForSubmitted(IStoragePurchaseContract request)
+        {
+            try
+            {
+                request.WaitForStorageContractSubmitted();
+            }
+            catch
+            {
+                stats.StorageRequestStats.FailedToSubmit++;
+                throw;
+            }
+        }
+
+        private void WaitForStarted(IStoragePurchaseContract request)
+        {
+            try
+            {
+                request.WaitForStorageContractStarted();
+            }
+            catch
+            {
+                stats.StorageRequestStats.FailedToStart++;
+                throw;
             }
         }
 
