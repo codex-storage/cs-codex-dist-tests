@@ -52,7 +52,7 @@ namespace AutoClient.Modes.FolderStore
                 }
 
                 statusFile.Save(status);
-                Thread.Sleep(2000);
+                Thread.Sleep(100);
             }
         }
 

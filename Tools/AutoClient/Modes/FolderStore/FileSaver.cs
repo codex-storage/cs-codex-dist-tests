@@ -40,7 +40,11 @@ namespace AutoClient.Modes.FolderStore
 
         private void EnsureBasicCid()
         {
-            if (IsBasicCidAvailable()) return;
+            if (IsBasicCidAvailable())
+            {
+                Log("BasicCid is available.");
+                return;
+            }
             UploadFile();
         }
 
@@ -76,8 +80,14 @@ namespace AutoClient.Modes.FolderStore
         {
             try
             {
-                var result = instance.Node.DownloadManifestOnly(new ContentId(entry.BasicCid));
-                return !string.IsNullOrEmpty(result.Cid.Id);
+                var result = instance.Node.LocalFiles();
+                if (result == null) return false;
+                if (result.Content == null) return false;
+                return result.Content.Any(c =>
+                    c != null &&
+                    c.Cid != null &&
+                    !string.IsNullOrEmpty(c.Cid.Id) &&
+                    c.Cid.Id.ToLowerInvariant() == entry.BasicCid.ToLowerInvariant());
             }
             catch
             {
@@ -88,6 +98,7 @@ namespace AutoClient.Modes.FolderStore
 
         private void UploadFile()
         {
+            Log("Uploading file...");
             Changes = true;
             try
             {
@@ -107,6 +118,7 @@ namespace AutoClient.Modes.FolderStore
         private void CreateNewPurchase()
         {
             if (string.IsNullOrEmpty(entry.BasicCid)) return;
+            Log("Creating new purchase...");
 
             Changes = true;
             try
