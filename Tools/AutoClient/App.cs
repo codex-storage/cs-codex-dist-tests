@@ -1,5 +1,4 @@
-﻿using AutoClient.Modes.FolderStore;
-using CodexClient;
+﻿using CodexClient;
 using Logging;
 using WebUtils;
 

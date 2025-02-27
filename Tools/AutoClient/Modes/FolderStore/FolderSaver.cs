@@ -106,6 +106,7 @@ namespace AutoClient.Modes.FolderStore
             {
                 var required = Math.Max(1024, min - info.Length);
                 status.Padding = paddingMessage + GenerateRandomString(required);
+                statusFile.Save(status);
             }
         }
 

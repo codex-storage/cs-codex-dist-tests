@@ -23,7 +23,6 @@ namespace AutoClient
 
         public IStoragePurchaseContract RequestStorage(ContentId cid)
         {
-            app.Log.Debug("Requesting storage for " + cid.Id);
             var result = Node.Marketplace.RequestStorage(new StoragePurchaseRequest(cid)
             {
                 CollateralPerByte = app.Config.CollateralPerByte.TstWei(),

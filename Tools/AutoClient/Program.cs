@@ -101,7 +101,7 @@ public class Program
             port: port
         );
 
-        var instance = CodexInstance.CreateFromApiEndpoint("AutoClient", address, EthAccountGenerator.GenerateNew());
+        var instance = CodexInstance.CreateFromApiEndpoint("[AutoClient]", address, EthAccountGenerator.GenerateNew());
         var node = app.CodexNodeFactory.CreateCodexNode(instance);
         return new CodexWrapper(app, node);
     }
