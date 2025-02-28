@@ -108,12 +108,11 @@ namespace AutoClient.Modes.FolderStore
                 var result = instance.Node.LocalFiles();
                 if (result == null) return false;
                 if (result.Content == null) return false;
-                var isFound = result.Content.Any(c =>
-                    c != null &&
-                    c.Cid != null &&
-                    !string.IsNullOrEmpty(c.Cid.Id) &&
-                    c.Cid.Id.ToLowerInvariant() == entry.BasicCid.ToLowerInvariant());
 
+                var localCids = result.Content.Where(c => c.Cid != null && !string.IsNullOrEmpty(c.Cid.Id)).Select(c => c.Cid.Id).ToArray();
+                Log("Local CIDs: " + string.Join(",", localCids));
+
+                var isFound = localCids.Any(c => c.ToLowerInvariant() == entry.BasicCid.ToLowerInvariant());
                 if (isFound)
                 {
                     Log("BasicCid found in local files.");
