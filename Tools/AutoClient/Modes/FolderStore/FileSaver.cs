@@ -108,17 +108,26 @@ namespace AutoClient.Modes.FolderStore
                 var result = instance.Node.LocalFiles();
                 if (result == null) return false;
                 if (result.Content == null) return false;
-                return result.Content.Any(c =>
+                var isFound = result.Content.Any(c =>
                     c != null &&
                     c.Cid != null &&
                     !string.IsNullOrEmpty(c.Cid.Id) &&
                     c.Cid.Id.ToLowerInvariant() == entry.BasicCid.ToLowerInvariant());
+
+                if (isFound)
+                {
+                    Log("BasicCid found in local files.");
+                    return true;
+                }
             }
-            catch
+            catch (Exception exc)
             {
-                Log("Failed to download manifest for basicCid");
-                return false;
+                Log($"Exception in {nameof(NodeContainsBasicCid)}: {exc}");
+                throw;
             }
+
+            Log("BasicCid not found in local files.");
+            return false;
         }
 
         private void UploadFile()
@@ -148,9 +157,6 @@ namespace AutoClient.Modes.FolderStore
             try
             {
                 var request = CreateNewStorageRequest();
-                entry.PurchaseFinishedUtc = DateTime.UtcNow + request.Purchase.Duration;
-                stats.StorageRequestStats.SuccessfullyStarted++;
-                saveChanges();
 
                 WaitForSubmitted(request);
                 WaitForStarted(request);
@@ -174,6 +180,10 @@ namespace AutoClient.Modes.FolderStore
                 var request = instance.RequestStorage(new ContentId(entry.BasicCid));
                 entry.EncodedCid = request.Purchase.ContentId.Id;
                 entry.PurchaseId = request.PurchaseId;
+                entry.PurchaseFinishedUtc = DateTime.UtcNow + request.Purchase.Duration;
+                stats.StorageRequestStats.SuccessfullyStarted++;
+                saveChanges();
+                Log("Saved new purchaseId: " + entry.PurchaseId);
                 return request;
             }
             catch
