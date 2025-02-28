@@ -11,27 +11,26 @@ namespace AutoClient.Modes.FolderStore
         private readonly Stats stats;
         private readonly string folderFile;
         private readonly FileStatus entry;
+        private readonly Action saveChanges;
         private readonly QuotaCheck quotaCheck;
 
-        public FileSaver(ILog log, CodexWrapper instance, Stats stats, string folderFile, FileStatus entry)
+        public FileSaver(ILog log, CodexWrapper instance, Stats stats, string folderFile, FileStatus entry, Action saveChanges)
         {
             this.log = log;
             this.instance = instance;
             this.stats = stats;
             this.folderFile = folderFile;
             this.entry = entry;
-
+            this.saveChanges = saveChanges;
             quotaCheck = new QuotaCheck(log, folderFile, instance);
         }
 
         public bool HasFailed { get; private set; }
-        public bool Changes { get; private set; }
 
         public void Process()
         {
             HasFailed = false;
-            Changes = false;
-            if (HasRecentPurchase(entry))
+            if (HasRecentPurchase())
             {
                 Log($"Purchase running: '{entry.PurchaseId}'");
                 return;
@@ -76,11 +75,15 @@ namespace AutoClient.Modes.FolderStore
             return false;
         }
 
-        private bool HasRecentPurchase(FileStatus entry)
+        private bool HasRecentPurchase()
         {
             if (string.IsNullOrEmpty(entry.PurchaseId)) return false;
             var purchase = GetPurchase(entry.PurchaseId);
             if (purchase == null) return false;
+            if (purchase.IsSubmitted)
+            {
+                WaitForSubmittedToStarted(purchase);
+            }
             if (!purchase.IsStarted) return false;
 
             // Purchase is started. But, if it finishes soon, we will treat it as already finished.
@@ -121,7 +124,6 @@ namespace AutoClient.Modes.FolderStore
         private void UploadFile()
         {
             Log("Uploading file...");
-            Changes = true;
             try
             {
                 entry.BasicCid = instance.UploadFile(folderFile).Id;
@@ -135,6 +137,7 @@ namespace AutoClient.Modes.FolderStore
                 log.Error("Failed to upload: " + exc);
                 HasFailed = true;
             }
+            saveChanges();
         }
 
         private void CreateNewPurchase()
@@ -142,22 +145,23 @@ namespace AutoClient.Modes.FolderStore
             if (string.IsNullOrEmpty(entry.BasicCid)) return;
             Log("Creating new purchase...");
 
-            Changes = true;
             try
             {
                 var request = CreateNewStorageRequest();
+                entry.PurchaseFinishedUtc = DateTime.UtcNow + request.Purchase.Duration;
+                stats.StorageRequestStats.SuccessfullyStarted++;
+                saveChanges();
 
                 WaitForSubmitted(request);
                 WaitForStarted(request);
 
-                entry.PurchaseFinishedUtc = DateTime.UtcNow + request.Purchase.Duration;
-                stats.StorageRequestStats.SuccessfullyStarted++;
                 Log($"Successfully started new purchase: '{entry.PurchaseId}' for {Time.FormatDuration(request.Purchase.Duration)}");
             }
             catch (Exception exc)
             {
                 entry.EncodedCid = string.Empty;
                 entry.PurchaseId = string.Empty;
+                saveChanges();
                 log.Error("Failed to start new purchase: " + exc);
                 HasFailed = true;
             }
@@ -177,6 +181,45 @@ namespace AutoClient.Modes.FolderStore
                 stats.StorageRequestStats.FailedToCreate++;
                 throw;
             }
+        }
+
+        private void WaitForSubmittedToStarted(StoragePurchase purchase)
+        {
+            try
+            {
+                var expirySeconds = Convert.ToInt64(purchase.Request.Expiry);
+                var expiry = TimeSpan.FromSeconds(expirySeconds);
+                Log($"Request was submitted but not started yet. Waiting {Time.FormatDuration(expiry)} to start or expire...");
+
+                var limit = DateTime.UtcNow + expiry;
+                while (DateTime.UtcNow < limit)
+                {
+                    Thread.Sleep(TimeSpan.FromSeconds(30));
+                    var update = GetPurchase(purchase.Request.Id);
+                    if (update != null)
+                    {
+                        if (update.IsStarted)
+                        {
+                            Log("Request successfully started.");
+                            return;
+                        }
+                        else if (!update.IsSubmitted)
+                        {
+                            Log("Request failed to start. State: " + update.State);
+                            entry.EncodedCid = string.Empty;
+                            entry.PurchaseId = string.Empty;
+                            saveChanges();
+                            return;
+                        }
+                    }
+                }
+            }
+            catch (Exception exc)
+            {
+                HasFailed = true;
+                Log($"Exception in {nameof(WaitForSubmittedToStarted)}: {exc}");
+                throw;
+            }            
         }
 
         private void WaitForSubmitted(IStoragePurchaseContract request)

@@ -9,6 +9,7 @@ namespace AutoClient.Modes.FolderStore
         private readonly CodexWrapper instance;
         private readonly JsonFile<FolderStatus> statusFile;
         private readonly FolderStatus status;
+        private int changeCounter = 0;
         private int failureCount = 0;
 
         public FolderSaver(App app, CodexWrapper instance)
@@ -25,17 +26,14 @@ namespace AutoClient.Modes.FolderStore
             var folderFiles = Directory.GetFiles(app.Config.FolderToStore);
             if (!folderFiles.Any()) throw new Exception("No files found in " + app.Config.FolderToStore);
 
-            var counter = 0;
+            changeCounter = 0;
             foreach (var folderFile in folderFiles)
             {
                 if (cts.IsCancellationRequested) return;
 
                 if (!folderFile.ToLowerInvariant().EndsWith(FolderSaverFilename))
                 {
-                    if (SaveFile(folderFile))
-                    {
-                        counter++;
-                    }
+                    SaveFile(folderFile);
                 }
 
                 if (failureCount > 9)
@@ -45,9 +43,9 @@ namespace AutoClient.Modes.FolderStore
                     return;
                 }
 
-                if (counter > 5)
+                if (changeCounter > 10)
                 {
-                    counter = 0;
+                    changeCounter = 0;
                     SaveFolderSaverJsonFile();
                 }
 
@@ -56,7 +54,7 @@ namespace AutoClient.Modes.FolderStore
             }
         }
 
-        private bool SaveFile(string folderFile)
+        private void SaveFile(string folderFile)
         {
             var localFilename = Path.GetFileName(folderFile);
             var entry = status.Files.SingleOrDefault(f => f.Filename == localFilename);
@@ -68,19 +66,19 @@ namespace AutoClient.Modes.FolderStore
                 };
                 status.Files.Add(entry);
             }
-            return ProcessFileEntry(folderFile, entry);
+            ProcessFileEntry(folderFile, entry);
         }
 
-        private bool ProcessFileEntry(string folderFile, FileStatus entry)
+        private void ProcessFileEntry(string folderFile, FileStatus entry)
         {
             var fileSaver = CreateFileSaver(folderFile, entry);
             fileSaver.Process();
             if (fileSaver.HasFailed) failureCount++;
-            return fileSaver.Changes;
         }
 
         private void SaveFolderSaverJsonFile()
         {
+            app.Log.Log($"Saving {FolderSaverFilename}...");
             var entry = new FileStatus
             {
                 Filename = FolderSaverFilename
@@ -90,6 +88,8 @@ namespace AutoClient.Modes.FolderStore
             var fileSaver = CreateFileSaver(folderFile, entry);
             fileSaver.Process();
             if (fileSaver.HasFailed) failureCount++;
+
+            app.Log.Log($"!!! {FolderSaverFilename} saved to CID '{entry.EncodedCid}' !!!");
         }
 
         private const int MinCodexStorageFilesize = 262144;
@@ -127,7 +127,11 @@ namespace AutoClient.Modes.FolderStore
         {
             var fixedLength = entry.Filename.PadRight(35);
             var prefix = $"[{fixedLength}] ";
-            return new FileSaver(new LogPrefixer(app.Log, prefix), instance, status.Stats, folderFile, entry);
+            return new FileSaver(new LogPrefixer(app.Log, prefix), instance, status.Stats, folderFile, entry, saveChanges: () =>
+            {
+                statusFile.Save(status);
+                changeCounter++;
+            });
         }
     }
 }
