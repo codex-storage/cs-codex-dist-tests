@@ -43,7 +43,7 @@ namespace AutoClient.Modes.FolderStore
                     return;
                 }
 
-                if (changeCounter > 10)
+                if (changeCounter > 5)
                 {
                     changeCounter = 0;
                     SaveFolderSaverJsonFile();
@@ -89,7 +89,14 @@ namespace AutoClient.Modes.FolderStore
             fileSaver.Process();
             if (fileSaver.HasFailed) failureCount++;
 
-            app.Log.Log($"!!! {FolderSaverFilename} saved to CID '{entry.EncodedCid}' !!!");
+            if (!string.IsNullOrEmpty(entry.EncodedCid))
+            {
+                app.Log.Log($"!!! {FolderSaverFilename} saved to CID '{entry.EncodedCid}' !!!");
+            }
+            else
+            {
+                app.Log.Error($"Failed to store {FolderSaverFilename} :|");
+            }
         }
 
         private const int MinCodexStorageFilesize = 262144;

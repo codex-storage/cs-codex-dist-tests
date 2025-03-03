@@ -10,12 +10,11 @@ namespace CodexClient
         string PurchaseId { get; }
         StoragePurchaseRequest Purchase { get; }
         ContentId ContentId { get; }
-        StoragePurchase GetStatus();
+        StoragePurchase? GetStatus();
         void WaitForStorageContractSubmitted();
         void WaitForStorageContractStarted();
         void WaitForStorageContractFinished();
         void WaitForContractFailed();
-        StoragePurchase GetPurchaseStatus();
     }
 
     public class StoragePurchaseContract : IStoragePurchaseContract
@@ -29,6 +28,7 @@ namespace CodexClient
         private DateTime? contractStartedUtc;
         private DateTime? contractFinishedUtc;
         private string lastState = string.Empty;
+        private ContentId encodedContentId = new ContentId();
 
         public StoragePurchaseContract(ILog log, CodexAccess codexAccess, string purchaseId, StoragePurchaseRequest purchase, ICodexNodeHooks hooks)
         {
@@ -37,26 +37,38 @@ namespace CodexClient
             PurchaseId = purchaseId;
             Purchase = purchase;
             this.hooks = hooks;
-            ContentId = new ContentId(codexAccess.GetPurchaseStatus(purchaseId).Request.Content.Cid);
         }
 
         public string PurchaseId { get; }
         public StoragePurchaseRequest Purchase { get; }
-        public ContentId ContentId { get; }
+        public ContentId ContentId
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(encodedContentId.Id)) GetStatus();
+                return encodedContentId;
+            }
+        }
 
         public TimeSpan? PendingToSubmitted => contractSubmittedUtc - contractPendingUtc;
         public TimeSpan? SubmittedToStarted => contractStartedUtc - contractSubmittedUtc;
         public TimeSpan? SubmittedToFinished => contractFinishedUtc - contractSubmittedUtc;
 
-        public StoragePurchase GetStatus()
+        public StoragePurchase? GetStatus()
         {
-            return codexAccess.GetPurchaseStatus(PurchaseId);
+            var status = codexAccess.GetPurchaseStatus(PurchaseId);
+            if (status != null)
+            {
+                encodedContentId = new ContentId(status.Request.Content.Cid);
+            }
+            return status;
         }
 
         public void WaitForStorageContractSubmitted()
         {
+            var timeout = Purchase.Expiry + gracePeriod;
             var raiseHook = lastState != "submitted";
-            WaitForStorageContractState(gracePeriod, "submitted", sleep: 200);
+            WaitForStorageContractState(timeout, "submitted", sleep: 200);
             contractSubmittedUtc = DateTime.UtcNow;
             if (raiseHook) hooks.OnStorageContractSubmitted(this);
             LogSubmittedDuration();
@@ -96,11 +108,6 @@ namespace CodexClient
             var currentContractTime = DateTime.UtcNow - contractSubmittedUtc!.Value;
             var timeout = (Purchase.Duration - currentContractTime) + gracePeriod;
             WaitForStorageContractState(timeout, "failed");
-        }
-
-        public StoragePurchase GetPurchaseStatus()
-        {
-            return codexAccess.GetPurchaseStatus(PurchaseId);
         }
 
         private void WaitForStorageContractState(TimeSpan timeout, string desiredState, int sleep = 1000)
