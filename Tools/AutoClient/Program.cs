@@ -89,6 +89,8 @@ public class Program
         return result.ToArray();
     }
 
+    private readonly string LogLevel = "TRACE;info:discv5,providers,routingtable,manager,cache;warn:libp2p,multistream,switch,transport,tcptransport,semaphore,asyncstreamwrapper,lpstream,mplex,mplexchannel,noise,bufferstream,mplexcoder,secure,chronosstream,connection,websock,ws-session,muxedupgrade,upgrade,identify,contracts,clock,serde,json,serialization,JSONRPC-WS-CLIENT,JSONRPC-HTTP-CLIENT,codex,repostore";
+
     private CodexWrapper CreateCodexWrapper(string endpoint)
     {
         var splitIndex = endpoint.LastIndexOf(':');
@@ -103,6 +105,9 @@ public class Program
 
         var instance = CodexInstance.CreateFromApiEndpoint("[AutoClient]", address, EthAccountGenerator.GenerateNew());
         var node = app.CodexNodeFactory.CreateCodexNode(instance);
+
+        node.SetLogLevel(LogLevel);
+
         return new CodexWrapper(app, node);
     }
 

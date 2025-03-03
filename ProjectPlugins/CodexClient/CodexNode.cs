@@ -11,6 +11,7 @@ namespace CodexClient
         string GetImageName();
         string GetPeerId();
         DebugInfo GetDebugInfo(bool log = false);
+        void SetLogLevel(string logLevel);
         string GetSpr();
         DebugPeer GetDebugPeer(string peerId);
         ContentId UploadFile(TrackedFile file);
@@ -133,6 +134,11 @@ namespace CodexClient
                 Log($"Got DebugInfo with id: {debugInfo.Id}. This node knows: [{known}]");
             }
             return debugInfo;
+        }
+
+        public void SetLogLevel(string logLevel)
+        {
+            codexAccess.SetLogLevel(logLevel);
         }
 
         public string GetSpr()

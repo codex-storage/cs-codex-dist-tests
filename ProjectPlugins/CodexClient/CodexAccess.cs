@@ -51,6 +51,22 @@ namespace CodexClient
             return mapper.Map(OnCodex(api => api.GetDebugInfoAsync()));
         }
 
+        public void SetLogLevel(string logLevel)
+        {
+            try
+            {
+                OnCodex(async api =>
+                {
+                    await api.SetDebugLogLevelAsync(logLevel);
+                    return string.Empty;
+                });
+            }
+            catch (Exception exc)
+            {
+                log.Error("Failed to set log level: " + exc);
+            }
+        }
+
         public string GetSpr()
         {
             return CrashCheck(() =>
