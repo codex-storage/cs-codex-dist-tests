@@ -30,6 +30,7 @@ namespace CodexPlugin
                 {
                     "discv5",
                     "providers",
+                    "routingtable",
                     "manager",
                     "cache",
                 };
@@ -80,12 +81,20 @@ namespace CodexPlugin
                     "json",
                     "serialization"
                 };
+                var marketplaceInfraTopics = new[]
+                {
+                    "JSONRPC-WS-CLIENT",
+                    "JSONRPC-HTTP-CLIENT",
+                    "codex",
+                    "repostore"
+                };
 
                 level = $"{level};" +
                     $"{CustomTopics.DiscV5.ToString()!.ToLowerInvariant()}:{string.Join(",", discV5Topics)};" +
                     $"{CustomTopics.Libp2p.ToString()!.ToLowerInvariant()}:{string.Join(",", libp2pTopics)};" +
                     $"{CustomTopics.ContractClock.ToString().ToLowerInvariant()}:{string.Join(",", contractClockTopics)};" +
-                    $"{CustomTopics.JsonSerialize.ToString().ToLowerInvariant()}:{string.Join(",", jsonSerializeTopics)}";
+                    $"{CustomTopics.JsonSerialize.ToString().ToLowerInvariant()}:{string.Join(",", jsonSerializeTopics)};" +
+                    $"{CustomTopics.MarketplaceInfra.ToString().ToLowerInvariant()}:{string.Join(",", marketplaceInfraTopics)}";
 
                 if (CustomTopics.BlockExchange != null)
                 {

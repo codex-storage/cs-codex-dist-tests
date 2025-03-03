@@ -54,6 +54,7 @@ namespace CodexPlugin
         public CodexLogLevel ContractClock { get; set; } = CodexLogLevel.Warn;
         public CodexLogLevel? BlockExchange { get; }
         public CodexLogLevel JsonSerialize { get; set; } = CodexLogLevel.Warn;
+        public CodexLogLevel MarketplaceInfra { get; set; } = CodexLogLevel.Warn;
     }
 
     public class CodexSetup : CodexStartupConfig, ICodexSetup
