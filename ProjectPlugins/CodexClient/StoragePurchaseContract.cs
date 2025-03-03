@@ -28,6 +28,7 @@ namespace CodexClient
         private DateTime? contractSubmittedUtc = DateTime.UtcNow;
         private DateTime? contractStartedUtc;
         private DateTime? contractFinishedUtc;
+        private string lastState = string.Empty;
 
         public StoragePurchaseContract(ILog log, CodexAccess codexAccess, string purchaseId, StoragePurchaseRequest purchase, ICodexNodeHooks hooks)
         {
@@ -54,8 +55,10 @@ namespace CodexClient
 
         public void WaitForStorageContractSubmitted()
         {
+            var raiseHook = lastState != "submitted";
             WaitForStorageContractState(gracePeriod, "submitted", sleep: 200);
             contractSubmittedUtc = DateTime.UtcNow;
+            if (raiseHook) hooks.OnStorageContractSubmitted(this);
             LogSubmittedDuration();
             AssertDuration(PendingToSubmitted, gracePeriod, nameof(PendingToSubmitted));
         }
@@ -102,7 +105,6 @@ namespace CodexClient
 
         private void WaitForStorageContractState(TimeSpan timeout, string desiredState, int sleep = 1000)
         {
-            var lastState = "";
             var waitStart = DateTime.UtcNow;
 
             Log($"Waiting for {Time.FormatDuration(timeout)} to reach state '{desiredState}'.");

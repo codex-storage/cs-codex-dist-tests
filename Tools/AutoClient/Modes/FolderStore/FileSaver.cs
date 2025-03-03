@@ -158,6 +158,9 @@ namespace AutoClient.Modes.FolderStore
                 WaitForSubmitted(request);
                 WaitForStarted(request);
 
+                stats.StorageRequestStats.SuccessfullyStarted++;
+                saveChanges();
+
                 Log($"Successfully started new purchase: '{entry.PurchaseId}' for {Time.FormatDuration(request.Purchase.Duration)}");
             }
             catch (Exception exc)
@@ -178,7 +181,6 @@ namespace AutoClient.Modes.FolderStore
                 entry.EncodedCid = request.Purchase.ContentId.Id;
                 entry.PurchaseId = request.PurchaseId;
                 entry.PurchaseFinishedUtc = DateTime.UtcNow + request.Purchase.Duration;
-                stats.StorageRequestStats.SuccessfullyStarted++;
                 saveChanges();
                 Log("Saved new purchaseId: " + entry.PurchaseId);
                 return request;

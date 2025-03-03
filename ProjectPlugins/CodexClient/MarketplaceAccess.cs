@@ -46,12 +46,7 @@ namespace CodexClient
 
             Log($"Storage requested successfully. PurchaseId: '{response}'.");
 
-            var contract = new StoragePurchaseContract(log, codexAccess, response, purchase, hooks);
-            contract.WaitForStorageContractSubmitted();
-
-            hooks.OnStorageContractSubmitted(contract);
-
-            return contract;
+            return new StoragePurchaseContract(log, codexAccess, response, purchase, hooks);
         }
 
         public string MakeStorageAvailable(StorageAvailability availability)
