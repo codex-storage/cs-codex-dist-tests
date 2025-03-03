@@ -30,7 +30,7 @@ namespace CodexClient
         IMarketplaceAccess Marketplace { get; }
         ITransferSpeeds TransferSpeeds { get; }
         EthAccount EthAccount { get; }
-        StoragePurchase GetPurchaseStatus(string purchaseId);
+        StoragePurchase? GetPurchaseStatus(string purchaseId);
 
         Address GetDiscoveryEndpoint();
         Address GetApiEndpoint();
@@ -86,7 +86,7 @@ namespace CodexClient
         public DebugInfoVersion Version { get; private set; }
         public ITransferSpeeds TransferSpeeds { get => transferSpeeds; }
 
-        public StoragePurchase GetPurchaseStatus(string purchaseId)
+        public StoragePurchase? GetPurchaseStatus(string purchaseId)
         {
             return codexAccess.GetPurchaseStatus(purchaseId);
         }

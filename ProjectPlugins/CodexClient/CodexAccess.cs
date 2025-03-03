@@ -152,17 +152,25 @@ namespace CodexClient
             return mapper.Map(space);
         }
 
-        public StoragePurchase GetPurchaseStatus(string purchaseId)
+        public StoragePurchase? GetPurchaseStatus(string purchaseId)
         {
             return CrashCheck(() =>
             {
                 var endpoint = GetEndpoint();
-                return Time.Retry(() =>
+                try
                 {
-                    var str = endpoint.HttpGetString($"storage/purchases/{purchaseId}");
-                    if (string.IsNullOrEmpty(str)) throw new Exception("Empty response.");
-                    return JsonConvert.DeserializeObject<StoragePurchase>(str)!;
-                }, nameof(GetPurchaseStatus));
+                    return Time.Retry(() =>
+                    {
+                        var str = endpoint.HttpGetString($"storage/purchases/{purchaseId}");
+                        if (string.IsNullOrEmpty(str)) throw new Exception("Empty response.");
+                        return JsonConvert.DeserializeObject<StoragePurchase>(str)!;
+                    }, nameof(GetPurchaseStatus));
+                }
+                catch (Exception exc)
+                {
+                    log.Error($"Failed to fetch purchase information for id: '{purchaseId}'. Exception: {exc.Message}");
+                    return null;
+                }
             });
 
             // TODO: current getpurchase api does not line up with its openapi spec.
