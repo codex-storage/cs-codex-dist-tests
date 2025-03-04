@@ -46,7 +46,7 @@
         {
             var result = Environment.GetEnvironmentVariable(name);
             if (string.IsNullOrEmpty(result)) error.Add($"'{name}' is not set.");
-            return result;
+            return result.Trim();
         }
     }
 }
