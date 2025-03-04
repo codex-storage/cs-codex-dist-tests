@@ -28,7 +28,7 @@ namespace AutoClient.Modes.FolderStore
             var folderFiles = Directory.GetFiles(app.Config.FolderToStore);
             if (!folderFiles.Any()) throw new Exception("No files found in " + app.Config.FolderToStore);
 
-            changeCounter = 0;
+            var saveFolderJsonCounter = 0;
             balanceChecker.Check();
             foreach (var folderFile in folderFiles)
             {
@@ -39,18 +39,28 @@ namespace AutoClient.Modes.FolderStore
                     SaveFile(folderFile);
                 }
 
-                if (failureCount > 9)
+                if (failureCount > 3)
                 {
                     app.Log.Error("Failure count reached threshold. Stopping...");
                     cts.Cancel();
                     return;
                 }
 
-                if (changeCounter > 5)
+                if (changeCounter > 1)
                 {
                     changeCounter = 0;
-                    balanceChecker.Check();
-                    SaveFolderSaverJsonFile();
+                    saveFolderJsonCounter++;
+                    if (saveFolderJsonCounter > 5)
+                    {
+                        saveFolderJsonCounter = 0;
+                        if (failureCount > 0)
+                        {
+                            app.Log.Log($"Failure count is reset. (Was: {failureCount})");
+                            failureCount = 0;
+                        }
+                        balanceChecker.Check();
+                        SaveFolderSaverJsonFile();
+                    }
                 }
 
                 statusFile.Save(status);
