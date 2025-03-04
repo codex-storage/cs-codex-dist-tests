@@ -9,6 +9,7 @@ namespace AutoClient.Modes.FolderStore
         private readonly CodexWrapper instance;
         private readonly JsonFile<FolderStatus> statusFile;
         private readonly FolderStatus status;
+        private readonly BalanceChecker balanceChecker;
         private int changeCounter = 0;
         private int failureCount = 0;
 
@@ -16,6 +17,7 @@ namespace AutoClient.Modes.FolderStore
         {
             this.app = app;
             this.instance = instance;
+            balanceChecker = new BalanceChecker(app);
 
             statusFile = new JsonFile<FolderStatus>(app, Path.Combine(app.Config.FolderToStore, FolderSaverFilename));
             status = statusFile.Load();
@@ -27,6 +29,7 @@ namespace AutoClient.Modes.FolderStore
             if (!folderFiles.Any()) throw new Exception("No files found in " + app.Config.FolderToStore);
 
             changeCounter = 0;
+            balanceChecker.Check();
             foreach (var folderFile in folderFiles)
             {
                 if (cts.IsCancellationRequested) return;
@@ -46,6 +49,7 @@ namespace AutoClient.Modes.FolderStore
                 if (changeCounter > 5)
                 {
                     changeCounter = 0;
+                    balanceChecker.Check();
                     SaveFolderSaverJsonFile();
                 }
 

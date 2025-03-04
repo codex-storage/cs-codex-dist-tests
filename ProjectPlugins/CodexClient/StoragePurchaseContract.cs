@@ -143,7 +143,7 @@ namespace CodexClient
         private void LogSubmittedDuration()
         {
             Log($"Pending to Submitted in {Time.FormatDuration(PendingToSubmitted)} " +
-                $"( < {Time.FormatDuration(gracePeriod)})");
+                $"( < {Time.FormatDuration(Purchase.Expiry + gracePeriod)})");
         }
 
         private void LogStartedDuration()

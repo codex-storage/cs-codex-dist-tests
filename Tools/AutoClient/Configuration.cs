@@ -41,6 +41,9 @@ namespace AutoClient
         [Uniform("folderToStore", "fts", "FOLDERTOSTORE", false, "When set, autoclient will attempt to upload and purchase storage for every non-JSON file in the provided folder.")]
         public string FolderToStore { get; set; } = "/data/EthereumMainnetPreMergeEraFiles";
 
+        [Uniform("ethAddressFile", "eaf", "ETHADDRESSFILE", false, "File with eth address used by codex node. Used for balance checking if geth/contracts information is provided.")]
+        public string EthAddressFile { get; set; } = "/root/codex-testnet-starter/scripts/eth.address";
+
         public string LogPath
         {
             get
