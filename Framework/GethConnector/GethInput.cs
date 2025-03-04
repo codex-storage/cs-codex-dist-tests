@@ -45,7 +45,11 @@
         private static string? GetEnvVar(List<string> error, string name)
         {
             var result = Environment.GetEnvironmentVariable(name);
-            if (string.IsNullOrEmpty(result)) error.Add($"'{name}' is not set.");
+            if (string.IsNullOrEmpty(result))
+            {
+                error.Add($"'{name}' is not set.");
+                return null;
+            }
             return result.Trim();
         }
     }

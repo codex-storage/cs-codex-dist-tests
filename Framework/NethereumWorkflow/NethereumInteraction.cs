@@ -50,6 +50,21 @@ namespace NethereumWorkflow
             return Time.Wait(handler.QueryAsync<TResult>(contractAddress, function));
         }
 
+        public TResult Call<TFunction, TResult>(string contractAddress, TFunction function, ulong blockNumber) where TFunction : FunctionMessage, new()
+        {
+            log.Debug(typeof(TFunction).ToString());
+            var handler = web3.Eth.GetContractQueryHandler<TFunction>();
+            return Time.Wait(handler.QueryAsync<TResult>(contractAddress, function, new BlockParameter(blockNumber)));
+        }
+
+        public void Call<TFunction>(string contractAddress, TFunction function, ulong blockNumber) where TFunction : FunctionMessage, new()
+        {
+            log.Debug(typeof(TFunction).ToString());
+            var handler = web3.Eth.GetContractQueryHandler<TFunction>();
+            var result = Time.Wait(handler.QueryRawAsync(contractAddress, function, new BlockParameter(blockNumber)));
+            var aaaa = 0;
+        }
+
         public string SendTransaction<TFunction>(string contractAddress, TFunction function) where TFunction : FunctionMessage, new()
         {
             log.Debug();

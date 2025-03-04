@@ -14,12 +14,14 @@ namespace TestNetRewarder
         private readonly Configuration config;
         private readonly BotClient client;
         private readonly ILog log;
+        private DateTime lastPeriodUpdateUtc;
 
         public Processor(Configuration config, BotClient client, ICodexContracts contracts, ILog log)
         {
             this.config = config;
             this.client = client;
             this.log = log;
+            lastPeriodUpdateUtc = DateTime.UtcNow;
 
             builder = new RequestBuilder();
             rewardChecker = new RewardChecker(builder);
@@ -68,6 +70,7 @@ namespace TestNetRewarder
         private async Task<int> ProcessEvents(TimeRange timeRange)
         {
             var numberOfChainEvents = chainState.Update(timeRange.To);
+            ProcessPeriodUpdate();
 
             var events = eventsFormatter.GetEvents();
             var errors = eventsFormatter.GetErrors();
@@ -78,6 +81,14 @@ namespace TestNetRewarder
                 await client.SendRewards(request);
             }
             return numberOfChainEvents;
+        }
+
+        private void ProcessPeriodUpdate()
+        {
+            if (DateTime.UtcNow < (lastPeriodUpdateUtc + TimeSpan.FromHours(1.0))) return;
+            lastPeriodUpdateUtc = DateTime.UtcNow;
+
+            eventsFormatter.ProcessPeriodReports(chainState.PeriodMonitor.GetAndClearReports());
         }
     }
 }

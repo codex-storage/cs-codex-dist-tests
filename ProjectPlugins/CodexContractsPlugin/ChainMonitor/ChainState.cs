@@ -46,10 +46,12 @@ namespace CodexContractsPlugin.ChainMonitor
             this.contracts = contracts;
             handler = changeHandler;
             TotalSpan = new TimeRange(startUtc, startUtc);
+            PeriodMonitor = new PeriodMonitor(this.log, contracts);
         }
 
         public TimeRange TotalSpan { get; private set; }
         public IChainStateRequest[] Requests => requests.ToArray();
+        public PeriodMonitor PeriodMonitor { get; }
 
         public int Update()
         {
@@ -88,9 +90,15 @@ namespace CodexContractsPlugin.ChainMonitor
             {
                 var blockEvents = events.All.Where(e => e.Block.BlockNumber == b).ToArray();
                 ApplyEvents(b, blockEvents, eventUtc);
+                UpdatePeriodMonitor(b, eventUtc);
 
                 eventUtc += spanPerBlock;
             }
+        }
+
+        private void UpdatePeriodMonitor(ulong blockNumber, DateTime eventUtc)
+        {
+            PeriodMonitor.Update(blockNumber, eventUtc, Requests);
         }
 
         private void ApplyEvents(ulong blockNumber, IHasBlock[] blockEvents, DateTime eventsUtc)

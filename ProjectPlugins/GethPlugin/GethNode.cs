@@ -20,6 +20,8 @@ namespace GethPlugin
         string SendEth(IHasEthAddress account, Ether eth);
         string SendEth(EthAddress account, Ether eth);
         TResult Call<TFunction, TResult>(string contractAddress, TFunction function) where TFunction : FunctionMessage, new();
+        TResult Call<TFunction, TResult>(string contractAddress, TFunction function, ulong blockNumber) where TFunction : FunctionMessage, new();
+        void Call<TFunction>(string contractAddress, TFunction function, ulong blockNumber) where TFunction : FunctionMessage, new();
         string SendTransaction<TFunction>(string contractAddress, TFunction function) where TFunction : FunctionMessage, new();
         Transaction GetTransaction(string transactionHash);
         decimal? GetSyncedBlockNumber();
@@ -129,6 +131,16 @@ namespace GethPlugin
         public TResult Call<TFunction, TResult>(string contractAddress, TFunction function) where TFunction : FunctionMessage, new()
         {
             return StartInteraction().Call<TFunction, TResult>(contractAddress, function);
+        }
+
+        public TResult Call<TFunction, TResult>(string contractAddress, TFunction function, ulong blockNumber) where TFunction : FunctionMessage, new()
+        {
+            return StartInteraction().Call<TFunction, TResult>(contractAddress, function, blockNumber);
+        }
+
+        public void Call<TFunction>(string contractAddress, TFunction function, ulong blockNumber) where TFunction : FunctionMessage, new()
+        {
+            StartInteraction().Call(contractAddress, function, blockNumber);
         }
 
         public string SendTransaction<TFunction>(string contractAddress, TFunction function) where TFunction : FunctionMessage, new()

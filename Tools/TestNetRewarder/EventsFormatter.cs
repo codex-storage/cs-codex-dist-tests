@@ -102,6 +102,28 @@ namespace TestNetRewarder
             errors.Add(msg);
         }
 
+        public void ProcessPeriodReports(PeriodReport[] periodReports)
+        {
+            var lines = periodReports.Select(FormatPeriodReport).ToList();
+            lines.Insert(0, FormatPeriodReportLine("period", "totalSlots", "required", "missed"));
+            AddBlock(0, "Proof system report", lines.ToArray());
+        }
+
+        private string FormatPeriodReport(PeriodReport report)
+        {
+            return FormatPeriodReportLine(
+                periodNumber: report.PeriodNumber.ToString(),
+                totalSlots: report.TotalNumSlots.ToString(),
+                totalRequired: report.TotalProofsRequired.ToString(),
+                totalMissed: report.MissedProofs.Length.ToString()
+            );
+        }
+
+        private string FormatPeriodReportLine(string periodNumber, string totalSlots, string totalRequired, string totalMissed)
+        {
+            return $"{periodNumber.PadLeft(10)} {totalSlots.PadLeft(10)} {totalRequired.PadLeft(10)} {totalMissed.PadLeft(10)}";
+        }
+
         private void AddRequestBlock(RequestEvent requestEvent, string eventName, params string[] content)
         {
             var blockNumber = $"[{requestEvent.Block.BlockNumber} {FormatDateTime(requestEvent.Block.Utc)}]";
