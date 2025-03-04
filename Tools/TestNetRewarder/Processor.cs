@@ -25,14 +25,15 @@ namespace TestNetRewarder
 
             builder = new RequestBuilder();
             rewardChecker = new RewardChecker(builder);
-            eventsFormatter = new EventsFormatter();
+            eventsFormatter = new EventsFormatter(config);
 
             var handler = new ChainStateChangeHandlerMux(
                 rewardChecker.Handler,
                 eventsFormatter
             );
 
-            chainState = new ChainState(log, contracts, handler, config.HistoryStartUtc);
+            chainState = new ChainState(log, contracts, handler, config.HistoryStartUtc,
+                doProofPeriodMonitoring: config.ShowProofPeriodReports > 0);
         }
 
         public async Task Initialize()
@@ -85,6 +86,7 @@ namespace TestNetRewarder
 
         private void ProcessPeriodUpdate()
         {
+            if (config.ShowProofPeriodReports < 1) return;
             if (DateTime.UtcNow < (lastPeriodUpdateUtc + TimeSpan.FromHours(1.0))) return;
             lastPeriodUpdateUtc = DateTime.UtcNow;
 

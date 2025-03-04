@@ -83,6 +83,8 @@
         public string Finished => "✅";
         public string Cancelled => "🚫";
         public string Failed => "❌";
+        public string ProofSubmitted => "🎵";
+        public string ProofReport => "🔎";
 
         public string StringToEmojis(string input, int outLength)
         {

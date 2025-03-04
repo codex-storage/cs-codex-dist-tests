@@ -1,4 +1,5 @@
-﻿using CodexContractsPlugin;
+﻿using BlockchainUtils;
+using CodexContractsPlugin;
 using CodexContractsPlugin.ChainMonitor;
 using DiscordRewards;
 using GethPlugin;
@@ -14,6 +15,12 @@ namespace TestNetRewarder
         private readonly List<ChainEventMessage> events = new List<ChainEventMessage>();
         private readonly List<string> errors = new List<string>();
         private readonly EmojiMaps emojiMaps = new EmojiMaps();
+        private readonly Configuration config;
+
+        public EventsFormatter(Configuration config)
+        {
+            this.config = config;
+        }
 
         public ChainEventMessage[] GetInitializationEvents(Configuration config)
         {
@@ -96,7 +103,16 @@ namespace TestNetRewarder
                 $"Slot Index: {slotIndex}"
             );
         }
-        
+
+        public void OnProofSubmitted(BlockTimeEntry block, string id)
+        {
+            if (config.ShowProofSubmittedEvents < 1) return;
+
+            AddBlock(block.BlockNumber, $"{emojiMaps.ProofSubmitted} **Proof submitted**",
+                $"Id: {id}"
+            );
+        }
+
         public void OnError(string msg)
         {
             errors.Add(msg);
@@ -106,7 +122,7 @@ namespace TestNetRewarder
         {
             var lines = periodReports.Select(FormatPeriodReport).ToList();
             lines.Insert(0, FormatPeriodReportLine("period", "totalSlots", "required", "missed"));
-            AddBlock(0, "Proof system report", lines.ToArray());
+            AddBlock(0, $"{emojiMaps.ProofReport} **Proof system report**", lines.ToArray());
         }
 
         private string FormatPeriodReport(PeriodReport report)

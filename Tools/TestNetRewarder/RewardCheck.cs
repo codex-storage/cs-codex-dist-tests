@@ -80,6 +80,10 @@ namespace TestNetRewarder
         {
         }
 
+        public void OnProofSubmitted(BlockTimeEntry block, string id)
+        {
+        }
+
         private void GiveReward(RewardConfig reward, EthAddress receiver)
         {
             giver.Give(reward, receiver);

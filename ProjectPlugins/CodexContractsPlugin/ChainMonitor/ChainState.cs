@@ -17,7 +17,7 @@ namespace CodexContractsPlugin.ChainMonitor
         void OnSlotFilled(RequestEvent requestEvent, EthAddress host, BigInteger slotIndex);
         void OnSlotFreed(RequestEvent requestEvent, BigInteger slotIndex);
         void OnSlotReservationsFull(RequestEvent requestEvent, BigInteger slotIndex);
-
+        void OnProofSubmitted(BlockTimeEntry block, string id);
         void OnError(string msg);
     }
 
@@ -39,12 +39,14 @@ namespace CodexContractsPlugin.ChainMonitor
         private readonly ILog log;
         private readonly ICodexContracts contracts;
         private readonly IChainStateChangeHandler handler;
+        private readonly bool doProofPeriodMonitoring;
 
-        public ChainState(ILog log, ICodexContracts contracts, IChainStateChangeHandler changeHandler, DateTime startUtc)
+        public ChainState(ILog log, ICodexContracts contracts, IChainStateChangeHandler changeHandler, DateTime startUtc, bool doProofPeriodMonitoring)
         {
             this.log = new LogPrefixer(log, "(ChainState) ");
             this.contracts = contracts;
             handler = changeHandler;
+            this.doProofPeriodMonitoring = doProofPeriodMonitoring;
             TotalSpan = new TimeRange(startUtc, startUtc);
             PeriodMonitor = new PeriodMonitor(this.log, contracts);
         }
@@ -98,6 +100,7 @@ namespace CodexContractsPlugin.ChainMonitor
 
         private void UpdatePeriodMonitor(ulong blockNumber, DateTime eventUtc)
         {
+            if (!doProofPeriodMonitoring) return;
             PeriodMonitor.Update(blockNumber, eventUtc, Requests);
         }
 
@@ -171,6 +174,13 @@ namespace CodexContractsPlugin.ChainMonitor
             if (r == null) return;
             r.Log($"[{@event.Block.BlockNumber}] SlotReservationsFull (slotIndex:{@event.SlotIndex})");
             handler.OnSlotReservationsFull(new RequestEvent(@event.Block, r), @event.SlotIndex);
+        }
+
+        private void ApplyEvent(ProofSubmittedEventDTO @event)
+        {
+            var id = Base58.Encode(@event.Id);
+            log.Log($"[{@event.Block.BlockNumber}] Proof submitted (id:{id})");
+            handler.OnProofSubmitted(@event.Block, id);
         }
 
         private void ApplyTimeImplicitEvents(ulong blockNumber, DateTime eventsUtc)

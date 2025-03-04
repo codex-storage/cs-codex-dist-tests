@@ -27,6 +27,12 @@ namespace TestNetRewarder
         [Uniform("events-overview", "eo", "EVENTSOVERVIEW", false, "When greater than zero, chain event summary will be generated.")]
         public int CreateChainEventsOverview { get; set; } = 1;
 
+        [Uniform("proof-period-reports", "ppr", "PROOFPERIODREPORTS", false, "When greater than zero, chain event summary will include period reports of the proving system.")]
+        public int ShowProofPeriodReports { get; set; } = 1;
+
+        [Uniform("proof-submitted-events", "pse", "PROOFSUBMITTEDEVENTS", false, "When greater than zero, chain event summary will include proof-submitted events.")]
+        public int ShowProofSubmittedEvents { get; set; } = 1;
+
         public string LogPath
         {
             get

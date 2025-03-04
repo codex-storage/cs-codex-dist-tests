@@ -14,7 +14,8 @@ namespace CodexContractsPlugin.ChainMonitor
             RequestFailedEventDTO[] failed,
             SlotFilledEventDTO[] slotFilled,
             SlotFreedEventDTO[] slotFreed,
-            SlotReservationsFullEventDTO[] slotReservationsFull
+            SlotReservationsFullEventDTO[] slotReservationsFull,
+            ProofSubmittedEventDTO[] proofSubmitted
             )
         {
             BlockInterval = blockInterval;
@@ -25,8 +26,8 @@ namespace CodexContractsPlugin.ChainMonitor
             SlotFilled = slotFilled;
             SlotFreed = slotFreed;
             SlotReservationsFull = slotReservationsFull;
-
-            All = ConcatAll<IHasBlock>(requests, fulfilled, cancelled, failed, slotFilled, SlotFreed, SlotReservationsFull);
+            ProofSubmitted = proofSubmitted;
+            All = ConcatAll<IHasBlock>(requests, fulfilled, cancelled, failed, slotFilled, SlotFreed, SlotReservationsFull, ProofSubmitted);
         }
 
         public BlockInterval BlockInterval { get; }
@@ -37,6 +38,7 @@ namespace CodexContractsPlugin.ChainMonitor
         public SlotFilledEventDTO[] SlotFilled { get; }
         public SlotFreedEventDTO[] SlotFreed { get; }
         public SlotReservationsFullEventDTO[] SlotReservationsFull { get; }
+        public ProofSubmittedEventDTO[] ProofSubmitted { get; }
         public IHasBlock[] All { get; }
 
         public static ChainEvents FromBlockInterval(ICodexContracts contracts, BlockInterval blockInterval)
@@ -59,7 +61,8 @@ namespace CodexContractsPlugin.ChainMonitor
                 events.GetRequestFailedEvents(),
                 events.GetSlotFilledEvents(),
                 events.GetSlotFreedEvents(),
-                events.GetSlotReservationsFull()
+                events.GetSlotReservationsFullEvents(),
+                events.GetProofSubmittedEvents()
             );
         }
 

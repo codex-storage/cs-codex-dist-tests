@@ -17,7 +17,8 @@ namespace CodexContractsPlugin
         RequestFailedEventDTO[] GetRequestFailedEvents();
         SlotFilledEventDTO[] GetSlotFilledEvents();
         SlotFreedEventDTO[] GetSlotFreedEvents();
-        SlotReservationsFullEventDTO[] GetSlotReservationsFull();
+        SlotReservationsFullEventDTO[] GetSlotReservationsFullEvents();
+        ProofSubmittedEventDTO[] GetProofSubmittedEvents();
     }
 
     public class CodexContractsEvents : ICodexContractsEvents
@@ -86,9 +87,15 @@ namespace CodexContractsPlugin
             return events.Select(SetBlockOnEvent).ToArray();
         }
 
-        public SlotReservationsFullEventDTO[] GetSlotReservationsFull()
+        public SlotReservationsFullEventDTO[] GetSlotReservationsFullEvents()
         {
             var events = gethNode.GetEvents<SlotReservationsFullEventDTO>(deployment.MarketplaceAddress, BlockInterval);
+            return events.Select(SetBlockOnEvent).ToArray();
+        }
+
+        public ProofSubmittedEventDTO[] GetProofSubmittedEvents()
+        {
+            var events = gethNode.GetEvents<ProofSubmittedEventDTO>(deployment.MarketplaceAddress, BlockInterval);
             return events.Select(SetBlockOnEvent).ToArray();
         }
 

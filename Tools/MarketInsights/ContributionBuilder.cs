@@ -1,4 +1,5 @@
-﻿using CodexContractsPlugin.ChainMonitor;
+﻿using BlockchainUtils;
+using CodexContractsPlugin.ChainMonitor;
 using GethPlugin;
 using Logging;
 using System.Numerics;
@@ -55,6 +56,10 @@ namespace MarketInsights
         }
 
         public void OnSlotReservationsFull(RequestEvent requestEvent, BigInteger slotIndex)
+        {
+        }
+
+        public void OnProofSubmitted(BlockTimeEntry block, string id)
         {
         }
 

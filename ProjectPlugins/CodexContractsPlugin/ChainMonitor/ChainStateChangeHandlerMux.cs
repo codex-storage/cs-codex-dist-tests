@@ -1,4 +1,5 @@
-﻿using System.Numerics;
+﻿using BlockchainUtils;
+using System.Numerics;
 using Utils;
 
 namespace CodexContractsPlugin.ChainMonitor
@@ -55,6 +56,11 @@ namespace CodexContractsPlugin.ChainMonitor
         public void OnError(string msg)
         {
             foreach (var handler in Handlers) handler.OnError(msg);
+        }
+
+        public void OnProofSubmitted(BlockTimeEntry block, string id)
+        {
+            foreach (var handler in Handlers) handler.OnProofSubmitted(block, id);
         }
     }
 }
