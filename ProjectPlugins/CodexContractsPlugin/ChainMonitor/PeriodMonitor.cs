@@ -86,7 +86,7 @@ namespace CodexContractsPlugin.ChainMonitor
 
         private void CalcStats()
         {
-            IsEmpty = Reports.Any(r => r.TotalProofsRequired > 0);
+            IsEmpty = Reports.All(r => r.TotalProofsRequired == 0);
             PeriodLow = Reports.Min(r => r.PeriodNumber);
             PeriodHigh = Reports.Max(r => r.PeriodNumber);
             AverageNumSlots = Reports.Average(r => Convert.ToSingle(r.TotalNumSlots));
