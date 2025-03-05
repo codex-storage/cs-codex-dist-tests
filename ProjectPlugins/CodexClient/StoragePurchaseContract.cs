@@ -72,7 +72,7 @@ namespace CodexClient
             contractSubmittedUtc = DateTime.UtcNow;
             if (raiseHook) hooks.OnStorageContractSubmitted(this);
             LogSubmittedDuration();
-            AssertDuration(PendingToSubmitted, gracePeriod, nameof(PendingToSubmitted));
+            AssertDuration(PendingToSubmitted, timeout, nameof(PendingToSubmitted));
         }
 
         public void WaitForStorageContractStarted()
