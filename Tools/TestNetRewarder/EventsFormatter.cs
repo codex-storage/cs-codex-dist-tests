@@ -118,26 +118,60 @@ namespace TestNetRewarder
             errors.Add(msg);
         }
 
-        public void ProcessPeriodReports(PeriodReport[] periodReports)
+        public void ProcessPeriodReports(PeriodMonitorResult reports)
         {
-            var lines = periodReports.Select(FormatPeriodReport).ToList();
-            lines.Insert(0, FormatPeriodReportLine("period", "totalSlots", "required", "missed"));
+            if (reports.IsEmpty) return;
+
+            var lines = new List<string> {
+                $"Periods: [{reports.PeriodLow} ... {reports.PeriodHigh}]",
+                $"Average number of slots: {reports.AverageNumSlots.ToString("F2")}",
+                $"Average number of proofs required: {reports.AverageNumProofsRequired.ToString("F2")}"
+            };
+
+            AddMissedProofDetails(lines, reports.Reports);
+
             AddBlock(0, $"{emojiMaps.ProofReport} **Proof system report**", lines.ToArray());
         }
 
-        private string FormatPeriodReport(PeriodReport report)
+        private void AddMissedProofDetails(List<string> lines, PeriodReport[] reports)
         {
-            return FormatPeriodReportLine(
-                periodNumber: report.PeriodNumber.ToString(),
-                totalSlots: report.TotalNumSlots.ToString(),
-                totalRequired: report.TotalProofsRequired.ToString(),
-                totalMissed: report.MissedProofs.Length.ToString()
-            );
+            var reportsWithMissedProofs = reports.Where(r => r.MissedProofs.Length > 0).ToArray();
+            if (reportsWithMissedProofs.Length < 1)
+            {
+                lines.Add($"No proofs were missed {emojiMaps.NoProofsMissed}");
+                return;
+            }
+
+            var totalMissed = reportsWithMissedProofs.Sum(r => r.MissedProofs.Length);
+            if (totalMissed > 10)
+            {
+                lines.Add($"[{totalMissed}] proofs were missed {emojiMaps.ManyProofsMissed}");
+                return;
+            }
+
+            foreach (var report in reportsWithMissedProofs)
+            {
+                DescribeMissedProof(lines, report);
+            }
         }
 
-        private string FormatPeriodReportLine(string periodNumber, string totalSlots, string totalRequired, string totalMissed)
+        private void DescribeMissedProof(List<string> lines, PeriodReport report)
         {
-            return $"{periodNumber.PadLeft(10)} {totalSlots.PadLeft(10)} {totalRequired.PadLeft(10)} {totalMissed.PadLeft(10)}";
+            foreach (var missedProof in report.MissedProofs)
+            {
+                DescribeMissedProof(lines, missedProof);
+            }
+        }
+
+        private void DescribeMissedProof(List<string> lines, PeriodProofMissed missedProof)
+        {
+            lines.Add($"[{FormatHost(missedProof.Host)}] missed proof for {FormatRequestId(missedProof.Request)} (slotIndex: {missedProof.SlotIndex})");
+        }
+
+        private string FormatHost(EthAddress? host)
+        {
+            if (host == null) return "Unknown host";
+            return host.Address;
         }
 
         private void AddRequestBlock(RequestEvent requestEvent, string eventName, params string[] content)
@@ -190,9 +224,19 @@ namespace TestNetRewarder
 
         private string FormatRequestId(RequestEvent requestEvent)
         {
+            return FormatRequestId(requestEvent.Request);
+        }
+
+        private string FormatRequestId(IChainStateRequest request)
+        {
+            return FormatRequestId(request.Request.Id);
+        }
+
+        private string FormatRequestId(string id)
+        {
             return
-                $"({emojiMaps.StringToEmojis(requestEvent.Request.Request.Id, 3)})" +
-                $"`{requestEvent.Request.Request.Id}`";
+                $"({emojiMaps.StringToEmojis(id, 3)})" +
+                $"`{id}`";
         }
 
         private string BytesToHexString(byte[] bytes)

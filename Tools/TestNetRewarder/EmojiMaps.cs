@@ -85,6 +85,8 @@
         public string Failed => "❌";
         public string ProofSubmitted => "🎵";
         public string ProofReport => "🔎";
+        public string NoProofsMissed => "🏛";
+        public string ManyProofsMissed => "😱";
 
         public string StringToEmojis(string input, int outLength)
         {

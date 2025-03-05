@@ -30,11 +30,11 @@ namespace CodexContractsPlugin.ChainMonitor
             currentPeriod = period;
         }
 
-        public PeriodReport[] GetAndClearReports()
+        public PeriodMonitorResult GetAndClearReports()
         {
             var result = reports.ToArray();
             reports.Clear();
-            return result;
+            return new PeriodMonitorResult(result);
         }
 
         private void CreateReportForPeriod(ulong lastBlockInPeriod, ulong periodNumber, IChainStateRequest[] requests)
@@ -64,6 +64,46 @@ namespace CodexContractsPlugin.ChainMonitor
                 }
             }
             reports.Add(new PeriodReport(periodNumber, total, required, missed.ToArray()));
+        }
+    }
+
+    public class PeriodMonitorResult
+    {
+        public PeriodMonitorResult(PeriodReport[] reports)
+        {
+            Reports = reports;
+
+            CalcStats();
+        }
+
+        public PeriodReport[] Reports { get; }
+
+        public bool IsEmpty { get; private set; }
+        public ulong PeriodLow { get; private set; }
+        public ulong PeriodHigh { get; private set; }
+        public float AverageNumSlots { get; private set; }
+        public float AverageNumProofsRequired { get; private set; }
+
+        private void CalcStats()
+        {
+            IsEmpty = true;
+            PeriodLow = ulong.MaxValue;
+            PeriodHigh = ulong.MinValue;
+            AverageNumSlots = 0.0f;
+            AverageNumProofsRequired = 0.0f;
+            float count = Reports.Length;
+
+            foreach (var report in Reports)
+            {
+                if (report.TotalProofsRequired > 0) IsEmpty = false;
+                PeriodLow = Math.Min(PeriodLow, report.PeriodNumber);
+                PeriodHigh = Math.Min(PeriodHigh, report.PeriodNumber);
+                AverageNumSlots += Convert.ToSingle(report.TotalNumSlots);
+                AverageNumProofsRequired += Convert.ToSingle(report.TotalProofsRequired);
+            }
+
+            AverageNumSlots = AverageNumSlots / count;
+            AverageNumProofsRequired = AverageNumProofsRequired / count;
         }
     }
 
