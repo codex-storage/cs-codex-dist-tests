@@ -86,24 +86,11 @@ namespace CodexContractsPlugin.ChainMonitor
 
         private void CalcStats()
         {
-            IsEmpty = true;
-            PeriodLow = ulong.MaxValue;
-            PeriodHigh = ulong.MinValue;
-            AverageNumSlots = 0.0f;
-            AverageNumProofsRequired = 0.0f;
-            float count = Reports.Length;
-
-            foreach (var report in Reports)
-            {
-                if (report.TotalProofsRequired > 0) IsEmpty = false;
-                PeriodLow = Math.Min(PeriodLow, report.PeriodNumber);
-                PeriodHigh = Math.Min(PeriodHigh, report.PeriodNumber);
-                AverageNumSlots += Convert.ToSingle(report.TotalNumSlots);
-                AverageNumProofsRequired += Convert.ToSingle(report.TotalProofsRequired);
-            }
-
-            AverageNumSlots = AverageNumSlots / count;
-            AverageNumProofsRequired = AverageNumProofsRequired / count;
+            IsEmpty = Reports.Any(r => r.TotalProofsRequired > 0);
+            PeriodLow = Reports.Min(r => r.PeriodNumber);
+            PeriodHigh = Reports.Max(r => r.PeriodNumber);
+            AverageNumSlots = Reports.Average(r => Convert.ToSingle(r.TotalNumSlots));
+            AverageNumProofsRequired = Reports.Average(r => Convert.ToSingle(r.TotalProofsRequired));
         }
     }
 

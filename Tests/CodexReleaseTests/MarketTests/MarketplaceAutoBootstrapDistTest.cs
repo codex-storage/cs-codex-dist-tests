@@ -78,6 +78,11 @@ namespace CodexReleaseTests.MarketTests
             return hosts;
         }
 
+        public void AssertTstBalance(ICodexNode node, TestToken expectedBalance, string message)
+        {
+            AssertTstBalance(node.EthAddress, expectedBalance, message);
+        }
+
         public void AssertTstBalance(EthAddress address, TestToken expectedBalance, string message)
         {
             var retry = GetBalanceAssertRetry();
@@ -85,18 +90,11 @@ namespace CodexReleaseTests.MarketTests
             {
                 var balance = GetTstBalance(address);
 
-                Assert.That(balance, Is.EqualTo(expectedBalance), message);
-            });
-        }
-
-        public void AssertTstBalance(ICodexNode node, TestToken expectedBalance, string message)
-        {
-            var retry = GetBalanceAssertRetry();
-            retry.Run(() =>
-            {
-                var balance = GetTstBalance(node);
-
-                Assert.That(balance, Is.EqualTo(expectedBalance), message);
+                if (balance != expectedBalance)
+                {
+                    throw new Exception(nameof(AssertTstBalance) +
+                        $" expected: {expectedBalance} but was: {balance} - message: " + message);
+                }
             });
         }
 
@@ -107,14 +105,18 @@ namespace CodexReleaseTests.MarketTests
             {
                 var balance = GetEthBalance(node);
 
-                Assert.That(balance, Is.EqualTo(expectedBalance), message);
+                if (balance != expectedBalance)
+                {
+                    throw new Exception(nameof(AssertEthBalance) + 
+                        $" expected: {expectedBalance} but was: {balance} - message: " + message);
+                }
             });
         }
 
         private Retry GetBalanceAssertRetry()
         {
             return new Retry("AssertBalance",
-                maxTimeout: TimeSpan.FromMinutes(30.0),
+                maxTimeout: TimeSpan.FromMinutes(10.0),
                 sleepAfterFail: TimeSpan.FromSeconds(10.0),
                 onFail: f => { });
         }
@@ -217,7 +219,10 @@ namespace CodexReleaseTests.MarketTests
                 var retry = GetBalanceAssertRetry();
                 retry.Run(() =>
                 {
-                    Assert.That(GetTstBalance(host), Is.GreaterThanOrEqualTo(StartingBalanceTST.Tst()));
+                    if (GetTstBalance(host) < StartingBalanceTST.Tst())
+                    {
+                        throw new Exception(nameof(AssertHostsCollateralsAreUnchanged));
+                    }
                 });
             }
         }

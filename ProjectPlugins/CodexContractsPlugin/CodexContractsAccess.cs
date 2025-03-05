@@ -105,17 +105,6 @@ namespace CodexContractsPlugin
             return new CodexContractsEvents(log, gethNode, Deployment, blockInterval);
         }
 
-        public byte[] GetSlotId(Request request, decimal slotIndex)
-        {
-            var encoder = new ABIEncode();
-            var encoded = encoder.GetABIEncoded(
-                new ABIValue("bytes32", request.RequestId),
-                new ABIValue("uint256", slotIndex.ToBig())
-            );
-
-            return Sha3Keccack.Current.CalculateHash(encoded);
-        }
-
         public EthAddress? GetSlotHost(Request storageRequest, decimal slotIndex)
         {
             var slotId = GetSlotId(storageRequest, slotIndex);
@@ -164,6 +153,17 @@ namespace CodexContractsPlugin
 
             var missing = IsProofMissing(slotId, blockNumber, period);
             return new ProofState(required, missing);
+        }
+
+        private byte[] GetSlotId(Request request, decimal slotIndex)
+        {
+            var encoder = new ABIEncode();
+            var encoded = encoder.GetABIEncoded(
+                new ABIValue("bytes32", request.RequestId),
+                new ABIValue("uint256", slotIndex.ToBig())
+            );
+
+            return Sha3Keccack.Current.CalculateHash(encoded);
         }
 
         private bool IsProofRequired(byte[] slotId, ulong blockNumber)

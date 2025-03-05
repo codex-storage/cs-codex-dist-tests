@@ -36,6 +36,41 @@
 
             return string.Join(" + ", tokens);
         }
+
+        public static Ether operator +(Ether a, Ether b)
+        {
+            return new Ether(a.Wei + b.Wei);
+        }
+
+        public static Ether operator -(Ether a, Ether b)
+        {
+            return new Ether(a.Wei - b.Wei);
+        }
+
+        public static Ether operator *(Ether a, int b)
+        {
+            return new Ether(a.Wei * b);
+        }
+
+        public static bool operator <(Ether a, Ether b)
+        {
+            return a.Wei < b.Wei;
+        }
+
+        public static bool operator >(Ether a, Ether b)
+        {
+            return a.Wei > b.Wei;
+        }
+
+        public static bool operator ==(Ether a, Ether b)
+        {
+            return a.Wei == b.Wei;
+        }
+
+        public static bool operator !=(Ether a, Ether b)
+        {
+            return a.Wei != b.Wei;
+        }
     }
 
     public static class TokensIntExtensions
