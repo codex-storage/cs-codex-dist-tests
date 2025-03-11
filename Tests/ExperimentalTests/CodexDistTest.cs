@@ -182,6 +182,7 @@ namespace CodexTests
 
         public void AssertBalance(ICodexContracts contracts, ICodexNode codexNode, Constraint constraint, string msg = "")
         {
+            Assert.Fail("Depricated, use MarketplaceAutobootstrapDistTest assertBalances instead.");
             AssertHelpers.RetryAssert(constraint, () => contracts.GetTestTokenBalance(codexNode), nameof(AssertBalance) + msg);
         }
 

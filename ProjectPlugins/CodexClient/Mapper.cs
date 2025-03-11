@@ -37,7 +37,7 @@ namespace CodexClient
             };
         }
 
-        public CodexOpenApi.SalesAvailabilityCREATE Map(StorageAvailability availability)
+        public CodexOpenApi.SalesAvailabilityCREATE Map(CreateStorageAvailability availability)
         {
             return new CodexOpenApi.SalesAvailabilityCREATE
             {
@@ -71,15 +71,13 @@ namespace CodexClient
         {
             return new StorageAvailability
             (
+                availability.Id,
                 ToByteSize(availability.TotalSize),
                 ToTimespan(availability.Duration),
                 new TestToken(ToBigIng(availability.MinPricePerBytePerSecond)),
-                new TestToken(ToBigIng(availability.TotalCollateral))
-            )
-            {
-                Id = availability.Id,
-                FreeSpace = ToByteSize(availability.FreeSize),
-            };
+                new TestToken(ToBigIng(availability.TotalCollateral)),
+                ToByteSize(availability.FreeSize)
+            );
         }
 
         public StoragePurchase Map(CodexOpenApi.Purchase purchase)

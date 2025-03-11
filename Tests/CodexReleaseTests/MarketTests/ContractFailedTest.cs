@@ -7,14 +7,16 @@ namespace CodexReleaseTests.MarketTests
 {
     public class ContractFailedTest : MarketplaceAutoBootstrapDistTest
     {
-        protected override int NumberOfHosts => 4;
+        private const int FilesizeMb = 10;
+        private const int NumberOfSlots = 3;
+
+        protected override int NumberOfHosts => 6;
         protected override int NumberOfClients => 1;
-        protected override ByteSize HostAvailabilitySize => 1.GB();
-        protected override TimeSpan HostAvailabilityMaxDuration => TimeSpan.FromDays(1.0);
+        protected override ByteSize HostAvailabilitySize => (5 * FilesizeMb).MB();
+        protected override TimeSpan HostAvailabilityMaxDuration => TimeSpan.FromDays(5.0);
         private readonly TestToken pricePerBytePerSecond = 10.TstWei();
 
         [Test]
-        [Ignore("Disabled for now: Test is unstable.")]
         public void ContractFailed()
         {
             var hosts = StartHosts();
@@ -32,6 +34,7 @@ namespace CodexReleaseTests.MarketTests
             hosts.Stop(waitTillStopped: true);
 
             WaitForSlotFreedEvents();
+            AssertProofMissedReports();
 
             request.WaitForContractFailed();
         }
@@ -47,7 +50,7 @@ namespace CodexReleaseTests.MarketTests
             {
                 var events = GetContracts().GetEvents(GetTestRunTimeRange());
                 var slotFreed = events.GetSlotFreedEvents();
-                if (slotFreed.Length == NumberOfHosts)
+                if (slotFreed.Length == NumberOfSlots)
                 {
                     Log($"{nameof(WaitForSlotFreedEvents)} took {Time.FormatDuration(DateTime.UtcNow - start)}");
                     return;
@@ -86,16 +89,16 @@ namespace CodexReleaseTests.MarketTests
 
         private IStoragePurchaseContract CreateStorageRequest(ICodexNode client)
         {
-            var cid = client.UploadFile(GenerateTestFile(5.MB()));
+            var cid = client.UploadFile(GenerateTestFile(FilesizeMb.MB()));
             return client.Marketplace.RequestStorage(new StoragePurchaseRequest(cid)
             {
                 Duration = TimeSpan.FromHours(1.0),
                 Expiry = TimeSpan.FromHours(0.2),
-                MinRequiredNumberOfNodes = (uint)NumberOfHosts,
-                NodeFailureTolerance = (uint)(NumberOfHosts / 2),
+                MinRequiredNumberOfNodes = NumberOfSlots,
+                NodeFailureTolerance = 1,
                 PricePerBytePerSecond = pricePerBytePerSecond,
                 ProofProbability = 1, // Require a proof every period
-                CollateralPerByte = 1.Tst()
+                CollateralPerByte = 1.TstWei()
             });
         }
     }

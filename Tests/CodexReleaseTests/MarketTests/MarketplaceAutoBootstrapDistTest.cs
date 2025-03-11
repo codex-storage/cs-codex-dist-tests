@@ -1,5 +1,6 @@
 ﻿using CodexClient;
 using CodexContractsPlugin;
+using CodexContractsPlugin.ChainMonitor;
 using CodexContractsPlugin.Marketplace;
 using CodexPlugin;
 using CodexTests;
@@ -22,13 +23,17 @@ namespace CodexReleaseTests.MarketTests
             base.LifecycleStart(lifecycle);
             var geth = StartGethNode(s => s.IsMiner());
             var contracts = Ci.StartCodexContracts(geth);
-            handles.Add(lifecycle, new MarketplaceHandle(geth, contracts));
+            var monitor = new ChainMonitor(lifecycle.Log, contracts, lifecycle.TestStart, TimeSpan.FromSeconds(1.0));
+            monitor.Start();
+
+            handles.Add(lifecycle, new MarketplaceHandle(geth, contracts, monitor));
         }
 
         protected override void LifecycleStop(TestLifecycle lifecycle, DistTestResult result)
         {
-            base.LifecycleStop(lifecycle, result);
+            handles[lifecycle].Monitor.Stop();
             handles.Remove(lifecycle);
+            base.LifecycleStop(lifecycle, result);
         }
 
         protected IGethNode GetGeth()
@@ -44,18 +49,27 @@ namespace CodexReleaseTests.MarketTests
         protected TimeSpan GetPeriodDuration()
         {
             var config = GetContracts().Deployment.Config;
-            return TimeSpan.FromSeconds(((double)config.Proofs.Period));
+            return TimeSpan.FromSeconds(config.Proofs.Period);
+        }
+
+        protected PeriodMonitorResult GetPeriodMonitorReports()
+        {
+            return handles[Get()].Monitor.GetPeriodReports();
         }
 
         protected abstract int NumberOfHosts { get; }
         protected abstract int NumberOfClients { get; }
         protected abstract ByteSize HostAvailabilitySize { get; }
         protected abstract TimeSpan HostAvailabilityMaxDuration { get; }
+        protected TimeSpan HostBlockTTL { get; } = TimeSpan.FromMinutes(1.0);
 
         public ICodexNodeGroup StartHosts()
         {
             var hosts = StartCodex(NumberOfHosts, s => s
                 .WithName("host")
+                .WithBlockTTL(HostBlockTTL)
+                .WithBlockMaintenanceNumber(100000)
+                .WithBlockMaintenanceInterval(HostBlockTTL / 4)
                 .EnableMarketplace(GetGeth(), GetContracts(), m => m
                     .WithInitial(StartingBalanceEth.Eth(), StartingBalanceTST.Tst())
                     .AsStorageNode()
@@ -67,15 +81,47 @@ namespace CodexReleaseTests.MarketTests
             {
                 AssertTstBalance(host, StartingBalanceTST.Tst(), nameof(StartHosts));
                 AssertEthBalance(host, StartingBalanceEth.Eth(), nameof(StartHosts));
-                
-                host.Marketplace.MakeStorageAvailable(new StorageAvailability(
+
+                var spaceBefore = host.Space();
+                Assert.That(spaceBefore.QuotaReservedBytes, Is.EqualTo(0));
+                Assert.That(spaceBefore.QuotaUsedBytes, Is.EqualTo(0));
+
+                host.Marketplace.MakeStorageAvailable(new CreateStorageAvailability(
                     totalSpace: HostAvailabilitySize,
                     maxDuration: HostAvailabilityMaxDuration,
                     minPricePerBytePerSecond: 1.TstWei(),
                     totalCollateral: 999999.Tst())
                 );
+
+                var spaceAfter = host.Space();
+                Assert.That(spaceAfter.QuotaReservedBytes, Is.EqualTo(HostAvailabilitySize.SizeInBytes));
+                Assert.That(spaceAfter.QuotaUsedBytes, Is.EqualTo(0));
             }
             return hosts;
+        }
+
+        public void AssertHostAvailabilitiesAreEmpty(IEnumerable<ICodexNode> hosts)
+        {
+            var retry = GetAvailabilitySpaceAssertRetry();
+            retry.Run(() =>
+            {
+                foreach (var host in hosts)
+                {
+                    AssertHostAvailabilitiesAreEmpty(host);
+                }
+            });
+        }
+
+        private void AssertHostAvailabilitiesAreEmpty(ICodexNode host)
+        {
+            var availabilities = host.Marketplace.GetAvailabilities();
+            foreach (var a in availabilities)
+            {
+                if (a.FreeSpace.SizeInBytes  != a.TotalSpace.SizeInBytes)
+                {
+                    throw new Exception(nameof(AssertHostAvailabilitiesAreEmpty) + $" free: {a.FreeSpace} total: {a.TotalSpace}");
+                }
+            }
         }
 
         public void AssertTstBalance(ICodexNode node, TestToken expectedBalance, string message)
@@ -117,6 +163,14 @@ namespace CodexReleaseTests.MarketTests
         {
             return new Retry("AssertBalance",
                 maxTimeout: TimeSpan.FromMinutes(10.0),
+                sleepAfterFail: TimeSpan.FromSeconds(10.0),
+                onFail: f => { });
+        }
+
+        private Retry GetAvailabilitySpaceAssertRetry()
+        {
+            return new Retry("AssertAvailabilitySpace",
+                maxTimeout: HostBlockTTL * 3,
                 sleepAfterFail: TimeSpan.FromSeconds(10.0),
                 onFail: f => { });
         }
@@ -305,6 +359,13 @@ namespace CodexReleaseTests.MarketTests
             }, description);
         }
 
+        protected void AssertEnoughProofMissedForSlotFree(ICodexNodeGroup hosts)
+        {
+            var slotFills = GetOnChainSlotFills(hosts);
+
+            todo for each filled slot, there should be enough proofs missed to trigger the slot-free event.
+        }
+
         public class SlotFill
         {
             public SlotFill(SlotFilledEventDTO slotFilledEvent, ICodexNode host)
@@ -319,14 +380,16 @@ namespace CodexReleaseTests.MarketTests
 
         private class MarketplaceHandle
         {
-            public MarketplaceHandle(IGethNode geth, ICodexContracts contracts)
+            public MarketplaceHandle(IGethNode geth, ICodexContracts contracts, ChainMonitor monitor)
             {
                 Geth = geth;
                 Contracts = contracts;
+                Monitor = monitor;
             }
 
             public IGethNode Geth { get; }
             public ICodexContracts Contracts { get; }
+            public ChainMonitor Monitor { get; }
         }
     }
 }

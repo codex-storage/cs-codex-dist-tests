@@ -1,5 +1,4 @@
 ﻿using CodexContractsPlugin.Marketplace;
-using System.Collections.Generic;
 using Utils;
 
 namespace CodexContractsPlugin.ChainMonitor

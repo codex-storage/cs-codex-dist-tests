@@ -39,8 +39,6 @@ namespace CodexContractsPlugin.ChainMonitor
 
         private void CreateReportForPeriod(ulong lastBlockInPeriod, ulong periodNumber, IChainStateRequest[] requests)
         {
-            log.Log("Creating report for period " + periodNumber);
-
             ulong total = 0;
             ulong required = 0;
             var missed = new List<PeriodProofMissed>();
@@ -63,7 +61,9 @@ namespace CodexContractsPlugin.ChainMonitor
                     }
                 }
             }
-            reports.Add(new PeriodReport(periodNumber, total, required, missed.ToArray()));
+            var report = new PeriodReport(periodNumber, total, required, missed.ToArray());
+            log.Log($"Period report: {report}");
+            reports.Add(report);
         }
     }
 
@@ -108,6 +108,16 @@ namespace CodexContractsPlugin.ChainMonitor
         public ulong TotalNumSlots { get; }
         public ulong TotalProofsRequired { get; }
         public PeriodProofMissed[] MissedProofs { get; }
+
+        public override string ToString()
+        {
+            var missed = "None";
+            if (MissedProofs.Length > 0)
+            {
+                missed = string.Join("+", MissedProofs.Select(p => $"{p.FormatHost()} missed {p.Request.Request.Id} slot {p.SlotIndex}"));
+            }
+            return $"Period:{PeriodNumber}=[Slots:{TotalNumSlots},ProofsRequired:{TotalProofsRequired},ProofsMissed:{missed}]";
+        }
     }
 
     public class PeriodProofMissed
@@ -122,5 +132,11 @@ namespace CodexContractsPlugin.ChainMonitor
         public EthAddress? Host { get; }
         public IChainStateRequest Request { get; }
         public int SlotIndex { get; }
+
+        public string FormatHost()
+        {
+            if (Host == null) return "Unknown host";
+            return Host.Address;
+        }
     }
 }

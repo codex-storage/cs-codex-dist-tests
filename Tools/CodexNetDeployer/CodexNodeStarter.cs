@@ -69,7 +69,7 @@ namespace CodexNetDeployer
 
                     if (config.ShouldMakeStorageAvailable)
                     {
-                        var availability = new StorageAvailability(
+                        var availability = new CreateStorageAvailability(
                             totalSpace: config.StorageSell!.Value.MB(),
                             maxDuration: TimeSpan.FromSeconds(config.MaxDuration),
                             minPricePerBytePerSecond: config.MinPricePerBytePerSecond.TstWei(),

@@ -198,7 +198,7 @@ namespace ExperimentalTests.UtilityTests
                     .AsStorageNode()
                     .AsValidator()));
 
-            var availability = new StorageAvailability(
+            var availability = new CreateStorageAvailability(
                 totalSpace: Mult(GetMinFileSize(), GetNumberOfLiveHosts()),
                 maxDuration: TimeSpan.FromMinutes(30),
                 minPricePerBytePerSecond: 1.TstWei(),

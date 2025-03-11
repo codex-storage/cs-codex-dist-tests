@@ -143,7 +143,7 @@ namespace CodexClient
             return mapper.Map(OnCodex(api => api.ListDataAsync()));
         }
 
-        public StorageAvailability SalesAvailability(StorageAvailability request)
+        public StorageAvailability SalesAvailability(CreateStorageAvailability request)
         {
             var body = mapper.Map(request);
             var read = OnCodex(api => api.OfferStorageAsync(body));

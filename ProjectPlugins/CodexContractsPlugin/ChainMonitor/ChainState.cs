@@ -1,6 +1,5 @@
 ﻿using BlockchainUtils;
 using CodexContractsPlugin.Marketplace;
-using GethPlugin;
 using Logging;
 using System.Numerics;
 using Utils;
@@ -79,7 +78,7 @@ namespace CodexContractsPlugin.ChainMonitor
                 throw new Exception(msg);
             }
 
-            log.Log($"ChainState updating: {events.BlockInterval} = {events.All.Length} events.");
+            log.Debug($"ChainState updating: {events.BlockInterval} = {events.All.Length} events.");
 
             // Run through each block and apply the events to the state in order.
             var span = events.BlockInterval.TimeRange.Duration;
