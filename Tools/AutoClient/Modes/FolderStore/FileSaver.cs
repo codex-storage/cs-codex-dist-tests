@@ -165,8 +165,7 @@ namespace AutoClient.Modes.FolderStore
             }
             catch (Exception exc)
             {
-                entry.EncodedCid = string.Empty;
-                entry.PurchaseId = string.Empty;
+                entry.ClearPurchase();
                 saveChanges();
                 log.Error("Failed to start new purchase: " + exc);
                 HasFailed = true;
@@ -215,8 +214,7 @@ namespace AutoClient.Modes.FolderStore
                         else if (!update.IsSubmitted)
                         {
                             Log("Request failed to start. State: " + update.State);
-                            entry.EncodedCid = string.Empty;
-                            entry.PurchaseId = string.Empty;
+                            entry.ClearPurchase();
                             saveChanges();
                             return;
                         }

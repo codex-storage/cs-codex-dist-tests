@@ -16,6 +16,13 @@
         public string EncodedCid { get; set; } = string.Empty;
         public string PurchaseId { get; set; } = string.Empty;
         public DateTime PurchaseFinishedUtc { get; set; } = DateTime.MinValue;
+
+        public void ClearPurchase()
+        {
+            EncodedCid = string.Empty;
+            PurchaseId = string.Empty;
+            PurchaseFinishedUtc = DateTime.MinValue;
+        }
     }
 
     [Serializable]
