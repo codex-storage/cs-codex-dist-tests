@@ -1,4 +1,5 @@
 ﻿using CodexClient.Hooks;
+using CodexContractsPlugin.Marketplace;
 using Logging;
 using Newtonsoft.Json;
 using Utils;
@@ -14,7 +15,7 @@ namespace CodexClient
         void WaitForStorageContractSubmitted();
         void WaitForStorageContractStarted();
         void WaitForStorageContractFinished();
-        void WaitForContractFailed();
+        void WaitForContractFailed(MarketplaceConfig config);
     }
 
     public class StoragePurchaseContract : IStoragePurchaseContract
@@ -99,7 +100,7 @@ namespace CodexClient
             AssertDuration(SubmittedToFinished, timeout, nameof(SubmittedToFinished));
         }
 
-        public void WaitForContractFailed()
+        public void WaitForContractFailed(MarketplaceConfig config)
         {
             if (!contractStartedUtc.HasValue)
             {
@@ -107,7 +108,25 @@ namespace CodexClient
             }
             var currentContractTime = DateTime.UtcNow - contractSubmittedUtc!.Value;
             var timeout = (Purchase.Duration - currentContractTime) + gracePeriod;
+            var minTimeout = TimeNeededToFailEnoughProofsToFreeASlot(config);
+
+            if (timeout < minTimeout)
+            {
+                throw new ArgumentOutOfRangeException(
+                    $"Test is misconfigured. Assuming a proof is required every period, it will take {Time.FormatDuration(minTimeout)} " +
+                    $"to fail enough proofs for a slot to be freed. But, the storage contract will complete in {Time.FormatDuration(timeout)}. " +
+                    $"Increase the duration."
+                );
+            }
+
             WaitForStorageContractState(timeout, "failed");
+        }
+
+        private TimeSpan TimeNeededToFailEnoughProofsToFreeASlot(MarketplaceConfig config)
+        {
+            var numMissedProofsRequiredForFree = config.Collateral.MaxNumberOfSlashes;
+            var timePerProof = TimeSpan.FromSeconds(config.Proofs.Period);
+            return timePerProof * (numMissedProofsRequiredForFree + 1);
         }
 
         private void WaitForStorageContractState(TimeSpan timeout, string desiredState, int sleep = 1000)

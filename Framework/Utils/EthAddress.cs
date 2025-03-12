@@ -30,5 +30,15 @@
         {
             return Address;
         }
+
+        public static bool operator ==(EthAddress a, EthAddress b)
+        {
+            return a.Address == b.Address;
+        }
+
+        public static bool operator !=(EthAddress a, EthAddress b)
+        {
+            return a.Address != b.Address;
+        }
     }
 }

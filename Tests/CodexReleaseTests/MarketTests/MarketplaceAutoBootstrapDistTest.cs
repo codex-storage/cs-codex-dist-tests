@@ -68,8 +68,8 @@ namespace CodexReleaseTests.MarketTests
             var hosts = StartCodex(NumberOfHosts, s => s
                 .WithName("host")
                 .WithBlockTTL(HostBlockTTL)
-                .WithBlockMaintenanceNumber(100000)
-                .WithBlockMaintenanceInterval(HostBlockTTL / 4)
+                .WithBlockMaintenanceNumber(100)
+                .WithBlockMaintenanceInterval(HostBlockTTL / 2)
                 .EnableMarketplace(GetGeth(), GetContracts(), m => m
                     .WithInitial(StartingBalanceEth.Eth(), StartingBalanceTST.Tst())
                     .AsStorageNode()
@@ -236,6 +236,29 @@ namespace CodexReleaseTests.MarketTests
             }).ToArray();
         }
 
+        public SlotFree[] GetOnChainSlotFrees(ICodexNodeGroup possibleHosts, string purchaseId)
+        {
+            var fills = GetOnChainSlotFrees(possibleHosts);
+            return fills.Where(f => f
+                .SlotFreedEvent.RequestId.ToHex(false).ToLowerInvariant() == purchaseId.ToLowerInvariant())
+                .ToArray();
+        }
+
+        public SlotFree[] GetOnChainSlotFrees(ICodexNodeGroup possibleHosts)
+        {
+            var events = GetContracts().GetEvents(GetTestRunTimeRange());
+            var fills = GetOnChainSlotFills(possibleHosts);
+            var frees = events.GetSlotFreedEvents();
+            return frees.Select(f =>
+            {
+                var matchingFill = fills.Single(fill => fill.SlotFilledEvent.RequestId == f.RequestId &&
+                    fill.SlotFilledEvent.SlotIndex == f.SlotIndex);
+
+                return new SlotFree(f, matchingFill.Host);
+
+            }).ToArray();
+        }
+
         protected void AssertClientHasPaidForContract(TestToken pricePerBytePerSecond, ICodexNode client, IStoragePurchaseContract contract, ICodexNodeGroup hosts)
         {
             var expectedBalance = StartingBalanceTST.Tst() - GetContractFinalCost(pricePerBytePerSecond, contract, hosts);
@@ -359,13 +382,6 @@ namespace CodexReleaseTests.MarketTests
             }, description);
         }
 
-        protected void AssertEnoughProofMissedForSlotFree(ICodexNodeGroup hosts)
-        {
-            var slotFills = GetOnChainSlotFills(hosts);
-
-            todo for each filled slot, there should be enough proofs missed to trigger the slot-free event.
-        }
-
         public class SlotFill
         {
             public SlotFill(SlotFilledEventDTO slotFilledEvent, ICodexNode host)
@@ -375,6 +391,18 @@ namespace CodexReleaseTests.MarketTests
             }
 
             public SlotFilledEventDTO SlotFilledEvent { get; }
+            public ICodexNode Host { get; }
+        }
+
+        public class SlotFree
+        {
+            public SlotFree(SlotFreedEventDTO slotFreedEvent, ICodexNode host)
+            {
+                SlotFreedEvent = slotFreedEvent;
+                Host = host;
+            }
+
+            public SlotFreedEventDTO SlotFreedEvent { get; }
             public ICodexNode Host { get; }
         }
 

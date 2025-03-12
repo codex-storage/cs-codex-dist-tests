@@ -40,6 +40,10 @@ namespace KubernetesWorkflow
 
         protected override void ProcessLine(string line)
         {
+            // This line is not useful and has no topic so we can't filter it with
+            // normal log-level controls.
+            if (line.Contains("Received JSON-RPC response") && !line.Contains("topics=")) return;
+
             LogFile.WriteRaw(line);
         }
     }
