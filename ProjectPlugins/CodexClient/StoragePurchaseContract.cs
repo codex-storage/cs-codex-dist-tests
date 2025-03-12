@@ -126,7 +126,12 @@ namespace CodexClient
         {
             var numMissedProofsRequiredForFree = config.Collateral.MaxNumberOfSlashes;
             var timePerProof = TimeSpan.FromSeconds(config.Proofs.Period);
-            return timePerProof * (numMissedProofsRequiredForFree + 1);
+            var result = timePerProof * (numMissedProofsRequiredForFree + 1);
+
+            // Times 2!
+            // Because of pointer-downtime it's possible that some periods even though there's a probability of 100%
+            // will not require any proof. To be safe we take twice the required time.
+            return result * 2;
         }
 
         private void WaitForStorageContractState(TimeSpan timeout, string desiredState, int sleep = 1000)

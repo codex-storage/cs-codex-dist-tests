@@ -160,7 +160,7 @@ namespace CodexReleaseTests.MarketTests
             var cid = client.UploadFile(GenerateTestFile(FilesizeMb.MB()));
             return client.Marketplace.RequestStorage(new StoragePurchaseRequest(cid)
             {
-                Duration = TimeSpan.FromMinutes(10.0),
+                Duration = TimeSpan.FromMinutes(20.0),
                 Expiry = TimeSpan.FromMinutes(5.0),
                 MinRequiredNumberOfNodes = NumberOfSlots,
                 NodeFailureTolerance = 1,
