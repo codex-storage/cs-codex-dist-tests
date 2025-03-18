@@ -1,6 +1,5 @@
 ﻿using BlockchainUtils;
 using CodexContractsPlugin.Marketplace;
-using GethPlugin;
 using Logging;
 using System.Numerics;
 using Utils;
@@ -101,7 +100,8 @@ namespace CodexContractsPlugin.ChainMonitor
         private void UpdatePeriodMonitor(ulong blockNumber, DateTime eventUtc)
         {
             if (!doProofPeriodMonitoring) return;
-            PeriodMonitor.Update(blockNumber, eventUtc, Requests);
+            var activeRequests = requests.Where(r => r.State == RequestState.Started).ToArray();
+            PeriodMonitor.Update(blockNumber, eventUtc, activeRequests);
         }
 
         private void ApplyEvents(ulong blockNumber, IHasBlock[] blockEvents, DateTime eventsUtc)
