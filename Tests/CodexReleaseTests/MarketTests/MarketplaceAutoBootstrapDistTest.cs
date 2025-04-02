@@ -143,12 +143,19 @@ namespace CodexReleaseTests.MarketTests
 
         public ICodexNodeGroup StartClients()
         {
-            return StartCodex(NumberOfClients, s => s
-                .WithName("client")
-                .EnableMarketplace(GetGeth(), GetContracts(), m => m
-                    .WithInitial(StartingBalanceEth.Eth(), StartingBalanceTST.Tst())
-                )
-            );
+            return StartClients(s => { });
+        }
+
+        public ICodexNodeGroup StartClients(Action<ICodexSetup> additional)
+        {
+            return StartCodex(NumberOfClients, s =>
+            {
+                s.WithName("client")
+                    .EnableMarketplace(GetGeth(), GetContracts(), m => m
+                    .WithInitial(StartingBalanceEth.Eth(), StartingBalanceTST.Tst()));
+
+                additional(s);
+            });
         }
 
         public ICodexNode StartValidator()

@@ -187,7 +187,7 @@ namespace AutoClient.Modes.FolderStore
             try
             {
                 var request = instance.RequestStorage(new ContentId(entry.BasicCid));
-                entry.EncodedCid = request.Purchase.ContentId.Id;
+                entry.EncodedCid = request.ContentId.Id;
                 entry.PurchaseId = request.PurchaseId;
                 entry.PurchaseFinishedUtc = DateTime.UtcNow + request.Purchase.Duration;
 
