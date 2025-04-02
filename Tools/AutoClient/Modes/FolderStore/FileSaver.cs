@@ -114,7 +114,16 @@ namespace AutoClient.Modes.FolderStore
                 if (isFound)
                 {
                     Log("BasicCid found in local files.");
-                    return true;
+
+                    if (IsCidBasic(entry.BasicCid))
+                    {
+                        Log("BasicCid is confirmed to not be encoded.");
+                        return true;
+                    }
+
+                    entry.BasicCid = string.Empty;
+                    Log("Warning: Cid stored as basic was actually encoded!");
+                    return false;
                 }
             }
             catch (Exception exc)
@@ -181,6 +190,13 @@ namespace AutoClient.Modes.FolderStore
                 entry.EncodedCid = request.Purchase.ContentId.Id;
                 entry.PurchaseId = request.PurchaseId;
                 entry.PurchaseFinishedUtc = DateTime.UtcNow + request.Purchase.Duration;
+
+                if (!IsCidEncoded(entry.EncodedCid))
+                {
+                    log.Error("CID received from storage request is not protected/encoded.");
+                    throw new Exception("CID received from storage request was not protected.");
+                }
+
                 saveChanges();
                 Log("Saved new purchaseId: " + entry.PurchaseId);
                 return request;
@@ -255,6 +271,39 @@ namespace AutoClient.Modes.FolderStore
                 stats.StorageRequestStats.FailedToStart++;
                 throw;
             }
+        }
+
+        private bool IsCidEncoded(string cid)
+        {
+            try
+            {
+                return GetManifestIsProtected(cid);
+            }
+            catch (Exception ex)
+            {
+                log.Error(nameof(IsCidEncoded) + ": " + ex);
+                return false;
+            }
+        }
+
+        private bool IsCidBasic(string cid)
+        {
+            try
+            {
+                return !GetManifestIsProtected(cid);
+            }
+            catch (Exception ex)
+            {
+                log.Error(nameof(IsCidBasic) + ": " + ex);
+                return false;
+            }
+        }
+
+        private bool GetManifestIsProtected(string cid)
+        {
+            var id = new ContentId(cid);
+            var manifest = instance.Node.DownloadManifestOnly(id);
+            return manifest.Manifest.Protected;
         }
 
         private void Log(string msg)

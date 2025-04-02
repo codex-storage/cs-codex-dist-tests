@@ -10,7 +10,7 @@ namespace CodexClient
             ContentId = cid;
         }
 
-        public ContentId ContentId { get; set; }
+        public ContentId ContentId { get; }
         public TestToken PricePerBytePerSecond { get; set; } = 1.TstWei();
         public TestToken CollateralPerByte { get; set; } = 1.TstWei();
         public uint MinRequiredNumberOfNodes { get; set; }
