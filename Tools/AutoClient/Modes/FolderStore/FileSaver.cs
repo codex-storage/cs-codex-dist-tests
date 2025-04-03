@@ -4,32 +4,64 @@ using Utils;
 
 namespace AutoClient.Modes.FolderStore
 {
+    public interface IFileSaverEventHandler
+    {
+        void SaveChanges();
+        void OnFailure();
+    }
+
     public class FileSaver
+    {
+        private readonly ILog log;
+        private readonly LoadBalancer loadBalancer;
+        private readonly Stats stats;
+        private readonly string folderFile;
+        private readonly FileStatus entry;
+        private readonly IFileSaverEventHandler handler;
+
+        public FileSaver(ILog log, LoadBalancer loadBalancer, Stats stats, string folderFile, FileStatus entry, IFileSaverEventHandler handler)
+        {
+            this.log = log;
+            this.loadBalancer = loadBalancer;
+            this.stats = stats;
+            this.folderFile = folderFile;
+            this.entry = entry;
+            this.handler = handler;
+        }
+
+        public void Process()
+        {
+            loadBalancer.DispatchOnCodex(instance =>
+            {
+                var run = new FileSaverRun(log, instance, stats, folderFile, entry, handler);
+                run.Process();
+            });
+        }
+    }
+
+    public class FileSaverRun
     {
         private readonly ILog log;
         private readonly CodexWrapper instance;
         private readonly Stats stats;
         private readonly string folderFile;
         private readonly FileStatus entry;
-        private readonly Action saveChanges;
+        private readonly IFileSaverEventHandler handler;
         private readonly QuotaCheck quotaCheck;
 
-        public FileSaver(ILog log, CodexWrapper instance, Stats stats, string folderFile, FileStatus entry, Action saveChanges)
+        public FileSaverRun(ILog log, CodexWrapper instance, Stats stats, string folderFile, FileStatus entry, IFileSaverEventHandler handler)
         {
             this.log = log;
             this.instance = instance;
             this.stats = stats;
             this.folderFile = folderFile;
             this.entry = entry;
-            this.saveChanges = saveChanges;
+            this.handler = handler;
             quotaCheck = new QuotaCheck(log, folderFile, instance);
         }
 
-        public bool HasFailed { get; private set; }
-
         public void Process()
         {
-            HasFailed = false;
             if (HasRecentPurchase())
             {
                 Log($"Purchase running: '{entry.PurchaseId}'");
@@ -71,7 +103,7 @@ namespace AutoClient.Modes.FolderStore
                 Thread.Sleep(TimeSpan.FromMinutes(1.0));
             }
             Log("Could not upload: Insufficient local storage quota.");
-            HasFailed = true;
+            handler.OnFailure();
             return false;
         }
 
@@ -108,7 +140,7 @@ namespace AutoClient.Modes.FolderStore
                 var result = instance.Node.LocalFiles();
                 if (result == null) return false;
                 if (result.Content == null) return false;
-                
+
                 var localCids = result.Content.Where(c => !string.IsNullOrEmpty(c.Cid.Id)).Select(c => c.Cid.Id).ToArray();
                 var isFound = localCids.Any(c => c.ToLowerInvariant() == entry.BasicCid.ToLowerInvariant());
                 if (isFound)
@@ -150,9 +182,9 @@ namespace AutoClient.Modes.FolderStore
                 entry.BasicCid = string.Empty;
                 stats.FailedUploads++;
                 log.Error("Failed to upload: " + exc);
-                HasFailed = true;
+                handler.OnFailure();
             }
-            saveChanges();
+            handler.SaveChanges();
         }
 
         private void CreateNewPurchase()
@@ -168,7 +200,7 @@ namespace AutoClient.Modes.FolderStore
                 WaitForStarted(request);
 
                 stats.StorageRequestStats.SuccessfullyStarted++;
-                saveChanges();
+                handler.SaveChanges();
 
                 Log($"Successfully started new purchase: '{entry.PurchaseId}' for {Time.FormatDuration(request.Purchase.Duration)}");
             }
@@ -176,9 +208,9 @@ namespace AutoClient.Modes.FolderStore
             {
                 entry.EncodedCid = string.Empty;
                 entry.PurchaseId = string.Empty;
-                saveChanges();
+                handler.SaveChanges();
                 log.Error("Failed to start new purchase: " + exc);
-                HasFailed = true;
+                handler.OnFailure();
             }
         }
 
@@ -197,7 +229,7 @@ namespace AutoClient.Modes.FolderStore
                     throw new Exception("CID received from storage request was not protected.");
                 }
 
-                saveChanges();
+                handler.SaveChanges();
                 Log("Saved new purchaseId: " + entry.PurchaseId);
                 return request;
             }
@@ -233,7 +265,7 @@ namespace AutoClient.Modes.FolderStore
                             Log("Request failed to start. State: " + update.State);
                             entry.EncodedCid = string.Empty;
                             entry.PurchaseId = string.Empty;
-                            saveChanges();
+                            handler.SaveChanges();
                             return;
                         }
                     }
@@ -241,10 +273,10 @@ namespace AutoClient.Modes.FolderStore
             }
             catch (Exception exc)
             {
-                HasFailed = true;
+                handler.OnFailure();
                 Log($"Exception in {nameof(WaitForSubmittedToStarted)}: {exc}");
                 throw;
-            }            
+            }
         }
 
         private void WaitForSubmitted(IStoragePurchaseContract request)

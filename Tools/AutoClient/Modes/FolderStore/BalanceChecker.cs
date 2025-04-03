@@ -1,5 +1,4 @@
-﻿using GethConnector;
-using Logging;
+﻿using Logging;
 using Utils;
 
 namespace AutoClient.Modes.FolderStore

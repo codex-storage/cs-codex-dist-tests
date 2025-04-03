@@ -1,22 +1,22 @@
 ﻿using ArgsUniform;
 using AutoClient;
 using AutoClient.Modes;
-using AutoClient.Modes.FolderStore;
 using CodexClient;
 using GethPlugin;
 using Utils;
+using WebUtils;
+using Logging;
 
 public class Program
 {
     private readonly App app;
-    private readonly List<IMode> modes = new List<IMode>();
 
     public Program(Configuration config)
     {
         app = new App(config);
     }
 
-    public static async Task Main(string[] args)
+    public static void Main(string[] args)
     {
         var cts = new CancellationTokenSource();
         Console.CancelKeyPress += (sender, args) => cts.Cancel();
@@ -30,50 +30,23 @@ public class Program
         }
 
         var p = new Program(config);
-        await p.Run();
+        p.Run();
     }
 
-    public async Task Run()
+    public void Run()
     {
-        await Task.CompletedTask;
+        if (app.Config.ContractDurationMinutes - 1 < 5) throw new Exception("Contract duration config option not long enough!");
         var codexNodes = CreateCodexWrappers();
+        var loadBalancer = new LoadBalancer(app, codexNodes);
 
-        var i = 0;
-        foreach (var cdx in codexNodes)
-        {
-            var mode = CreateMode();
-            modes.Add(mode);
-
-            mode.Start(cdx, i);
-            i++;
-        }
+        var folderStore = new FolderStoreMode(app, loadBalancer);
+        folderStore.Start();
 
         app.Cts.Token.WaitHandle.WaitOne();
 
-        foreach (var mode in modes) mode.Stop();
-        modes.Clear();
+        folderStore.Stop();
 
         app.Log.Log("Done");
-    }
-
-    private IMode CreateMode()
-    {
-        if (!string.IsNullOrEmpty(app.Config.FolderToStore))
-        {
-            return CreateFolderStoreMode();
-        }
-
-        return new PurchasingMode(app);
-    }
-
-    private IMode CreateFolderStoreMode()
-    {
-        if (app.Config.ContractDurationMinutes - 1 < 5) throw new Exception("Contract duration config option not long enough!");
-
-        return new FolderStoreMode(app, app.Config.FolderToStore, new PurchaseInfo(
-            purchaseDurationTotal: TimeSpan.FromMinutes(app.Config.ContractDurationMinutes),
-            purchaseDurationSafe: TimeSpan.FromMinutes(app.Config.ContractDurationMinutes - 120)
-        ));
     }
 
     private CodexWrapper[] CreateCodexWrappers()
@@ -81,9 +54,11 @@ public class Program
         var endpointStrs = app.Config.CodexEndpoints.Split(";", StringSplitOptions.RemoveEmptyEntries);
         var result = new List<CodexWrapper>();
 
+        var i = 1;
         foreach (var e in endpointStrs)
         {
-            result.Add(CreateCodexWrapper(e));
+            result.Add(CreateCodexWrapper(e, i));
+            i++;
         }
 
         return result.ToArray();
@@ -91,7 +66,7 @@ public class Program
 
     private readonly string LogLevel = "TRACE;info:discv5,providers,routingtable,manager,cache;warn:libp2p,multistream,switch,transport,tcptransport,semaphore,asyncstreamwrapper,lpstream,mplex,mplexchannel,noise,bufferstream,mplexcoder,secure,chronosstream,connection,websock,ws-session,muxedupgrade,upgrade,identify,contracts,clock,serde,json,serialization,JSONRPC-WS-CLIENT,JSONRPC-HTTP-CLIENT,repostore";
 
-    private CodexWrapper CreateCodexWrapper(string endpoint)
+    private CodexWrapper CreateCodexWrapper(string endpoint, int number)
     {
         var splitIndex = endpoint.LastIndexOf(':');
         var host = endpoint.Substring(0, splitIndex);
@@ -103,11 +78,13 @@ public class Program
             port: port
         );
 
+        var log = new LogPrefixer(app.Log, $"[{number.ToString().PadLeft(3, '0')}] ");
+        var httpFactory = new HttpFactory(log, new AutoClientWebTimeSet());
+        var codexNodeFactory = new CodexNodeFactory(log: log, httpFactory: httpFactory, dataDir: app.Config.DataPath);
         var instance = CodexInstance.CreateFromApiEndpoint("[AutoClient]", address, EthAccountGenerator.GenerateNew());
-        var node = app.CodexNodeFactory.CreateCodexNode(instance);
+        var node = codexNodeFactory.CreateCodexNode(instance);
 
         node.SetLogLevel(LogLevel);
-
         return new CodexWrapper(app, node);
     }
 

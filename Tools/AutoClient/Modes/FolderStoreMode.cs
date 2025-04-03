@@ -2,28 +2,26 @@
 
 namespace AutoClient.Modes
 {
-    public class FolderStoreMode : IMode
+    public class FolderStoreMode
     {
         private readonly App app;
-        private readonly string folder;
-        private readonly PurchaseInfo purchaseInfo;
         private readonly CancellationTokenSource cts = new CancellationTokenSource();
         private Task checkTask = Task.CompletedTask;
+        private readonly LoadBalancer loadBalancer;
 
-        public FolderStoreMode(App app, string folder, PurchaseInfo purchaseInfo)
+        public FolderStoreMode(App app, LoadBalancer loadBalancer)
         {
             this.app = app;
-            this.folder = folder;
-            this.purchaseInfo = purchaseInfo;
+            this.loadBalancer = loadBalancer;
         }
 
-        public void Start(CodexWrapper instance, int index)
+        public void Start()
         {
             checkTask = Task.Run(() =>
             {
                 try
                 {
-                    var saver = new FolderSaver(app, instance);
+                    var saver = new FolderSaver(app, loadBalancer);
                     while (!cts.IsCancellationRequested)
                     {
                         saver.Run(cts);
