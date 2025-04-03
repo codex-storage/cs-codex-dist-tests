@@ -94,6 +94,10 @@
             private void CheckMaximums()
             {
                 if (Duration() > maxTimeout) Fail();
+
+                // If we have a few very fast failures, retrying won't help us. There's probably something wrong with our operation.
+                // In this case, don't wait the full duration and fail quickly.
+                if (failures.Count > 5 && failures.All(f => f.Duration < TimeSpan.FromSeconds(1.0))) Fail();
             }
 
             private void Fail()

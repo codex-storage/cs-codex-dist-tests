@@ -128,7 +128,7 @@ namespace CodexClient
                 Content = Map(request.Content),
                 Id = request.Id,
                 Client = request.Client,
-                Expiry = TimeSpan.FromSeconds(request.Expiry),
+                Expiry = request.Expiry,
                 Nonce = request.Nonce
             };
         }
@@ -137,12 +137,12 @@ namespace CodexClient
         {
             return new StorageAsk
             {
-                Duration = TimeSpan.FromSeconds(ask.Duration),
+                Duration = ask.Duration,
                 MaxSlotLoss = ask.MaxSlotLoss,
                 ProofProbability = ask.ProofProbability,
-                PricePerBytePerSecond = ToTestToken(ask.PricePerBytePerSecond),
+                PricePerBytePerSecond = ask.PricePerBytePerSecond,
                 Slots = ask.Slots,
-                SlotSize = ToByteSize(ask.SlotSize)
+                SlotSize = ask.SlotSize
             };
         }
 
