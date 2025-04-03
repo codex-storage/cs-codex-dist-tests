@@ -43,9 +43,9 @@ namespace AutoClient
 
             public void Queue(Action<CodexWrapper> action)
             {
+                if (queue.Count > 2) log.Log("Queue full. Waiting...");
                 while (queue.Count > 2)
                 {
-                    log.Log("Queue full. Waiting...");
                     Thread.Sleep(TimeSpan.FromSeconds(5.0));
                 }
 
@@ -57,18 +57,26 @@ namespace AutoClient
 
             private void Worker()
             {
-                while (running)
+                try
                 {
-                    while (queue.Count == 0) Thread.Sleep(TimeSpan.FromSeconds(5.0));
-
-                    Action<CodexWrapper> action = w => { };
-                    lock (queueLock)
+                    while (running)
                     {
-                        action = queue[0];
-                        queue.RemoveAt(0);
-                    }
+                        while (queue.Count == 0) Thread.Sleep(TimeSpan.FromSeconds(5.0));
 
-                    action(instance);
+                        Action<CodexWrapper> action = w => { };
+                        lock (queueLock)
+                        {
+                            action = queue[0];
+                            queue.RemoveAt(0);
+                        }
+
+                        action(instance);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    log.Error("Exception in worker: " + ex);
+                    throw;
                 }
             }
         }
