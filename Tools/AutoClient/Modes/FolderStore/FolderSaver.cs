@@ -33,6 +33,7 @@ namespace AutoClient.Modes.FolderStore
             foreach (var folderFile in folderFiles)
             {
                 if (cts.IsCancellationRequested) return;
+                loadBalancer.CheckErrors();
 
                 if (!folderFile.ToLowerInvariant().EndsWith(FolderSaverFilename))
                 {

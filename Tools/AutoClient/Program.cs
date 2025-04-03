@@ -38,6 +38,7 @@ public class Program
         if (app.Config.ContractDurationMinutes - 1 < 5) throw new Exception("Contract duration config option not long enough!");
         var codexNodes = CreateCodexWrappers();
         var loadBalancer = new LoadBalancer(app, codexNodes);
+        loadBalancer.Start();
 
         var folderStore = new FolderStoreMode(app, loadBalancer);
         folderStore.Start();
@@ -45,6 +46,7 @@ public class Program
         app.Cts.Token.WaitHandle.WaitOne();
 
         folderStore.Stop();
+        loadBalancer.Stop();
 
         app.Log.Log("Done");
     }

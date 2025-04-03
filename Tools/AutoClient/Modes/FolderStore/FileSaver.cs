@@ -31,11 +31,35 @@ namespace AutoClient.Modes.FolderStore
 
         public void Process()
         {
+            if (string.IsNullOrEmpty(entry.CodexNodeId))
+            {
+                DispatchToAny();
+            }
+            else
+            {
+                DispatchToSpecific();
+            }
+        }
+
+        private void DispatchToAny()
+        {
             loadBalancer.DispatchOnCodex(instance =>
             {
+                entry.CodexNodeId = instance.Node.GetName();
+                handler.SaveChanges();
+
                 var run = new FileSaverRun(log, instance, stats, folderFile, entry, handler);
                 run.Process();
             });
+        }
+
+        private void DispatchToSpecific()
+        {
+            loadBalancer.DispatchOnSpecificCodex(instance =>
+            {
+                var run = new FileSaverRun(log, instance, stats, folderFile, entry, handler);
+                run.Process();
+            }, entry.CodexNodeId);
         }
     }
 
