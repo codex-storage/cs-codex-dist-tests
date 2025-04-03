@@ -63,18 +63,18 @@ namespace CodexClient
         public string Client { get; set; } = string.Empty;
         public StorageAsk Ask { get; set; } = null!;
         public StorageContent Content { get; set; } = null!;
-        public string Expiry { get; set; } = string.Empty;
+        public TimeSpan Expiry { get; set; }
         public string Nonce { get; set; } = string.Empty;
     }
 
     public class StorageAsk
     {
-        public int Slots { get; set; }
-        public string SlotSize { get; set; } = string.Empty;
-        public string Duration { get; set; } = string.Empty;
+        public long Slots { get; set; }
+        public ByteSize SlotSize { get; set; } = 0.Bytes();
+        public TimeSpan Duration { get; set; }
         public string ProofProbability { get; set; } = string.Empty;
-        public string PricePerBytePerSecond { get; set; } = string.Empty;
-        public int MaxSlotLoss { get; set; }
+        public TestToken PricePerBytePerSecond { get; set; } = 0.Tst();
+        public long MaxSlotLoss { get; set; }
     }
 
     public class StorageContent
