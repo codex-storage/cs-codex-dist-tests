@@ -6,7 +6,7 @@ namespace AutoClient
     {
         [Uniform("codex-endpoints", "ce", "CODEXENDPOINTS", false, "Codex endpoints. Semi-colon separated. (default 'http://localhost:8080')")]
         public string CodexEndpoints { get; set; } =
-            "http://localhost:8080";
+            "http://localhost:8080;http://localhost:8081;http://localhost:8082;http://localhost:8083";
 
         [Uniform("datapath", "dp", "DATAPATH", false, "Root path where all data files will be saved.")]
         public string DataPath { get; set; } = "datapath";
@@ -42,7 +42,11 @@ namespace AutoClient
         public string FolderToStore { get; set; } = "/data/EthereumMainnetPreMergeEraFiles";
 
         [Uniform("ethAddressFile", "eaf", "ETHADDRESSFILE", false, "File(s) with eth address used by codex node. Used for balance checking if geth/contracts information is provided. Semi-colon separated.")]
-        public string EthAddressFile { get; set; } = "/root/codex-testnet-starter/scripts/eth.address";
+        public string EthAddressFile { get; set; } = 
+            "/root/codex-testnet-starter/scripts/eth.address" + ";" +
+            "/root/codex-testnet-starter/scripts/eth_2.address" + ";" +
+            "/root/codex-testnet-starter/scripts/eth_3.address" + ";" +
+            "/root/codex-testnet-starter/scripts/eth_4.address";
 
         public string LogPath
         {

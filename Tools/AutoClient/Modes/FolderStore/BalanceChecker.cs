@@ -15,6 +15,9 @@ namespace AutoClient.Modes.FolderStore
 
             connector = GethConnector.GethConnector.Initialize(app.Log);
             addresses = LoadAddresses(app);
+
+            log.Log($"Loaded Eth-addresses for checking: {addresses.Length}");
+            foreach (var addr in addresses) log.Log(" - " + addr);
         }
 
         private EthAddress[] LoadAddresses(App app)
