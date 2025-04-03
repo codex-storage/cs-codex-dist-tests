@@ -78,10 +78,11 @@ public class Program
             port: port
         );
 
-        var log = new LogPrefixer(app.Log, $"[{number.ToString().PadLeft(3, '0')}] ");
+        var numberStr = number.ToString().PadLeft(3, '0');
+        var log = new LogPrefixer(app.Log, $"[{numberStr}] ");
         var httpFactory = new HttpFactory(log, new AutoClientWebTimeSet());
         var codexNodeFactory = new CodexNodeFactory(log: log, httpFactory: httpFactory, dataDir: app.Config.DataPath);
-        var instance = CodexInstance.CreateFromApiEndpoint("[AutoClient]", address, EthAccountGenerator.GenerateNew());
+        var instance = CodexInstance.CreateFromApiEndpoint($"[AC-{numberStr}]", address, EthAccountGenerator.GenerateNew());
         var node = codexNodeFactory.CreateCodexNode(instance);
 
         node.SetLogLevel(LogLevel);
