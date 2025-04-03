@@ -25,10 +25,9 @@ namespace AutoClient.Modes.FolderStore
             try
             {
                 if (string.IsNullOrEmpty(app.Config.EthAddressFile)) return Array.Empty<EthAddress>();
-                if (!File.Exists(app.Config.EthAddressFile)) return Array.Empty<EthAddress>();
 
                 var tokens = app.Config.EthAddressFile.Split(";", StringSplitOptions.RemoveEmptyEntries);
-                return tokens.Select(ConvertToAddress).Where(a => a != null).ToArray();
+                return tokens.Select(ConvertToAddress).Where(a => a != null).Cast<EthAddress>().ToArray();
             }
             catch (Exception exc)
             {
@@ -37,8 +36,9 @@ namespace AutoClient.Modes.FolderStore
             }
         }
 
-        private EthAddress ConvertToAddress(string t)
+        private EthAddress? ConvertToAddress(string t)
         {
+            if (!File.Exists(t)) return null;
             return new EthAddress(
                     File.ReadAllText(t)
                     .Trim()
