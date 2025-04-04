@@ -5,7 +5,6 @@ namespace AutoClient.Modes
     public class FolderStoreMode
     {
         private readonly App app;
-        private readonly CancellationTokenSource cts = new CancellationTokenSource();
         private Task checkTask = Task.CompletedTask;
         private readonly LoadBalancer loadBalancer;
 
@@ -22,9 +21,9 @@ namespace AutoClient.Modes
                 try
                 {
                     var saver = new FolderSaver(app, loadBalancer);
-                    while (!cts.IsCancellationRequested)
+                    while (!app.Cts.IsCancellationRequested)
                     {
-                        saver.Run(cts);
+                        saver.Run();
                     }
                 }
                 catch (Exception ex)
@@ -37,7 +36,7 @@ namespace AutoClient.Modes
 
         public void Stop()
         {
-            cts.Cancel();
+            app.Cts.Cancel();
             checkTask.Wait();
         }
     }

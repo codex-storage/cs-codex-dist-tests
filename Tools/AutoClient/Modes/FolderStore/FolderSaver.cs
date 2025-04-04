@@ -23,7 +23,7 @@ namespace AutoClient.Modes.FolderStore
             status = statusFile.Load();
         }
 
-        public void Run(CancellationTokenSource cts)
+        public void Run()
         {
             var folderFiles = Directory.GetFiles(app.Config.FolderToStore);
             if (!folderFiles.Any()) throw new Exception("No files found in " + app.Config.FolderToStore);
@@ -32,7 +32,7 @@ namespace AutoClient.Modes.FolderStore
             balanceChecker.Check();
             foreach (var folderFile in folderFiles)
             {
-                if (cts.IsCancellationRequested) return;
+                if (app.Cts.IsCancellationRequested) return;
                 loadBalancer.CheckErrors();
 
                 if (!folderFile.ToLowerInvariant().EndsWith(FolderSaverFilename))
@@ -43,7 +43,7 @@ namespace AutoClient.Modes.FolderStore
                 if (failureCount > 3)
                 {
                     app.Log.Error("Failure count reached threshold. Stopping...");
-                    cts.Cancel();
+                    app.Cts.Cancel();
                     return;
                 }
 
