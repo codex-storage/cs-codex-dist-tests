@@ -34,21 +34,21 @@ namespace CodexClient
 
     public class StoragePurchase
     {
-        public string State { get; set; } = string.Empty;
+        public StoragePurchaseState State { get; set; } = StoragePurchaseState.Unknown;
         public string Error { get; set; } = string.Empty;
         public StorageRequest Request { get; set; } = null!;
 
-        public bool IsCancelled => State.ToLowerInvariant().Contains("cancel");
-        public bool IsError => State.ToLowerInvariant().Contains("error");
-        public bool IsFinished => State.ToLowerInvariant().Contains("finished");
-        public bool IsStarted => State.ToLowerInvariant().Contains("started");
-        public bool IsSubmitted => State.ToLowerInvariant().Contains("submitted");
+        public bool IsCancelled => State == StoragePurchaseState.Cancelled;
+        public bool IsError => State == StoragePurchaseState.Errored;
+        public bool IsFinished => State == StoragePurchaseState.Finished;
+        public bool IsStarted => State == StoragePurchaseState.Started;
+        public bool IsSubmitted => State == StoragePurchaseState.Submitted;
     }
 
     public enum StoragePurchaseState
     {
         Cancelled = 0,
-        Error = 1,
+        Errored = 1,
         Failed = 2,
         Finished = 3,
         Pending = 4,

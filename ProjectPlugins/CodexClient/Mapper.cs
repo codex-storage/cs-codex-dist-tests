@@ -86,23 +86,21 @@ namespace CodexClient
             return new StoragePurchase
             {
                 Request = Map(purchase.Request),
-                State = purchase.State.ToString(), //Map(purchase.State),
+                State = Map(purchase.State),
                 Error = purchase.Error
             };
         }
 
         public StoragePurchaseState Map(CodexOpenApi.PurchaseState purchaseState)
         {
-            // TODO: to be re-enabled when marketplace api lines up with openapi.yaml.
-
             // Explicit mapping: If the API changes, we will get compile errors here.
             // That's what we want.
             switch (purchaseState)
             {
                 case CodexOpenApi.PurchaseState.Cancelled:
                     return StoragePurchaseState.Cancelled;
-                case CodexOpenApi.PurchaseState.Error:
-                    return StoragePurchaseState.Error;
+                case CodexOpenApi.PurchaseState.Errored:
+                    return StoragePurchaseState.Errored;
                 case CodexOpenApi.PurchaseState.Failed:
                     return StoragePurchaseState.Failed;
                 case CodexOpenApi.PurchaseState.Finished:

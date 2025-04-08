@@ -124,13 +124,13 @@
 
         public static void Retry(Action action, TimeSpan maxTimeout, TimeSpan retryTime, string description, Action<Failure> onFail)
         {
-            var r = new Retry(description, maxTimeout, retryTime, onFail);
+            var r = new Retry(description, maxTimeout, retryTime, onFail, failFast: true);
             r.Run(action);
         }
 
         public static T Retry<T>(Func<T> action, TimeSpan maxTimeout, TimeSpan retryTime, string description, Action<Failure> onFail)
         {
-            var r = new Retry(description, maxTimeout, retryTime, onFail);
+            var r = new Retry(description, maxTimeout, retryTime, onFail, failFast: true);
             return r.Run(action);
         }
     }
