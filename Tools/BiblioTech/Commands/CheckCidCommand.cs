@@ -10,10 +10,10 @@ namespace BiblioTech.Commands
             name: "cid",
             description: "Codex Content-Identifier",
             isRequired: true);
-        private readonly CodexCidChecker checker;
+        private readonly CodexTwoWayChecker checker;
         private readonly CidStorage cidStorage;
 
-        public CheckCidCommand(CodexCidChecker checker)
+        public CheckCidCommand(CodexTwoWayChecker checker)
         {
             this.checker = checker;
             this.cidStorage = new CidStorage(Path.Combine(Program.Config.DataPath, "valid_cids.txt"));
