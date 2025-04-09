@@ -40,7 +40,7 @@ namespace WebUtils
 
         public T OnClient<T>(Func<HttpClient, T> action, string description)
         {
-            var retry = new Retry(description, timeSet.HttpRetryTimeout(), timeSet.HttpCallRetryDelay(), f => { });
+            var retry = new Retry(description, timeSet.HttpRetryTimeout(), timeSet.HttpCallRetryDelay(), f => { }, failFast: true);
             return OnClient(action, retry);
         }
 

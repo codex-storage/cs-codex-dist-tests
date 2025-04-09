@@ -380,8 +380,9 @@ namespace CodexClient
 
             var retry = new Retry($"Checking local space for quotaUsed increase of {expectedIncreaseOfQuotaUsed}",
             maxTimeout: maxTimeout,
-            sleepAfterFail: TimeSpan.FromSeconds(3),
-            onFail: f => { });
+            sleepAfterFail: TimeSpan.FromSeconds(10),
+            onFail: f => { },
+            failFast: false);
 
             retry.Run(() =>
             {

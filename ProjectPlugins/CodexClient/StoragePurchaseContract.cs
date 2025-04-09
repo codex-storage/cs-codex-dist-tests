@@ -27,7 +27,7 @@ namespace CodexClient
         private DateTime? contractSubmittedUtc = DateTime.UtcNow;
         private DateTime? contractStartedUtc;
         private DateTime? contractFinishedUtc;
-        private string lastState = string.Empty;
+        private StoragePurchaseState lastState = StoragePurchaseState.Unknown;
         private ContentId encodedContentId = new ContentId();
 
         public StoragePurchaseContract(ILog log, CodexAccess codexAccess, string purchaseId, StoragePurchaseRequest purchase, ICodexNodeHooks hooks)
@@ -67,8 +67,8 @@ namespace CodexClient
         public void WaitForStorageContractSubmitted()
         {
             var timeout = Purchase.Expiry + gracePeriod;
-            var raiseHook = lastState != "submitted";
-            WaitForStorageContractState(timeout, "submitted", sleep: 200);
+            var raiseHook = lastState != StoragePurchaseState.Submitted;
+            WaitForStorageContractState(timeout, StoragePurchaseState.Submitted, sleep: 200);
             contractSubmittedUtc = DateTime.UtcNow;
             if (raiseHook) hooks.OnStorageContractSubmitted(this);
             LogSubmittedDuration();
@@ -79,7 +79,7 @@ namespace CodexClient
         {
             var timeout = Purchase.Expiry + gracePeriod;
 
-            WaitForStorageContractState(timeout, "started");
+            WaitForStorageContractState(timeout, StoragePurchaseState.Started);
             contractStartedUtc = DateTime.UtcNow;
             LogStartedDuration();
             AssertDuration(SubmittedToStarted, timeout, nameof(SubmittedToStarted));
@@ -93,7 +93,7 @@ namespace CodexClient
             }
             var currentContractTime = DateTime.UtcNow - contractSubmittedUtc!.Value;
             var timeout = (Purchase.Duration - currentContractTime) + gracePeriod;
-            WaitForStorageContractState(timeout, "finished");
+            WaitForStorageContractState(timeout, StoragePurchaseState.Finished);
             contractFinishedUtc = DateTime.UtcNow;
             LogFinishedDuration();
             AssertDuration(SubmittedToFinished, timeout, nameof(SubmittedToFinished));
@@ -107,10 +107,10 @@ namespace CodexClient
             }
             var currentContractTime = DateTime.UtcNow - contractSubmittedUtc!.Value;
             var timeout = (Purchase.Duration - currentContractTime) + gracePeriod;
-            WaitForStorageContractState(timeout, "failed");
+            WaitForStorageContractState(timeout, StoragePurchaseState.Failed);
         }
 
-        private void WaitForStorageContractState(TimeSpan timeout, string desiredState, int sleep = 1000)
+        private void WaitForStorageContractState(TimeSpan timeout, StoragePurchaseState desiredState, int sleep = 1000)
         {
             var waitStart = DateTime.UtcNow;
 
@@ -128,7 +128,7 @@ namespace CodexClient
                     hooks.OnStorageContractUpdated(purchaseStatus);
                 }
 
-                if (lastState == "errored")
+                if (lastState == StoragePurchaseState.Errored)
                 {
                     FrameworkAssert.Fail("Contract errored: " + statusJson);
                 }
