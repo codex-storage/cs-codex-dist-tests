@@ -1,5 +1,4 @@
-﻿using CodexOpenApi;
-using Newtonsoft.Json.Linq;
+﻿using Newtonsoft.Json.Linq;
 using System.Numerics;
 using Utils;
 
@@ -37,14 +36,14 @@ namespace CodexClient
             };
         }
 
-        public CodexOpenApi.SalesAvailabilityCREATE Map(CreateStorageAvailability availability)
+        public CodexOpenApi.SalesAvailability Map(StorageAvailability availability)
         {
-            return new CodexOpenApi.SalesAvailabilityCREATE
+            return new CodexOpenApi.SalesAvailability
             {
-                Duration = ToDecInt(availability.MaxDuration.TotalSeconds),
+                Duration = ToLong(availability.MaxDuration.TotalSeconds),
                 MinPricePerBytePerSecond = ToDecInt(availability.MinPricePerBytePerSecond),
                 TotalCollateral = ToDecInt(availability.TotalCollateral),
-                TotalSize = ToDecInt(availability.TotalSpace.SizeInBytes)
+                TotalSize = availability.TotalSpace.SizeInBytes
             };
         }
 
@@ -52,11 +51,11 @@ namespace CodexClient
         {
             return new CodexOpenApi.StorageRequestCreation
             {
-                Duration = ToDecInt(purchase.Duration.TotalSeconds),
+                Duration = ToLong(purchase.Duration.TotalSeconds),
                 ProofProbability = ToDecInt(purchase.ProofProbability),
                 PricePerBytePerSecond = ToDecInt(purchase.PricePerBytePerSecond),
                 CollateralPerByte = ToDecInt(purchase.CollateralPerByte),
-                Expiry = ToDecInt(purchase.Expiry.TotalSeconds),
+                Expiry = ToLong(purchase.Expiry.TotalSeconds),
                 Nodes = Convert.ToInt32(purchase.MinRequiredNumberOfNodes),
                 Tolerance = Convert.ToInt32(purchase.NodeFailureTolerance)
             };
@@ -74,8 +73,8 @@ namespace CodexClient
                 availability.Id,
                 ToByteSize(availability.TotalSize),
                 ToTimespan(availability.Duration),
-                new TestToken(ToBigIng(availability.MinPricePerBytePerSecond)),
-                new TestToken(ToBigIng(availability.TotalCollateral)),
+                new TestToken(ToBigInt(availability.MinPricePerBytePerSecond)),
+                new TestToken(ToBigInt(availability.TotalCollateral)),
                 ToByteSize(availability.FreeSize)
             );
         }
@@ -85,34 +84,32 @@ namespace CodexClient
             return new StoragePurchase
             {
                 Request = Map(purchase.Request),
-                State = purchase.State.ToString(), //Map(purchase.State),
+                State = Map(purchase.State),
                 Error = purchase.Error
             };
         }
 
-        public StoragePurchaseState Map(PurchaseState purchaseState)
+        public StoragePurchaseState Map(CodexOpenApi.PurchaseState purchaseState)
         {
-            // TODO: to be re-enabled when marketplace api lines up with openapi.yaml.
-
             // Explicit mapping: If the API changes, we will get compile errors here.
             // That's what we want.
             switch (purchaseState)
             {
-                case PurchaseState.Cancelled:
+                case CodexOpenApi.PurchaseState.Cancelled:
                     return StoragePurchaseState.Cancelled;
-                case PurchaseState.Error:
-                    return StoragePurchaseState.Error;
-                case PurchaseState.Failed:
+                case CodexOpenApi.PurchaseState.Errored:
+                    return StoragePurchaseState.Errored;
+                case CodexOpenApi.PurchaseState.Failed:
                     return StoragePurchaseState.Failed;
-                case PurchaseState.Finished:
+                case CodexOpenApi.PurchaseState.Finished:
                     return StoragePurchaseState.Finished;
-                case PurchaseState.Pending:
+                case CodexOpenApi.PurchaseState.Pending:
                     return StoragePurchaseState.Pending;
-                case PurchaseState.Started:
+                case CodexOpenApi.PurchaseState.Started:
                     return StoragePurchaseState.Started;
-                case PurchaseState.Submitted:
+                case CodexOpenApi.PurchaseState.Submitted:
                     return StoragePurchaseState.Submitted;
-                case PurchaseState.Unknown:
+                case CodexOpenApi.PurchaseState.Unknown:
                     return StoragePurchaseState.Unknown;
             }
 
@@ -256,19 +253,29 @@ namespace CodexClient
             return t.TstWei.ToString("D");
         }
 
-        private BigInteger ToBigIng(string tokens)
+        private TestToken ToTestToken(string s)
+        {
+            return new TestToken(ToBigInt(s));
+        }
+
+        private long ToLong(double value)
+        {
+            return Convert.ToInt64(value);
+        }
+
+        private BigInteger ToBigInt(string tokens)
         {
             return BigInteger.Parse(tokens);
         }
 
-        private TimeSpan ToTimespan(string duration)
+        private TimeSpan ToTimespan(long duration)
         {
-            return TimeSpan.FromSeconds(Convert.ToInt32(duration));
+            return TimeSpan.FromSeconds(duration);
         }
 
-        private ByteSize ToByteSize(string size)
+        private ByteSize ToByteSize(long size)
         {
-            return new ByteSize(Convert.ToInt64(size));
+            return new ByteSize(size);
         }
     }
 }

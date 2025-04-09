@@ -10,7 +10,7 @@ namespace CodexClient
             ContentId = cid;
         }
 
-        public ContentId ContentId { get; set; }
+        public ContentId ContentId { get; }
         public TestToken PricePerBytePerSecond { get; set; } = 1.TstWei();
         public TestToken CollateralPerByte { get; set; } = 1.TstWei();
         public uint MinRequiredNumberOfNodes { get; set; }
@@ -34,21 +34,21 @@ namespace CodexClient
 
     public class StoragePurchase
     {
-        public string State { get; set; } = string.Empty;
+        public StoragePurchaseState State { get; set; } = StoragePurchaseState.Unknown;
         public string Error { get; set; } = string.Empty;
         public StorageRequest Request { get; set; } = null!;
 
-        public bool IsCancelled => State.ToLowerInvariant().Contains("cancel");
-        public bool IsError => State.ToLowerInvariant().Contains("error");
-        public bool IsFinished => State.ToLowerInvariant().Contains("finished");
-        public bool IsStarted => State.ToLowerInvariant().Contains("started");
-        public bool IsSubmitted => State.ToLowerInvariant().Contains("submitted");
+        public bool IsCancelled => State == StoragePurchaseState.Cancelled;
+        public bool IsError => State == StoragePurchaseState.Errored;
+        public bool IsFinished => State == StoragePurchaseState.Finished;
+        public bool IsStarted => State == StoragePurchaseState.Started;
+        public bool IsSubmitted => State == StoragePurchaseState.Submitted;
     }
 
     public enum StoragePurchaseState
     {
         Cancelled = 0,
-        Error = 1,
+        Errored = 1,
         Failed = 2,
         Finished = 3,
         Pending = 4,
@@ -63,18 +63,18 @@ namespace CodexClient
         public string Client { get; set; } = string.Empty;
         public StorageAsk Ask { get; set; } = null!;
         public StorageContent Content { get; set; } = null!;
-        public string Expiry { get; set; } = string.Empty;
+        public long Expiry { get; set; }
         public string Nonce { get; set; } = string.Empty;
     }
 
     public class StorageAsk
     {
-        public int Slots { get; set; }
-        public string SlotSize { get; set; } = string.Empty;
-        public string Duration { get; set; } = string.Empty;
+        public long Slots { get; set; }
+        public long SlotSize { get; set; }
+        public long Duration { get; set; }
         public string ProofProbability { get; set; } = string.Empty;
         public string PricePerBytePerSecond { get; set; } = string.Empty;
-        public int MaxSlotLoss { get; set; }
+        public long MaxSlotLoss { get; set; }
     }
 
     public class StorageContent

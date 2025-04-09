@@ -6,18 +6,20 @@
         private readonly TimeSpan maxTimeout;
         private readonly TimeSpan sleepAfterFail;
         private readonly Action<Failure> onFail;
+        private readonly bool failFast;
 
-        public Retry(string description, TimeSpan maxTimeout, TimeSpan sleepAfterFail, Action<Failure> onFail)
+        public Retry(string description, TimeSpan maxTimeout, TimeSpan sleepAfterFail, Action<Failure> onFail, bool failFast)
         {
             this.description = description;
             this.maxTimeout = maxTimeout;
             this.sleepAfterFail = sleepAfterFail;
             this.onFail = onFail;
+            this.failFast = failFast;
         }
 
         public void Run(Action task)
         {
-            var run = new RetryRun(description, task, maxTimeout, sleepAfterFail, onFail);
+            var run = new RetryRun(description, task, maxTimeout, sleepAfterFail, onFail, failFast);
             run.Run();
         }
 
@@ -28,7 +30,7 @@
             var run = new RetryRun(description, () =>
             {
                 result = task();
-            }, maxTimeout, sleepAfterFail, onFail);
+            }, maxTimeout, sleepAfterFail, onFail, failFast);
             run.Run();
 
             return result!;
@@ -43,16 +45,18 @@
             private readonly Action<Failure> onFail;
             private readonly DateTime start = DateTime.UtcNow;
             private readonly List<Failure> failures = new List<Failure>();
+            private readonly bool failFast;
             private int tryNumber;
             private DateTime tryStart;
 
-            public RetryRun(string description, Action task, TimeSpan maxTimeout, TimeSpan sleepAfterFail, Action<Failure> onFail)
+            public RetryRun(string description, Action task, TimeSpan maxTimeout, TimeSpan sleepAfterFail, Action<Failure> onFail, bool failFast)
             {
                 this.description = description;
                 this.task = task;
                 this.maxTimeout = maxTimeout;
                 this.sleepAfterFail = sleepAfterFail;
                 this.onFail = onFail;
+                this.failFast = failFast;
 
                 tryNumber = 0;
                 tryStart = DateTime.UtcNow;
@@ -94,6 +98,10 @@
             private void CheckMaximums()
             {
                 if (Duration() > maxTimeout) Fail();
+
+                // If we have a few very fast failures, retrying won't help us. There's probably something wrong with our operation.
+                // In this case, don't wait the full duration and fail quickly.
+                if (failFast && failures.Count > 5 && failures.All(f => f.Duration < TimeSpan.FromSeconds(1.0))) Fail();
             }
 
             private void Fail()

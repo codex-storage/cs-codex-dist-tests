@@ -164,7 +164,8 @@ namespace CodexReleaseTests.MarketTests
             return new Retry("AssertBalance",
                 maxTimeout: TimeSpan.FromMinutes(10.0),
                 sleepAfterFail: TimeSpan.FromSeconds(10.0),
-                onFail: f => { });
+                onFail: f => { },
+                failFast: false);
         }
 
         private Retry GetAvailabilitySpaceAssertRetry()
@@ -197,12 +198,19 @@ namespace CodexReleaseTests.MarketTests
 
         public ICodexNodeGroup StartClients()
         {
-            return StartCodex(NumberOfClients, s => s
-                .WithName("client")
-                .EnableMarketplace(GetGeth(), GetContracts(), m => m
-                    .WithInitial(StartingBalanceEth.Eth(), StartingBalanceTST.Tst())
-                )
-            );
+            return StartClients(s => { });
+        }
+
+        public ICodexNodeGroup StartClients(Action<ICodexSetup> additional)
+        {
+            return StartCodex(NumberOfClients, s =>
+            {
+                s.WithName("client")
+                    .EnableMarketplace(GetGeth(), GetContracts(), m => m
+                    .WithInitial(StartingBalanceEth.Eth(), StartingBalanceTST.Tst()));
+
+                additional(s);
+            });
         }
 
         public ICodexNode StartValidator()
