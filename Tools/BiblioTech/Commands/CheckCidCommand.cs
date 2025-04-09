@@ -1,5 +1,6 @@
 ﻿using BiblioTech.Options;
 using Discord;
+using Discord.WebSocket;
 
 namespace BiblioTech.Commands
 {
@@ -33,16 +34,33 @@ namespace BiblioTech.Commands
                 return;
             }
 
-            var response = checker.PerformCheck(cid);
-            await Program.AdminChecker.SendInAdminChannel($"User {Mention(user)} used '/{Name}' for cid '{cid}'. Lookup-success: {response.Success}. Message: '{response.Message}' Error: '{response.Error}'");
+            try
+            {
+                await PerformCheck(context, user, cid);
+            }
+            catch (Exception ex)
+            {
+                await RespondeWithError(context, ex);
+            }
+        }
 
+        private async Task PerformCheck(CommandContext context, SocketUser user, string cid)
+        {
+            var response = checker.PerformCheck(cid);
             if (response.Success)
             {
                 await CheckAltruisticRole(context, user, cid, response.Message);
                 return;
             }
 
+            await Program.AdminChecker.SendInAdminChannel($"User {Mention(user)} used '/{Name}' for cid '{cid}'. Lookup-success: {response.Success}. Message: '{response.Message}'");
             await context.Followup(response.Message);
+        }
+
+        private async Task RespondeWithError(CommandContext context, Exception ex)
+        {
+            await Program.AdminChecker.SendInAdminChannel("Exception during CheckCidCommand: " + ex);
+            await context.Followup("I'm sorry to report something has gone wrong in an unexpected way. Error details are already posted in the admin channel.");
         }
 
         private async Task CheckAltruisticRole(CommandContext context, IUser user, string cid, string responseMessage)

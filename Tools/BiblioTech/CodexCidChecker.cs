@@ -33,7 +33,7 @@ namespace BiblioTech
         {
             if (string.IsNullOrEmpty(config.CodexEndpoint))
             {
-                return new CheckResponse(false, "Codex CID checker is not (yet) available.", "");
+                return new CheckResponse(false, "Codex CID checker is not (yet) available.");
             }
 
             try
@@ -41,13 +41,9 @@ namespace BiblioTech
                 checkMutex.WaitOne();
                 var codex = GetCodex();
                 var nodeCheck = CheckCodex(codex);
-                if (!nodeCheck) return new CheckResponse(false, "Codex node is not available. Cannot perform check.", $"Codex node at '{config.CodexEndpoint}' did not respond correctly to debug/info.");
+                if (!nodeCheck) return new CheckResponse(false, "Codex node is not available. Cannot perform check.");
 
                 return PerformCheck(codex, cid);
-            }
-            catch (Exception ex)
-            {
-                return new CheckResponse(false, "Internal server error", ex.ToString());
             }
             finally
             {
@@ -62,9 +58,9 @@ namespace BiblioTech
                 var manifest = codex.DownloadManifestOnly(new ContentId(cid));
                 return SuccessMessage(manifest);
             }
-            catch (Exception ex)
+            catch
             {
-                return UnexpectedException(ex);
+                return FailedMessage();
             }
         }
 
@@ -74,58 +70,27 @@ namespace BiblioTech
         {
             return FormatResponse(
                 success: true,
-                title: $"Success: '{content.Cid}'",
-                error: "",
+                title: $"Success",
+                $"cid: '{content.Cid}'",
                 $"size: {content.Manifest.OriginalBytes} bytes",
                 $"blockSize: {content.Manifest.BlockSize} bytes",
                 $"protected: {content.Manifest.Protected}"
             );
         }
 
-        private CheckResponse UnexpectedException(Exception ex)
+        private CheckResponse FailedMessage()
         {
-            return FormatResponse(
-                success: false,
-                title: "Unexpected error",
-                error: ex.ToString(),
-                content: "Details will be sent to the bot-admin channel."
-            );
-        }
+            var msg = "Could not download content.";
 
-        private CheckResponse UnexpectedReturnCode(string response)
-        {
-            var msg = "Unexpected return code. Response: " + response;
             return FormatResponse(
                 success: false,
-                title: "Unexpected return code",
-                error: msg,
-                content: msg
-            );
-        }
-
-        private CheckResponse FailedToFetch(string response)
-        {
-            var msg = "Failed to download content. Response: " + response;
-            return FormatResponse(
-                success: false,
-                title: "Could not download content",
-                error: msg,
+                title: "Failed",
                 msg,
                 $"Connection trouble? See 'https://docs.codex.storage/learn/troubleshoot'"
             );
         }
 
-        private CheckResponse CidFormatInvalid(string response)
-        {
-            return FormatResponse(
-                success: false,
-                title: "Invalid format",
-                error: "",
-                content: "Provided CID is not formatted correctly."
-            );
-        }
-
-        private CheckResponse FormatResponse(bool success, string title, string error, params string[] content)
+        private CheckResponse FormatResponse(bool success, string title, params string[] content)
         {
             var msg = string.Join(nl,
                 new string[]
@@ -140,7 +105,7 @@ namespace BiblioTech
                 })
             ) + nl + nl;
 
-            return new CheckResponse(success, msg, error);
+            return new CheckResponse(success, msg);
         }
 
         #endregion
@@ -190,15 +155,13 @@ namespace BiblioTech
 
     public class CheckResponse
     {
-        public CheckResponse(bool success, string message, string error)
+        public CheckResponse(bool success, string message)
         {
             Success = success;
             Message = message;
-            Error = error;
         }
 
         public bool Success { get; }
         public string Message { get; }
-        public string Error { get; }
     }
 }
