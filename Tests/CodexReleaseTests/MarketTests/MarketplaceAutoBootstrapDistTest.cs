@@ -173,7 +173,8 @@ namespace CodexReleaseTests.MarketTests
             return new Retry("AssertAvailabilitySpace",
                 maxTimeout: HostBlockTTL * 3,
                 sleepAfterFail: TimeSpan.FromSeconds(10.0),
-                onFail: f => { });
+                onFail: f => { },
+                failFast: false);
         }
 
         private TestToken GetTstBalance(ICodexNode node)

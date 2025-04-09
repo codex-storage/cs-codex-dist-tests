@@ -36,7 +36,7 @@ namespace CodexClient
             };
         }
 
-        public CodexOpenApi.SalesAvailability Map(StorageAvailability availability)
+        public CodexOpenApi.SalesAvailability Map(CreateStorageAvailability availability)
         {
             return new CodexOpenApi.SalesAvailability
             {
