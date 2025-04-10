@@ -68,7 +68,7 @@ namespace BiblioTech.CodexChecking
 
         private HttpFactory CreateHttpFactory()
         {
-            if (string.IsNullOrEmpty(config.CodexEndpointAuth) && config.CodexEndpointAuth.Contains(":"))
+            if (string.IsNullOrEmpty(config.CodexEndpointAuth) || !config.CodexEndpointAuth.Contains(":"))
             {
                 return new HttpFactory(log);
             }
