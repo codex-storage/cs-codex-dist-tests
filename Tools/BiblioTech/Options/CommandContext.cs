@@ -55,7 +55,7 @@ namespace BiblioTech.Options
             var writer = new StreamWriter(stream);
             writer.Write(fileContent);
 
-            await Command.RespondWithFileAsync(stream, "CheckFile.txt", text: message, ephemeral: true);
+            await Command.FollowupWithFileAsync(stream, "CheckFile.txt", text: message, ephemeral: true);
 
             // Detached task for cleaning up the stream resources.
             _ = Task.Run(() =>
