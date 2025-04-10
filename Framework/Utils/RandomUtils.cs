@@ -47,7 +47,8 @@
                 var result = "";
                 while (result.Length < requiredLength)
                 {
-                    var bytes = new byte[1024];
+                    var len = Math.Min(1024, requiredLength - result.Length);
+                    var bytes = new byte[len];
                     random.NextBytes(bytes);
                     result += string.Join("", bytes.Select(b => b.ToString()));
                 }

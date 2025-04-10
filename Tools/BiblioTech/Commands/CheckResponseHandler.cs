@@ -34,10 +34,8 @@ namespace BiblioTech.Commands
 
         public async Task GiveDataFileToUser(string fileContent)
         {
-            await context.Followup("Please download the attached file. Upload it to your Codex node, " +
+            await context.SendFile(fileContent, "Please download the attached file. Upload it to your Codex node, " +
                 "then provide the CID as argument to this command.");
-
-            await context.SendFile(fileContent);
         }
 
         public async Task GiveRoleReward()

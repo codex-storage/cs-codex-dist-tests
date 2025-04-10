@@ -49,13 +49,13 @@ namespace BiblioTech.Options
             }
         }
 
-        public async Task SendFile(string fileContent)
+        public async Task SendFile(string fileContent, string message)
         {
             var stream = new MemoryStream();
             var writer = new StreamWriter(stream);
             writer.Write(fileContent);
 
-            await Command.RespondWithFileAsync(stream, "CheckFile.txt", ephemeral: true);
+            await Command.RespondWithFileAsync(stream, "CheckFile.txt", text: message, ephemeral: true);
 
             // Detached task for cleaning up the stream resources.
             _ = Task.Run(() =>
