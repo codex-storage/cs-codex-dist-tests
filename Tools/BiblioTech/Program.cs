@@ -34,6 +34,7 @@ namespace BiblioTech
             EnsurePath(Config.DataPath);
             EnsurePath(Config.UserDataPath);
             EnsurePath(Config.EndpointsPath);
+            EnsurePath(Config.ChecksDataPath);
 
             return new Program().MainAsync(args);
         }
