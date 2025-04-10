@@ -6,6 +6,7 @@ namespace AutoClient.Modes.FolderStore
     {
         private readonly App app;
         private readonly string filePath;
+        private readonly object fileLock = new object();
 
         public JsonFile(App app, string filePath)
         {
@@ -15,35 +16,41 @@ namespace AutoClient.Modes.FolderStore
 
         public T Load()
         {
-            try
+            lock (fileLock)
             {
-                if (!File.Exists(filePath))
+                try
                 {
-                    var state = new T();
-                    Save(state);
-                    return state;
+                    if (!File.Exists(filePath))
+                    {
+                        var state = new T();
+                        Save(state);
+                        return state;
+                    }
+                    var text = File.ReadAllText(filePath);
+                    return JsonConvert.DeserializeObject<T>(text)!;
                 }
-                var text = File.ReadAllText(filePath);
-                return JsonConvert.DeserializeObject<T>(text)!;
-            }
-            catch (Exception exc)
-            {
-                app.Log.Error("Failed to load state: " + exc);
-                throw;
+                catch (Exception exc)
+                {
+                    app.Log.Error("Failed to load state: " + exc);
+                    throw;
+                }
             }
         }
 
         public void Save(T state)
         {
-            try
+            lock (fileLock)
             {
-                var json = JsonConvert.SerializeObject(state, Formatting.Indented);
-                File.WriteAllText(filePath, json);
-            }
-            catch (Exception exc)
-            {
-                app.Log.Error("Failed to save state: " + exc);
-                throw;
+                try
+                {
+                    var json = JsonConvert.SerializeObject(state, Formatting.Indented);
+                    File.WriteAllText(filePath, json);
+                }
+                catch (Exception exc)
+                {
+                    app.Log.Error("Failed to save state: " + exc);
+                    throw;
+                }
             }
         }
     }

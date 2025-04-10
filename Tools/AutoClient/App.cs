@@ -20,10 +20,6 @@ namespace AutoClient
                 new FileLog(Path.Combine(config.LogPath, "performance")),
                 new ConsoleLog()
             ));
-
-            var httpFactory = new HttpFactory(Log, new AutoClientWebTimeSet());
-
-            CodexNodeFactory = new CodexNodeFactory(log: Log, httpFactory: httpFactory, dataDir: Config.DataPath);
         }
 
         public Configuration Config { get; }
@@ -31,7 +27,6 @@ namespace AutoClient
         public IFileGenerator Generator { get; }
         public CancellationTokenSource Cts { get; } = new CancellationTokenSource();
         public Performance Performance { get; }
-        public CodexNodeFactory CodexNodeFactory { get; }
 
         private IFileGenerator CreateGenerator()
         {

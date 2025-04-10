@@ -1,5 +1,4 @@
-﻿using GethConnector;
-using Logging;
+﻿using Logging;
 using Utils;
 
 namespace AutoClient.Modes.FolderStore
@@ -8,35 +7,43 @@ namespace AutoClient.Modes.FolderStore
     {
         private readonly LogPrefixer log;
         private readonly GethConnector.GethConnector? connector;
-        private readonly EthAddress? address;
+        private readonly EthAddress[] addresses;
 
         public BalanceChecker(App app)
         {
             log = new LogPrefixer(app.Log, "(Balance) ");
 
             connector = GethConnector.GethConnector.Initialize(app.Log);
-            address = LoadAddress(app);
+            addresses = LoadAddresses(app);
+
+            log.Log($"Loaded Eth-addresses for checking: {addresses.Length}");
+            foreach (var addr in addresses) log.Log(" - " + addr);
         }
 
-        private EthAddress? LoadAddress(App app)
+        private EthAddress[] LoadAddresses(App app)
         {
             try
             {
-                if (string.IsNullOrEmpty(app.Config.EthAddressFile)) return null;
-                if (!File.Exists(app.Config.EthAddressFile)) return null;
+                if (string.IsNullOrEmpty(app.Config.EthAddressFile)) return Array.Empty<EthAddress>();
 
-                return new EthAddress(
-                    File.ReadAllText(app.Config.EthAddressFile)
-                    .Trim()
-                    .Replace("\n", "")
-                    .Replace(Environment.NewLine, "")
-                );
+                var tokens = app.Config.EthAddressFile.Split(";", StringSplitOptions.RemoveEmptyEntries);
+                return tokens.Select(ConvertToAddress).Where(a => a != null).Cast<EthAddress>().ToArray();
             }
             catch (Exception exc)
             {
                 log.Error($"Failed to load eth address from file: {exc}");
-                return null;
+                return Array.Empty<EthAddress>();
             }
+        }
+
+        private EthAddress? ConvertToAddress(string t)
+        {
+            if (!File.Exists(t)) return null;
+            return new EthAddress(
+                    File.ReadAllText(t)
+                    .Trim()
+                    .Replace("\n", "")
+                    .Replace(Environment.NewLine, ""));
         }
 
         public void Check()
@@ -46,35 +53,32 @@ namespace AutoClient.Modes.FolderStore
                 Log("Connector not configured. Can't check balances.");
                 return;
             }
-            if (address == null)
-            {
-                Log("EthAddress not found. Can't check balances.");
-                return;
-            }
 
-            try
+            foreach (var address in addresses)
             {
-                PerformCheck();
-            }
-            catch (Exception exc)
-            {
-                Log($"Exception while checking balances: {exc}");
+                try
+                {
+                    PerformCheck(address);
+                }
+                catch (Exception exc)
+                {
+                    Log($"Exception while checking balances: {exc}");
+                }
             }
         }
 
-        private void PerformCheck()
+        private void PerformCheck(EthAddress address)
         {
             var geth = connector!.GethNode;
             var contracts = connector!.CodexContracts;
-            var addr = address!;
 
-            var eth = geth.GetEthBalance(addr);
-            var tst = contracts.GetTestTokenBalance(addr);
+            var eth = geth.GetEthBalance(address);
+            var tst = contracts.GetTestTokenBalance(address);
 
             Log($"Balances: [{eth}] - [{tst}]");
 
-            if (eth.Eth < 1) TryAddEth(geth, addr);
-            if (tst.Tst < 1) TryAddTst(contracts, addr);
+            if (eth.Eth < 1) TryAddEth(geth, address);
+            if (tst.Tst < 1) TryAddTst(contracts, address);
         }
 
         private void TryAddEth(GethPlugin.IGethNode geth, EthAddress addr)

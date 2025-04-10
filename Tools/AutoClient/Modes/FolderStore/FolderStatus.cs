@@ -11,6 +11,7 @@
     [Serializable]
     public class FileStatus
     {
+        public string CodexNodeId { get; set; } = string.Empty;
         public string Filename { get; set; } = string.Empty;
         public string BasicCid { get; set; } = string.Empty;
         public string EncodedCid { get; set; } = string.Empty;

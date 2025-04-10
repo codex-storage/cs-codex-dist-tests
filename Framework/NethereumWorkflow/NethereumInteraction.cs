@@ -62,7 +62,6 @@ namespace NethereumWorkflow
             log.Debug(typeof(TFunction).ToString());
             var handler = web3.Eth.GetContractQueryHandler<TFunction>();
             var result = Time.Wait(handler.QueryRawAsync(contractAddress, function, new BlockParameter(blockNumber)));
-            var aaaa = 0;
         }
 
         public string SendTransaction<TFunction>(string contractAddress, TFunction function) where TFunction : FunctionMessage, new()
