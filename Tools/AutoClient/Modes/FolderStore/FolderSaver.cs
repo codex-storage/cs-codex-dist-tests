@@ -1,4 +1,5 @@
 ﻿using Logging;
+using Utils;
 
 namespace AutoClient.Modes.FolderStore
 {
@@ -126,22 +127,9 @@ namespace AutoClient.Modes.FolderStore
             if (info.Length < min)
             {
                 var required = Math.Max(1024, min - info.Length);
-                status.Padding = paddingMessage + GenerateRandomString(required);
+                status.Padding = paddingMessage + RandomUtils.GenerateRandomString(required);
                 statusFile.Save(status);
             }
-        }
-
-        private string GenerateRandomString(long required)
-        {
-            var result = "";
-            while (result.Length < required)
-            {
-                var bytes = new byte[1024];
-                random.NextBytes(bytes);
-                result += string.Join("", bytes.Select(b => b.ToString()));
-            }
-
-            return result;
         }
 
         private FileSaver CreateFileSaver(string folderFile, FileStatus entry)

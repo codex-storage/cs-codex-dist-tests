@@ -1,4 +1,5 @@
 ﻿using ArgsUniform;
+using BiblioTech.CodexChecking;
 using BiblioTech.Commands;
 using BiblioTech.Rewards;
 using Discord;
@@ -80,7 +81,9 @@ namespace BiblioTech
             client = new DiscordSocketClient();
             client.Log += ClientLog;
 
-            var checker = new CodexTwoWayChecker(Config, Log);
+            var checkRepo = new CheckRepo(Config);
+            var codexWrapper = new CodexWrapper(Log, Config);
+            var checker = new CodexTwoWayChecker(Log, Config, checkRepo, codexWrapper);
             var notifyCommand = new NotifyCommand();
             var associateCommand = new UserAssociateCommand(notifyCommand);
             var sprCommand = new SprCommand();
@@ -90,7 +93,8 @@ namespace BiblioTech
                 sprCommand,
                 associateCommand,
                 notifyCommand,
-                new CheckCidCommand(checker),
+                new CheckUploadCommand(checker),
+                new CheckDownloadCommand(checker),
                 new AdminCommand(sprCommand, replacement)
             );
 

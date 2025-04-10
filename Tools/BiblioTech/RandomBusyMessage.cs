@@ -14,7 +14,9 @@
             "Analyzing the wavelengths...",
             "Charging the flux-capacitor...",
             "Jumping to hyperspace...",
-            "Computing the ultimate answer..."
+            "Computing the ultimate answer...",
+            "Turning it off and on again...",
+            "Compiling from sources..."
         };
 
         public static string Get()

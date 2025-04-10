@@ -34,9 +34,25 @@
                 var source = items.ToList();
                 while (source.Any())
                 {
-                    result.Add(RandomUtils.PickOneRandom(source));
+                    result.Add(PickOneRandom(source));
                 }
                 return result.ToArray();
+            }
+        }
+
+        public static string GenerateRandomString(long requiredLength)
+        {
+            lock (@lock)
+            {
+                var result = "";
+                while (result.Length < requiredLength)
+                {
+                    var bytes = new byte[1024];
+                    random.NextBytes(bytes);
+                    result += string.Join("", bytes.Select(b => b.ToString()));
+                }
+
+                return result;
             }
         }
     }

@@ -49,6 +49,16 @@ namespace BiblioTech.Options
             }
         }
 
+        public async Task SendFile(string fileContent)
+        {
+            using var stream = new MemoryStream();
+            using var writer = new StreamWriter(stream);
+            writer.Write(fileContent);
+            stream.Position = 0;
+
+            await Command.RespondWithFileAsync(stream, "CheckFile.txt", ephemeral: true);
+        }
+
         private string FormatChunk(string[] chunk)
         {
             return string.Join(Environment.NewLine, chunk);

@@ -49,6 +49,7 @@ namespace BiblioTech
 
         public string EndpointsPath => Path.Combine(DataPath, "endpoints");
         public string UserDataPath => Path.Combine(DataPath, "users");
+        public string ChecksDataPath => Path.Combine(DataPath, "checks");
         public string LogPath => Path.Combine(DataPath, "logs");
         public bool DebugNoDiscord => NoDiscord == 1;
     }
