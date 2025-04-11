@@ -60,5 +60,10 @@ namespace BiblioTech.Commands
         {
             await context.Followup("Successfully completed the check!");
         }
+
+        public async Task ToAdminChannel(string msg)
+        {
+            await Program.AdminChecker.SendInAdminChannel(msg);
+        }
     }
 }

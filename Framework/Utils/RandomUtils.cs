@@ -47,13 +47,14 @@
                 var result = "";
                 while (result.Length < requiredLength)
                 {
-                    var len = Math.Min(1024, requiredLength - result.Length);
+                    var remaining = requiredLength - result.Length;
+                    var len = Math.Min(1024, remaining);
                     var bytes = new byte[len];
                     random.NextBytes(bytes);
                     result += string.Join("", bytes.Select(b => b.ToString()));
                 }
 
-                return result;
+                return result.Substring(0, Convert.ToInt32(requiredLength));
             }
         }
     }

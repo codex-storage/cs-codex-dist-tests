@@ -15,6 +15,8 @@ namespace BiblioTech.CodexChecking
         Task CouldNotDownloadCid();
         Task GiveCidToUser(string cid);
         Task GiveDataFileToUser(string fileContent);
+
+        Task ToAdminChannel(string msg);
     }
 
     public class CodexTwoWayChecker
@@ -91,9 +93,9 @@ namespace BiblioTech.CodexChecking
                 return;
             }
 
-            if (IsManifestLengthCompatible(check, manifest))
+            if (await IsManifestLengthCompatible(handler, check, manifest))
             {
-                if (IsContentCorrect(check, receivedCid))
+                if (await IsContentCorrect(handler, check, receivedCid))
                 {
                     CheckNowCompleted(handler, check, userId);
                     return;
@@ -148,34 +150,38 @@ namespace BiblioTech.CodexChecking
             }
         }
 
-        private bool IsManifestLengthCompatible(TransferCheck check, Manifest manifest)
+        private async Task<bool> IsManifestLengthCompatible(ICheckResponseHandler handler, TransferCheck check, Manifest manifest)
         {
             var dataLength = check.UniqueData.Length;
             var manifestLength = manifest.OriginalBytes.SizeInBytes;
+
+            await handler.ToAdminChannel($"Debug:dataLength={dataLength},manifestLength={manifestLength}");
 
             return
                 manifestLength > (dataLength - 1) &&
                 manifestLength < (dataLength + 1);
         }
 
-        private bool IsContentCorrect(TransferCheck check, string receivedCid)
+        private async Task<bool> IsContentCorrect(ICheckResponseHandler handler, TransferCheck check, string receivedCid)
         {
             try
             {
-                return codexWrapper.OnCodex(node =>
+                var content = codexWrapper.OnCodex(node =>
                 {
                     var file = node.DownloadContent(new ContentId(receivedCid));
-                    if (file == null) return false;
+                    if (file == null) return string.Empty;
                     try
                     {
-                        var content = File.ReadAllText(file.Filename).Trim();
-                        return content == check.UniqueData;
+                        return File.ReadAllText(file.Filename).Trim();
                     }
                     finally
                     {
                         if (File.Exists(file.Filename)) File.Delete(file.Filename);
                     }
                 });
+
+                await handler.ToAdminChannel($"Debug:content=`{content}`,check=`{check.UniqueData}`");
+                return content == check.UniqueData;
             }
             catch
             { 
