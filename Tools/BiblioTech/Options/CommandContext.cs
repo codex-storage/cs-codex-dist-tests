@@ -51,18 +51,18 @@ namespace BiblioTech.Options
 
         public async Task SendFile(string fileContent, string message)
         {
-            var stream = new MemoryStream();
-            var writer = new StreamWriter(stream);
-            writer.Write(fileContent);
+            if (fileContent.Length < 1) throw new Exception("File content is empty.");
 
-            await Command.FollowupWithFileAsync(stream, "CheckFile.txt", text: message, ephemeral: true);
+            var filename = Guid.NewGuid().ToString() + ".tmp";
+            File.WriteAllText(filename, fileContent);
+
+            await Command.FollowupWithFileAsync(filename, "Codex_UploadCheckFile.txt", text: message, ephemeral: true);
 
             // Detached task for cleaning up the stream resources.
             _ = Task.Run(() =>
             {
-                Thread.Sleep(TimeSpan.FromSeconds(30));
-                writer.Dispose();
-                stream.Dispose();
+                Thread.Sleep(TimeSpan.FromMinutes(2));
+                File.Delete(filename);
             });
         }
 
