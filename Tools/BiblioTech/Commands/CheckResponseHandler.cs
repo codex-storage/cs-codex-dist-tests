@@ -1,4 +1,5 @@
-﻿using BiblioTech.CodexChecking;
+﻿using System.Linq;
+using BiblioTech.CodexChecking;
 using BiblioTech.Options;
 using Discord;
 
@@ -27,15 +28,28 @@ namespace BiblioTech.Commands
 
         public async Task GiveCidToUser(string cid)
         {
-            await context.Followup("Please download this CID using your Codex node. " +
-                "Then provide the content of the downloaded file as argument to this command. " +
-                $"`{cid}`");
+            await context.Followup(
+                FormatCatchyMessage("[💾] Please download this CID using your Codex node.",
+                $"👉 `{cid}`.",
+                "👉 Then provide the *content of the downloaded file* as argument to this command."));
         }
 
         public async Task GiveDataFileToUser(string fileContent)
         {
-            await context.SendFile(fileContent, "Please download the attached file. Upload it to your Codex node, " +
-                "then provide the CID as argument to this command.");
+            await context.SendFile(fileContent,
+                FormatCatchyMessage("[💿] Please download the attached file.",
+                "👉 Upload it to your Codex node.",
+                "👉 Then provide the *CID* as argument to this command."));
+        }
+
+        private string FormatCatchyMessage(string title, params string[] content)
+        {
+            var entries = new List<string>();
+            entries.Add(title);
+            entries.Add("```");
+            entries.AddRange(content);
+            entries.Add("```");
+            return string.Join(Environment.NewLine, entries.ToArray());
         }
 
         public async Task GiveRoleReward()
