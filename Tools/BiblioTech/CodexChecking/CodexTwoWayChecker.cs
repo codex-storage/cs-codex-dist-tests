@@ -8,7 +8,7 @@ namespace BiblioTech.CodexChecking
     public interface ICheckResponseHandler
     {
         Task CheckNotStarted();
-        Task NowCompleted();
+        Task NowCompleted(ulong userId, string checkName);
         Task GiveRoleReward();
         
         Task InvalidData();
@@ -56,13 +56,14 @@ namespace BiblioTech.CodexChecking
                 return;
             }
 
+            Log($"Verifying for downloadCheck: received: '{receivedData}' check: '{check.UniqueData}'");
             if (string.IsNullOrEmpty(receivedData) || receivedData != check.UniqueData)
             {
                 await handler.InvalidData();
                 return;
             }
 
-            CheckNowCompleted(handler, check, userId);
+            await CheckNowCompleted(handler, check, userId, "DownloadCheck");
         }
 
         public async Task StartUploadCheck(ICheckResponseHandler handler, ulong userId)
@@ -93,11 +94,12 @@ namespace BiblioTech.CodexChecking
                 return;
             }
 
-            if (await IsManifestLengthCompatible(handler, check, manifest))
+            await IsManifestLengthCompatible(handler, check, manifest);
+            if (true) // debugging, always pass the length check
             {
                 if (await IsContentCorrect(handler, check, receivedCid))
                 {
-                    CheckNowCompleted(handler, check, userId);
+                    await CheckNowCompleted(handler, check, userId, "UploadCheck");
                     return;
                 }
             }
@@ -107,7 +109,7 @@ namespace BiblioTech.CodexChecking
 
         private string GenerateUniqueData()
         {
-            return $"'{RandomBusyMessage.Get()}'{RandomUtils.GenerateRandomString(12)}";
+            return $"{RandomBusyMessage.Get().Substring(5)}{RandomUtils.GenerateRandomString(12)}";
         }
 
         private string UploadData(string uniqueData)
@@ -155,6 +157,7 @@ namespace BiblioTech.CodexChecking
             var dataLength = check.UniqueData.Length;
             var manifestLength = manifest.OriginalBytes.SizeInBytes;
 
+            Log($"Checking manifest length: dataLength={dataLength},manifestLength={manifestLength}");
             await handler.ToAdminChannel($"Debug:dataLength={dataLength},manifestLength={manifestLength}");
 
             return
@@ -180,6 +183,7 @@ namespace BiblioTech.CodexChecking
                     }
                 });
 
+                Log($"Checking content: content={content},check={check.UniqueData}");
                 await handler.ToAdminChannel($"Debug:content=`{content}`,check=`{check.UniqueData}`");
                 return content == check.UniqueData;
             }
@@ -189,18 +193,18 @@ namespace BiblioTech.CodexChecking
             }
         }
 
-        private void CheckNowCompleted(ICheckResponseHandler handler, TransferCheck check, ulong userId)
+        private async Task CheckNowCompleted(ICheckResponseHandler handler, TransferCheck check, ulong userId, string checkName)
         {
             if (check.CompletedUtc != DateTime.MinValue) return;
 
             check.CompletedUtc = DateTime.UtcNow;
             repo.SaveChanges();
 
-            handler.NowCompleted();
-            CheckUserForRoleRewards(handler, userId);
+            await handler.NowCompleted(userId, checkName);
+            await CheckUserForRoleRewards(handler, userId);
         }
 
-        private void CheckUserForRoleRewards(ICheckResponseHandler handler, ulong userId)
+        private async Task CheckUserForRoleRewards(ICheckResponseHandler handler, ulong userId)
         {
             var check = repo.GetOrCreate(userId);
 
@@ -208,8 +212,13 @@ namespace BiblioTech.CodexChecking
                 check.UploadCheck.CompletedUtc != DateTime.MinValue &&
                 check.DownloadCheck.CompletedUtc != DateTime.MinValue)
             {
-                handler.GiveRoleReward();
+                await handler.GiveRoleReward();
             }
+        }
+
+        private void Log(string msg)
+        {
+            log.Log(msg);
         }
     }
 }

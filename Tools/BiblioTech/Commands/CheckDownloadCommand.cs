@@ -35,6 +35,11 @@ namespace BiblioTech.Commands
                 }
                 else
                 {
+                    if (content.Length > 1024)
+                    {
+                        await context.Followup("Provided content is too long!");
+                        return;
+                    }
                     await checker.VerifyDownloadCheck(handler, user.Id, content);
                 }
             }

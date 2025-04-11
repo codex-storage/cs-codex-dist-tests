@@ -56,9 +56,10 @@ namespace BiblioTech.Commands
             await context.Followup("The received data didn't match. Check has failed.");
         }
 
-        public async Task NowCompleted()
+        public async Task NowCompleted(ulong userId, string checkName)
         {
             await context.Followup("Successfully completed the check!");
+            await Program.AdminChecker.SendInAdminChannel($"User <@{userId}> has completed check: {checkName}");
         }
 
         public async Task ToAdminChannel(string msg)
