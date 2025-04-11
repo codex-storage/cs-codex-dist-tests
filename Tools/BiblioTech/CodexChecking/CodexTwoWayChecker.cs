@@ -195,12 +195,12 @@ namespace BiblioTech.CodexChecking
 
         private async Task CheckNowCompleted(ICheckResponseHandler handler, TransferCheck check, ulong userId, string checkName)
         {
-            if (check.CompletedUtc != DateTime.MinValue) return;
+            await handler.NowCompleted(userId, checkName);
 
+            if (check.CompletedUtc != DateTime.MinValue) return;
             check.CompletedUtc = DateTime.UtcNow;
             repo.SaveChanges();
 
-            await handler.NowCompleted(userId, checkName);
             await CheckUserForRoleRewards(handler, userId);
         }
 
