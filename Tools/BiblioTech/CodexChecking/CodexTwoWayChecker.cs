@@ -94,10 +94,9 @@ namespace BiblioTech.CodexChecking
                 return;
             }
 
-            await IsManifestLengthCompatible(handler, check, manifest);
-            if (true) // debugging, always pass the length check
+            if (IsManifestLengthCompatible(handler, check, manifest))
             {
-                if (await IsContentCorrect(handler, check, receivedCid))
+                if (IsContentCorrect(handler, check, receivedCid))
                 {
                     await CheckNowCompleted(handler, check, userId, "UploadCheck");
                     return;
@@ -152,20 +151,19 @@ namespace BiblioTech.CodexChecking
             }
         }
 
-        private async Task<bool> IsManifestLengthCompatible(ICheckResponseHandler handler, TransferCheck check, Manifest manifest)
+        private bool IsManifestLengthCompatible(ICheckResponseHandler handler, TransferCheck check, Manifest manifest)
         {
             var dataLength = check.UniqueData.Length;
             var manifestLength = manifest.OriginalBytes.SizeInBytes;
 
             Log($"Checking manifest length: dataLength={dataLength},manifestLength={manifestLength}");
-            await handler.ToAdminChannel($"Debug:dataLength={dataLength},manifestLength={manifestLength}");
 
             return
                 manifestLength > (dataLength - 1) &&
                 manifestLength < (dataLength + 1);
         }
 
-        private async Task<bool> IsContentCorrect(ICheckResponseHandler handler, TransferCheck check, string receivedCid)
+        private bool IsContentCorrect(ICheckResponseHandler handler, TransferCheck check, string receivedCid)
         {
             try
             {
@@ -184,7 +182,6 @@ namespace BiblioTech.CodexChecking
                 });
 
                 Log($"Checking content: content={content},check={check.UniqueData}");
-                await handler.ToAdminChannel($"Debug:content=`{content}`,check=`{check.UniqueData}`");
                 return content == check.UniqueData;
             }
             catch
