@@ -42,6 +42,7 @@ namespace BiblioTech
 
             Program.AdminChecker.SetAdminChannel(adminChannel);
             Program.RoleDriver = new RoleDriver(client, Program.UserRepo, log, rewardsChannel);
+            Program.ChainActivityHandler = new ChainActivityHandler(log);
             Program.EventsSender = new ChainEventsSender(log, replacement, chainEventsChannel);
 
             var builders = commands.Select(c =>

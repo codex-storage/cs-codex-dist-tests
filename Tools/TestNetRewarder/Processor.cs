@@ -32,7 +32,7 @@ namespace TestNetRewarder
         public async Task Initialize()
         {
             var events = eventsFormatter.GetInitializationEvents(config);
-            var request = builder.Build(events, Array.Empty<string>());
+            var request = builder.Build(chainState, events, Array.Empty<string>());
             if (request.HasAny())
             {
                 await client.SendRewards(request);
@@ -49,7 +49,7 @@ namespace TestNetRewarder
 
                 if (numberOfChainEvents == 0) return TimeSegmentResponse.Underload;
                 if (numberOfChainEvents > 10) return TimeSegmentResponse.Overload;
-                if (duration > TimeSpan.FromSeconds(1)) return TimeSegmentResponse.Overload;
+                if (duration > TimeSpan.FromSeconds(3)) return TimeSegmentResponse.Overload;
                 return TimeSegmentResponse.OK;
             }
             catch (Exception ex)
@@ -69,7 +69,7 @@ namespace TestNetRewarder
             var events = eventsFormatter.GetEvents();
             var errors = eventsFormatter.GetErrors();
 
-            var request = builder.Build(events, errors);
+            var request = builder.Build(chainState, events, errors);
             if (request.HasAny())
             {
                 await client.SendRewards(request);

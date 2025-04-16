@@ -18,6 +18,7 @@ namespace BiblioTech
         public static UserRepo UserRepo { get; } = new UserRepo();
         public static AdminChecker AdminChecker { get; private set; } = null!;
         public static IDiscordRoleDriver RoleDriver { get; set; } = null!;
+        public static ChainActivityHandler ChainActivityHandler { get; set; } = null!;
         public static ChainEventsSender EventsSender { get; set; } = null!;
         public static ILog Log { get; private set; } = null!;
 
