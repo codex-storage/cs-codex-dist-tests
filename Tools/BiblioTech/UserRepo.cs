@@ -41,11 +41,10 @@ namespace BiblioTech
             return cache.Values.ToArray();  
         }
 
-        public UserData? GetUserById(ulong id)
+        public UserData GetUser(IUser user)
         {
             if (cache.Count == 0) LoadAllUserData();
-            if (cache.ContainsKey(id)) return cache[id];
-            return null;
+            return GetOrCreate(user);
         }
 
         public void AddMintEventForUser(IUser user, EthAddress usedAddress, Transaction<Ether>? eth, Transaction<TestToken>? tokens)
@@ -75,10 +74,10 @@ namespace BiblioTech
 
             lock (repoLock)
             {
-                var userData = GetUserData(user);
+                var userData = GetUserDataMaybe(user);
                 if (userData == null)
                 {
-                    result.Add("User has not joined the test net.");
+                    result.Add("User has not interacted with bot.");
                 }
                 else
                 {
@@ -107,19 +106,19 @@ namespace BiblioTech
 
         public string[] GetUserReport(IUser user)
         {
-            var userData = GetUserData(user);
+            var userData = GetUserDataMaybe(user);
             if (userData == null) return new[] { "User has not joined the test net." };
             return userData.CreateOverview();
         }
 
         public string[] GetUserReport(EthAddress ethAddress)
         {
-            var userData = GetUserDataForAddress(ethAddress);
+            var userData = GetUserDataForAddressMaybe(ethAddress);
             if (userData == null) return new[] { "No user is using this eth address." };
             return userData.CreateOverview();
         }
 
-        public UserData? GetUserDataForAddress(EthAddress? address)
+        public UserData? GetUserDataForAddressMaybe(EthAddress? address)
         {
             if (address == null) return null;
 
@@ -144,7 +143,7 @@ namespace BiblioTech
 
         private SetAddressResponse SetUserAddress(IUser user, EthAddress? address)
         {
-            if (GetUserDataForAddress(address) != null)
+            if (GetUserDataForAddressMaybe(address) != null)
             {
                 return SetAddressResponse.AddressAlreadyInUse;
             }
@@ -159,13 +158,12 @@ namespace BiblioTech
 
         private void SetUserNotification(IUser user, bool notifyEnabled)
         {
-            var userData = GetUserData(user);
-            if (userData == null) return;
+            var userData = GetOrCreate(user);
             userData.NotificationsEnabled = notifyEnabled;
             SaveUserData(userData);
         }
 
-        private UserData? GetUserData(IUser user)
+        private UserData? GetUserDataMaybe(IUser user)
         {
             if (cache.ContainsKey(user.Id))
             {
@@ -184,7 +182,7 @@ namespace BiblioTech
 
         private UserData GetOrCreate(IUser user)
         {
-            var userData = GetUserData(user);
+            var userData = GetUserDataMaybe(user);
             if (userData == null)
             {
                 return CreateAndSaveNewUserData(user);

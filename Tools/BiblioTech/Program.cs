@@ -89,17 +89,15 @@ namespace BiblioTech
             var checker = new CodexTwoWayChecker(Log, Config, checkRepo, codexWrapper);
             var notifyCommand = new NotifyCommand();
             var associateCommand = new UserAssociateCommand(notifyCommand);
-            var sprCommand = new SprCommand();
             var roleRemover = new ActiveP2pRoleRemover(Config, Log, checkRepo);
             var handler = new CommandHandler(Log, client, replacement, roleRemover,
                 new GetBalanceCommand(associateCommand),
                 new MintCommand(associateCommand),
-                sprCommand,
                 associateCommand,
                 notifyCommand,
                 new CheckUploadCommand(checker),
                 new CheckDownloadCommand(checker),
-                new AdminCommand(sprCommand, replacement)
+                new AdminCommand(replacement)
             );
 
             await client.LoginAsync(TokenType.Bot, Config.ApplicationToken);

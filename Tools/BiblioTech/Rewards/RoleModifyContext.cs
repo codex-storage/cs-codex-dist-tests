@@ -97,7 +97,7 @@ namespace BiblioTech.Rewards
         {
             try
             {
-                var userData = userRepo.GetUserById(user.Id);
+                var userData = userRepo.GetUser(user);
                 if (userData == null) return;
 
                 if (userData.NotificationsEnabled && rewardsChannel != null)
