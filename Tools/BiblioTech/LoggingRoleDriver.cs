@@ -15,18 +15,37 @@ namespace BiblioTech
             this.log = log;
         }
 
-        public async Task GiveAltruisticRole(IUser user)
+        public async Task RunRoleGiver(Func<IRoleGiver, Task> action)
         {
             await Task.CompletedTask;
-
-            log.Log($"Give altruistic role to {user.Id}");
+            await action(new LoggingRoleGiver(log));
         }
 
-        public async Task GiveRewards(GiveRewardsCommand rewards)
+        public async Task IterateRemoveActiveP2pParticipants(Func<IUser, bool> predicate)
         {
             await Task.CompletedTask;
+        }
 
-            log.Log(JsonConvert.SerializeObject(rewards, Formatting.None));
+        private class LoggingRoleGiver : IRoleGiver
+        {
+            private readonly ILog log;
+
+            public LoggingRoleGiver(ILog log)
+            {
+                this.log = log;
+            }
+
+            public async Task GiveActiveP2pParticipant(IUser user)
+            {
+                log.Log($"Giving ActiveP2p role to " + user.Id);
+                await Task.CompletedTask;
+            }
+
+            public async Task GiveAltruisticRole(IUser user)
+            {
+                log.Log($"Giving Altruistic role to " + user.Id);
+                await Task.CompletedTask;
+            }
         }
     }
 }

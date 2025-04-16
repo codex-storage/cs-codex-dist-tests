@@ -88,7 +88,7 @@ namespace ExperimentalTests.UtilityTests
                 $"Event '{msg}' did not occure correct number of times.");
         }
 
-        private void OnCommand(string timestamp, GiveRewardsCommand call)
+        private void OnCommand(string timestamp, EventsAndErrors call)
         {
             Log($"<API call {timestamp}>");
             foreach (var e in call.EventsOverview)
@@ -276,7 +276,7 @@ namespace ExperimentalTests.UtilityTests
                 monitor = new ContainerFileMonitor(log, ci, botContainer, "/app/datapath/logs/discordbot.log");
             }
 
-            public void Start(Action<string, GiveRewardsCommand> onCommand)
+            public void Start(Action<string, EventsAndErrors> onCommand)
             {
                 monitor.Start(line => ParseLine(line, onCommand));
             }
@@ -286,14 +286,14 @@ namespace ExperimentalTests.UtilityTests
                 monitor.Stop();
             }
 
-            private void ParseLine(string line, Action<string, GiveRewardsCommand> onCommand)
+            private void ParseLine(string line, Action<string, EventsAndErrors> onCommand)
             {
                 try
                 {
                     var timestamp = line.Substring(0, 30);
                     var json = line.Substring(31);
 
-                    var cmd = JsonConvert.DeserializeObject<GiveRewardsCommand>(json);
+                    var cmd = JsonConvert.DeserializeObject<EventsAndErrors>(json);
                     if (cmd != null)
                     {
                         onCommand(timestamp, cmd);

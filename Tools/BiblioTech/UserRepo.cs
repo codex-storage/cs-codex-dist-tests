@@ -41,6 +41,13 @@ namespace BiblioTech
             return cache.Values.ToArray();  
         }
 
+        public UserData? GetUserById(ulong id)
+        {
+            if (cache.Count == 0) LoadAllUserData();
+            if (cache.ContainsKey(id)) return cache[id];
+            return null;
+        }
+
         public void AddMintEventForUser(IUser user, EthAddress usedAddress, Transaction<Ether>? eth, Transaction<TestToken>? tokens)
         {
             lock (repoLock)

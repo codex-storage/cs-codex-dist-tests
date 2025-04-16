@@ -8,7 +8,6 @@ namespace TestNetRewarder
     public class Processor : ITimeSegmentHandler
     {
         private readonly RequestBuilder builder;
-        private readonly RewardChecker rewardChecker;
         private readonly EventsFormatter eventsFormatter;
         private readonly ChainState chainState;
         private readonly Configuration config;
@@ -24,15 +23,9 @@ namespace TestNetRewarder
             lastPeriodUpdateUtc = DateTime.UtcNow;
 
             builder = new RequestBuilder();
-            rewardChecker = new RewardChecker(builder);
             eventsFormatter = new EventsFormatter(config);
 
-            var handler = new ChainStateChangeHandlerMux(
-                rewardChecker.Handler,
-                eventsFormatter
-            );
-
-            chainState = new ChainState(log, contracts, handler, config.HistoryStartUtc,
+            chainState = new ChainState(log, contracts, eventsFormatter, config.HistoryStartUtc,
                 doProofPeriodMonitoring: config.ShowProofPeriodReports > 0);
         }
 

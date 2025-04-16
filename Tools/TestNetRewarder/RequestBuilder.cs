@@ -3,38 +3,15 @@ using Utils;
 
 namespace TestNetRewarder
 {
-    public class RequestBuilder : IRewardGiver
+    public class RequestBuilder
     {
-        private readonly Dictionary<ulong, List<EthAddress>> rewards = new Dictionary<ulong, List<EthAddress>>();
-
-        public void Give(RewardConfig reward, EthAddress receiver)
+        public EventsAndErrors Build(ChainEventMessage[] lines, string[] errors)
         {
-            if (rewards.ContainsKey(reward.RoleId))
+            return new EventsAndErrors
             {
-                rewards[reward.RoleId].Add(receiver);
-            }
-            else
-            {
-                rewards.Add(reward.RoleId, new List<EthAddress> { receiver });
-            }
-        }
-
-        public GiveRewardsCommand Build(ChainEventMessage[] lines, string[] errors)
-        {
-            var result = new GiveRewardsCommand
-            {
-                Rewards = rewards.Select(p => new RewardUsersCommand
-                {
-                    RewardId = p.Key,
-                    UserAddresses = p.Value.Select(v => v.Address).ToArray()
-                }).ToArray(),
                 EventsOverview = lines,
                 Errors = errors
             };
-
-            rewards.Clear();
-
-            return result;
         }
     }
 }

@@ -1,21 +1,14 @@
 ﻿namespace DiscordRewards
 {
-    public class GiveRewardsCommand
+    public class EventsAndErrors
     {
-        public RewardUsersCommand[] Rewards { get; set; } = Array.Empty<RewardUsersCommand>();
         public ChainEventMessage[] EventsOverview { get; set; } = Array.Empty<ChainEventMessage>();
         public string[] Errors { get; set; } = Array.Empty<string>();
 
         public bool HasAny()
         {
-            return Rewards.Any() || EventsOverview.Any();
+            return Errors.Length > 0 || EventsOverview.Length > 0;
         }
-    }
-
-    public class RewardUsersCommand
-    {
-        public ulong RewardId { get; set; }
-        public string[] UserAddresses { get; set; } = Array.Empty<string>();
     }
 
     public class ChainEventMessage
