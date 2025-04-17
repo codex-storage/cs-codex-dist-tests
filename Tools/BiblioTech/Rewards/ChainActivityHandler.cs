@@ -18,9 +18,7 @@ namespace BiblioTech.Rewards
 
         public async Task ProcessChainActivity(ActiveChainAddresses activeChainAddresses)
         {
-            if (!activeChainAddresses.HasAny()) return;
             var activeUserIds = ConvertToUserIds(activeChainAddresses);
-            if (!activeUserIds.HasAny()) return;
             if (!HasChanged(activeUserIds)) return;
 
             await GiveAndRemoveRoles(activeUserIds);
@@ -131,16 +129,6 @@ namespace BiblioTech.Rewards
 
             public List<ulong> Hosts { get; }
             public List<ulong> Clients { get; }
-
-            public bool HasAny()
-            {
-                return Hosts.Any() || Clients.Any();
-            }
-
-            public override string ToString()
-            {
-                return "Hosts:" + string.Join(",", Hosts) + "Clients:" + string.Join(",", Clients);
-            }
         }
     }
 }

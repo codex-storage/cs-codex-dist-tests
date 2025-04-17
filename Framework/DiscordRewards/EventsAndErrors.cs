@@ -30,10 +30,5 @@
         {
             return Hosts.Length > 0 || Clients.Length > 0;
         }
-
-        public override string ToString()
-        {
-            return "Hosts:" + string.Join(",", Hosts) + "Clients:" + string.Join(",", Clients);
-        }
     }
 }
