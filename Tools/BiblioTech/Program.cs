@@ -16,6 +16,7 @@ namespace BiblioTech
         private DiscordSocketClient client = null!;
         private CustomReplacement replacement = null!;
 
+        public static CallDispatcher Dispatcher { get; private set; } = null!;
         public static Configuration Config { get; private set; } = null!;
         public static UserRepo UserRepo { get; } = new UserRepo();
         public static AdminChecker AdminChecker { get; private set; } = null!;
@@ -26,8 +27,6 @@ namespace BiblioTech
 
         public static Task Main(string[] args)
         {
-            Log = new ConsoleLog();
-
             var uniformArgs = new ArgsUniform<Configuration>(PrintHelp, args);
             Config = uniformArgs.Parse();
 
@@ -36,24 +35,14 @@ namespace BiblioTech
                 new ConsoleLog()
             );
 
+            Dispatcher = new CallDispatcher(Log);
+
             EnsurePath(Config.DataPath);
             EnsurePath(Config.UserDataPath);
             EnsurePath(Config.EndpointsPath);
             EnsurePath(Config.ChecksDataPath);
 
             return new Program().MainAsync(args);
-        }
-
-        public static void Write(EventsAndErrors cmd)
-        {
-            if (Log == null) return;
-
-            if (cmd == null)
-            {
-                Log.Log("cmd is null!");
-                return;
-            }
-            Log.Log(JsonConvert.SerializeObject(cmd));
         }
 
         public async Task MainAsync(string[] args)

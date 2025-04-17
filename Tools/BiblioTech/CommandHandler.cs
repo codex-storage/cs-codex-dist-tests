@@ -84,6 +84,7 @@ namespace BiblioTech
                 log.Error(json);
                 throw;
             }
+            Program.Dispatcher.Start();
             log.Log("Initialized.");
         }
 
