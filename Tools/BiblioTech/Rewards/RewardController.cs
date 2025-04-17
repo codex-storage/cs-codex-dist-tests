@@ -39,6 +39,8 @@ namespace BiblioTech.Rewards
         [HttpPost]
         public async Task<string> Give(EventsAndErrors cmd)
         {
+            Program.Write(cmd);
+
             await Safe(() => Program.ChainActivityHandler.ProcessChainActivity(cmd.ActiveChainAddresses));
             await Safe(() => Program.EventsSender.ProcessChainEvents(cmd.EventsOverview, cmd.Errors));
             return "OK";

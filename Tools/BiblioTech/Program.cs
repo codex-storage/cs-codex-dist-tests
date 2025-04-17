@@ -4,8 +4,10 @@ using BiblioTech.Commands;
 using BiblioTech.Rewards;
 using Discord;
 using Discord.WebSocket;
+using DiscordRewards;
 using Logging;
 using Nethereum.Model;
+using Newtonsoft.Json;
 
 namespace BiblioTech
 {
@@ -40,6 +42,18 @@ namespace BiblioTech
             EnsurePath(Config.ChecksDataPath);
 
             return new Program().MainAsync(args);
+        }
+
+        public static void Write(EventsAndErrors cmd)
+        {
+            if (Log == null) return;
+
+            if (cmd == null)
+            {
+                Log.Log("cmd is null!");
+                return;
+            }
+            Log.Log(JsonConvert.SerializeObject(cmd));
         }
 
         public async Task MainAsync(string[] args)
