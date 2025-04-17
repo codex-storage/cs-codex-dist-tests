@@ -18,24 +18,10 @@ namespace BiblioTech.Rewards
 
         public async Task ProcessChainActivity(ActiveChainAddresses activeChainAddresses)
         {
-            if (!activeChainAddresses.HasAny())
-            {
-                Log("Received empty activeChainAddresses.");
-                return;
-            }
-
+            if (!activeChainAddresses.HasAny()) return;
             var activeUserIds = ConvertToUserIds(activeChainAddresses);
-            if (!activeUserIds.HasAny())
-            {
-                Log("Empty userIds after lookup of addresses: " + activeChainAddresses);
-                return;
-            }
-            
-            if (!HasChanged(activeUserIds))
-            {
-                Log("Active userIds has not changed: " + activeUserIds);
-                return;
-            }
+            if (!activeUserIds.HasAny()) return;
+            if (!HasChanged(activeUserIds)) return;
 
             await GiveAndRemoveRoles(activeUserIds);
         }
