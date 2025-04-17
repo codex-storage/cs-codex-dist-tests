@@ -122,20 +122,17 @@ namespace BiblioTech
         {
             if (address == null) return null;
 
-            // If this becomes a performance problem, switch to in-memory cached list.
-            var files = Directory.GetFiles(Program.Config.UserDataPath);
-            foreach (var file in files)
+            var lower = address.Address.ToLowerInvariant();
+            if (string.IsNullOrEmpty(lower)) return null;
+
+            if (cache.Count == 0) LoadAllUserData();
+            foreach (var item in cache.Values)
             {
-                try
+                if (item.CurrentAddress != null &&
+                    item.CurrentAddress.Address.ToLowerInvariant() == lower)
                 {
-                    var user = JsonConvert.DeserializeObject<UserData>(File.ReadAllText(file))!;
-                    if (user.CurrentAddress != null &&
-                        user.CurrentAddress.Address == address.Address)
-                    {
-                        return user;
-                    }
+                    return item;
                 }
-                catch { }
             }
 
             return null;

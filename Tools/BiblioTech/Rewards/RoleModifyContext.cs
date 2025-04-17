@@ -10,6 +10,8 @@ namespace BiblioTech.Rewards
     {
         private Dictionary<ulong, IGuildUser> users = new();
         private Dictionary<ulong, SocketRole> roles = new();
+        private DateTime lastLoad = DateTime.MinValue;
+
         private readonly SocketGuild guild;
         private readonly UserRepo userRepo;
         private readonly ILog log;
@@ -25,8 +27,14 @@ namespace BiblioTech.Rewards
 
         public async Task Initialize()
         {
-            this.users = await LoadAllUsers(guild);
-            this.roles = LoadAllRoles(guild);
+            var span = DateTime.UtcNow - lastLoad;
+            if (span > TimeSpan.FromMinutes(10))
+            {
+                lastLoad = DateTime.UtcNow;
+                log.Log("Loading all users and roles...");
+                this.users = await LoadAllUsers(guild);
+                this.roles = LoadAllRoles(guild);
+            }
         }
 
         public IGuildUser[] Users => users.Values.ToArray();
@@ -76,7 +84,6 @@ namespace BiblioTech.Rewards
 
         private async Task<Dictionary<ulong, IGuildUser>> LoadAllUsers(SocketGuild guild)
         {
-            log.Log("Loading all users..");
             var result = new Dictionary<ulong, IGuildUser>();
             var users = guild.GetUsersAsync();
             await foreach (var ulist in users)
