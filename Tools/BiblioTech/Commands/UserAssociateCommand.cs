@@ -69,8 +69,8 @@ namespace BiblioTech.Commands
         {
             await context.Followup(new string[]
             {
-                    "Done! Thank you for joining the test net!",
-                    "By default, the bot will @-mention you with test-net related notifications.",
+                    "Done! Thank you for joining!",
+                    "By default, the bot will @-mention you with discord role notifications.",
                     $"You can enable/disable this behavior with the '/{notifyCommand.Name}' command."
             });
 

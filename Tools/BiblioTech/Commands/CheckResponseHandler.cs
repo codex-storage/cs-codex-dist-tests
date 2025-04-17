@@ -56,7 +56,11 @@ namespace BiblioTech.Commands
         {
             try
             {
-                await Program.RoleDriver.GiveAltruisticRole(user);
+                await Program.RoleDriver.RunRoleGiver(async r =>
+                {
+                    await r.GiveAltruisticRole(user.Id);
+                    await r.GiveActiveP2pParticipant(user.Id);
+                });
                 await context.Followup($"Congratulations! You've been granted the Altruistic Mode role!");
             }
             catch (Exception ex)

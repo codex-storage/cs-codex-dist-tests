@@ -194,7 +194,6 @@ namespace BiblioTech.CodexChecking
         {
             await handler.NowCompleted(userId, checkName);
 
-            if (check.CompletedUtc != DateTime.MinValue) return;
             check.CompletedUtc = DateTime.UtcNow;
             repo.SaveChanges();
 
@@ -205,8 +204,7 @@ namespace BiblioTech.CodexChecking
         {
             var check = repo.GetOrCreate(userId);
 
-            if (
-                check.UploadCheck.CompletedUtc != DateTime.MinValue &&
+            if (check.UploadCheck.CompletedUtc != DateTime.MinValue &&
                 check.DownloadCheck.CompletedUtc != DateTime.MinValue)
             {
                 await handler.GiveRoleReward();

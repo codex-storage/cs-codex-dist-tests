@@ -5,6 +5,7 @@ using BiblioTech.Rewards;
 using Discord;
 using Discord.WebSocket;
 using Logging;
+using Nethereum.Model;
 
 namespace BiblioTech
 {
@@ -17,6 +18,8 @@ namespace BiblioTech
         public static UserRepo UserRepo { get; } = new UserRepo();
         public static AdminChecker AdminChecker { get; private set; } = null!;
         public static IDiscordRoleDriver RoleDriver { get; set; } = null!;
+        public static ChainActivityHandler ChainActivityHandler { get; set; } = null!;
+        public static ChainEventsSender EventsSender { get; set; } = null!;
         public static ILog Log { get; private set; } = null!;
 
         public static Task Main(string[] args)
@@ -87,16 +90,15 @@ namespace BiblioTech
             var checker = new CodexTwoWayChecker(Log, Config, checkRepo, codexWrapper);
             var notifyCommand = new NotifyCommand();
             var associateCommand = new UserAssociateCommand(notifyCommand);
-            var sprCommand = new SprCommand();
-            var handler = new CommandHandler(Log, client, replacement,
+            var roleRemover = new ActiveP2pRoleRemover(Config, Log, checkRepo);
+            var handler = new CommandHandler(Log, client, replacement, roleRemover,
                 new GetBalanceCommand(associateCommand),
                 new MintCommand(associateCommand),
-                sprCommand,
                 associateCommand,
                 notifyCommand,
                 new CheckUploadCommand(checker),
                 new CheckDownloadCommand(checker),
-                new AdminCommand(sprCommand, replacement)
+                new AdminCommand(replacement)
             );
 
             await client.LoginAsync(TokenType.Bot, Config.ApplicationToken);
