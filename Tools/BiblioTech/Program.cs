@@ -1,9 +1,13 @@
 ﻿using ArgsUniform;
+using BiblioTech.CodexChecking;
 using BiblioTech.Commands;
 using BiblioTech.Rewards;
 using Discord;
 using Discord.WebSocket;
+using DiscordRewards;
 using Logging;
+using Nethereum.Model;
+using Newtonsoft.Json;
 
 namespace BiblioTech
 {
@@ -12,16 +16,17 @@ namespace BiblioTech
         private DiscordSocketClient client = null!;
         private CustomReplacement replacement = null!;
 
+        public static CallDispatcher Dispatcher { get; private set; } = null!;
         public static Configuration Config { get; private set; } = null!;
         public static UserRepo UserRepo { get; } = new UserRepo();
         public static AdminChecker AdminChecker { get; private set; } = null!;
         public static IDiscordRoleDriver RoleDriver { get; set; } = null!;
+        public static ChainActivityHandler ChainActivityHandler { get; set; } = null!;
+        public static ChainEventsSender EventsSender { get; set; } = null!;
         public static ILog Log { get; private set; } = null!;
 
         public static Task Main(string[] args)
         {
-            Log = new ConsoleLog();
-
             var uniformArgs = new ArgsUniform<Configuration>(PrintHelp, args);
             Config = uniformArgs.Parse();
 
@@ -30,9 +35,12 @@ namespace BiblioTech
                 new ConsoleLog()
             );
 
+            Dispatcher = new CallDispatcher(Log);
+
             EnsurePath(Config.DataPath);
             EnsurePath(Config.UserDataPath);
             EnsurePath(Config.EndpointsPath);
+            EnsurePath(Config.ChecksDataPath);
 
             return new Program().MainAsync(args);
         }
@@ -80,18 +88,20 @@ namespace BiblioTech
             client = new DiscordSocketClient();
             client.Log += ClientLog;
 
-            var checker = new CodexCidChecker(Config, Log);
+            var checkRepo = new CheckRepo(Config);
+            var codexWrapper = new CodexWrapper(Log, Config);
+            var checker = new CodexTwoWayChecker(Log, Config, checkRepo, codexWrapper);
             var notifyCommand = new NotifyCommand();
             var associateCommand = new UserAssociateCommand(notifyCommand);
-            var sprCommand = new SprCommand();
-            var handler = new CommandHandler(Log, client, replacement,
+            var roleRemover = new ActiveP2pRoleRemover(Config, Log, checkRepo);
+            var handler = new CommandHandler(Log, client, replacement, roleRemover,
                 new GetBalanceCommand(associateCommand),
                 new MintCommand(associateCommand),
-                sprCommand,
                 associateCommand,
                 notifyCommand,
-                new CheckCidCommand(checker),
-                new AdminCommand(sprCommand, replacement)
+                new CheckUploadCommand(checker),
+                new CheckDownloadCommand(checker),
+                new AdminCommand(replacement)
             );
 
             await client.LoginAsync(TokenType.Bot, Config.ApplicationToken);

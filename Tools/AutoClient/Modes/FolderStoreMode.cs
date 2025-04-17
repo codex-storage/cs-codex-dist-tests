@@ -2,31 +2,28 @@
 
 namespace AutoClient.Modes
 {
-    public class FolderStoreMode : IMode
+    public class FolderStoreMode
     {
         private readonly App app;
-        private readonly string folder;
-        private readonly PurchaseInfo purchaseInfo;
-        private readonly CancellationTokenSource cts = new CancellationTokenSource();
         private Task checkTask = Task.CompletedTask;
+        private readonly LoadBalancer loadBalancer;
 
-        public FolderStoreMode(App app, string folder, PurchaseInfo purchaseInfo)
+        public FolderStoreMode(App app, LoadBalancer loadBalancer)
         {
             this.app = app;
-            this.folder = folder;
-            this.purchaseInfo = purchaseInfo;
+            this.loadBalancer = loadBalancer;
         }
 
-        public void Start(CodexWrapper instance, int index)
+        public void Start()
         {
             checkTask = Task.Run(() =>
             {
                 try
                 {
-                    var saver = new FolderSaver(app, instance);
-                    while (!cts.IsCancellationRequested)
+                    var saver = new FolderSaver(app, loadBalancer);
+                    while (!app.Cts.IsCancellationRequested)
                     {
-                        saver.Run(cts);
+                        saver.Run();
                     }
                 }
                 catch (Exception ex)
@@ -39,7 +36,7 @@ namespace AutoClient.Modes
 
         public void Stop()
         {
-            cts.Cancel();
+            app.Cts.Cancel();
             checkTask.Wait();
         }
     }

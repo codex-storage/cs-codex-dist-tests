@@ -49,6 +49,23 @@ namespace BiblioTech.Options
             }
         }
 
+        public async Task SendFile(string fileContent, string message)
+        {
+            if (fileContent.Length < 1) throw new Exception("File content is empty.");
+
+            var filename = Guid.NewGuid().ToString() + ".tmp";
+            File.WriteAllText(filename, fileContent);
+
+            await Command.FollowupWithFileAsync(filename, "Codex_UploadCheckFile.txt", text: message, ephemeral: true);
+
+            // Detached task for cleaning up the stream resources.
+            _ = Task.Run(() =>
+            {
+                Thread.Sleep(TimeSpan.FromMinutes(2));
+                File.Delete(filename);
+            });
+        }
+
         private string FormatChunk(string[] chunk)
         {
             return string.Join(Environment.NewLine, chunk);

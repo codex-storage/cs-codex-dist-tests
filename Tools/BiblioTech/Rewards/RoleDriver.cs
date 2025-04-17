@@ -1,6 +1,7 @@
 ﻿using Discord;
 using Discord.WebSocket;
 using DiscordRewards;
+using k8s.KubeConfigModels;
 using Logging;
 using Newtonsoft.Json;
 using Utils;
@@ -10,145 +11,52 @@ namespace BiblioTech.Rewards
     public class RoleDriver : IDiscordRoleDriver
     {
         private readonly DiscordSocketClient client;
+        private readonly UserRepo userRepo;
         private readonly ILog log;
         private readonly SocketTextChannel? rewardsChannel;
-        private readonly ChainEventsSender eventsSender;
-        private readonly RewardRepo repo = new RewardRepo();
 
-        public RoleDriver(DiscordSocketClient client, ILog log, CustomReplacement replacement)
+        public RoleDriver(DiscordSocketClient client, UserRepo userRepo, ILog log, SocketTextChannel? rewardsChannel)
         {
             this.client = client;
+            this.userRepo = userRepo;
             this.log = log;
-            rewardsChannel = GetChannel(Program.Config.RewardsChannelId);
-            eventsSender = new ChainEventsSender(log, replacement, GetChannel(Program.Config.ChainEventsChannelId));
+            this.rewardsChannel = rewardsChannel;
         }
 
-        public async Task GiveRewards(GiveRewardsCommand rewards)
+        public async Task RunRoleGiver(Func<IRoleGiver, Task> action)
         {
-            log.Log($"Processing rewards command: '{JsonConvert.SerializeObject(rewards)}'");
+            var context = OpenRoleModifyContext();
+            var mapper = new RoleMapper(context);
+            await action(mapper);
+        }
 
-            if (rewards.Rewards.Any())
+        public async Task IterateUsersWithRoles(Func<IRoleGiver, IUser, ulong, Task> onUserWithRole, params ulong[] rolesToIterate)
+        {
+            await IterateUsersWithRoles(onUserWithRole, g => Task.CompletedTask, rolesToIterate);
+        }
+
+        public async Task IterateUsersWithRoles(Func<IRoleGiver, IUser, ulong, Task> onUserWithRole, Func<IRoleGiver, Task> whenDone, params ulong[] rolesToIterate)
+        {
+            var context = OpenRoleModifyContext();
+            var mapper = new RoleMapper(context);
+            foreach (var user in context.Users)
             {
-                await ProcessRewards(rewards);
-            }
-
-            await eventsSender.ProcessChainEvents(rewards.EventsOverview, rewards.Errors);
-        }
-
-        public async Task GiveAltruisticRole(IUser user)
-        {
-            var guild = GetGuild();
-            var role = guild.Roles.SingleOrDefault(r => r.Id == Program.Config.AltruisticRoleId);
-            if (role == null) return;
-
-            var guildUser = guild.Users.SingleOrDefault(u => u.Id == user.Id);
-            if (guildUser == null) return;
-
-            await guildUser.AddRoleAsync(role);
-        }
-
-        private async Task ProcessRewards(GiveRewardsCommand rewards)
-        {
-            try
-            {
-                var guild = GetGuild();
-                // We load all role and user information first,
-                // so we don't ask the server for the same info multiple times.
-                var context = new RewardContext(
-                    await LoadAllUsers(guild),
-                    LookUpAllRoles(guild, rewards),
-                    rewardsChannel);
-
-                await context.ProcessGiveRewardsCommand(LookUpUsers(rewards));
-            }
-            catch (Exception ex)
-            {
-                log.Error("Failed to process rewards: " + ex);
-            }
-        }
-
-        private SocketTextChannel? GetChannel(ulong id)
-        {
-            if (id == 0) return null;
-            return GetGuild().TextChannels.SingleOrDefault(c => c.Id == id);
-        }
-
-        private async Task<Dictionary<ulong, IGuildUser>> LoadAllUsers(SocketGuild guild)
-        {
-            log.Log("Loading all users..");
-            var result = new Dictionary<ulong, IGuildUser>();
-            var users = guild.GetUsersAsync();
-            await foreach (var ulist in users)
-            {
-                foreach (var u in ulist)
+                foreach (var role in rolesToIterate)
                 {
-                    result.Add(u.Id, u);
-                    //var roleIds = string.Join(",", u.RoleIds.Select(r => r.ToString()).ToArray());
-                    //log.Log($" > {u.Id}({u.DisplayName}) has [{roleIds}]");
-                }
-            }
-            return result;
-        }
-
-        private Dictionary<ulong, RoleReward> LookUpAllRoles(SocketGuild guild, GiveRewardsCommand rewards)
-        {
-            var result = new Dictionary<ulong, RoleReward>();
-            foreach (var r in rewards.Rewards)
-            {
-                if (!result.ContainsKey(r.RewardId))
-                {
-                    var rewardConfig = repo.Rewards.SingleOrDefault(rr => rr.RoleId == r.RewardId);
-                    if (rewardConfig == null)
+                    if (user.RoleIds.Contains(role))
                     {
-                        log.Log($"No Reward is configured for id '{r.RewardId}'.");
-                    }
-                    else
-                    {
-                        var socketRole = guild.GetRole(r.RewardId);
-                        if (socketRole == null)
-                        {
-                            log.Log($"Guild Role by id '{r.RewardId}' not found.");
-                        }
-                        else
-                        {
-                            result.Add(r.RewardId, new RoleReward(socketRole, rewardConfig));
-                        }
+                        await onUserWithRole(mapper, user, role);
                     }
                 }
             }
-
-            return result;
+            await whenDone(mapper);
         }
 
-        private UserReward[] LookUpUsers(GiveRewardsCommand rewards)
+        private RoleModifyContext OpenRoleModifyContext()
         {
-            return rewards.Rewards.Select(LookUpUserData).ToArray();
-        }
-
-        private UserReward LookUpUserData(RewardUsersCommand command)
-        {
-            return new UserReward(command,
-                command.UserAddresses
-                    .Select(LookUpUserDataForAddress)
-                    .Where(d => d != null)
-                    .Cast<UserData>()
-                    .ToArray());
-        }
-
-        private UserData? LookUpUserDataForAddress(string address)
-        {
-            try
-            {
-                var userData =  Program.UserRepo.GetUserDataForAddress(new EthAddress(address));
-                if (userData != null) log.Log($"User '{userData.Name}' was looked up.");
-                else log.Log($"Lookup for user was unsuccessful. EthAddress: '{address}'");
-                return userData;
-            }
-            catch (Exception ex)
-            {
-                log.Error("Error during UserData lookup: " + ex);
-                return null;
-            }
+            var context = new RoleModifyContext(GetGuild(), userRepo, log, rewardsChannel);
+            context.Initialize();
+            return context;
         }
 
         private SocketGuild GetGuild()
@@ -163,27 +71,48 @@ namespace BiblioTech.Rewards
         }
     }
 
-    public class RoleReward
+    public class RoleMapper : IRoleGiver
     {
-        public RoleReward(SocketRole socketRole, RewardConfig reward)
+        private readonly RoleModifyContext context;
+
+        public RoleMapper(RoleModifyContext context)
         {
-            SocketRole = socketRole;
-            Reward = reward;
+            this.context = context;
         }
 
-        public SocketRole SocketRole { get; }
-        public RewardConfig Reward { get; }
-    }
-
-    public class UserReward
-    {
-        public UserReward(RewardUsersCommand rewardCommand, UserData[] users)
+        public async Task GiveActiveClient(ulong userId)
         {
-            RewardCommand = rewardCommand;
-            Users = users;
+            await context.GiveRole(userId, Program.Config.ActiveClientRoleId);
         }
 
-        public RewardUsersCommand RewardCommand { get; }
-        public UserData[] Users { get; }
+        public async Task GiveActiveHost(ulong userId)
+        {
+            await context.GiveRole(userId, Program.Config.ActiveHostRoleId);
+        }
+
+        public async Task GiveActiveP2pParticipant(ulong userId)
+        {
+            await context.GiveRole(userId, Program.Config.ActiveP2pParticipantRoleId);
+        }
+
+        public async Task RemoveActiveP2pParticipant(ulong userId)
+        {
+            await context.RemoveRole(userId, Program.Config.ActiveP2pParticipantRoleId);
+        }
+
+        public async Task GiveAltruisticRole(ulong userId)
+        {
+            await context.GiveRole(userId, Program.Config.AltruisticRoleId);
+        }
+
+        public async Task RemoveActiveClient(ulong userId)
+        {
+            await context.RemoveRole(userId, Program.Config.ActiveClientRoleId);
+        }
+
+        public async Task RemoveActiveHost(ulong userId)
+        {
+            await context.RemoveRole(userId, Program.Config.ActiveHostRoleId);
+        }
     }
 }

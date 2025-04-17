@@ -1,29 +1,30 @@
 ﻿using Logging;
+using Utils;
 
 namespace AutoClient.Modes.FolderStore
 {
-    public class FolderSaver
+    public class FolderSaver : IFileSaverEventHandler
     {
         private const string FolderSaverFilename = "foldersaver.json";
         private readonly App app;
-        private readonly CodexWrapper instance;
+        private readonly LoadBalancer loadBalancer;
         private readonly JsonFile<FolderStatus> statusFile;
         private readonly FolderStatus status;
         private readonly BalanceChecker balanceChecker;
         private int changeCounter = 0;
         private int failureCount = 0;
 
-        public FolderSaver(App app, CodexWrapper instance)
+        public FolderSaver(App app, LoadBalancer loadBalancer)
         {
             this.app = app;
-            this.instance = instance;
+            this.loadBalancer = loadBalancer;
             balanceChecker = new BalanceChecker(app);
 
             statusFile = new JsonFile<FolderStatus>(app, Path.Combine(app.Config.FolderToStore, FolderSaverFilename));
             status = statusFile.Load();
         }
 
-        public void Run(CancellationTokenSource cts)
+        public void Run()
         {
             var folderFiles = Directory.GetFiles(app.Config.FolderToStore);
             if (!folderFiles.Any()) throw new Exception("No files found in " + app.Config.FolderToStore);
@@ -32,7 +33,8 @@ namespace AutoClient.Modes.FolderStore
             balanceChecker.Check();
             foreach (var folderFile in folderFiles)
             {
-                if (cts.IsCancellationRequested) return;
+                if (app.Cts.IsCancellationRequested) return;
+                loadBalancer.CheckErrors();
 
                 if (!folderFile.ToLowerInvariant().EndsWith(FolderSaverFilename))
                 {
@@ -42,7 +44,7 @@ namespace AutoClient.Modes.FolderStore
                 if (failureCount > 3)
                 {
                     app.Log.Error("Failure count reached threshold. Stopping...");
-                    cts.Cancel();
+                    app.Cts.Cancel();
                     return;
                 }
 
@@ -87,7 +89,6 @@ namespace AutoClient.Modes.FolderStore
         {
             var fileSaver = CreateFileSaver(folderFile, entry);
             fileSaver.Process();
-            if (fileSaver.HasFailed) failureCount++;
         }
 
         private void SaveFolderSaverJsonFile()
@@ -101,7 +102,6 @@ namespace AutoClient.Modes.FolderStore
             ApplyPadding(folderFile);
             var fileSaver = CreateFileSaver(folderFile, entry);
             fileSaver.Process();
-            if (fileSaver.HasFailed) failureCount++;
 
             if (!string.IsNullOrEmpty(entry.EncodedCid))
             {
@@ -126,33 +126,27 @@ namespace AutoClient.Modes.FolderStore
             if (info.Length < min)
             {
                 var required = Math.Max(1024, min - info.Length);
-                status.Padding = paddingMessage + GenerateRandomString(required);
+                status.Padding = paddingMessage + RandomUtils.GenerateRandomString(required);
                 statusFile.Save(status);
             }
-        }
-
-        private string GenerateRandomString(long required)
-        {
-            var result = "";
-            while (result.Length < required)
-            {
-                var bytes = new byte[1024];
-                random.NextBytes(bytes);
-                result += string.Join("", bytes.Select(b => b.ToString()));
-            }
-
-            return result;
         }
 
         private FileSaver CreateFileSaver(string folderFile, FileStatus entry)
         {
             var fixedLength = entry.Filename.PadRight(35);
             var prefix = $"[{fixedLength}] ";
-            return new FileSaver(new LogPrefixer(app.Log, prefix), instance, status.Stats, folderFile, entry, saveChanges: () =>
-            {
-                statusFile.Save(status);
-                changeCounter++;
-            });
+            return new FileSaver(new LogPrefixer(app.Log, prefix), loadBalancer, status.Stats, folderFile, entry, this);
+        }
+
+        public void SaveChanges()
+        {
+            statusFile.Save(status);
+            changeCounter++;
+        }
+
+        public void OnFailure()
+        {
+            failureCount++;
         }
     }
 }

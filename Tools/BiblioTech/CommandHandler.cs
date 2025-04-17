@@ -4,6 +4,9 @@ using Discord;
 using Newtonsoft.Json;
 using BiblioTech.Rewards;
 using Logging;
+using BiblioTech.CodexChecking;
+using Nethereum.Model;
+using static Org.BouncyCastle.Math.EC.ECCurve;
 
 namespace BiblioTech
 {
@@ -11,13 +14,15 @@ namespace BiblioTech
     {
         private readonly DiscordSocketClient client;
         private readonly CustomReplacement replacement;
+        private readonly ActiveP2pRoleRemover roleRemover;
         private readonly BaseCommand[] commands;
         private readonly ILog log;
 
-        public CommandHandler(ILog log, DiscordSocketClient client, CustomReplacement replacement, params BaseCommand[] commands)
+        public CommandHandler(ILog log, DiscordSocketClient client, CustomReplacement replacement, ActiveP2pRoleRemover roleRemover, params BaseCommand[] commands)
         {
             this.client = client;
             this.replacement = replacement;
+            this.roleRemover = roleRemover;
             this.commands = commands;
             this.log = log;
             client.Ready += Client_Ready;
@@ -30,10 +35,15 @@ namespace BiblioTech
             Program.AdminChecker.SetGuild(guild);
             log.Log($"Initializing for guild: '{guild.Name}'");
 
-            var adminChannels = guild.TextChannels.Where(Program.AdminChecker.IsAdminChannel).ToArray();
-            if (adminChannels == null || !adminChannels.Any()) throw new Exception("No admin message channel");
-            Program.AdminChecker.SetAdminChannel(adminChannels.First());
-            Program.RoleDriver = new RoleDriver(client, log, replacement);
+            var adminChannel = GetChannel(guild, Program.Config.AdminChannelId);
+            if (adminChannel == null) throw new Exception("No admin message channel");
+            var chainEventsChannel = GetChannel(guild, Program.Config.ChainEventsChannelId);
+            var rewardsChannel = GetChannel(guild, Program.Config.RewardsChannelId);
+
+            Program.AdminChecker.SetAdminChannel(adminChannel);
+            Program.RoleDriver = new RoleDriver(client, Program.UserRepo, log, rewardsChannel);
+            Program.ChainActivityHandler = new ChainActivityHandler(log, Program.UserRepo);
+            Program.EventsSender = new ChainEventsSender(log, replacement, chainEventsChannel);
 
             var builders = commands.Select(c =>
             {
@@ -65,6 +75,8 @@ namespace BiblioTech
                 {
                     log.Log($"{cmd.Name} ({cmd.Description}) [{DescribOptions(cmd.Options)}]");
                 }
+
+                roleRemover.Start();
             }
             catch (HttpException exception)
             {
@@ -72,7 +84,14 @@ namespace BiblioTech
                 log.Error(json);
                 throw;
             }
+            Program.Dispatcher.Start();
             log.Log("Initialized.");
+        }
+
+        private SocketTextChannel? GetChannel(SocketGuild guild, ulong id)
+        {
+            if (id == 0) return null;
+            return guild.TextChannels.SingleOrDefault(c => c.Id == id);
         }
 
         private string DescribOptions(IReadOnlyCollection<SocketApplicationCommandOption> options)

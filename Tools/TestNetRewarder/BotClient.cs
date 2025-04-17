@@ -21,7 +21,7 @@ namespace TestNetRewarder
             return result == "Pong";
         }
 
-        public async Task<bool> SendRewards(GiveRewardsCommand command)
+        public async Task<bool> SendRewards(EventsAndErrors command)
         {
             if (command == null) return false;
             var result = await HttpPostJson(command);
