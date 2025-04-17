@@ -1,4 +1,5 @@
-﻿using Discord;
+﻿using BiblioTech.Rewards;
+using Discord;
 using Logging;
 using System.Threading.Tasks;
 
@@ -50,7 +51,18 @@ namespace BiblioTech.CodexChecking
         {
             var expiryMoment = DateTime.UtcNow - TimeSpan.FromMinutes(config.ActiveP2pRoleDurationMinutes);
 
-            Program.RoleDriver.IterateRemoveActiveP2pParticipants(p => ShouldRemoveRole(p, expiryMoment));
+            Program.RoleDriver.IterateUsersWithRoles(
+                (g, u, r) => OnUserWithRole(g, u, r, expiryMoment),
+                Program.Config.ActiveP2pParticipantRoleId);
+        }
+
+        private async Task OnUserWithRole(IRoleGiver giver, IUser user, ulong roleId, DateTime expiryMoment)
+        {
+            var report = repo.GetOrCreate(user.Id);
+            if (report.UploadCheck.CompletedUtc > expiryMoment) return;
+            if (report.DownloadCheck.CompletedUtc > expiryMoment) return;
+
+            await giver.RemoveActiveP2pParticipant(user.Id);
         }
 
         private bool ShouldRemoveRole(IUser user, DateTime expiryMoment)

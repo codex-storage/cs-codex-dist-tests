@@ -1,4 +1,5 @@
-﻿using DiscordRewards;
+﻿using Discord;
+using DiscordRewards;
 using Logging;
 
 namespace BiblioTech.Rewards
@@ -7,6 +8,7 @@ namespace BiblioTech.Rewards
     {
         private readonly ILog log;
         private readonly UserRepo repo;
+        private ActiveUserIds? previousIds = null;
 
         public ChainActivityHandler(ILog log, UserRepo repo)
         {
@@ -18,17 +20,85 @@ namespace BiblioTech.Rewards
         {
             var activeUserIds = ConvertToUserIds(activeChainAddresses);
             if (!activeUserIds.HasAny()) return;
+            
+            if (!HasChanged(activeUserIds)) return;
 
-            todo call role driver to add roles to new activeIds or remove them.
+            await GiveAndRemoveRoles(activeUserIds);
+        }
+
+        private async Task GiveAndRemoveRoles(ActiveUserIds activeUserIds)
+        {
+            await Program.RoleDriver.IterateUsersWithRoles(
+                (g, u, r) => OnUserWithRole(g, u, r, activeUserIds),
+                whenDone: g => GiveRolesToRemaining(g, activeUserIds),
+                Program.Config.ActiveClientRoleId,
+                Program.Config.ActiveHostRoleId);
+        }
+
+        private async Task OnUserWithRole(IRoleGiver giver, IUser user, ulong roleId, ActiveUserIds activeIds)
+        {
+            if (roleId == Program.Config.ActiveClientRoleId)
+            {
+                await CheckUserWithRole(user, activeIds.Clients, giver.RemoveActiveClient);
+            }
+            else if (roleId == Program.Config.ActiveHostRoleId)
+            {
+                await CheckUserWithRole(user, activeIds.Hosts, giver.RemoveActiveHost);
+            }
+            else
+            {
+                throw new Exception("Unknown roleId received!");
+            }
+        }
+
+        private async Task CheckUserWithRole(IUser user, List<ulong> activeUsers, Func<ulong, Task> removeActiveRole)
+        {
+            if (ShouldUserHaveRole(user, activeUsers))
+            {
+                activeUsers.Remove(user.Id);
+            }
+            else
+            {
+                await removeActiveRole(user.Id);
+            }
+        }
+
+        private bool ShouldUserHaveRole(IUser user, List<ulong> activeUsers)
+        {
+            return activeUsers.Any(id => id == user.Id);
+        }
+
+        private async Task GiveRolesToRemaining(IRoleGiver giver, ActiveUserIds ids)
+        {
+            foreach (var client in ids.Clients) await giver.GiveActiveClient(client);
+            foreach (var host in ids.Hosts) await giver.GiveActiveHost(host);
+        }
+
+        private bool HasChanged(ActiveUserIds activeUserIds)
+        {
+            if (previousIds == null)
+            {
+                previousIds = activeUserIds;
+                return true;
+            }
+            
+            if (!IsEquivalent(previousIds.Hosts, activeUserIds.Hosts)) return true;
+            if (!IsEquivalent(previousIds.Clients, activeUserIds.Clients)) return true;
+            return false;
+        }
+
+        private static bool IsEquivalent(IEnumerable<ulong> a, IEnumerable<ulong> b)
+        {
+            return a.SequenceEqual(b);
         }
 
         private ActiveUserIds ConvertToUserIds(ActiveChainAddresses activeChainAddresses)
         {
             return new ActiveUserIds
-            {
-                Hosts = Map(activeChainAddresses.Hosts),
-                Clients = Map(activeChainAddresses.Clients)
-            };
+            (
+                hosts: Map(activeChainAddresses.Hosts),
+                clients: Map(activeChainAddresses.Clients)
+            );
         }
 
         private ulong[] Map(string[] ethAddresses)
@@ -43,13 +113,19 @@ namespace BiblioTech.Rewards
                 }
             }
 
-            return result.ToArray();
+            return result.Order().ToArray();
         }
 
         private class ActiveUserIds
         {
-            public ulong[] Hosts { get; set; } = Array.Empty<ulong>();
-            public ulong[] Clients { get; set; } = Array.Empty<ulong>();
+            public ActiveUserIds(IEnumerable<ulong> hosts, IEnumerable<ulong> clients)
+            {
+                Hosts = hosts.ToList();
+                Clients = clients.ToList();
+            }
+
+            public List<ulong> Hosts { get; }
+            public List<ulong> Clients { get; }
 
             public bool HasAny()
             {

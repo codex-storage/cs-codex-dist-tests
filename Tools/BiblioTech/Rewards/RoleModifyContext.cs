@@ -31,28 +31,28 @@ namespace BiblioTech.Rewards
 
         public IGuildUser[] Users => users.Values.ToArray();
 
-        public async Task GiveRole(IUser user, ulong roleId)
+        public async Task GiveRole(ulong userId, ulong roleId)
         {
             var role = GetRole(roleId);
-            var guildUser = GetUser(user.Id);
+            var guildUser = GetUser(userId);
             if (role == null) return;
             if (guildUser == null) return;
 
             await guildUser.AddRoleAsync(role);
-            await Program.AdminChecker.SendInAdminChannel($"Added role '{role.Name}' for user <@{user.Id}>.");
+            await Program.AdminChecker.SendInAdminChannel($"Added role '{role.Name}' for user <@{userId}>.");
 
             await SendNotification(guildUser, role);
         }
 
-        public async Task RemoveRole(IUser user, ulong roleId)
+        public async Task RemoveRole(ulong userId, ulong roleId)
         {
             var role = GetRole(roleId);
-            var guildUser = GetUser(user.Id);
+            var guildUser = GetUser(userId);
             if (role == null) return;
             if (guildUser == null) return;
 
             await guildUser.RemoveRoleAsync(role);
-            await Program.AdminChecker.SendInAdminChannel($"Removed role '{role.Name}' for user <@{user.Id}>.");
+            await Program.AdminChecker.SendInAdminChannel($"Removed role '{role.Name}' for user <@{userId}>.");
         }
 
         private SocketRole? GetRole(ulong roleId)

@@ -30,20 +30,26 @@ namespace BiblioTech.Rewards
             await action(mapper);
         }
 
-        public async Task IterateRemoveActiveP2pParticipants(Func<IUser, bool> shouldRemove)
+        public async Task IterateUsersWithRoles(Func<IRoleGiver, IUser, ulong, Task> onUserWithRole, params ulong[] rolesToIterate)
+        {
+            await IterateUsersWithRoles(onUserWithRole, g => Task.CompletedTask, rolesToIterate);
+        }
+
+        public async Task IterateUsersWithRoles(Func<IRoleGiver, IUser, ulong, Task> onUserWithRole, Func<IRoleGiver, Task> whenDone, params ulong[] rolesToIterate)
         {
             var context = await OpenRoleModifyContext();
+            var mapper = new RoleMapper(context);
             foreach (var user in context.Users)
             {
-                if (user.RoleIds.Any(r => r == Program.Config.ActiveP2pParticipantRoleId))
+                foreach (var role in rolesToIterate)
                 {
-                    // This user has the role. Should it be removed?
-                    if (shouldRemove(user))
+                    if (user.RoleIds.Contains(role))
                     {
-                        await context.RemoveRole(user, Program.Config.ActiveP2pParticipantRoleId);
+                        await onUserWithRole(mapper, user, role);
                     }
                 }
             }
+            await whenDone(mapper);
         }
 
         private async Task<RoleModifyContext> OpenRoleModifyContext()
@@ -74,14 +80,39 @@ namespace BiblioTech.Rewards
             this.context = context;
         }
 
-        public async Task GiveActiveP2pParticipant(IUser user)
+        public async Task GiveActiveClient(ulong userId)
         {
-            await context.GiveRole(user, Program.Config.ActiveP2pParticipantRoleId);
+            await context.GiveRole(userId, Program.Config.ActiveClientRoleId);
         }
 
-        public async Task GiveAltruisticRole(IUser user)
+        public async Task GiveActiveHost(ulong userId)
         {
-            await context.GiveRole(user, Program.Config.AltruisticRoleId);
+            await context.GiveRole(userId, Program.Config.ActiveHostRoleId);
+        }
+
+        public async Task GiveActiveP2pParticipant(ulong userId)
+        {
+            await context.GiveRole(userId, Program.Config.ActiveP2pParticipantRoleId);
+        }
+
+        public async Task RemoveActiveP2pParticipant(ulong userId)
+        {
+            await context.RemoveRole(userId, Program.Config.ActiveP2pParticipantRoleId);
+        }
+
+        public async Task GiveAltruisticRole(ulong userId)
+        {
+            await context.GiveRole(userId, Program.Config.AltruisticRoleId);
+        }
+
+        public async Task RemoveActiveClient(ulong userId)
+        {
+            await context.RemoveRole(userId, Program.Config.ActiveClientRoleId);
+        }
+
+        public async Task RemoveActiveHost(ulong userId)
+        {
+            await context.RemoveRole(userId, Program.Config.ActiveHostRoleId);
         }
     }
 }

@@ -11,13 +11,19 @@ namespace BiblioTech.Rewards
     public interface IDiscordRoleDriver
     {
         Task RunRoleGiver(Func<IRoleGiver, Task> action);
-        Task IterateRemoveActiveP2pParticipants(Func<IUser, bool> predicate);
+        Task IterateUsersWithRoles(Func<IRoleGiver, IUser, ulong, Task> onUserWithRole, params ulong[] rolesToIterate);
+        Task IterateUsersWithRoles(Func<IRoleGiver, IUser, ulong, Task> onUserWithRole, Func<IRoleGiver, Task> whenDone, params ulong[] rolesToIterate);
     }
 
     public interface IRoleGiver
     {
-        Task GiveAltruisticRole(IUser user);
-        Task GiveActiveP2pParticipant(IUser user);
+        Task GiveAltruisticRole(ulong userId);
+        Task GiveActiveP2pParticipant(ulong userId);
+        Task RemoveActiveP2pParticipant(ulong userId);
+        Task GiveActiveHost(ulong userId);
+        Task RemoveActiveHost(ulong userId);
+        Task GiveActiveClient(ulong userId);
+        Task RemoveActiveClient(ulong userId);
     }
 
     [Route("api/[controller]")]
