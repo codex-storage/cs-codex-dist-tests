@@ -18,10 +18,24 @@ namespace BiblioTech.Rewards
 
         public async Task Process(ActiveChainAddresses activeChainAddresses)
         {
+            if (!activeChainAddresses.HasAny())
+            {
+                Log("Received empty activeChainAddresses.");
+                return;
+            }
+
             var activeUserIds = ConvertToUserIds(activeChainAddresses);
-            if (!activeUserIds.HasAny()) return;
+            if (!activeUserIds.HasAny())
+            {
+                Log("Empty userIds after lookup of addresses: " + activeChainAddresses);
+                return;
+            }
             
-            if (!HasChanged(activeUserIds)) return;
+            if (!HasChanged(activeUserIds))
+            {
+                Log("Active userIds has not changed: " + activeUserIds);
+                return;
+            }
 
             await GiveAndRemoveRoles(activeUserIds);
         }
@@ -116,6 +130,11 @@ namespace BiblioTech.Rewards
             return result.Order().ToArray();
         }
 
+        private void Log(string msg)
+        {
+            log.Log(msg);
+        }
+
         private class ActiveUserIds
         {
             public ActiveUserIds(IEnumerable<ulong> hosts, IEnumerable<ulong> clients)
@@ -130,6 +149,11 @@ namespace BiblioTech.Rewards
             public bool HasAny()
             {
                 return Hosts.Any() || Clients.Any();
+            }
+
+            public override string ToString()
+            {
+                return "Hosts:" + string.Join(",", Hosts) + "Clients:" + string.Join(",", Clients);
             }
         }
     }

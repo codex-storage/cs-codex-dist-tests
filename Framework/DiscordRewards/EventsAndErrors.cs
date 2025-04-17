@@ -11,8 +11,7 @@
             return
                 Errors.Length > 0 ||
                 EventsOverview.Length > 0 ||
-                ActiveChainAddresses.Hosts.Length > 0 ||
-                ActiveChainAddresses.Clients.Length > 0;
+                ActiveChainAddresses.HasAny();
         }
     }
 
@@ -26,5 +25,15 @@
     {
         public string[] Hosts { get; set; } = Array.Empty<string>();
         public string[] Clients { get; set; } = Array.Empty<string>();
+
+        public bool HasAny()
+        {
+            return Hosts.Length > 0 || Clients.Length > 0;
+        }
+
+        public override string ToString()
+        {
+            return "Hosts:" + string.Join(",", Hosts) + "Clients:" + string.Join(",", Clients);
+        }
     }
 }

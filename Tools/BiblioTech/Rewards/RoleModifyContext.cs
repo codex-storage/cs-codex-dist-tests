@@ -33,6 +33,7 @@ namespace BiblioTech.Rewards
 
         public async Task GiveRole(ulong userId, ulong roleId)
         {
+            Log($"Giving role {roleId} to user {userId}");
             var role = GetRole(roleId);
             var guildUser = GetUser(userId);
             if (role == null) return;
@@ -46,6 +47,7 @@ namespace BiblioTech.Rewards
 
         public async Task RemoveRole(ulong userId, ulong roleId)
         {
+            Log($"Removing role {roleId} from user {userId}");
             var role = GetRole(roleId);
             var guildUser = GetUser(userId);
             if (role == null) return;
@@ -65,6 +67,11 @@ namespace BiblioTech.Rewards
         {
             if (users.ContainsKey(userId)) return users[userId];
             return null;
+        }
+
+        private void Log(string msg)
+        {
+            log.Log(msg);
         }
 
         private async Task<Dictionary<ulong, IGuildUser>> LoadAllUsers(SocketGuild guild)
