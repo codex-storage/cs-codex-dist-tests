@@ -25,7 +25,7 @@ namespace BiblioTech.Rewards
 
         public async Task RunRoleGiver(Func<IRoleGiver, Task> action)
         {
-            var context = await OpenRoleModifyContext();
+            var context = OpenRoleModifyContext();
             var mapper = new RoleMapper(context);
             await action(mapper);
         }
@@ -37,7 +37,7 @@ namespace BiblioTech.Rewards
 
         public async Task IterateUsersWithRoles(Func<IRoleGiver, IUser, ulong, Task> onUserWithRole, Func<IRoleGiver, Task> whenDone, params ulong[] rolesToIterate)
         {
-            var context = await OpenRoleModifyContext();
+            var context = OpenRoleModifyContext();
             var mapper = new RoleMapper(context);
             foreach (var user in context.Users)
             {
@@ -52,10 +52,10 @@ namespace BiblioTech.Rewards
             await whenDone(mapper);
         }
 
-        private async Task<RoleModifyContext> OpenRoleModifyContext()
+        private RoleModifyContext OpenRoleModifyContext()
         {
             var context = new RoleModifyContext(GetGuild(), userRepo, log, rewardsChannel);
-            await context.Initialize();
+            context.Initialize();
             return context;
         }
 

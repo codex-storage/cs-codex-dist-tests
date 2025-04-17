@@ -11,6 +11,7 @@ namespace BiblioTech.Rewards
         private Dictionary<ulong, IGuildUser> users = new();
         private Dictionary<ulong, SocketRole> roles = new();
         private DateTime lastLoad = DateTime.MinValue;
+        private readonly object _lock = new object();
 
         private readonly SocketGuild guild;
         private readonly UserRepo userRepo;
@@ -25,15 +26,20 @@ namespace BiblioTech.Rewards
             this.rewardsChannel = rewardsChannel;
         }
 
-        public async Task Initialize()
+        public void Initialize()
         {
-            var span = DateTime.UtcNow - lastLoad;
-            if (span > TimeSpan.FromMinutes(10))
+            lock (_lock)
             {
-                lastLoad = DateTime.UtcNow;
-                log.Log("Loading all users and roles...");
-                this.users = await LoadAllUsers(guild);
-                this.roles = LoadAllRoles(guild);
+                var span = DateTime.UtcNow - lastLoad;
+                if (span > TimeSpan.FromMinutes(10))
+                {
+                    lastLoad = DateTime.UtcNow;
+                    log.Log("Loading all users and roles...");
+                    var task = LoadAllUsers(guild);
+                    task.Wait();
+                    this.users = task.Result;
+                    this.roles = LoadAllRoles(guild);
+                }
             }
         }
 
