@@ -28,14 +28,14 @@ namespace BiblioTech.Rewards
 
         public void Add(string from, string to)
         {
-            if (replacements.ContainsKey(from))
+            AddOrUpdate(from, to);
+
+            var lower = from.ToLowerInvariant();
+            if (lower != from)
             {
-                replacements[from] = to;
+                AddOrUpdate(lower, to);
             }
-            else
-            {
-                replacements.Add(from, to);
-            }
+
             Save();
         }
 
@@ -53,6 +53,18 @@ namespace BiblioTech.Rewards
                 result = result.Replace(pair.Key, pair.Value);
             }
             return result;
+        }
+
+        private void AddOrUpdate(string from, string to)
+        {
+            if (replacements.ContainsKey(from))
+            {
+                replacements[from] = to;
+            }
+            else
+            {
+                replacements.Add(from, to);
+            }
         }
 
         private void Save()
