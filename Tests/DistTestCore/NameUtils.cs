@@ -25,6 +25,7 @@ namespace DistTestCore
             var test = TestContext.CurrentContext.Test;
             if (test.ClassName!.Contains("AdhocContext")) return "none";
             var className = test.ClassName!.Substring(test.ClassName.LastIndexOf('.') + 1);
+            className += FormatArguments(test);
             return className.Replace('.', '-');
         }
 
@@ -54,7 +55,7 @@ namespace DistTestCore
 
         private static string FormatArguments(TestContext.TestAdapter test)
         {
-            if (test.Arguments == null || !test.Arguments.Any()) return "";
+            if (test.Arguments == null || test.Arguments.Length == 0) return "";
             return $"[{string.Join(',', test.Arguments.Select(FormatArgument).ToArray())}]";
         }
         
@@ -69,6 +70,8 @@ namespace DistTestCore
         private static string ReplaceInvalidCharacters(string name)
         {
             return name
+                .Replace("codexstorage/nim-codex:", "")
+                .Replace("-dist-tests", "")
                 .Replace(":", "_")
                 .Replace("/", "_")
                 .Replace("\\", "_");
@@ -84,9 +87,9 @@ namespace DistTestCore
 
         private static string GetFixtureName(string name, DateTime start)
         {
-            var className = GetRawFixtureName();
-            if (!string.IsNullOrEmpty(name)) className = name;
-            return $"{Pad(start.Hour)}-{Pad(start.Minute)}-{Pad(start.Second)}Z_{className.Replace('.', '-')}";
+            var fixtureName = GetRawFixtureName();
+            if (!string.IsNullOrEmpty(name)) fixtureName = name;
+            return $"{Pad(start.Hour)}-{Pad(start.Minute)}-{Pad(start.Second)}Z_{fixtureName.Replace('.', '-')}";
         }
 
         private static string Pad(int n)
