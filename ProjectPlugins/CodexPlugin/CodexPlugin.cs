@@ -13,12 +13,15 @@ namespace CodexPlugin
         private readonly CodexLogLevel defaultLogLevel = CodexLogLevel.Trace;
         private readonly CodexHooksFactory hooksFactory = new CodexHooksFactory();
         private readonly ProcessControlMap processControlMap = new ProcessControlMap();
+        private readonly CodexDockerImage codexDockerImage = new CodexDockerImage();
+        private readonly CodexContainerRecipe recipe;
         private readonly CodexWrapper codexWrapper;
 
         public CodexPlugin(IPluginTools tools)
         {
             this.tools = tools;
 
+            recipe = new CodexContainerRecipe(codexDockerImage);
             codexStarter = CreateCodexStarter();
             codexWrapper = new CodexWrapper(tools, processControlMap, hooksFactory);
         }
@@ -28,7 +31,7 @@ namespace CodexPlugin
             if (UseContainers)
             {
                 Log("Using Containerized Codex instances");
-                return new ContainerCodexStarter(tools, processControlMap);
+                return new ContainerCodexStarter(tools, recipe, processControlMap);
             }
 
             Log("Using Binary Codex instances");
@@ -37,8 +40,15 @@ namespace CodexPlugin
 
         public string LogPrefix => "(Codex) ";
 
+        public void Awake(IPluginAccess access)
+        {
+            access.GetPlugin<CodexContractsPlugin.CodexContractsPlugin>().SetCodexDockerImageProvider(codexDockerImage);
+        }
+
         public void Announce()
         {
+            // give codex docker image to contracts plugin.
+
             Log($"Loaded with Codex ID: '{codexWrapper.GetCodexId()}' - Revision: {codexWrapper.GetCodexRevision()}");
         }
 
