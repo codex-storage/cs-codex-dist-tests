@@ -50,8 +50,9 @@ namespace CodexReleaseTests.DataTests
             var blockTtl = TimeSpan.FromMinutes(1.0);
             var interval = TimeSpan.FromSeconds(10.0);
 
+            var bootstrapNode = StartCodex();
             var geth = StartGethNode(s => s.IsMiner());
-            var contracts = Ci.StartCodexContracts(geth);
+            var contracts = Ci.StartCodexContracts(geth, bootstrapNode.Version);
             var node = StartCodex(s => s
                 .EnableMarketplace(geth, contracts, m => m.WithInitial(100.Eth(), 100.Tst()))
                 .WithBlockTTL(blockTtl)

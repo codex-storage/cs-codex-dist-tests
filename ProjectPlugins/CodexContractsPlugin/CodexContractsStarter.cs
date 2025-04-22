@@ -1,4 +1,5 @@
-﻿using CodexContractsPlugin.Marketplace;
+﻿using CodexClient;
+using CodexContractsPlugin.Marketplace;
 using Core;
 using GethPlugin;
 using KubernetesWorkflow;
@@ -12,21 +13,22 @@ namespace CodexContractsPlugin
     public class CodexContractsStarter
     {
         private readonly IPluginTools tools;
-        private readonly CodexContractsContainerRecipe recipe;
 
-        public CodexContractsStarter(IPluginTools tools, CodexContractsContainerRecipe recipe)
+        public CodexContractsStarter(IPluginTools tools)
         {
             this.tools = tools;
-            this.recipe = recipe;
         }
 
-        public CodexContractsDeployment Deploy(CoreInterface ci, IGethNode gethNode)
+        public CodexContractsDeployment Deploy(CoreInterface ci, IGethNode gethNode, DebugInfoVersion versionInfo)
         {
             Log("Starting Codex SmartContracts container...");
 
             var workflow = tools.CreateWorkflow();
             var startupConfig = CreateStartupConfig(gethNode);
             startupConfig.NameOverride = "codex-contracts";
+
+            var recipe = new CodexContractsContainerRecipe(versionInfo);
+            Log($"Using image: {recipe.Image}");
 
             var containers = workflow.Start(1, recipe, startupConfig).WaitForOnline();
             if (containers.Containers.Length != 1) throw new InvalidOperationException("Expected 1 Codex contracts container to be created. Test infra failure.");
