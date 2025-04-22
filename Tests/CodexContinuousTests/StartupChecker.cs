@@ -22,7 +22,7 @@ namespace ContinuousTests
 
         public void Check()
         {
-            var log = new FixtureLog(new LogConfig(config.LogPath), DateTime.UtcNow, config.CodexDeployment.Id,
+            var log = FixtureLog.Create(new LogConfig(config.LogPath), DateTime.UtcNow, config.CodexDeployment.Id,
                 "StartupChecks");
             log.Log("Starting continuous test run...");
             IncludeDeploymentConfiguration(log);
@@ -90,7 +90,7 @@ namespace ContinuousTests
             }
         }
 
-        private void CheckCodexNodes(BaseLog log, Configuration config)
+        private void CheckCodexNodes(ILog log, Configuration config)
         {
             throw new NotImplementedException();
 

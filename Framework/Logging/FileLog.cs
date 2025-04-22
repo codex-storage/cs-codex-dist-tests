@@ -9,7 +9,7 @@
 
         public string FullFilename { get; }
 
-        protected override string GetFullName()
+        public override string GetFullName()
         {
             return FullFilename;
         }

@@ -17,7 +17,6 @@
 
         public string Prefix { get; set; } = string.Empty;
 
-
         public LogFile CreateSubfile(string addName, string ext = "log")
         {
             return backingLog.CreateSubfile(addName, ext);
@@ -41,6 +40,16 @@
         public void AddStringReplace(string from, string to)
         {
             backingLog.AddStringReplace(from, to);
+        }
+
+        public void Raw(string message)
+        {
+            backingLog.Raw(message);
+        }
+
+        public string GetFullName()
+        {
+            return backingLog.GetFullName();
         }
     }
 }

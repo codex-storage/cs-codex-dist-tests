@@ -33,7 +33,7 @@ namespace DistTestCore
 
             var logConfig = configuration.GetLogConfig();
             var startTime = DateTime.UtcNow;
-            fixtureLog = new FixtureLog(logConfig, startTime, deployId);
+            fixtureLog = FixtureLog.Create(logConfig, startTime, deployId);
             statusLog = new StatusLog(logConfig, startTime, "dist-tests", deployId);
 
             globalEntryPoint = new EntryPoint(fixtureLog, configuration.GetK8sConfiguration(new DefaultK8sTimeSet(), TestNamespacePrefix), configuration.GetFileManagerFolder());
@@ -44,7 +44,7 @@ namespace DistTestCore
         [OneTimeSetUp]
         public void GlobalSetup()
         {
-            fixtureLog.Log($"Distributed Tests are starting...");
+            fixtureLog.Log($"Starting...");
             globalEntryPoint.Announce();
 
             // Previous test run may have been interrupted.
@@ -87,7 +87,15 @@ namespace DistTestCore
             }
             else
             {
-                CreateNewTestLifecycle();
+                try
+                {
+                    CreateNewTestLifecycle();
+                }
+                catch (Exception ex)
+                {
+                    fixtureLog.Error("Setup failed: " + ex);
+                    GlobalTestFailure.HasFailed = true;
+                }
             }
         }
 
@@ -236,11 +244,6 @@ namespace DistTestCore
                 Log(result.Message);
                 Log($"{result.StackTrace}");
             }
-
-            if (result.Outcome.Status == TestStatus.Failed)
-            {
-                log.MarkAsFailed();
-            }
         }
 
         private IWebCallTimeSet GetWebCallTimeSet()
@@ -296,11 +299,6 @@ namespace DistTestCore
         private void IncludeLogsOnTestFailure(TestLifecycle lifecycle)
         {
             var testStatus = TestContext.CurrentContext.Result.Outcome.Status;
-            if (testStatus == TestStatus.Failed)
-            {
-                fixtureLog.MarkAsFailed();
-            }
-
             if (ShouldDownloadAllLogs(testStatus))
             {
                 lifecycle.Log.Log("Downloading all container logs...");
