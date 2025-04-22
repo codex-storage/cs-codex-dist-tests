@@ -6,7 +6,6 @@ using CodexTests;
 using DistTestCore;
 using GethPlugin;
 using Nethereum.Hex.HexConvertors.Extensions;
-using NUnit.Framework;
 using Utils;
 
 namespace CodexReleaseTests.MarketTests
@@ -21,14 +20,14 @@ namespace CodexReleaseTests.MarketTests
         {
             base.LifecycleStart(lifecycle);
             var geth = StartGethNode(s => s.IsMiner());
-            var contracts = Ci.StartCodexContracts(geth);
+            var contracts = Ci.StartCodexContracts(geth, BootstrapNode.Version);
             handles.Add(lifecycle, new MarketplaceHandle(geth, contracts));
         }
 
         protected override void LifecycleStop(TestLifecycle lifecycle, DistTestResult result)
         {
-            base.LifecycleStop(lifecycle, result);
             handles.Remove(lifecycle);
+            base.LifecycleStop(lifecycle, result);
         }
 
         protected IGethNode GetGeth()

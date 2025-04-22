@@ -7,15 +7,11 @@ namespace CodexContractsPlugin
     {
         private readonly IPluginTools tools;
         private readonly CodexContractsStarter starter;
-        private readonly VersionRegistry versionRegistry;
-        private readonly CodexContractsContainerRecipe recipe;
 
         public CodexContractsPlugin(IPluginTools tools)
         {
             this.tools = tools;
-            versionRegistry = new VersionRegistry(tools.GetLog());
-            recipe = new CodexContractsContainerRecipe(versionRegistry);
-            starter = new CodexContractsStarter(tools, recipe);
+            starter = new CodexContractsStarter(tools);
         }
 
         public string LogPrefix => "(CodexContracts) ";
@@ -31,27 +27,22 @@ namespace CodexContractsPlugin
 
         public void AddMetadata(IAddMetadata metadata)
         {
-            metadata.Add("codexcontractsid", recipe.Image);
+            metadata.Add("codexcontractsid", "dynamic");
         }
 
         public void Decommission()
         {
         }
 
-        public CodexContractsDeployment DeployContracts(CoreInterface ci, IGethNode gethNode)
+        public CodexContractsDeployment DeployContracts(CoreInterface ci, IGethNode gethNode, CodexClient.DebugInfoVersion versionInfo)
         {
-            return starter.Deploy(ci, gethNode);
+            return starter.Deploy(ci, gethNode, versionInfo);
         }
 
         public ICodexContracts WrapDeploy(IGethNode gethNode, CodexContractsDeployment deployment)
         {
             deployment = SerializeGate.Gate(deployment);
             return starter.Wrap(gethNode, deployment);
-        }
-
-        public void SetCodexDockerImageProvider(ICodexDockerImageProvider provider)
-        {
-            versionRegistry.SetProvider(provider);
         }
     }
 }

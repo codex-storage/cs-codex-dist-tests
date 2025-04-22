@@ -31,7 +31,7 @@ namespace ExperimentalTests.BasicTests
             );
 
             var geth = StartGethNode(s => s.IsMiner().WithName("disttest-geth"));
-            var contracts = Ci.StartCodexContracts(geth);
+            var contracts = Ci.StartCodexContracts(geth, BootstrapNode.Version);
 
             var numberOfHosts = 5;
             var hosts = StartCodex(numberOfHosts, s => s

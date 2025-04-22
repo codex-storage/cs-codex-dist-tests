@@ -1,4 +1,5 @@
-﻿using GethPlugin;
+﻿using CodexClient;
+using GethPlugin;
 using KubernetesWorkflow;
 using KubernetesWorkflow.Recipe;
 
@@ -8,14 +9,14 @@ namespace CodexContractsPlugin
     {
         public const string MarketplaceAddressFilename = "/hardhat/deployments/codexdisttestnetwork/Marketplace.json";
         public const string MarketplaceArtifactFilename = "/hardhat/artifacts/contracts/Marketplace.sol/Marketplace.json";
-        private readonly VersionRegistry versionRegistry;
+        private readonly DebugInfoVersion versionInfo;
 
         public override string AppName => "codex-contracts";
-        public override string Image => versionRegistry.GetContractsDockerImage();
+        public override string Image => GetContractsDockerImage();
 
-        public CodexContractsContainerRecipe(VersionRegistry versionRegistry)
+        public CodexContractsContainerRecipe(DebugInfoVersion versionInfo)
         {
-            this.versionRegistry = versionRegistry;
+            this.versionInfo = versionInfo;
         }
 
         protected override void Initialize(StartupConfig startupConfig)
@@ -29,6 +30,11 @@ namespace CodexContractsPlugin
             AddEnvVar("DISTTEST_NETWORK_URL", address.ToString());
             AddEnvVar("HARDHAT_NETWORK", "codexdisttestnetwork");
             AddEnvVar("KEEP_ALIVE", "1");
+        }
+
+        private string GetContractsDockerImage()
+        {
+            return $"codexstorage/codex-contracts-eth:sha-{versionInfo.Contracts}-dist-tests";
         }
     }
 }

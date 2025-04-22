@@ -64,8 +64,12 @@ namespace CodexNetDeployer
             var gethDeployment = DeployGeth(ci);
             var gethNode = ci.WrapGethDeployment(gethDeployment, new BlockCache());
 
+            var bootNode = ci.StartCodexNode();
+            var versionInfo = bootNode.GetDebugInfo().Version;
+            bootNode.Stop(waitTillStopped: true);
+
             Log("Geth started. Deploying Codex contracts...");
-            var contractsDeployment = ci.DeployCodexContracts(gethNode);
+            var contractsDeployment = ci.DeployCodexContracts(gethNode, versionInfo);
             var contracts = ci.WrapCodexContractsDeployment(gethNode, contractsDeployment);
             Log("Codex contracts deployed.");
 
