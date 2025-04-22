@@ -7,8 +7,10 @@ namespace Logging
         void Log(string message);
         void Debug(string message = "", int skipFrames = 0);
         void Error(string message);
+        void Raw(string message);
         void AddStringReplace(string from, string to);
         LogFile CreateSubfile(string addName, string ext = "log");
+        string GetFullName();
     }
 
     public abstract class BaseLog : ILog
@@ -28,7 +30,8 @@ namespace Logging
         }
 
         protected bool IsDebug { get; private set; }
-        protected abstract string GetFullName();
+
+        public abstract string GetFullName();
 
         public LogFile LogFile 
         {
@@ -58,6 +61,11 @@ namespace Logging
             var msg = $"[ERROR] {message}";
             Console.WriteLine(msg);
             Log(msg);
+        }
+
+        public void Raw(string message)
+        {
+            LogFile.WriteRaw(message);
         }
 
         public virtual void AddStringReplace(string from, string to)

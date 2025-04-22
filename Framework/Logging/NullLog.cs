@@ -2,11 +2,9 @@
 {
     public class NullLog : BaseLog
     {
-        public string FullFilename { get; set; } = "NULL";
-
-        protected override string GetFullName()
+        public override string GetFullName()
         {
-            return FullFilename;
+            return "NULL";
         }
 
         public override void Log(string message)

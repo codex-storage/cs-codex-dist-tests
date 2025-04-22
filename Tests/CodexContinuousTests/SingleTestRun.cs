@@ -37,7 +37,7 @@ namespace ContinuousTests
             this.handle = handle;
             this.cancelToken = cancelToken;
             testName = handle.Test.GetType().Name;
-            fixtureLog = new FixtureLog(new LogConfig(config.LogPath), DateTime.UtcNow, deployId, testName);
+            fixtureLog = FixtureLog.Create(new LogConfig(config.LogPath), DateTime.UtcNow, deployId, testName);
             entryPoint = entryPointFactory.CreateEntryPoint(config.KubeConfigFile, config.DataPath,
                 config.CodexDeployment.Metadata.KubeNamespace, fixtureLog);
             ApplyLogReplacements(fixtureLog, startupChecker);
@@ -81,17 +81,11 @@ namespace ContinuousTests
                 OverviewLog($" > Test passed. ({Time.FormatDuration(duration)})");
                 UpdateStatusLogPassed(testStart, duration);
 
-                if (!config.KeepPassedTestLogs)
-                {
-                    fixtureLog.Delete();
-                }
-
                 resultHandler(true);
             }
             catch (Exception ex)
             {
                 fixtureLog.Error("Test run failed with exception: " + ex);
-                fixtureLog.MarkAsFailed();
                 UpdateStatusLogFailed(testStart, duration, ex.ToString());
 
                 DownloadContainerLogs(testStart);

@@ -4,8 +4,7 @@ namespace CodexPlugin
 {
     public class CodexDockerImage : ICodexDockerImageProvider
     {
-        private const string DefaultDockerImage = "codexstorage/nim-codex:sha-c9a5ef8-dist-tests";
-            //"codexstorage/nim-codex:latest-dist-tests";
+        private const string DefaultDockerImage = "codexstorage/nim-codex:latest-dist-tests";
 
         public static string Override { get; set; } = string.Empty;
 
