@@ -11,7 +11,8 @@ namespace CodexContractsPlugin
     public class VersionRegistry
     {
         private ICodexDockerImageProvider provider = new ExceptionProvider();
-        private readonly Dictionary<string, string> cache = new Dictionary<string, string>();
+        private static readonly Dictionary<string, string> cache = new Dictionary<string, string>();
+        private static readonly object cacheLock = new object();
         private readonly ILog log;
 
         public VersionRegistry(ILog log)
@@ -39,13 +40,16 @@ namespace CodexContractsPlugin
 
         private string GetContractsDockerImage(string codexImage)
         {
-            if (cache.TryGetValue(codexImage, out string? value))
+            lock (cacheLock)
             {
-                return value;
+                if (cache.TryGetValue(codexImage, out string? value))
+                {
+                    return value;
+                }
+                var result = GetContractsImage(codexImage);
+                cache.Add(codexImage, result);
+                return result;
             }
-            var result = GetContractsImage(codexImage);
-            cache.Add(codexImage, result);
-            return result;
         }
 
         private string GetContractsImage(string codexImage)
@@ -82,13 +86,31 @@ namespace CodexContractsPlugin
             startInfo.RedirectStandardError = true;
 
             var process = Process.Start(startInfo);
-            if (process == null || process.HasExited)
+            if (process == null)
             {
                 throw new Exception("Failed to start: " + cmd + args);
             }
+            KillAfterTimeout(process);
 
             process.WaitForExit();
             return process.StandardOutput.ReadToEnd();
+        }
+
+        private void KillAfterTimeout(Process process)
+        {
+            // There's a known issue that some docker commands on some platforms
+            // will fail to stop on their own. This has been known since 2019 and it's not fixed.
+            // So we will issue a kill to the process ourselves if it exceeds a timeout.
+
+            Task.Run(() =>
+            {
+                Thread.Sleep(TimeSpan.FromSeconds(30.0));
+
+                if (process != null && !process.HasExited)
+                {
+                    process.Kill();
+                }
+            });
         }
     }
 
