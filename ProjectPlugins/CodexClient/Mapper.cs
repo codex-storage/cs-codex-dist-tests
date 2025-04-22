@@ -165,13 +165,11 @@ namespace CodexClient
 
         private DebugInfoVersion Map(CodexOpenApi.CodexVersion obj)
         {
-            throw new Exception("waiting for new codex image with contracts revision");
-
             return new DebugInfoVersion
             {
                 Version = obj.Version,
                 Revision = obj.Revision,
-                Contracts = "aaa"
+                Contracts = obj.Contracts
             };
         }
 
