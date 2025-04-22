@@ -13,6 +13,10 @@ namespace DeployAndRunPlugin
             this.tools = tools;
         }
 
+        public void Awake(IPluginAccess access)
+        {
+        }
+
         public void Announce()
         {
             tools.GetLog().Log("Deploy-and-Run plugin loaded.");

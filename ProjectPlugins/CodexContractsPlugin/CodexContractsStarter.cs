@@ -12,10 +12,12 @@ namespace CodexContractsPlugin
     public class CodexContractsStarter
     {
         private readonly IPluginTools tools;
+        private readonly CodexContractsContainerRecipe recipe;
 
-        public CodexContractsStarter(IPluginTools tools)
+        public CodexContractsStarter(IPluginTools tools, CodexContractsContainerRecipe recipe)
         {
             this.tools = tools;
+            this.recipe = recipe;
         }
 
         public CodexContractsDeployment Deploy(CoreInterface ci, IGethNode gethNode)
@@ -26,7 +28,7 @@ namespace CodexContractsPlugin
             var startupConfig = CreateStartupConfig(gethNode);
             startupConfig.NameOverride = "codex-contracts";
 
-            var containers = workflow.Start(1, new CodexContractsContainerRecipe(), startupConfig).WaitForOnline();
+            var containers = workflow.Start(1, recipe, startupConfig).WaitForOnline();
             if (containers.Containers.Length != 1) throw new InvalidOperationException("Expected 1 Codex contracts container to be created. Test infra failure.");
             var container = containers.Containers[0];
 

@@ -17,6 +17,10 @@ namespace CodexDiscordBotPlugin
 
         public string LogPrefix => "(DiscordBot) ";
 
+        public void Awake(IPluginAccess access)
+        {
+        }
+
         public void Announce()
         {
             tools.GetLog().Log($"Codex DiscordBot (BiblioTech) loaded.");

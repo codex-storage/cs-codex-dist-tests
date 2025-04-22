@@ -7,7 +7,6 @@ namespace CodexPlugin
 {
     public class CodexContainerRecipe : ContainerRecipeFactory
     {
-        private const string DefaultDockerImage = "codexstorage/nim-codex:latest-dist-tests";
         public const string ApiPortTag = "codex_api_port";
         public const string ListenPortTag = "codex_listen_port";
         public const string MetricsPortTag = "codex_metrics_port";
@@ -16,11 +15,15 @@ namespace CodexPlugin
         // Used by tests for time-constraint assertions.
         public static readonly TimeSpan MaxUploadTimePerMegabyte = TimeSpan.FromSeconds(2.0);
         public static readonly TimeSpan MaxDownloadTimePerMegabyte = TimeSpan.FromSeconds(2.0);
+        private readonly CodexDockerImage codexDockerImage;
 
         public override string AppName => "codex";
-        public override string Image => GetDockerImage();
+        public override string Image => codexDockerImage.GetCodexDockerImage();
 
-        public static string DockerImageOverride { get; set; } = string.Empty;
+        public CodexContainerRecipe(CodexDockerImage codexDockerImage)
+        {
+            this.codexDockerImage = codexDockerImage;
+        }
 
         protected override void Initialize(StartupConfig startupConfig)
         {
@@ -162,14 +165,6 @@ namespace CodexPlugin
             if (config.StorageQuota != null) return config.StorageQuota.Multiply(1.2);
             // Default Codex quota: 8 Gb, using +20% to be safe.
             return 8.GB().Multiply(1.2);
-        }
-
-        private string GetDockerImage()
-        {
-            var image = Environment.GetEnvironmentVariable("CODEXDOCKERIMAGE");
-            if (!string.IsNullOrEmpty(image)) return image;
-            if (!string.IsNullOrEmpty(DockerImageOverride)) return DockerImageOverride;
-            return DefaultDockerImage;
         }
     }
 }
