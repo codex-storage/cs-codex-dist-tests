@@ -29,9 +29,19 @@
             OnAll(l => l.Error(message));
         }
 
+        public string GetFullName()
+        {
+            return targetLogs.First().GetFullName();
+        }
+
         public void Log(string message)
         {
             OnAll(l => l.Log(message));
+        }
+
+        public void Raw(string message)
+        {
+            OnAll(l => l.Raw(message));
         }
 
         private void OnAll(Action<ILog> action)

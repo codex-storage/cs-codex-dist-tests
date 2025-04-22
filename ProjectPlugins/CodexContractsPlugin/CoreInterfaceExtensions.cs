@@ -21,6 +21,11 @@ namespace CodexContractsPlugin
             return WrapCodexContractsDeployment(ci, gethNode, deployment);
         }
 
+        public static void SetCodexDockerImageProvider(this CoreInterface ci, ICodexDockerImageProvider provider)
+        {
+            Plugin(ci).SetCodexDockerImageProvider(provider);
+        }
+
         private static CodexContractsPlugin Plugin(CoreInterface ci)
         {
             return ci.GetPlugin<CodexContractsPlugin>();

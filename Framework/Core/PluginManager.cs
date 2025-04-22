@@ -1,6 +1,6 @@
 ﻿namespace Core
 {
-    internal class PluginManager
+    internal class PluginManager : IPluginAccess
     {
         private readonly List<PluginToolsPair> pairs = new List<PluginToolsPair>();
 
@@ -14,6 +14,7 @@
 
                 ApplyLogPrefix(plugin, tools);
             }
+            AwakePlugins();
         }
 
         internal void AnnouncePlugins()
@@ -43,7 +44,7 @@
             }
         }
 
-        internal T GetPlugin<T>() where T : IProjectPlugin
+        public T GetPlugin<T>() where T : IProjectPlugin
         {
             return (T)pairs.Single(p => p.Plugin.GetType() == typeof(T)).Plugin;
         }
@@ -53,6 +54,14 @@
             var plugin = (IProjectPlugin)Activator.CreateInstance(pluginType, args: tools)!;
             pairs.Add(new PluginToolsPair(plugin, tools));
             return plugin;
+        }
+
+        private void AwakePlugins()
+        {
+            foreach (var p in pairs)
+            {
+                p.Plugin.Awake(this);
+            }
         }
 
         private void ApplyLogPrefix(IProjectPlugin plugin, PluginTools tools)

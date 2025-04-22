@@ -10,12 +10,13 @@ namespace CodexPlugin
     {
         private readonly IPluginTools pluginTools;
         private readonly ProcessControlMap processControlMap;
-        private readonly CodexContainerRecipe recipe = new CodexContainerRecipe();
+        private readonly CodexContainerRecipe recipe;
         private readonly ApiChecker apiChecker;
 
-        public ContainerCodexStarter(IPluginTools pluginTools, ProcessControlMap processControlMap)
+        public ContainerCodexStarter(IPluginTools pluginTools, CodexContainerRecipe recipe, ProcessControlMap processControlMap)
         {
             this.pluginTools = pluginTools;
+            this.recipe = recipe;
             this.processControlMap = processControlMap;
             apiChecker = new ApiChecker(pluginTools);
         }

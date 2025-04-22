@@ -134,8 +134,11 @@ namespace CodexTests
 
             if (!result.Success)
             {
-                var codexNodes = nodes[lifecycle];
-                foreach (var node in codexNodes) node.DownloadLog();
+                lock (_lock)
+                {
+                    var codexNodes = nodes[lifecycle];
+                    foreach (var node in codexNodes) node.DownloadLog();
+                }
             }
         }
 
@@ -299,7 +302,7 @@ namespace CodexTests
 
                 Stopwatch.Measure(lifecycle.Log, $"Transcript.Finalize: {outputFilepath}", () =>
                 {
-                    writer.IncludeFile(lifecycle.Log.LogFile.Filename);
+                    writer.IncludeFile(lifecycle.Log.GetFullName());
                     writer.Finalize(outputFilepath);
                 });
             }
@@ -311,9 +314,9 @@ namespace CodexTests
 
         private string GetOutputFullPath(TestLifecycle lifecycle, CreateTranscriptAttribute attr)
         {
-            var outputPath = Path.GetDirectoryName(lifecycle.Log.LogFile.Filename);
+            var outputPath = Path.GetDirectoryName(lifecycle.Log.GetFullName());
             if (outputPath == null) throw new Exception("Logfile path is null");
-            var filename = Path.GetFileNameWithoutExtension(lifecycle.Log.LogFile.Filename);
+            var filename = Path.GetFileNameWithoutExtension(lifecycle.Log.GetFullName());
             if (string.IsNullOrEmpty(filename)) throw new Exception("Logfile name is null or empty");
             var outputFile = Path.Combine(outputPath, filename + "_" + attr.OutputFilename);
             if (!outputFile.EndsWith(".owts")) outputFile += ".owts";

@@ -40,7 +40,7 @@ namespace CodexNetDeployer
             Log($"Codex docker image will be built in path '{repoPath}'.");
             Log("Please note this can take several minutes. If you're not trying to use a Codex image with local code changes,");
             Log("Consider using the default test image or consider setting the 'CODEXDOCKERIMAGE' environment variable to use an already built image.");
-            CodexContainerRecipe.DockerImageOverride = $"Using docker image locally built in path '{repoPath}'.";
+            CodexDockerImage.Override = $"Using docker image locally built in path '{repoPath}'.";
         }
 
         public void Build()
@@ -62,7 +62,7 @@ namespace CodexNetDeployer
 
             Docker("push", customImage);
 
-            CodexContainerRecipe.DockerImageOverride = customImage;
+            CodexDockerImage.Override = customImage;
             Log("Image pushed. Good to go!");
         }
 

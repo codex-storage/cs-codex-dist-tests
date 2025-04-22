@@ -2,7 +2,7 @@
 {
     public class ConsoleLog : BaseLog
     {
-        protected override string GetFullName()
+        public override string GetFullName()
         {
             return "CONSOLE";
         }
