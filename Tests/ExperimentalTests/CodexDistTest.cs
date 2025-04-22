@@ -134,8 +134,11 @@ namespace CodexTests
 
             if (!result.Success)
             {
-                var codexNodes = nodes[lifecycle];
-                foreach (var node in codexNodes) node.DownloadLog();
+                lock (_lock)
+                {
+                    var codexNodes = nodes[lifecycle];
+                    foreach (var node in codexNodes) node.DownloadLog();
+                }
             }
         }
 
