@@ -10,22 +10,24 @@ using WebUtils;
 
 namespace DistTestCore
 {
-    public class TestLifecycle : IK8sHooks
+    public class TestLifecycle : IK8sHooks, ILifecycleComponent
     {
         private const string TestsType = "dist-tests";
         private readonly EntryPoint entryPoint;
         private readonly Dictionary<string, string> metadata; 
         private readonly List<RunningPod> runningContainers = new();
+        private readonly string testName;
         private readonly string deployId;
         private readonly List<IDownloadedLog> stoppedContainerLogs = new List<IDownloadedLog>();
 
-        public TestLifecycle(TestLog log, Configuration configuration, IWebCallTimeSet webCallTimeSet, IK8sTimeSet k8sTimeSet, string testNamespace, string deployId, bool waitForCleanup)
+        public TestLifecycle(TestLog log, Configuration configuration, IWebCallTimeSet webCallTimeSet, IK8sTimeSet k8sTimeSet, string testNamespace, string testName, string deployId, bool waitForCleanup)
         {
             Log = log;
             Configuration = configuration;
             WebCallTimeSet = webCallTimeSet;
             K8STimeSet = k8sTimeSet;
             TestNamespace = testNamespace;
+            this.testName = testName;
             TestStart = DateTime.UtcNow;
 
             entryPoint = new EntryPoint(log, configuration.GetK8sConfiguration(k8sTimeSet, this, testNamespace), configuration.GetFileManagerFolder(), webCallTimeSet, k8sTimeSet);
@@ -34,6 +36,28 @@ namespace DistTestCore
             this.deployId = deployId;
             WaitForCleanup = waitForCleanup;
             log.WriteLogTag();
+        }
+
+        public void Start(ILifecycleComponentAccess access)
+        {
+            Log.Log($"*** Begin: {testName}");
+        }
+
+        public void Stop(ILifecycleComponentAccess access, DistTestResult result)
+        {
+            Log.Log($"*** Finished: {testName} = {result.Status}");
+            if (!string.IsNullOrEmpty(result.Result))
+            {
+                Log.Log(result.Result);
+                Log.Log($"{result.Trace}");
+            }
+
+            if (!result.Success)
+            {
+                DownloadAllLogs();
+            }
+
+            DeleteAllResources();
         }
 
         public DateTime TestStart { get; }
@@ -45,7 +69,7 @@ namespace DistTestCore
         public bool WaitForCleanup { get; }
         public CoreInterface CoreInterface { get; }
 
-        public void DeleteAllResources()
+        private void DeleteAllResources()
         {
             entryPoint.Decommission(
                 deleteKubernetesResources: true,

@@ -1,6 +1,5 @@
 ﻿using BlockchainUtils;
 using CodexClient;
-using CodexClient.Hooks;
 using CodexContractsPlugin;
 using CodexNetDeployer;
 using CodexPlugin;
@@ -17,86 +16,74 @@ using Newtonsoft.Json;
 using NUnit.Framework;
 using NUnit.Framework.Constraints;
 using OverwatchTranscript;
-using Utils;
 
 namespace CodexTests
 {
-    public class CodexLogTrackerProvider  : ICodexHooksProvider
+    public class CodexDistTestComponents : ILifecycleComponent
     {
-        private readonly Action<ICodexNode> addNode;
+        private readonly object nodesLock = new object();
 
-        public CodexLogTrackerProvider(Action<ICodexNode> addNode)
+        public CodexDistTestComponents(CodexTranscriptWriter? writer)
         {
-            this.addNode = addNode;
+            Writer = writer;
         }
 
-        // See TestLifecycle.cs DownloadAllLogs()
-        public ICodexNodeHooks CreateHooks(string nodeName)
+        public CodexTranscriptWriter? Writer { get; }
+        public BlockCache Cache { get; } = new();
+        public List<ICodexNode> Nodes { get; } = new();
+
+        public void Start(ILifecycleComponentAccess access)
         {
-            return new CodexLogTracker(addNode);
+            var ci = access.Get<TestLifecycle>().CoreInterface;
+            ci.AddCodexHooksProvider(new CodexLogTrackerProvider(n =>
+            {
+                lock (nodesLock)
+                {
+                    Nodes.Add(n);
+                }
+            }));
         }
 
-        public class CodexLogTracker : ICodexNodeHooks
+        public void Stop(ILifecycleComponentAccess access, DistTestResult result)
         {
-            private readonly Action<ICodexNode> addNode;
+            var tl = access.Get<TestLifecycle>();
+            var log = tl.Log;
+            var logFiles = tl.DownloadAllLogs();
 
-            public CodexLogTracker(Action<ICodexNode> addNode)
+            TeardownTranscript(log, logFiles, result);
+
+            // todo: on not success: go to nodes and dl logs?
+            // or fix disttest failure log download so we can always have logs even for non-codexes?
+        }
+
+        private void TeardownTranscript(TestLog log, IDownloadedLog[] logFiles, DistTestResult result)
+        {
+            if (Writer == null) return;
+
+            Writer.AddResult(result.Success, result.Result);
+
+            try
             {
-                this.addNode = addNode;
+                Stopwatch.Measure(log, "Transcript.ProcessLogs", () =>
+                {
+                    Writer.ProcessLogs(logFiles);
+                });
+
+                Stopwatch.Measure(log, $"Transcript.Finalize", () =>
+                {
+                    Writer.IncludeFile(log.GetFullName());
+                    Writer.Finalize();
+                });
             }
-
-            public void OnFileDownloaded(ByteSize size, ContentId cid)
+            catch (Exception ex)
             {
-            }
-
-            public void OnFileDownloading(ContentId cid)
-            {
-            }
-
-            public void OnFileUploaded(string uid, ByteSize size, ContentId cid)
-            {
-            }
-
-            public void OnFileUploading(string uid, ByteSize size)
-            {
-            }
-
-            public void OnNodeStarted(ICodexNode node, string peerId, string nodeId)
-            {
-                addNode(node);
-            }
-
-            public void OnNodeStarting(DateTime startUtc, string image, EthAccount? ethAccount)
-            {
-            }
-
-            public void OnNodeStopping()
-            {
-            }
-
-            public void OnStorageAvailabilityCreated(StorageAvailability response)
-            {
-            }
-
-            public void OnStorageContractSubmitted(StoragePurchaseContract storagePurchaseContract)
-            {
-            }
-
-            public void OnStorageContractUpdated(StoragePurchase purchaseStatus)
-            {
+                log.Error("Failure during transcript teardown: " + ex);
             }
         }
     }
 
     public class CodexDistTest : DistTest
     {
-        private static readonly object _lock = new object();
-        private static readonly Dictionary<TestLifecycle, CodexTranscriptWriter> writers = new Dictionary<TestLifecycle, CodexTranscriptWriter>();
-        private static readonly Dictionary<TestLifecycle, BlockCache> blockCaches = new Dictionary<TestLifecycle, BlockCache>();
-
-        // this entire structure is not good and needs to be destroyed at the earliest convenience:
-        private static readonly Dictionary<TestLifecycle, List<ICodexNode>> nodes = new Dictionary<TestLifecycle, List<ICodexNode>>();
-
         public CodexDistTest()
         {
             ProjectPlugin.Load<CodexPlugin.CodexPlugin>();
@@ -112,34 +99,12 @@ namespace CodexTests
             localBuilder.Build();
         }
 
-        protected override void LifecycleStart(TestLifecycle lifecycle)
+        protected override void CreateComponents(ILifecycleComponentCollector collector)
         {
-            base.LifecycleStart(lifecycle);
-            SetupTranscript(lifecycle);
-
-            Ci.AddCodexHooksProvider(new CodexLogTrackerProvider(n =>
-            {
-                lock (_lock)
-                {
-                    if (!nodes.ContainsKey(lifecycle)) nodes.Add(lifecycle, new List<ICodexNode>());
-                    nodes[lifecycle].Add(n);
-                }
-            }));
-        }
-
-        protected override void LifecycleStop(TestLifecycle lifecycle, DistTestResult result)
-        {
-            base.LifecycleStop(lifecycle, result);
-            TeardownTranscript(lifecycle, result);
-
-            if (!result.Success)
-            {
-                lock (_lock)
-                {
-                    var codexNodes = nodes[lifecycle];
-                    foreach (var node in codexNodes) node.DownloadLog();
-                }
-            }
+            base.CreateComponents(collector);
+            collector.AddComponent(new CodexDistTestComponents(
+                SetupTranscript()
+            ));
         }
 
         public ICodexNode StartCodex()
@@ -173,6 +138,11 @@ namespace CodexTests
             return Ci.StartGethNode(GetBlockCache(), setup);
         }
 
+        private BlockCache GetBlockCache()
+        {
+            return Get<CodexDistTestComponents>().Cache;
+        }
+
         public PeerConnectionTestHelpers CreatePeerConnectionTestHelpers()
         {
             return new PeerConnectionTestHelpers(GetTestLog());
@@ -180,7 +150,7 @@ namespace CodexTests
 
         public PeerDownloadTestHelpers CreatePeerDownloadTestHelpers()
         {
-            return new PeerDownloadTestHelpers(GetTestLog(), Get().GetFileManager());
+            return new PeerDownloadTestHelpers(GetTestLog(), Get<TestLifecycle>().GetFileManager());
         }
 
         public void AssertBalance(ICodexContracts contracts, ICodexNode codexNode, Constraint constraint, string msg = "")
@@ -258,81 +228,20 @@ namespace CodexTests
             return null;
         }
 
-        private void SetupTranscript(TestLifecycle lifecycle)
+        private CodexTranscriptWriter? SetupTranscript()
         {
             var attr = GetTranscriptAttributeOfCurrentTest();
-            if (attr == null) return;
+            if (attr == null) return null;
 
             var config = new CodexTranscriptWriterConfig(
+                attr.OutputFilename,
                 attr.IncludeBlockReceivedEvents
             );
 
-            var log = new LogPrefixer(lifecycle.Log, "(Transcript) ");
+            var log = new LogPrefixer(GetTestLog(), "(Transcript) ");
             var writer = new CodexTranscriptWriter(log, config, Transcript.NewWriter(log));
             Ci.AddCodexHooksProvider(writer);
-            lock (_lock)
-            {
-                writers.Add(lifecycle, writer);
-            }
-        }
-
-        private void TeardownTranscript(TestLifecycle lifecycle, DistTestResult result)
-        {
-            var attr = GetTranscriptAttributeOfCurrentTest();
-            if (attr == null) return;
-
-            var outputFilepath = GetOutputFullPath(lifecycle, attr);
-
-            CodexTranscriptWriter writer = null!;
-            lock (_lock)
-            {
-                writer = writers[lifecycle];
-                writers.Remove(lifecycle);
-            }
-
-            writer.AddResult(result.Success, result.Result);
-
-            try
-            {
-                Stopwatch.Measure(lifecycle.Log, "Transcript.ProcessLogs", () =>
-                {
-                    writer.ProcessLogs(lifecycle.DownloadAllLogs());
-                });
-
-                Stopwatch.Measure(lifecycle.Log, $"Transcript.Finalize: {outputFilepath}", () =>
-                {
-                    writer.IncludeFile(lifecycle.Log.GetFullName());
-                    writer.Finalize(outputFilepath);
-                });
-            }
-            catch (Exception ex)
-            {
-                lifecycle.Log.Error("Failure during transcript teardown: " + ex);
-            }
-        }
-
-        private string GetOutputFullPath(TestLifecycle lifecycle, CreateTranscriptAttribute attr)
-        {
-            var outputPath = Path.GetDirectoryName(lifecycle.Log.GetFullName());
-            if (outputPath == null) throw new Exception("Logfile path is null");
-            var filename = Path.GetFileNameWithoutExtension(lifecycle.Log.GetFullName());
-            if (string.IsNullOrEmpty(filename)) throw new Exception("Logfile name is null or empty");
-            var outputFile = Path.Combine(outputPath, filename + "_" + attr.OutputFilename);
-            if (!outputFile.EndsWith(".owts")) outputFile += ".owts";
-            return outputFile;
-        }
-
-        private BlockCache GetBlockCache()
-        {
-            var lifecycle = Get();
-            lock (_lock)
-            {
-                if (!blockCaches.ContainsKey(lifecycle))
-                {
-                    blockCaches[lifecycle] = new BlockCache();
-                }
-            }
-            return blockCaches[lifecycle];
+            return writer;
         }
     }
 
