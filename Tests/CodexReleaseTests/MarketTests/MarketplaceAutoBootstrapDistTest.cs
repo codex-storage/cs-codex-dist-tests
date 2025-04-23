@@ -194,6 +194,8 @@ namespace CodexReleaseTests.MarketTests
             var expectedBalance = StartingBalanceTST.Tst() - GetContractFinalCost(pricePerBytePerSecond, contract, hosts);
 
             AssertTstBalance(client, expectedBalance, "Client balance incorrect.");
+
+            Log($"Client has paid for contract. Balance: {expectedBalance}");
         }
 
         protected void AssertHostsWerePaidForContract(TestToken pricePerBytePerSecond, IStoragePurchaseContract contract, ICodexNodeGroup hosts)
@@ -213,7 +215,9 @@ namespace CodexReleaseTests.MarketTests
 
             foreach (var pair in expectedBalances)
             {
-                AssertTstBalance(pair.Key, pair.Value, "Host was not paid for storage.");
+                AssertTstBalance(pair.Key, pair.Value, $"Host {pair.Key} was not paid for storage.");
+
+                Log($"Host {pair.Key} was paid for storage. Balance: {pair.Value}");
             }
         }
 
