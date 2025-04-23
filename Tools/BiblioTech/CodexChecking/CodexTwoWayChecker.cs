@@ -8,7 +8,7 @@ namespace BiblioTech.CodexChecking
     public interface ICheckResponseHandler
     {
         Task CheckNotStarted();
-        Task NowCompleted(ulong userId, string checkName);
+        Task NowCompleted(string checkName);
         Task GiveRoleReward();
         
         Task InvalidData();
@@ -192,7 +192,7 @@ namespace BiblioTech.CodexChecking
 
         private async Task CheckNowCompleted(ICheckResponseHandler handler, TransferCheck check, ulong userId, string checkName)
         {
-            await handler.NowCompleted(userId, checkName);
+            await handler.NowCompleted(checkName);
 
             check.CompletedUtc = DateTime.UtcNow;
             repo.SaveChanges();
