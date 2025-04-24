@@ -5,22 +5,42 @@ using Utils;
 
 namespace CodexReleaseTests.MarketTests
 {
-    [TestFixture]
+    [TestFixture(6, 3, 1)]
+    [TestFixture(6, 4, 1)]
+    [TestFixture(6, 4, 2)]
+    [TestFixture(8, 5, 1)]
+    [TestFixture(8, 5, 2)]
+    [TestFixture(8, 6, 1)]
+    [TestFixture(8, 6, 2)]
+    [TestFixture(8, 6, 3)]
+    [TestFixture(8, 8, 1)]
+    [TestFixture(8, 8, 2)]
+    [TestFixture(8, 8, 3)]
+    [TestFixture(8, 8, 4)]
     public class MultipleContractsTest : MarketplaceAutoBootstrapDistTest
     {
-        private const int FilesizeMb = 10;
+        public MultipleContractsTest(int hosts, int slots, int tolerance)
+        {
+            this.hosts = hosts;
+            this.slots = slots;
+            this.tolerance = tolerance;
+        }
 
-        protected override int NumberOfHosts => 8;
+        private const int FilesizeMb = 10;
+        private readonly int hosts;
+        private readonly int slots;
+        private readonly int tolerance;
+
+        protected override int NumberOfHosts => hosts;
         protected override int NumberOfClients => 3;
-        protected override ByteSize HostAvailabilitySize => (5 * FilesizeMb).MB();
-        protected override TimeSpan HostAvailabilityMaxDuration => Get8TimesConfiguredPeriodDuration();
+        protected override ByteSize HostAvailabilitySize => (100 * FilesizeMb).MB();
+        protected override TimeSpan HostAvailabilityMaxDuration => Get8TimesConfiguredPeriodDuration() * 3;
         private readonly TestToken pricePerBytePerSecond = 10.TstWei();
 
         [Test]
-        [Ignore("TODO - wip")]
         [Combinatorial]
         public void MultipleContractGenerations(
-            [Values(1, 5, 10)] int numGenerations)
+            [Values(5)] int numGenerations)
         {
             var hosts = StartHosts();
 
@@ -44,8 +64,13 @@ namespace CodexReleaseTests.MarketTests
             });
 
             All(requests, r => r.WaitForStorageContractStarted());
-            All(requests, r => AssertContractSlotsAreFilledByHosts(r, hosts));
-            All(requests, r => r.WaitForStorageContractFinished());
+
+            Thread.Sleep(TimeSpan.FromSeconds(12.0));
+            clients.Stop(waitTillStopped: false);
+
+            // for the time being, we're only interested in whether these contracts start.
+            //All(requests, r => AssertContractSlotsAreFilledByHosts(r, hosts));
+            //All(requests, r => r.WaitForStorageContractFinished());
         }
 
         private void All(IStoragePurchaseContract[] requests, Action<IStoragePurchaseContract> action)
@@ -66,11 +91,11 @@ namespace CodexReleaseTests.MarketTests
             {
                 Duration = GetContractDuration(),
                 Expiry = GetContractExpiry(),
-                MinRequiredNumberOfNodes = (uint)NumberOfHosts / 2,
-                NodeFailureTolerance = (uint)(NumberOfHosts / 4),
+                MinRequiredNumberOfNodes = (uint)slots,
+                NodeFailureTolerance = (uint)tolerance,
                 PricePerBytePerSecond = pricePerBytePerSecond,
                 ProofProbability = 20,
-                CollateralPerByte = 1.Tst()
+                CollateralPerByte = 1.TstWei()
             });
         }
 
@@ -81,7 +106,7 @@ namespace CodexReleaseTests.MarketTests
 
         private TimeSpan GetContractDuration()
         {
-            return Get8TimesConfiguredPeriodDuration() / 2;
+            return Get8TimesConfiguredPeriodDuration();
         }
 
         private TimeSpan Get8TimesConfiguredPeriodDuration()

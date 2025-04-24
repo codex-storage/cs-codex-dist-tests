@@ -6,10 +6,15 @@ namespace CodexReleaseTests.MarketTests
 {
     [TestFixture(6, 3, 1)]
     [TestFixture(6, 4, 2)]
+    [TestFixture(8, 5, 1)]
     [TestFixture(8, 5, 2)]
+    [TestFixture(8, 6, 1)]
+    [TestFixture(8, 6, 2)]
     [TestFixture(8, 6, 3)]
-    [TestFixture(12, 8, 1)]
-    [TestFixture(12, 8, 4)]
+    [TestFixture(8, 8, 1)]
+    [TestFixture(8, 8, 2)]
+    [TestFixture(8, 8, 3)]
+    [TestFixture(8, 8, 4)]
     public class ContractSuccessfulTest : MarketplaceAutoBootstrapDistTest
     {
         public ContractSuccessfulTest(int hosts, int slots, int tolerance)
