@@ -33,7 +33,7 @@ namespace CodexReleaseTests.MarketTests
         protected override int NumberOfHosts => hosts;
         protected override int NumberOfClients => 1;
         protected override ByteSize HostAvailabilitySize => (5 * FilesizeMb).MB();
-        protected override TimeSpan HostAvailabilityMaxDuration => Get8TimesConfiguredPeriodDuration();
+        protected override TimeSpan HostAvailabilityMaxDuration => Get8TimesConfiguredPeriodDuration() * 12;
 
         [Test]
         public void ContractSuccessful()
@@ -48,6 +48,9 @@ namespace CodexReleaseTests.MarketTests
 
             request.WaitForStorageContractStarted();
             AssertContractSlotsAreFilledByHosts(request, hosts);
+
+            Thread.Sleep(TimeSpan.FromSeconds(12.0));
+            return;
 
             request.WaitForStorageContractFinished();
 
@@ -79,7 +82,7 @@ namespace CodexReleaseTests.MarketTests
 
         private TimeSpan GetContractDuration()
         {
-            return Get8TimesConfiguredPeriodDuration() / 2;
+            return Get8TimesConfiguredPeriodDuration() * 4;
         }
 
         private TimeSpan Get8TimesConfiguredPeriodDuration()

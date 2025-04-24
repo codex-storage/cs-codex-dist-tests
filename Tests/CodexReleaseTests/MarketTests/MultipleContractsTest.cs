@@ -34,13 +34,13 @@ namespace CodexReleaseTests.MarketTests
         protected override int NumberOfHosts => hosts;
         protected override int NumberOfClients => 3;
         protected override ByteSize HostAvailabilitySize => (100 * FilesizeMb).MB();
-        protected override TimeSpan HostAvailabilityMaxDuration => Get8TimesConfiguredPeriodDuration() * 3;
+        protected override TimeSpan HostAvailabilityMaxDuration => Get8TimesConfiguredPeriodDuration() * 12;
         private readonly TestToken pricePerBytePerSecond = 10.TstWei();
 
         [Test]
         [Combinatorial]
         public void MultipleContractGenerations(
-            [Values(5)] int numGenerations)
+            [Values(5, 10)] int numGenerations)
         {
             var hosts = StartHosts();
 
@@ -49,6 +49,8 @@ namespace CodexReleaseTests.MarketTests
                 Log("Generation: " + i);
                 Generation(hosts);
             }
+
+            Thread.Sleep(TimeSpan.FromSeconds(12.0));
         }
 
         private void Generation(ICodexNodeGroup hosts)
@@ -65,7 +67,6 @@ namespace CodexReleaseTests.MarketTests
 
             All(requests, r => r.WaitForStorageContractStarted());
 
-            Thread.Sleep(TimeSpan.FromSeconds(12.0));
             clients.Stop(waitTillStopped: false);
 
             // for the time being, we're only interested in whether these contracts start.
@@ -106,7 +107,7 @@ namespace CodexReleaseTests.MarketTests
 
         private TimeSpan GetContractDuration()
         {
-            return Get8TimesConfiguredPeriodDuration();
+            return Get8TimesConfiguredPeriodDuration() * 4;
         }
 
         private TimeSpan Get8TimesConfiguredPeriodDuration()
