@@ -40,6 +40,9 @@ namespace KubernetesWorkflow
 
         protected override void ProcessLine(string line)
         {
+            if (line.Contains("Received JSON-RPC response")) return;
+            if (line.Contains("object field not marked with serialize, skipping")) return;
+
             LogFile.WriteRaw(line);
         }
     }

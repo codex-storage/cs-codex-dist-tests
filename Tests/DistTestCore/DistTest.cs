@@ -164,7 +164,7 @@ namespace DistTestCore
 
         protected TimeRange GetTestRunTimeRange()
         {
-            return new TimeRange(Get().TestStart, DateTime.UtcNow);
+            return new TimeRange(Get().TestStartUtc, DateTime.UtcNow);
         }
 
         protected virtual void Initialize(FixtureLog fixtureLog)

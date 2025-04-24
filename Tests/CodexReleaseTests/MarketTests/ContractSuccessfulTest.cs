@@ -4,16 +4,31 @@ using Utils;
 
 namespace CodexReleaseTests.MarketTests
 {
-    [TestFixture]
+    [TestFixture(6, 3, 1)]
+    [TestFixture(6, 4, 2)]
+    [TestFixture(8, 5, 2)]
+    [TestFixture(8, 6, 3)]
+    [TestFixture(12, 8, 1)]
+    [TestFixture(12, 8, 4)]
     public class ContractSuccessfulTest : MarketplaceAutoBootstrapDistTest
     {
-        private const int FilesizeMb = 10;
+        public ContractSuccessfulTest(int hosts, int slots, int tolerance)
+        {
+            this.hosts = hosts;
+            this.slots = slots;
+            this.tolerance = tolerance;
+        }
 
-        protected override int NumberOfHosts => 6;
+        private const int FilesizeMb = 10;
+        private readonly TestToken pricePerBytePerSecond = 10.TstWei();
+        private readonly int hosts;
+        private readonly int slots;
+        private readonly int tolerance;
+
+        protected override int NumberOfHosts => hosts;
         protected override int NumberOfClients => 1;
         protected override ByteSize HostAvailabilitySize => (5 * FilesizeMb).MB();
         protected override TimeSpan HostAvailabilityMaxDuration => Get8TimesConfiguredPeriodDuration();
-        private readonly TestToken pricePerBytePerSecond = 10.TstWei();
 
         [Test]
         public void ContractSuccessful()
@@ -44,11 +59,8 @@ namespace CodexReleaseTests.MarketTests
             {
                 Duration = GetContractDuration(),
                 Expiry = GetContractExpiry(),
-                // TODO: this should work with NumberOfHosts, but
-                // an ongoing issue makes hosts sometimes not pick up slots.
-                // When it's resolved, we can reduce the number of hosts and slim down this test.
-                MinRequiredNumberOfNodes = 3,
-                NodeFailureTolerance = 1,
+                MinRequiredNumberOfNodes = (uint)slots,
+                NodeFailureTolerance = (uint)tolerance,
                 PricePerBytePerSecond = pricePerBytePerSecond,
                 ProofProbability = 20,
                 CollateralPerByte = 100.TstWei()

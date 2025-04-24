@@ -1,4 +1,5 @@
 ﻿using CodexClient;
+using CodexPlugin;
 using NUnit.Framework;
 using Utils;
 
@@ -16,13 +17,25 @@ namespace CodexReleaseTests.MarketTests
         private readonly TestToken pricePerBytePerSecond = 10.TstWei();
 
         [Test]
-        [Ignore("TODO - Test where multiple successful contracts are run simultaenously")]
-        public void MultipleSuccessfulContracts()
+        [Ignore("TODO - wip")]
+        [Combinatorial]
+        public void MultipleContractGenerations(
+            [Values(1, 5, 10)] int numGenerations)
         {
             var hosts = StartHosts();
+
+            for (var i = 0; i < numGenerations; i++)
+            {
+                Log("Generation: " + i);
+                Generation(hosts);
+            }
+        }
+
+        private void Generation(ICodexNodeGroup hosts)
+        {
             var clients = StartClients();
 
-            var requests = clients.Select(c => CreateStorageRequest(c)).ToArray();
+            var requests = clients.Select(CreateStorageRequest).ToArray();
 
             All(requests, r =>
             {
@@ -32,26 +45,17 @@ namespace CodexReleaseTests.MarketTests
 
             All(requests, r => r.WaitForStorageContractStarted());
             All(requests, r => AssertContractSlotsAreFilledByHosts(r, hosts));
-
             All(requests, r => r.WaitForStorageContractFinished());
-
-                // todo: removed from codexclient:
-                //contracts.WaitUntilNextPeriod();
-                //contracts.WaitUntilNextPeriod();
-
-                //var blocks = 3;
-                //Log($"Waiting {blocks} blocks for nodes to process payouts...");
-                //Thread.Sleep(GethContainerRecipe.BlockInterval * blocks);
-
-            // todo:
-            //AssertClientHasPaidForContract(pricePerSlotPerSecond, client, request, hosts);
-            //AssertHostsWerePaidForContract(pricePerSlotPerSecond, request, hosts);
-            //AssertHostsCollateralsAreUnchanged(hosts);
         }
 
         private void All(IStoragePurchaseContract[] requests, Action<IStoragePurchaseContract> action)
         {
-            foreach (var r in requests) action(r);
+            var tasks = requests.Select(r => Task.Run(() => action(r))).ToArray();
+            Task.WaitAll(tasks);
+            foreach(var t in tasks)
+            {
+                if (t.Exception != null) throw t.Exception;
+            }
         }
 
         private IStoragePurchaseContract CreateStorageRequest(ICodexNode client)
@@ -62,8 +66,8 @@ namespace CodexReleaseTests.MarketTests
             {
                 Duration = GetContractDuration(),
                 Expiry = GetContractExpiry(),
-                MinRequiredNumberOfNodes = (uint)NumberOfHosts,
-                NodeFailureTolerance = (uint)(NumberOfHosts / 2),
+                MinRequiredNumberOfNodes = (uint)NumberOfHosts / 2,
+                NodeFailureTolerance = (uint)(NumberOfHosts / 4),
                 PricePerBytePerSecond = pricePerBytePerSecond,
                 ProofProbability = 20,
                 CollateralPerByte = 1.Tst()

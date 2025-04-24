@@ -5,6 +5,7 @@ using CodexPlugin;
 using CodexTests;
 using DistTestCore;
 using GethPlugin;
+using Logging;
 using Nethereum.Hex.HexConvertors.Extensions;
 using Utils;
 
@@ -21,11 +22,15 @@ namespace CodexReleaseTests.MarketTests
             base.LifecycleStart(lifecycle);
             var geth = StartGethNode(s => s.IsMiner());
             var contracts = Ci.StartCodexContracts(geth, BootstrapNode.Version);
-            handles.Add(lifecycle, new MarketplaceHandle(geth, contracts));
+            var monitor = SetupChainMonitor(lifecycle.Log, contracts, lifecycle.TestStartUtc);
+            handles.Add(lifecycle, new MarketplaceHandle(geth, contracts, monitor));
         }
 
         protected override void LifecycleStop(TestLifecycle lifecycle, DistTestResult result)
         {
+            var handle = handles[lifecycle];
+            if (handle.ChainMonitor != null) handle.ChainMonitor.Stop();
+
             handles.Remove(lifecycle);
             base.LifecycleStop(lifecycle, result);
         }
@@ -50,6 +55,7 @@ namespace CodexReleaseTests.MarketTests
         protected abstract int NumberOfClients { get; }
         protected abstract ByteSize HostAvailabilitySize { get; }
         protected abstract TimeSpan HostAvailabilityMaxDuration { get; }
+        protected virtual bool MonitorChainState { get; } = true;
 
         public ICodexNodeGroup StartHosts()
         {
@@ -110,6 +116,15 @@ namespace CodexReleaseTests.MarketTests
                         $" expected: {expectedBalance} but was: {balance} - message: " + message);
                 }
             });
+        }
+
+        private ChainMonitor? SetupChainMonitor(ILog log, ICodexContracts contracts, DateTime startUtc)
+        {
+            if (!MonitorChainState) return null;
+
+            var result = new ChainMonitor(log, contracts, startUtc);
+            result.Start();
+            return result;
         }
 
         private Retry GetBalanceAssertRetry()
@@ -330,14 +345,16 @@ namespace CodexReleaseTests.MarketTests
 
         private class MarketplaceHandle
         {
-            public MarketplaceHandle(IGethNode geth, ICodexContracts contracts)
+            public MarketplaceHandle(IGethNode geth, ICodexContracts contracts, ChainMonitor? chainMonitor)
             {
                 Geth = geth;
                 Contracts = contracts;
+                ChainMonitor = chainMonitor;
             }
 
             public IGethNode Geth { get; }
             public ICodexContracts Contracts { get; }
+            public ChainMonitor? ChainMonitor { get; }
         }
     }
 }

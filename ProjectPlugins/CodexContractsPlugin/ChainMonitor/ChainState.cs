@@ -47,7 +47,7 @@ namespace CodexContractsPlugin.ChainMonitor
             handler = changeHandler;
             this.doProofPeriodMonitoring = doProofPeriodMonitoring;
             TotalSpan = new TimeRange(startUtc, startUtc);
-            PeriodMonitor = new PeriodMonitor(this.log, contracts);
+            PeriodMonitor = new PeriodMonitor(contracts);
         }
 
         public TimeRange TotalSpan { get; private set; }
@@ -78,7 +78,7 @@ namespace CodexContractsPlugin.ChainMonitor
                 throw new Exception(msg);
             }
 
-            log.Log($"ChainState updating: {events.BlockInterval} = {events.All.Length} events.");
+            log.Debug($"ChainState updating: {events.BlockInterval} = {events.All.Length} events.");
 
             // Run through each block and apply the events to the state in order.
             var span = events.BlockInterval.TimeRange.Duration;
