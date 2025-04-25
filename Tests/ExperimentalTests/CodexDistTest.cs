@@ -37,7 +37,6 @@ namespace CodexTests
         public void SetupCodexDistTest()
         {
             writer = SetupTranscript();
-
         }
 
         [TearDown]
@@ -203,7 +202,7 @@ namespace CodexTests
 
                 Stopwatch.Measure(log, $"Transcript.FinalizeWriter", () =>
                 {
-                    writer.IncludeFile(log.GetFullName());
+                    writer.IncludeFile(log.GetFullName() + ".log");
                     writer.FinalizeWriter();
                 });
             }
