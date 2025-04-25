@@ -10,41 +10,18 @@ using Utils;
 
 namespace CodexReleaseTests.MarketTests
 {
-    public class MarketplaceTestComponent : ILifecycleComponent
-    {
-        public IGethNode Geth { get; }
-        public ICodexContracts Contracts { get; }
-
-        public void Start(ILifecycleComponentAccess access)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void Stop(ILifecycleComponentAccess access, DistTestResult result)
-        {
-            throw new NotImplementedException();
-        }
-    }
-
     public abstract class MarketplaceAutoBootstrapDistTest : AutoBootstrapDistTest
     {
+        private readonly Dictionary<TestLifecycle, MarketplaceHandle> handles = new Dictionary<TestLifecycle, MarketplaceHandle>();
         protected const int StartingBalanceTST = 1000;
         protected const int StartingBalanceEth = 10;
-
-        protected override void CreateComponents(ILifecycleComponentCollector collector)
-        {
-            base.CreateComponents(collector);
-
-
-            collector.AddComponent(new MarketplaceTestComponent());
-        }
 
         protected override void LifecycleStart(TestLifecycle lifecycle)
         {
             base.LifecycleStart(lifecycle);
             var geth = StartGethNode(s => s.IsMiner());
             var contracts = Ci.StartCodexContracts(geth, BootstrapNode.Version);
-            handles.Add(lifecycle, new MarketplaceTestComponent(geth, contracts));
+            handles.Add(lifecycle, new MarketplaceHandle(geth, contracts));
         }
 
         protected override void LifecycleStop(TestLifecycle lifecycle, DistTestResult result)
@@ -345,6 +322,18 @@ namespace CodexReleaseTests.MarketTests
 
             public SlotFilledEventDTO SlotFilledEvent { get; }
             public ICodexNode Host { get; }
+        }
+
+        private class MarketplaceHandle
+        {
+            public MarketplaceHandle(IGethNode geth, ICodexContracts contracts)
+            {
+                Geth = geth;
+                Contracts = contracts;
+            }
+
+            public IGethNode Geth { get; }
+            public ICodexContracts Contracts { get; }
         }
     }
 }

@@ -4,56 +4,46 @@ using DistTestCore;
 
 namespace CodexTests
 {
-    public class AutoBootstrapComponent : ILifecycleComponent
-    {
-        public ICodexNode? BootstrapNode { get; private set; } = null;
-
-        public void Start(ILifecycleComponentAccess access)
-        {
-            if (BootstrapNode != null) return;
-
-            var tl = access.Get<TestLifecycle>();
-            var ci = tl.CoreInterface;
-            var testNamespace = tl.TestNamespace;
-
-            BootstrapNode = ci.StartCodexNode(s => s.WithName("BOOTSTRAP_" + testNamespace));
-        }
-
-        public void ApplyBootstrapNode(ICodexSetup setup)
-        {
-            if (BootstrapNode == null) return;
-
-            setup.WithBootstrapNode(BootstrapNode);
-        }
-
-        public void Stop(ILifecycleComponentAccess access, DistTestResult result)
-        {
-            if (BootstrapNode == null) return;
-            BootstrapNode.Stop(waitTillStopped: false);
-        }
-    }
-
     public class AutoBootstrapDistTest : CodexDistTest
     {
+        private readonly Dictionary<TestLifecycle, ICodexNode> bootstrapNodes = new Dictionary<TestLifecycle, ICodexNode>();
+        private bool isBooting = false;
 
-        protected override void CreateComponents(ILifecycleComponentCollector collector)
+        protected override void LifecycleStart(TestLifecycle tl)
         {
-            base.CreateComponents(collector);
-            collector.AddComponent(new AutoBootstrapComponent());
+            base.LifecycleStart(tl);
+            if (!bootstrapNodes.ContainsKey(tl))
+            {
+                isBooting = true;
+                bootstrapNodes.Add(tl, StartCodex(s => s.WithName("BOOTSTRAP_" + tl.TestNamespace)));
+                isBooting = false;
+            }
+        }
+
+        protected override void LifecycleStop(TestLifecycle lifecycle, DistTestResult result)
+        {
+            bootstrapNodes.Remove(lifecycle);
+            base.LifecycleStop(lifecycle, result);
         }
 
         protected override void OnCodexSetup(ICodexSetup setup)
         {
-            Get<AutoBootstrapComponent>().ApplyBootstrapNode(setup);
+            if (isBooting) return;
+
+            var node = BootstrapNode;
+            if (node != null) setup.WithBootstrapNode(node);
         }
 
         protected ICodexNode BootstrapNode
         {
             get
             {
-                var bn = Get<AutoBootstrapComponent>().BootstrapNode;
-                if (bn == null) throw new InvalidOperationException("BootstrapNode accessed before initialized.");
-                return bn;
+                var tl = Get();
+                if (bootstrapNodes.TryGetValue(tl, out var node))
+                {
+                    return node;
+                }
+                throw new InvalidOperationException("Bootstrap node not yet started.");
             }
         }
     }

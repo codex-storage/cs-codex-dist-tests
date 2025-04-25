@@ -19,8 +19,9 @@ namespace DistTestCore
         private readonly Assembly[] testAssemblies;
         private readonly FixtureLog fixtureLog;
         private readonly StatusLog statusLog;
+        private readonly object lifecycleLock = new object();
         private readonly EntryPoint globalEntryPoint;
-        private readonly DistTestLifecycleComponents lifecycleComponents = new DistTestLifecycleComponents();
+        private readonly Dictionary<string, TestLifecycle> lifecycles = new Dictionary<string, TestLifecycle>();
         private readonly string deployId;
         
         public DistTest()
@@ -88,12 +89,7 @@ namespace DistTestCore
             {
                 try
                 {
-                    var testName = GetCurrentTestName();
-                    fixtureLog.WriteLogTag();
-                    Stopwatch.Measure(fixtureLog, $"Setup for {testName}", () =>
-                    {
-                        lifecycleComponents.Setup(testName, CreateComponents);
-                    });
+                    CreateNewTestLifecycle();
                 }
                 catch (Exception ex)
                 {
@@ -108,7 +104,7 @@ namespace DistTestCore
         {
             try
             {
-                Stopwatch.Measure(fixtureLog, $"Teardown for {GetCurrentTestName()}", DisposeTestLifecycle);
+                DisposeTestLifecycle();
             }
             catch (Exception ex)
             {
@@ -175,49 +171,80 @@ namespace DistTestCore
         {
         }
 
-        protected virtual void CreateComponents(ILifecycleComponentCollector collector)
-        {
-            var testNamespace = TestNamespacePrefix + Guid.NewGuid().ToString();
-            var lifecycle = new TestLifecycle(
-                fixtureLog.CreateTestLog(),
-                configuration,
-                GetWebCallTimeSet(),
-                GetK8sTimeSet(),
-                testNamespace,
-                GetCurrentTestName(),
-                deployId,
-                ShouldWaitForCleanup());
-
-            collector.AddComponent(lifecycle);
-        }
-
-        protected virtual void DestroyComponents(TestLifecycle lifecycle, DistTestResult testResult)
+        protected virtual void LifecycleStart(TestLifecycle lifecycle)
         {
         }
 
-        public T Get<T>() where T : ILifecycleComponent
+        protected virtual void LifecycleStop(TestLifecycle lifecycle, DistTestResult testResult)
         {
-            return lifecycleComponents.Get<T>(GetCurrentTestName());
         }
 
-        private TestLifecycle Get()
+        protected virtual void CollectStatusLogData(TestLifecycle lifecycle, Dictionary<string, string> data)
         {
-            return Get<TestLifecycle>();
+        }
+
+        protected TestLifecycle Get()
+        {
+            lock (lifecycleLock)
+            {
+                return lifecycles[GetCurrentTestName()];
+            }
+        }
+
+        private void CreateNewTestLifecycle()
+        {
+            var testName = GetCurrentTestName();
+            fixtureLog.WriteLogTag();
+            Stopwatch.Measure(fixtureLog, $"Setup for {testName}", () =>
+            {
+                lock (lifecycleLock)
+                {
+                    var testNamespace = TestNamespacePrefix + Guid.NewGuid().ToString();
+                    var lifecycle = new TestLifecycle(
+                        fixtureLog.CreateTestLog(),
+                        configuration,
+                        GetWebCallTimeSet(),
+                        GetK8sTimeSet(),
+                        testNamespace,
+                        deployId,
+                        ShouldWaitForCleanup());
+                    lifecycles.Add(testName, lifecycle);
+                    LifecycleStart(lifecycle);
+                }
+            });
         }
 
         private void DisposeTestLifecycle()
         {
-            var testName = GetCurrentTestName();
-            var results = GetTestResult();
             var lifecycle = Get();
+            var testResult = GetTestResult();
             var testDuration = lifecycle.GetTestDuration();
             var data = lifecycle.GetPluginMetadata();
-            fixtureLog.Log($"{GetCurrentTestName()} = {results} ({testDuration})");
-            statusLog.ConcludeTest(results, testDuration, data);
+            CollectStatusLogData(lifecycle, data);
+            fixtureLog.Log($"{GetCurrentTestName()} = {testResult} ({testDuration})");
+            statusLog.ConcludeTest(testResult, testDuration, data);
+            Stopwatch.Measure(fixtureLog, $"Teardown for {GetCurrentTestName()}", () =>
+            {
+                WriteEndTestLog(lifecycle.Log);
 
-            lifecycleComponents.TearDown(testName, results);
+                IncludeLogsOnTestFailure(lifecycle);
+                LifecycleStop(lifecycle, testResult);
+                lifecycle.DeleteAllResources();
+                lifecycles.Remove(GetCurrentTestName());
+            });
         }
 
+        private void WriteEndTestLog(TestLog log)
+        {
+            var result = TestContext.CurrentContext.Result;
+
+            Log($"*** Finished: {GetCurrentTestName()} = {result.Outcome.Status}");
+            if (!string.IsNullOrEmpty(result.Message))
+            {
+                Log(result.Message);
+                Log($"{result.StackTrace}");
+            }
+        }
 
         private IWebCallTimeSet GetWebCallTimeSet()
         {
@@ -269,6 +296,28 @@ namespace DistTestCore
                 .ToArray();
         }
 
+        private void IncludeLogsOnTestFailure(TestLifecycle lifecycle)
+        {
+            var testStatus = TestContext.CurrentContext.Result.Outcome.Status;
+            if (ShouldDownloadAllLogs(testStatus))
+            {
+                lifecycle.Log.Log("Downloading all container logs...");
+                lifecycle.DownloadAllLogs();
+            }
+        }
+
+        private bool ShouldDownloadAllLogs(TestStatus testStatus)
+        {
+            if (configuration.AlwaysDownloadContainerLogs) return true;
+            if (!IsDownloadingLogsEnabled()) return false;
+            if (testStatus == TestStatus.Failed)
+            {
+                return true;
+            }
+
+            return false;
+        }
+
         private string GetCurrentTestName()
         {
             return $"[{TestContext.CurrentContext.Test.Name}]";
@@ -279,8 +328,7 @@ namespace DistTestCore
             var success = TestContext.CurrentContext.Result.Outcome.Status == TestStatus.Passed;
             var status = TestContext.CurrentContext.Result.Outcome.Status.ToString();
             var result = TestContext.CurrentContext.Result.Message;
-            var trace = TestContext.CurrentContext.Result.StackTrace;
-            return new DistTestResult(success, status, result ?? string.Empty, trace ?? string.Empty);
+            return new DistTestResult(success, status, result ?? string.Empty);
         }
 
         private bool IsDownloadingLogsEnabled()
@@ -291,18 +339,16 @@ namespace DistTestCore
 
     public class DistTestResult
     {
-        public DistTestResult(bool success, string status, string result, string trace)
+        public DistTestResult(bool success, string status, string result)
         {
             Success = success;
             Status = status;
             Result = result;
-            Trace = trace;
         }
 
         public bool Success { get; }
         public string Status { get; }
         public string Result { get; }
-        public string Trace { get; }
 
         public override string ToString()
         {

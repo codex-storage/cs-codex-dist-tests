@@ -2,13 +2,11 @@
 {
     public class CodexTranscriptWriterConfig
     {
-        public CodexTranscriptWriterConfig(string outputFilename, bool includeBlockReceivedEvents)
+        public CodexTranscriptWriterConfig(bool includeBlockReceivedEvents)
         {
-            OutputFilename = outputFilename;
             IncludeBlockReceivedEvents = includeBlockReceivedEvents;
         }
 
-        public string OutputFilename { get; }
         public bool IncludeBlockReceivedEvents { get; }
     }
 }

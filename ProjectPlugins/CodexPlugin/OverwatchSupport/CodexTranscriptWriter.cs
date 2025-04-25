@@ -23,25 +23,14 @@ namespace CodexPlugin.OverwatchSupport
             converter = new CodexLogConverter(writer, config, identityMap);
         }
 
-        public void Finalize()
+        public void Finalize(string outputFilepath)
         {
             log.Log("Finalizing Codex transcript...");
 
             writer.AddHeader(CodexHeaderKey, CreateCodexHeader());
-            writer.Write(GetOutputFullPath());
+            writer.Write(outputFilepath);
 
             log.Log("Done");
-        }
-
-        private string GetOutputFullPath()
-        {
-            var outputPath = Path.GetDirectoryName(log.GetFullName());
-            if (outputPath == null) throw new Exception("Logfile path is null");
-            var filename = Path.GetFileNameWithoutExtension(log.GetFullName());
-            if (string.IsNullOrEmpty(filename)) throw new Exception("Logfile name is null or empty");
-            var outputFile = Path.Combine(outputPath, filename + "_" + config.OutputFilename);
-            if (!outputFile.EndsWith(".owts")) outputFile += ".owts";
-            return outputFile;
         }
 
         public ICodexNodeHooks CreateHooks(string nodeName)

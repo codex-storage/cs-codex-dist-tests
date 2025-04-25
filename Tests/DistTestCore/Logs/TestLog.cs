@@ -1,4 +1,5 @@
 ﻿using Logging;
+using System.Xml.Linq;
 
 namespace DistTestCore.Logs
 {
@@ -7,6 +8,7 @@ namespace DistTestCore.Logs
         public TestLog(ILog backingLog, string methodName, string deployId, string name = "")
             : base(backingLog, deployId)
         {
+            backingLog.Log($"*** Begin: {methodName}");
         }
 
         public static TestLog Create(FixtureLog parentLog, string name = "")
