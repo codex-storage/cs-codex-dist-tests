@@ -5,6 +5,11 @@ namespace DistTestCore
 {
     public static class NameUtils
     {
+        public static string GetTestLogFileName(DateTime start, string name = "")
+        {
+            return $"{Pad(start.Hour)}-{Pad(start.Minute)}-{Pad(start.Second)}Z_{GetTestMethodName(name)}";
+        }
+
         public static string GetTestMethodName(string name = "")
         {
             if (!string.IsNullOrEmpty(name)) return name;
@@ -16,7 +21,7 @@ namespace DistTestCore
         public static string GetFixtureFullName(LogConfig config, DateTime start, string name)
         {
             var folder = DetermineFolder(config, start);
-            var fixtureName = GetFixtureName(name, start);
+            var fixtureName = GetRawFixtureName();
             return Path.Combine(folder, fixtureName);
         }
 
@@ -83,13 +88,6 @@ namespace DistTestCore
                config.LogRoot,
                $"{start.Year}-{Pad(start.Month)}",
                Pad(start.Day));
-        }
-
-        private static string GetFixtureName(string name, DateTime start)
-        {
-            var fixtureName = GetRawFixtureName();
-            if (!string.IsNullOrEmpty(name)) fixtureName = name;
-            return $"{Pad(start.Hour)}-{Pad(start.Minute)}-{Pad(start.Second)}Z_{fixtureName.Replace('.', '-')}";
         }
 
         private static string Pad(int n)
