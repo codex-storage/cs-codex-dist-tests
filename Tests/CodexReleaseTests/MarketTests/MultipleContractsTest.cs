@@ -43,20 +43,19 @@ namespace CodexReleaseTests.MarketTests
             [Values(5, 10)] int numGenerations)
         {
             var hosts = StartHosts();
+            var clients = StartClients();
 
             for (var i = 0; i < numGenerations; i++)
             {
                 Log("Generation: " + i);
-                Generation(hosts);
+                Generation(clients, hosts);
             }
 
             Thread.Sleep(TimeSpan.FromSeconds(12.0));
         }
 
-        private void Generation(ICodexNodeGroup hosts)
+        private void Generation(ICodexNodeGroup clients, ICodexNodeGroup hosts)
         {
-            var clients = StartClients();
-
             var requests = clients.Select(CreateStorageRequest).ToArray();
 
             All(requests, r =>
@@ -66,8 +65,6 @@ namespace CodexReleaseTests.MarketTests
             });
 
             All(requests, r => r.WaitForStorageContractStarted());
-
-            clients.Stop(waitTillStopped: false);
 
             // for the time being, we're only interested in whether these contracts start.
             //All(requests, r => AssertContractSlotsAreFilledByHosts(r, hosts));

@@ -7,6 +7,7 @@ using DistTestCore;
 using GethPlugin;
 using Logging;
 using Nethereum.Hex.HexConvertors.Extensions;
+using NUnit.Framework;
 using Utils;
 
 namespace CodexReleaseTests.MarketTests
@@ -123,7 +124,10 @@ namespace CodexReleaseTests.MarketTests
             if (!MonitorChainState) return null;
 
             var result = new ChainMonitor(log, contracts, startUtc);
-            result.Start();
+            result.Start(() =>
+            {
+                Assert.Fail("Failure in chain monitor.");
+            });
             return result;
         }
 

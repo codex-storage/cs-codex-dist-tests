@@ -26,10 +26,10 @@ namespace CodexReleaseTests.MarketTests
             this.updateInterval = updateInterval;
         }
 
-        public void Start()
+        public void Start(Action onFailure)
         {
             cts = new CancellationTokenSource();
-            worker = Task.Run(Worker);
+            worker = Task.Run(() => Worker(onFailure));
         }
 
         public void Stop()
@@ -39,14 +39,23 @@ namespace CodexReleaseTests.MarketTests
             if (worker.Exception != null) throw worker.Exception;
         }
 
-        private void Worker()
+        private void Worker(Action onFailure)
         {
             var state = new ChainState(log, contracts, new DoNothingChainEventHandler(), startUtc, doProofPeriodMonitoring: true);
             Thread.Sleep(updateInterval);
 
             while (!cts.IsCancellationRequested)
             {
-                UpdateChainState(state);
+                try
+                {
+                    UpdateChainState(state);
+                }
+                catch (Exception ex)
+                {
+                    log.Error("Exception in chain monitor: " + ex);
+                    onFailure();
+                    throw;
+                }
 
                 cts.Token.WaitHandle.WaitOne(updateInterval);
             }
@@ -61,7 +70,7 @@ namespace CodexReleaseTests.MarketTests
 
             var slots = reports.Reports.Sum(r => Convert.ToInt32(r.TotalNumSlots));
             var required = reports.Reports.Sum(r => Convert.ToInt32(r.TotalProofsRequired));
-            var missed = reports.Reports.Sum(r => Convert.ToInt32(r.MissedProofs));
+            var missed = reports.Reports.Sum(r => r.MissedProofs.Length);
 
             log.Log($"Proof report: Slots={slots} Required={required} Missed={missed}");
         }
