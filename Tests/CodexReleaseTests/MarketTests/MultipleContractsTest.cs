@@ -32,8 +32,8 @@ namespace CodexReleaseTests.MarketTests
         private readonly int tolerance;
 
         protected override int NumberOfHosts => hosts;
-        protected override int NumberOfClients => 3;
-        protected override ByteSize HostAvailabilitySize => (100 * FilesizeMb).MB();
+        protected override int NumberOfClients => 6;
+        protected override ByteSize HostAvailabilitySize => (1000    * FilesizeMb).MB();
         protected override TimeSpan HostAvailabilityMaxDuration => Get8TimesConfiguredPeriodDuration() * 12;
         private readonly TestToken pricePerBytePerSecond = 10.TstWei();
 
@@ -56,7 +56,7 @@ namespace CodexReleaseTests.MarketTests
 
         private void Generation(ICodexNodeGroup clients, ICodexNodeGroup hosts)
         {
-            var requests = clients.Select(CreateStorageRequest).ToArray();
+            var requests = All(clients.ToArray(), CreateStorageRequest);
 
             All(requests, r =>
             {
@@ -71,14 +71,25 @@ namespace CodexReleaseTests.MarketTests
             //All(requests, r => r.WaitForStorageContractFinished());
         }
 
-        private void All(IStoragePurchaseContract[] requests, Action<IStoragePurchaseContract> action)
+        private void All<T>(T[] items, Action<T> action)
         {
-            var tasks = requests.Select(r => Task.Run(() => action(r))).ToArray();
+            var tasks = items.Select(r => Task.Run(() => action(r))).ToArray();
             Task.WaitAll(tasks);
             foreach(var t in tasks)
             {
                 if (t.Exception != null) throw t.Exception;
             }
+        }
+
+        private TResult[] All<T, TResult>(T[] items, Func<T, TResult> action)
+        {
+            var tasks = items.Select(r => Task.Run(() => action(r))).ToArray();
+            Task.WaitAll(tasks);
+            foreach (var t in tasks)
+            {
+                if (t.Exception != null) throw t.Exception;
+            }
+            return tasks.Select(t => t.Result).ToArray();
         }
 
         private IStoragePurchaseContract CreateStorageRequest(ICodexNode client)
