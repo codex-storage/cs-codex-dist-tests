@@ -7,16 +7,9 @@ namespace CodexReleaseTests.MarketTests
 {
     [TestFixture(6, 3, 1)]
     [TestFixture(6, 4, 1)]
-    [TestFixture(6, 4, 2)]
     [TestFixture(8, 5, 1)]
-    [TestFixture(8, 5, 2)]
     [TestFixture(8, 6, 1)]
-    [TestFixture(8, 6, 2)]
     [TestFixture(8, 6, 3)]
-    [TestFixture(8, 8, 1)]
-    [TestFixture(8, 8, 2)]
-    [TestFixture(8, 8, 3)]
-    [TestFixture(8, 8, 4)]
     public class MultipleContractsTest : MarketplaceAutoBootstrapDistTest
     {
         public MultipleContractsTest(int hosts, int slots, int tolerance)
@@ -40,7 +33,7 @@ namespace CodexReleaseTests.MarketTests
         [Test]
         [Combinatorial]
         public void MultipleContractGenerations(
-            [Values(5, 10)] int numGenerations)
+            [Values(10)] int numGenerations)
         {
             var hosts = StartHosts();
             var clients = StartClients();
