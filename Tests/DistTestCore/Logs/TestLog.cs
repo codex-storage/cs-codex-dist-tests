@@ -1,5 +1,4 @@
 ﻿using Logging;
-using System.Xml.Linq;
 
 namespace DistTestCore.Logs
 {
@@ -11,9 +10,9 @@ namespace DistTestCore.Logs
             backingLog.Log($"*** Begin: {methodName}");
         }
 
-        public static TestLog Create(FixtureLog parentLog, string name = "")
+        public static TestLog Create(FixtureLog parentLog, DateTime start, string name = "")
         {
-            var methodName = NameUtils.GetTestMethodName(name);
+            var methodName = NameUtils.GetTestLogFileName(start, name);
             var fullName = Path.Combine(parentLog.GetFullName(), methodName);
             var backingLog = CreateMainLog(fullName, name);
             return new TestLog(backingLog, methodName, parentLog.DeployId);

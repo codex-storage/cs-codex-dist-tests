@@ -1,29 +1,27 @@
 ﻿using CodexClient;
 using CodexPlugin;
-using DistTestCore;
+using NUnit.Framework;
 
 namespace CodexTests
 {
     public class AutoBootstrapDistTest : CodexDistTest
     {
-        private readonly Dictionary<TestLifecycle, ICodexNode> bootstrapNodes = new Dictionary<TestLifecycle, ICodexNode>();
         private bool isBooting = false;
 
-        protected override void LifecycleStart(TestLifecycle tl)
+        public ICodexNode BootstrapNode { get; private set; } = null!;
+
+        [SetUp]
+        public void SetupBootstrapNode()
         {
-            base.LifecycleStart(tl);
-            if (!bootstrapNodes.ContainsKey(tl))
-            {
-                isBooting = true;
-                bootstrapNodes.Add(tl, StartCodex(s => s.WithName("BOOTSTRAP_" + tl.TestNamespace)));
-                isBooting = false;
-            }
+            isBooting = true;
+            BootstrapNode = StartCodex(s => s.WithName("BOOTSTRAP_" + GetTestNamespace()));
+            isBooting = false;
         }
 
-        protected override void LifecycleStop(TestLifecycle lifecycle, DistTestResult result)
+        [TearDown]
+        public void TearDownBootstrapNode()
         {
-            bootstrapNodes.Remove(lifecycle);
-            base.LifecycleStop(lifecycle, result);
+            BootstrapNode.Stop(waitTillStopped: false);
         }
 
         protected override void OnCodexSetup(ICodexSetup setup)
@@ -32,19 +30,6 @@ namespace CodexTests
 
             var node = BootstrapNode;
             if (node != null) setup.WithBootstrapNode(node);
-        }
-
-        protected ICodexNode BootstrapNode
-        {
-            get
-            {
-                var tl = Get();
-                if (bootstrapNodes.TryGetValue(tl, out var node))
-                {
-                    return node;
-                }
-                throw new InvalidOperationException("Bootstrap node not yet started.");
-            }
         }
     }
 }
