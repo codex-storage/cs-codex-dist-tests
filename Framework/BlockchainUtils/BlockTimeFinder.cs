@@ -101,10 +101,18 @@ namespace BlockchainUtils
                 previous.Utc < target;
         }
 
-        private BlockTimeEntry GetBlock(ulong number)
+        private BlockTimeEntry GetBlock(ulong number, bool retry = false)
         {
             if (number < bounds.Genesis.BlockNumber) throw new Exception("Can't fetch block before genesis.");
-            if (number > bounds.Current.BlockNumber) throw new Exception("Can't fetch block after current.");
+            if (number > bounds.Current.BlockNumber)
+            {
+                if (retry) throw new Exception("Can't fetch block after current.");
+
+                // todo test and verify this:
+                Thread.Sleep(1000);
+                bounds.Initialize();
+                return GetBlock(number, retry: true);
+            }
 
             var dateTime = web3.GetTimestampForBlock(number);
             if (dateTime == null) throw new Exception("Failed to get dateTime for block that should exist.");
