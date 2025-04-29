@@ -4,19 +4,14 @@ namespace DistTestCore.Logs
 {
     public class FixtureLog : BaseTestLog
     {
-        private readonly ILog backingLog;
-        private readonly string deployId;
-
         public FixtureLog(ILog backingLog, string deployId)
             : base(backingLog, deployId)
         {
-            this.backingLog = backingLog;
-            this.deployId = deployId;
         }
 
-        public TestLog CreateTestLog(string name = "")
+        public TestLog CreateTestLog(DateTime start, string name = "")
         {
-            return TestLog.Create(this, name);
+            return TestLog.Create(this, start, name);
         }
 
         public static FixtureLog Create(LogConfig config, DateTime start, string deployId, string name = "")

@@ -3,41 +3,35 @@ using CodexContractsPlugin;
 using CodexContractsPlugin.Marketplace;
 using CodexPlugin;
 using CodexTests;
-using DistTestCore;
 using GethPlugin;
 using Nethereum.Hex.HexConvertors.Extensions;
+using NUnit.Framework;
 using Utils;
 
 namespace CodexReleaseTests.MarketTests
 {
     public abstract class MarketplaceAutoBootstrapDistTest : AutoBootstrapDistTest
     {
-        private readonly Dictionary<TestLifecycle, MarketplaceHandle> handles = new Dictionary<TestLifecycle, MarketplaceHandle>();
+        private MarketplaceHandle handle = null!;
         protected const int StartingBalanceTST = 1000;
         protected const int StartingBalanceEth = 10;
 
-        protected override void LifecycleStart(TestLifecycle lifecycle)
+        [SetUp]
+        public void SetupMarketplace()
         {
-            base.LifecycleStart(lifecycle);
             var geth = StartGethNode(s => s.IsMiner());
             var contracts = Ci.StartCodexContracts(geth, BootstrapNode.Version);
-            handles.Add(lifecycle, new MarketplaceHandle(geth, contracts));
-        }
-
-        protected override void LifecycleStop(TestLifecycle lifecycle, DistTestResult result)
-        {
-            handles.Remove(lifecycle);
-            base.LifecycleStop(lifecycle, result);
+            handle = new MarketplaceHandle(geth, contracts);
         }
 
         protected IGethNode GetGeth()
         {
-            return handles[Get()].Geth;
+            return handle.Geth;
         }
 
         protected ICodexContracts GetContracts()
         {
-            return handles[Get()].Contracts;
+            return handle.Contracts;
         }
 
         protected TimeSpan GetPeriodDuration()
