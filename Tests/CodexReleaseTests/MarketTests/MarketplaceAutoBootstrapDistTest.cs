@@ -23,7 +23,7 @@ namespace CodexReleaseTests.MarketTests
             var geth = StartGethNode(s => s.IsMiner());
             var contracts = Ci.StartCodexContracts(geth, BootstrapNode.Version);
             var monitor = SetupChainMonitor(GetTestLog(), contracts, GetTestRunTimeRange().From);
-            handle = new MarketplaceHandle(geth, contracts, monitor));
+            handle = new MarketplaceHandle(geth, contracts, monitor);
         }
 
         [TearDown]
