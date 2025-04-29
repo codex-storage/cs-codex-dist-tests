@@ -747,7 +747,7 @@ namespace KubernetesWorkflow
             }
             var pod = pods[0];
             if (pod.Status == null) throw new Exception("Pod status unknown");
-            //if (string.IsNullOrEmpty(pod.Status.PodIP)) throw new Exception("Pod IP unknown");
+            if (string.IsNullOrEmpty(pod.Status.PodIP)) throw new Exception("Pod IP unknown");
             return pod;
         }
 
@@ -977,7 +977,7 @@ namespace KubernetesWorkflow
         private PodInfo CreatePodInfo(V1Pod pod)
         {
             var name = pod.Name();
-            var ip = "disabled"; // pod.Status.PodIP;
+            var ip = pod.Status.PodIP;
             var k8sNodeName = pod.Spec.NodeName;
 
             if (string.IsNullOrEmpty(name)) throw new InvalidOperationException("Invalid pod name received. Test infra failure.");
