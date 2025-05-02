@@ -7,6 +7,11 @@ namespace AutoClient.Modes.FolderStore
     public interface IFileSaverEventHandler
     {
         void SaveChanges();
+    }
+
+    public interface IFileSaverResultHandler
+    {
+        void OnSuccess();
         void OnFailure();
     }
 
@@ -17,16 +22,18 @@ namespace AutoClient.Modes.FolderStore
         private readonly Stats stats;
         private readonly string folderFile;
         private readonly FileStatus entry;
-        private readonly IFileSaverEventHandler handler;
+        private readonly IFileSaverEventHandler saveHandler;
+        private readonly IFileSaverResultHandler resultHandler;
 
-        public FileSaver(ILog log, LoadBalancer loadBalancer, Stats stats, string folderFile, FileStatus entry, IFileSaverEventHandler handler)
+        public FileSaver(ILog log, LoadBalancer loadBalancer, Stats stats, string folderFile, FileStatus entry, IFileSaverEventHandler saveHandler, IFileSaverResultHandler resultHandler)
         {
             this.log = log;
             this.loadBalancer = loadBalancer;
             this.stats = stats;
             this.folderFile = folderFile;
             this.entry = entry;
-            this.handler = handler;
+            this.saveHandler = saveHandler;
+            this.resultHandler = resultHandler;
         }
 
         public void Process()
@@ -46,9 +53,9 @@ namespace AutoClient.Modes.FolderStore
             loadBalancer.DispatchOnCodex(instance =>
             {
                 entry.CodexNodeId = instance.Node.GetName();
-                handler.SaveChanges();
+                saveHandler.SaveChanges();
 
-                var run = new FileSaverRun(log, instance, stats, folderFile, entry, handler);
+                var run = new FileSaverRun(log, instance, stats, folderFile, entry, saveHandler, resultHandler);
                 run.Process();
             });
         }
@@ -57,7 +64,7 @@ namespace AutoClient.Modes.FolderStore
         {
             loadBalancer.DispatchOnSpecificCodex(instance =>
             {
-                var run = new FileSaverRun(log, instance, stats, folderFile, entry, handler);
+                var run = new FileSaverRun(log, instance, stats, folderFile, entry, saveHandler, resultHandler);
                 run.Process();
             }, entry.CodexNodeId);
         }
@@ -70,17 +77,19 @@ namespace AutoClient.Modes.FolderStore
         private readonly Stats stats;
         private readonly string folderFile;
         private readonly FileStatus entry;
-        private readonly IFileSaverEventHandler handler;
+        private readonly IFileSaverEventHandler saveHandler;
+        private readonly IFileSaverResultHandler resultHandler;
         private readonly QuotaCheck quotaCheck;
 
-        public FileSaverRun(ILog log, CodexWrapper instance, Stats stats, string folderFile, FileStatus entry, IFileSaverEventHandler handler)
+        public FileSaverRun(ILog log, CodexWrapper instance, Stats stats, string folderFile, FileStatus entry, IFileSaverEventHandler saveHandler, IFileSaverResultHandler resultHandler)
         {
             this.log = log;
             this.instance = instance;
             this.stats = stats;
             this.folderFile = folderFile;
             this.entry = entry;
-            this.handler = handler;
+            this.saveHandler = saveHandler;
+            this.resultHandler = resultHandler;
             quotaCheck = new QuotaCheck(log, folderFile, instance);
         }
 
@@ -127,7 +136,7 @@ namespace AutoClient.Modes.FolderStore
                 Thread.Sleep(TimeSpan.FromMinutes(1.0));
             }
             Log("Could not upload: Insufficient local storage quota.");
-            handler.OnFailure();
+            resultHandler.OnFailure();
             return false;
         }
 
@@ -206,9 +215,9 @@ namespace AutoClient.Modes.FolderStore
                 entry.BasicCid = string.Empty;
                 stats.FailedUploads++;
                 log.Error("Failed to upload: " + exc);
-                handler.OnFailure();
+                resultHandler.OnFailure();
             }
-            handler.SaveChanges();
+            saveHandler.SaveChanges();
         }
 
         private void CreateNewPurchase()
@@ -224,17 +233,18 @@ namespace AutoClient.Modes.FolderStore
                 WaitForStarted(request);
 
                 stats.StorageRequestStats.SuccessfullyStarted++;
-                handler.SaveChanges();
+                saveHandler.SaveChanges();
 
                 Log($"Successfully started new purchase: '{entry.PurchaseId}' for {Time.FormatDuration(request.Purchase.Duration)}");
+                resultHandler.OnSuccess();
             }
             catch (Exception exc)
             {
                 entry.EncodedCid = string.Empty;
                 entry.PurchaseId = string.Empty;
-                handler.SaveChanges();
+                saveHandler.SaveChanges();
                 log.Error("Failed to start new purchase: " + exc);
-                handler.OnFailure();
+                resultHandler.OnFailure();
             }
         }
 
@@ -253,7 +263,7 @@ namespace AutoClient.Modes.FolderStore
                     throw new Exception("CID received from storage request was not protected.");
                 }
 
-                handler.SaveChanges();
+                saveHandler.SaveChanges();
                 Log("Saved new purchaseId: " + entry.PurchaseId);
                 return request;
             }
@@ -289,7 +299,7 @@ namespace AutoClient.Modes.FolderStore
                             Log("Request failed to start. State: " + update.State);
                             entry.EncodedCid = string.Empty;
                             entry.PurchaseId = string.Empty;
-                            handler.SaveChanges();
+                            saveHandler.SaveChanges();
                             return;
                         }
                     }
@@ -297,7 +307,7 @@ namespace AutoClient.Modes.FolderStore
             }
             catch (Exception exc)
             {
-                handler.OnFailure();
+                resultHandler.OnFailure();
                 Log($"Exception in {nameof(WaitForSubmittedToStarted)}: {exc}");
                 throw;
             }
