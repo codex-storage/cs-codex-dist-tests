@@ -46,7 +46,7 @@ namespace AutoClient
                 if (queue.Count > 2) log.Log("Queue full. Waiting...");
                 while (queue.Count > 2)
                 {
-                    Thread.Sleep(TimeSpan.FromSeconds(5.0));
+                    Thread.Sleep(TimeSpan.FromSeconds(1.0));
                 }
 
                 lock (queueLock)
@@ -61,7 +61,7 @@ namespace AutoClient
                 {
                     while (running)
                     {
-                        while (queue.Count == 0) Thread.Sleep(TimeSpan.FromSeconds(5.0));
+                        while (queue.Count == 0) Thread.Sleep(TimeSpan.FromSeconds(1.0));
 
                         Action<CodexWrapper> action = w => { };
                         lock (queueLock)
