@@ -22,6 +22,8 @@ namespace TestNetRewarder
             this.log = log;
             lastPeriodUpdateUtc = DateTime.UtcNow;
 
+            if (config.ProofReportHours < 1) throw new Exception("ProofReportHours must be one or greater");
+
             builder = new RequestBuilder();
             eventsFormatter = new EventsFormatter(config);
 
@@ -79,7 +81,7 @@ namespace TestNetRewarder
         private void ProcessPeriodUpdate()
         {
             if (config.ShowProofPeriodReports < 1) return;
-            if (DateTime.UtcNow < (lastPeriodUpdateUtc + TimeSpan.FromHours(1.0))) return;
+            if (DateTime.UtcNow < (lastPeriodUpdateUtc + TimeSpan.FromHours(config.ProofReportHours))) return;
             lastPeriodUpdateUtc = DateTime.UtcNow;
 
             eventsFormatter.ProcessPeriodReports(chainState.PeriodMonitor.GetAndClearReports());
