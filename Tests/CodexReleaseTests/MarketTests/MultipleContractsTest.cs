@@ -5,11 +5,11 @@ using Utils;
 
 namespace CodexReleaseTests.MarketTests
 {
-    [TestFixture(6, 3, 1)]
-    [TestFixture(6, 4, 1)]
-    [TestFixture(8, 5, 1)]
-    [TestFixture(8, 6, 1)]
-    [TestFixture(8, 6, 3)]
+    [TestFixture(8, 3, 1)]
+    [TestFixture(8, 4, 1)]
+    [TestFixture(10, 5, 1)]
+    [TestFixture(10, 6, 1)]
+    [TestFixture(10, 6, 3)]
     public class MultipleContractsTest : MarketplaceAutoBootstrapDistTest
     {
         public MultipleContractsTest(int hosts, int slots, int tolerance)
@@ -25,8 +25,8 @@ namespace CodexReleaseTests.MarketTests
         private readonly int tolerance;
 
         protected override int NumberOfHosts => hosts;
-        protected override int NumberOfClients => 6;
-        protected override ByteSize HostAvailabilitySize => (1000    * FilesizeMb).MB();
+        protected override int NumberOfClients => 8;
+        protected override ByteSize HostAvailabilitySize => (1000 * FilesizeMb).MB();
         protected override TimeSpan HostAvailabilityMaxDuration => Get8TimesConfiguredPeriodDuration() * 12;
         private readonly TestToken pricePerBytePerSecond = 10.TstWei();
 
