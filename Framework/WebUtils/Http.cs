@@ -20,11 +20,6 @@ namespace WebUtils
         private readonly Action<HttpClient> onClientCreated;
         private readonly string id;
 
-        internal Http(string id, ILog log, IWebCallTimeSet timeSet)
-            : this(id, log, timeSet, DoNothing)
-        {
-        }
-
         internal Http(string id, ILog log, IWebCallTimeSet timeSet, Action<HttpClient> onClientCreated)
         {
             this.id = id;
@@ -88,10 +83,6 @@ namespace WebUtils
             client.Timeout = timeSet.HttpCallTimeout();
             onClientCreated(client);
             return client;
-        }
-
-        private static void DoNothing(HttpClient client)
-        {
         }
     }
 }

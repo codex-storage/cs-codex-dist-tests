@@ -16,6 +16,10 @@ namespace GethPlugin
 
         public string LogPrefix => "(Geth) ";
 
+        public void Awake(IPluginAccess access)
+        {
+        }
+
         public void Announce()
         {
             tools.GetLog().Log($"Loaded Geth plugin.");

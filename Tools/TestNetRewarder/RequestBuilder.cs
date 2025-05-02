@@ -1,40 +1,55 @@
-﻿using DiscordRewards;
+﻿using CodexContractsPlugin.ChainMonitor;
+using DiscordRewards;
 using Utils;
 
 namespace TestNetRewarder
 {
-    public class RequestBuilder : IRewardGiver
+    public class RequestBuilder
     {
-        private readonly Dictionary<ulong, List<EthAddress>> rewards = new Dictionary<ulong, List<EthAddress>>();
-
-        public void Give(RewardConfig reward, EthAddress receiver)
+        public EventsAndErrors Build(ChainState chainState, ChainEventMessage[] lines, string[] errors)
         {
-            if (rewards.ContainsKey(reward.RoleId))
+            var activeChainAddresses = CollectActiveAddresses(chainState);
+
+            return new EventsAndErrors
             {
-                rewards[reward.RoleId].Add(receiver);
+                EventsOverview = lines,
+                Errors = errors,
+                ActiveChainAddresses = activeChainAddresses
+            };
+        }
+
+        private ActiveChainAddresses CollectActiveAddresses(ChainState chainState)
+        {
+            var hosts = new List<string>();
+            var clients = new List<string>();
+
+            foreach (var request in chainState.Requests)
+            {
+                CollectAddresses(request, hosts, clients);
             }
-            else
+
+            return new ActiveChainAddresses
             {
-                rewards.Add(reward.RoleId, new List<EthAddress> { receiver });
+                Hosts = hosts.ToArray(),
+                Clients = clients.ToArray()
+            };
+        }
+
+        private void CollectAddresses(IChainStateRequest request, List<string> hosts, List<string> clients)
+        {
+            if (request.State != CodexContractsPlugin.RequestState.Started) return;
+
+            AddIfNew(clients, request.Client);
+            foreach (var host in request.Hosts.GetHosts())
+            {
+                AddIfNew(hosts, host);
             }
         }
 
-        public GiveRewardsCommand Build(ChainEventMessage[] lines, string[] errors)
+        private void AddIfNew(List<string> list, EthAddress address)
         {
-            var result = new GiveRewardsCommand
-            {
-                Rewards = rewards.Select(p => new RewardUsersCommand
-                {
-                    RewardId = p.Key,
-                    UserAddresses = p.Value.Select(v => v.Address).ToArray()
-                }).ToArray(),
-                EventsOverview = lines,
-                Errors = errors
-            };
-
-            rewards.Clear();
-
-            return result;
+            var addr = address.Address;
+            if (!list.Contains(addr)) list.Add(addr);
         }
     }
 }

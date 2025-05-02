@@ -12,11 +12,12 @@ namespace BiblioTech.Options
         public async Task<string?> Parse(CommandContext context)
         {
             var strData = context.Options.SingleOrDefault(o => o.Name == Name);
-            if (strData == null)
+            if (strData == null && IsRequired)
             {
                 await context.Followup("String option not received.");
                 return null;
             }
+            if (strData == null) return null;
             return strData.Value as string;
         }
     }

@@ -16,6 +16,10 @@ namespace CodexContractsPlugin
 
         public string LogPrefix => "(CodexContracts) ";
 
+        public void Awake(IPluginAccess access)
+        {
+        }
+
         public void Announce()
         {
             tools.GetLog().Log($"Loaded Codex-Marketplace SmartContracts");
@@ -23,16 +27,16 @@ namespace CodexContractsPlugin
 
         public void AddMetadata(IAddMetadata metadata)
         {
-            metadata.Add("codexcontractsid", CodexContractsContainerRecipe.DockerImage);
+            metadata.Add("codexcontractsid", "dynamic");
         }
 
         public void Decommission()
         {
         }
 
-        public CodexContractsDeployment DeployContracts(CoreInterface ci, IGethNode gethNode)
+        public CodexContractsDeployment DeployContracts(CoreInterface ci, IGethNode gethNode, CodexClient.DebugInfoVersion versionInfo)
         {
-            return starter.Deploy(ci, gethNode);
+            return starter.Deploy(ci, gethNode, versionInfo);
         }
 
         public ICodexContracts WrapDeploy(IGethNode gethNode, CodexContractsDeployment deployment)

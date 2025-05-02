@@ -18,6 +18,10 @@ namespace MetricsPlugin
 
         public string LogPrefix => "(Metrics) ";
 
+        public void Awake(IPluginAccess access)
+        {
+        }
+
         public void Announce()
         {
             tools.GetLog().Log($"Prometheus plugin loaded with '{starter.GetPrometheusId()}'.");

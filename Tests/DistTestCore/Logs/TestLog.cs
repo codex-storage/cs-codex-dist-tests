@@ -1,20 +1,21 @@
-﻿namespace DistTestCore.Logs
+﻿using Logging;
+
+namespace DistTestCore.Logs
 {
     public class TestLog : BaseTestLog
     {
-        private readonly string fullName;
-
-        public TestLog(string folder, string deployId, string name = "") : base(deployId)
+        public TestLog(ILog backingLog, string methodName, string deployId, string name = "")
+            : base(backingLog, deployId)
         {
-            var methodName = NameUtils.GetTestMethodName(name);
-            fullName = Path.Combine(folder, methodName);
-
-            Log($"*** Begin: {methodName}");
+            backingLog.Log($"*** Begin: {methodName}");
         }
 
-        protected override string GetFullName()
+        public static TestLog Create(FixtureLog parentLog, DateTime start, string name = "")
         {
-            return fullName;
+            var methodName = NameUtils.GetTestLogFileName(start, name);
+            var fullName = Path.Combine(parentLog.GetFullName(), methodName);
+            var backingLog = CreateMainLog(fullName, name);
+            return new TestLog(backingLog, methodName, parentLog.DeployId);
         }
     }
 }

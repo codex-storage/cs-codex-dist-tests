@@ -1,13 +1,14 @@
-﻿using Core;
+﻿using CodexClient;
+using Core;
 using GethPlugin;
 
 namespace CodexContractsPlugin
 {
     public static class CoreInterfaceExtensions
     {
-        public static CodexContractsDeployment DeployCodexContracts(this CoreInterface ci, IGethNode gethNode)
+        public static CodexContractsDeployment DeployCodexContracts(this CoreInterface ci, IGethNode gethNode, DebugInfoVersion versionInfo)
         {
-            return Plugin(ci).DeployContracts(ci, gethNode);
+            return Plugin(ci).DeployContracts(ci, gethNode, versionInfo);
         }
 
         public static ICodexContracts WrapCodexContractsDeployment(this CoreInterface ci, IGethNode gethNode, CodexContractsDeployment deployment)
@@ -15,9 +16,9 @@ namespace CodexContractsPlugin
             return Plugin(ci).WrapDeploy(gethNode, deployment);
         }
 
-        public static ICodexContracts StartCodexContracts(this CoreInterface ci, IGethNode gethNode)
+        public static ICodexContracts StartCodexContracts(this CoreInterface ci, IGethNode gethNode, DebugInfoVersion versionInfo)
         {
-            var deployment = DeployCodexContracts(ci, gethNode);
+            var deployment = DeployCodexContracts(ci, gethNode, versionInfo);
             return WrapCodexContractsDeployment(ci, gethNode, deployment);
         }
 

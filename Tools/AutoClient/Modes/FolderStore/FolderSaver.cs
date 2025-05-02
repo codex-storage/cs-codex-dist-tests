@@ -1,4 +1,5 @@
 ﻿using Logging;
+using Utils;
 
 namespace AutoClient.Modes.FolderStore
 {
@@ -10,14 +11,16 @@ namespace AutoClient.Modes.FolderStore
         private readonly JsonFile<FolderStatus> statusFile;
         private readonly FolderStatus status;
         private readonly BalanceChecker balanceChecker;
+        private readonly SlowModeHandler slowModeHandler;
         private int changeCounter = 0;
-        private int failureCount = 0;
+        private int saveFolderJsonCounter = 0;
 
         public FolderSaver(App app, LoadBalancer loadBalancer)
         {
             this.app = app;
             this.loadBalancer = loadBalancer;
             balanceChecker = new BalanceChecker(app);
+            slowModeHandler = new SlowModeHandler(app);
 
             statusFile = new JsonFile<FolderStatus>(app, Path.Combine(app.Config.FolderToStore, FolderSaverFilename));
             status = statusFile.Load();
@@ -25,10 +28,11 @@ namespace AutoClient.Modes.FolderStore
 
         public void Run()
         {
+            saveFolderJsonCounter = 0;
+
             var folderFiles = Directory.GetFiles(app.Config.FolderToStore);
             if (!folderFiles.Any()) throw new Exception("No files found in " + app.Config.FolderToStore);
 
-            var saveFolderJsonCounter = 0;
             balanceChecker.Check();
             foreach (var folderFile in folderFiles)
             {
@@ -40,32 +44,27 @@ namespace AutoClient.Modes.FolderStore
                     SaveFile(folderFile);
                 }
 
-                if (failureCount > 3)
-                {
-                    app.Log.Error("Failure count reached threshold. Stopping...");
-                    app.Cts.Cancel();
-                    return;
-                }
-
-                if (changeCounter > 1)
-                {
-                    changeCounter = 0;
-                    saveFolderJsonCounter++;
-                    if (saveFolderJsonCounter > 5)
-                    {
-                        saveFolderJsonCounter = 0;
-                        if (failureCount > 0)
-                        {
-                            app.Log.Log($"Failure count is reset. (Was: {failureCount})");
-                            failureCount = 0;
-                        }
-                        balanceChecker.Check();
-                        SaveFolderSaverJsonFile();
-                    }
-                }
+                slowModeHandler.Check();
+                
+                CheckAndSaveChanges();
 
                 statusFile.Save(status);
                 Thread.Sleep(100);
+            }
+        }
+
+        private void CheckAndSaveChanges()
+        {
+            if (changeCounter > 1)
+            {
+                changeCounter = 0;
+                saveFolderJsonCounter++;
+                if (saveFolderJsonCounter > 5)
+                {
+                    saveFolderJsonCounter = 0;
+                    balanceChecker.Check();
+                    SaveFolderSaverJsonFile();
+                }
             }
         }
 
@@ -113,7 +112,6 @@ namespace AutoClient.Modes.FolderStore
         }
 
         private const int MinCodexStorageFilesize = 262144;
-        private readonly Random random = new Random();
         private readonly string paddingMessage = $"Codex currently requires a minimum filesize of {MinCodexStorageFilesize} bytes for datasets used in storage contracts. " +
             $"Anything smaller, and the erasure-coding algorithms used for data durability won't function. Therefore, we apply this padding field to make sure this " +
             $"file is larger than the minimal size. The following is pseudo-random: ";
@@ -125,40 +123,22 @@ namespace AutoClient.Modes.FolderStore
             if (info.Length < min)
             {
                 var required = Math.Max(1024, min - info.Length);
-                status.Padding = paddingMessage + GenerateRandomString(required);
+                status.Padding = paddingMessage + RandomUtils.GenerateRandomString(required);
                 statusFile.Save(status);
             }
-        }
-
-        private string GenerateRandomString(long required)
-        {
-            var result = "";
-            while (result.Length < required)
-            {
-                var bytes = new byte[1024];
-                random.NextBytes(bytes);
-                result += string.Join("", bytes.Select(b => b.ToString()));
-            }
-
-            return result;
         }
 
         private FileSaver CreateFileSaver(string folderFile, FileStatus entry)
         {
             var fixedLength = entry.Filename.PadRight(35);
             var prefix = $"[{fixedLength}] ";
-            return new FileSaver(new LogPrefixer(app.Log, prefix), loadBalancer, status.Stats, folderFile, entry, this);
+            return new FileSaver(new LogPrefixer(app.Log, prefix), loadBalancer, status.Stats, folderFile, entry, this, slowModeHandler);
         }
 
         public void SaveChanges()
         {
             statusFile.Save(status);
             changeCounter++;
-        }
-
-        public void OnFailure()
-        {
-            failureCount++;
         }
     }
 }

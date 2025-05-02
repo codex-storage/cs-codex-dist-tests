@@ -1,7 +1,6 @@
 ﻿using BiblioTech.Options;
 using Discord;
 using Discord.WebSocket;
-using Org.BouncyCastle.Utilities;
 
 namespace BiblioTech
 {

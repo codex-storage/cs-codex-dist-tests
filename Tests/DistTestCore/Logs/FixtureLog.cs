@@ -4,28 +4,21 @@ namespace DistTestCore.Logs
 {
     public class FixtureLog : BaseTestLog
     {
-        private readonly string fullName;
-        private readonly string deployId;
-
-        public FixtureLog(LogConfig config, DateTime start, string deployId, string name = "") : base(deployId)
+        public FixtureLog(ILog backingLog, string deployId)
+            : base(backingLog, deployId)
         {
-            this.deployId = deployId;
-            fullName = NameUtils.GetFixtureFullName(config, start, name);
         }
 
-        public TestLog CreateTestLog(string name = "")
+        public TestLog CreateTestLog(DateTime start, string name = "")
         {
-            return new TestLog(fullName, deployId, name);
+            return TestLog.Create(this, start, name);
         }
 
-        public void DeleteFolder()
+        public static FixtureLog Create(LogConfig config, DateTime start, string deployId, string name = "")
         {
-            Directory.Delete(fullName, true);
-        }
-
-        protected override string GetFullName()
-        {
-            return fullName;
+            var fullName = NameUtils.GetFixtureFullName(config, start, name);
+            var log = CreateMainLog(fullName, name);
+            return new FixtureLog(log, deployId);
         }
     }
 }

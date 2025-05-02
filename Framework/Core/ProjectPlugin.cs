@@ -4,6 +4,7 @@ namespace Core
 {
     public interface IProjectPlugin
     {
+        void Awake(IPluginAccess access);
         void Announce();
         void Decommission();
     }
@@ -16,6 +17,11 @@ namespace Core
     public interface IHasMetadata
     {
         void AddMetadata(IAddMetadata metadata);
+    }
+
+    public interface IPluginAccess
+    {
+        T GetPlugin<T>() where T : IProjectPlugin;
     }
 
     public static class ProjectPlugin

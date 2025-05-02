@@ -5,6 +5,11 @@ namespace DistTestCore
 {
     public static class NameUtils
     {
+        public static string GetTestLogFileName(DateTime start, string name = "")
+        {
+            return $"{Pad(start.Hour)}-{Pad(start.Minute)}-{Pad(start.Second)}Z_{GetTestMethodName(name)}";
+        }
+
         public static string GetTestMethodName(string name = "")
         {
             if (!string.IsNullOrEmpty(name)) return name;
@@ -16,7 +21,7 @@ namespace DistTestCore
         public static string GetFixtureFullName(LogConfig config, DateTime start, string name)
         {
             var folder = DetermineFolder(config, start);
-            var fixtureName = GetFixtureName(name, start);
+            var fixtureName = GetRawFixtureName();
             return Path.Combine(folder, fixtureName);
         }
 
@@ -25,6 +30,7 @@ namespace DistTestCore
             var test = TestContext.CurrentContext.Test;
             if (test.ClassName!.Contains("AdhocContext")) return "none";
             var className = test.ClassName!.Substring(test.ClassName.LastIndexOf('.') + 1);
+            className += FormatArguments(test);
             return className.Replace('.', '-');
         }
 
@@ -54,7 +60,7 @@ namespace DistTestCore
 
         private static string FormatArguments(TestContext.TestAdapter test)
         {
-            if (test.Arguments == null || !test.Arguments.Any()) return "";
+            if (test.Arguments == null || test.Arguments.Length == 0) return "";
             return $"[{string.Join(',', test.Arguments.Select(FormatArgument).ToArray())}]";
         }
         
@@ -69,6 +75,8 @@ namespace DistTestCore
         private static string ReplaceInvalidCharacters(string name)
         {
             return name
+                .Replace("codexstorage/nim-codex:", "")
+                .Replace("-dist-tests", "")
                 .Replace(":", "_")
                 .Replace("/", "_")
                 .Replace("\\", "_");
@@ -80,13 +88,6 @@ namespace DistTestCore
                config.LogRoot,
                $"{start.Year}-{Pad(start.Month)}",
                Pad(start.Day));
-        }
-
-        private static string GetFixtureName(string name, DateTime start)
-        {
-            var className = GetRawFixtureName();
-            if (!string.IsNullOrEmpty(name)) className = name;
-            return $"{Pad(start.Hour)}-{Pad(start.Minute)}-{Pad(start.Second)}Z_{className.Replace('.', '-')}";
         }
 
         private static string Pad(int n)

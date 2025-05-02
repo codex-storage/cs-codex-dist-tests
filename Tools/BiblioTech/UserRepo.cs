@@ -41,6 +41,12 @@ namespace BiblioTech
             return cache.Values.ToArray();  
         }
 
+        public UserData GetUser(IUser user)
+        {
+            if (cache.Count == 0) LoadAllUserData();
+            return GetOrCreate(user);
+        }
+
         public void AddMintEventForUser(IUser user, EthAddress usedAddress, Transaction<Ether>? eth, Transaction<TestToken>? tokens)
         {
             lock (repoLock)
@@ -68,10 +74,10 @@ namespace BiblioTech
 
             lock (repoLock)
             {
-                var userData = GetUserData(user);
+                var userData = GetUserDataMaybe(user);
                 if (userData == null)
                 {
-                    result.Add("User has not joined the test net.");
+                    result.Add("User has not interacted with bot.");
                 }
                 else
                 {
@@ -100,36 +106,33 @@ namespace BiblioTech
 
         public string[] GetUserReport(IUser user)
         {
-            var userData = GetUserData(user);
+            var userData = GetUserDataMaybe(user);
             if (userData == null) return new[] { "User has not joined the test net." };
             return userData.CreateOverview();
         }
 
         public string[] GetUserReport(EthAddress ethAddress)
         {
-            var userData = GetUserDataForAddress(ethAddress);
+            var userData = GetUserDataForAddressMaybe(ethAddress);
             if (userData == null) return new[] { "No user is using this eth address." };
             return userData.CreateOverview();
         }
 
-        public UserData? GetUserDataForAddress(EthAddress? address)
+        public UserData? GetUserDataForAddressMaybe(EthAddress? address)
         {
             if (address == null) return null;
 
-            // If this becomes a performance problem, switch to in-memory cached list.
-            var files = Directory.GetFiles(Program.Config.UserDataPath);
-            foreach (var file in files)
+            var lower = address.Address.ToLowerInvariant();
+            if (string.IsNullOrEmpty(lower)) return null;
+
+            if (cache.Count == 0) LoadAllUserData();
+            foreach (var item in cache.Values)
             {
-                try
+                if (item.CurrentAddress != null &&
+                    item.CurrentAddress.Address.ToLowerInvariant() == lower)
                 {
-                    var user = JsonConvert.DeserializeObject<UserData>(File.ReadAllText(file))!;
-                    if (user.CurrentAddress != null &&
-                        user.CurrentAddress.Address == address.Address)
-                    {
-                        return user;
-                    }
+                    return item;
                 }
-                catch { }
             }
 
             return null;
@@ -137,7 +140,7 @@ namespace BiblioTech
 
         private SetAddressResponse SetUserAddress(IUser user, EthAddress? address)
         {
-            if (GetUserDataForAddress(address) != null)
+            if (GetUserDataForAddressMaybe(address) != null)
             {
                 return SetAddressResponse.AddressAlreadyInUse;
             }
@@ -152,13 +155,12 @@ namespace BiblioTech
 
         private void SetUserNotification(IUser user, bool notifyEnabled)
         {
-            var userData = GetUserData(user);
-            if (userData == null) return;
+            var userData = GetOrCreate(user);
             userData.NotificationsEnabled = notifyEnabled;
             SaveUserData(userData);
         }
 
-        private UserData? GetUserData(IUser user)
+        private UserData? GetUserDataMaybe(IUser user)
         {
             if (cache.ContainsKey(user.Id))
             {
@@ -177,7 +179,7 @@ namespace BiblioTech
 
         private UserData GetOrCreate(IUser user)
         {
-            var userData = GetUserData(user);
+            var userData = GetUserDataMaybe(user);
             if (userData == null)
             {
                 return CreateAndSaveNewUserData(user);
