@@ -20,9 +20,10 @@ namespace BlockchainUtils
 
         public BlockTimeEntry Get(ulong blockNumber)
         {
-            bounds.Initialize();
             var b = cache.Get(blockNumber);
             if (b != null) return b;
+
+            bounds.Initialize();
             return GetBlock(blockNumber);
         }
 

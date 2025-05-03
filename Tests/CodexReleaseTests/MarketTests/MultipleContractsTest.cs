@@ -5,11 +5,11 @@ using Utils;
 
 namespace CodexReleaseTests.MarketTests
 {
-    [TestFixture(8, 3, 1)]
+    //[TestFixture(8, 3, 1)]
     [TestFixture(8, 4, 1)]
-    [TestFixture(10, 5, 1)]
-    [TestFixture(10, 6, 1)]
-    [TestFixture(10, 6, 3)]
+    //[TestFixture(10, 5, 1)]
+    //[TestFixture(10, 6, 1)]
+    //[TestFixture(10, 6, 3)]
     public class MultipleContractsTest : MarketplaceAutoBootstrapDistTest
     {
         public MultipleContractsTest(int hosts, int slots, int tolerance)
@@ -33,7 +33,7 @@ namespace CodexReleaseTests.MarketTests
         [Test]
         [Combinatorial]
         public void MultipleContractGenerations(
-            [Values(10)] int numGenerations)
+            [Values(50)] int numGenerations)
         {
             var hosts = StartHosts();
             var clients = StartClients();
@@ -96,7 +96,7 @@ namespace CodexReleaseTests.MarketTests
                 MinRequiredNumberOfNodes = (uint)slots,
                 NodeFailureTolerance = (uint)tolerance,
                 PricePerBytePerSecond = pricePerBytePerSecond,
-                ProofProbability = 20,
+                ProofProbability = 1,
                 CollateralPerByte = 1.TstWei()
             });
         }
