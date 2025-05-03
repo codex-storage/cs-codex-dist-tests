@@ -199,21 +199,23 @@ namespace CodexContractsPlugin.ChainMonitor
         private ChainStateRequest? FindRequest(IHasRequestId request)
         {
             var r = requests.SingleOrDefault(r => Equal(r.Request.RequestId, request.RequestId));
-            if (r == null)
+            if (r != null) return r;
+           
+            try
             {
-                var blockNumber = "unknown";
-                if (request is IHasBlock blk)
-                {
-                    blockNumber = blk.Block.BlockNumber.ToString();
-                }
-
-                var msg = $"Received event of type '{request.GetType()}' in block '{blockNumber}' for request by Id: '{request.RequestId}'. " +
-                    $"Failed to find request. Request creation event not seen! (Tracker start time: {TotalSpan.From})";
-
+                var req = contracts.GetRequest(request.RequestId);
+                var state = contracts.GetRequestState(req);
+                var newRequest = new ChainStateRequest(log, req, state);
+                requests.Add(newRequest);
+                return newRequest;
+            }
+            catch (Exception ex)
+            {
+                var msg = "Failed to get request from chain: " + ex;
                 log.Error(msg);
                 handler.OnError(msg);
+                return null;
             }
-            return r;
         }
 
         private bool Equal(byte[] a, byte[] b)
