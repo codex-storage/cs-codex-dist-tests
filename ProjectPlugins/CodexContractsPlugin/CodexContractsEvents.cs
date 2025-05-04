@@ -4,6 +4,8 @@ using GethPlugin;
 using Logging;
 using Nethereum.Contracts;
 using Nethereum.Hex.HexTypes;
+using Nethereum.RPC.Eth.DTOs;
+using Nethereum.Web3;
 using Utils;
 
 namespace CodexContractsPlugin
@@ -19,6 +21,7 @@ namespace CodexContractsPlugin
         SlotFreedEventDTO[] GetSlotFreedEvents();
         SlotReservationsFullEventDTO[] GetSlotReservationsFullEvents();
         ProofSubmittedEventDTO[] GetProofSubmittedEvents();
+        void Do();
     }
 
     public class CodexContractsEvents : ICodexContractsEvents
@@ -33,9 +36,32 @@ namespace CodexContractsPlugin
             this.gethNode = gethNode;
             this.deployment = deployment;
             BlockInterval = blockInterval;
+
+            Do();
         }
         
         public BlockInterval BlockInterval { get; }
+
+        public void Do()
+        {
+            for (ulong i = BlockInterval.From; i <= BlockInterval.To; i++)
+            {
+                var block = gethNode.GetBlk(i);
+                if (block == null) return;
+
+                foreach (var t in block.Transactions)
+                {
+                    if (t == null) continue;
+
+                    var input = t.ConvertToTransactionInput();
+                    var aaa = t.DecodeTransactionToFunctionMessage<ReserveSlotFunction>();
+                    if (aaa != null)
+                    {
+                        var a = 0;
+                    }
+                }
+            }
+        }
 
         public Request[] GetStorageRequests()
         {

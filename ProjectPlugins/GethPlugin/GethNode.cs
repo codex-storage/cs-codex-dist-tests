@@ -31,6 +31,7 @@ namespace GethPlugin
         List<EventLog<TEvent>> GetEvents<TEvent>(string address, TimeRange timeRange) where TEvent : IEventDTO, new();
         BlockInterval ConvertTimeRangeToBlockRange(TimeRange timeRange);
         BlockTimeEntry GetBlockForNumber(ulong number);
+        BlockWithTransactions GetBlk(ulong number);
     }
 
     public class DeploymentGethNode : BaseGethNode, IGethNode
@@ -181,6 +182,11 @@ namespace GethPlugin
         public BlockTimeEntry GetBlockForNumber(ulong number)
         {
             return StartInteraction().GetBlockForNumber(number);
+        }
+
+        public BlockWithTransactions GetBlk(ulong number)
+        {
+            return StartInteraction().GetBlk(number);
         }
 
         protected abstract NethereumInteraction StartInteraction();
