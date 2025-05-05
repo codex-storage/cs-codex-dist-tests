@@ -10,6 +10,7 @@ namespace AutoClient.Modes.FolderStore
         private readonly LoadBalancer loadBalancer;
         private readonly JsonFile<FolderStatus> statusFile;
         private readonly FolderStatus status;
+        private readonly object statusLock = new object();
         private readonly BalanceChecker balanceChecker;
         private readonly SlowModeHandler slowModeHandler;
         private int changeCounter = 0;
@@ -48,7 +49,7 @@ namespace AutoClient.Modes.FolderStore
                 
                 CheckAndSaveChanges();
 
-                statusFile.Save(status);
+                SaveChanges();
                 Thread.Sleep(100);
             }
         }
@@ -71,16 +72,23 @@ namespace AutoClient.Modes.FolderStore
         private void SaveFile(string folderFile)
         {
             var localFilename = Path.GetFileName(folderFile);
-            var entry = status.Files.SingleOrDefault(f => f.Filename == localFilename);
-            if (entry == null)
+            var entry = GetEntry(localFilename);
+            ProcessFileEntry(folderFile, entry);
+        }
+
+        private FileStatus GetEntry(string localFilename)
+        {
+            lock (statusLock)
             {
-                entry = new FileStatus
+                var entry = status.Files.SingleOrDefault(f => f.Filename == localFilename);
+                if (entry != null) return entry;
+                var newEntry = new FileStatus
                 {
                     Filename = localFilename
                 };
-                status.Files.Add(entry);
+                status.Files.Add(newEntry);
+                return newEntry;
             }
-            ProcessFileEntry(folderFile, entry);
         }
 
         private void ProcessFileEntry(string folderFile, FileStatus entry)
@@ -97,6 +105,7 @@ namespace AutoClient.Modes.FolderStore
                 Filename = FolderSaverFilename
             };
             var folderFile = Path.Combine(app.Config.FolderToStore, FolderSaverFilename);
+            var cidsFile = Path.Combine(app.Config.DataPath, "cids.log");
             ApplyPadding(folderFile);
             var fileSaver = CreateFileSaver(folderFile, entry);
             fileSaver.Process();
@@ -104,6 +113,7 @@ namespace AutoClient.Modes.FolderStore
             if (!string.IsNullOrEmpty(entry.EncodedCid))
             {
                 app.Log.Log($"!!! {FolderSaverFilename} saved to CID '{entry.EncodedCid}' !!!");
+                File.AppendAllLines(cidsFile, [entry.EncodedCid]);
             }
             else
             {
@@ -123,8 +133,11 @@ namespace AutoClient.Modes.FolderStore
             if (info.Length < min)
             {
                 var required = Math.Max(1024, min - info.Length);
-                status.Padding = paddingMessage + RandomUtils.GenerateRandomString(required);
-                statusFile.Save(status);
+                lock (statusLock)
+                {
+                    status.Padding = paddingMessage + RandomUtils.GenerateRandomString(required);
+                }
+                SaveChanges();
             }
         }
 
@@ -137,7 +150,10 @@ namespace AutoClient.Modes.FolderStore
 
         public void SaveChanges()
         {
-            statusFile.Save(status);
+            lock (statusLock)
+            {
+                statusFile.Save(status);
+            }
             changeCounter++;
         }
     }
