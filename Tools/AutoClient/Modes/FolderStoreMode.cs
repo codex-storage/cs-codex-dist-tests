@@ -24,6 +24,7 @@ namespace AutoClient.Modes
                     while (!app.Cts.IsCancellationRequested)
                     {
                         saver.Run();
+                        Thread.Sleep(TimeSpan.FromHours(1.0));
                     }
                 }
                 catch (Exception ex)
