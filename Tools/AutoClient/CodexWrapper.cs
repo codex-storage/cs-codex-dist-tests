@@ -24,15 +24,16 @@ namespace AutoClient
 
         public IStoragePurchaseContract RequestStorage(ContentId cid)
         {
+            var (nodes, tolerance) = GetDurability();
             var result = Node.Marketplace.RequestStorage(new StoragePurchaseRequest(cid)
             {
                 CollateralPerByte = app.Config.CollateralPerByte.TstWei(),
                 Duration = GetDuration(),
                 Expiry = TimeSpan.FromMinutes(app.Config.ContractExpiryMinutes),
-                MinRequiredNumberOfNodes = Convert.ToUInt32(app.Config.NumHosts),
-                NodeFailureTolerance = Convert.ToUInt32(app.Config.HostTolerance),
+                MinRequiredNumberOfNodes = nodes,
+                NodeFailureTolerance = tolerance,
                 PricePerBytePerSecond = GetPricePerBytePerSecond(),
-                ProofProbability = 15
+                ProofProbability = GetProofProbability()
             });
             return result;
         }
@@ -60,6 +61,23 @@ namespace AutoClient
             i += r.Next(0, day * 2);
 
             return TimeSpan.FromMinutes(i);
+        }
+
+        private (uint, uint) GetDurability()
+        {
+            (uint, uint)[] options = [
+                (4, 2),
+                (5, 2),
+                (10, 5),
+                (20, 10)
+            ];
+
+            return options[r.Next(0, options.Length)];
+        }
+
+        private int GetProofProbability()
+        {
+            return r.Next(10, 100);
         }
     }
 }
