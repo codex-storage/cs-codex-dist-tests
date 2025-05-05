@@ -48,9 +48,6 @@ namespace AutoClient.Modes.FolderStore
                 slowModeHandler.Check();
                 
                 CheckAndSaveChanges();
-
-                SaveChanges();
-                Thread.Sleep(100);
             }
 
             app.Log.Log("All files processed.");
@@ -62,7 +59,7 @@ namespace AutoClient.Modes.FolderStore
             {
                 changeCounter = 0;
                 saveFolderJsonCounter++;
-                if (saveFolderJsonCounter > 5)
+                if (saveFolderJsonCounter > 10)
                 {
                     saveFolderJsonCounter = 0;
                     balanceChecker.Check();

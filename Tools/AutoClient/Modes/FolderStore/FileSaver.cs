@@ -242,6 +242,7 @@ namespace AutoClient.Modes.FolderStore
             {
                 entry.EncodedCid = string.Empty;
                 entry.PurchaseId = string.Empty;
+                stats.StorageRequestStats.FailedToStart++;
                 saveHandler.SaveChanges();
                 log.Error("Failed to start new purchase: " + exc);
                 resultHandler.OnFailure();
@@ -263,7 +264,6 @@ namespace AutoClient.Modes.FolderStore
                     throw new Exception("CID received from storage request was not protected.");
                 }
 
-                saveHandler.SaveChanges();
                 Log("Saved new purchaseId: " + entry.PurchaseId);
                 return request;
             }
@@ -299,6 +299,7 @@ namespace AutoClient.Modes.FolderStore
                             Log("Request failed to start. State: " + update.State);
                             entry.EncodedCid = string.Empty;
                             entry.PurchaseId = string.Empty;
+                            stats.StorageRequestStats.FailedToStart++;
                             saveHandler.SaveChanges();
                             return;
                         }
