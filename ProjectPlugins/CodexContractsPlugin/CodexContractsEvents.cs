@@ -21,7 +21,7 @@ namespace CodexContractsPlugin
         SlotFreedEventDTO[] GetSlotFreedEvents();
         SlotReservationsFullEventDTO[] GetSlotReservationsFullEvents();
         ProofSubmittedEventDTO[] GetProofSubmittedEvents();
-        void Do();
+        ReserveSlotFunction[] GetReserveSlotCalls();
     }
 
     public class CodexContractsEvents : ICodexContractsEvents
@@ -36,32 +36,9 @@ namespace CodexContractsPlugin
             this.gethNode = gethNode;
             this.deployment = deployment;
             BlockInterval = blockInterval;
-
-            Do();
         }
         
         public BlockInterval BlockInterval { get; }
-
-        public void Do()
-        {
-            for (ulong i = BlockInterval.From; i <= BlockInterval.To; i++)
-            {
-                var block = gethNode.GetBlk(i);
-                if (block == null) return;
-
-                foreach (var t in block.Transactions)
-                {
-                    if (t == null) continue;
-
-                    var input = t.ConvertToTransactionInput();
-                    var aaa = t.DecodeTransactionToFunctionMessage<ReserveSlotFunction>();
-                    if (aaa != null)
-                    {
-                        var a = 0;
-                    }
-                }
-            }
-        }
 
         public Request[] GetStorageRequests()
         {
@@ -123,6 +100,13 @@ namespace CodexContractsPlugin
         {
             var events = gethNode.GetEvents<ProofSubmittedEventDTO>(deployment.MarketplaceAddress, BlockInterval);
             return events.Select(SetBlockOnEvent).ToArray();
+        }
+
+        public ReserveSlotFunction[] GetReserveSlotCalls()
+        {
+            var result = new List<ReserveSlotFunction>();
+            gethNode.IterateFunctionCalls<ReserveSlotFunction>(BlockInterval, result.Add);
+            return result.ToArray();
         }
 
         private T SetBlockOnEvent<T>(EventLog<T> e) where T : IHasBlock

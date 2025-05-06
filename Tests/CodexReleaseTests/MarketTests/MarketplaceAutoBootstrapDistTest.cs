@@ -254,6 +254,28 @@ namespace CodexReleaseTests.MarketTests
             }
         }
 
+        protected void WaitForContractStarted(IStoragePurchaseContract r)
+        {
+            try
+            {
+                r.WaitForStorageContractStarted();
+            }
+            catch
+            {
+                // Contract failed to start. Retrieve and log every call to ReserveSlot to identify which hosts
+                // should have filled the slot.
+
+                var requestId = r.PurchaseId.ToLowerInvariant();
+                var calls = GetContracts().GetEvents(GetTestRunTimeRange()).GetReserveSlotCalls();
+
+                Log($"Request '{requestId}' failed to start. There were {calls.Length} hosts who called reserve-slot for it:");
+                foreach (var c in calls)
+                {
+                    Log($" - Host: {c.FromAddress} RequestId: {c.RequestId.ToHex()} SlotIndex: {c.SlotIndex}");
+                }
+            }
+        }
+
         private TestToken GetContractFinalCost(TestToken pricePerBytePerSecond, IStoragePurchaseContract contract, ICodexNodeGroup hosts)
         {
             var fills = GetOnChainSlotFills(hosts);
@@ -321,6 +343,39 @@ namespace CodexReleaseTests.MarketTests
                 if (onChainRequests.Any(r => r.Id == contract.PurchaseId)) return;
                 throw new Exception($"OnChain request {contract.PurchaseId} not found...");
             }, nameof(AssertContractIsOnChain));
+        }
+
+        protected void WaitUntilSlotReservationsFull(IStoragePurchaseContract contract)
+        {
+            var requestId = contract.PurchaseId.ToLowerInvariant();
+            var slots = contract.Purchase.MinRequiredNumberOfNodes;
+
+            var timeout = TimeSpan.FromMinutes(1.0);
+            var start = DateTime.UtcNow;
+            var fullIndices = new List<ulong>();
+
+            while (DateTime.UtcNow - start < timeout)
+            {
+                Thread.Sleep(TimeSpan.FromSeconds(3.0));
+
+                var fullEvents = GetContracts().GetEvents(GetTestRunTimeRange()).GetSlotReservationsFullEvents();
+                foreach (var e in fullEvents)
+                {
+                    if (e.RequestId.ToHex().ToLowerInvariant() == requestId)
+                    {
+                        if (!fullIndices.Contains(e.SlotIndex))
+                        {
+                            fullIndices.Add(e.SlotIndex);
+                            if (fullIndices.Count == slots) return;
+                        }
+                    }
+                }
+            }
+
+            Assert.Fail(
+                $"Slot reservations were not full after {Time.FormatDuration(timeout)}." +
+                $" Slots: {slots} Filled: {string.Join(",", fullIndices.Select(i => i.ToString()))}"
+            );
         }
 
         protected void AssertOnChainEvents(Action<ICodexContractsEvents> onEvents, string description)
