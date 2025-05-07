@@ -39,7 +39,6 @@ namespace CodexReleaseTests.MarketTests
 
             request.WaitForStorageContractSubmitted();
             AssertContractIsOnChain(request);
-            WaitUntilSlotReservationsFull(request);
 
             WaitForContractStarted(request);
             AssertContractSlotsAreFilledByHosts(request, hosts);

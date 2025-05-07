@@ -345,39 +345,6 @@ namespace CodexReleaseTests.MarketTests
             }, nameof(AssertContractIsOnChain));
         }
 
-        protected void WaitUntilSlotReservationsFull(IStoragePurchaseContract contract)
-        {
-            var requestId = contract.PurchaseId.ToLowerInvariant();
-            var slots = contract.Purchase.MinRequiredNumberOfNodes;
-
-            var timeout = TimeSpan.FromMinutes(1.0);
-            var start = DateTime.UtcNow;
-            var fullIndices = new List<ulong>();
-
-            while (DateTime.UtcNow - start < timeout)
-            {
-                Thread.Sleep(TimeSpan.FromSeconds(3.0));
-
-                var fullEvents = GetContracts().GetEvents(GetTestRunTimeRange()).GetSlotReservationsFullEvents();
-                foreach (var e in fullEvents)
-                {
-                    if (e.RequestId.ToHex().ToLowerInvariant() == requestId)
-                    {
-                        if (!fullIndices.Contains(e.SlotIndex))
-                        {
-                            fullIndices.Add(e.SlotIndex);
-                            if (fullIndices.Count == slots) return;
-                        }
-                    }
-                }
-            }
-
-            Assert.Fail(
-                $"Slot reservations were not full after {Time.FormatDuration(timeout)}." +
-                $" Slots: {slots} Filled: {string.Join(",", fullIndices.Select(i => i.ToString()))}"
-            );
-        }
-
         protected void AssertOnChainEvents(Action<ICodexContractsEvents> onEvents, string description)
         {
             Time.Retry(() =>

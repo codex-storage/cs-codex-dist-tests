@@ -57,7 +57,6 @@ namespace CodexReleaseTests.MarketTests
                 AssertContractIsOnChain(r);
             });
 
-            All(requests, WaitUntilSlotReservationsFull);
             All(requests, WaitForContractStarted);
 
             // for the time being, we're only interested in whether these contracts start.

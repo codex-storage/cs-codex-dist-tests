@@ -31,8 +31,7 @@ namespace GethPlugin
         List<EventLog<TEvent>> GetEvents<TEvent>(string address, TimeRange timeRange) where TEvent : IEventDTO, new();
         BlockInterval ConvertTimeRangeToBlockRange(TimeRange timeRange);
         BlockTimeEntry GetBlockForNumber(ulong number);
-        void IterateFunctionCalls<TFunc>(BlockInterval blockInterval, Action<TFunc> onCall) where TFunc : FunctionMessage;
-
+        void IterateFunctionCalls<TFunc>(BlockInterval blockInterval, Action<TFunc> onCall) where TFunc : FunctionMessage, new();
     }
 
     public class DeploymentGethNode : BaseGethNode, IGethNode
@@ -199,8 +198,11 @@ namespace GethPlugin
 
                 foreach (var t in blk.Transactions)
                 {
-                    var func = t.DecodeTransactionToFunctionMessage<TFunc>();
-                    if (func != null) onCall(func);
+                    if (t.IsTransactionForFunctionMessage<TFunc>())
+                    {
+                        var func = t.DecodeTransactionToFunctionMessage<TFunc>();
+                        if (func != null) onCall(func);
+                    }
                 }
             }
         }
