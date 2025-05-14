@@ -143,6 +143,7 @@ namespace KubernetesWorkflow
             log.Debug();
             if (IsNamespaceOnline(K8sNamespace))
             {
+                log.Log($"Deleting namespace '{K8sNamespace}'");
                 client.Run(c => c.DeleteNamespace(K8sNamespace, null, null, gracePeriodSeconds: 0));
 
                 if (wait) WaitUntilNamespaceDeleted(K8sNamespace);
@@ -191,6 +192,7 @@ namespace KubernetesWorkflow
         {
             if (IsNamespaceOnline(K8sNamespace)) return;
 
+            log.Log($"Creating namespace '{K8sNamespace}'");
             var namespaceSpec = new V1Namespace
             {
                 ApiVersion = "v1",
@@ -392,7 +394,7 @@ namespace KubernetesWorkflow
             client.Run(c => c.CreateNamespacedDeployment(deploymentSpec, K8sNamespace));
 
             var name = deploymentSpec.Metadata.Name;
-            log.Log($"Created deployment with name '{name}' and podLabel '{podLabel}'");
+            log.Log($"Created deployment with name '{name}' and podLabel '{podLabel}' in namespace '{K8sNamespace}'");
             return new RunningDeployment(name, podLabel);
         }
 
@@ -733,7 +735,7 @@ namespace KubernetesWorkflow
 
         private V1Pod GetPodForDeplomentInternal(RunningDeployment deployment)
         {
-            log.Log($"Looking for deployment with PodLabel: '{deployment.PodLabel}'");
+            log.Log($"Looking for deployment with PodLabel: '{deployment.PodLabel}' in namespace '{K8sNamespace}'");
 
             var allPods = client.Run(c => c.ListNamespacedPod(K8sNamespace));
             var pods = allPods.Items.Where(p => p.GetLabel(PodLabelKey) == deployment.PodLabel).ToArray();
