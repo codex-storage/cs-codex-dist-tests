@@ -392,6 +392,7 @@ namespace KubernetesWorkflow
             client.Run(c => c.CreateNamespacedDeployment(deploymentSpec, K8sNamespace));
 
             var name = deploymentSpec.Metadata.Name;
+            log.Log($"Created deployment with name '{name}' and podLabel '{podLabel}'");
             return new RunningDeployment(name, podLabel);
         }
 
@@ -732,6 +733,8 @@ namespace KubernetesWorkflow
 
         private V1Pod GetPodForDeplomentInternal(RunningDeployment deployment)
         {
+            log.Log($"Looking for deployment with PodLabel: '{deployment.PodLabel}'");
+
             var allPods = client.Run(c => c.ListNamespacedPod(K8sNamespace));
             var pods = allPods.Items.Where(p => p.GetLabel(PodLabelKey) == deployment.PodLabel).ToArray();
 
