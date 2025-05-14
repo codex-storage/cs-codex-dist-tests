@@ -12,6 +12,8 @@ namespace CodexPlugin
         public const string MetricsPortTag = "codex_metrics_port";
         public const string DiscoveryPortTag = "codex_discovery_port";
 
+        public const string ProfilerExecTimeThreshold = "0.2s";
+
         // Used by tests for time-constraint assertions.
         public static readonly TimeSpan MaxUploadTimePerMegabyte = TimeSpan.FromSeconds(2.0);
         public static readonly TimeSpan MaxDownloadTimePerMegabyte = TimeSpan.FromSeconds(2.0);
@@ -46,6 +48,7 @@ namespace CodexPlugin
             var discPort = CreateDiscoveryPort(config);
             AddEnvVar("CODEX_DISC_PORT", discPort);
             AddEnvVar("CODEX_LOG_LEVEL", config.LogLevelWithTopics());
+            AddEnvVar("CODEX_EXEC_TIME_THRESHOLD", ProfilerExecTimeThreshold);
 
             if (config.PublicTestNet != null)
             {
