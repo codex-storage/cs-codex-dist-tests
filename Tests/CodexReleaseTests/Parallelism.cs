@@ -1,6 +1,6 @@
 ﻿using NUnit.Framework;
 
-[assembly: LevelOfParallelism(10)]
+[assembly: LevelOfParallelism(1)]
 namespace CodexReleaseTests
 {
 }
