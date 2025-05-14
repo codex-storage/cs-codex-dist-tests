@@ -3,6 +3,7 @@ using k8s.Models;
 using KubernetesWorkflow.Recipe;
 using KubernetesWorkflow.Types;
 using Logging;
+using Newtonsoft.Json;
 using Utils;
 
 namespace KubernetesWorkflow
@@ -752,7 +753,11 @@ namespace KubernetesWorkflow
             }
             var pod = pods[0];
             if (pod.Status == null) throw new Exception("Pod status unknown");
-            if (string.IsNullOrEmpty(pod.Status.PodIP)) throw new Exception("Pod IP unknown");
+            if (string.IsNullOrEmpty(pod.Status.PodIP))
+            {
+                throw new Exception($"Pod IP unknown. PodLabel: '{deployment.PodLabel}' in namespace '{K8sNamespace}'. " +
+                    $"pod status JSON: '{JsonConvert.SerializeObject(pod.Status)}'");
+            }
             return pod;
         }
 
