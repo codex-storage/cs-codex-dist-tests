@@ -10,7 +10,7 @@ namespace CodexPlugin
     public class ApiChecker
     {
         // <INSERT-OPENAPI-YAML-HASH>
-        private const string OpenApiYamlHash = "2F-9D-82-3C-F0-2F-D3-C9-72-C3-F2-6E-BD-C3-63-F5-67-62-D1-03-B6-60-75-31-22-DF-3F-63-A2-8D-AA-4B";
+        private const string OpenApiYamlHash = "FD-C8-0F-19-5E-14-09-C9-05-93-17-4A-97-50-1D-7E-37-50-B2-30-B2-E6-66-37-23-FA-35-F5-AB-A0-C6-BD";
         private const string OpenApiFilePath = "/codex/openapi.yaml";
         private const string DisableEnvironmentVariable = "CODEXPLUGIN_DISABLE_APICHECK";
 
