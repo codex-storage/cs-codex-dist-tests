@@ -1,4 +1,5 @@
-﻿using System.Numerics;
+﻿using System.IO.Compression;
+using System.Numerics;
 using CodexContractsPlugin.ChainMonitor;
 using CodexContractsPlugin.Marketplace;
 using Logging;
@@ -24,15 +25,17 @@ namespace TraceContract
         private readonly List<Entry> entries = new();
         private readonly string folder;
         private readonly List<string> files = new();
+        private readonly Input input;
+        private readonly Config config;
 
         public Output(ILog log, Input input, Config config)
         {
             folder = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
             Directory.CreateDirectory(folder);
 
-            var filename = Path.Combine(folder, $"Contract_{input.PurchaseId}");
+            var filename = Path.Combine(folder, $"contract_{input.PurchaseId}");
             var fileLog = new FileLog(filename);
-            files.Add(fileLog.FullFilename);
+            files.Add(fileLog.FullFilename + ".log");
             foreach (var pair in config.LogReplacements)
             {
                 fileLog.AddStringReplace(pair.Key, pair.Value);
@@ -41,6 +44,8 @@ namespace TraceContract
 
             log.Log($"Logging to '{filename}'");
             this.log = new LogSplitter(fileLog, log);
+            this.input = input;
+            this.config = config;
         }
 
         public void LogRequestCreated(RequestEvent requestEvent)
@@ -94,6 +99,13 @@ namespace TraceContract
             foreach (var e in sorted) Write(e);
         }
 
+        public LogFile CreateNodeLogTargetFile(string node)
+        {
+            var file = log.CreateSubfile(node);
+            files.Add(file.Filename);
+            return file;
+        }
+
         private void Write(Entry e)
         {
             log.Log($"[{Time.FormatTimestamp(e.Utc)}] {e.Msg}");
@@ -104,16 +116,19 @@ namespace TraceContract
             Add(call.Block.Utc, $"Reserve-slot called. Index: {call.SlotIndex} Host: '{call.FromAddress}'");
         }
 
+        public string Package()
+        {
+            var outputFolder = config.GetOuputFolder();
+            Directory.CreateDirectory(outputFolder);
+            var filename = Path.Combine(outputFolder, $"contract_{input.PurchaseId}.zip");
+
+            ZipFile.CreateFromDirectory(folder, filename);
+            return filename;
+        }
+
         private void Add(DateTime utc, string msg)
         {
             entries.Add(new Entry(utc, msg));
-        }
-
-        public LogFile CreateNodeLogTargetFile(string node)
-        {
-            var file = log.CreateSubfile(node);
-            files.Add(file.Filename);
-            return file;
         }
     }
 }

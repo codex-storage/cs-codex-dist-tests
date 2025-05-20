@@ -1,7 +1,6 @@
 ﻿using BlockchainUtils;
 using CodexContractsPlugin;
 using CodexContractsPlugin.Marketplace;
-using ContinuousTests;
 using Core;
 using GethPlugin;
 using Logging;
@@ -56,7 +55,9 @@ namespace TraceContract
             Log("Downloading storage nodes logs for the request timerange...");
             DownloadStorageNodeLogs(requestTimeRange, entryPoint.Tools);
 
-            // package everything
+            Log("Packaging...");
+            var zipFilename = output.Package();
+            Log($"Saved to '{zipFilename}'");
 
             entryPoint.Decommission(false, false, false);
             Log("Done");
@@ -87,8 +88,9 @@ namespace TraceContract
                 Log($"Downloading logs from '{node}'...");
 
                 var targetFile = output.CreateNodeLogTargetFile(node);
-                var downloader = new ElasticSearchLogDownloader(log, tools, config.StorageNodesKubernetesNamespace);
-                downloader.Download(targetFile, node, start, requestTimeRange.To);
+                targetFile.Write("TODO!");
+                //var downloader = new ElasticSearchLogDownloader(log, tools, config);
+                //downloader.Download(targetFile, node, start, requestTimeRange.To);
             }
         }
 

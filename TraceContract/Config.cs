@@ -55,6 +55,11 @@
             return GetEnvVar("ES_PASSWORD", "password");
         }
 
+        public string GetOuputFolder()
+        {
+            return GetEnvVar("OUTPUT_FOLDER", "/tmp");
+        }
+
         private string GetEnvVar(string name, string defaultValue)
         {
             var v = Environment.GetEnvironmentVariable(name);
