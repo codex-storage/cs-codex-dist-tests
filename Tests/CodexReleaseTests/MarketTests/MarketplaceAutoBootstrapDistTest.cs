@@ -271,7 +271,7 @@ namespace CodexReleaseTests.MarketTests
                 Log($"Request '{requestId}' failed to start. There were {calls.Length} hosts who called reserve-slot for it:");
                 foreach (var c in calls)
                 {
-                    Log($" - Host: {c.FromAddress} RequestId: {c.RequestId.ToHex()} SlotIndex: {c.SlotIndex}");
+                    Log($" - {c.Block.Utc} Host: {c.FromAddress} RequestId: {c.RequestId.ToHex()} SlotIndex: {c.SlotIndex}");
                 }
             }
         }

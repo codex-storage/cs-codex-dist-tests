@@ -86,6 +86,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CodexClient", "ProjectPlugi
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebUtils", "Framework\WebUtils\WebUtils.csproj", "{372C9E5D-5453-4D45-9948-E9324E21AD65}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TraceContract", "TraceContract\TraceContract.csproj", "{6F4C72D7-4B6E-45FD-93C6-2099CBE5B2AC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -232,6 +234,10 @@ Global
 		{372C9E5D-5453-4D45-9948-E9324E21AD65}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{372C9E5D-5453-4D45-9948-E9324E21AD65}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{372C9E5D-5453-4D45-9948-E9324E21AD65}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6F4C72D7-4B6E-45FD-93C6-2099CBE5B2AC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6F4C72D7-4B6E-45FD-93C6-2099CBE5B2AC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6F4C72D7-4B6E-45FD-93C6-2099CBE5B2AC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6F4C72D7-4B6E-45FD-93C6-2099CBE5B2AC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -272,6 +278,7 @@ Global
 		{4648B5AA-A0A7-44BA-89BC-2FD57370943C} = {81AE04BC-CBFA-4E6F-B039-8208E9AFAAE7}
 		{9AF12703-29AF-416D-9781-204223D6D0E5} = {8F1F1C2A-E313-4E0C-BE40-58FB0BA91124}
 		{372C9E5D-5453-4D45-9948-E9324E21AD65} = {81AE04BC-CBFA-4E6F-B039-8208E9AFAAE7}
+		{6F4C72D7-4B6E-45FD-93C6-2099CBE5B2AC} = {7591C5B3-D86E-4AE4-8ED2-B272D17FE7E3}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {237BF0AA-9EC4-4659-AD9A-65DEB974250C}

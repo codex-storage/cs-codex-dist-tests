@@ -4,8 +4,6 @@ using GethPlugin;
 using Logging;
 using Nethereum.Contracts;
 using Nethereum.Hex.HexTypes;
-using Nethereum.RPC.Eth.DTOs;
-using Nethereum.Web3;
 using Utils;
 
 namespace CodexContractsPlugin
@@ -105,7 +103,11 @@ namespace CodexContractsPlugin
         public ReserveSlotFunction[] GetReserveSlotCalls()
         {
             var result = new List<ReserveSlotFunction>();
-            gethNode.IterateFunctionCalls<ReserveSlotFunction>(BlockInterval, result.Add);
+            gethNode.IterateFunctionCalls<ReserveSlotFunction>(BlockInterval, (b, fn) =>
+            {
+                fn.Block = b;
+                result.Add(fn);
+            });
             return result.ToArray();
         }
 

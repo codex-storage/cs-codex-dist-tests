@@ -15,6 +15,11 @@ namespace CodexContractsPlugin.Marketplace
         byte[] RequestId { get; set; }
     }
 
+    public interface IHasSlotIndex
+    {
+        ulong SlotIndex { get; set; }
+    }
+
     public partial class Request : RequestBase, IHasBlock, IHasRequestId
     {
         [JsonIgnore]
@@ -51,26 +56,32 @@ namespace CodexContractsPlugin.Marketplace
         public BlockTimeEntry Block { get; set; }
     }
 
-    public partial class SlotFilledEventDTO : IHasBlock, IHasRequestId
+    public partial class SlotFilledEventDTO : IHasBlock, IHasRequestId, IHasSlotIndex
     {
         [JsonIgnore]
         public BlockTimeEntry Block { get; set; }
         public EthAddress Host { get; set; }
     }
 
-    public partial class SlotFreedEventDTO : IHasBlock, IHasRequestId
+    public partial class SlotFreedEventDTO : IHasBlock, IHasRequestId, IHasSlotIndex
     {
         [JsonIgnore]
         public BlockTimeEntry Block { get; set; }
     }
 
-    public partial class SlotReservationsFullEventDTO : IHasBlock, IHasRequestId
+    public partial class SlotReservationsFullEventDTO : IHasBlock, IHasRequestId, IHasSlotIndex
     {
         [JsonIgnore]
         public BlockTimeEntry Block { get; set; }
     }
 
     public partial class ProofSubmittedEventDTO : IHasBlock
+    {
+        [JsonIgnore]
+        public BlockTimeEntry Block { get; set; }
+    }
+
+    public partial class ReserveSlotFunction : IHasBlock, IHasRequestId, IHasSlotIndex
     {
         [JsonIgnore]
         public BlockTimeEntry Block { get; set; }
