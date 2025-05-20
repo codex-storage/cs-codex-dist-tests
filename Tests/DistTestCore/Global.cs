@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using System.Diagnostics;
+using System.Reflection;
 using Core;
 using Logging;
 
@@ -33,7 +34,9 @@ namespace DistTestCore
         {
             try
             {
-                Stopwatch.Measure(log, "Global setup", () =>
+                Trace.Listeners.Add(new ConsoleTraceListener());
+
+                Logging.Stopwatch.Measure(log, "Global setup", () =>
                 {
                     globalEntryPoint.Announce();
                     globalEntryPoint.Tools.CreateWorkflow().DeleteNamespacesStartingWith(TestNamespacePrefix, wait: true);
@@ -55,6 +58,8 @@ namespace DistTestCore
                 deleteTrackedFiles: true,
                 waitTillDone: true
             );
+
+            Trace.Flush();
         }
     }
 }
