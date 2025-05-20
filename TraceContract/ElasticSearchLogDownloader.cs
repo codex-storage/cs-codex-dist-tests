@@ -1,21 +1,22 @@
-﻿using Core;
+﻿using System.Text;
+using Core;
 using Logging;
 using Utils;
 using WebUtils;
 
-namespace ContinuousTests
+namespace TraceContract
 {
     public class ElasticSearchLogDownloader
     {
         private readonly ILog log;
         private readonly IPluginTools tools;
-        private readonly string k8SNamespace;
+        private readonly Config config;
 
-        public ElasticSearchLogDownloader(ILog log, IPluginTools tools, string k8sNamespace)
+        public ElasticSearchLogDownloader(ILog log, IPluginTools tools, Config config)
         {
             this.log = log;
             this.tools = tools;
-            k8SNamespace = k8sNamespace;
+            this.config = config;
         }
 
         public void Download(LogFile targetFile, string containerName, DateTime startUtc, DateTime endUtc)
@@ -59,19 +60,29 @@ namespace ContinuousTests
                 .Replace("<STARTTIME>", start)
                 .Replace("<ENDTIME>", end)
                 .Replace("<CONTAINERNAME>", containerName)
-                .Replace("<NAMESPACENAME>", k8SNamespace);
+                .Replace("<NAMESPACENAME>", config.StorageNodesKubernetesNamespace);
         }
 
         private IEndpoint CreateElasticSearchEndpoint()
         {
-            var serviceName = "elasticsearch";
-            var k8sNamespace = "monitoring";
-            var address = new Address("ElasticSearchEndpoint", $"http://{serviceName}.{k8sNamespace}.svc.cluster.local", 9200);
+            //var serviceName = "elasticsearch";
+            //var k8sNamespace = "monitoring";
+            //var address = new Address("ElasticSearchEndpoint", $"http://{serviceName}.{k8sNamespace}.svc.cluster.local", 9200);
+
+            var address = new Address("TestnetElasticSearchEndpoint", config.ElasticSearchUrl, 443);
             var baseUrl = "";
+
+            var username = config.GetElasticSearchUsername();
+            var password = config.GetElasticSearchPassword();
+
+            var base64Creds = Convert.ToBase64String(
+                Encoding.ASCII.GetBytes($"{username}:{password}")
+            );
 
             var http = tools.CreateHttp(address.ToString(), client =>
             {
                 client.DefaultRequestHeaders.Add("kbn-xsrf", "reporting");
+                client.DefaultRequestHeaders.Add("Authorization", "Basic " + base64Creds);
             });
 
             return http.CreateEndpoint(address, baseUrl);

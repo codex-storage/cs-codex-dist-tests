@@ -15,17 +15,18 @@
         /// </summary>
         public TimeSpan LogStartBeforeStorageContractStarts { get; } = TimeSpan.FromMinutes(1.0);
 
+        public string ElasticSearchUrl { get; } = $"https://es.testnet.codex.storage";
         public string StorageNodesKubernetesNamespace = "codex";
         public string[] StorageNodesKubernetesContainerNames = [
             "codex-1-1",
-            //"codex-2-1",
-            //"codex-3-1",
-            //"codex-4-1",
-            //"codex-5-1",
-            //"codex-6-1",
-            //"codex-7-1",
-            //"codex-8-1",
-            //"codex-9-1",
+            "codex-2-1",
+            "codex-3-1",
+            "codex-4-1",
+            "codex-5-1",
+            "codex-6-1",
+            "codex-7-1",
+            "codex-8-1",
+            "codex-9-1",
             "codex-10-1",
             // "codex-validator-1-1",
         ];
@@ -43,5 +44,22 @@
             { "0xE7EEb996B3c817cEd03d10cd64A1325DA33D92e7", "codex 09" },
             { "0xD25C7609e97F40b66E74c0FcEbeA06D09423CC7e", "codex 10" }
         };
+
+        public string GetElasticSearchUsername()
+        {
+            return GetEnvVar("ES_USERNAME", "username");
+        }
+
+        public string GetElasticSearchPassword()
+        {
+            return GetEnvVar("ES_PASSWORD", "password");
+        }
+
+        private string GetEnvVar(string name, string defaultValue)
+        {
+            var v = Environment.GetEnvironmentVariable(name);
+            if (string.IsNullOrEmpty(v)) return defaultValue;
+            return v;
+        }
     }
 }
