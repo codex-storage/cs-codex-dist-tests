@@ -33,7 +33,7 @@ namespace KubernetesWorkflow
             sourceLog.Log(msg);
 
             LogFile.Write(msg);
-            LogFile.WriteRaw(description);
+            LogFile.Write(description);
         }
 
         public LogFile LogFile { get; }
@@ -43,7 +43,7 @@ namespace KubernetesWorkflow
             if (line.Contains("Received JSON-RPC response")) return;
             if (line.Contains("object field not marked with serialize, skipping")) return;
 
-            LogFile.WriteRaw(line);
+            LogFile.Write(line);
         }
     }
 }

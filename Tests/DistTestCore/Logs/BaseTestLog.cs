@@ -8,7 +8,7 @@ namespace DistTestCore.Logs
 
         protected BaseTestLog(ILog backingLog, string deployId)
         {
-            this.backingLog = backingLog;
+            this.backingLog = new TimestampPrefixer(backingLog);
 
             DeployId = deployId;
         }

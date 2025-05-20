@@ -1,5 +1,4 @@
 ﻿using Core;
-using KubernetesWorkflow.Types;
 using Logging;
 using Utils;
 using WebUtils;
@@ -8,20 +7,22 @@ namespace ContinuousTests
 {
     public class ElasticSearchLogDownloader
     {
-        private readonly IPluginTools tools;
         private readonly ILog log;
+        private readonly IPluginTools tools;
+        private readonly string k8SNamespace;
 
-        public ElasticSearchLogDownloader(IPluginTools tools, ILog log)
+        public ElasticSearchLogDownloader(ILog log, IPluginTools tools, string k8sNamespace)
         {
-            this.tools = tools;
             this.log = log;
+            this.tools = tools;
+            k8SNamespace = k8sNamespace;
         }
 
-        public void Download(LogFile targetFile, RunningContainer container, DateTime startUtc, DateTime endUtc, string openingLine)
+        public void Download(LogFile targetFile, string containerName, DateTime startUtc, DateTime endUtc)
         {
             try
             {
-                DownloadLog(targetFile, container, startUtc, endUtc, openingLine);
+                DownloadLog(targetFile, containerName, startUtc, endUtc);
             }
             catch (Exception ex)
             {
@@ -29,29 +30,25 @@ namespace ContinuousTests
             }
         }
 
-        private void DownloadLog(LogFile targetFile, RunningContainer container, DateTime startUtc, DateTime endUtc, string openingLine)
+        private void DownloadLog(LogFile targetFile, string containerName, DateTime startUtc, DateTime endUtc)
         {
-            log.Log($"Downloading log (from ElasticSearch) for container '{container.Name}' within time range: " +
+            log.Log($"Downloading log (from ElasticSearch) for container '{containerName}' within time range: " +
                 $"{startUtc.ToString("o")} - {endUtc.ToString("o")}");
-            log.Log(openingLine);
 
             var endpoint = CreateElasticSearchEndpoint();
-            var queryTemplate = CreateQueryTemplate(container, startUtc, endUtc);
+            var queryTemplate = CreateQueryTemplate(containerName, startUtc, endUtc);
 
-            targetFile.Write($"Downloading '{container.Name}' to '{targetFile.Filename}'.");
+            targetFile.Write($"Downloading '{containerName}' to '{targetFile.Filename}'.");
             var reconstructor = new LogReconstructor(targetFile, endpoint, queryTemplate);
             reconstructor.DownloadFullLog();
 
             log.Log("Log download finished.");
         }
 
-        private string CreateQueryTemplate(RunningContainer container, DateTime startUtc, DateTime endUtc)
+        private string CreateQueryTemplate(string containerName, DateTime startUtc, DateTime endUtc)
         {
             var start = startUtc.ToString("o");
             var end = endUtc.ToString("o");
-
-            var containerName = container.RunningPod.StartResult.Deployment.Name;
-            var namespaceName = container.RunningPod.StartResult.Cluster.Configuration.KubernetesNamespace;
 
             //container_name : codex3-5 - deploymentName as stored in pod
             // pod_namespace : codex - continuous - nolimits - tests - 1
@@ -62,7 +59,7 @@ namespace ContinuousTests
                 .Replace("<STARTTIME>", start)
                 .Replace("<ENDTIME>", end)
                 .Replace("<CONTAINERNAME>", containerName)
-                .Replace("<NAMESPACENAME>", namespaceName);
+                .Replace("<NAMESPACENAME>", k8SNamespace);
         }
 
         private IEndpoint CreateElasticSearchEndpoint()
