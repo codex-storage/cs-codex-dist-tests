@@ -65,7 +65,6 @@ namespace TraceContract
 
         private ICodexContracts ConnectCodexContracts(CoreInterface ci)
         {
-
             var account = EthAccountGenerator.GenerateNew();
             var blockCache = new BlockCache();
             var geth = new CustomGethNode(log, blockCache, config.RpcEndpoint, config.GethPort, account.PrivateKey);
@@ -83,14 +82,13 @@ namespace TraceContract
         {
             var start = requestTimeRange.From - config.LogStartBeforeStorageContractStarts;
 
-            foreach (var node in config.StorageNodesKubernetesContainerNames)
+            foreach (var node in config.StorageNodesKubernetesPodNames)
             {
                 Log($"Downloading logs from '{node}'...");
 
                 var targetFile = output.CreateNodeLogTargetFile(node);
-                targetFile.Write("TODO!");
-                //var downloader = new ElasticSearchLogDownloader(log, tools, config);
-                //downloader.Download(targetFile, node, start, requestTimeRange.To);
+                var downloader = new ElasticSearchLogDownloader(log, tools, config);
+                downloader.Download(targetFile, node, start, requestTimeRange.To);
             }
         }
 

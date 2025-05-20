@@ -19,11 +19,11 @@ namespace TraceContract
             this.config = config;
         }
 
-        public void Download(LogFile targetFile, string containerName, DateTime startUtc, DateTime endUtc)
+        public void Download(LogFile targetFile, string podName, DateTime startUtc, DateTime endUtc)
         {
             try
             {
-                DownloadLog(targetFile, containerName, startUtc, endUtc);
+                DownloadLog(targetFile, podName, startUtc, endUtc);
             }
             catch (Exception ex)
             {
@@ -31,22 +31,22 @@ namespace TraceContract
             }
         }
 
-        private void DownloadLog(LogFile targetFile, string containerName, DateTime startUtc, DateTime endUtc)
+        private void DownloadLog(LogFile targetFile, string podName, DateTime startUtc, DateTime endUtc)
         {
-            log.Log($"Downloading log (from ElasticSearch) for container '{containerName}' within time range: " +
+            log.Log($"Downloading log (from ElasticSearch) for pod '{podName}' within time range: " +
                 $"{startUtc.ToString("o")} - {endUtc.ToString("o")}");
 
             var endpoint = CreateElasticSearchEndpoint();
-            var queryTemplate = CreateQueryTemplate(containerName, startUtc, endUtc);
+            var queryTemplate = CreateQueryTemplate(podName, startUtc, endUtc);
 
-            targetFile.Write($"Downloading '{containerName}' to '{targetFile.Filename}'.");
+            targetFile.Write($"Downloading '{podName}' to '{targetFile.Filename}'.");
             var reconstructor = new LogReconstructor(targetFile, endpoint, queryTemplate);
             reconstructor.DownloadFullLog();
 
             log.Log("Log download finished.");
         }
 
-        private string CreateQueryTemplate(string containerName, DateTime startUtc, DateTime endUtc)
+        private string CreateQueryTemplate(string podName, DateTime startUtc, DateTime endUtc)
         {
             var start = startUtc.ToString("o");
             var end = endUtc.ToString("o");
@@ -55,12 +55,12 @@ namespace TraceContract
             // pod_namespace : codex - continuous - nolimits - tests - 1
 
             //var source = "{ \"sort\": [ { \"@timestamp\": { \"order\": \"asc\" } } ], \"fields\": [ { \"field\": \"@timestamp\", \"format\": \"strict_date_optional_time\" }, { \"field\": \"pod_name\" }, { \"field\": \"message\" } ], \"size\": <SIZE>, <SEARCHAFTER> \"_source\": false, \"query\": { \"bool\": { \"must\": [], \"filter\": [ { \"range\": { \"@timestamp\": { \"format\": \"strict_date_optional_time\", \"gte\": \"<STARTTIME>\", \"lte\": \"<ENDTIME>\" } } }, { \"match_phrase\": { \"pod_name\": \"<PODNAME>\" } } ] } } }";
-            var source = "{ \"sort\": [ { \"@timestamp\": { \"order\": \"asc\" } } ], \"fields\": [ { \"field\": \"@timestamp\", \"format\": \"strict_date_optional_time\" }, { \"field\": \"message\" } ], \"size\": <SIZE>, <SEARCHAFTER> \"_source\": false, \"query\": { \"bool\": { \"must\": [], \"filter\": [ { \"range\": { \"@timestamp\": { \"format\": \"strict_date_optional_time\", \"gte\": \"<STARTTIME>\", \"lte\": \"<ENDTIME>\" } } }, { \"match_phrase\": { \"container_name\": \"<CONTAINERNAME>\" } }, { \"match_phrase\": { \"pod_namespace\": \"<NAMESPACENAME>\" } } ] } } }";
+            var source = "{ \"sort\": [ { \"@timestamp\": { \"order\": \"asc\" } } ], \"fields\": [ { \"field\": \"@timestamp\", \"format\": \"strict_date_optional_time\" }, { \"field\": \"message\" } ], \"size\": <SIZE>, <SEARCHAFTER> \"_source\": false, \"query\": { \"bool\": { \"must\": [], \"filter\": [ { \"range\": { \"@timestamp\": { \"format\": \"strict_date_optional_time\", \"gte\": \"<STARTTIME>\", \"lte\": \"<ENDTIME>\" } } }, { \"match_phrase\": { \"pod_name\": \"<PODNAME>\" } } ] } } }";
             return source
                 .Replace("<STARTTIME>", start)
                 .Replace("<ENDTIME>", end)
-                .Replace("<CONTAINERNAME>", containerName)
-                .Replace("<NAMESPACENAME>", config.StorageNodesKubernetesNamespace);
+                .Replace("<PODNAME>", podName);
+                //.Replace("<NAMESPACENAME>", config.StorageNodesKubernetesNamespace);
         }
 
         private IEndpoint CreateElasticSearchEndpoint()
@@ -121,7 +121,7 @@ namespace TraceContract
                                 .Replace("<SIZE>", sizeOfPage.ToString())
                                 .Replace("<SEARCHAFTER>", searchAfter);
 
-                var response = endpoint.HttpPostString<SearchResponse>("_search", query);
+                var response = endpoint.HttpPostString<SearchResponse>("/_search", query);
 
                 lastHits = response.hits.hits.Length;
                 if (lastHits > 0)
