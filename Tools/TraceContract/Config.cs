@@ -15,7 +15,14 @@
         /// </summary>
         public TimeSpan LogStartBeforeStorageContractStarts { get; } = TimeSpan.FromMinutes(1.0);
 
-        public string ElasticSearchUrl { get; } = $"https://es.testnet.codex.storage";
+        public string ElasticSearchUrl
+        {
+            get
+            {
+                return GetEnvVar("ES_HOST", "es_host");
+            }
+        }
+
         public string[] StorageNodesKubernetesPodNames = [
             "codex-1-1",
             "codex-2-1",
