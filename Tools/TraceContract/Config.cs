@@ -63,7 +63,7 @@
 
         public string GetOuputFolder()
         {
-            return GetEnvVar("OUTPUT_FOLDER", "/tmp");
+            return GetEnvVar("OUTPUT_FOLDER", "/output");
         }
 
         private string GetEnvVar(string name, string defaultValue)
