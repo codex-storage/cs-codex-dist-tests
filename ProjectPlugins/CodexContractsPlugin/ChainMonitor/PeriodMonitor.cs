@@ -1,18 +1,15 @@
-﻿using Logging;
-using Utils;
+﻿using Utils;
 
 namespace CodexContractsPlugin.ChainMonitor
 {
     public class PeriodMonitor
     {
-        private readonly ILog log;
         private readonly ICodexContracts contracts;
         private readonly List<PeriodReport> reports = new List<PeriodReport>();
         private ulong? currentPeriod = null;
 
-        public PeriodMonitor(ILog log, ICodexContracts contracts)
+        public PeriodMonitor(ICodexContracts contracts)
         {
-            this.log = log;
             this.contracts = contracts;
         }
 
@@ -39,8 +36,6 @@ namespace CodexContractsPlugin.ChainMonitor
 
         private void CreateReportForPeriod(ulong lastBlockInPeriod, ulong periodNumber, IChainStateRequest[] requests)
         {
-            log.Log("Creating report for period " + periodNumber);
-
             ulong total = 0;
             ulong required = 0;
             var missed = new List<PeriodProofMissed>();
@@ -87,6 +82,8 @@ namespace CodexContractsPlugin.ChainMonitor
         private void CalcStats()
         {
             IsEmpty = Reports.All(r => r.TotalProofsRequired == 0);
+            if (Reports.Length == 0) return;
+
             PeriodLow = Reports.Min(r => r.PeriodNumber);
             PeriodHigh = Reports.Max(r => r.PeriodNumber);
             AverageNumSlots = Reports.Average(r => Convert.ToSingle(r.TotalNumSlots));

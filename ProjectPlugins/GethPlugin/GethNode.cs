@@ -31,6 +31,7 @@ namespace GethPlugin
         List<EventLog<TEvent>> GetEvents<TEvent>(string address, TimeRange timeRange) where TEvent : IEventDTO, new();
         BlockInterval ConvertTimeRangeToBlockRange(TimeRange timeRange);
         BlockTimeEntry GetBlockForNumber(ulong number);
+        void IterateFunctionCalls<TFunc>(BlockInterval blockInterval, Action<BlockTimeEntry, TFunc> onCall) where TFunc : FunctionMessage, new();
     }
 
     public class DeploymentGethNode : BaseGethNode, IGethNode
@@ -181,6 +182,33 @@ namespace GethPlugin
         public BlockTimeEntry GetBlockForNumber(ulong number)
         {
             return StartInteraction().GetBlockForNumber(number);
+        }
+
+        public BlockWithTransactions GetBlk(ulong number)
+        {
+            return StartInteraction().GetBlockWithTransactions(number);
+        }
+
+        public void IterateFunctionCalls<TFunc>(BlockInterval blockRange, Action<BlockTimeEntry, TFunc> onCall) where TFunc : FunctionMessage, new()
+        {
+            var i = StartInteraction();
+            for (var blkI = blockRange.From; blkI <= blockRange.To; blkI++)
+            {
+                var blk = i.GetBlockWithTransactions(blkI);
+
+                foreach (var t in blk.Transactions)
+                {
+                    if (t.IsTransactionForFunctionMessage<TFunc>())
+                    {
+                        var func = t.DecodeTransactionToFunctionMessage<TFunc>();
+                        if (func != null)
+                        {
+                            var b = GetBlockForNumber(blkI);
+                            onCall(b, func);
+                        }
+                    }
+                }
+            }
         }
 
         protected abstract NethereumInteraction StartInteraction();

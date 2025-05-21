@@ -143,5 +143,10 @@ namespace NethereumWorkflow
             var blockTimeFinder = new BlockTimeFinder(blockCache, wrapper, log);
             return blockTimeFinder.Get(number);
         }
+
+        public BlockWithTransactions GetBlockWithTransactions(ulong number)
+        {
+            return Time.Wait(web3.Eth.Blocks.GetBlockWithTransactionsByNumber.SendRequestAsync(new BlockParameter(number)));
+        }
     }
 }

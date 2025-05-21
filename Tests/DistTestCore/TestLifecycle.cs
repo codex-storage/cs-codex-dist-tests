@@ -26,7 +26,7 @@ namespace DistTestCore
             WebCallTimeSet = webCallTimeSet;
             K8STimeSet = k8sTimeSet;
             TestNamespace = testNamespace;
-            TestStart = DateTime.UtcNow;
+            TestStartUtc = DateTime.UtcNow;
 
             entryPoint = new EntryPoint(log, configuration.GetK8sConfiguration(k8sTimeSet, this, testNamespace), configuration.GetFileManagerFolder(), webCallTimeSet, k8sTimeSet);
             metadata = entryPoint.GetPluginMetadata();
@@ -36,7 +36,7 @@ namespace DistTestCore
             log.WriteLogTag();
         }
 
-        public DateTime TestStart { get; }
+        public DateTime TestStartUtc { get; }
         public TestLog Log { get; }
         public Configuration Configuration { get; }
         public IWebCallTimeSet WebCallTimeSet { get; }
@@ -76,7 +76,7 @@ namespace DistTestCore
 
         public TimeSpan GetTestDuration()
         {
-            return DateTime.UtcNow - TestStart;
+            return DateTime.UtcNow - TestStartUtc;
         }
 
         public void OnContainersStarted(RunningPod rc)

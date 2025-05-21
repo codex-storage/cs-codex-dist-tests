@@ -1,6 +1,4 @@
-﻿using Utils;
-
-namespace Logging
+﻿namespace Logging
 {
     public class LogFile
     {
@@ -16,11 +14,6 @@ namespace Logging
         public string Filename { get; private set; }
 
         public void Write(string message)
-        {
-            WriteRaw($"{GetTimestamp()} {message}");
-        }
-
-        public void WriteRaw(string message)
         {
             try
             {
@@ -48,11 +41,6 @@ namespace Logging
             {
                 Console.WriteLine("Writing to log has failed: " + ex);
             }
-        }
-
-        private static string GetTimestamp()
-        {
-            return $"[{Time.FormatTimestamp(DateTime.UtcNow)}]";
         }
 
         private void EnsurePathExists(string filename)

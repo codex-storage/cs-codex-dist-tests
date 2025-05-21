@@ -4,6 +4,7 @@ using CodexContractsPlugin.Marketplace;
 using CodexPlugin;
 using CodexTests;
 using GethPlugin;
+using Logging;
 using Nethereum.Hex.HexConvertors.Extensions;
 using NUnit.Framework;
 using Utils;
@@ -21,7 +22,14 @@ namespace CodexReleaseTests.MarketTests
         {
             var geth = StartGethNode(s => s.IsMiner());
             var contracts = Ci.StartCodexContracts(geth, BootstrapNode.Version);
-            handle = new MarketplaceHandle(geth, contracts);
+            var monitor = SetupChainMonitor(GetTestLog(), contracts, GetTestRunTimeRange().From);
+            handle = new MarketplaceHandle(geth, contracts, monitor);
+        }
+
+        [TearDown]
+        public void TearDownMarketplace()
+        {
+            if (handle.ChainMonitor != null) handle.ChainMonitor.Stop();
         }
 
         protected IGethNode GetGeth()
@@ -44,6 +52,7 @@ namespace CodexReleaseTests.MarketTests
         protected abstract int NumberOfClients { get; }
         protected abstract ByteSize HostAvailabilitySize { get; }
         protected abstract TimeSpan HostAvailabilityMaxDuration { get; }
+        protected virtual bool MonitorChainState { get; } = true;
 
         public ICodexNodeGroup StartHosts()
         {
@@ -104,6 +113,19 @@ namespace CodexReleaseTests.MarketTests
                         $" expected: {expectedBalance} but was: {balance} - message: " + message);
                 }
             });
+        }
+
+        private ChainMonitor? SetupChainMonitor(ILog log, ICodexContracts contracts, DateTime startUtc)
+        {
+            if (!MonitorChainState) return null;
+
+            var result = new ChainMonitor(log, contracts, startUtc);
+            result.Start(() =>
+            {
+                log.Error("Failure in chain monitor. No chain updates after this point.");
+                //Assert.Fail("Failure in chain monitor.");
+            });
+            return result;
         }
 
         private Retry GetBalanceAssertRetry()
@@ -232,6 +254,28 @@ namespace CodexReleaseTests.MarketTests
             }
         }
 
+        protected void WaitForContractStarted(IStoragePurchaseContract r)
+        {
+            try
+            {
+                r.WaitForStorageContractStarted();
+            }
+            catch
+            {
+                // Contract failed to start. Retrieve and log every call to ReserveSlot to identify which hosts
+                // should have filled the slot.
+
+                var requestId = r.PurchaseId.ToLowerInvariant();
+                var calls = GetContracts().GetEvents(GetTestRunTimeRange()).GetReserveSlotCalls();
+
+                Log($"Request '{requestId}' failed to start. There were {calls.Length} hosts who called reserve-slot for it:");
+                foreach (var c in calls)
+                {
+                    Log($" - {c.Block.Utc} Host: {c.FromAddress} RequestId: {c.RequestId.ToHex()} SlotIndex: {c.SlotIndex}");
+                }
+            }
+        }
+
         private TestToken GetContractFinalCost(TestToken pricePerBytePerSecond, IStoragePurchaseContract contract, ICodexNodeGroup hosts)
         {
             var fills = GetOnChainSlotFills(hosts);
@@ -324,14 +368,16 @@ namespace CodexReleaseTests.MarketTests
 
         private class MarketplaceHandle
         {
-            public MarketplaceHandle(IGethNode geth, ICodexContracts contracts)
+            public MarketplaceHandle(IGethNode geth, ICodexContracts contracts, ChainMonitor? chainMonitor)
             {
                 Geth = geth;
                 Contracts = contracts;
+                ChainMonitor = chainMonitor;
             }
 
             public IGethNode Geth { get; }
             public ICodexContracts Contracts { get; }
+            public ChainMonitor? ChainMonitor { get; }
         }
     }
 }

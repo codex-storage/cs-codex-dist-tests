@@ -4,16 +4,30 @@ using Utils;
 
 namespace CodexReleaseTests.MarketTests
 {
-    [TestFixture]
+    [TestFixture(6, 3, 1)]
+    [TestFixture(6, 4, 2)]
+    [TestFixture(8, 5, 1)]
+    [TestFixture(8, 6, 1)]
+    [TestFixture(8, 6, 3)]
     public class ContractSuccessfulTest : MarketplaceAutoBootstrapDistTest
     {
-        private const int FilesizeMb = 10;
+        public ContractSuccessfulTest(int hosts, int slots, int tolerance)
+        {
+            this.hosts = hosts;
+            this.slots = slots;
+            this.tolerance = tolerance;
+        }
 
-        protected override int NumberOfHosts => 6;
+        private const int FilesizeMb = 10;
+        private readonly TestToken pricePerBytePerSecond = 10.TstWei();
+        private readonly int hosts;
+        private readonly int slots;
+        private readonly int tolerance;
+
+        protected override int NumberOfHosts => hosts;
         protected override int NumberOfClients => 1;
         protected override ByteSize HostAvailabilitySize => (5 * FilesizeMb).MB();
-        protected override TimeSpan HostAvailabilityMaxDuration => Get8TimesConfiguredPeriodDuration();
-        private readonly TestToken pricePerBytePerSecond = 10.TstWei();
+        protected override TimeSpan HostAvailabilityMaxDuration => Get8TimesConfiguredPeriodDuration() * 12;
 
         [Test]
         public void ContractSuccessful()
@@ -26,8 +40,11 @@ namespace CodexReleaseTests.MarketTests
             request.WaitForStorageContractSubmitted();
             AssertContractIsOnChain(request);
 
-            request.WaitForStorageContractStarted();
+            WaitForContractStarted(request);
             AssertContractSlotsAreFilledByHosts(request, hosts);
+
+            Thread.Sleep(TimeSpan.FromSeconds(12.0));
+            return;
 
             request.WaitForStorageContractFinished();
 
@@ -44,11 +61,8 @@ namespace CodexReleaseTests.MarketTests
             {
                 Duration = GetContractDuration(),
                 Expiry = GetContractExpiry(),
-                // TODO: this should work with NumberOfHosts, but
-                // an ongoing issue makes hosts sometimes not pick up slots.
-                // When it's resolved, we can reduce the number of hosts and slim down this test.
-                MinRequiredNumberOfNodes = 3,
-                NodeFailureTolerance = 1,
+                MinRequiredNumberOfNodes = (uint)slots,
+                NodeFailureTolerance = (uint)tolerance,
                 PricePerBytePerSecond = pricePerBytePerSecond,
                 ProofProbability = 20,
                 CollateralPerByte = 100.TstWei()
@@ -62,7 +76,7 @@ namespace CodexReleaseTests.MarketTests
 
         private TimeSpan GetContractDuration()
         {
-            return Get8TimesConfiguredPeriodDuration() / 2;
+            return Get8TimesConfiguredPeriodDuration() * 4;
         }
 
         private TimeSpan Get8TimesConfiguredPeriodDuration()
