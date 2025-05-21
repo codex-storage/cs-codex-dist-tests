@@ -14,6 +14,7 @@ env:
   OUTPUT_FOLDER: "/tmp"
   ES_USERNAME: ${{ secrets.ES_USERNAME }}
   ES_PASSWORD: ${{ secrets.ES_PASSWORD }}
+  ES_HOST: ${{ secrets.ES_HOST }}
 
 jobs:
   run_tests:
