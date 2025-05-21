@@ -17,8 +17,8 @@ env:
   ES_HOST: ${{ secrets.ES_HOST }}
 
 jobs:
-  run_tests:
-    name: Run Release Tests
+  trace_contract:
+    name: Trace contract
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
