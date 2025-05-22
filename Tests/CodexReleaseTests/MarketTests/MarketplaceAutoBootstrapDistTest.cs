@@ -266,9 +266,10 @@ namespace CodexReleaseTests.MarketTests
                 // should have filled the slot.
 
                 var requestId = r.PurchaseId.ToLowerInvariant();
-                var calls = GetContracts().GetEvents(GetTestRunTimeRange()).GetReserveSlotCalls();
+                var calls = new List<ReserveSlotFunction>();
+                GetContracts().GetEvents(GetTestRunTimeRange()).GetReserveSlotCalls(calls.Add);
 
-                Log($"Request '{requestId}' failed to start. There were {calls.Length} hosts who called reserve-slot for it:");
+                Log($"Request '{requestId}' failed to start. There were {calls.Count} hosts who called reserve-slot for it:");
                 foreach (var c in calls)
                 {
                     Log($" - {c.Block.Utc} Host: {c.FromAddress} RequestId: {c.RequestId.ToHex()} SlotIndex: {c.SlotIndex}");

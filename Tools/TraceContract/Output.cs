@@ -113,7 +113,7 @@ namespace TraceContract
             log.Log($"[{Time.FormatTimestamp(e.Utc)}] {e.Msg}");
         }
 
-        private void LogReserveSlotCall(ReserveSlotFunction call)
+        public void LogReserveSlotCall(ReserveSlotFunction call)
         {
             Add(call.Block.Utc, $"Reserve-slot called. Index: {call.SlotIndex} Host: '{call.FromAddress}'");
         }

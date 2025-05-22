@@ -36,7 +36,15 @@ namespace TraceContract
 
             // For this timeline, we log all the calls to reserve-slot.
             var events = contracts.GetEvents(requestTimeline);
-            output.LogReserveSlotCalls(Filter(events.GetReserveSlotCalls()));
+
+            events.GetReserveSlotCalls(call =>
+            {
+                if (IsThisRequest(call.RequestId))
+                {
+                    output.LogReserveSlotCall(call);
+                    log.Log("Found reserve-slot call for slotIndex " + call.SlotIndex);
+                }
+            });
 
             log.Log("Writing blockchain output...");
             output.WriteContractEvents();
@@ -65,11 +73,6 @@ namespace TraceContract
             }
 
             return tracker.FinishUtc;
-        }
-
-        private ReserveSlotFunction[] Filter(ReserveSlotFunction[] calls)
-        {
-            return calls.Where(c => IsThisRequest(c.RequestId)).ToArray();
         }
 
         private Request? GetRequest()
