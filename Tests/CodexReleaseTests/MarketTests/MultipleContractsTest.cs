@@ -1,28 +1,55 @@
 ﻿using CodexClient;
+using CodexPlugin;
 using NUnit.Framework;
 using Utils;
 
 namespace CodexReleaseTests.MarketTests
 {
-    [TestFixture]
+    //[TestFixture(8, 3, 1)]
+    [TestFixture(8, 4, 1)]
+    //[TestFixture(10, 5, 1)]
+    //[TestFixture(10, 6, 1)]
+    //[TestFixture(10, 6, 3)]
     public class MultipleContractsTest : MarketplaceAutoBootstrapDistTest
     {
-        private const int FilesizeMb = 10;
+        public MultipleContractsTest(int hosts, int slots, int tolerance)
+        {
+            this.hosts = hosts;
+            this.slots = slots;
+            this.tolerance = tolerance;
+        }
 
-        protected override int NumberOfHosts => 8;
-        protected override int NumberOfClients => 3;
-        protected override ByteSize HostAvailabilitySize => (5 * FilesizeMb).MB();
-        protected override TimeSpan HostAvailabilityMaxDuration => Get8TimesConfiguredPeriodDuration();
+        private const int FilesizeMb = 10;
+        private readonly int hosts;
+        private readonly int slots;
+        private readonly int tolerance;
+
+        protected override int NumberOfHosts => hosts;
+        protected override int NumberOfClients => 8;
+        protected override ByteSize HostAvailabilitySize => (1000 * FilesizeMb).MB();
+        protected override TimeSpan HostAvailabilityMaxDuration => Get8TimesConfiguredPeriodDuration() * 12;
         private readonly TestToken pricePerBytePerSecond = 10.TstWei();
 
         [Test]
-        [Ignore("TODO - Test where multiple successful contracts are run simultaenously")]
-        public void MultipleSuccessfulContracts()
+        [Combinatorial]
+        public void MultipleContractGenerations(
+            [Values(50)] int numGenerations)
         {
             var hosts = StartHosts();
             var clients = StartClients();
 
-            var requests = clients.Select(c => CreateStorageRequest(c)).ToArray();
+            for (var i = 0; i < numGenerations; i++)
+            {
+                Log("Generation: " + i);
+                Generation(clients, hosts);
+            }
+
+            Thread.Sleep(TimeSpan.FromSeconds(12.0));
+        }
+
+        private void Generation(ICodexNodeGroup clients, ICodexNodeGroup hosts)
+        {
+            var requests = All(clients.ToArray(), CreateStorageRequest);
 
             All(requests, r =>
             {
@@ -30,28 +57,32 @@ namespace CodexReleaseTests.MarketTests
                 AssertContractIsOnChain(r);
             });
 
-            All(requests, r => r.WaitForStorageContractStarted());
-            All(requests, r => AssertContractSlotsAreFilledByHosts(r, hosts));
+            All(requests, WaitForContractStarted);
 
-            All(requests, r => r.WaitForStorageContractFinished());
-
-                // todo: removed from codexclient:
-                //contracts.WaitUntilNextPeriod();
-                //contracts.WaitUntilNextPeriod();
-
-                //var blocks = 3;
-                //Log($"Waiting {blocks} blocks for nodes to process payouts...");
-                //Thread.Sleep(GethContainerRecipe.BlockInterval * blocks);
-
-            // todo:
-            //AssertClientHasPaidForContract(pricePerSlotPerSecond, client, request, hosts);
-            //AssertHostsWerePaidForContract(pricePerSlotPerSecond, request, hosts);
-            //AssertHostsCollateralsAreUnchanged(hosts);
+            // for the time being, we're only interested in whether these contracts start.
+            //All(requests, r => AssertContractSlotsAreFilledByHosts(r, hosts));
+            //All(requests, r => r.WaitForStorageContractFinished());
         }
 
-        private void All(IStoragePurchaseContract[] requests, Action<IStoragePurchaseContract> action)
+        private void All<T>(T[] items, Action<T> action)
         {
-            foreach (var r in requests) action(r);
+            var tasks = items.Select(r => Task.Run(() => action(r))).ToArray();
+            Task.WaitAll(tasks);
+            foreach(var t in tasks)
+            {
+                if (t.Exception != null) throw t.Exception;
+            }
+        }
+
+        private TResult[] All<T, TResult>(T[] items, Func<T, TResult> action)
+        {
+            var tasks = items.Select(r => Task.Run(() => action(r))).ToArray();
+            Task.WaitAll(tasks);
+            foreach (var t in tasks)
+            {
+                if (t.Exception != null) throw t.Exception;
+            }
+            return tasks.Select(t => t.Result).ToArray();
         }
 
         private IStoragePurchaseContract CreateStorageRequest(ICodexNode client)
@@ -62,11 +93,11 @@ namespace CodexReleaseTests.MarketTests
             {
                 Duration = GetContractDuration(),
                 Expiry = GetContractExpiry(),
-                MinRequiredNumberOfNodes = (uint)NumberOfHosts,
-                NodeFailureTolerance = (uint)(NumberOfHosts / 2),
+                MinRequiredNumberOfNodes = (uint)slots,
+                NodeFailureTolerance = (uint)tolerance,
                 PricePerBytePerSecond = pricePerBytePerSecond,
-                ProofProbability = 20,
-                CollateralPerByte = 1.Tst()
+                ProofProbability = 1,
+                CollateralPerByte = 1.TstWei()
             });
         }
 
@@ -77,7 +108,7 @@ namespace CodexReleaseTests.MarketTests
 
         private TimeSpan GetContractDuration()
         {
-            return Get8TimesConfiguredPeriodDuration() / 2;
+            return Get8TimesConfiguredPeriodDuration() * 4;
         }
 
         private TimeSpan Get8TimesConfiguredPeriodDuration()

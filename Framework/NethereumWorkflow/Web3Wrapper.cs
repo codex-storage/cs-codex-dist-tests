@@ -19,23 +19,40 @@ namespace NethereumWorkflow
 
         public ulong GetCurrentBlockNumber()
         {
-            var number = Time.Wait(web3.Eth.Blocks.GetBlockNumber.SendRequestAsync());
-            return Convert.ToUInt64(number.ToDecimal());
+            return Retry(() =>
+            {
+                var number = Time.Wait(web3.Eth.Blocks.GetBlockNumber.SendRequestAsync());
+                return Convert.ToUInt64(number.ToDecimal());
+            });
         }
 
         public DateTime? GetTimestampForBlock(ulong blockNumber)
         {
-            try
+            return Retry<DateTime?>(() =>
             {
-                var block = Time.Wait(web3.Eth.Blocks.GetBlockWithTransactionsByNumber.SendRequestAsync(new BlockParameter(blockNumber)));
-                if (block == null) return null;
-                return DateTimeOffset.FromUnixTimeSeconds(Convert.ToInt64(block.Timestamp.ToDecimal())).UtcDateTime;
-            }
-            catch (Exception ex)
-            {
-                log.Error("Exception while getting timestamp for block: " + ex);
-                return null;
-            }
+                try
+                {
+                    var block = Time.Wait(web3.Eth.Blocks.GetBlockWithTransactionsByNumber.SendRequestAsync(new BlockParameter(blockNumber)));
+                    if (block == null) return null;
+                    return DateTimeOffset.FromUnixTimeSeconds(Convert.ToInt64(block.Timestamp.ToDecimal())).UtcDateTime;
+                }
+                catch (Exception ex)
+                {
+                    log.Error("Exception while getting timestamp for block: " + ex);
+                    return null;
+                }
+            });
+        }
+
+        private T Retry<T>(Func<T> action)
+        {
+            var retry = new Retry(nameof(Web3Wrapper),
+                maxTimeout: TimeSpan.FromSeconds(30),
+                sleepAfterFail: TimeSpan.FromSeconds(3),
+                onFail: f => { },
+                failFast: false);
+
+            return retry.Run(action);
         }
     }
 }
