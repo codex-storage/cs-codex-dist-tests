@@ -11,7 +11,7 @@ on:
 env:
   SOURCE: ${{ format('{0}/{1}', github.server_url, github.repository) }}
   BRANCH: ${{ github.ref_name }}
-  OUTPUT_FOLDER: "/output"
+  OUTPUT_FOLDER: "~/output"
   ES_USERNAME: ${{ secrets.ES_USERNAME }}
   ES_PASSWORD: ${{ secrets.ES_PASSWORD }}
   ES_HOST: ${{ secrets.ES_HOST }}
@@ -38,6 +38,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: contract-trace
-          path: /output/*
+          path: ~/output/*
           if-no-files-found: error
           retention-days: 7
