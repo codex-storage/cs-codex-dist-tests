@@ -55,9 +55,7 @@ namespace TraceContract
             Log("Downloading storage nodes logs for the request timerange...");
             DownloadStorageNodeLogs(requestTimeRange, entryPoint.Tools);
 
-            Log("Packaging...");
-            var zipFilename = output.Package();
-            Log($"Saved to '{zipFilename}'");
+            output.ShowOutputFiles(log);
 
             entryPoint.Decommission(false, false, false);
             Log("Done");
