@@ -29,6 +29,7 @@ namespace CodexContractsPlugin
 
             AddEnvVar("DISTTEST_NETWORK_URL", address.ToString());
             AddEnvVar("HARDHAT_NETWORK", "codexdisttestnetwork");
+            AddEnvVar("HARDHAT_IGNITION_CONFIRM_DEPLOYMENT", "false");
             AddEnvVar("KEEP_ALIVE", "1");
         }
 
