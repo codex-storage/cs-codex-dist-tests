@@ -80,6 +80,29 @@ namespace CodexReleaseTests.MarketTests
             return hosts;
         }
 
+        public ICodexNode StartOneHost()
+        {
+            var host = StartCodex(s => s
+                .WithName("singlehost")
+                .EnableMarketplace(GetGeth(), GetContracts(), m => m
+                    .WithInitial(StartingBalanceEth.Eth(), StartingBalanceTST.Tst())
+                    .AsStorageNode()
+                )
+            );
+
+            var config = GetContracts().Deployment.Config;
+            AssertTstBalance(host, StartingBalanceTST.Tst(), nameof(StartOneHost));
+            AssertEthBalance(host, StartingBalanceEth.Eth(), nameof(StartOneHost));
+
+            host.Marketplace.MakeStorageAvailable(new StorageAvailability(
+                totalSpace: HostAvailabilitySize,
+                maxDuration: HostAvailabilityMaxDuration,
+                minPricePerBytePerSecond: 1.TstWei(),
+                totalCollateral: 999999.Tst())
+            );
+            return host;
+        }
+
         public void AssertTstBalance(ICodexNode node, TestToken expectedBalance, string message)
         {
             AssertTstBalance(node.EthAddress, expectedBalance, message);
@@ -185,7 +208,7 @@ namespace CodexReleaseTests.MarketTests
             );
         }
 
-        public SlotFill[] GetOnChainSlotFills(ICodexNodeGroup possibleHosts, string purchaseId)
+        public SlotFill[] GetOnChainSlotFills(IEnumerable<ICodexNode> possibleHosts, string purchaseId)
         {
             var fills = GetOnChainSlotFills(possibleHosts);
             return fills.Where(f => f
@@ -193,7 +216,7 @@ namespace CodexReleaseTests.MarketTests
                 .ToArray();
         }
 
-        public SlotFill[] GetOnChainSlotFills(ICodexNodeGroup possibleHosts)
+        public SlotFill[] GetOnChainSlotFills(IEnumerable<ICodexNode> possibleHosts)
         {
             var events = GetContracts().GetEvents(GetTestRunTimeRange());
             var fills = events.GetSlotFilledEvents();
@@ -356,6 +379,33 @@ namespace CodexReleaseTests.MarketTests
             }, description);
         }
 
+        protected TimeSpan CalculateContractFailTimespan()
+        {
+            var config = GetContracts().Deployment.Config;
+            var requiredNumMissedProofs = Convert.ToInt32(config.Collateral.MaxNumberOfSlashes);
+            var periodDuration = GetPeriodDuration();
+            var gracePeriod = periodDuration;
+
+            // Each host could miss 1 proof per period,
+            // so the time we should wait is period time * requiredNum of missed proofs.
+            // Except: the proof requirement has a concept of "downtime":
+            // a segment of time where proof is not required.
+            // We calculate the probability of downtime and extend the waiting
+            // timeframe by a factor, such that all hosts are highly likely to have 
+            // failed a sufficient number of proofs.
+
+            float n = requiredNumMissedProofs;
+            return gracePeriod + (periodDuration * n * GetDowntimeFactor(config));
+        }
+
+        private float GetDowntimeFactor(MarketplaceConfig config)
+        {
+            byte numBlocksInDowntimeSegment = config.Proofs.Downtime;
+            float downtime = numBlocksInDowntimeSegment;
+            float window = 256.0f;
+            var chanceOfDowntime = downtime / window;
+            return 1.0f + chanceOfDowntime + chanceOfDowntime;
+        }
         public class SlotFill
         {
             public SlotFill(SlotFilledEventDTO slotFilledEvent, ICodexNode host)

@@ -1,5 +1,4 @@
 ﻿using CodexClient;
-using CodexContractsPlugin.Marketplace;
 using NUnit.Framework;
 using Utils;
 
@@ -55,33 +54,6 @@ namespace CodexReleaseTests.MarketTests
                 GetContracts().WaitUntilNextPeriod();
             }
             Assert.Fail($"{nameof(WaitForSlotFreedEvents)} failed after {Time.FormatDuration(timeout)}");
-        }
-
-        private TimeSpan CalculateContractFailTimespan()
-        {
-            var config = GetContracts().Deployment.Config;
-            var requiredNumMissedProofs = Convert.ToInt32(config.Collateral.MaxNumberOfSlashes);
-            var periodDuration = GetPeriodDuration();
-
-            // Each host could miss 1 proof per period,
-            // so the time we should wait is period time * requiredNum of missed proofs.
-            // Except: the proof requirement has a concept of "downtime":
-            // a segment of time where proof is not required.
-            // We calculate the probability of downtime and extend the waiting
-            // timeframe by a factor, such that all hosts are highly likely to have 
-            // failed a sufficient number of proofs.
-
-            float n = requiredNumMissedProofs;
-            return periodDuration * n * GetDowntimeFactor(config);
-        }
-
-        private float GetDowntimeFactor(MarketplaceConfig config)
-        {
-            byte numBlocksInDowntimeSegment = config.Proofs.Downtime;
-            float downtime = numBlocksInDowntimeSegment;
-            float window = 256.0f;
-            var chanceOfDowntime = downtime / window;
-            return 1.0f + chanceOfDowntime + chanceOfDowntime;
         }
 
         private IStoragePurchaseContract CreateStorageRequest(ICodexNode client)
