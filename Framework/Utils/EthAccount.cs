@@ -32,14 +32,17 @@
             return EthAddress.ToString();
         }
 
-        public static bool operator ==(EthAccount a, EthAccount b)
+        public static bool operator ==(EthAccount? a, EthAccount? b)
         {
+            if (ReferenceEquals(a, b)) return true;
+            if (ReferenceEquals(a, null)) return false;
+            if (ReferenceEquals(b, null)) return false;
             return a.PrivateKey == b.PrivateKey;
         }
 
-        public static bool operator !=(EthAccount a, EthAccount b)
+        public static bool operator !=(EthAccount? a, EthAccount? b)
         {
-            return a.PrivateKey != b.PrivateKey;
+            return !(a == b);
         }
     }
 }

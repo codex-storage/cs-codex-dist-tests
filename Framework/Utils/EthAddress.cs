@@ -35,14 +35,17 @@
             return Address;
         }
 
-        public static bool operator ==(EthAddress a, EthAddress b)
+        public static bool operator ==(EthAddress? a, EthAddress? b)
         {
+            if (ReferenceEquals(a, b)) return true;
+            if (ReferenceEquals(a, null)) return false;
+            if (ReferenceEquals(b, null)) return false;
             return a.Address == b.Address;
         }
 
-        public static bool operator !=(EthAddress a, EthAddress b)
+        public static bool operator !=(EthAddress? a, EthAddress? b)
         {
-            return a.Address != b.Address;
+            return !(a == b);
         }
     }
 }

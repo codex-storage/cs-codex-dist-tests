@@ -31,7 +31,7 @@ namespace CodexReleaseTests.MarketTests
         protected override int NumberOfHosts => 5;
         protected override int NumberOfClients => 1;
         protected override ByteSize HostAvailabilitySize => SlotSize.Multiply(1.1); // Each host can hold 1 slot.
-        protected override TimeSpan HostAvailabilityMaxDuration => GetPeriodDuration() * 100;
+        protected override TimeSpan HostAvailabilityMaxDuration => TimeSpan.FromDays(5.0);
 
         private static bool IsPowerOfTwo(ByteSize size)
         {
@@ -41,6 +41,7 @@ namespace CodexReleaseTests.MarketTests
 
         #endregion
 
+        [Ignore("Test is ready. Waiting for repair implementation.")]
         [Test]
         [Combinatorial]
         public void RollingRepairSingleFailure(
@@ -172,7 +173,7 @@ namespace CodexReleaseTests.MarketTests
             var config = GetContracts().Deployment.Config;
             return client.Marketplace.RequestStorage(new StoragePurchaseRequest(cid)
             {
-                Duration = TimeSpan.FromDays(2.0),
+                Duration = HostAvailabilityMaxDuration / 2,
                 Expiry = TimeSpan.FromMinutes(10.0),
                 MinRequiredNumberOfNodes = Slots,
                 NodeFailureTolerance = Tolerance,
