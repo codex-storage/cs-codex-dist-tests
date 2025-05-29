@@ -4,11 +4,9 @@ using Utils;
 
 namespace CodexReleaseTests.MarketTests
 {
-    [TestFixture(6, 3, 1)]
-    [TestFixture(6, 4, 2)]
-    [TestFixture(8, 5, 1)]
-    [TestFixture(8, 6, 1)]
-    [TestFixture(8, 6, 3)]
+    [TestFixture(5, 3, 1)]
+    //[TestFixture(10, 6, 3)]
+    //[TestFixture(10, 20, 10)]
     public class ContractSuccessfulTest : MarketplaceAutoBootstrapDistTest
     {
         public ContractSuccessfulTest(int hosts, int slots, int tolerance)
@@ -43,9 +41,6 @@ namespace CodexReleaseTests.MarketTests
             WaitForContractStarted(request);
             AssertContractSlotsAreFilledByHosts(request, hosts);
 
-            Thread.Sleep(TimeSpan.FromSeconds(12.0));
-            return;
-
             request.WaitForStorageContractFinished();
 
             AssertClientHasPaidForContract(pricePerBytePerSecond, client, request, hosts);
@@ -76,7 +71,7 @@ namespace CodexReleaseTests.MarketTests
 
         private TimeSpan GetContractDuration()
         {
-            return Get8TimesConfiguredPeriodDuration() * 4;
+            return Get8TimesConfiguredPeriodDuration() / 2;
         }
 
         private TimeSpan Get8TimesConfiguredPeriodDuration()

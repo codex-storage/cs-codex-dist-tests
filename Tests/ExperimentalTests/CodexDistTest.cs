@@ -95,7 +95,7 @@ namespace CodexTests
             return new PeerDownloadTestHelpers(GetTestLog(), GetFileManager());
         }
 
-        public void AssertBalance(ICodexContracts contracts, ICodexNode codexNode, Constraint constraint, string msg = "")
+        public void AssertBalance(ICodexContracts contracts, ICodexNode codexNode, Constraint constraint, string msg)
         {
             AssertHelpers.RetryAssert(constraint, () => contracts.GetTestTokenBalance(codexNode), nameof(AssertBalance) + msg);
         }

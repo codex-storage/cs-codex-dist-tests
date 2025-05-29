@@ -274,6 +274,7 @@ namespace CodexReleaseTests.MarketTests
                 {
                     Log($" - {c.Block.Utc} Host: {c.FromAddress} RequestId: {c.RequestId.ToHex()} SlotIndex: {c.SlotIndex}");
                 }
+                throw;
             }
         }
 

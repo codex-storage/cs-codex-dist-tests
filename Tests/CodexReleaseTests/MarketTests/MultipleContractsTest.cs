@@ -6,7 +6,7 @@ using Utils;
 namespace CodexReleaseTests.MarketTests
 {
     //[TestFixture(8, 3, 1)]
-    [TestFixture(8, 4, 1)]
+    [TestFixture(12, 48, 12)]
     //[TestFixture(10, 5, 1)]
     //[TestFixture(10, 6, 1)]
     //[TestFixture(10, 6, 3)]
