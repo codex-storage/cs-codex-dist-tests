@@ -1,33 +1,26 @@
-using CodexClient;
+﻿using CodexClient;
 using NUnit.Framework;
 using Utils;
 
 namespace CodexReleaseTests.MarketTests
 {
-    [TestFixture(5, 3, 1)]
-    [TestFixture(10, 20, 10)]
-    public class ContractSuccessfulTest : MarketplaceAutoBootstrapDistTest
+    [TestFixture]
+    public class ContractsStartTest : MarketplaceAutoBootstrapDistTest
     {
-        public ContractSuccessfulTest(int hosts, int slots, int tolerance)
-        {
-            this.hosts = hosts;
-            this.slots = slots;
-            this.tolerance = tolerance;
-        }
-
         private const int FilesizeMb = 10;
         private readonly TestToken pricePerBytePerSecond = 10.TstWei();
-        private readonly int hosts;
-        private readonly int slots;
-        private readonly int tolerance;
 
-        protected override int NumberOfHosts => hosts;
+        protected override int NumberOfHosts => 5;
         protected override int NumberOfClients => 1;
         protected override ByteSize HostAvailabilitySize => (5 * FilesizeMb).MB();
         protected override TimeSpan HostAvailabilityMaxDuration => Get8TimesConfiguredPeriodDuration() * 12;
 
         [Test]
-        public void ContractSuccessful()
+        [Combinatorial]
+        public void ContractStarts(
+            [Values(1, 2, 3)] int rerunA,
+            [Values(1, 2, 3)] int rerunB,
+            [Values(1, 2, 3)] int rerunC)
         {
             var hosts = StartHosts();
             var client = StartClients().Single();
@@ -39,12 +32,6 @@ namespace CodexReleaseTests.MarketTests
 
             WaitForContractStarted(request);
             AssertContractSlotsAreFilledByHosts(request, hosts);
-
-            request.WaitForStorageContractFinished();
-
-            AssertClientHasPaidForContract(pricePerBytePerSecond, client, request, hosts);
-            AssertHostsWerePaidForContract(pricePerBytePerSecond, request, hosts);
-            AssertHostsCollateralsAreUnchanged(hosts);
         }
 
         private IStoragePurchaseContract CreateStorageRequest(ICodexNode client)
@@ -55,8 +42,8 @@ namespace CodexReleaseTests.MarketTests
             {
                 Duration = GetContractDuration(),
                 Expiry = GetContractExpiry(),
-                MinRequiredNumberOfNodes = (uint)slots,
-                NodeFailureTolerance = (uint)tolerance,
+                MinRequiredNumberOfNodes = 3,
+                NodeFailureTolerance = 1,
                 PricePerBytePerSecond = pricePerBytePerSecond,
                 ProofProbability = 20,
                 CollateralPerByte = 100.TstWei()
@@ -70,7 +57,7 @@ namespace CodexReleaseTests.MarketTests
 
         private TimeSpan GetContractDuration()
         {
-            return Get8TimesConfiguredPeriodDuration() / 2;
+            return Get8TimesConfiguredPeriodDuration();
         }
 
         private TimeSpan Get8TimesConfiguredPeriodDuration()

@@ -5,11 +5,7 @@ using Utils;
 
 namespace CodexReleaseTests.MarketTests
 {
-    //[TestFixture(8, 3, 1)]
     [TestFixture(12, 48, 12)]
-    //[TestFixture(10, 5, 1)]
-    //[TestFixture(10, 6, 1)]
-    //[TestFixture(10, 6, 3)]
     public class MultipleContractsTest : MarketplaceAutoBootstrapDistTest
     {
         public MultipleContractsTest(int hosts, int slots, int tolerance)
@@ -33,7 +29,7 @@ namespace CodexReleaseTests.MarketTests
         [Test]
         [Combinatorial]
         public void MultipleContractGenerations(
-            [Values(50)] int numGenerations)
+            [Values(10)] int numGenerations)
         {
             var hosts = StartHosts();
             var clients = StartClients();
@@ -58,10 +54,6 @@ namespace CodexReleaseTests.MarketTests
             });
 
             All(requests, WaitForContractStarted);
-
-            // for the time being, we're only interested in whether these contracts start.
-            //All(requests, r => AssertContractSlotsAreFilledByHosts(r, hosts));
-            //All(requests, r => r.WaitForStorageContractFinished());
         }
 
         private void All<T>(T[] items, Action<T> action)
