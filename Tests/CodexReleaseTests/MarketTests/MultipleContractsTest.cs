@@ -88,7 +88,7 @@ namespace CodexReleaseTests.MarketTests
                 MinRequiredNumberOfNodes = (uint)slots,
                 NodeFailureTolerance = (uint)tolerance,
                 PricePerBytePerSecond = pricePerBytePerSecond,
-                ProofProbability = 1,
+                ProofProbability = 1000,
                 CollateralPerByte = 1.TstWei()
             });
         }
