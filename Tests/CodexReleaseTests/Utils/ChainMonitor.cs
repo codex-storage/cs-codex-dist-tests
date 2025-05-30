@@ -44,6 +44,7 @@ namespace CodexReleaseTests.Utils
             var state = new ChainState(log, contracts, new DoNothingChainEventHandler(), startUtc, doProofPeriodMonitoring: true);
             Thread.Sleep(updateInterval);
 
+            log.Log("Chain monitoring started");
             while (!cts.IsCancellationRequested)
             {
                 try

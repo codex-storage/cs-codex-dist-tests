@@ -17,8 +17,10 @@ namespace CodexReleaseTests.MarketTests
         protected override TimeSpan HostAvailabilityMaxDuration => Get8TimesConfiguredPeriodDuration() * 12;
 
         [Test]
-        [Repeat(16)]
-        public void Start()
+        [Combinatorial]
+        public void Start(
+            [Values([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16])] int rerun
+        )
         {
             var hosts = StartHosts();
             var client = StartClients().Single();
