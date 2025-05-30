@@ -1,14 +1,15 @@
 ﻿using CodexClient;
 using CodexPlugin;
+using CodexReleaseTests.Utils;
 using NUnit.Framework;
 using Utils;
 
 namespace CodexReleaseTests.MarketTests
 {
     [TestFixture(12, 48, 12)]
-    public class MultipleContractsTest : MarketplaceAutoBootstrapDistTest
+    public class SequentialContracts : MarketplaceAutoBootstrapDistTest
     {
-        public MultipleContractsTest(int hosts, int slots, int tolerance)
+        public SequentialContracts(int hosts, int slots, int tolerance)
         {
             this.hosts = hosts;
             this.slots = slots;
@@ -28,7 +29,7 @@ namespace CodexReleaseTests.MarketTests
 
         [Test]
         [Combinatorial]
-        public void MultipleContractGenerations(
+        public void Sequential(
             [Values(10)] int numGenerations)
         {
             var hosts = StartHosts();
@@ -88,7 +89,7 @@ namespace CodexReleaseTests.MarketTests
                 MinRequiredNumberOfNodes = (uint)slots,
                 NodeFailureTolerance = (uint)tolerance,
                 PricePerBytePerSecond = pricePerBytePerSecond,
-                ProofProbability = 1000,
+                ProofProbability = 10000,
                 CollateralPerByte = 1.TstWei()
             });
         }

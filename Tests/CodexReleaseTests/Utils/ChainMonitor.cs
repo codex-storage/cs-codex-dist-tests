@@ -2,7 +2,7 @@
 using CodexContractsPlugin.ChainMonitor;
 using Logging;
 
-namespace CodexReleaseTests.MarketTests
+namespace CodexReleaseTests.Utils
 {
     public class ChainMonitor
     {

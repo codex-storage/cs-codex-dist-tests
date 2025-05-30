@@ -1,10 +1,11 @@
 ﻿using CodexClient;
+using CodexReleaseTests.Utils;
 using NUnit.Framework;
 using Utils;
 
 namespace CodexReleaseTests.MarketTests
 {
-    public class ContractFailedTest : MarketplaceAutoBootstrapDistTest
+    public class FailTest : MarketplaceAutoBootstrapDistTest
     {
         protected override int NumberOfHosts => 4;
         protected override int NumberOfClients => 1;
@@ -13,8 +14,7 @@ namespace CodexReleaseTests.MarketTests
         private readonly TestToken pricePerBytePerSecond = 10.TstWei();
 
         [Test]
-        [Ignore("Disabled for now: Test is unstable.")]
-        public void ContractFailed()
+        public void Fail()
         {
             var hosts = StartHosts();
             var client = StartClients().Single();

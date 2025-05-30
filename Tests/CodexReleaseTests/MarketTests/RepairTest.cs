@@ -1,4 +1,5 @@
 ﻿using CodexClient;
+using CodexReleaseTests.Utils;
 using Nethereum.Hex.HexConvertors.Extensions;
 using NUnit.Framework;
 using Utils;
@@ -49,6 +50,7 @@ namespace CodexReleaseTests.MarketTests
         {
             var hosts = StartHosts().ToList();
             var client = StartClients().Single();
+            StartValidator();
 
             var contract = CreateStorageRequest(client);
             contract.WaitForStorageContractStarted();
@@ -178,7 +180,7 @@ namespace CodexReleaseTests.MarketTests
                 MinRequiredNumberOfNodes = Slots,
                 NodeFailureTolerance = Tolerance,
                 PricePerBytePerSecond = 10.TstWei(),
-                ProofProbability = 20,
+                ProofProbability = 1, // One proof every period. Free slot as quickly as possible.
                 CollateralPerByte = 1.TstWei()
             });
         }

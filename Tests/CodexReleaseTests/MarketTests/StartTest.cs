@@ -1,11 +1,12 @@
 ﻿using CodexClient;
+using CodexReleaseTests.Utils;
 using NUnit.Framework;
 using Utils;
 
 namespace CodexReleaseTests.MarketTests
 {
     [TestFixture]
-    public class ContractsStartTest : MarketplaceAutoBootstrapDistTest
+    public class StartTest : MarketplaceAutoBootstrapDistTest
     {
         private const int FilesizeMb = 10;
         private readonly TestToken pricePerBytePerSecond = 10.TstWei();
@@ -16,11 +17,8 @@ namespace CodexReleaseTests.MarketTests
         protected override TimeSpan HostAvailabilityMaxDuration => Get8TimesConfiguredPeriodDuration() * 12;
 
         [Test]
-        [Combinatorial]
-        public void ContractStarts(
-            [Values(1, 2, 3)] int rerunA,
-            [Values(1, 2, 3)] int rerunB,
-            [Values(1, 2, 3)] int rerunC)
+        [Repeat(16)]
+        public void Start()
         {
             var hosts = StartHosts();
             var client = StartClients().Single();

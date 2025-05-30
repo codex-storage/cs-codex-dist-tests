@@ -1,4 +1,5 @@
 using CodexClient;
+using CodexReleaseTests.Utils;
 using NUnit.Framework;
 using Utils;
 
@@ -6,9 +7,9 @@ namespace CodexReleaseTests.MarketTests
 {
     [TestFixture(5, 3, 1)]
     [TestFixture(10, 20, 10)]
-    public class ContractSuccessfulTest : MarketplaceAutoBootstrapDistTest
+    public class FinishTest : MarketplaceAutoBootstrapDistTest
     {
-        public ContractSuccessfulTest(int hosts, int slots, int tolerance)
+        public FinishTest(int hosts, int slots, int tolerance)
         {
             this.hosts = hosts;
             this.slots = slots;
@@ -27,7 +28,8 @@ namespace CodexReleaseTests.MarketTests
         protected override TimeSpan HostAvailabilityMaxDuration => Get8TimesConfiguredPeriodDuration() * 12;
 
         [Test]
-        public void ContractSuccessful()
+        [Repeat(16)]
+        public void Finish()
         {
             var hosts = StartHosts();
             var client = StartClients().Single();

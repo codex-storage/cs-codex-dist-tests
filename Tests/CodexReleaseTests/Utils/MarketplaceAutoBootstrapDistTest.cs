@@ -9,7 +9,7 @@ using Nethereum.Hex.HexConvertors.Extensions;
 using NUnit.Framework;
 using Utils;
 
-namespace CodexReleaseTests.MarketTests
+namespace CodexReleaseTests.Utils
 {
     public abstract class MarketplaceAutoBootstrapDistTest : AutoBootstrapDistTest
     {
@@ -45,7 +45,7 @@ namespace CodexReleaseTests.MarketTests
         protected TimeSpan GetPeriodDuration()
         {
             var config = GetContracts().Deployment.Config;
-            return TimeSpan.FromSeconds(((double)config.Proofs.Period));
+            return TimeSpan.FromSeconds(config.Proofs.Period);
         }
 
         protected abstract int NumberOfHosts { get; }
@@ -320,7 +320,7 @@ namespace CodexReleaseTests.MarketTests
 
         private DateTime GetContractOnChainSubmittedUtc(IStoragePurchaseContract contract)
         {
-            return Time.Retry<DateTime>(() =>
+            return Time.Retry(() =>
             {
                 var events = GetContracts().GetEvents(GetTestRunTimeRange());
                 var submitEvent = events.GetStorageRequests().SingleOrDefault(e => e.RequestId.ToHex(false) == contract.PurchaseId);
@@ -395,7 +395,7 @@ namespace CodexReleaseTests.MarketTests
             // failed a sufficient number of proofs.
 
             float n = requiredNumMissedProofs;
-            return gracePeriod + (periodDuration * n * GetDowntimeFactor(config));
+            return gracePeriod + periodDuration * n * GetDowntimeFactor(config);
         }
 
         private float GetDowntimeFactor(MarketplaceConfig config)
