@@ -60,7 +60,7 @@ namespace AutoClient
             "/root/codex-testnet-starter/scripts/eth_8.address";
 
         [Uniform("slowModeDelayMinutes", "smdm", "SLOWMODEDELAYMINUTES", false, "When contract failure threshold is reached, slow down process for each file by this amount of minutes.")]
-        public int SlowModeDelayMinutes { get; set; } = 60 * 1;
+        public int SlowModeDelayMinutes { get; set; } = 30 * 1;
 
         public string LogPath
         {

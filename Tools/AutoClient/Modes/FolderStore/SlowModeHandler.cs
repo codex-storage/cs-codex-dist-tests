@@ -18,7 +18,7 @@
             if (slowMode)
             {
                 recoveryCount++;
-                if (recoveryCount > 3)
+                if (recoveryCount > 2)
                 {
                     Log("Recovery limit reached. Exiting slow mode.");
                     slowMode = false;
@@ -30,7 +30,7 @@
         public void OnFailure()
         {
             failureCount++;
-            if (failureCount > 3 && !slowMode)
+            if (failureCount > 5 && !slowMode)
             {
                 Log("Failure limit reached. Entering slow mode.");
                 slowMode = true;

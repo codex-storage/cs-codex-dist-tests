@@ -66,9 +66,17 @@ namespace AutoClient
         private (uint, uint) GetDurability()
         {
             (uint, uint)[] options = [
+                (4, 1),
                 (4, 2),
+                (5, 1),
                 (5, 2),
-                (10, 5),
+                (6, 1),
+                (6, 2),
+                (6, 3),
+                (10, 2),
+                (10, 4),
+                (20, 2),
+                (20, 4),
                 (20, 10)
             ];
 
