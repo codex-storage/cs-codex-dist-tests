@@ -8,12 +8,16 @@ namespace CodexReleaseTests.MarketTests
     [TestFixture]
     public class StartTest : MarketplaceAutoBootstrapDistTest
     {
-        private const int FilesizeMb = 10;
+        private readonly PurchaseParams purchaseParams = new PurchaseParams(
+            nodes: 3,
+            tolerance: 1,
+            uploadFilesize: 10.MB()
+        );
         private readonly TestToken pricePerBytePerSecond = 10.TstWei();
 
         protected override int NumberOfHosts => 5;
         protected override int NumberOfClients => 1;
-        protected override ByteSize HostAvailabilitySize => (5 * FilesizeMb).MB();
+        protected override ByteSize HostAvailabilitySize => purchaseParams.SlotSize.Multiply(10.0);
         protected override TimeSpan HostAvailabilityMaxDuration => Get8TimesConfiguredPeriodDuration() * 12;
 
         [Test]
@@ -36,14 +40,14 @@ namespace CodexReleaseTests.MarketTests
 
         private IStoragePurchaseContract CreateStorageRequest(ICodexNode client)
         {
-            var cid = client.UploadFile(GenerateTestFile(FilesizeMb.MB()));
+            var cid = client.UploadFile(GenerateTestFile(purchaseParams.UploadFilesize));
             var config = GetContracts().Deployment.Config;
             return client.Marketplace.RequestStorage(new StoragePurchaseRequest(cid)
             {
                 Duration = GetContractDuration(),
                 Expiry = GetContractExpiry(),
-                MinRequiredNumberOfNodes = 3,
-                NodeFailureTolerance = 1,
+                MinRequiredNumberOfNodes = (uint)purchaseParams.Nodes,
+                NodeFailureTolerance = (uint)purchaseParams.Tolerance,
                 PricePerBytePerSecond = pricePerBytePerSecond,
                 ProofProbability = 20,
                 CollateralPerByte = 100.TstWei()

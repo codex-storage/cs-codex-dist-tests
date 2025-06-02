@@ -25,6 +25,21 @@
             return new ByteSize(Convert.ToInt64(result));
         }
 
+        public int DivUp(ByteSize div)
+        {
+            var d = div.SizeInBytes;
+            var remaining = SizeInBytes;
+            var result = 0;
+            while (remaining > d)
+            {
+                remaining -= d;
+                result++;
+            }
+
+            if (remaining > 0) result++;
+            return result;
+        }
+
         public override bool Equals(object? obj)
         {
             return obj is ByteSize size && SizeInBytes == size.SizeInBytes;

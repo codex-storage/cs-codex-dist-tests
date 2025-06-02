@@ -12,18 +12,15 @@ namespace CodexReleaseTests.MarketTests
         public SequentialContracts(int hosts, int slots, int tolerance)
         {
             this.hosts = hosts;
-            this.slots = slots;
-            this.tolerance = tolerance;
+            purchaseParams = new PurchaseParams(slots, tolerance, 10.MB());
         }
 
-        private const int FilesizeMb = 10;
         private readonly int hosts;
-        private readonly int slots;
-        private readonly int tolerance;
+        private readonly PurchaseParams purchaseParams;
 
         protected override int NumberOfHosts => hosts;
         protected override int NumberOfClients => 8;
-        protected override ByteSize HostAvailabilitySize => (1000 * FilesizeMb).MB();
+        protected override ByteSize HostAvailabilitySize => purchaseParams.SlotSize.Multiply(100.0);
         protected override TimeSpan HostAvailabilityMaxDuration => Get8TimesConfiguredPeriodDuration() * 12;
         private readonly TestToken pricePerBytePerSecond = 10.TstWei();
 
@@ -80,14 +77,14 @@ namespace CodexReleaseTests.MarketTests
 
         private IStoragePurchaseContract CreateStorageRequest(ICodexNode client)
         {
-            var cid = client.UploadFile(GenerateTestFile(FilesizeMb.MB()));
+            var cid = client.UploadFile(GenerateTestFile(purchaseParams.UploadFilesize));
             var config = GetContracts().Deployment.Config;
             return client.Marketplace.RequestStorage(new StoragePurchaseRequest(cid)
             {
                 Duration = GetContractDuration(),
                 Expiry = GetContractExpiry(),
-                MinRequiredNumberOfNodes = (uint)slots,
-                NodeFailureTolerance = (uint)tolerance,
+                MinRequiredNumberOfNodes = (uint)purchaseParams.Nodes,
+                NodeFailureTolerance = (uint)purchaseParams.Tolerance,
                 PricePerBytePerSecond = pricePerBytePerSecond,
                 ProofProbability = 10000,
                 CollateralPerByte = 1.TstWei()
@@ -107,7 +104,7 @@ namespace CodexReleaseTests.MarketTests
         private TimeSpan Get8TimesConfiguredPeriodDuration()
         {
             var config = GetContracts().Deployment.Config;
-            return TimeSpan.FromSeconds(((double)config.Proofs.Period) * 8.0);
+            return TimeSpan.FromSeconds(config.Proofs.Period * 8.0);
         }
     }
 }

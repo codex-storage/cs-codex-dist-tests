@@ -11,34 +11,21 @@ namespace CodexReleaseTests.MarketTests
     {
         #region Setup
 
-        private readonly ByteSize Filesize;
-        private readonly uint Slots;
-        private readonly uint Tolerance;
-        private readonly ByteSize EncodedFilesize;
-        private readonly ByteSize SlotSize;
+        private readonly PurchaseParams purchaseParams = new PurchaseParams(
+            nodes: 4,
+            tolerance: 2,
+            uploadFilesize: 32.MB()
+        );
 
         public RepairTest()
         {
-            Filesize = 32.MB();
-            Slots = 4;
-            Tolerance = 2;
-
-            EncodedFilesize = new ByteSize(Filesize.SizeInBytes * (Slots / Tolerance));
-            SlotSize = new ByteSize(EncodedFilesize.SizeInBytes / Slots);
-            Assert.That(IsPowerOfTwo(SlotSize));
-            Assert.That(Slots, Is.LessThan(NumberOfHosts));
+            Assert.That(purchaseParams.Nodes, Is.LessThan(NumberOfHosts));
         }
 
         protected override int NumberOfHosts => 5;
         protected override int NumberOfClients => 1;
-        protected override ByteSize HostAvailabilitySize => SlotSize.Multiply(1.1); // Each host can hold 1 slot.
+        protected override ByteSize HostAvailabilitySize => purchaseParams.SlotSize.Multiply(1.1); // Each host can hold 1 slot.
         protected override TimeSpan HostAvailabilityMaxDuration => TimeSpan.FromDays(5.0);
-
-        private static bool IsPowerOfTwo(ByteSize size)
-        {
-            var x = size.SizeInBytes;
-            return (x != 0) && ((x & (x - 1)) == 0);
-        }
 
         #endregion
 
@@ -173,14 +160,14 @@ namespace CodexReleaseTests.MarketTests
 
         private IStoragePurchaseContract CreateStorageRequest(ICodexNode client)
         {
-            var cid = client.UploadFile(GenerateTestFile(Filesize));
+            var cid = client.UploadFile(GenerateTestFile(purchaseParams.UploadFilesize));
             var config = GetContracts().Deployment.Config;
             return client.Marketplace.RequestStorage(new StoragePurchaseRequest(cid)
             {
                 Duration = HostAvailabilityMaxDuration / 2,
                 Expiry = TimeSpan.FromMinutes(10.0),
-                MinRequiredNumberOfNodes = Slots,
-                NodeFailureTolerance = Tolerance,
+                MinRequiredNumberOfNodes = (uint)purchaseParams.Nodes,
+                NodeFailureTolerance = (uint)purchaseParams.Tolerance,
                 PricePerBytePerSecond = 10.TstWei(),
                 ProofProbability = 1, // One proof every period. Free slot as quickly as possible.
                 CollateralPerByte = 1.TstWei()
