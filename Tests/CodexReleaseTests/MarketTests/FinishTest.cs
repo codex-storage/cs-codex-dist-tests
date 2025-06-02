@@ -71,7 +71,7 @@ namespace CodexReleaseTests.MarketTests
 
         private TimeSpan GetContractDuration()
         {
-            return Get8TimesConfiguredPeriodDuration() / 2;
+            return Get8TimesConfiguredPeriodDuration();
         }
 
         private TimeSpan Get8TimesConfiguredPeriodDuration()

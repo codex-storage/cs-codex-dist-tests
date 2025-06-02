@@ -6,7 +6,7 @@ using Utils;
 
 namespace CodexReleaseTests.MarketTests
 {
-    [TestFixture(12, 48, 12)]
+    [TestFixture(10, 20, 5)]
     public class SequentialContracts : MarketplaceAutoBootstrapDistTest
     {
         public SequentialContracts(int hosts, int slots, int tolerance)
@@ -19,7 +19,7 @@ namespace CodexReleaseTests.MarketTests
         private readonly PurchaseParams purchaseParams;
 
         protected override int NumberOfHosts => hosts;
-        protected override int NumberOfClients => 8;
+        protected override int NumberOfClients => 6;
         protected override ByteSize HostAvailabilitySize => purchaseParams.SlotSize.Multiply(100.0);
         protected override TimeSpan HostAvailabilityMaxDuration => Get8TimesConfiguredPeriodDuration() * 12;
         private readonly TestToken pricePerBytePerSecond = 10.TstWei();
@@ -35,7 +35,14 @@ namespace CodexReleaseTests.MarketTests
             for (var i = 0; i < numGenerations; i++)
             {
                 Log("Generation: " + i);
-                Generation(clients, hosts);
+                try
+                {
+                    Generation(clients, hosts);
+                }
+                catch (Exception ex)
+                {
+                    Assert.Fail($"Failed at generation {i} with exception {ex}");
+                }
             }
 
             Thread.Sleep(TimeSpan.FromSeconds(12.0));
