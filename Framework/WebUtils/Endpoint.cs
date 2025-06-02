@@ -85,7 +85,7 @@ namespace WebUtils
                 var result = Deserialize<TResponse>(response);
                 if (result == null) throw new Exception("Failed to deserialize response");
                 return result;
-            }, $"HTTO-POST-JSON: {route}");
+            }, $"HTTP-POST-JSON: {route}");
         }
 
         public string HttpPostStream(string route, Stream stream)

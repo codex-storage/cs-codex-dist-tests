@@ -8,7 +8,7 @@ namespace DistTestCore.Logs
 
         protected BaseTestLog(ILog backingLog, string deployId)
         {
-            this.backingLog = backingLog;
+            this.backingLog = new TimestampPrefixer(backingLog);
 
             DeployId = deployId;
         }
@@ -59,24 +59,8 @@ namespace DistTestCore.Logs
 
         protected static ILog CreateMainLog(string fullName, string name)
         {
-            ILog log = new FileLog(fullName);
-            log = ApplyConsoleOutput(log);
-            return log;
-        }
-
-        private static ILog ApplyConsoleOutput(ILog log)
-        {
-            // If we're running as a release test, we'll split the log output
-            // to the console as well.
-
-            var testType = Environment.GetEnvironmentVariable("TEST_TYPE");
-            if (string.IsNullOrEmpty(testType) || testType.ToLowerInvariant() != "release-tests")
-            {
-                return log;
-            }
-
             return new LogSplitter(
-                log,
+                new FileLog(fullName),
                 new ConsoleLog()
             );
         }

@@ -1,27 +1,29 @@
-﻿using Core;
-using KubernetesWorkflow.Types;
+﻿using System.Text;
+using Core;
 using Logging;
 using Utils;
 using WebUtils;
 
-namespace ContinuousTests
+namespace TraceContract
 {
     public class ElasticSearchLogDownloader
     {
-        private readonly IPluginTools tools;
         private readonly ILog log;
+        private readonly IPluginTools tools;
+        private readonly Config config;
 
-        public ElasticSearchLogDownloader(IPluginTools tools, ILog log)
+        public ElasticSearchLogDownloader(ILog log, IPluginTools tools, Config config)
         {
-            this.tools = tools;
             this.log = log;
+            this.tools = tools;
+            this.config = config;
         }
 
-        public void Download(LogFile targetFile, RunningContainer container, DateTime startUtc, DateTime endUtc, string openingLine)
+        public void Download(LogFile targetFile, string podName, DateTime startUtc, DateTime endUtc)
         {
             try
             {
-                DownloadLog(targetFile, container, startUtc, endUtc, openingLine);
+                DownloadLog(targetFile, podName, startUtc, endUtc);
             }
             catch (Exception ex)
             {
@@ -29,52 +31,58 @@ namespace ContinuousTests
             }
         }
 
-        private void DownloadLog(LogFile targetFile, RunningContainer container, DateTime startUtc, DateTime endUtc, string openingLine)
+        private void DownloadLog(LogFile targetFile, string podName, DateTime startUtc, DateTime endUtc)
         {
-            log.Log($"Downloading log (from ElasticSearch) for container '{container.Name}' within time range: " +
+            log.Log($"Downloading log (from ElasticSearch) for pod '{podName}' within time range: " +
                 $"{startUtc.ToString("o")} - {endUtc.ToString("o")}");
-            log.Log(openingLine);
 
             var endpoint = CreateElasticSearchEndpoint();
-            var queryTemplate = CreateQueryTemplate(container, startUtc, endUtc);
+            var queryTemplate = CreateQueryTemplate(podName, startUtc, endUtc);
 
-            targetFile.Write($"Downloading '{container.Name}' to '{targetFile.Filename}'.");
+            targetFile.Write($"Downloading '{podName}' to '{targetFile.Filename}'.");
             var reconstructor = new LogReconstructor(targetFile, endpoint, queryTemplate);
             reconstructor.DownloadFullLog();
 
             log.Log("Log download finished.");
         }
 
-        private string CreateQueryTemplate(RunningContainer container, DateTime startUtc, DateTime endUtc)
+        private string CreateQueryTemplate(string podName, DateTime startUtc, DateTime endUtc)
         {
             var start = startUtc.ToString("o");
             var end = endUtc.ToString("o");
-
-            var containerName = container.RunningPod.StartResult.Deployment.Name;
-            var namespaceName = container.RunningPod.StartResult.Cluster.Configuration.KubernetesNamespace;
 
             //container_name : codex3-5 - deploymentName as stored in pod
             // pod_namespace : codex - continuous - nolimits - tests - 1
 
             //var source = "{ \"sort\": [ { \"@timestamp\": { \"order\": \"asc\" } } ], \"fields\": [ { \"field\": \"@timestamp\", \"format\": \"strict_date_optional_time\" }, { \"field\": \"pod_name\" }, { \"field\": \"message\" } ], \"size\": <SIZE>, <SEARCHAFTER> \"_source\": false, \"query\": { \"bool\": { \"must\": [], \"filter\": [ { \"range\": { \"@timestamp\": { \"format\": \"strict_date_optional_time\", \"gte\": \"<STARTTIME>\", \"lte\": \"<ENDTIME>\" } } }, { \"match_phrase\": { \"pod_name\": \"<PODNAME>\" } } ] } } }";
-            var source = "{ \"sort\": [ { \"@timestamp\": { \"order\": \"asc\" } } ], \"fields\": [ { \"field\": \"@timestamp\", \"format\": \"strict_date_optional_time\" }, { \"field\": \"message\" } ], \"size\": <SIZE>, <SEARCHAFTER> \"_source\": false, \"query\": { \"bool\": { \"must\": [], \"filter\": [ { \"range\": { \"@timestamp\": { \"format\": \"strict_date_optional_time\", \"gte\": \"<STARTTIME>\", \"lte\": \"<ENDTIME>\" } } }, { \"match_phrase\": { \"container_name\": \"<CONTAINERNAME>\" } }, { \"match_phrase\": { \"pod_namespace\": \"<NAMESPACENAME>\" } } ] } } }";
+            var source = "{ \"sort\": [ { \"@timestamp\": { \"order\": \"asc\" } } ], \"fields\": [ { \"field\": \"@timestamp\", \"format\": \"strict_date_optional_time\" }, { \"field\": \"message\" } ], \"size\": <SIZE>, <SEARCHAFTER> \"_source\": false, \"query\": { \"bool\": { \"must\": [], \"filter\": [ { \"range\": { \"@timestamp\": { \"format\": \"strict_date_optional_time\", \"gte\": \"<STARTTIME>\", \"lte\": \"<ENDTIME>\" } } }, { \"match_phrase\": { \"pod_name\": \"<PODNAME>\" } } ] } } }";
             return source
                 .Replace("<STARTTIME>", start)
                 .Replace("<ENDTIME>", end)
-                .Replace("<CONTAINERNAME>", containerName)
-                .Replace("<NAMESPACENAME>", namespaceName);
+                .Replace("<PODNAME>", podName);
+                //.Replace("<NAMESPACENAME>", config.StorageNodesKubernetesNamespace);
         }
 
         private IEndpoint CreateElasticSearchEndpoint()
         {
-            var serviceName = "elasticsearch";
-            var k8sNamespace = "monitoring";
-            var address = new Address("ElasticSearchEndpoint", $"http://{serviceName}.{k8sNamespace}.svc.cluster.local", 9200);
+            //var serviceName = "elasticsearch";
+            //var k8sNamespace = "monitoring";
+            //var address = new Address("ElasticSearchEndpoint", $"http://{serviceName}.{k8sNamespace}.svc.cluster.local", 9200);
+
+            var address = new Address("TestnetElasticSearchEndpoint", config.ElasticSearchUrl, 443);
             var baseUrl = "";
+
+            var username = config.GetElasticSearchUsername();
+            var password = config.GetElasticSearchPassword();
+
+            var base64Creds = Convert.ToBase64String(
+                Encoding.ASCII.GetBytes($"{username}:{password}")
+            );
 
             var http = tools.CreateHttp(address.ToString(), client =>
             {
                 client.DefaultRequestHeaders.Add("kbn-xsrf", "reporting");
+                client.DefaultRequestHeaders.Add("Authorization", "Basic " + base64Creds);
             });
 
             return http.CreateEndpoint(address, baseUrl);
@@ -113,7 +121,7 @@ namespace ContinuousTests
                                 .Replace("<SIZE>", sizeOfPage.ToString())
                                 .Replace("<SEARCHAFTER>", searchAfter);
 
-                var response = endpoint.HttpPostString<SearchResponse>("_search", query);
+                var response = endpoint.HttpPostString<SearchResponse>("/_search", query);
 
                 lastHits = response.hits.hits.Length;
                 if (lastHits > 0)

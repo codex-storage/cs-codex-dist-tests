@@ -65,7 +65,7 @@ namespace Logging
 
         public void Raw(string message)
         {
-            LogFile.WriteRaw(message);
+            LogFile.Write(message);
         }
 
         public virtual void AddStringReplace(string from, string to)

@@ -3,11 +3,8 @@ using CodexContractsPlugin.Marketplace;
 using GethPlugin;
 using Logging;
 using Nethereum.ABI;
-using Nethereum.ABI.FunctionEncoding.Attributes;
 using Nethereum.Contracts;
-using Nethereum.Hex.HexConvertors.Extensions;
 using Nethereum.Util;
-using NethereumWorkflow;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Utils;
@@ -28,6 +25,7 @@ namespace CodexContractsPlugin
         ICodexContractsEvents GetEvents(BlockInterval blockInterval);
         EthAddress? GetSlotHost(Request storageRequest, decimal slotIndex);
         RequestState GetRequestState(Request request);
+        Request GetRequest(byte[] requestId);
         ulong GetPeriodNumber(DateTime utc);
         void WaitUntilNextPeriod();
         ProofState GetProofState(Request storageRequest, decimal slotIndex, ulong blockNumber, ulong period);
@@ -124,6 +122,17 @@ namespace CodexContractsPlugin
                 RequestId = request.RequestId
             };
             return gethNode.Call<RequestStateFunction, RequestState>(Deployment.MarketplaceAddress, func);
+        }
+
+        public Request GetRequest(byte[] requestId)
+        {
+            var func = new GetRequestFunction
+            {
+                RequestId = requestId
+            };
+
+            var request = gethNode.Call<GetRequestFunction, GetRequestOutputDTO>(Deployment.MarketplaceAddress, func);
+            return request.ReturnValue1;
         }
 
         public ulong GetPeriodNumber(DateTime utc)

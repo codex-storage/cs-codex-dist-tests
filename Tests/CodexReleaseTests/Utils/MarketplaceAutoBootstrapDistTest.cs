@@ -4,11 +4,12 @@ using CodexContractsPlugin.Marketplace;
 using CodexPlugin;
 using CodexTests;
 using GethPlugin;
+using Logging;
 using Nethereum.Hex.HexConvertors.Extensions;
 using NUnit.Framework;
 using Utils;
 
-namespace CodexReleaseTests.MarketTests
+namespace CodexReleaseTests.Utils
 {
     public abstract class MarketplaceAutoBootstrapDistTest : AutoBootstrapDistTest
     {
@@ -21,7 +22,14 @@ namespace CodexReleaseTests.MarketTests
         {
             var geth = StartGethNode(s => s.IsMiner());
             var contracts = Ci.StartCodexContracts(geth, BootstrapNode.Version);
-            handle = new MarketplaceHandle(geth, contracts);
+            var monitor = SetupChainMonitor(GetTestLog(), contracts, GetTestRunTimeRange().From);
+            handle = new MarketplaceHandle(geth, contracts, monitor);
+        }
+
+        [TearDown]
+        public void TearDownMarketplace()
+        {
+            if (handle.ChainMonitor != null) handle.ChainMonitor.Stop();
         }
 
         protected IGethNode GetGeth()
@@ -37,13 +45,14 @@ namespace CodexReleaseTests.MarketTests
         protected TimeSpan GetPeriodDuration()
         {
             var config = GetContracts().Deployment.Config;
-            return TimeSpan.FromSeconds(((double)config.Proofs.Period));
+            return TimeSpan.FromSeconds(config.Proofs.Period);
         }
 
         protected abstract int NumberOfHosts { get; }
         protected abstract int NumberOfClients { get; }
         protected abstract ByteSize HostAvailabilitySize { get; }
         protected abstract TimeSpan HostAvailabilityMaxDuration { get; }
+        protected virtual bool MonitorChainState { get; } = true;
 
         public ICodexNodeGroup StartHosts()
         {
@@ -69,6 +78,29 @@ namespace CodexReleaseTests.MarketTests
                 );
             }
             return hosts;
+        }
+
+        public ICodexNode StartOneHost()
+        {
+            var host = StartCodex(s => s
+                .WithName("singlehost")
+                .EnableMarketplace(GetGeth(), GetContracts(), m => m
+                    .WithInitial(StartingBalanceEth.Eth(), StartingBalanceTST.Tst())
+                    .AsStorageNode()
+                )
+            );
+
+            var config = GetContracts().Deployment.Config;
+            AssertTstBalance(host, StartingBalanceTST.Tst(), nameof(StartOneHost));
+            AssertEthBalance(host, StartingBalanceEth.Eth(), nameof(StartOneHost));
+
+            host.Marketplace.MakeStorageAvailable(new StorageAvailability(
+                totalSpace: HostAvailabilitySize,
+                maxDuration: HostAvailabilityMaxDuration,
+                minPricePerBytePerSecond: 1.TstWei(),
+                totalCollateral: 999999.Tst())
+            );
+            return host;
         }
 
         public void AssertTstBalance(ICodexNode node, TestToken expectedBalance, string message)
@@ -104,6 +136,19 @@ namespace CodexReleaseTests.MarketTests
                         $" expected: {expectedBalance} but was: {balance} - message: " + message);
                 }
             });
+        }
+
+        private ChainMonitor? SetupChainMonitor(ILog log, ICodexContracts contracts, DateTime startUtc)
+        {
+            if (!MonitorChainState) return null;
+
+            var result = new ChainMonitor(log, contracts, startUtc);
+            result.Start(() =>
+            {
+                log.Error("Failure in chain monitor. No chain updates after this point.");
+                //Assert.Fail("Failure in chain monitor.");
+            });
+            return result;
         }
 
         private Retry GetBalanceAssertRetry()
@@ -163,7 +208,7 @@ namespace CodexReleaseTests.MarketTests
             );
         }
 
-        public SlotFill[] GetOnChainSlotFills(ICodexNodeGroup possibleHosts, string purchaseId)
+        public SlotFill[] GetOnChainSlotFills(IEnumerable<ICodexNode> possibleHosts, string purchaseId)
         {
             var fills = GetOnChainSlotFills(possibleHosts);
             return fills.Where(f => f
@@ -171,7 +216,7 @@ namespace CodexReleaseTests.MarketTests
                 .ToArray();
         }
 
-        public SlotFill[] GetOnChainSlotFills(ICodexNodeGroup possibleHosts)
+        public SlotFill[] GetOnChainSlotFills(IEnumerable<ICodexNode> possibleHosts)
         {
             var events = GetContracts().GetEvents(GetTestRunTimeRange());
             var fills = events.GetSlotFilledEvents();
@@ -232,6 +277,30 @@ namespace CodexReleaseTests.MarketTests
             }
         }
 
+        protected void WaitForContractStarted(IStoragePurchaseContract r)
+        {
+            try
+            {
+                r.WaitForStorageContractStarted();
+            }
+            catch
+            {
+                // Contract failed to start. Retrieve and log every call to ReserveSlot to identify which hosts
+                // should have filled the slot.
+
+                var requestId = r.PurchaseId.ToLowerInvariant();
+                var calls = new List<ReserveSlotFunction>();
+                GetContracts().GetEvents(GetTestRunTimeRange()).GetReserveSlotCalls(calls.Add);
+
+                Log($"Request '{requestId}' failed to start. There were {calls.Count} hosts who called reserve-slot for it:");
+                foreach (var c in calls)
+                {
+                    Log($" - {c.Block.Utc} Host: {c.FromAddress} RequestId: {c.RequestId.ToHex()} SlotIndex: {c.SlotIndex}");
+                }
+                throw;
+            }
+        }
+
         private TestToken GetContractFinalCost(TestToken pricePerBytePerSecond, IStoragePurchaseContract contract, ICodexNodeGroup hosts)
         {
             var fills = GetOnChainSlotFills(hosts);
@@ -251,7 +320,7 @@ namespace CodexReleaseTests.MarketTests
 
         private DateTime GetContractOnChainSubmittedUtc(IStoragePurchaseContract contract)
         {
-            return Time.Retry<DateTime>(() =>
+            return Time.Retry(() =>
             {
                 var events = GetContracts().GetEvents(GetTestRunTimeRange());
                 var submitEvent = events.GetStorageRequests().SingleOrDefault(e => e.RequestId.ToHex(false) == contract.PurchaseId);
@@ -310,6 +379,33 @@ namespace CodexReleaseTests.MarketTests
             }, description);
         }
 
+        protected TimeSpan CalculateContractFailTimespan()
+        {
+            var config = GetContracts().Deployment.Config;
+            var requiredNumMissedProofs = Convert.ToInt32(config.Collateral.MaxNumberOfSlashes);
+            var periodDuration = GetPeriodDuration();
+            var gracePeriod = periodDuration;
+
+            // Each host could miss 1 proof per period,
+            // so the time we should wait is period time * requiredNum of missed proofs.
+            // Except: the proof requirement has a concept of "downtime":
+            // a segment of time where proof is not required.
+            // We calculate the probability of downtime and extend the waiting
+            // timeframe by a factor, such that all hosts are highly likely to have 
+            // failed a sufficient number of proofs.
+
+            float n = requiredNumMissedProofs;
+            return gracePeriod + periodDuration * n * GetDowntimeFactor(config);
+        }
+
+        private float GetDowntimeFactor(MarketplaceConfig config)
+        {
+            byte numBlocksInDowntimeSegment = config.Proofs.Downtime;
+            float downtime = numBlocksInDowntimeSegment;
+            float window = 256.0f;
+            var chanceOfDowntime = downtime / window;
+            return 1.0f + chanceOfDowntime + chanceOfDowntime;
+        }
         public class SlotFill
         {
             public SlotFill(SlotFilledEventDTO slotFilledEvent, ICodexNode host)
@@ -324,14 +420,16 @@ namespace CodexReleaseTests.MarketTests
 
         private class MarketplaceHandle
         {
-            public MarketplaceHandle(IGethNode geth, ICodexContracts contracts)
+            public MarketplaceHandle(IGethNode geth, ICodexContracts contracts, ChainMonitor? chainMonitor)
             {
                 Geth = geth;
                 Contracts = contracts;
+                ChainMonitor = chainMonitor;
             }
 
             public IGethNode Geth { get; }
             public ICodexContracts Contracts { get; }
+            public ChainMonitor? ChainMonitor { get; }
         }
     }
 }

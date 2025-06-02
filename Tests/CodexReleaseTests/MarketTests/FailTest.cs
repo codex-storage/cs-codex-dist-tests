@@ -1,21 +1,23 @@
 ﻿using CodexClient;
-using CodexContractsPlugin.Marketplace;
+using CodexReleaseTests.Utils;
 using NUnit.Framework;
 using Utils;
 
 namespace CodexReleaseTests.MarketTests
 {
-    public class ContractFailedTest : MarketplaceAutoBootstrapDistTest
+    public class FailTest : MarketplaceAutoBootstrapDistTest
     {
         protected override int NumberOfHosts => 4;
         protected override int NumberOfClients => 1;
         protected override ByteSize HostAvailabilitySize => 1.GB();
         protected override TimeSpan HostAvailabilityMaxDuration => TimeSpan.FromDays(1.0);
-        private readonly TestToken pricePerBytePerSecond = 10.TstWei();
 
+        [Ignore("Slots are never freed because proofs are never marked as missing. Issue: https://github.com/codex-storage/nim-codex/issues/1153")]
         [Test]
-        [Ignore("Disabled for now: Test is unstable.")]
-        public void ContractFailed()
+        [Combinatorial]
+        public void Fail(
+            [Values([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16])] int rerun
+        )
         {
             var hosts = StartHosts();
             var client = StartClients().Single();
@@ -38,10 +40,10 @@ namespace CodexReleaseTests.MarketTests
 
         private void WaitForSlotFreedEvents()
         {
-            Log(nameof(WaitForSlotFreedEvents));
-
             var start = DateTime.UtcNow;
             var timeout = CalculateContractFailTimespan();
+
+            Log($"{nameof(WaitForSlotFreedEvents)} timeout: {Time.FormatDuration(timeout)}");
 
             while (DateTime.UtcNow < start + timeout)
             {
@@ -57,45 +59,18 @@ namespace CodexReleaseTests.MarketTests
             Assert.Fail($"{nameof(WaitForSlotFreedEvents)} failed after {Time.FormatDuration(timeout)}");
         }
 
-        private TimeSpan CalculateContractFailTimespan()
-        {
-            var config = GetContracts().Deployment.Config;
-            var requiredNumMissedProofs = Convert.ToInt32(config.Collateral.MaxNumberOfSlashes);
-            var periodDuration = GetPeriodDuration();
-
-            // Each host could miss 1 proof per period,
-            // so the time we should wait is period time * requiredNum of missed proofs.
-            // Except: the proof requirement has a concept of "downtime":
-            // a segment of time where proof is not required.
-            // We calculate the probability of downtime and extend the waiting
-            // timeframe by a factor, such that all hosts are highly likely to have 
-            // failed a sufficient number of proofs.
-
-            float n = requiredNumMissedProofs;
-            return periodDuration * n * GetDowntimeFactor(config);
-        }
-
-        private float GetDowntimeFactor(MarketplaceConfig config)
-        {
-            byte numBlocksInDowntimeSegment = config.Proofs.Downtime;
-            float downtime = numBlocksInDowntimeSegment;
-            float window = 256.0f;
-            var chanceOfDowntime = downtime / window;
-            return 1.0f + chanceOfDowntime + chanceOfDowntime;
-        }
-
         private IStoragePurchaseContract CreateStorageRequest(ICodexNode client)
         {
             var cid = client.UploadFile(GenerateTestFile(5.MB()));
             return client.Marketplace.RequestStorage(new StoragePurchaseRequest(cid)
             {
-                Duration = TimeSpan.FromHours(1.0),
-                Expiry = TimeSpan.FromHours(0.2),
+                Duration = HostAvailabilityMaxDuration / 2,
+                Expiry = TimeSpan.FromMinutes(5.0),
                 MinRequiredNumberOfNodes = (uint)NumberOfHosts,
                 NodeFailureTolerance = (uint)(NumberOfHosts / 2),
-                PricePerBytePerSecond = pricePerBytePerSecond,
+                PricePerBytePerSecond = 100.TstWei(),
                 ProofProbability = 1, // Require a proof every period
-                CollateralPerByte = 1.Tst()
+                CollateralPerByte = 1.TstWei()
             });
         }
     }

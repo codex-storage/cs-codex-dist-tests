@@ -1,0 +1,43 @@
+name: Trace Contract
+
+on:
+  workflow_dispatch:
+    inputs:
+      purchaseid:
+        description: "Testnet Purchase ID"
+        required: true
+        type: string
+
+env:
+  SOURCE: ${{ format('{0}/{1}', github.server_url, github.repository) }}
+  BRANCH: ${{ github.ref_name }}
+  OUTPUT_FOLDER: output
+  ES_USERNAME: ${{ secrets.ES_USERNAME }}
+  ES_PASSWORD: ${{ secrets.ES_PASSWORD }}
+  ES_HOST: ${{ secrets.ES_HOST }}
+
+jobs:
+  trace_contract:
+    name: Trace contract
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ inputs.workflow_source }}
+
+      - name: Variables
+        run: |
+          echo "PURCHASE_ID=${{ inputs.purchaseid }}" >> $GITHUB_ENV
+
+      - name: Run Trace
+        run: |
+          dotnet run --project Tools/TraceContract
+
+      - name: Upload output
+        uses: actions/upload-artifact@v4
+        with:
+          name: contract-trace
+          path: ${{ env.OUTPUT_FOLDER }}/
+          if-no-files-found: error
+          retention-days: 7

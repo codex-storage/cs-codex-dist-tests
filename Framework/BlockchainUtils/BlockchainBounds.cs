@@ -87,6 +87,8 @@
         private void AddCurrentBlock()
         {
             var currentBlockNumber = web3.GetCurrentBlockNumber();
+            if (Current != null && Current.BlockNumber == currentBlockNumber) return;
+
             var blockTime = web3.GetTimestampForBlock(currentBlockNumber);
             if (blockTime == null) throw new Exception("Unable to get dateTime for current block.");
             AddCurrentBlock(currentBlockNumber, blockTime.Value);
