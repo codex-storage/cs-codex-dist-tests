@@ -39,16 +39,16 @@
 
         public Dictionary<string, string> LogReplacements = new()
         {
-            { "0xa1f988fBa23EFd5fA36F4c1a2D1E3c83e25bee4e", "codex 01" },
-            { "0xa26a91310F9f2987AA7e0b1ca70e5C474c88ed34", "codex 02" },
-            { "0x0CDC9d2D375300C46E13a679cD9eA5299A4FAc74", "codex 03" },
-            { "0x7AF1a49A4a52e4bCe3789Ce3d43ff8AD8c8F2118", "codex 04" },
-            { "0xfbbEB320c6c775f6565c7bcC732b2813Dd6E0cd3", "codex 05" },
-            { "0x4A904CA0998B643eb42d4ae190a5821A4ac51E68", "codex 06" },
-            { "0x2b8Ea47d0966B26DEec485c0fCcF0D1A8b52A0e8", "codex 07" },
-            { "0x78F90A61d9a2aA93B61A7503Cc2177fFEF379021", "codex 08" },
-            { "0xE7EEb996B3c817cEd03d10cd64A1325DA33D92e7", "codex 09" },
-            { "0xD25C7609e97F40b66E74c0FcEbeA06D09423CC7e", "codex 10" }
+            { "0x3620ec38d88e9f0cf7feceebf97864f27676aa3e", "codex-01" },
+            { "0xd80dc50af2a826f2cddc13840d05aed4ee6536c3", "codex-02" },
+            { "0x2d1cd0fa0c7e0d29e7b2482b9ff87d5e7b76b905", "codex-03" },
+            { "0xd47063bb6e56c9a6edb7612d33ad7d49eeb55ee0", "codex-04" },
+            { "0x069da63e29b12a3828984379fcbd7dd3ee3774aa", "codex-05" },
+            { "0x43fcceb2a9ce4761ccaa4c9f8d390c7581c190aa", "codex-06" },
+            { "0x1a30cef06dbbf8ec25062e4e8d22e8df292f5054", "codex-07" },
+            { "0xe169b5dcbae9a7392072323aaf5a677a33d67ecd", "codex-08" },
+            { "0x21f7428619ef9f53addc5dab6723c822a8a96b42", "codex-09" },
+            { "0xf9bd20512de2d5ca0dcfd8d3cd08a2821917797a", "codex-10" }
         };
 
         public string GetElasticSearchUsername()
