@@ -6,6 +6,8 @@ namespace AutoClient
     {
         private readonly List<Cdx> instances;
         private readonly object instanceLock = new object();
+        private readonly App app;
+        private int printDelay = 10;
 
         private class Cdx
         {
@@ -24,6 +26,7 @@ namespace AutoClient
             }
 
             public string Id { get; }
+            public int QueueSize => queue.Count;
 
             public void Start()
             {
@@ -82,9 +85,19 @@ namespace AutoClient
             }
         }
 
+        private class CdxComparer : IComparer<Cdx>
+        {
+            public int Compare(Cdx? x, Cdx? y)
+            {
+                if (x == null || y == null) return 0;
+                return x.QueueSize - y.QueueSize;
+            }
+        }
+
         public LoadBalancer(App app, CodexWrapper[] instances)
         {
             this.instances = instances.Select(i => new Cdx(app, i)).ToList();
+            this.app = app;
         }
 
         public void Start()
@@ -101,23 +114,38 @@ namespace AutoClient
         {
             lock (instanceLock)
             {
+                instances.Sort(new CdxComparer());
                 var i = instances.First();
-                instances.RemoveAt(0);
-                instances.Add(i);
 
                 i.Queue(action);
             }
+            PrintQueue();
         }
 
         public void DispatchOnSpecificCodex(Action<CodexWrapper> action, string id)
         {
             lock (instanceLock)
             {
+                instances.Sort(new CdxComparer());
                 var i = instances.Single(a => a.Id == id);
-                instances.Remove(i);
-                instances.Add(i);
 
                 i.Queue(action);
+            }
+            PrintQueue();
+        }
+
+        private void PrintQueue()
+        {
+            printDelay--;
+            if (printDelay > 0) return;
+            printDelay = 10;
+
+            lock (instanceLock)
+            {
+                foreach (var i in instances)
+                {
+                    app.Log.Log($"Queue[{i.Id}] = {i.QueueSize} entries");
+                }
             }
         }
 
