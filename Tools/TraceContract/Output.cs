@@ -28,21 +28,22 @@ namespace TraceContract
 
         public Output(ILog log, Input input, Config config)
         {
+            this.input = input;
+            this.config = config;
+
             folder = config.GetOuputFolder();
             Directory.CreateDirectory(folder);
 
             var filename = Path.Combine(folder, $"contract_{input.PurchaseId}");
             var fileLog = new FileLog(filename);
+            log.Log($"Logging to '{filename}'");
+
+            this.log = new LogSplitter(fileLog, log);
             foreach (var pair in config.LogReplacements)
             {
-                fileLog.AddStringReplace(pair.Key, pair.Value);
-                fileLog.AddStringReplace(pair.Key.ToLowerInvariant(), pair.Value);
+                this.log.AddStringReplace(pair.Key, pair.Value);
+                this.log.AddStringReplace(pair.Key.ToLowerInvariant(), pair.Value);
             }
-
-            log.Log($"Logging to '{filename}'");
-            this.log = new LogSplitter(fileLog, log);
-            this.input = input;
-            this.config = config;
         }
 
         public void LogRequestCreated(RequestEvent requestEvent)
