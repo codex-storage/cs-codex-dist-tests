@@ -43,12 +43,11 @@ namespace AutoClient
 
             public void Queue(Action<CodexWrapper> action)
             {
-                if (queue.Count > 2) log.Log("Queue full. Waiting...");
-                var sleep = 0.1;
-                while (queue.Count > 2)
+                if (queue.Count > 3) Thread.Sleep(TimeSpan.FromSeconds(5.0));
+                if (queue.Count > 5) log.Log("Queue full. Waiting...");
+                while (queue.Count > 5)
                 {
-                    Thread.Sleep(TimeSpan.FromSeconds(sleep));
-                    sleep *= 2.0;
+                    Thread.Sleep(TimeSpan.FromSeconds(1.0));
                 }
 
                 lock (queueLock)

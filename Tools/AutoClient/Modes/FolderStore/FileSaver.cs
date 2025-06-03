@@ -278,6 +278,8 @@ namespace AutoClient.Modes.FolderStore
         {
             try
             {
+                if (purchase.IsStarted) return;
+
                 var expirySeconds = Convert.ToInt64(purchase.Request.Expiry);
                 var expiry = TimeSpan.FromSeconds(expirySeconds);
                 Log($"Request was submitted but not started yet. Waiting {Time.FormatDuration(expiry)} to start or expire...");
@@ -285,7 +287,7 @@ namespace AutoClient.Modes.FolderStore
                 var limit = DateTime.UtcNow + expiry;
                 while (DateTime.UtcNow < limit)
                 {
-                    Thread.Sleep(TimeSpan.FromSeconds(30));
+                    Thread.Sleep(TimeSpan.FromSeconds(10));
                     var update = GetPurchase(purchase.Request.Id);
                     if (update != null)
                     {
