@@ -88,6 +88,7 @@ public class Program
         var node = codexNodeFactory.CreateCodexNode(instance);
 
         node.SetLogLevel(LogLevel);
+        app.Log.Log($"Set up codex endpoint: {numberStr}");
         return new CodexWrapper(app, node);
     }
 

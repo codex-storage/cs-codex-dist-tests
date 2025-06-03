@@ -29,6 +29,7 @@ namespace AutoClient.Modes.FolderStore
 
         public void Run()
         {
+            app.Log.Log("Running FolderSaver...");
             saveFolderJsonCounter = 0;
 
             var folderFiles = Directory.GetFiles(app.Config.FolderToStore);

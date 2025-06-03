@@ -102,11 +102,13 @@ namespace AutoClient
 
         public void Start()
         {
+            app.Log.Log("LoadBalancer starting...");
             foreach (var i in instances) i.Start();
         }
 
         public void Stop()
         {
+            app.Log.Log("LoadBalancer stopping...");
             foreach (var i in instances) i.Stop();
         }
 

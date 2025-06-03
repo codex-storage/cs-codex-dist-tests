@@ -54,6 +54,7 @@ namespace AutoClient.Modes.FolderStore
                 return;
             }
 
+            Log("Checking balances...");
             foreach (var address in addresses)
             {
                 try
