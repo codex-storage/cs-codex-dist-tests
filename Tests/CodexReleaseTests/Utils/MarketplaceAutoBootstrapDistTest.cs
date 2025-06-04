@@ -53,11 +53,15 @@ namespace CodexReleaseTests.Utils
         protected abstract ByteSize HostAvailabilitySize { get; }
         protected abstract TimeSpan HostAvailabilityMaxDuration { get; }
         protected virtual bool MonitorChainState { get; } = true;
+        protected TimeSpan HostBlockTTL { get; } = TimeSpan.FromMinutes(1.0);
 
         public ICodexNodeGroup StartHosts()
         {
             var hosts = StartCodex(NumberOfHosts, s => s
                 .WithName("host")
+                .WithBlockTTL(HostBlockTTL)
+                .WithBlockMaintenanceNumber(1000)
+                .WithBlockMaintenanceInterval(HostBlockTTL / 2)
                 .EnableMarketplace(GetGeth(), GetContracts(), m => m
                     .WithInitial(StartingBalanceEth.Eth(), StartingBalanceTST.Tst())
                     .AsStorageNode()
@@ -70,7 +74,7 @@ namespace CodexReleaseTests.Utils
                 AssertTstBalance(host, StartingBalanceTST.Tst(), nameof(StartHosts));
                 AssertEthBalance(host, StartingBalanceEth.Eth(), nameof(StartHosts));
                 
-                host.Marketplace.MakeStorageAvailable(new StorageAvailability(
+                host.Marketplace.MakeStorageAvailable(new CreateStorageAvailability(
                     totalSpace: HostAvailabilitySize,
                     maxDuration: HostAvailabilityMaxDuration,
                     minPricePerBytePerSecond: 1.TstWei(),
@@ -84,6 +88,9 @@ namespace CodexReleaseTests.Utils
         {
             var host = StartCodex(s => s
                 .WithName("singlehost")
+                .WithBlockTTL(HostBlockTTL)
+                .WithBlockMaintenanceNumber(1000)
+                .WithBlockMaintenanceInterval(HostBlockTTL / 2)
                 .EnableMarketplace(GetGeth(), GetContracts(), m => m
                     .WithInitial(StartingBalanceEth.Eth(), StartingBalanceTST.Tst())
                     .AsStorageNode()
@@ -94,7 +101,7 @@ namespace CodexReleaseTests.Utils
             AssertTstBalance(host, StartingBalanceTST.Tst(), nameof(StartOneHost));
             AssertEthBalance(host, StartingBalanceEth.Eth(), nameof(StartOneHost));
 
-            host.Marketplace.MakeStorageAvailable(new StorageAvailability(
+            host.Marketplace.MakeStorageAvailable(new CreateStorageAvailability(
                 totalSpace: HostAvailabilitySize,
                 maxDuration: HostAvailabilityMaxDuration,
                 minPricePerBytePerSecond: 1.TstWei(),
