@@ -33,6 +33,9 @@ namespace TestNetRewarder
         [Uniform("proof-submitted-events", "pse", "PROOFSUBMITTEDEVENTS", false, "When greater than zero, chain event summary will include proof-submitted events.")]
         public int ShowProofSubmittedEvents { get; set; } = 0; // Defaulted to zero, aprox 7 to 10 such events every 2 minutes in testnet (from autoclient alone!)
 
+        [Uniform("proof-period-report-hours", "pprh", "PROOFPERIODREPORTHOURS", false, "Frequency in hours with which proof period reports are created.")]
+        public int ProofReportHours { get; set; } = 24;
+
         public string LogPath
         {
             get

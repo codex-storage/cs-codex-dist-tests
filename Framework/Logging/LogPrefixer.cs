@@ -24,17 +24,17 @@
 
         public void Debug(string message = "", int skipFrames = 0)
         {
-            backingLog.Debug(Prefix + message, skipFrames);
+            backingLog.Debug(GetPrefix() + message, skipFrames);
         }
 
         public void Error(string message)
         {
-            backingLog.Error(Prefix + message);
+            backingLog.Error(GetPrefix() + message);
         }
 
         public void Log(string message)
         {
-            backingLog.Log(Prefix + message);
+            backingLog.Log(GetPrefix() + message);
         }
 
         public void AddStringReplace(string from, string to)
@@ -50,6 +50,11 @@
         public string GetFullName()
         {
             return backingLog.GetFullName();
+        }
+
+        protected virtual string GetPrefix()
+        {
+            return Prefix;
         }
     }
 }

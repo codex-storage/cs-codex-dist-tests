@@ -42,7 +42,6 @@ namespace CodexPlugin
 
         public void Awake(IPluginAccess access)
         {
-            access.GetPlugin<CodexContractsPlugin.CodexContractsPlugin>().SetCodexDockerImageProvider(codexDockerImage);
         }
 
         public void Announce()

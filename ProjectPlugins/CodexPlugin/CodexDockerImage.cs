@@ -1,10 +1,8 @@
-﻿using CodexContractsPlugin;
-
-namespace CodexPlugin
+﻿namespace CodexPlugin
 {
-    public class CodexDockerImage : ICodexDockerImageProvider
+    public class CodexDockerImage
     {
-        private const string DefaultDockerImage = "codexstorage/nim-codex:latest-dist-tests";
+        private const string DefaultDockerImage = "codexstorage/nim-codex:0.2.3-dist-tests";
 
         public static string Override { get; set; } = string.Empty;
 

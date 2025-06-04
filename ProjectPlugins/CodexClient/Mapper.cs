@@ -166,7 +166,8 @@ namespace CodexClient
             return new DebugInfoVersion
             {
                 Version = obj.Version,
-                Revision = obj.Revision
+                Revision = obj.Revision,
+                Contracts = obj.Contracts
             };
         }
 

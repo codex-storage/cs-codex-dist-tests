@@ -28,11 +28,11 @@ namespace MetricsPlugin
             var file = log.CreateSubfile("csv");
             log.Log($"Downloading metrics for {nodeName} to file {file.Filename}");
 
-            file.WriteRaw(string.Join(",", headers));
+            file.Write(string.Join(",", headers));
 
             foreach (var pair in map)
             {
-                file.WriteRaw(string.Join(",", new[] { FormatTimestamp(pair.Key) }.Concat(pair.Value)));
+                file.Write(string.Join(",", new[] { FormatTimestamp(pair.Key) }.Concat(pair.Value)));
             }
 
             return file;

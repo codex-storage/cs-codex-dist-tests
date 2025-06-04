@@ -199,7 +199,7 @@ namespace ContinuousTests
 
             private void WriteEntryToFile(LogQueueEntry currentEntry)
             {
-                targetFile.WriteRaw(currentEntry.Message);
+                targetFile.Write(currentEntry.Message);
             }
 
             private void DeleteOldEntries(ulong wantedNumber)

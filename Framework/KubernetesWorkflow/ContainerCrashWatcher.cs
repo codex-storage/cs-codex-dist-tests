@@ -14,6 +14,7 @@ namespace KubernetesWorkflow
         private CancellationTokenSource cts;
         private Task? worker;
         private Exception? workerException;
+        private bool hasCrashed = false;
 
         public ContainerCrashWatcher(ILog log, KubernetesClientConfiguration config, string containerName, string podName, string recipeName, string k8sNamespace)
         {
@@ -47,10 +48,7 @@ namespace KubernetesWorkflow
 
         public bool HasCrashed()
         {
-            using var client = new Kubernetes(config);
-            var result = HasContainerBeenRestarted(client);
-            if (result) DownloadCrashedContainerLogs(client);
-            return result;
+            return hasCrashed;
         }
 
         private void Worker()
@@ -72,6 +70,9 @@ namespace KubernetesWorkflow
             {
                 if (HasContainerBeenRestarted(client))
                 {
+                    hasCrashed = true;
+                    cts.Cancel();
+
                     DownloadCrashedContainerLogs(client);
                     return;
                 }

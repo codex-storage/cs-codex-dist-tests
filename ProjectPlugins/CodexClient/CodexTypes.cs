@@ -17,6 +17,7 @@ namespace CodexClient
     {
         public string Version { get; set; } = string.Empty;
         public string Revision { get; set; } = string.Empty;
+        public string Contracts { get; set; } = string.Empty;
 
         public bool IsValid()
         {

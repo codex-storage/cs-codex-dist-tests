@@ -8,7 +8,7 @@ namespace BiblioTech.CodexChecking
     public interface ICheckResponseHandler
     {
         Task CheckNotStarted();
-        Task NowCompleted(ulong userId, string checkName);
+        Task NowCompleted(string checkName);
         Task GiveRoleReward();
         
         Task InvalidData();
@@ -37,7 +37,7 @@ namespace BiblioTech.CodexChecking
         public async Task StartDownloadCheck(ICheckResponseHandler handler, ulong userId)
         {
             var check = repo.GetOrCreate(userId).DownloadCheck;
-            if (string.IsNullOrEmpty(check.UniqueData))
+            if (IsUniqueDataStale(check))
             {
                 check.UniqueData = GenerateUniqueData();
                 repo.SaveChanges();
@@ -69,7 +69,7 @@ namespace BiblioTech.CodexChecking
         public async Task StartUploadCheck(ICheckResponseHandler handler, ulong userId)
         {
             var check = repo.GetOrCreate(userId).UploadCheck;
-            if (string.IsNullOrEmpty(check.UniqueData))
+            if (IsUniqueDataStale(check))
             {
                 check.UniqueData = GenerateUniqueData();
                 repo.SaveChanges();
@@ -109,6 +109,15 @@ namespace BiblioTech.CodexChecking
         private string GenerateUniqueData()
         {
             return $"{RandomBusyMessage.Get().Substring(5)}{RandomUtils.GenerateRandomString(12)}";
+        }
+
+        private bool IsUniqueDataStale(TransferCheck check)
+        {
+            var expiry = DateTime.UtcNow - TimeSpan.FromMinutes(10.0);
+
+            return
+                string.IsNullOrEmpty(check.UniqueData) ||
+                check.CompletedUtc < expiry;
         }
 
         private string UploadData(string uniqueData)
@@ -192,7 +201,7 @@ namespace BiblioTech.CodexChecking
 
         private async Task CheckNowCompleted(ICheckResponseHandler handler, TransferCheck check, ulong userId, string checkName)
         {
-            await handler.NowCompleted(userId, checkName);
+            await handler.NowCompleted(checkName);
 
             check.CompletedUtc = DateTime.UtcNow;
             repo.SaveChanges();

@@ -74,10 +74,24 @@ namespace BiblioTech.Commands
             await context.Followup("The received data didn't match. Check has failed.");
         }
 
-        public async Task NowCompleted(ulong userId, string checkName)
+        public async Task NowCompleted(string checkName)
         {
-            await context.Followup("Successfully completed the check!");
-            await Program.AdminChecker.SendInAdminChannel($"User <@{userId}> has completed check: {checkName}");
+            // check if eth address is known for user.
+            var data = Program.UserRepo.GetUser(user);
+            if (data.CurrentAddress == null)
+            {
+                await context.Followup($"Successfully completed the check!{Environment.NewLine}" +
+                    $"You haven't yet set your ethereum address. Consider using '/set' to set it.{Environment.NewLine}" +
+                    $"(You can find your address in the 'eth.address' file of your Codex node.)");
+
+                await Program.AdminChecker.SendInAdminChannel($"User <@{user.Id}> has completed check: {checkName}" +
+                    $" - EthAddress not set for user. User was reminded.");
+            }
+            else
+            {
+                await context.Followup("Successfully completed the check!");
+                await Program.AdminChecker.SendInAdminChannel($"User <@{user.Id}> has completed check: {checkName}");
+            }
         }
 
         public async Task ToAdminChannel(string msg)

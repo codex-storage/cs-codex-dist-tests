@@ -19,6 +19,7 @@ namespace CodexContractsPlugin
         SlotFreedEventDTO[] GetSlotFreedEvents();
         SlotReservationsFullEventDTO[] GetSlotReservationsFullEvents();
         ProofSubmittedEventDTO[] GetProofSubmittedEvents();
+        void GetReserveSlotCalls(Action<ReserveSlotFunction> onFunction);
     }
 
     public class CodexContractsEvents : ICodexContractsEvents
@@ -97,6 +98,15 @@ namespace CodexContractsPlugin
         {
             var events = gethNode.GetEvents<ProofSubmittedEventDTO>(deployment.MarketplaceAddress, BlockInterval);
             return events.Select(SetBlockOnEvent).ToArray();
+        }
+
+        public void GetReserveSlotCalls(Action<ReserveSlotFunction> onFunction)
+        {
+            gethNode.IterateFunctionCalls<ReserveSlotFunction>(BlockInterval, (b, fn) =>
+            {
+                fn.Block = b;
+                onFunction(fn);
+            });
         }
 
         private T SetBlockOnEvent<T>(EventLog<T> e) where T : IHasBlock

@@ -31,7 +31,7 @@ namespace ExperimentalTests.BasicTests
             );
 
             var geth = StartGethNode(s => s.IsMiner().WithName("disttest-geth"));
-            var contracts = Ci.StartCodexContracts(geth);
+            var contracts = Ci.StartCodexContracts(geth, BootstrapNode.Version);
 
             var numberOfHosts = 5;
             var hosts = StartCodex(numberOfHosts, s => s
@@ -48,7 +48,7 @@ namespace ExperimentalTests.BasicTests
 
             foreach (var host in hosts)
             {
-                AssertBalance(contracts, host, Is.EqualTo(hostInitialBalance));
+                AssertBalance(contracts, host, Is.EqualTo(hostInitialBalance), "Host initial balance");
 
                 var availability = new CreateStorageAvailability(
                     totalSpace: 10.GB(),
@@ -66,7 +66,7 @@ namespace ExperimentalTests.BasicTests
                 .EnableMarketplace(geth, contracts, m => m
                     .WithInitial(10.Eth(), clientInitialBalance)));
 
-            AssertBalance(contracts, client, Is.EqualTo(clientInitialBalance));
+            AssertBalance(contracts, client, Is.EqualTo(clientInitialBalance), "Client initial balance");
 
             var uploadCid = client.UploadFile(testFile);
 

@@ -1,49 +1,45 @@
 ﻿using CodexClient;
 using CodexContractsPlugin;
-using CodexContractsPlugin.ChainMonitor;
 using CodexContractsPlugin.Marketplace;
 using CodexPlugin;
 using CodexTests;
-using DistTestCore;
 using GethPlugin;
+using Logging;
 using Nethereum.Hex.HexConvertors.Extensions;
 using NUnit.Framework;
 using Utils;
 
-namespace CodexReleaseTests.MarketTests
+namespace CodexReleaseTests.Utils
 {
     public abstract class MarketplaceAutoBootstrapDistTest : AutoBootstrapDistTest
     {
-        private readonly Dictionary<TestLifecycle, MarketplaceHandle> handles = new Dictionary<TestLifecycle, MarketplaceHandle>();
+        private MarketplaceHandle handle = null!;
         protected const int StartingBalanceTST = 1000;
         protected const int StartingBalanceEth = 10;
 
-        protected override void LifecycleStart(TestLifecycle lifecycle)
+        [SetUp]
+        public void SetupMarketplace()
         {
-            base.LifecycleStart(lifecycle);
             var geth = StartGethNode(s => s.IsMiner());
-            var contracts = Ci.StartCodexContracts(geth);
-            var monitor = new ChainMonitor(lifecycle.Log, contracts, lifecycle.TestStart, TimeSpan.FromSeconds(1.0));
-            monitor.Start();
-
-            handles.Add(lifecycle, new MarketplaceHandle(geth, contracts, monitor));
+            var contracts = Ci.StartCodexContracts(geth, BootstrapNode.Version);
+            var monitor = SetupChainMonitor(GetTestLog(), contracts, GetTestRunTimeRange().From);
+            handle = new MarketplaceHandle(geth, contracts, monitor);
         }
 
-        protected override void LifecycleStop(TestLifecycle lifecycle, DistTestResult result)
+        [TearDown]
+        public void TearDownMarketplace()
         {
-            handles[lifecycle].Monitor.Stop();
-            handles.Remove(lifecycle);
-            base.LifecycleStop(lifecycle, result);
+            if (handle.ChainMonitor != null) handle.ChainMonitor.Stop();
         }
 
         protected IGethNode GetGeth()
         {
-            return handles[Get()].Geth;
+            return handle.Geth;
         }
 
         protected ICodexContracts GetContracts()
         {
-            return handles[Get()].Contracts;
+            return handle.Contracts;
         }
 
         protected TimeSpan GetPeriodDuration()
@@ -52,24 +48,16 @@ namespace CodexReleaseTests.MarketTests
             return TimeSpan.FromSeconds(config.Proofs.Period);
         }
 
-        protected PeriodMonitorResult GetPeriodMonitorReports()
-        {
-            return handles[Get()].Monitor.GetPeriodReports();
-        }
-
         protected abstract int NumberOfHosts { get; }
         protected abstract int NumberOfClients { get; }
         protected abstract ByteSize HostAvailabilitySize { get; }
         protected abstract TimeSpan HostAvailabilityMaxDuration { get; }
-        protected TimeSpan HostBlockTTL { get; } = TimeSpan.FromMinutes(1.0);
+        protected virtual bool MonitorChainState { get; } = true;
 
         public ICodexNodeGroup StartHosts()
         {
             var hosts = StartCodex(NumberOfHosts, s => s
                 .WithName("host")
-                .WithBlockTTL(HostBlockTTL)
-                .WithBlockMaintenanceNumber(100)
-                .WithBlockMaintenanceInterval(HostBlockTTL / 2)
                 .EnableMarketplace(GetGeth(), GetContracts(), m => m
                     .WithInitial(StartingBalanceEth.Eth(), StartingBalanceTST.Tst())
                     .AsStorageNode()
@@ -81,47 +69,38 @@ namespace CodexReleaseTests.MarketTests
             {
                 AssertTstBalance(host, StartingBalanceTST.Tst(), nameof(StartHosts));
                 AssertEthBalance(host, StartingBalanceEth.Eth(), nameof(StartHosts));
-
-                var spaceBefore = host.Space();
-                Assert.That(spaceBefore.QuotaReservedBytes, Is.EqualTo(0));
-                Assert.That(spaceBefore.QuotaUsedBytes, Is.EqualTo(0));
-
-                host.Marketplace.MakeStorageAvailable(new CreateStorageAvailability(
+                
+                host.Marketplace.MakeStorageAvailable(new StorageAvailability(
                     totalSpace: HostAvailabilitySize,
                     maxDuration: HostAvailabilityMaxDuration,
                     minPricePerBytePerSecond: 1.TstWei(),
                     totalCollateral: 999999.Tst())
                 );
-
-                var spaceAfter = host.Space();
-                Assert.That(spaceAfter.QuotaReservedBytes, Is.EqualTo(HostAvailabilitySize.SizeInBytes));
-                Assert.That(spaceAfter.QuotaUsedBytes, Is.EqualTo(0));
             }
             return hosts;
         }
 
-        public void AssertHostAvailabilitiesAreEmpty(IEnumerable<ICodexNode> hosts)
+        public ICodexNode StartOneHost()
         {
-            var retry = GetAvailabilitySpaceAssertRetry();
-            retry.Run(() =>
-            {
-                foreach (var host in hosts)
-                {
-                    AssertHostAvailabilitiesAreEmpty(host);
-                }
-            });
-        }
+            var host = StartCodex(s => s
+                .WithName("singlehost")
+                .EnableMarketplace(GetGeth(), GetContracts(), m => m
+                    .WithInitial(StartingBalanceEth.Eth(), StartingBalanceTST.Tst())
+                    .AsStorageNode()
+                )
+            );
 
-        private void AssertHostAvailabilitiesAreEmpty(ICodexNode host)
-        {
-            var availabilities = host.Marketplace.GetAvailabilities();
-            foreach (var a in availabilities)
-            {
-                if (a.FreeSpace.SizeInBytes  != a.TotalSpace.SizeInBytes)
-                {
-                    throw new Exception(nameof(AssertHostAvailabilitiesAreEmpty) + $" free: {a.FreeSpace} total: {a.TotalSpace}");
-                }
-            }
+            var config = GetContracts().Deployment.Config;
+            AssertTstBalance(host, StartingBalanceTST.Tst(), nameof(StartOneHost));
+            AssertEthBalance(host, StartingBalanceEth.Eth(), nameof(StartOneHost));
+
+            host.Marketplace.MakeStorageAvailable(new StorageAvailability(
+                totalSpace: HostAvailabilitySize,
+                maxDuration: HostAvailabilityMaxDuration,
+                minPricePerBytePerSecond: 1.TstWei(),
+                totalCollateral: 999999.Tst())
+            );
+            return host;
         }
 
         public void AssertTstBalance(ICodexNode node, TestToken expectedBalance, string message)
@@ -159,19 +138,23 @@ namespace CodexReleaseTests.MarketTests
             });
         }
 
+        private ChainMonitor? SetupChainMonitor(ILog log, ICodexContracts contracts, DateTime startUtc)
+        {
+            if (!MonitorChainState) return null;
+
+            var result = new ChainMonitor(log, contracts, startUtc);
+            result.Start(() =>
+            {
+                log.Error("Failure in chain monitor. No chain updates after this point.");
+                //Assert.Fail("Failure in chain monitor.");
+            });
+            return result;
+        }
+
         private Retry GetBalanceAssertRetry()
         {
             return new Retry("AssertBalance",
                 maxTimeout: TimeSpan.FromMinutes(10.0),
-                sleepAfterFail: TimeSpan.FromSeconds(10.0),
-                onFail: f => { },
-                failFast: false);
-        }
-
-        private Retry GetAvailabilitySpaceAssertRetry()
-        {
-            return new Retry("AssertAvailabilitySpace",
-                maxTimeout: HostBlockTTL * 3,
                 sleepAfterFail: TimeSpan.FromSeconds(10.0),
                 onFail: f => { },
                 failFast: false);
@@ -225,7 +208,7 @@ namespace CodexReleaseTests.MarketTests
             );
         }
 
-        public SlotFill[] GetOnChainSlotFills(ICodexNodeGroup possibleHosts, string purchaseId)
+        public SlotFill[] GetOnChainSlotFills(IEnumerable<ICodexNode> possibleHosts, string purchaseId)
         {
             var fills = GetOnChainSlotFills(possibleHosts);
             return fills.Where(f => f
@@ -233,7 +216,7 @@ namespace CodexReleaseTests.MarketTests
                 .ToArray();
         }
 
-        public SlotFill[] GetOnChainSlotFills(ICodexNodeGroup possibleHosts)
+        public SlotFill[] GetOnChainSlotFills(IEnumerable<ICodexNode> possibleHosts)
         {
             var events = GetContracts().GetEvents(GetTestRunTimeRange());
             var fills = events.GetSlotFilledEvents();
@@ -245,34 +228,13 @@ namespace CodexReleaseTests.MarketTests
             }).ToArray();
         }
 
-        public SlotFree[] GetOnChainSlotFrees(ICodexNodeGroup possibleHosts, string purchaseId)
-        {
-            var fills = GetOnChainSlotFrees(possibleHosts);
-            return fills.Where(f => f
-                .SlotFreedEvent.RequestId.ToHex(false).ToLowerInvariant() == purchaseId.ToLowerInvariant())
-                .ToArray();
-        }
-
-        public SlotFree[] GetOnChainSlotFrees(ICodexNodeGroup possibleHosts)
-        {
-            var events = GetContracts().GetEvents(GetTestRunTimeRange());
-            var fills = GetOnChainSlotFills(possibleHosts);
-            var frees = events.GetSlotFreedEvents();
-            return frees.Select(f =>
-            {
-                var matchingFill = fills.Single(fill => fill.SlotFilledEvent.RequestId == f.RequestId &&
-                    fill.SlotFilledEvent.SlotIndex == f.SlotIndex);
-
-                return new SlotFree(f, matchingFill.Host);
-
-            }).ToArray();
-        }
-
         protected void AssertClientHasPaidForContract(TestToken pricePerBytePerSecond, ICodexNode client, IStoragePurchaseContract contract, ICodexNodeGroup hosts)
         {
             var expectedBalance = StartingBalanceTST.Tst() - GetContractFinalCost(pricePerBytePerSecond, contract, hosts);
 
             AssertTstBalance(client, expectedBalance, "Client balance incorrect.");
+
+            Log($"Client has paid for contract. Balance: {expectedBalance}");
         }
 
         protected void AssertHostsWerePaidForContract(TestToken pricePerBytePerSecond, IStoragePurchaseContract contract, ICodexNodeGroup hosts)
@@ -292,7 +254,9 @@ namespace CodexReleaseTests.MarketTests
 
             foreach (var pair in expectedBalances)
             {
-                AssertTstBalance(pair.Key, pair.Value, "Host was not paid for storage.");
+                AssertTstBalance(pair.Key, pair.Value, $"Host {pair.Key} was not paid for storage.");
+
+                Log($"Host {pair.Key} was paid for storage. Balance: {pair.Value}");
             }
         }
 
@@ -310,6 +274,30 @@ namespace CodexReleaseTests.MarketTests
                         throw new Exception(nameof(AssertHostsCollateralsAreUnchanged));
                     }
                 });
+            }
+        }
+
+        protected void WaitForContractStarted(IStoragePurchaseContract r)
+        {
+            try
+            {
+                r.WaitForStorageContractStarted();
+            }
+            catch
+            {
+                // Contract failed to start. Retrieve and log every call to ReserveSlot to identify which hosts
+                // should have filled the slot.
+
+                var requestId = r.PurchaseId.ToLowerInvariant();
+                var calls = new List<ReserveSlotFunction>();
+                GetContracts().GetEvents(GetTestRunTimeRange()).GetReserveSlotCalls(calls.Add);
+
+                Log($"Request '{requestId}' failed to start. There were {calls.Count} hosts who called reserve-slot for it:");
+                foreach (var c in calls)
+                {
+                    Log($" - {c.Block.Utc} Host: {c.FromAddress} RequestId: {c.RequestId.ToHex()} SlotIndex: {c.SlotIndex}");
+                }
+                throw;
             }
         }
 
@@ -332,7 +320,7 @@ namespace CodexReleaseTests.MarketTests
 
         private DateTime GetContractOnChainSubmittedUtc(IStoragePurchaseContract contract)
         {
-            return Time.Retry<DateTime>(() =>
+            return Time.Retry(() =>
             {
                 var events = GetContracts().GetEvents(GetTestRunTimeRange());
                 var submitEvent = events.GetStorageRequests().SingleOrDefault(e => e.RequestId.ToHex(false) == contract.PurchaseId);
@@ -391,6 +379,33 @@ namespace CodexReleaseTests.MarketTests
             }, description);
         }
 
+        protected TimeSpan CalculateContractFailTimespan()
+        {
+            var config = GetContracts().Deployment.Config;
+            var requiredNumMissedProofs = Convert.ToInt32(config.Collateral.MaxNumberOfSlashes);
+            var periodDuration = GetPeriodDuration();
+            var gracePeriod = periodDuration;
+
+            // Each host could miss 1 proof per period,
+            // so the time we should wait is period time * requiredNum of missed proofs.
+            // Except: the proof requirement has a concept of "downtime":
+            // a segment of time where proof is not required.
+            // We calculate the probability of downtime and extend the waiting
+            // timeframe by a factor, such that all hosts are highly likely to have 
+            // failed a sufficient number of proofs.
+
+            float n = requiredNumMissedProofs;
+            return gracePeriod + periodDuration * n * GetDowntimeFactor(config);
+        }
+
+        private float GetDowntimeFactor(MarketplaceConfig config)
+        {
+            byte numBlocksInDowntimeSegment = config.Proofs.Downtime;
+            float downtime = numBlocksInDowntimeSegment;
+            float window = 256.0f;
+            var chanceOfDowntime = downtime / window;
+            return 1.0f + chanceOfDowntime + chanceOfDowntime;
+        }
         public class SlotFill
         {
             public SlotFill(SlotFilledEventDTO slotFilledEvent, ICodexNode host)
@@ -403,30 +418,18 @@ namespace CodexReleaseTests.MarketTests
             public ICodexNode Host { get; }
         }
 
-        public class SlotFree
-        {
-            public SlotFree(SlotFreedEventDTO slotFreedEvent, ICodexNode host)
-            {
-                SlotFreedEvent = slotFreedEvent;
-                Host = host;
-            }
-
-            public SlotFreedEventDTO SlotFreedEvent { get; }
-            public ICodexNode Host { get; }
-        }
-
         private class MarketplaceHandle
         {
-            public MarketplaceHandle(IGethNode geth, ICodexContracts contracts, ChainMonitor monitor)
+            public MarketplaceHandle(IGethNode geth, ICodexContracts contracts, ChainMonitor? chainMonitor)
             {
                 Geth = geth;
                 Contracts = contracts;
-                Monitor = monitor;
+                ChainMonitor = chainMonitor;
             }
 
             public IGethNode Geth { get; }
             public ICodexContracts Contracts { get; }
-            public ChainMonitor Monitor { get; }
+            public ChainMonitor? ChainMonitor { get; }
         }
     }
 }
