@@ -1,15 +1,18 @@
-﻿using Utils;
+﻿using Logging;
+using Utils;
 
 namespace CodexContractsPlugin.ChainMonitor
 {
     public class PeriodMonitor
     {
+        private readonly ILog log;
         private readonly ICodexContracts contracts;
         private readonly List<PeriodReport> reports = new List<PeriodReport>();
         private ulong? currentPeriod = null;
 
-        public PeriodMonitor(ICodexContracts contracts)
+        public PeriodMonitor(ILog log, ICodexContracts contracts)
         {
+            this.log = log;
             this.contracts = contracts;
         }
 

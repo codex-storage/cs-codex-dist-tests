@@ -1,5 +1,4 @@
 ﻿using CodexClient.Hooks;
-using CodexContractsPlugin.Marketplace;
 using Logging;
 using Newtonsoft.Json;
 using Utils;
@@ -15,7 +14,13 @@ namespace CodexClient
         void WaitForStorageContractSubmitted();
         void WaitForStorageContractStarted();
         void WaitForStorageContractFinished();
-        void WaitForContractFailed(MarketplaceConfig config);
+        void WaitForContractFailed(IMarketplaceConfigInput config);
+    }
+
+    public interface IMarketplaceConfigInput
+    {
+        int MaxNumberOfSlashes { get; }
+        TimeSpan PeriodDuration { get; }
     }
 
     public class StoragePurchaseContract : IStoragePurchaseContract
@@ -100,7 +105,7 @@ namespace CodexClient
             AssertDuration(SubmittedToFinished, timeout, nameof(SubmittedToFinished));
         }
 
-        public void WaitForContractFailed(MarketplaceConfig config)
+        public void WaitForContractFailed(IMarketplaceConfigInput config)
         {
             if (!contractStartedUtc.HasValue)
             {
@@ -122,10 +127,10 @@ namespace CodexClient
             WaitForStorageContractState(timeout, StoragePurchaseState.Failed);
         }
 
-        private TimeSpan TimeNeededToFailEnoughProofsToFreeASlot(MarketplaceConfig config)
+        private TimeSpan TimeNeededToFailEnoughProofsToFreeASlot(IMarketplaceConfigInput config)
         {
-            var numMissedProofsRequiredForFree = config.Collateral.MaxNumberOfSlashes;
-            var timePerProof = TimeSpan.FromSeconds(config.Proofs.Period);
+            var numMissedProofsRequiredForFree = config.MaxNumberOfSlashes;
+            var timePerProof = config.PeriodDuration;
             var result = timePerProof * (numMissedProofsRequiredForFree + 1);
 
             // Times 2!
