@@ -103,6 +103,30 @@ namespace CodexReleaseTests.Utils
             return host;
         }
 
+        public void AssertHostAvailabilitiesAreEmpty(IEnumerable<ICodexNode> hosts)
+        {
+            var retry = GetAvailabilitySpaceAssertRetry();
+            retry.Run(() =>
+            {
+                foreach (var host in hosts)
+                {
+                    AssertHostAvailabilitiesAreEmpty(host);
+                }
+            });
+        }
+
+        private void AssertHostAvailabilitiesAreEmpty(ICodexNode host)
+        {
+            var availabilities = host.Marketplace.GetAvailabilities();
+            foreach (var a in availabilities)
+            {
+                if (a.FreeSpace.SizeInBytes != a.TotalSpace.SizeInBytes)
+                {
+                    throw new Exception(nameof(AssertHostAvailabilitiesAreEmpty) + $" free: {a.FreeSpace} total: {a.TotalSpace}");
+                }
+            }
+        }
+
         public void AssertTstBalance(ICodexNode node, TestToken expectedBalance, string message)
         {
             AssertTstBalance(node.EthAddress, expectedBalance, message);
@@ -155,6 +179,15 @@ namespace CodexReleaseTests.Utils
         {
             return new Retry("AssertBalance",
                 maxTimeout: TimeSpan.FromMinutes(10.0),
+                sleepAfterFail: TimeSpan.FromSeconds(10.0),
+                onFail: f => { },
+                failFast: false);
+        }
+
+        private Retry GetAvailabilitySpaceAssertRetry()
+        {
+            return new Retry("AssertAvailabilitySpace",
+                maxTimeout: HostBlockTTL * 3,
                 sleepAfterFail: TimeSpan.FromSeconds(10.0),
                 onFail: f => { },
                 failFast: false);
