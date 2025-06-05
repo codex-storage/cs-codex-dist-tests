@@ -6,7 +6,7 @@ using Utils;
 namespace CodexReleaseTests.MarketTests
 {
     [TestFixture(5, 3, 1)]
-    [TestFixture(10, 20, 10)]
+    [TestFixture(10, 8, 4)]
     public class FinishTest : MarketplaceAutoBootstrapDistTest
     {
         public FinishTest(int hosts, int slots, int tolerance)

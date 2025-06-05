@@ -124,7 +124,7 @@ namespace CodexClient
                 );
             }
 
-            WaitForStorageContractState(timeout, StoragePurchaseState.Failed);
+            WaitForStorageContractState(timeout, StoragePurchaseState.Errored);
         }
 
         private TimeSpan TimeNeededToFailEnoughProofsToFreeASlot(IMarketplaceConfigInput config)
@@ -157,7 +157,7 @@ namespace CodexClient
                     hooks.OnStorageContractUpdated(purchaseStatus);
                 }
 
-                if (lastState == StoragePurchaseState.Errored)
+                if (desiredState != StoragePurchaseState.Errored && lastState == StoragePurchaseState.Errored)
                 {
                     FrameworkAssert.Fail("Contract errored: " + statusJson);
                 }
