@@ -1,39 +1,33 @@
 ﻿using CodexClient;
 using CodexPlugin;
+using CodexReleaseTests.Utils;
 using NUnit.Framework;
 using Utils;
 
 namespace CodexReleaseTests.MarketTests
 {
-    //[TestFixture(8, 3, 1)]
-    [TestFixture(8, 4, 1)]
-    //[TestFixture(10, 5, 1)]
-    //[TestFixture(10, 6, 1)]
-    //[TestFixture(10, 6, 3)]
-    public class MultipleContractsTest : MarketplaceAutoBootstrapDistTest
+    [TestFixture(10, 20, 5)]
+    public class SequentialContracts : MarketplaceAutoBootstrapDistTest
     {
-        public MultipleContractsTest(int hosts, int slots, int tolerance)
+        public SequentialContracts(int hosts, int slots, int tolerance)
         {
             this.hosts = hosts;
-            this.slots = slots;
-            this.tolerance = tolerance;
+            purchaseParams = new PurchaseParams(slots, tolerance, 10.MB());
         }
 
-        private const int FilesizeMb = 10;
         private readonly int hosts;
-        private readonly int slots;
-        private readonly int tolerance;
+        private readonly PurchaseParams purchaseParams;
 
         protected override int NumberOfHosts => hosts;
-        protected override int NumberOfClients => 8;
-        protected override ByteSize HostAvailabilitySize => (1000 * FilesizeMb).MB();
+        protected override int NumberOfClients => 6;
+        protected override ByteSize HostAvailabilitySize => purchaseParams.SlotSize.Multiply(100.0);
         protected override TimeSpan HostAvailabilityMaxDuration => Get8TimesConfiguredPeriodDuration() * 12;
         private readonly TestToken pricePerBytePerSecond = 10.TstWei();
 
         [Test]
         [Combinatorial]
-        public void MultipleContractGenerations(
-            [Values(50)] int numGenerations)
+        public void Sequential(
+            [Values(10)] int numGenerations)
         {
             var hosts = StartHosts();
             var clients = StartClients();
@@ -41,7 +35,14 @@ namespace CodexReleaseTests.MarketTests
             for (var i = 0; i < numGenerations; i++)
             {
                 Log("Generation: " + i);
-                Generation(clients, hosts);
+                try
+                {
+                    Generation(clients, hosts);
+                }
+                catch (Exception ex)
+                {
+                    Assert.Fail($"Failed at generation {i} with exception {ex}");
+                }
             }
 
             Thread.Sleep(TimeSpan.FromSeconds(12.0));
@@ -58,10 +59,6 @@ namespace CodexReleaseTests.MarketTests
             });
 
             All(requests, WaitForContractStarted);
-
-            // for the time being, we're only interested in whether these contracts start.
-            //All(requests, r => AssertContractSlotsAreFilledByHosts(r, hosts));
-            //All(requests, r => r.WaitForStorageContractFinished());
         }
 
         private void All<T>(T[] items, Action<T> action)
@@ -87,16 +84,16 @@ namespace CodexReleaseTests.MarketTests
 
         private IStoragePurchaseContract CreateStorageRequest(ICodexNode client)
         {
-            var cid = client.UploadFile(GenerateTestFile(FilesizeMb.MB()));
+            var cid = client.UploadFile(GenerateTestFile(purchaseParams.UploadFilesize));
             var config = GetContracts().Deployment.Config;
             return client.Marketplace.RequestStorage(new StoragePurchaseRequest(cid)
             {
                 Duration = GetContractDuration(),
                 Expiry = GetContractExpiry(),
-                MinRequiredNumberOfNodes = (uint)slots,
-                NodeFailureTolerance = (uint)tolerance,
+                MinRequiredNumberOfNodes = (uint)purchaseParams.Nodes,
+                NodeFailureTolerance = (uint)purchaseParams.Tolerance,
                 PricePerBytePerSecond = pricePerBytePerSecond,
-                ProofProbability = 1,
+                ProofProbability = 10000,
                 CollateralPerByte = 1.TstWei()
             });
         }
@@ -114,7 +111,7 @@ namespace CodexReleaseTests.MarketTests
         private TimeSpan Get8TimesConfiguredPeriodDuration()
         {
             var config = GetContracts().Deployment.Config;
-            return TimeSpan.FromSeconds(((double)config.Proofs.Period) * 8.0);
+            return TimeSpan.FromSeconds(config.Proofs.Period * 8.0);
         }
     }
 }

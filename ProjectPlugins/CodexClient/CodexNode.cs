@@ -318,6 +318,14 @@ namespace CodexClient
             log.AddStringReplace(CodexUtils.ToShortId(peerId), nodeName);
             log.AddStringReplace(nodeId, nodeName);
             log.AddStringReplace(CodexUtils.ToShortId(nodeId), nodeName);
+
+            var ethAccount = codexAccess.GetEthAccount();
+            if (ethAccount != null)
+            {
+                var addr = ethAccount.EthAddress.ToString();
+                log.AddStringReplace(addr, nodeName);
+                log.AddStringReplace(addr.ToLowerInvariant(), nodeName);
+            }
         }
 
         private string[] GetPeerMultiAddresses(CodexNode peer, DebugInfo peerInfo)

@@ -59,19 +59,22 @@ namespace TraceContract
             var ignoreLog = new NullLog();
             var chainState = new ChainState(ignoreLog, contracts, tracker, utc, false);
 
-            while (!tracker.IsFinished)
+            var atNow = false;
+            while (!tracker.IsFinished && !atNow)
             {
                 utc += TimeSpan.FromHours(1.0);
                 if (utc > DateTime.UtcNow)
                 {
                     log.Log("Caught up to present moment without finding contract end.");
-                    return DateTime.UtcNow;
+                    utc = DateTime.UtcNow;
+                    atNow = true;
                 }
 
                 log.Log($"Querying up to {utc}");
                 chainState.Update(utc);
             }
 
+            if (atNow) return utc;
             return tracker.FinishUtc;
         }
 

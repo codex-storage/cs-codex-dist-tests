@@ -6,7 +6,7 @@
     }
 
     [Serializable]
-    public class EthAddress
+    public class EthAddress : IComparable<EthAddress>
     {
         public EthAddress(string address)
         {
@@ -15,10 +15,14 @@
 
         public string Address { get; }
 
+        public int CompareTo(EthAddress? other)
+        {
+            return Address.CompareTo(other!.Address);
+        }
+
         public override bool Equals(object? obj)
         {
-            return obj is EthAddress address &&
-                   Address == address.Address;
+            return obj is EthAddress token && Address == token.Address;
         }
 
         public override int GetHashCode()
@@ -29,6 +33,19 @@
         public override string ToString()
         {
             return Address;
+        }
+
+        public static bool operator ==(EthAddress? a, EthAddress? b)
+        {
+            if (ReferenceEquals(a, b)) return true;
+            if (ReferenceEquals(a, null)) return false;
+            if (ReferenceEquals(b, null)) return false;
+            return a.Address == b.Address;
+        }
+
+        public static bool operator !=(EthAddress? a, EthAddress? b)
+        {
+            return !(a == b);
         }
     }
 }

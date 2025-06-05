@@ -14,7 +14,13 @@ namespace CodexClient
         void WaitForStorageContractSubmitted();
         void WaitForStorageContractStarted();
         void WaitForStorageContractFinished();
-        void WaitForContractFailed();
+        void WaitForContractFailed(IMarketplaceConfigInput config);
+    }
+
+    public interface IMarketplaceConfigInput
+    {
+        int MaxNumberOfSlashes { get; }
+        TimeSpan PeriodDuration { get; }
     }
 
     public class StoragePurchaseContract : IStoragePurchaseContract
@@ -99,7 +105,7 @@ namespace CodexClient
             AssertDuration(SubmittedToFinished, timeout, nameof(SubmittedToFinished));
         }
 
-        public void WaitForContractFailed()
+        public void WaitForContractFailed(IMarketplaceConfigInput config)
         {
             if (!contractStartedUtc.HasValue)
             {
@@ -107,7 +113,30 @@ namespace CodexClient
             }
             var currentContractTime = DateTime.UtcNow - contractSubmittedUtc!.Value;
             var timeout = (Purchase.Duration - currentContractTime) + gracePeriod;
+            var minTimeout = TimeNeededToFailEnoughProofsToFreeASlot(config);
+
+            if (timeout < minTimeout)
+            {
+                throw new ArgumentOutOfRangeException(
+                    $"Test is misconfigured. Assuming a proof is required every period, it will take {Time.FormatDuration(minTimeout)} " +
+                    $"to fail enough proofs for a slot to be freed. But, the storage contract will complete in {Time.FormatDuration(timeout)}. " +
+                    $"Increase the duration."
+                );
+            }
+
             WaitForStorageContractState(timeout, StoragePurchaseState.Failed);
+        }
+
+        private TimeSpan TimeNeededToFailEnoughProofsToFreeASlot(IMarketplaceConfigInput config)
+        {
+            var numMissedProofsRequiredForFree = config.MaxNumberOfSlashes;
+            var timePerProof = config.PeriodDuration;
+            var result = timePerProof * (numMissedProofsRequiredForFree + 1);
+
+            // Times 2!
+            // Because of pointer-downtime it's possible that some periods even though there's a probability of 100%
+            // will not require any proof. To be safe we take twice the required time.
+            return result * 2;
         }
 
         private void WaitForStorageContractState(TimeSpan timeout, StoragePurchaseState desiredState, int sleep = 1000)

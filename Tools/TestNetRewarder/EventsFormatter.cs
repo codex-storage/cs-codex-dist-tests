@@ -165,13 +165,7 @@ namespace TestNetRewarder
 
         private void DescribeMissedProof(List<string> lines, PeriodProofMissed missedProof)
         {
-            lines.Add($"[{FormatHost(missedProof.Host)}] missed proof for {FormatRequestId(missedProof.Request)} (slotIndex: {missedProof.SlotIndex})");
-        }
-
-        private string FormatHost(EthAddress? host)
-        {
-            if (host == null) return "Unknown host";
-            return host.Address;
+            lines.Add($"[{missedProof.FormatHost()}] missed proof for {FormatRequestId(missedProof.Request)} (slotIndex: {missedProof.SlotIndex})");
         }
 
         private void AddRequestBlock(RequestEvent requestEvent, string eventName, params string[] content)
