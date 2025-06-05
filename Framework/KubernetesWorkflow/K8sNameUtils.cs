@@ -22,7 +22,9 @@
                 .Replace("\\", "-")
                 .Replace("[", "-")
                 .Replace("]", "-")
-                .Replace(",", "-");
+                .Replace(",", "-")
+                .Replace("(", "-")
+                .Replace(")", "-");
 
             if (result.Length > maxLength) result = result.Substring(0, maxLength);
             result = result.Trim('-');
