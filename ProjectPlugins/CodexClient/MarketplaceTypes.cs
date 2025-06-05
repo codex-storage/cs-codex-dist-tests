@@ -84,9 +84,9 @@ namespace CodexClient
         //public PoRParameters Por { get; set; }
     }
 
-    public class StorageAvailability
+    public class CreateStorageAvailability
     {
-        public StorageAvailability(ByteSize totalSpace, TimeSpan maxDuration, TestToken minPricePerBytePerSecond, TestToken totalCollateral)
+        public CreateStorageAvailability(ByteSize totalSpace, TimeSpan maxDuration, TestToken minPricePerBytePerSecond, TestToken totalCollateral)
         {
             TotalSpace = totalSpace;
             MaxDuration = maxDuration;
@@ -94,20 +94,49 @@ namespace CodexClient
             TotalCollateral = totalCollateral;
         }
 
-        public string Id { get; set; } = string.Empty;
+        public ByteSize TotalSpace { get; }
+        public TimeSpan MaxDuration { get; }
+        public TestToken MinPricePerBytePerSecond { get; }
+        public TestToken TotalCollateral { get; }
+
+        public void Log(ILog log)
+        {
+            log.Log($"Create storage Availability: (" +
+                $"totalSize: {TotalSpace}, " +
+                $"maxDuration: {Time.FormatDuration(MaxDuration)}, " +
+                $"minPricePerBytePerSecond: {MinPricePerBytePerSecond}, " +
+                $"totalCollateral: {TotalCollateral})");
+        }
+    }
+
+    public class StorageAvailability
+    {
+        public StorageAvailability(string id, ByteSize totalSpace, TimeSpan maxDuration, TestToken minPricePerBytePerSecond, TestToken totalCollateral, ByteSize freeSpace)
+        {
+            Id = id;
+            TotalSpace = totalSpace;
+            MaxDuration = maxDuration;
+            MinPricePerBytePerSecond = minPricePerBytePerSecond;
+            TotalCollateral = totalCollateral;
+            FreeSpace = freeSpace;
+        }
+
+        public string Id { get; }
         public ByteSize TotalSpace { get; }
         public TimeSpan MaxDuration { get; }
         public TestToken MinPricePerBytePerSecond { get; }
         public TestToken TotalCollateral { get; } 
-        public ByteSize FreeSpace { get; set; } = ByteSize.Zero;
+        public ByteSize FreeSpace { get; }
 
         public void Log(ILog log)
         {
             log.Log($"Storage Availability: (" +
+                $"id: {Id}, " +
                 $"totalSize: {TotalSpace}, " +
                 $"maxDuration: {Time.FormatDuration(MaxDuration)}, " + 
                 $"minPricePerBytePerSecond: {MinPricePerBytePerSecond}, " +
-                $"totalCollateral: {TotalCollateral})");
+                $"totalCollateral: {TotalCollateral}, " +
+                $"freeSpace: {FreeSpace})");
         }
     }
 }

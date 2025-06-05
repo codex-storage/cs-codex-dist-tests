@@ -47,7 +47,7 @@ namespace CodexContractsPlugin.ChainMonitor
             handler = changeHandler;
             this.doProofPeriodMonitoring = doProofPeriodMonitoring;
             TotalSpan = new TimeRange(startUtc, startUtc);
-            PeriodMonitor = new PeriodMonitor(contracts);
+            PeriodMonitor = new PeriodMonitor(log, contracts);
         }
 
         public TimeRange TotalSpan { get; private set; }

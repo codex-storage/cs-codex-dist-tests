@@ -11,7 +11,7 @@ namespace CodexClient
         private readonly ILog log;
         private readonly IHttpFactory httpFactory;
         private readonly IProcessControl processControl;
-        private ICodexInstance instance;
+        private readonly ICodexInstance instance;
         private readonly Mapper mapper = new Mapper();
 
         public CodexAccess(ILog log, IHttpFactory httpFactory, IProcessControl processControl, ICodexInstance instance)
@@ -25,8 +25,6 @@ namespace CodexClient
         public void Stop(bool waitTillStopped)
         {
             processControl.Stop(waitTillStopped);
-            // Prevents accidental use after stop:
-            instance = null!;
         }
 
         public IDownloadedLog DownloadLog(string additionalName = "")
@@ -143,7 +141,7 @@ namespace CodexClient
             return mapper.Map(OnCodex(api => api.ListDataAsync()));
         }
 
-        public StorageAvailability SalesAvailability(StorageAvailability request)
+        public StorageAvailability SalesAvailability(CreateStorageAvailability request)
         {
             var body = mapper.Map(request);
             var read = OnCodex(api => api.OfferStorageAsync(body));

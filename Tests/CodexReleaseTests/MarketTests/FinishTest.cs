@@ -32,6 +32,7 @@ namespace CodexReleaseTests.MarketTests
         {
             var hosts = StartHosts();
             var client = StartClients().Single();
+            AssertHostAvailabilitiesAreEmpty(hosts);
 
             var request = CreateStorageRequest(client);
 
@@ -46,6 +47,7 @@ namespace CodexReleaseTests.MarketTests
             AssertClientHasPaidForContract(pricePerBytePerSecond, client, request, hosts);
             AssertHostsWerePaidForContract(pricePerBytePerSecond, request, hosts);
             AssertHostsCollateralsAreUnchanged(hosts);
+            AssertHostAvailabilitiesAreEmpty(hosts);
         }
 
         private IStoragePurchaseContract CreateStorageRequest(ICodexNode client)

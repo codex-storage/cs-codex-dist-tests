@@ -146,7 +146,6 @@ namespace CodexContractsPlugin
 
         public void WaitUntilNextPeriod()
         {
-            log.Log("Waiting until next proof period...");
             var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
             var periodSeconds = (int)Deployment.Config.Proofs.Period;
             var secondsLeft = now % periodSeconds;

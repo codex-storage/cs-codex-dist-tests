@@ -50,7 +50,7 @@ namespace ExperimentalTests.BasicTests
             {
                 AssertBalance(contracts, host, Is.EqualTo(hostInitialBalance), "Host initial balance");
 
-                var availability = new StorageAvailability(
+                var availability = new CreateStorageAvailability(
                     totalSpace: 10.GB(),
                     maxDuration: TimeSpan.FromMinutes(30),
                     minPricePerBytePerSecond: 1.TstWei(),
