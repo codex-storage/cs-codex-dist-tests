@@ -21,7 +21,7 @@ namespace CodexReleaseTests.MarketTests
         protected override int NumberOfHosts => hosts;
         protected override int NumberOfClients => 6;
         protected override ByteSize HostAvailabilitySize => purchaseParams.SlotSize.Multiply(100.0);
-        protected override TimeSpan HostAvailabilityMaxDuration => Get8TimesConfiguredPeriodDuration() * 12;
+        protected override TimeSpan HostAvailabilityMaxDuration => GetContractDuration() * 2;
         private readonly TestToken pricePerBytePerSecond = 10.TstWei();
 
         [Test]
