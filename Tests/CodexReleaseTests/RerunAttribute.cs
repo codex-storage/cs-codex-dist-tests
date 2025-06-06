@@ -4,7 +4,7 @@ namespace CodexReleaseTests
 {
     public class RerunAttribute : ValuesAttribute
     {
-        private const int NumberOfReRuns = 1;
+        private const int NumberOfReRuns = 8;
 
         public RerunAttribute()
         {
