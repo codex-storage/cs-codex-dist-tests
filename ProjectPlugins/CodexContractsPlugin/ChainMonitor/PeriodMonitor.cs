@@ -1,15 +1,18 @@
-﻿using Utils;
+﻿using Logging;
+using Utils;
 
 namespace CodexContractsPlugin.ChainMonitor
 {
     public class PeriodMonitor
     {
+        private readonly ILog log;
         private readonly ICodexContracts contracts;
         private readonly List<PeriodReport> reports = new List<PeriodReport>();
         private ulong? currentPeriod = null;
 
-        public PeriodMonitor(ICodexContracts contracts)
+        public PeriodMonitor(ILog log, ICodexContracts contracts)
         {
+            this.log = log;
             this.contracts = contracts;
         }
 
@@ -58,7 +61,9 @@ namespace CodexContractsPlugin.ChainMonitor
                     }
                 }
             }
-            reports.Add(new PeriodReport(periodNumber, total, required, missed.ToArray()));
+            var report = new PeriodReport(periodNumber, total, required, missed.ToArray());
+            log.Log($"Period report: {report}");
+            reports.Add(report);
         }
     }
 
@@ -105,6 +110,16 @@ namespace CodexContractsPlugin.ChainMonitor
         public ulong TotalNumSlots { get; }
         public ulong TotalProofsRequired { get; }
         public PeriodProofMissed[] MissedProofs { get; }
+
+        public override string ToString()
+        {
+            var missed = "None";
+            if (MissedProofs.Length > 0)
+            {
+                missed = string.Join("+", MissedProofs.Select(p => $"{p.FormatHost()} missed {p.Request.Request.Id} slot {p.SlotIndex}"));
+            }
+            return $"Period:{PeriodNumber}=[Slots:{TotalNumSlots},ProofsRequired:{TotalProofsRequired},ProofsMissed:{missed}]";
+        }
     }
 
     public class PeriodProofMissed
@@ -119,5 +134,11 @@ namespace CodexContractsPlugin.ChainMonitor
         public EthAddress? Host { get; }
         public IChainStateRequest Request { get; }
         public int SlotIndex { get; }
+
+        public string FormatHost()
+        {
+            if (Host == null) return "Unknown host";
+            return Host.Address;
+        }
     }
 }

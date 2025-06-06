@@ -6,7 +6,7 @@ namespace CodexClient
 {
     public interface IMarketplaceAccess
     {
-        string MakeStorageAvailable(StorageAvailability availability);
+        string MakeStorageAvailable(CreateStorageAvailability availability);
         StorageAvailability[] GetAvailabilities();
         IStoragePurchaseContract RequestStorage(StoragePurchaseRequest purchase);
     }
@@ -49,7 +49,7 @@ namespace CodexClient
             return new StoragePurchaseContract(log, codexAccess, response, purchase, hooks);
         }
 
-        public string MakeStorageAvailable(StorageAvailability availability)
+        public string MakeStorageAvailable(CreateStorageAvailability availability)
         {
             availability.Log(log);
 
@@ -77,7 +77,7 @@ namespace CodexClient
 
     public class MarketplaceUnavailable : IMarketplaceAccess
     {
-        public string MakeStorageAvailable(StorageAvailability availability)
+        public string MakeStorageAvailable(CreateStorageAvailability availability)
         {
             Unavailable();
             throw new NotImplementedException();

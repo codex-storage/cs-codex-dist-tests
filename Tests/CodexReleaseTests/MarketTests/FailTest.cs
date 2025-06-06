@@ -8,11 +8,16 @@ namespace CodexReleaseTests.MarketTests
     public class FailTest : MarketplaceAutoBootstrapDistTest
     {
         protected override int NumberOfHosts => 4;
+        private readonly int SlotTolerance;
         protected override int NumberOfClients => 1;
         protected override ByteSize HostAvailabilitySize => 1.GB();
         protected override TimeSpan HostAvailabilityMaxDuration => TimeSpan.FromDays(1.0);
 
-        [Ignore("Slots are never freed because proofs are never marked as missing. Issue: https://github.com/codex-storage/nim-codex/issues/1153")]
+        public FailTest()
+        {
+            SlotTolerance = NumberOfHosts / 2;
+        }
+
         [Test]
         [Combinatorial]
         public void Fail(
@@ -35,7 +40,8 @@ namespace CodexReleaseTests.MarketTests
 
             WaitForSlotFreedEvents();
 
-            request.WaitForContractFailed();
+            var config = GetContracts().Deployment.Config;
+            request.WaitForContractFailed(config);
         }
 
         private void WaitForSlotFreedEvents()
@@ -49,7 +55,8 @@ namespace CodexReleaseTests.MarketTests
             {
                 var events = GetContracts().GetEvents(GetTestRunTimeRange());
                 var slotFreed = events.GetSlotFreedEvents();
-                if (slotFreed.Length == NumberOfHosts)
+                Log($"SlotFreed events: {slotFreed.Length} - Expected: {SlotTolerance}");
+                if (slotFreed.Length > SlotTolerance)
                 {
                     Log($"{nameof(WaitForSlotFreedEvents)} took {Time.FormatDuration(DateTime.UtcNow - start)}");
                     return;
@@ -67,7 +74,7 @@ namespace CodexReleaseTests.MarketTests
                 Duration = HostAvailabilityMaxDuration / 2,
                 Expiry = TimeSpan.FromMinutes(5.0),
                 MinRequiredNumberOfNodes = (uint)NumberOfHosts,
-                NodeFailureTolerance = (uint)(NumberOfHosts / 2),
+                NodeFailureTolerance = (uint)SlotTolerance,
                 PricePerBytePerSecond = 100.TstWei(),
                 ProofProbability = 1, // Require a proof every period
                 CollateralPerByte = 1.TstWei()

@@ -53,11 +53,15 @@ namespace CodexReleaseTests.Utils
         protected abstract ByteSize HostAvailabilitySize { get; }
         protected abstract TimeSpan HostAvailabilityMaxDuration { get; }
         protected virtual bool MonitorChainState { get; } = true;
+        protected TimeSpan HostBlockTTL { get; } = TimeSpan.FromMinutes(1.0);
 
         public ICodexNodeGroup StartHosts()
         {
             var hosts = StartCodex(NumberOfHosts, s => s
                 .WithName("host")
+                .WithBlockTTL(HostBlockTTL)
+                .WithBlockMaintenanceNumber(1000)
+                .WithBlockMaintenanceInterval(HostBlockTTL / 2)
                 .EnableMarketplace(GetGeth(), GetContracts(), m => m
                     .WithInitial(StartingBalanceEth.Eth(), StartingBalanceTST.Tst())
                     .AsStorageNode()
@@ -70,7 +74,7 @@ namespace CodexReleaseTests.Utils
                 AssertTstBalance(host, StartingBalanceTST.Tst(), nameof(StartHosts));
                 AssertEthBalance(host, StartingBalanceEth.Eth(), nameof(StartHosts));
                 
-                host.Marketplace.MakeStorageAvailable(new StorageAvailability(
+                host.Marketplace.MakeStorageAvailable(new CreateStorageAvailability(
                     totalSpace: HostAvailabilitySize,
                     maxDuration: HostAvailabilityMaxDuration,
                     minPricePerBytePerSecond: 1.TstWei(),
@@ -84,6 +88,9 @@ namespace CodexReleaseTests.Utils
         {
             var host = StartCodex(s => s
                 .WithName("singlehost")
+                .WithBlockTTL(HostBlockTTL)
+                .WithBlockMaintenanceNumber(1000)
+                .WithBlockMaintenanceInterval(HostBlockTTL / 2)
                 .EnableMarketplace(GetGeth(), GetContracts(), m => m
                     .WithInitial(StartingBalanceEth.Eth(), StartingBalanceTST.Tst())
                     .AsStorageNode()
@@ -94,13 +101,37 @@ namespace CodexReleaseTests.Utils
             AssertTstBalance(host, StartingBalanceTST.Tst(), nameof(StartOneHost));
             AssertEthBalance(host, StartingBalanceEth.Eth(), nameof(StartOneHost));
 
-            host.Marketplace.MakeStorageAvailable(new StorageAvailability(
+            host.Marketplace.MakeStorageAvailable(new CreateStorageAvailability(
                 totalSpace: HostAvailabilitySize,
                 maxDuration: HostAvailabilityMaxDuration,
                 minPricePerBytePerSecond: 1.TstWei(),
                 totalCollateral: 999999.Tst())
             );
             return host;
+        }
+
+        public void AssertHostAvailabilitiesAreEmpty(IEnumerable<ICodexNode> hosts)
+        {
+            var retry = GetAvailabilitySpaceAssertRetry();
+            retry.Run(() =>
+            {
+                foreach (var host in hosts)
+                {
+                    AssertHostAvailabilitiesAreEmpty(host);
+                }
+            });
+        }
+
+        private void AssertHostAvailabilitiesAreEmpty(ICodexNode host)
+        {
+            var availabilities = host.Marketplace.GetAvailabilities();
+            foreach (var a in availabilities)
+            {
+                if (a.FreeSpace.SizeInBytes != a.TotalSpace.SizeInBytes)
+                {
+                    throw new Exception(nameof(AssertHostAvailabilitiesAreEmpty) + $" free: {a.FreeSpace} total: {a.TotalSpace}");
+                }
+            }
         }
 
         public void AssertTstBalance(ICodexNode node, TestToken expectedBalance, string message)
@@ -155,6 +186,15 @@ namespace CodexReleaseTests.Utils
         {
             return new Retry("AssertBalance",
                 maxTimeout: TimeSpan.FromMinutes(10.0),
+                sleepAfterFail: TimeSpan.FromSeconds(10.0),
+                onFail: f => { },
+                failFast: false);
+        }
+
+        private Retry GetAvailabilitySpaceAssertRetry()
+        {
+            return new Retry("AssertAvailabilitySpace",
+                maxTimeout: HostBlockTTL * 3,
                 sleepAfterFail: TimeSpan.FromSeconds(10.0),
                 onFail: f => { },
                 failFast: false);
