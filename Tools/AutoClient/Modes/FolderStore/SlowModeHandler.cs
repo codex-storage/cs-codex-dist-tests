@@ -25,6 +25,8 @@
                     failureCount = 0;
                 }
             }
+
+            Check();
         }
 
         public void OnFailure()
@@ -36,9 +38,11 @@
                 slowMode = true;
                 recoveryCount = 0;
             }
+
+            Check();
         }
 
-        public void Check()
+        private void Check()
         {
             if (slowMode)
             {

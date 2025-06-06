@@ -45,8 +45,6 @@ namespace AutoClient.Modes.FolderStore
                 {
                     SaveFile(folderFile);
                 }
-
-                slowModeHandler.Check();
                 
                 CheckAndSaveChanges();
             }
