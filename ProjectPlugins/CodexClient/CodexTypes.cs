@@ -66,7 +66,7 @@ namespace CodexClient
     public class Manifest
     {
         public string RootHash { get; set; } = string.Empty;
-        public ByteSize OriginalBytes { get; set; } = ByteSize.Zero;
+        public ByteSize DatasetSize { get; set; } = ByteSize.Zero;
         public ByteSize BlockSize { get; set; } = ByteSize.Zero;
         public bool Protected { get; set; }
     }

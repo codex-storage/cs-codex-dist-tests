@@ -22,12 +22,12 @@ namespace CodexReleaseTests.MarketTests
         protected override int NumberOfHosts => hosts;
         protected override int NumberOfClients => 1;
         protected override ByteSize HostAvailabilitySize => purchaseParams.SlotSize.Multiply(5.1);
-        protected override TimeSpan HostAvailabilityMaxDuration => Get8TimesConfiguredPeriodDuration() * 12;
+        protected override TimeSpan HostAvailabilityMaxDuration => GetContractDuration() * 2;
 
         [Test]
         [Combinatorial]
         public void Finish(
-            [Values([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16])] int rerun
+            [Rerun] int rerun
         )
         {
             var hosts = StartHosts();

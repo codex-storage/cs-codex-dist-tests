@@ -27,7 +27,7 @@ namespace CodexReleaseTests.DataTests
             Assert.That(spaceDiff, Is.LessThan(64.KB().SizeInBytes));
 
             Assert.That(localDataset.Cid, Is.EqualTo(cid));
-            Assert.That(localDataset.Manifest.OriginalBytes.SizeInBytes, Is.EqualTo(file.GetFilesize().SizeInBytes));
+            Assert.That(localDataset.Manifest.DatasetSize.SizeInBytes, Is.EqualTo(file.GetFilesize().SizeInBytes));
         }
     }
 }

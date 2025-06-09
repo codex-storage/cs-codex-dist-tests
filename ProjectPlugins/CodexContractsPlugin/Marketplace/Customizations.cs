@@ -96,8 +96,23 @@ namespace CodexContractsPlugin.Marketplace
 
     public partial class MarketplaceConfig : IMarketplaceConfigInput
     {
-        public int MaxNumberOfSlashes => this.Collateral.MaxNumberOfSlashes;
-        public TimeSpan PeriodDuration => TimeSpan.FromSeconds(this.Proofs.Period);
+        public int MaxNumberOfSlashes
+        {
+            get
+            {
+                if (Collateral == null) return -1;
+                return Collateral.MaxNumberOfSlashes;
+            }
+        }
+
+        public TimeSpan PeriodDuration
+        {
+            get
+            {
+                if (Proofs == null) return TimeSpan.MinValue;
+                return TimeSpan.FromSeconds(this.Proofs.Period);
+            }
+        }
     }
 }
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.

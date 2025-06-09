@@ -5,29 +5,29 @@ using Utils;
 
 namespace CodexReleaseTests.MarketTests
 {
-    [TestFixture]
-    public class StartTest : MarketplaceAutoBootstrapDistTest
+    public class MaxCapacityTest : MarketplaceAutoBootstrapDistTest
     {
+        private readonly TestToken pricePerBytePerSecond = 10.TstWei();
         private readonly PurchaseParams purchaseParams = new PurchaseParams(
-            nodes: 3,
-            tolerance: 1,
+            nodes: 10,
+            tolerance: 5,
             uploadFilesize: 10.MB()
         );
-        private readonly TestToken pricePerBytePerSecond = 10.TstWei();
 
-        protected override int NumberOfHosts => 5;
+        protected override int NumberOfHosts => purchaseParams.Nodes / 2;
         protected override int NumberOfClients => 1;
-        protected override ByteSize HostAvailabilitySize => purchaseParams.SlotSize.Multiply(10.0);
-        protected override TimeSpan HostAvailabilityMaxDuration => Get8TimesConfiguredPeriodDuration() * 12;
+        protected override ByteSize HostAvailabilitySize => purchaseParams.SlotSize.Multiply(2.1);
+        protected override TimeSpan HostAvailabilityMaxDuration => GetContractDuration() * 2;
 
         [Test]
         [Combinatorial]
-        public void Start(
+        public void TwoSlotsEach(
             [Rerun] int rerun
         )
         {
             var hosts = StartHosts();
             var client = StartClients().Single();
+            AssertHostAvailabilitiesAreEmpty(hosts);
 
             var request = CreateStorageRequest(client);
 
