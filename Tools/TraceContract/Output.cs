@@ -86,11 +86,6 @@ namespace TraceContract
             Add(requestEvent.Block.Utc, $"Slot reservations full. Index: {slotIndex}");
         }
 
-        public void LogReserveSlotCalls(ReserveSlotFunction[] reserveSlotFunctions)
-        {
-            foreach (var call in reserveSlotFunctions) LogReserveSlotCall(call);
-        }
-
         public void WriteContractEvents()
         {
             var sorted = entries.OrderBy(e => e.Utc).ToArray();
