@@ -36,11 +36,14 @@ public class Program
     public void Run()
     {
         if (app.Config.ContractDurationMinutes - 1 < 5) throw new Exception("Contract duration config option not long enough!");
+        Log("Setting up Codex instances...");
         var codexNodes = CreateCodexWrappers();
         var loadBalancer = new LoadBalancer(app, codexNodes);
+        Log("Setting up load-balancer...");
         loadBalancer.Start();
 
         var folderStore = new FolderStoreMode(app, loadBalancer);
+        Log("Starting folder store mode...");
         folderStore.Start();
 
         app.Cts.Token.WaitHandle.WaitOne();
@@ -48,7 +51,7 @@ public class Program
         folderStore.Stop();
         loadBalancer.Stop();
 
-        app.Log.Log("Done");
+        Log("Done");
     }
 
     private CodexWrapper[] CreateCodexWrappers()
@@ -88,12 +91,17 @@ public class Program
         var node = codexNodeFactory.CreateCodexNode(instance);
 
         node.SetLogLevel(LogLevel);
-        app.Log.Log($"Set up codex endpoint: {numberStr}");
+        Log($"Set up codex endpoint: {numberStr}");
         return new CodexWrapper(app, node);
     }
 
     private static void PrintHelp()
     {
         Console.WriteLine("Generates fake data and creates Codex storage contracts for it.");
+    }
+
+    private void Log(string msg)
+    {
+        app.Log.Log(msg);
     }
 }
