@@ -22,7 +22,7 @@ namespace CodexReleaseTests.DataTests
             var localDataset = downloader.DownloadStreamlessWait(cid, size);
 
             Assert.That(localDataset.Cid, Is.EqualTo(cid));
-            Assert.That(localDataset.Manifest.OriginalBytes.SizeInBytes, Is.EqualTo(file.GetFilesize().SizeInBytes));
+            Assert.That(localDataset.Manifest.DatasetSize.SizeInBytes, Is.EqualTo(file.GetFilesize().SizeInBytes));
 
             // Stop the uploader node and verify that the downloader has the data.
             uploader.Stop(waitTillStopped: true);

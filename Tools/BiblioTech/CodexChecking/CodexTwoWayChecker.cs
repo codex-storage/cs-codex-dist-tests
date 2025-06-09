@@ -163,7 +163,7 @@ namespace BiblioTech.CodexChecking
         private bool IsManifestLengthCompatible(ICheckResponseHandler handler, TransferCheck check, Manifest manifest)
         {
             var dataLength = check.UniqueData.Length;
-            var manifestLength = manifest.OriginalBytes.SizeInBytes;
+            var manifestLength = manifest.DatasetSize.SizeInBytes;
 
             Log($"Checking manifest length: dataLength={dataLength},manifestLength={manifestLength}");
 
