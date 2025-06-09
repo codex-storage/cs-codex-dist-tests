@@ -6,6 +6,7 @@
         private int failureCount = 0;
         private bool slowMode = false;
         private int recoveryCount = 0;
+        private readonly object _lock = new object();
 
         public SlowModeHandler(App app)
         {
@@ -18,7 +19,8 @@
             if (slowMode)
             {
                 recoveryCount++;
-                if (recoveryCount > 2)
+                Log("Recovering from slow mode: " + recoveryCount);
+                if (recoveryCount > 3)
                 {
                     Log("Recovery limit reached. Exiting slow mode.");
                     slowMode = false;
@@ -32,7 +34,8 @@
         public void OnFailure()
         {
             failureCount++;
-            if (failureCount > 5 && !slowMode)
+            Log("Failing towards slow mode: " + failureCount);
+            if (failureCount > 3 && !slowMode)
             {
                 Log("Failure limit reached. Entering slow mode.");
                 slowMode = true;
@@ -46,7 +49,11 @@
         {
             if (slowMode)
             {
-                Thread.Sleep(TimeSpan.FromMinutes(app.Config.SlowModeDelayMinutes));
+                lock (_lock)
+                {
+                    if (!slowMode) return;
+                    Thread.Sleep(TimeSpan.FromMinutes(app.Config.SlowModeDelayMinutes));
+                }
             }
         }
 
