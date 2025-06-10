@@ -23,20 +23,26 @@ namespace BiblioTech.CodexChecking
             factory = new CodexNodeFactory(log, httpFactory, dataDir: config.DataPath);
         }
 
-        public void OnCodex(Action<ICodexNode> action)
+        public async Task OnCodex(Action<ICodexNode> action)
         {
-            lock (codexLock)
+            await Task.Run(() =>
             {
-                action(Get());
-            }
+                lock (codexLock)
+                {
+                    action(Get());
+                }
+            });
         }
 
-        public T OnCodex<T>(Func<ICodexNode, T> func)
+        public async Task<T> OnCodex<T>(Func<ICodexNode, T> func)
         {
-            lock (codexLock)
+            return await Task<T>.Run(() =>
             {
-                return func(Get());
-            }
+                lock (codexLock)
+                {
+                    return func(Get());
+                }
+            });            
         }
 
         private ICodexNode Get()
@@ -76,10 +82,28 @@ namespace BiblioTech.CodexChecking
             var tokens = config.CodexEndpointAuth.Split(':');
             if (tokens.Length != 2) throw new Exception("Expected '<username>:<password>' in CodexEndpointAuth parameter.");
 
-            return new HttpFactory(log, onClientCreated: client =>
+            return new HttpFactory(log, new SnappyTimeSet(), onClientCreated: client =>
             {
                 client.SetBasicAuthentication(tokens[0], tokens[1]);
             });
+        }
+
+        public class SnappyTimeSet : IWebCallTimeSet
+        {
+            public TimeSpan HttpCallRetryDelay()
+            {
+                return TimeSpan.FromSeconds(1.0);
+            }
+
+            public TimeSpan HttpCallTimeout()
+            {
+                return TimeSpan.FromSeconds(3.0);
+            }
+
+            public TimeSpan HttpRetryTimeout()
+            {
+                return TimeSpan.FromSeconds(12.0);
+            }
         }
     }
 }

@@ -88,7 +88,7 @@ namespace BiblioTech
             client = new DiscordSocketClient();
             client.Log += ClientLog;
 
-            var checkRepo = new CheckRepo(Config);
+            var checkRepo = new CheckRepo(Log, Config);
             var codexWrapper = new CodexWrapper(Log, Config);
             var checker = new CodexTwoWayChecker(Log, Config, checkRepo, codexWrapper);
             var notifyCommand = new NotifyCommand();

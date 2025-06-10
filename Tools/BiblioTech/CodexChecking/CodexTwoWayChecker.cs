@@ -43,7 +43,7 @@ namespace BiblioTech.CodexChecking
                 repo.SaveChanges();
             }
 
-            var cid = UploadData(check.UniqueData);
+            var cid = await UploadData(check.UniqueData);
             await handler.GiveCidToUser(cid);
         }
 
@@ -87,7 +87,7 @@ namespace BiblioTech.CodexChecking
                 return;
             }
 
-            var manifest = GetManifest(receivedCid);
+            var manifest = await GetManifest(receivedCid);
             if (manifest == null)
             {
                 await handler.CouldNotDownloadCid();
@@ -96,7 +96,7 @@ namespace BiblioTech.CodexChecking
 
             if (IsManifestLengthCompatible(handler, check, manifest))
             {
-                if (IsContentCorrect(handler, check, receivedCid))
+                if (await IsContentCorrect(handler, check, receivedCid))
                 {
                     await CheckNowCompleted(handler, check, userId, "UploadCheck");
                     return;
@@ -120,7 +120,7 @@ namespace BiblioTech.CodexChecking
                 check.CompletedUtc < expiry;
         }
 
-        private string UploadData(string uniqueData)
+        private async Task<string> UploadData(string uniqueData)
         {
             var filePath = Path.Combine(config.ChecksDataPath, Guid.NewGuid().ToString());
 
@@ -129,7 +129,7 @@ namespace BiblioTech.CodexChecking
                 File.WriteAllText(filePath, uniqueData);
                 var file = new TrackedFile(log, filePath, "checkData");
 
-                return codexWrapper.OnCodex(node =>
+                return await codexWrapper.OnCodex(node =>
                 {
                     return node.UploadFile(file).Id;
                 });
@@ -145,11 +145,11 @@ namespace BiblioTech.CodexChecking
             }
         }
 
-        private Manifest? GetManifest(string receivedCid)
+        private async Task<Manifest?> GetManifest(string receivedCid)
         {
             try
             {
-                return codexWrapper.OnCodex(node =>
+                return await codexWrapper.OnCodex(node =>
                 {
                     return node.DownloadManifestOnly(new ContentId(receivedCid)).Manifest;
                 });
@@ -172,11 +172,11 @@ namespace BiblioTech.CodexChecking
                 manifestLength < (dataLength + 1);
         }
 
-        private bool IsContentCorrect(ICheckResponseHandler handler, TransferCheck check, string receivedCid)
+        private async Task<bool> IsContentCorrect(ICheckResponseHandler handler, TransferCheck check, string receivedCid)
         {
             try
             {
-                var content = codexWrapper.OnCodex(node =>
+                var content = await codexWrapper.OnCodex(node =>
                 {
                     var file = node.DownloadContent(new ContentId(receivedCid));
                     if (file == null) return string.Empty;
