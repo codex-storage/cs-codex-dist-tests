@@ -20,7 +20,9 @@ namespace BiblioTech
                 Program.Log.Log($"Responding to '{Name}'");
                 var context = new CommandContext(command, command.Data.Options);
                 await command.RespondAsync(StartingMessage, ephemeral: IsEphemeral(context));
-                await Invoke(context);
+
+                // Fire and forget invocation handler. Return SlashCommandHandler immediately.
+                _ = Invoke(context);
             }
             catch (Exception ex)
             {
