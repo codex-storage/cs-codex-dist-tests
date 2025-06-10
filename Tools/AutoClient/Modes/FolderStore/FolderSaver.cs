@@ -40,7 +40,6 @@ namespace AutoClient.Modes.FolderStore
             {
                 if (app.Cts.IsCancellationRequested) return;
                 loadBalancer.CheckErrors();
-                slowModeHandler.Check();
 
                 if (!folderFile.ToLowerInvariant().EndsWith(FolderSaverFilename))
                 {
