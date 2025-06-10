@@ -163,7 +163,15 @@ namespace AutoClient.Modes.FolderStore
 
         private StoragePurchase? GetPurchase(string purchaseId)
         {
-            return instance.GetStoragePurchase(purchaseId);
+            try
+            {
+                return instance.GetStoragePurchase(purchaseId);
+            }
+            catch (Exception exc)
+            {
+                log.Error("Failed to get purchase: " + exc);
+                return null;
+            }
         }
 
         private bool NodeContainsBasicCid()

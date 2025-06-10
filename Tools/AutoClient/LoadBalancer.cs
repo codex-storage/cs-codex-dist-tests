@@ -65,7 +65,8 @@ namespace AutoClient
                 {
                     while (running)
                     {
-                        while (queue.Count == 0) Thread.Sleep(TimeSpan.FromSeconds(1.0));
+                        while (running && queue.Count == 0) Thread.Sleep(TimeSpan.FromSeconds(1.0));
+                        if (!running) return;
 
                         Action<CodexWrapper> action = w => { };
                         lock (queueLock)
