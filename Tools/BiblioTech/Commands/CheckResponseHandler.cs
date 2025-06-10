@@ -26,6 +26,11 @@ namespace BiblioTech.Commands
             await context.Followup("Could not download the CID.");
         }
 
+        public async Task CodexUnavailable()
+        {
+            await context.Followup("Couldn't perform check: Our Codex node appears unavailable. Try again later?");
+        }
+
         public async Task GiveCidToUser(string cid)
         {
             await context.Followup(

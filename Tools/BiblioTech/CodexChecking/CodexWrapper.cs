@@ -21,38 +21,72 @@ namespace BiblioTech.CodexChecking
 
             var httpFactory = CreateHttpFactory();
             factory = new CodexNodeFactory(log, httpFactory, dataDir: config.DataPath);
+
+            Task.Run(CheckCodexNode);
         }
 
-        public async Task OnCodex(Action<ICodexNode> action)
+        public T? OnCodex<T>(Func<ICodexNode, T> func) where T : class
         {
-            await Task.Run(() =>
+            lock (codexLock)
             {
-                lock (codexLock)
-                {
-                    action(Get());
-                }
-            });
-        }
-
-        public async Task<T> OnCodex<T>(Func<ICodexNode, T> func)
-        {
-            return await Task<T>.Run(() =>
-            {
-                lock (codexLock)
-                {
-                    return func(Get());
-                }
-            });            
-        }
-
-        private ICodexNode Get()
-        {
-            if (currentCodexNode == null)
-            {
-                currentCodexNode = CreateCodex();
+                if (currentCodexNode == null) return null;
+                return func(currentCodexNode);
             }
+        }
 
-            return currentCodexNode;
+        private void CheckCodexNode()
+        {
+            Thread.Sleep(TimeSpan.FromSeconds(10.0));
+
+            while (true)
+            {
+                lock (codexLock)
+                {
+                    var newNode = GetNewCodexNode();
+                    if (newNode != null && currentCodexNode == null) ShowConnectionRestored();
+                    if (newNode == null && currentCodexNode != null) ShowConnectionLost();
+                    currentCodexNode = newNode;
+                }
+
+                Thread.Sleep(TimeSpan.FromMinutes(15.0));
+            }
+        }
+
+        private ICodexNode? GetNewCodexNode()
+        {
+            try
+            {
+                if (currentCodexNode != null)
+                {
+                    try
+                    {
+                        // Current instance is responsive? Keep it.
+                        var info = currentCodexNode.GetDebugInfo();
+                        if (info != null && info.Version != null &&
+                            !string.IsNullOrEmpty(info.Version.Revision)) return currentCodexNode;
+                    }
+                    catch
+                    {
+                    }
+                }
+
+                return CreateCodex();
+            }
+            catch (Exception ex)
+            {
+                log.Error("Exception when trying to check codex node: " + ex.Message);
+                return null;
+            }
+        }
+
+        private void ShowConnectionLost()
+        {
+            Program.AdminChecker.SendInAdminChannel("Codex node connection lost.");
+        }
+
+        private void ShowConnectionRestored()
+        {
+            Program.AdminChecker.SendInAdminChannel("Codex node connection restored.");
         }
 
         private ICodexNode CreateCodex()
@@ -76,7 +110,7 @@ namespace BiblioTech.CodexChecking
         {
             if (string.IsNullOrEmpty(config.CodexEndpointAuth) || !config.CodexEndpointAuth.Contains(":"))
             {
-                return new HttpFactory(log);
+                return new HttpFactory(log, new SnappyTimeSet());
             }
 
             var tokens = config.CodexEndpointAuth.Split(':');

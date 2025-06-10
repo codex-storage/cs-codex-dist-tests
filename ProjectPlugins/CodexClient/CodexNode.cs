@@ -299,7 +299,7 @@ namespace CodexClient
 
         private void InitializePeerNodeId()
         {
-            var debugInfo = Time.Retry(codexAccess.GetDebugInfo, "ensure online");
+            var debugInfo = codexAccess.GetDebugInfo();
             if (!debugInfo.Version.IsValid())
             {
                 throw new Exception($"Invalid version information received from Codex node {GetName()}: {debugInfo.Version}");

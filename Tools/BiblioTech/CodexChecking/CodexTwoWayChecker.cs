@@ -15,6 +15,7 @@ namespace BiblioTech.CodexChecking
         Task CouldNotDownloadCid();
         Task GiveCidToUser(string cid);
         Task GiveDataFileToUser(string fileContent);
+        Task CodexUnavailable();
 
         Task ToAdminChannel(string msg);
     }
@@ -43,7 +44,13 @@ namespace BiblioTech.CodexChecking
                 repo.SaveChanges();
             }
 
-            var cid = await UploadData(check.UniqueData);
+            var cid = UploadData(check.UniqueData);
+            if (cid == null)
+            {
+                await handler.CodexUnavailable();
+                return;
+            }
+
             await handler.GiveCidToUser(cid);
         }
 
@@ -87,7 +94,7 @@ namespace BiblioTech.CodexChecking
                 return;
             }
 
-            var manifest = await GetManifest(receivedCid);
+            var manifest = GetManifest(receivedCid);
             if (manifest == null)
             {
                 await handler.CouldNotDownloadCid();
@@ -96,7 +103,12 @@ namespace BiblioTech.CodexChecking
 
             if (IsManifestLengthCompatible(handler, check, manifest))
             {
-                if (await IsContentCorrect(handler, check, receivedCid))
+                var correct = IsContentCorrect(handler, check, receivedCid);
+                if (!correct.HasValue) {
+                    await handler.CodexUnavailable();
+                    return;
+                }
+                if (correct.Value)
                 {
                     await CheckNowCompleted(handler, check, userId, "UploadCheck");
                     return;
@@ -120,7 +132,7 @@ namespace BiblioTech.CodexChecking
                 check.CompletedUtc < expiry;
         }
 
-        private async Task<string> UploadData(string uniqueData)
+        private string? UploadData(string uniqueData)
         {
             var filePath = Path.Combine(config.ChecksDataPath, Guid.NewGuid().ToString());
 
@@ -129,7 +141,7 @@ namespace BiblioTech.CodexChecking
                 File.WriteAllText(filePath, uniqueData);
                 var file = new TrackedFile(log, filePath, "checkData");
 
-                return await codexWrapper.OnCodex(node =>
+                return codexWrapper.OnCodex(node =>
                 {
                     return node.UploadFile(file).Id;
                 });
@@ -145,11 +157,11 @@ namespace BiblioTech.CodexChecking
             }
         }
 
-        private async Task<Manifest?> GetManifest(string receivedCid)
+        private Manifest? GetManifest(string receivedCid)
         {
             try
             {
-                return await codexWrapper.OnCodex(node =>
+                return codexWrapper.OnCodex(node =>
                 {
                     return node.DownloadManifestOnly(new ContentId(receivedCid)).Manifest;
                 });
@@ -172,11 +184,11 @@ namespace BiblioTech.CodexChecking
                 manifestLength < (dataLength + 1);
         }
 
-        private async Task<bool> IsContentCorrect(ICheckResponseHandler handler, TransferCheck check, string receivedCid)
+        private bool? IsContentCorrect(ICheckResponseHandler handler, TransferCheck check, string receivedCid)
         {
             try
             {
-                var content = await codexWrapper.OnCodex(node =>
+                var content = codexWrapper.OnCodex(node =>
                 {
                     var file = node.DownloadContent(new ContentId(receivedCid));
                     if (file == null) return string.Empty;
@@ -189,6 +201,8 @@ namespace BiblioTech.CodexChecking
                         if (File.Exists(file.Filename)) File.Delete(file.Filename);
                     }
                 });
+
+                if (content == null) return null;
 
                 Log($"Checking content: content={content},check={check.UniqueData}");
                 return content == check.UniqueData;
