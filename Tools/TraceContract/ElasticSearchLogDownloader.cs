@@ -40,7 +40,7 @@ namespace TraceContract
             var queryTemplate = CreateQueryTemplate(podName, startUtc, endUtc);
 
             targetFile.Write($"Downloading '{podName}' to '{targetFile.Filename}'.");
-            var reconstructor = new LogReconstructor(targetFile, endpoint, queryTemplate);
+            var reconstructor = new LogReconstructor(log, targetFile, endpoint, queryTemplate);
             reconstructor.DownloadFullLog();
 
             log.Log("Log download finished.");
@@ -91,6 +91,7 @@ namespace TraceContract
         public class LogReconstructor
         {
             private readonly List<LogQueueEntry> queue = new List<LogQueueEntry>();
+            private readonly ILog log;
             private readonly LogFile targetFile;
             private readonly IEndpoint endpoint;
             private readonly string queryTemplate;
@@ -98,9 +99,11 @@ namespace TraceContract
             private string searchAfter = "";
             private int lastHits = 1;
             private ulong? lastLogLine;
+            private uint linesWritten = 0;
 
-            public LogReconstructor(LogFile targetFile, IEndpoint endpoint, string queryTemplate)
+            public LogReconstructor(ILog log, LogFile targetFile, IEndpoint endpoint, string queryTemplate)
             {
+                this.log = log;
                 this.targetFile = targetFile;
                 this.endpoint = endpoint;
                 this.queryTemplate = queryTemplate;
@@ -113,6 +116,8 @@ namespace TraceContract
                     QueryElasticSearch();
                     ProcessQueue();
                 }
+
+                log.Log($"{linesWritten} lines written.");
             }
 
             private void QueryElasticSearch()
@@ -124,6 +129,8 @@ namespace TraceContract
                 var response = endpoint.HttpPostString<SearchResponse>("/_search", query);
 
                 lastHits = response.hits.hits.Length;
+                log.Log($"pageSize: {sizeOfPage} after: {searchAfter} -> {lastHits} hits");
+
                 if (lastHits > 0)
                 {
                     UpdateSearchAfter(response);
@@ -176,7 +183,7 @@ namespace TraceContract
 
             private void ProcessQueue()
             {
-                if (lastLogLine == null)
+                if (lastLogLine == null && queue.Any())
                 {
                     lastLogLine = queue.Min(q => q.Number) - 1;
                 }
@@ -208,6 +215,7 @@ namespace TraceContract
             private void WriteEntryToFile(LogQueueEntry currentEntry)
             {
                 targetFile.Write(currentEntry.Message);
+                linesWritten++;
             }
 
             private void DeleteOldEntries(ulong wantedNumber)
