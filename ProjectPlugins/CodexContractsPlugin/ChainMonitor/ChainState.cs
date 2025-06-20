@@ -1,6 +1,7 @@
 ﻿using BlockchainUtils;
 using CodexContractsPlugin.Marketplace;
 using Logging;
+using Newtonsoft.Json;
 using System.Numerics;
 using Utils;
 
@@ -118,7 +119,20 @@ namespace CodexContractsPlugin.ChainMonitor
         private void ApplyEvent(Request request)
         {
             if (requests.Any(r => Equal(r.Request.RequestId, request.RequestId)))
-                throw new Exception("Received NewRequest event for id that already exists.");
+            {
+                var msg = "Received NewRequest event for id that already exists. ";
+                msg += "Received: " + JsonConvert.SerializeObject(request);
+                var r = FindRequest(request);
+                if (r != null)
+                {
+                    msg += " Already have: " + JsonConvert.SerializeObject(r);
+                }
+                else
+                {
+                    msg += " Already have: Not found!";
+                }
+                throw new Exception(msg);
+            }
 
             var newRequest = new ChainStateRequest(log, request, RequestState.New);
             requests.Add(newRequest);
