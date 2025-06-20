@@ -4,7 +4,7 @@
     {
         private readonly App app;
         private int failureCount = 0;
-        private bool slowMode = false;
+        private bool slowMode = true;
         private int recoveryCount = 0;
         private readonly object _lock = new object();
 
