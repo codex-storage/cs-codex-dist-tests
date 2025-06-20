@@ -129,6 +129,7 @@ namespace CodexContractsPlugin.ChainMonitor
                 if (request.Content.Cid.ToHex() != r.Request.Content.Cid.ToHex()) throw new Exception("Same request has different CIDs.");
 
                 log.Log("Received the same request-creation event multiple times.");
+                return;
             }
 
             var newRequest = new ChainStateRequest(log, request, RequestState.New);
