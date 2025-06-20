@@ -50,7 +50,7 @@ namespace TestNetRewarder
         public void OnNewRequest(RequestEvent requestEvent)
         {
             var request = requestEvent.Request;
-            AddRequestBlock(requestEvent, $"{emojiMaps.NewRequest} New Request",
+            AddRequestBlock(requestEvent, emojiMaps.NewRequest, "New Request",
                 $"Client: {request.Client}",
                 $"Content: {BytesToHexString(request.Request.Content.Cid)}",
                 $"Duration: {BigIntToDuration(request.Request.Ask.Duration)}",
@@ -66,27 +66,27 @@ namespace TestNetRewarder
 
         public void OnRequestCancelled(RequestEvent requestEvent)
         {
-            AddRequestBlock(requestEvent, $"{emojiMaps.Cancelled} Cancelled");
+            AddRequestBlock(requestEvent, emojiMaps.Cancelled, "Cancelled");
         }
 
         public void OnRequestFailed(RequestEvent requestEvent)
         {
-            AddRequestBlock(requestEvent, $"{emojiMaps.Failed} Failed");
+            AddRequestBlock(requestEvent, emojiMaps.Failed, "Failed");
         }
 
         public void OnRequestFinished(RequestEvent requestEvent)
         {
-            AddRequestBlock(requestEvent, $"{emojiMaps.Finished} Finished");
+            AddRequestBlock(requestEvent, emojiMaps.Finished, "Finished");
         }
 
         public void OnRequestFulfilled(RequestEvent requestEvent)
         {
-            AddRequestBlock(requestEvent, $"{emojiMaps.Started} Started");
+            AddRequestBlock(requestEvent, emojiMaps.Started, "Started");
         }
 
         public void OnSlotFilled(RequestEvent requestEvent, EthAddress host, BigInteger slotIndex, bool isRepair)
         {
-            AddRequestBlock(requestEvent, GetSlotFilledTitle(isRepair),
+            AddRequestBlock(requestEvent, GetSlotFilledIcon(isRepair), GetSlotFilledTitle(isRepair),
                 $"Host: {host}",
                 $"Slot Index: {slotIndex}"
             );
@@ -94,14 +94,14 @@ namespace TestNetRewarder
 
         public void OnSlotFreed(RequestEvent requestEvent, BigInteger slotIndex)
         {
-            AddRequestBlock(requestEvent, $"{emojiMaps.SlotFreed} Slot Freed",
+            AddRequestBlock(requestEvent, emojiMaps.SlotFreed, "Slot Freed",
                 $"Slot Index: {slotIndex}"
             );
         }
 
         public void OnSlotReservationsFull(RequestEvent requestEvent, BigInteger slotIndex)
         {
-            AddRequestBlock(requestEvent, $"{emojiMaps.SlotReservationsFull} Slot Reservations Full",
+            AddRequestBlock(requestEvent, emojiMaps.SlotReservationsFull, "Slot Reservations Full",
                 $"Slot Index: {slotIndex}"
             );
         }
@@ -135,10 +135,16 @@ namespace TestNetRewarder
             AddBlock(0, $"{emojiMaps.ProofReport} **Proof system report**", lines.ToArray());
         }
 
+        private string GetSlotFilledIcon(bool isRepair)
+        {
+            if (isRepair) return emojiMaps.SlotRepaired;
+            return emojiMaps.SlotFilled;
+        }
+
         private string GetSlotFilledTitle(bool isRepair)
         {
-            if (isRepair) return $"{emojiMaps.SlotRepaired} Slot Repaired";
-            return $"{emojiMaps.SlotFilled} Slot Filled";
+            if (isRepair) return $"Slot Repaired";
+            return $"Slot Filled";
         }
 
         private void AddMissedProofDetails(List<string> lines, PeriodReport[] reports)
@@ -176,10 +182,10 @@ namespace TestNetRewarder
             lines.Add($"[{missedProof.FormatHost()}] missed proof for {FormatRequestId(missedProof.Request)} (slotIndex: {missedProof.SlotIndex})");
         }
 
-        private void AddRequestBlock(RequestEvent requestEvent, string eventName, params string[] content)
+        private void AddRequestBlock(RequestEvent requestEvent, string icon, string eventName, params string[] content)
         {
             var blockNumber = $"[{requestEvent.Block.BlockNumber} {FormatDateTime(requestEvent.Block.Utc)}]";
-            var title = $"{blockNumber} **{eventName}** {FormatRequestId(requestEvent)}";
+            var title = $"{blockNumber} {icon} **{eventName}** {FormatRequestId(requestEvent)}";
             AddBlock(requestEvent.Block.BlockNumber, title, content);
         }
 
