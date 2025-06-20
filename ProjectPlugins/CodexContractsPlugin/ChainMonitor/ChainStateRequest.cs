@@ -55,13 +55,25 @@ namespace CodexContractsPlugin.ChainMonitor
     public class RequestHosts
     {
         private readonly Dictionary<int, EthAddress> hosts = new Dictionary<int, EthAddress>();
+        private readonly List<int> filled = new List<int>();
 
-        public void Add(EthAddress host, int index)
+        public void HostFillsSlot(EthAddress host, int index)
         {
             hosts.Add(index, host);
+            filled.Add(index);
+        }
+
+        public bool IsFilled(int index)
+        {
+            return hosts.ContainsKey(index);
+        }
+
+        public bool WasPreviouslyFilled(int index)
+        {
+            return filled.Contains(index);
         }
         
-        public void RemoveHost(int index)
+        public void SlotFreed(int index)
         {
             hosts.Remove(index);
         }

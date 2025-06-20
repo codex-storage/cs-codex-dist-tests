@@ -84,9 +84,9 @@ namespace TestNetRewarder
             AddRequestBlock(requestEvent, $"{emojiMaps.Started} Started");
         }
 
-        public void OnSlotFilled(RequestEvent requestEvent, EthAddress host, BigInteger slotIndex)
+        public void OnSlotFilled(RequestEvent requestEvent, EthAddress host, BigInteger slotIndex, bool isRepair)
         {
-            AddRequestBlock(requestEvent, $"{emojiMaps.SlotFilled} Slot Filled",
+            AddRequestBlock(requestEvent, GetSlotFilledTitle(isRepair),
                 $"Host: {host}",
                 $"Slot Index: {slotIndex}"
             );
@@ -133,6 +133,12 @@ namespace TestNetRewarder
             AddMissedProofDetails(lines, reports.Reports);
 
             AddBlock(0, $"{emojiMaps.ProofReport} **Proof system report**", lines.ToArray());
+        }
+
+        private string GetSlotFilledTitle(bool isRepair)
+        {
+            if (isRepair) return $"{emojiMaps.SlotRepaired} Slot Repaired";
+            return $"{emojiMaps.SlotFilled} Slot Filled";
         }
 
         private void AddMissedProofDetails(List<string> lines, PeriodReport[] reports)

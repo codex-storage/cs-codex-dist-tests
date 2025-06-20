@@ -2,7 +2,6 @@
 using CodexContractsPlugin.Marketplace;
 using Logging;
 using Nethereum.Hex.HexConvertors.Extensions;
-using Newtonsoft.Json;
 using System.Numerics;
 using Utils;
 
@@ -15,7 +14,7 @@ namespace CodexContractsPlugin.ChainMonitor
         void OnRequestFulfilled(RequestEvent requestEvent);
         void OnRequestCancelled(RequestEvent requestEvent);
         void OnRequestFailed(RequestEvent requestEvent);
-        void OnSlotFilled(RequestEvent requestEvent, EthAddress host, BigInteger slotIndex);
+        void OnSlotFilled(RequestEvent requestEvent, EthAddress host, BigInteger slotIndex, bool isRepair);
         void OnSlotFreed(RequestEvent requestEvent, BigInteger slotIndex);
         void OnSlotReservationsFull(RequestEvent requestEvent, BigInteger slotIndex);
         void OnProofSubmitted(BlockTimeEntry block, string id);
@@ -166,16 +165,18 @@ namespace CodexContractsPlugin.ChainMonitor
         {
             var r = FindRequest(@event);
             if (r == null) return;
-            r.Hosts.Add(@event.Host, (int)@event.SlotIndex);
+            var slotIndex = (int)@event.SlotIndex;
+            var isRepair = !r.Hosts.IsFilled(slotIndex) && r.Hosts.WasPreviouslyFilled(slotIndex);
+            r.Hosts.HostFillsSlot(@event.Host, slotIndex);
             r.Log($"[{@event.Block.BlockNumber}] SlotFilled (host:'{@event.Host}', slotIndex:{@event.SlotIndex})");
-            handler.OnSlotFilled(new RequestEvent(@event.Block, r), @event.Host, @event.SlotIndex);
+            handler.OnSlotFilled(new RequestEvent(@event.Block, r), @event.Host, @event.SlotIndex, isRepair);
         }
 
         private void ApplyEvent(SlotFreedEventDTO @event)
         {
             var r = FindRequest(@event);
             if (r == null) return;
-            r.Hosts.RemoveHost((int)@event.SlotIndex);
+            r.Hosts.SlotFreed((int)@event.SlotIndex);
             r.Log($"[{@event.Block.BlockNumber}] SlotFreed (slotIndex:{@event.SlotIndex})");
             handler.OnSlotFreed(new RequestEvent(@event.Block, r), @event.SlotIndex);
         }

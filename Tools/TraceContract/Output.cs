@@ -72,9 +72,9 @@ namespace TraceContract
             Add(requestEvent.Block, "Started");
         }
 
-        public void LogSlotFilled(RequestEvent requestEvent, EthAddress host, BigInteger slotIndex)
+        public void LogSlotFilled(RequestEvent requestEvent, EthAddress host, BigInteger slotIndex, bool isRepair)
         {
-            Add(requestEvent.Block, $"Slot filled. Index: {slotIndex} Host: '{host}'");
+            Add(requestEvent.Block, $"Slot filled. Index: {slotIndex} Host: '{host}' isRepair: {isRepair}");
         }
 
         public void LogSlotFreed(RequestEvent requestEvent, BigInteger slotIndex)
