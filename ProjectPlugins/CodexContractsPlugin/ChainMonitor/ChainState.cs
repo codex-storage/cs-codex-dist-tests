@@ -1,6 +1,7 @@
 ﻿using BlockchainUtils;
 using CodexContractsPlugin.Marketplace;
 using Logging;
+using Nethereum.Hex.HexConvertors.Extensions;
 using Newtonsoft.Json;
 using System.Numerics;
 using Utils;
@@ -120,18 +121,14 @@ namespace CodexContractsPlugin.ChainMonitor
         {
             if (requests.Any(r => Equal(r.Request.RequestId, request.RequestId)))
             {
-                var msg = "Received NewRequest event for id that already exists. ";
-                msg += "Received: " + JsonConvert.SerializeObject(request);
                 var r = FindRequest(request);
-                if (r != null)
-                {
-                    msg += " Already have: " + JsonConvert.SerializeObject(r);
-                }
-                else
-                {
-                    msg += " Already have: Not found!";
-                }
-                throw new Exception(msg);
+                if (r == null) throw new Exception("ChainState is inconsistent. Received already-known requestId that's not known.");
+
+                if (request.Block.BlockNumber != r.Request.Block.BlockNumber) throw new Exception("Same request found in different blocks.");
+                if (request.Client != r.Request.Client) throw new Exception("Same request belongs to different clients.");
+                if (request.Content.Cid.ToHex() != r.Request.Content.Cid.ToHex()) throw new Exception("Same request has different CIDs.");
+
+                log.Log("Received the same request-creation event multiple times.");
             }
 
             var newRequest = new ChainStateRequest(log, request, RequestState.New);
