@@ -1,8 +1,7 @@
 ﻿using BlockchainUtils;
-using CodexContractsPlugin;
 using CodexContractsPlugin.ChainMonitor;
+using CodexContractsPlugin.Marketplace;
 using DiscordRewards;
-using GethPlugin;
 using System.Globalization;
 using System.Numerics;
 using Utils;
@@ -16,10 +15,12 @@ namespace TestNetRewarder
         private readonly List<string> errors = new List<string>();
         private readonly EmojiMaps emojiMaps = new EmojiMaps();
         private readonly Configuration config;
+        private readonly string periodDuration;
 
-        public EventsFormatter(Configuration config)
+        public EventsFormatter(Configuration config, MarketplaceConfig marketplaceConfig)
         {
             this.config = config;
+            periodDuration = Time.FormatDuration(marketplaceConfig.PeriodDuration);
         }
 
         public ChainEventMessage[] GetInitializationEvents(Configuration config)
@@ -58,7 +59,8 @@ namespace TestNetRewarder
                 $"PricePerBytePerSecond: {BitIntToTestTokens(request.Request.Ask.PricePerBytePerSecond)}",
                 $"Number of Slots: {request.Request.Ask.Slots}",
                 $"Slot Tolerance: {request.Request.Ask.MaxSlotLoss}",
-                $"Slot Size: {BigIntToByteSize(request.Request.Ask.SlotSize)}"
+                $"Slot Size: {BigIntToByteSize(request.Request.Ask.SlotSize)}",
+                $"Proof Probability: 1 / {request.Request.Ask.ProofProbability} every {periodDuration}"
             );
         }
 
