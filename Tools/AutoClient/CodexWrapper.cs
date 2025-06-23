@@ -85,7 +85,7 @@ namespace AutoClient
 
         private int GetProofProbability()
         {
-            return r.Next(10, 100);
+            return 10000 + r.Next(10, 100);
         }
     }
 }
