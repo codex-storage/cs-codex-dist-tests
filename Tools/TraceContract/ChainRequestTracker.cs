@@ -70,11 +70,11 @@ namespace TraceContract
             }
         }
 
-        public void OnSlotFilled(RequestEvent requestEvent, EthAddress host, BigInteger slotIndex)
+        public void OnSlotFilled(RequestEvent requestEvent, EthAddress host, BigInteger slotIndex, bool isRepair)
         {
             if (IsMyRequest(requestEvent))
             {
-                output.LogSlotFilled(requestEvent, host, slotIndex);
+                output.LogSlotFilled(requestEvent, host, slotIndex, isRepair);
             }
         }
 

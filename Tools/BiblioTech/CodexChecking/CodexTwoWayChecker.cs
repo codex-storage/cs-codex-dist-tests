@@ -15,6 +15,7 @@ namespace BiblioTech.CodexChecking
         Task CouldNotDownloadCid();
         Task GiveCidToUser(string cid);
         Task GiveDataFileToUser(string fileContent);
+        Task CodexUnavailable();
 
         Task ToAdminChannel(string msg);
     }
@@ -44,6 +45,12 @@ namespace BiblioTech.CodexChecking
             }
 
             var cid = UploadData(check.UniqueData);
+            if (cid == null)
+            {
+                await handler.CodexUnavailable();
+                return;
+            }
+
             await handler.GiveCidToUser(cid);
         }
 
@@ -96,7 +103,12 @@ namespace BiblioTech.CodexChecking
 
             if (IsManifestLengthCompatible(handler, check, manifest))
             {
-                if (IsContentCorrect(handler, check, receivedCid))
+                var correct = IsContentCorrect(handler, check, receivedCid);
+                if (!correct.HasValue) {
+                    await handler.CodexUnavailable();
+                    return;
+                }
+                if (correct.Value)
                 {
                     await CheckNowCompleted(handler, check, userId, "UploadCheck");
                     return;
@@ -120,7 +132,7 @@ namespace BiblioTech.CodexChecking
                 check.CompletedUtc < expiry;
         }
 
-        private string UploadData(string uniqueData)
+        private string? UploadData(string uniqueData)
         {
             var filePath = Path.Combine(config.ChecksDataPath, Guid.NewGuid().ToString());
 
@@ -172,7 +184,7 @@ namespace BiblioTech.CodexChecking
                 manifestLength < (dataLength + 1);
         }
 
-        private bool IsContentCorrect(ICheckResponseHandler handler, TransferCheck check, string receivedCid)
+        private bool? IsContentCorrect(ICheckResponseHandler handler, TransferCheck check, string receivedCid)
         {
             try
             {
@@ -189,6 +201,8 @@ namespace BiblioTech.CodexChecking
                         if (File.Exists(file.Filename)) File.Delete(file.Filename);
                     }
                 });
+
+                if (content == null) return null;
 
                 Log($"Checking content: content={content},check={check.UniqueData}");
                 return content == check.UniqueData;

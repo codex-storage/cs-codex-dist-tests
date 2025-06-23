@@ -27,7 +27,7 @@ namespace KubernetesWorkflow.Types
         public Address GetAddress(string portTag)
         {
             var addresses = Addresses.Where(a => a.PortTag == portTag).ToArray();
-            if (!addresses.Any()) throw new Exception("No addresses found for portTag: " + portTag);
+            if (addresses.Length == 0) throw new Exception("No addresses found for portTag: " + portTag);
 
             var select = SelectAddress(addresses);
             return select.Address;

@@ -1,6 +1,5 @@
 ﻿using BlockchainUtils;
 using CodexContractsPlugin.ChainMonitor;
-using GethPlugin;
 using Logging;
 using System.Numerics;
 using Utils;
@@ -47,7 +46,7 @@ namespace MarketInsights
             AddRequestToAverage(segment.Started, requestEvent);
         }
 
-        public void OnSlotFilled(RequestEvent requestEvent, EthAddress host, BigInteger slotIndex)
+        public void OnSlotFilled(RequestEvent requestEvent, EthAddress host, BigInteger slotIndex, bool isRepair)
         {
         }
 

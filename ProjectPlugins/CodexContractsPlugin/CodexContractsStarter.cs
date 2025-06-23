@@ -35,12 +35,15 @@ namespace CodexContractsPlugin
             var container = containers.Containers[0];
 
             Log("Container started.");
+            var watcher = workflow.CreateCrashWatcher(container);
+            watcher.Start();
 
             try
             {
                 var result = DeployContract(container, workflow, gethNode);
 
                 workflow.Stop(containers, waitTillStopped: false);
+                watcher.Stop();
                 Log("Container stopped.");
                 return result;
             }

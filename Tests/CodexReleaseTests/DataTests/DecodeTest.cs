@@ -1,6 +1,4 @@
-﻿using System.Security.Cryptography;
-using CodexReleaseTests.Utils;
-using Nethereum.JsonRpc.Client;
+﻿using CodexReleaseTests.Utils;
 using NUnit.Framework;
 using Utils;
 

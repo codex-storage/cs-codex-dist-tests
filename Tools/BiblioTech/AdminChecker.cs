@@ -35,6 +35,7 @@ namespace BiblioTech
 
         public async Task SendInAdminChannel(string[] lines)
         {
+            if (adminChannel == null) return;
             var chunker = new LineChunker(lines);
             var chunks = chunker.GetChunks();
             if (!chunks.Any()) return;

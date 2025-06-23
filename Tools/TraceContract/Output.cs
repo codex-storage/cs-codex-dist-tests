@@ -1,4 +1,5 @@
 ﻿using System.Numerics;
+using BlockchainUtils;
 using CodexContractsPlugin.ChainMonitor;
 using CodexContractsPlugin.Marketplace;
 using Logging;
@@ -10,13 +11,13 @@ namespace TraceContract
     {
         private class Entry
         {
-            public Entry(DateTime utc, string msg)
+            public Entry(BlockTimeEntry blk, string msg)
             {
-                Utc = utc;
+                Blk = blk;
                 Msg = msg;
             }
 
-            public DateTime Utc { get; }
+            public BlockTimeEntry Blk { get; }
             public string Msg { get; }
         }
 
@@ -48,47 +49,47 @@ namespace TraceContract
 
         public void LogRequestCreated(RequestEvent requestEvent)
         {
-            Add(requestEvent.Block.Utc, $"Storage request created: '{requestEvent.Request.Request.Id}'");
+            Add(requestEvent.Block, $"Storage request created: '{requestEvent.Request.Request.Id}'");
         }
 
         public void LogRequestCancelled(RequestEvent requestEvent)
         {
-            Add(requestEvent.Block.Utc, "Expired");
+            Add(requestEvent.Block, "Expired");
         }
 
         public void LogRequestFailed(RequestEvent requestEvent)
         {
-            Add(requestEvent.Block.Utc, "Failed");
+            Add(requestEvent.Block, "Failed");
         }
 
         public void LogRequestFinished(RequestEvent requestEvent)
         {
-            Add(requestEvent.Block.Utc, "Finished");
+            Add(requestEvent.Block, "Finished");
         }
 
         public void LogRequestStarted(RequestEvent requestEvent)
         {
-            Add(requestEvent.Block.Utc, "Started");
+            Add(requestEvent.Block, "Started");
         }
 
-        public void LogSlotFilled(RequestEvent requestEvent, EthAddress host, BigInteger slotIndex)
+        public void LogSlotFilled(RequestEvent requestEvent, EthAddress host, BigInteger slotIndex, bool isRepair)
         {
-            Add(requestEvent.Block.Utc, $"Slot filled. Index: {slotIndex} Host: '{host}'");
+            Add(requestEvent.Block, $"Slot filled. Index: {slotIndex} Host: '{host}' isRepair: {isRepair}");
         }
 
         public void LogSlotFreed(RequestEvent requestEvent, BigInteger slotIndex)
         {
-            Add(requestEvent.Block.Utc, $"Slot freed. Index: {slotIndex}");
+            Add(requestEvent.Block, $"Slot freed. Index: {slotIndex}");
         }
 
         public void LogSlotReservationsFull(RequestEvent requestEvent, BigInteger slotIndex)
         {
-            Add(requestEvent.Block.Utc, $"Slot reservations full. Index: {slotIndex}");
+            Add(requestEvent.Block, $"Slot reservations full. Index: {slotIndex}");
         }
 
         public void WriteContractEvents()
         {
-            var sorted = entries.OrderBy(e => e.Utc).ToArray();
+            var sorted = entries.OrderBy(e => e.Blk.Utc).ToArray();
             foreach (var e in sorted) Write(e);
         }
 
@@ -106,17 +107,17 @@ namespace TraceContract
 
         private void Write(Entry e)
         {
-            log.Log($"[{Time.FormatTimestamp(e.Utc)}] {e.Msg}");
+            log.Log($"Block: {e.Blk.BlockNumber} [{Time.FormatTimestamp(e.Blk.Utc)}] {e.Msg}");
         }
 
         public void LogReserveSlotCall(ReserveSlotFunction call)
         {
-            Add(call.Block.Utc, $"Reserve-slot called. Index: {call.SlotIndex} Host: '{call.FromAddress}'");
+            Add(call.Block, $"Reserve-slot called. Block: {call.Block.BlockNumber} Index: {call.SlotIndex} Host: '{call.FromAddress}'");
         }
 
-        private void Add(DateTime utc, string msg)
+        private void Add(BlockTimeEntry blk, string msg)
         {
-            entries.Add(new Entry(utc, msg));
+            entries.Add(new Entry(blk, msg));
         }
     }
 }
