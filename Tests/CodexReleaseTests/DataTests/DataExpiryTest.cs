@@ -98,10 +98,11 @@ namespace CodexReleaseTests.DataTests
         {
             var blockTtl = TimeSpan.FromMinutes(1.0);
 
-            var bootstrapNode = StartCodex();
+            var bootstrapNode = StartCodex(s => s.WithName("Bootstrap"));
             var geth = StartGethNode(s => s.IsMiner());
             var contracts = Ci.StartCodexContracts(geth, bootstrapNode.Version);
             var client = StartCodex(s => s
+                .WithName("client")
                 .WithBootstrapNode(bootstrapNode)
                 .EnableMarketplace(geth, contracts, m => m.WithInitial(100.Eth(), 100.Tst()))
                 .WithBlockTTL(blockTtl)
@@ -110,6 +111,7 @@ namespace CodexReleaseTests.DataTests
             );
 
             var hosts = StartCodex(3, s => s
+                .WithName("host")
                 .WithBootstrapNode(bootstrapNode)
                 .EnableMarketplace(geth, contracts, m => m.AsStorageNode().WithInitial(100.Eth(), 100.Tst()))
                 .WithBlockTTL(blockTtl)
@@ -122,7 +124,7 @@ namespace CodexReleaseTests.DataTests
                 minPricePerBytePerSecond: 1.TstWei(),
                 totalCollateral: 10.Tst()));
 
-            var uploadCid = client.UploadFile(GenerateTestFile(1.MB()));
+            var uploadCid = client.UploadFile(GenerateTestFile(5.MB()));
             var request = client.Marketplace.RequestStorage(new CodexClient.StoragePurchaseRequest(uploadCid)
             {
                 CollateralPerByte = 1.TstWei(),
@@ -140,7 +142,7 @@ namespace CodexReleaseTests.DataTests
             
             Thread.Sleep(blockTtl * 2.0);
 
-            var checker = StartCodex(s => s.WithBootstrapNode(bootstrapNode));
+            var checker = StartCodex(s => s.WithName("checker").WithBootstrapNode(bootstrapNode));
             var manifest = checker.DownloadManifestOnly(storeCid);
             Assert.That(manifest.Manifest.Protected, Is.True);
         }
