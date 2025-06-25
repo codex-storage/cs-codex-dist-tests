@@ -9,9 +9,9 @@ FROM ${IMAGE} AS builder
 ARG APP_HOME
 
 WORKDIR ${APP_HOME}
-COPY ./Tools/BiblioTech ./Tools/BiblioTech
-COPY ./Framework ./Framework
-COPY ./ProjectPlugins ./ProjectPlugins
+COPY Tools/BiblioTech Tools/BiblioTech
+COPY Framework Framework
+COPY ProjectPlugins ProjectPlugins
 RUN dotnet restore Tools/BiblioTech
 RUN dotnet publish Tools/BiblioTech -c Release -o out
 
@@ -23,4 +23,7 @@ ENV APP_HOME=${APP_HOME}
 
 WORKDIR ${APP_HOME}
 COPY --from=builder ${APP_HOME}/out .
-CMD dotnet ${APP_HOME}/BiblioTech.dll
+COPY --chmod=0755 Tools/BiblioTech/docker/docker-entrypoint.sh /
+
+ENTRYPOINT ["/docker-entrypoint.sh"]
+CMD ["bash", "-c", "dotnet ${APP_HOME}/BiblioTech.dll"]
