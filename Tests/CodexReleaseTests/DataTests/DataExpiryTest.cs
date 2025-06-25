@@ -92,5 +92,57 @@ namespace CodexReleaseTests.DataTests
             Assert.That(cleanupSpace.QuotaUsedBytes, Is.EqualTo(startSpace.QuotaUsedBytes));
             Assert.That(cleanupSpace.FreeBytes, Is.EqualTo(startSpace.FreeBytes));
         }
+
+        [Test]
+        public void StorageRequestsKeepManifests()
+        {
+            var blockTtl = TimeSpan.FromMinutes(1.0);
+
+            var bootstrapNode = StartCodex();
+            var geth = StartGethNode(s => s.IsMiner());
+            var contracts = Ci.StartCodexContracts(geth, bootstrapNode.Version);
+            var client = StartCodex(s => s
+                .WithBootstrapNode(bootstrapNode)
+                .EnableMarketplace(geth, contracts, m => m.WithInitial(100.Eth(), 100.Tst()))
+                .WithBlockTTL(blockTtl)
+                .WithBlockMaintenanceInterval(TimeSpan.FromSeconds(10.0))
+                .WithBlockMaintenanceNumber(100000)
+            );
+
+            var hosts = StartCodex(3, s => s
+                .WithBootstrapNode(bootstrapNode)
+                .EnableMarketplace(geth, contracts, m => m.AsStorageNode().WithInitial(100.Eth(), 100.Tst()))
+                .WithBlockTTL(blockTtl)
+                .WithBlockMaintenanceInterval(TimeSpan.FromSeconds(10.0))
+                .WithBlockMaintenanceNumber(100000)
+            );
+            foreach (var host in hosts) host.Marketplace.MakeStorageAvailable(new CodexClient.CreateStorageAvailability(
+                totalSpace: 2.GB(),
+                maxDuration: TimeSpan.FromDays(2.0),
+                minPricePerBytePerSecond: 1.TstWei(),
+                totalCollateral: 10.Tst()));
+
+            var uploadCid = client.UploadFile(GenerateTestFile(1.MB()));
+            var request = client.Marketplace.RequestStorage(new CodexClient.StoragePurchaseRequest(uploadCid)
+            {
+                CollateralPerByte = 1.TstWei(),
+                Duration = TimeSpan.FromDays(1.0),
+                Expiry = TimeSpan.FromHours(1.0),
+                MinRequiredNumberOfNodes = 3,
+                NodeFailureTolerance = 1,
+                PricePerBytePerSecond = 1.Tst(),
+                ProofProbability = 99999
+            });
+            request.WaitForStorageContractStarted();
+            var storeCid = request.ContentId;
+
+            client.Stop(waitTillStopped: true);
+            
+            Thread.Sleep(blockTtl * 2.0);
+
+            var checker = StartCodex(s => s.WithBootstrapNode(bootstrapNode));
+            var manifest = checker.DownloadManifestOnly(storeCid);
+            Assert.That(manifest.Manifest.Protected, Is.True);
+        }
     }
 }

@@ -74,11 +74,16 @@ namespace CodexContractsPlugin
 
             var extractor = new ContractsContainerInfoExtractor(tools.GetLog(), workflow, container);
             var marketplaceAddress = extractor.ExtractMarketplaceAddress();
+            if (string.IsNullOrEmpty(marketplaceAddress)) throw new Exception("Marketplace address not received.");
             var (abi, bytecode) = extractor.ExtractMarketplaceAbiAndByteCode();
+            if (string.IsNullOrEmpty(abi)) throw new Exception("ABI not received.");
+            if (string.IsNullOrEmpty(bytecode)) throw new Exception("bytecode not received.");
             EnsureCompatbility(abi, bytecode);
 
             var interaction = new ContractInteractions(tools.GetLog(), gethNode);
             var tokenAddress = interaction.GetTokenAddress(marketplaceAddress);
+            if (string.IsNullOrEmpty(tokenAddress)) throw new Exception("Token address not received.");
+            Log("TokenAddress: " + tokenAddress);
 
             Log("Extract completed. Checking sync...");
 

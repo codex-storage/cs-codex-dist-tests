@@ -27,7 +27,7 @@ namespace CodexContractsPlugin
             var marketplaceAddress = Retry(FetchMarketplaceAddress);
             if (string.IsNullOrEmpty(marketplaceAddress)) throw new InvalidOperationException("Unable to fetch marketplace account from codex-contracts node. Test infra failure.");
 
-            log.Debug("Got MarketplaceAddress: " + marketplaceAddress);
+            log.Log("MarketplaceAddress: " + marketplaceAddress);
             return marketplaceAddress;
         }
 
@@ -43,9 +43,10 @@ namespace CodexContractsPlugin
 
         private string FetchMarketplaceAddress()
         {
-            var json = workflow.ExecuteCommand(container, "cat", CodexContractsContainerRecipe.MarketplaceAddressFilename);
-            var marketplace = JsonConvert.DeserializeObject<MarketplaceJson>(json);
-            return marketplace!.address;
+            var json = workflow.ExecuteCommand(container, "cat", CodexContractsContainerRecipe.DeployedAddressesFilename);
+            json = json.Replace("#", "_");
+            var addresses = JsonConvert.DeserializeObject<DeployedAddressesJson>(json);
+            return addresses!.Marketplace_Marketplace;
         }
 
         private (string, string) FetchMarketplaceAbiAndByteCode()
@@ -67,8 +68,10 @@ namespace CodexContractsPlugin
         }
     }
 
-    public class MarketplaceJson
+    public class DeployedAddressesJson
     {
-        public string address { get; set; } = string.Empty;
+        public string Token_TestToken { get; set; } = string.Empty;
+        public string Verifier_Groth16Verifier { get; set; } = string.Empty;
+        public string Marketplace_Marketplace { get; set; } = string.Empty;
     }
 }
