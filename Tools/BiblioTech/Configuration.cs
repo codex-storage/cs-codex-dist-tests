@@ -44,6 +44,9 @@ namespace BiblioTech
         [Uniform("codex-endpoint-auth", "cea", "CODEXENDPOINTAUTH", false, "Codex endpoint basic auth. Colon separated username and password. (default: empty, no auth used.)")]
         public string CodexEndpointAuth { get; set; } = "";
 
+        [Uniform("transaction-link-format", "tlf", "TRANSACTIONLINKFORMAT", false, "Format of links to transactions on the blockchain. Use '<ID>' to inject the transaction ID into this string. (default 'https://explorer.testnet.codex.storage/tx/<ID>')")]
+        public string TransactionLinkFormat { get; set; } = "https://explorer.testnet.codex.storage/tx/<ID>";
+
         #region Role Rewards
 
         /// <summary>

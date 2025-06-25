@@ -98,9 +98,7 @@ namespace BiblioTech.Commands
 
         private string FormatTransactionLink(string transaction)
         {
-            TODO! this needs to be configurable when we switch to devnet.
-
-            var url = $"https://explorer.testnet.codex.storage/tx/{transaction}";
+            var url = Program.Config.TransactionLinkFormat.Replace("<ID>", transaction);
             return $"- [View on block explorer](<{url}>){Environment.NewLine}Transaction ID - `{transaction}`";
         }
     }
