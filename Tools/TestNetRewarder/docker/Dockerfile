@@ -9,9 +9,9 @@ FROM ${IMAGE} AS builder
 ARG APP_HOME
 
 WORKDIR ${APP_HOME}
-COPY ./Tools/TestNetRewarder ./Tools/TestNetRewarder
-COPY ./Framework ./Framework
-COPY ./ProjectPlugins ./ProjectPlugins
+COPY Tools/TestNetRewarder Tools/TestNetRewarder
+COPY Framework Framework
+COPY ProjectPlugins ProjectPlugins
 RUN dotnet restore Tools/TestNetRewarder
 RUN dotnet publish Tools/TestNetRewarder -c Release -o out
 
@@ -23,4 +23,7 @@ ENV APP_HOME=${APP_HOME}
 
 WORKDIR ${APP_HOME}
 COPY --from=builder ${APP_HOME}/out .
-CMD dotnet ${APP_HOME}/TestNetRewarder.dll
+COPY --chmod=0755 Tools/TestNetRewarder/docker/docker-entrypoint.sh /
+
+ENTRYPOINT ["/docker-entrypoint.sh"]
+CMD ["bash", "-c", "dotnet ${APP_HOME}/TestNetRewarder.dll"]
