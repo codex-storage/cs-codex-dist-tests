@@ -114,14 +114,13 @@ namespace NethereumWorkflow
             var p = web3.Processing.Logs.CreateProcessor(
                 action: logs.Add,
                 minimumBlockConfirmations: 1,
-                criteria: l => l.Address == address
+                criteria: l => l.IsLogForEvent<TEvent>()
             );
 
             var from = new BlockParameter(fromBlockNumber);
             var to = new BlockParameter(toBlockNumber);
             var ct = new CancellationTokenSource().Token;
             Time.Wait(p.ExecuteAsync(toBlockNumber: to.BlockNumber, cancellationToken: ct, startAtBlockNumberIfNotProcessed: from.BlockNumber));
-
 
             return logs
                 .Where(l => l.IsLogForEvent<TEvent>())
