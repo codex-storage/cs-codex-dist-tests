@@ -2,7 +2,7 @@
 {
     public class CodexDockerImage
     {
-        private const string DefaultDockerImage = "codexstorage/nim-codex:sha-e324ac8-dist-tests";
+        private const string DefaultDockerImage = "codexstorage/nim-codex:latest-dist-tests";
 
         public static string Override { get; set; } = string.Empty;
 

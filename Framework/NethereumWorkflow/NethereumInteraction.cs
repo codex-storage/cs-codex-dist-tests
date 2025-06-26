@@ -110,11 +110,47 @@ namespace NethereumWorkflow
 
         public List<EventLog<TEvent>> GetEvents<TEvent>(string address, ulong fromBlockNumber, ulong toBlockNumber) where TEvent : IEventDTO, new()
         {
-            var eventHandler = web3.Eth.GetEvent<TEvent>(address);
-            var from = new BlockParameter(fromBlockNumber);
-            var to = new BlockParameter(toBlockNumber);
-            var blockFilter = Time.Wait(eventHandler.CreateFilterBlockRangeAsync(from, to));
-            return Time.Wait(eventHandler.GetAllChangesAsync(blockFilter));
+            try
+            {
+                var logs = new List<FilterLog>();
+                var p = web3.Processing.Logs.CreateProcessor(l => logs.Add(l));
+
+                var from = new BlockParameter(fromBlockNumber);
+                var to = new BlockParameter(toBlockNumber);
+                var ct = new CancellationTokenSource().Token;
+                Time.Wait(p.ExecuteAsync(toBlockNumber: to.BlockNumber, cancellationToken: ct, startAtBlockNumberIfNotProcessed: from.BlockNumber));
+
+                var result = new List<EventLog<TEvent>>();
+                foreach (var l in logs)
+                {
+                    if (l.IsLogForEvent<TEvent>())
+                    {
+                        var eee = l.DecodeEvent<TEvent>();
+                        result.Add(eee);
+                    }
+                }
+
+                return result;
+
+
+                //var eventHandler = web3.Eth.GetEvent<TEvent>(address);
+                
+                //var blockFilter = Time.Wait(eventHandler.CreateFilterBlockRangeAsync(from, to));
+                //return Time.Wait(eventHandler.GetAllChangesAsync(blockFilter));
+
+                //var events = eventHandler.DecodeAllEventsForEvent(new FilterLog[]
+                //{
+                //    //new FilterLog
+                //    //{
+                //    //    BlockNumber = from.BlockNumber
+                //    //}
+                //});
+            }
+            catch (Exception ex)
+            {
+                var aaa = 0;
+                throw;
+            }
         }
 
         public BlockInterval ConvertTimeRangeToBlockRange(TimeRange timeRange)
