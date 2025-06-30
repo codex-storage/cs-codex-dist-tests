@@ -12,6 +12,7 @@ namespace CodexClient
         ContentId ContentId { get; }
         StoragePurchase? GetStatus();
         void WaitForStorageContractSubmitted();
+        void WaitForStorageContractExpired();
         void WaitForStorageContractStarted();
         void WaitForStorageContractFinished();
         void WaitForContractFailed(IMarketplaceConfigInput config);
@@ -79,6 +80,12 @@ namespace CodexClient
             if (raiseHook) hooks.OnStorageContractSubmitted(this);
             LogSubmittedDuration();
             AssertDuration(PendingToSubmitted, timeout, nameof(PendingToSubmitted));
+        }
+
+        public void WaitForStorageContractExpired()
+        {
+            var timeout = Purchase.Expiry + gracePeriod + gracePeriod;
+            WaitForStorageContractState(timeout, StoragePurchaseState.Cancelled);
         }
 
         public void WaitForStorageContractStarted()

@@ -3,6 +3,7 @@ using BlockchainUtils;
 using CodexContractsPlugin.ChainMonitor;
 using CodexContractsPlugin.Marketplace;
 using Logging;
+using Newtonsoft.Json;
 using Utils;
 
 namespace TraceContract
@@ -49,7 +50,9 @@ namespace TraceContract
 
         public void LogRequestCreated(RequestEvent requestEvent)
         {
-            Add(requestEvent.Block, $"Storage request created: '{requestEvent.Request.Request.Id}'");
+            var r = requestEvent.Request.Request;
+            var msg = $"Storage request created: '{r.Id}' = {Environment.NewLine}${JsonConvert.SerializeObject(r, Formatting.Indented)}{Environment.NewLine}";
+            Add(requestEvent.Block, msg);
         }
 
         public void LogRequestCancelled(RequestEvent requestEvent)
