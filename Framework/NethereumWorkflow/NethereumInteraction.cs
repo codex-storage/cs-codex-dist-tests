@@ -110,11 +110,22 @@ namespace NethereumWorkflow
 
         public List<EventLog<TEvent>> GetEvents<TEvent>(string address, ulong fromBlockNumber, ulong toBlockNumber) where TEvent : IEventDTO, new()
         {
-            var eventHandler = web3.Eth.GetEvent<TEvent>(address);
+            var logs = new List<FilterLog>();
+            var p = web3.Processing.Logs.CreateProcessor(
+                action: logs.Add,
+                minimumBlockConfirmations: 1,
+                criteria: l => l.IsLogForEvent<TEvent>()
+            );
+
             var from = new BlockParameter(fromBlockNumber);
             var to = new BlockParameter(toBlockNumber);
-            var blockFilter = Time.Wait(eventHandler.CreateFilterBlockRangeAsync(from, to));
-            return Time.Wait(eventHandler.GetAllChangesAsync(blockFilter));
+            var ct = new CancellationTokenSource().Token;
+            Time.Wait(p.ExecuteAsync(toBlockNumber: to.BlockNumber, cancellationToken: ct, startAtBlockNumberIfNotProcessed: from.BlockNumber));
+
+            return logs
+                .Where(l => l.IsLogForEvent<TEvent>())
+                .Select(l => l.DecodeEvent<TEvent>())
+                .ToList();
         }
 
         public BlockInterval ConvertTimeRangeToBlockRange(TimeRange timeRange)
