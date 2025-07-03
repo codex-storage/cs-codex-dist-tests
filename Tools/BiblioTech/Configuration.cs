@@ -30,7 +30,7 @@ namespace BiblioTech
         public int RewardApiPort { get; set; } = 31080;
 
         [Uniform("send-eth", "se", "SENDETH", true, "Amount of Eth send by the mint command.")]
-        public int SendEth { get; set; } = 10;
+        public decimal SendEth { get; set; } = 10.0m;
 
         [Uniform("mint-tt", "mt", "MINTTT", true, "Amount of TSTWEI minted by the mint command.")]
         public BigInteger MintTT { get; set; } = 1073741824;
