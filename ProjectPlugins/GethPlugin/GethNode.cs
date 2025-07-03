@@ -32,6 +32,7 @@ namespace GethPlugin
         BlockInterval ConvertTimeRangeToBlockRange(TimeRange timeRange);
         BlockTimeEntry GetBlockForNumber(ulong number);
         void IterateFunctionCalls<TFunc>(BlockInterval blockInterval, Action<BlockTimeEntry, TFunc> onCall) where TFunc : FunctionMessage, new();
+        IGethNode WithDifferentAccount(EthAccount account);
     }
 
     public class DeploymentGethNode : BaseGethNode, IGethNode
@@ -68,6 +69,21 @@ namespace GethPlugin
             var creator = new NethereumInteractionCreator(log, blockCache, address.Host, address.Port, account.PrivateKey);
             return creator.CreateWorkflow();
         }
+
+        public IGethNode WithDifferentAccount(EthAccount account)
+        {
+            return new DeploymentGethNode(log, blockCache,
+                new GethDeployment(
+                    StartResult.Pod,
+                    StartResult.DiscoveryPort,
+                    StartResult.HttpPort,
+                    StartResult.WsPort,
+                    new GethAccount(
+                        account.EthAddress.Address,
+                        account.PrivateKey
+                    ),
+                    account.PrivateKey));
+        }
     }
 
     public class CustomGethNode : BaseGethNode, IGethNode
@@ -93,6 +109,11 @@ namespace GethPlugin
         public GethBootstrapNode GetBootstrapRecord()
         {
             throw new NotImplementedException();
+        }
+
+        public IGethNode WithDifferentAccount(EthAccount account)
+        {
+            return new CustomGethNode(log, blockCache, gethHost, gethPort, account.PrivateKey);
         }
 
         protected override NethereumInteraction StartInteraction()

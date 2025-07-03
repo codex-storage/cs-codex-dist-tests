@@ -20,6 +20,7 @@ namespace CodexContractsPlugin
         string MintTestTokens(EthAddress ethAddress, TestToken testTokens);
         TestToken GetTestTokenBalance(IHasEthAddress owner);
         TestToken GetTestTokenBalance(EthAddress ethAddress);
+        void TransferTestTokens(EthAddress to, TestToken amount);
 
         ICodexContractsEvents GetEvents(TimeRange timeRange);
         ICodexContractsEvents GetEvents(BlockInterval blockInterval);
@@ -29,6 +30,8 @@ namespace CodexContractsPlugin
         ulong GetPeriodNumber(DateTime utc);
         void WaitUntilNextPeriod();
         ProofState GetProofState(Request storageRequest, decimal slotIndex, ulong blockNumber, ulong period);
+
+        ICodexContracts WithDifferentGeth(IGethNode node);
     }
 
     public class ProofState
@@ -91,6 +94,11 @@ namespace CodexContractsPlugin
         {
             var balance = StartInteraction().GetBalance(Deployment.TokenAddress, ethAddress.Address);
             return balance.TstWei();
+        }
+
+        public void TransferTestTokens(EthAddress to, TestToken amount)
+        {
+            StartInteraction().TransferTestTokens(Deployment.TokenAddress, to.Address, amount.TstWei);
         }
 
         public ICodexContractsEvents GetEvents(TimeRange timeRange)
@@ -163,6 +171,11 @@ namespace CodexContractsPlugin
             return new ProofState(required, missing);
         }
 
+        public ICodexContracts WithDifferentGeth(IGethNode node)
+        {
+            return new CodexContractsAccess(log, node, Deployment);
+        }
+
         private byte[] GetSlotId(Request request, decimal slotIndex)
         {
             var encoder = new ABIEncode();
@@ -193,7 +206,7 @@ namespace CodexContractsPlugin
                     SlotId = slotId,
                     Period = period
                 };
-                gethNode.Call<MarkProofAsMissingFunction>(Deployment.MarketplaceAddress, funcB, blockNumber);
+                gethNode.Call(Deployment.MarketplaceAddress, funcB, blockNumber);
             }
             catch (AggregateException exc)
             {

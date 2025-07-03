@@ -2,8 +2,6 @@
 using CodexContractsPlugin.Marketplace;
 using GethPlugin;
 using Logging;
-using Nethereum.ABI.FunctionEncoding.Attributes;
-using Nethereum.Contracts;
 using Nethereum.Hex.HexConvertors.Extensions;
 using System.Numerics;
 using Utils;
@@ -33,9 +31,9 @@ namespace CodexContractsPlugin
             try
             {
                 log.Debug(tokenAddress);
-                var function = new GetTokenNameFunction();
+                var function = new NameFunction();
 
-                return gethNode.Call<GetTokenNameFunction, string>(tokenAddress, function);
+                return gethNode.Call<NameFunction, string>(tokenAddress, function);
             }
             catch (Exception ex)
             {
@@ -53,12 +51,24 @@ namespace CodexContractsPlugin
         public decimal GetBalance(string tokenAddress, string account)
         {
             log.Debug($"({tokenAddress}) {account}");
-            var function = new GetTokenBalanceFunction
+            var function = new BalanceOfFunction
             {
-                Owner = account
+                Account = account
             };
 
-            return gethNode.Call<GetTokenBalanceFunction, BigInteger>(tokenAddress, function).ToDecimal();
+            return gethNode.Call<BalanceOfFunction, BigInteger>(tokenAddress, function).ToDecimal();
+        }
+
+        public void TransferTestTokens(string tokenAddress, string toAccount, BigInteger amount)
+        {
+            log.Debug($"({tokenAddress}) {toAccount} {amount}");
+            var function = new TransferFunction
+            {
+                To = toAccount,
+                Value = amount
+            };
+
+            gethNode.SendTransaction(tokenAddress, function);
         }
 
         public GetRequestOutputDTO GetRequest(string marketplaceAddress, byte[] requestId)
@@ -90,7 +100,7 @@ namespace CodexContractsPlugin
             log.Debug($"({tokenAddress}) {amount} --> {account}");
             if (string.IsNullOrEmpty(account)) throw new ArgumentException("Invalid arguments for MintTestTokens");
 
-            var function = new MintTokensFunction
+            var function = new MintFunction
             {
                 Holder = account,
                 Amount = amount
@@ -109,27 +119,5 @@ namespace CodexContractsPlugin
         {
             return gethNode.IsContractAvailable(marketplaceAbi, marketplaceAddress);
         }
-    }
-
-    [Function("name", "string")]
-    public class GetTokenNameFunction : FunctionMessage
-    {
-    }
-
-    [Function("mint")]
-    public class MintTokensFunction : FunctionMessage
-    {
-        [Parameter("address", "holder", 1)]
-        public string Holder { get; set; } = string.Empty;
-
-        [Parameter("uint256", "amount", 2)]
-        public BigInteger Amount { get; set; }
-    }
-
-    [Function("balanceOf", "uint256")]
-    public class GetTokenBalanceFunction : FunctionMessage
-    {
-        [Parameter("address", "owner", 1)]
-        public string Owner { get; set; } = string.Empty;
     }
 }
