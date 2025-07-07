@@ -7,7 +7,7 @@ namespace CodexContractsPlugin.ChainMonitor
     {
         private ChainEvents(
             BlockInterval blockInterval,
-            Request[] requests,
+            StorageRequestedEventDTO[] requests,
             RequestFulfilledEventDTO[] fulfilled,
             RequestCancelledEventDTO[] cancelled,
             RequestFailedEventDTO[] failed,
@@ -30,7 +30,7 @@ namespace CodexContractsPlugin.ChainMonitor
         }
 
         public BlockInterval BlockInterval { get; }
-        public Request[] Requests { get; }
+        public StorageRequestedEventDTO[] Requests { get; }
         public RequestFulfilledEventDTO[] Fulfilled { get; }
         public RequestCancelledEventDTO[] Cancelled { get; }
         public RequestFailedEventDTO[] Failed { get; }
@@ -54,7 +54,7 @@ namespace CodexContractsPlugin.ChainMonitor
         {
             return new ChainEvents(
                 events.BlockInterval,
-                events.GetStorageRequests(),
+                events.GetStorageRequestedEvents(),
                 events.GetRequestFulfilledEvents(),
                 events.GetRequestCancelledEvents(),
                 events.GetRequestFailedEvents(),

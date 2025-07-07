@@ -176,8 +176,7 @@ namespace CodexReleaseTests.Utils
             var result = new ChainMonitor(log, contracts, startUtc);
             result.Start(() =>
             {
-                log.Error("Failure in chain monitor. No chain updates after this point.");
-                //Assert.Fail("Failure in chain monitor.");
+                Assert.Fail("Failure in chain monitor.");
             });
             return result;
         }
@@ -363,7 +362,7 @@ namespace CodexReleaseTests.Utils
             return Time.Retry(() =>
             {
                 var events = GetContracts().GetEvents(GetTestRunTimeRange());
-                var submitEvent = events.GetStorageRequests().SingleOrDefault(e => e.RequestId.ToHex(false) == contract.PurchaseId);
+                var submitEvent = events.GetStorageRequestedEvents().SingleOrDefault(e => e.RequestId.ToHex() == contract.PurchaseId);
                 if (submitEvent == null)
                 {
                     // We're too early.
@@ -405,8 +404,8 @@ namespace CodexReleaseTests.Utils
             // Check the creation event.
             AssertOnChainEvents(events =>
             {
-                var onChainRequests = events.GetStorageRequests();
-                if (onChainRequests.Any(r => r.Id == contract.PurchaseId)) return;
+                var onChainRequests = events.GetStorageRequestedEvents();
+                if (onChainRequests.Any(r => r.RequestId.ToHex() == contract.PurchaseId)) return;
                 throw new Exception($"OnChain request {contract.PurchaseId} not found...");
             }, nameof(AssertContractIsOnChain));
 

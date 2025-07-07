@@ -24,12 +24,12 @@ namespace CodexContractsPlugin
 
         ICodexContractsEvents GetEvents(TimeRange timeRange);
         ICodexContractsEvents GetEvents(BlockInterval blockInterval);
-        EthAddress? GetSlotHost(Request storageRequest, decimal slotIndex);
-        RequestState GetRequestState(Request request);
+        EthAddress? GetSlotHost(byte[] requestId, decimal slotIndex);
+        RequestState GetRequestState(byte[] requestId);
         Request GetRequest(byte[] requestId);
         ulong GetPeriodNumber(DateTime utc);
         void WaitUntilNextPeriod();
-        ProofState GetProofState(Request storageRequest, decimal slotIndex, ulong blockNumber, ulong period);
+        ProofState GetProofState(byte[] requestId, decimal slotIndex, ulong blockNumber, ulong period);
 
         ICodexContracts WithDifferentGeth(IGethNode node);
     }
@@ -111,9 +111,9 @@ namespace CodexContractsPlugin
             return new CodexContractsEvents(log, gethNode, Deployment, blockInterval);
         }
 
-        public EthAddress? GetSlotHost(Request storageRequest, decimal slotIndex)
+        public EthAddress? GetSlotHost(byte[] requestId, decimal slotIndex)
         {
-            var slotId = GetSlotId(storageRequest, slotIndex);
+            var slotId = GetSlotId(requestId, slotIndex);
             var func = new GetHostFunction
             {
                 SlotId = slotId
@@ -123,17 +123,22 @@ namespace CodexContractsPlugin
             return new EthAddress(address);
         }
 
-        public RequestState GetRequestState(Request request)
+        public RequestState GetRequestState(byte[] requestId)
         {
+            if (requestId == null) throw new ArgumentNullException(nameof(requestId));
+            if (requestId.Length != 32) throw new InvalidDataException(nameof(requestId) + $"{nameof(requestId)} length should be 32 bytes, but was: {requestId.Length}" + requestId.Length);
+
             var func = new RequestStateFunction
             {
-                RequestId = request.RequestId
+                RequestId = requestId
             };
             return gethNode.Call<RequestStateFunction, RequestState>(Deployment.MarketplaceAddress, func);
         }
 
         public Request GetRequest(byte[] requestId)
         {
+            if (requestId == null) throw new ArgumentNullException(nameof(requestId));
+            if (requestId.Length != 32) throw new InvalidDataException(nameof(requestId) + $"{nameof(requestId)} length should be 32 bytes, but was: {requestId.Length}" + requestId.Length);
             var func = new GetRequestFunction
             {
                 RequestId = requestId
@@ -160,9 +165,9 @@ namespace CodexContractsPlugin
             Thread.Sleep(TimeSpan.FromSeconds(secondsLeft + 1));
         }
 
-        public ProofState GetProofState(Request storageRequest, decimal slotIndex, ulong blockNumber, ulong period)
+        public ProofState GetProofState(byte[] requestId, decimal slotIndex, ulong blockNumber, ulong period)
         {
-            var slotId = GetSlotId(storageRequest, slotIndex);
+            var slotId = GetSlotId(requestId, slotIndex);
 
             var required = IsProofRequired(slotId, blockNumber);
             if (!required) return new ProofState(false, false);
@@ -176,11 +181,11 @@ namespace CodexContractsPlugin
             return new CodexContractsAccess(log, node, Deployment);
         }
 
-        private byte[] GetSlotId(Request request, decimal slotIndex)
+        private byte[] GetSlotId(byte[] requestId, decimal slotIndex)
         {
             var encoder = new ABIEncode();
             var encoded = encoder.GetABIEncoded(
-                new ABIValue("bytes32", request.RequestId),
+                new ABIValue("bytes32", requestId),
                 new ABIValue("uint256", slotIndex.ToBig())
             );
 

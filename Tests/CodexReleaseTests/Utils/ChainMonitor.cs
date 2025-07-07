@@ -41,7 +41,7 @@ namespace CodexReleaseTests.Utils
 
         private void Worker(Action onFailure)
         {
-            var state = new ChainState(log, contracts, new DoNothingChainEventHandler(), startUtc, doProofPeriodMonitoring: true);
+            var state = new ChainState(log, contracts, new DoNothingThrowingChainEventHandler(), startUtc, doProofPeriodMonitoring: true);
             Thread.Sleep(updateInterval);
 
             log.Log("Chain monitoring started");

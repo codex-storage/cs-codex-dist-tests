@@ -1,6 +1,7 @@
 ﻿using System.Numerics;
 using BlockchainUtils;
 using CodexContractsPlugin.ChainMonitor;
+using Nethereum.Hex.HexConvertors.Extensions;
 using Utils;
 
 namespace TraceContract
@@ -96,7 +97,7 @@ namespace TraceContract
 
         private bool IsMyRequest(RequestEvent requestEvent)
         {
-            return requestId == requestEvent.Request.Request.Id.ToLowerInvariant();
+            return requestId == requestEvent.Request.RequestId.ToHex().ToLowerInvariant();
         }
     }
 

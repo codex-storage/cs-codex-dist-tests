@@ -41,21 +41,13 @@ namespace CodexReleaseTests.MarketTests
 
             WaitForContractStarted(request);
             AssertContractSlotsAreFilledByHosts(request, hosts);
-            AssertContractIsOnChain(request);
 
             request.WaitForStorageContractFinished();
-            AssertContractIsOnChain(request);
 
             AssertClientHasPaidForContract(pricePerBytePerSecond, client, request, hosts);
             AssertHostsWerePaidForContract(pricePerBytePerSecond, request, hosts);
             AssertHostsCollateralsAreUnchanged(hosts);
             AssertHostAvailabilitiesAreEmpty(hosts);
-
-            Thread.Sleep(GetPeriodDuration());
-            AssertContractIsOnChain(request);
-
-            Thread.Sleep(GetPeriodDuration());
-            AssertContractIsOnChain(request);
         }
 
         private IStoragePurchaseContract CreateStorageRequest(ICodexNode client)

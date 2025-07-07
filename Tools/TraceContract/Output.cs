@@ -50,8 +50,7 @@ namespace TraceContract
 
         public void LogRequestCreated(RequestEvent requestEvent)
         {
-            var r = requestEvent.Request.Request;
-            var msg = $"Storage request created: '{r.Id}' = {Environment.NewLine}${JsonConvert.SerializeObject(r, Formatting.Indented)}{Environment.NewLine}";
+            var msg = $"Storage request created: '{requestEvent.Request.RequestId}' = {Environment.NewLine}${JsonConvert.SerializeObject(requestEvent.Request.Request, Formatting.Indented)}{Environment.NewLine}";
             Add(requestEvent.Block, msg);
         }
 

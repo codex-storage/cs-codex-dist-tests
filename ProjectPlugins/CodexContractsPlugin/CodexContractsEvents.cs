@@ -11,7 +11,7 @@ namespace CodexContractsPlugin
     public interface ICodexContractsEvents
     {
         BlockInterval BlockInterval { get; }
-        Request[] GetStorageRequests();
+        StorageRequestedEventDTO[] GetStorageRequestedEvents();
         RequestFulfilledEventDTO[] GetRequestFulfilledEvents();
         RequestCancelledEventDTO[] GetRequestCancelledEvents();
         RequestFailedEventDTO[] GetRequestFailedEvents();
@@ -38,18 +38,10 @@ namespace CodexContractsPlugin
         
         public BlockInterval BlockInterval { get; }
 
-        public Request[] GetStorageRequests()
+        public StorageRequestedEventDTO[] GetStorageRequestedEvents()
         {
             var events = gethNode.GetEvents<StorageRequestedEventDTO>(deployment.MarketplaceAddress, BlockInterval);
-            var i = new ContractInteractions(log, gethNode);
-            return events.Select(e =>
-            {
-                var requestEvent = i.GetRequest(deployment.MarketplaceAddress, e.Event.RequestId);
-                var result = requestEvent.ReturnValue1;
-                result.Block = GetBlock(e.Log.BlockNumber.ToUlong());
-                result.RequestId = e.Event.RequestId;
-                return result;
-            }).ToArray();
+            return events.Select(SetBlockOnEvent).ToArray();
         }
 
         public RequestFulfilledEventDTO[] GetRequestFulfilledEvents()

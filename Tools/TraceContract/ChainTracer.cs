@@ -3,6 +3,7 @@ using CodexContractsPlugin.ChainMonitor;
 using CodexContractsPlugin.Marketplace;
 using Logging;
 using Nethereum.Hex.HexConvertors.Extensions;
+using Nethereum.Model;
 using Utils;
 
 namespace TraceContract
@@ -28,10 +29,12 @@ namespace TraceContract
             var request = GetRequest();
             if (request == null) throw new Exception("Failed to find the purchase in the last week of transactions.");
 
-            log.Log($"Request started at {request.Block.Utc}");
-            var contractEnd = RunToContractEnd(request);
+            var creationEvent = FindRequestCreationEvent();
 
-            var requestTimeline = new TimeRange(request.Block.Utc.AddMinutes(-1.0), contractEnd.AddMinutes(1.0));
+            log.Log($"Request started at {creationEvent.Block.Utc}");
+            var contractEnd = RunToContractEnd(creationEvent);
+
+            var requestTimeline = new TimeRange(creationEvent.Block.Utc.AddMinutes(-1.0), contractEnd.AddMinutes(1.0));
             log.Log($"Request timeline: {requestTimeline.From} -> {requestTimeline.To}");
 
             // For this timeline, we log all the calls to reserve-slot.
@@ -52,7 +55,7 @@ namespace TraceContract
             return requestTimeline;
         }
 
-        private DateTime RunToContractEnd(Request request)
+        private DateTime RunToContractEnd(StorageRequestedEventDTO request)
         {
             var utc = request.Block.Utc.AddMinutes(-1.0);
             var tracker = new ChainRequestTracker(output, input.PurchaseId);
@@ -78,33 +81,33 @@ namespace TraceContract
             return tracker.FinishUtc;
         }
 
-        private Request? GetRequest()
-        {
-            var request = FindRequest(LastHour());
-            if (request == null) request = FindRequest(LastDay());
-            if (request == null) request = FindRequest(LastWeek());
-            return request;
-        }
-
-        private Request? FindRequest(TimeRange timeRange)
-        {
-            var events = contracts.GetEvents(timeRange);
-            var requests = events.GetStorageRequests();
-
-            foreach (var r in requests)
-            {
-                if (IsThisRequest(r.RequestId))
-                {
-                    return r;
-                }
-            }
-
-            return null;
-        }
-
         private bool IsThisRequest(byte[] requestId)
         {
             return requestId.ToHex().ToLowerInvariant() == input.PurchaseId.ToLowerInvariant();
+        }
+
+        private Request? GetRequest()
+        {
+            return contracts.GetRequest(input.RequestId);
+        }
+
+        public StorageRequestedEventDTO FindRequestCreationEvent()
+        {
+            var range = new TimeRange(DateTime.UtcNow - TimeSpan.FromHours(3.0), DateTime.UtcNow);
+            var limit = DateTime.UtcNow - TimeSpan.FromDays(30);
+
+            while (range.From > limit)
+            {
+                var events = contracts.GetEvents(range);
+                foreach (var r in events.GetStorageRequestedEvents())
+                {
+                    if (r.RequestId.ToHex() == input.RequestId.ToHex()) return r;
+                }
+
+                range = new TimeRange(range.From - TimeSpan.FromHours(3.0), range.From);
+            }
+
+            throw new Exception("Unable to find storage request creation event on-chain after (limit) " + Time.FormatTimestamp(limit));
         }
 
         private static TimeRange LastHour()

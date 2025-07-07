@@ -35,7 +35,6 @@ namespace CodexReleaseTests.MarketTests
 
             request.WaitForStorageContractStarted();
             AssertContractSlotsAreFilledByHosts(request, hosts);
-            AssertContractIsOnChain(request);
 
             hosts.Stop(waitTillStopped: true);
 
@@ -43,12 +42,6 @@ namespace CodexReleaseTests.MarketTests
 
             var config = GetContracts().Deployment.Config;
             request.WaitForContractFailed(config);
-
-            Thread.Sleep(GetPeriodDuration());
-            AssertContractIsOnChain(request);
-
-            Thread.Sleep(GetPeriodDuration());
-            AssertContractIsOnChain(request);
         }
 
         private void WaitForSlotFreedEvents()
