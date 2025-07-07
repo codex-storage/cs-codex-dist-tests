@@ -35,7 +35,7 @@ namespace CodexContractsPlugin.Marketplace
         {
             get
             {
-                return BitConverter.ToString(RequestId).Replace("-", "").ToLowerInvariant();
+                return RequestId.ToHex();
             }
         }
     }

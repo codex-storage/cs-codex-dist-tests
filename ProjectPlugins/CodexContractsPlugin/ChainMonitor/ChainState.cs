@@ -224,7 +224,7 @@ namespace CodexContractsPlugin.ChainMonitor
             }
             catch (Exception ex)
             {
-                var msg = "Failed to get request from chain: " + ex;
+                var msg = $"Failed to get request with id '{request.RequestId.ToHex()}' from chain: {ex}";
                 log.Error(msg);
                 handler.OnError(msg);
                 return null;

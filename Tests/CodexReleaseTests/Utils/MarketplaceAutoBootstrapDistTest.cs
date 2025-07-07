@@ -402,12 +402,21 @@ namespace CodexReleaseTests.Utils
 
         protected void AssertContractIsOnChain(IStoragePurchaseContract contract)
         {
+            // Check the creation event.
             AssertOnChainEvents(events =>
             {
                 var onChainRequests = events.GetStorageRequests();
                 if (onChainRequests.Any(r => r.Id == contract.PurchaseId)) return;
                 throw new Exception($"OnChain request {contract.PurchaseId} not found...");
             }, nameof(AssertContractIsOnChain));
+
+            // Check that the getRequest call returns it.
+            var rid = contract.PurchaseId.HexToByteArray();
+            var r = GetContracts().GetRequest(rid);
+            if (r == null) throw new Exception($"Failed to get Request from {nameof(GetRequestFunction)}");
+            Assert.That(r.Ask.Duration, Is.EqualTo(contract.Purchase.Duration.TotalSeconds));
+            Assert.That(r.Ask.Slots, Is.EqualTo(contract.Purchase.MinRequiredNumberOfNodes));
+            Assert.That(((int)r.Ask.ProofProbability), Is.EqualTo(contract.Purchase.ProofProbability));
         }
 
         protected void AssertOnChainEvents(Action<ICodexContractsEvents> onEvents, string description)
