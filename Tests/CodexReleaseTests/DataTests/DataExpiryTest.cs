@@ -1,4 +1,5 @@
 ﻿using CodexContractsPlugin;
+using CodexPlugin;
 using CodexTests;
 using NUnit.Framework;
 using Utils;
@@ -8,17 +9,23 @@ namespace CodexReleaseTests.DataTests
     [TestFixture]
     public class DataExpiryTest : CodexDistTest
     {
+        private readonly TimeSpan blockTtl = TimeSpan.FromMinutes(1.0);
+        private readonly TimeSpan blockInterval = TimeSpan.FromSeconds(10.0);
+        private readonly int blockCount = 100000;
+
+        private ICodexSetup WithFastBlockExpiry(ICodexSetup setup)
+        {
+            return setup
+                .WithBlockTTL(blockTtl)
+                .WithBlockMaintenanceInterval(blockInterval)
+                .WithBlockMaintenanceNumber(blockCount);
+        }
+
         [Test]
         public void DeletesExpiredData()
         {
             var fileSize = 100.MB();
-            var blockTtl = TimeSpan.FromMinutes(1.0);
-            var interval = TimeSpan.FromSeconds(10.0);
-            var node = StartCodex(s => s
-                .WithBlockTTL(blockTtl)
-                .WithBlockMaintenanceInterval(interval)
-                .WithBlockMaintenanceNumber(100000)
-            );
+            var node = StartCodex(s => WithFastBlockExpiry(s));
 
             var startSpace = node.Space();
             Assert.That(startSpace.QuotaUsedBytes, Is.EqualTo(0));
@@ -47,17 +54,12 @@ namespace CodexReleaseTests.DataTests
         public void DeletesExpiredDataUsedByStorageRequests()
         {
             var fileSize = 100.MB();
-            var blockTtl = TimeSpan.FromMinutes(1.0);
-            var interval = TimeSpan.FromSeconds(10.0);
 
             var bootstrapNode = StartCodex();
             var geth = StartGethNode(s => s.IsMiner());
             var contracts = Ci.StartCodexContracts(geth, bootstrapNode.Version);
-            var node = StartCodex(s => s
+            var node = StartCodex(s => WithFastBlockExpiry(s)
                 .EnableMarketplace(geth, contracts, m => m.WithInitial(100.Eth(), 100.Tst()))
-                .WithBlockTTL(blockTtl)
-                .WithBlockMaintenanceInterval(interval)
-                .WithBlockMaintenanceNumber(100000)
             );
 
             var startSpace = node.Space();
@@ -94,29 +96,22 @@ namespace CodexReleaseTests.DataTests
         }
 
         [Test]
+        [Ignore("Issue not fixed. Ticket: https://github.com/codex-storage/nim-codex/issues/1291")]
         public void StorageRequestsKeepManifests()
         {
-            var blockTtl = TimeSpan.FromMinutes(1.0);
-
             var bootstrapNode = StartCodex(s => s.WithName("Bootstrap"));
             var geth = StartGethNode(s => s.IsMiner());
             var contracts = Ci.StartCodexContracts(geth, bootstrapNode.Version);
-            var client = StartCodex(s => s
+            var client = StartCodex(s => WithFastBlockExpiry(s)
                 .WithName("client")
                 .WithBootstrapNode(bootstrapNode)
                 .EnableMarketplace(geth, contracts, m => m.WithInitial(100.Eth(), 100.Tst()))
-                .WithBlockTTL(blockTtl)
-                .WithBlockMaintenanceInterval(TimeSpan.FromSeconds(10.0))
-                .WithBlockMaintenanceNumber(100000)
             );
 
-            var hosts = StartCodex(3, s => s
+            var hosts = StartCodex(3, s => WithFastBlockExpiry(s)
                 .WithName("host")
                 .WithBootstrapNode(bootstrapNode)
                 .EnableMarketplace(geth, contracts, m => m.AsStorageNode().WithInitial(100.Eth(), 100.Tst()))
-                .WithBlockTTL(blockTtl)
-                .WithBlockMaintenanceInterval(TimeSpan.FromSeconds(10.0))
-                .WithBlockMaintenanceNumber(100000)
             );
             foreach (var host in hosts) host.Marketplace.MakeStorageAvailable(new CodexClient.CreateStorageAvailability(
                 totalSpace: 2.GB(),
@@ -132,14 +127,17 @@ namespace CodexReleaseTests.DataTests
                 Expiry = TimeSpan.FromHours(1.0),
                 MinRequiredNumberOfNodes = 3,
                 NodeFailureTolerance = 1,
-                PricePerBytePerSecond = 1.Tst(),
+                PricePerBytePerSecond = 10.TstWei(),
                 ProofProbability = 99999
             });
+            request.WaitForStorageContractSubmitted();
             request.WaitForStorageContractStarted();
             var storeCid = request.ContentId;
 
+            var clientManifest = client.DownloadManifestOnly(storeCid);
+            Assert.That(clientManifest.Manifest.Protected, Is.True);
+
             client.Stop(waitTillStopped: true);
-            
             Thread.Sleep(blockTtl * 2.0);
 
             var checker = StartCodex(s => s.WithName("checker").WithBootstrapNode(bootstrapNode));
