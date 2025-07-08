@@ -452,7 +452,7 @@ namespace CodexReleaseTests.Utils
             float downtime = numBlocksInDowntimeSegment;
             float window = 256.0f;
             var chanceOfDowntime = downtime / window;
-            return 1.0f + chanceOfDowntime + chanceOfDowntime;
+            return 1.0f + (5.0f * chanceOfDowntime);
         }
         public class SlotFill
         {

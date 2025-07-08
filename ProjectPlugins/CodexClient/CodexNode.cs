@@ -77,7 +77,16 @@ namespace CodexClient
 
         public void Initialize()
         {
-            InitializePeerNodeId();
+            // This is the moment we first connect to a codex node. Sometimes, Kubernetes takes a while to spin up the
+            // container. So we'll adding a custom, generous retry here.
+            var kubeSpinupRetry = new Retry("CodexNode_Initialize",
+                maxTimeout: TimeSpan.FromMinutes(10.0),
+                sleepAfterFail: TimeSpan.FromSeconds(10.0),
+                onFail: f => { },
+                failFast: false);
+
+            kubeSpinupRetry.Run(InitializePeerNodeId);
+
             InitializeLogReplacements();
 
             hooks.OnNodeStarted(this, peerId, nodeId);
