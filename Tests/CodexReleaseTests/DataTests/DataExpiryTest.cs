@@ -24,7 +24,7 @@ namespace CodexReleaseTests.DataTests
         [Test]
         public void DeletesExpiredData()
         {
-            var fileSize = 100.MB();
+            var fileSize = 3.MB();
             var node = StartCodex(s => WithFastBlockExpiry(s));
 
             var startSpace = node.Space();
@@ -53,7 +53,7 @@ namespace CodexReleaseTests.DataTests
         [Test]
         public void DeletesExpiredDataUsedByStorageRequests()
         {
-            var fileSize = 100.MB();
+            var fileSize = 3.MB();
 
             var bootstrapNode = StartCodex();
             var geth = StartGethNode(s => s.IsMiner());
