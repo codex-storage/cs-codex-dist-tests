@@ -7,7 +7,6 @@ namespace Core
 {
     public interface IPluginTools : IWorkflowTool, ILogTool, IHttpFactory, IFileTool
     {
-        IWebCallTimeSet WebCallTimeSet { get; }
         IK8sTimeSet K8STimeSet { get; }
 
         /// <summary>

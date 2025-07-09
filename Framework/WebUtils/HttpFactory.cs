@@ -8,7 +8,7 @@ namespace WebUtils
         IHttp CreateHttp(string id, Action<HttpClient> onClientCreated, IWebCallTimeSet timeSet);
         IHttp CreateHttp(string id);
 
-        IWebCallTimeSet TimeSet { get; }
+        IWebCallTimeSet WebCallTimeSet { get; }
     }
 
     public class HttpFactory : IHttpFactory
@@ -39,7 +39,7 @@ namespace WebUtils
             factoryOnClientCreated = onClientCreated;
         }
 
-        public IWebCallTimeSet TimeSet => timeSet;
+        public IWebCallTimeSet WebCallTimeSet => timeSet;
 
         public IHttp CreateHttp(string id, Action<HttpClient> onClientCreated)
         {

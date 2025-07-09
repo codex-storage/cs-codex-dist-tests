@@ -215,7 +215,7 @@ namespace CodexClient
 
         private T OnCodexNoRetry<T>(Func<CodexApiClient, Task<T>> action)
         {
-            var timeSet = httpFactory.TimeSet;
+            var timeSet = httpFactory.WebCallTimeSet;
             var noRetry = new Retry(nameof(OnCodexNoRetry),
                 maxTimeout: TimeSpan.FromSeconds(1.0),
                 sleepAfterFail: TimeSpan.FromSeconds(2.0),
