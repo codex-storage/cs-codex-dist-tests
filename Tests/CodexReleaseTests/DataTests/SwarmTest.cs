@@ -89,7 +89,7 @@ namespace CodexReleaseTests.DataTests
                     var file = remaining.PickOneRandom();
                     try
                     {
-                        var dl = node.DownloadContent(file.Cid);
+                        var dl = node.DownloadContent(file.Cid, TimeSpan.FromMinutes(30));
                         lock (file.Lock)
                         {
                             file.Downloaded.Add(dl);
