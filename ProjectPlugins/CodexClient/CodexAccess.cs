@@ -1,4 +1,5 @@
-﻿using CodexOpenApi;
+﻿using System.Threading;
+using CodexOpenApi;
 using Logging;
 using Newtonsoft.Json;
 using Utils;
@@ -119,7 +120,7 @@ namespace CodexClient
 
         public Stream DownloadFile(string contentId)
         {
-            var fileResponse = OnCodex(api => api.DownloadNetworkStreamAsync(contentId));
+            var fileResponse = OnCodexNoRetry(api => api.DownloadNetworkStreamAsync(contentId));
             if (fileResponse.StatusCode != 200) throw new Exception("Download failed with StatusCode: " + fileResponse.StatusCode);
             return fileResponse.Stream;
         }
@@ -212,15 +213,22 @@ namespace CodexClient
             processControl.DeleteDataDirFolder();
         }
 
-        private T OnCodex<T>(Func<CodexApiClient, Task<T>> action)
+        private T OnCodexNoRetry<T>(Func<CodexApiClient, Task<T>> action)
         {
-            var result = httpFactory.CreateHttp(GetHttpId(), h => CheckContainerCrashed()).OnClient(client => CallCodex(client, action));
+            var timeSet = httpFactory.TimeSet;
+            var noRetry = new Retry(nameof(OnCodexNoRetry),
+                maxTimeout: TimeSpan.FromSeconds(1.0),
+                sleepAfterFail: TimeSpan.FromSeconds(2.0),
+                onFail: f => { },
+                failFast: true);
+
+            var result = httpFactory.CreateHttp(GetHttpId(), h => CheckContainerCrashed()).OnClient(client => CallCodex(client, action), noRetry);
             return result;
         }
 
-        private T OnCodex<T>(Func<CodexApiClient, Task<T>> action, Retry retry)
+        private T OnCodex<T>(Func<CodexApiClient, Task<T>> action)
         {
-            var result = httpFactory.CreateHttp(GetHttpId(), h => CheckContainerCrashed()).OnClient(client => CallCodex(client, action), retry);
+            var result = httpFactory.CreateHttp(GetHttpId(), h => CheckContainerCrashed()).OnClient(client => CallCodex(client, action));
             return result;
         }
 
