@@ -724,9 +724,11 @@ namespace KubernetesWorkflow
         private V1Pod GetPodForDeployment(RunningDeployment deployment)
         {
             return Time.Retry(() => GetPodForDeplomentInternal(deployment),
-                // We will wait up to 1 minute, k8s might be moving pods around.
-                maxTimeout: TimeSpan.FromMinutes(1),
-                retryTime: TimeSpan.FromSeconds(10),
+                // K8s might be moving pods around. If it's scaling the cluster
+                // to handle the increased load, it might take a while before the new
+                // VMs are up and ready. So we use a generous timeout.
+                maxTimeout: TimeSpan.FromMinutes(15.0),
+                retryTime: TimeSpan.FromSeconds(30.0),
                 description: "Find pod by label for deployment.");
         }
 

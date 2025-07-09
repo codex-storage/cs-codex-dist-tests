@@ -13,7 +13,8 @@
 
         public RunningPod WaitForOnline()
         {
-            workflow.WaitUntilOnline(runningPod);
+            var podInfo = workflow.WaitUntilOnline(runningPod);
+            runningPod.Initialize(podInfo);
             return runningPod;
         }
     }
