@@ -274,7 +274,7 @@ namespace DistTestCore
 
         private string GetCurrentTestName()
         {
-            return $"[{NameUtils.GetTestMethodName()}]";
+            return $"[{NameUtils.GetRawFixtureName()}:{NameUtils.GetTestMethodName()}]";
         }
 
         public DistTestResult GetTestResult()

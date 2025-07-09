@@ -19,7 +19,7 @@ namespace CodexReleaseTests.DataTests
 
             try
             {
-                node.DownloadContent(unknownCid);
+                node.DownloadContent(unknownCid, TimeSpan.FromMinutes(2.0));
             }
             catch (Exception ex)
             {
