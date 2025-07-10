@@ -261,10 +261,15 @@ namespace CodexReleaseTests.Utils
             var fills = events.GetSlotFilledEvents();
             return fills.Select(f =>
             {
-                var host = possibleHosts.Single(h => h.EthAddress.Address == f.Host.Address);
+                // We can encounter a fill event that's from an old host.
+                // We must disregard those.
+                var host = possibleHosts.SingleOrDefault(h => h.EthAddress.Address == f.Host.Address);
+                if (host == null) return null;
                 return new SlotFill(f, host);
-
-            }).ToArray();
+            })
+            .Where(f => f != null)
+            .Cast<SlotFill>()
+            .ToArray();
         }
 
         protected void AssertClientHasPaidForContract(TestToken pricePerBytePerSecond, ICodexNode client, IStoragePurchaseContract contract, ICodexNodeGroup hosts)

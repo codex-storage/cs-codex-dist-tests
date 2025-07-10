@@ -98,7 +98,7 @@ namespace CodexReleaseTests.MarketTests
         private void WaitForNewSlotFilledEvent(IStoragePurchaseContract contract, ulong slotIndex)
         {
             Log(nameof(WaitForNewSlotFilledEvent));
-            var start = DateTime.UtcNow;
+            var start = DateTime.UtcNow - TimeSpan.FromSeconds(10.0);
             var timeout = contract.Purchase.Expiry;
 
             while (DateTime.UtcNow < start + timeout)
@@ -122,6 +122,7 @@ namespace CodexReleaseTests.MarketTests
                 if (matches.Length == 1)
                 {
                     Log($"Found the correct new slotFilled event: {matches[0].ToString()}");
+                    return;
                 }
 
                 Thread.Sleep(TimeSpan.FromSeconds(15));

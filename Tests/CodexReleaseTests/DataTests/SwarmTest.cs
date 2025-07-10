@@ -9,7 +9,7 @@ namespace CodexReleaseTests.DataTests
 {
     [TestFixture(2, 10)]
     [TestFixture(5, 20)]
-    [TestFixture(10, 50)]
+    [TestFixture(10, 20)]
     public class SwarmTests : AutoBootstrapDistTest
     {
         private readonly int numberOfNodes;

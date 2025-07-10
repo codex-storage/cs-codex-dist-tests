@@ -130,6 +130,9 @@ namespace NethereumWorkflow
 
         public BlockInterval ConvertTimeRangeToBlockRange(TimeRange timeRange)
         {
+            if (timeRange.To - timeRange.From < TimeSpan.FromSeconds(1.0))
+                throw new Exception(nameof(ConvertTimeRangeToBlockRange) + ": Time range too small.");
+
             var wrapper = new Web3Wrapper(web3, log);
             var blockTimeFinder = new BlockTimeFinder(blockCache, wrapper, log);
 
