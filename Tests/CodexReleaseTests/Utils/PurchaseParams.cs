@@ -33,7 +33,7 @@ namespace CodexReleaseTests.Utils
             var numSlotBlocks = 1 + ((numBlocks - 1) / Nodes); // round-up div.
 
             // Next power of two:
-            var numSlotBlocksPow2 = NextPowerOf2(numSlotBlocks);
+            var numSlotBlocksPow2 = IsOrNextPowerOf2(numSlotBlocks);
             return new ByteSize(blockSize.SizeInBytes * numSlotBlocksPow2);
         }
 
@@ -51,8 +51,9 @@ namespace CodexReleaseTests.Utils
             return new ByteSize(blockSize.SizeInBytes * totalBlocks);
         }
 
-        private int NextPowerOf2(int n)
+        private int IsOrNextPowerOf2(int n)
         {
+            if (IsPowerOfTwo(n)) return n;
             n = n - 1;
             var lg = Convert.ToInt32(Math.Round(Math.Log2(Convert.ToDouble(n))));
             return 1 << (lg + 1);
@@ -61,6 +62,11 @@ namespace CodexReleaseTests.Utils
         private static bool IsPowerOfTwo(ByteSize size)
         {
             var x = size.SizeInBytes;
+            return (x != 0) && ((x & (x - 1)) == 0);
+        }
+
+        private static bool IsPowerOfTwo(int x)
+        {
             return (x != 0) && ((x & (x - 1)) == 0);
         }
     }
