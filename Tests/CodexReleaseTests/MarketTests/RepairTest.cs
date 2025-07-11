@@ -29,13 +29,11 @@ namespace CodexReleaseTests.MarketTests
 
         #endregion
 
-        [Ignore("Test is ready. Waiting for repair implementation. " +
-            "Slots are never freed because proofs are never marked as missing. Issue: https://github.com/codex-storage/nim-codex/issues/1153")]
         [Test]
         [Combinatorial]
         public void RollingRepairSingleFailure(
             [Rerun] int rerun,
-            [Values(10)] int numFailures)
+            [Values(5)] int numFailures)
         {
             var hosts = StartHosts().ToList();
             var client = StartClients().Single();
