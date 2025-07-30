@@ -93,7 +93,7 @@ namespace BiblioTech.Commands
         private bool ShouldSendEth(IGethNode gethNode, EthAddress addr)
         {
             var eth = gethNode.GetEthBalance(addr);
-            return eth.Eth < Program.Config.SendEth;
+            return ((decimal)eth.Eth) < Program.Config.SendEth;
         }
 
         private string FormatTransactionLink(string transaction)
