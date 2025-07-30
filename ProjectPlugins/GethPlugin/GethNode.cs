@@ -21,6 +21,7 @@ namespace GethPlugin
         string SendEth(EthAddress account, Ether eth);
         TResult Call<TFunction, TResult>(string contractAddress, TFunction function) where TFunction : FunctionMessage, new();
         TResult Call<TFunction, TResult>(string contractAddress, TFunction function, ulong blockNumber) where TFunction : FunctionMessage, new();
+        void Call<TFunction>(string contractAddress, TFunction function) where TFunction : FunctionMessage, new();
         void Call<TFunction>(string contractAddress, TFunction function, ulong blockNumber) where TFunction : FunctionMessage, new();
         string SendTransaction<TFunction>(string contractAddress, TFunction function) where TFunction : FunctionMessage, new();
         Transaction GetTransaction(string transactionHash);
@@ -32,6 +33,7 @@ namespace GethPlugin
         BlockInterval ConvertTimeRangeToBlockRange(TimeRange timeRange);
         BlockTimeEntry GetBlockForNumber(ulong number);
         void IterateFunctionCalls<TFunc>(BlockInterval blockInterval, Action<BlockTimeEntry, TFunc> onCall) where TFunc : FunctionMessage, new();
+        IGethNode WithDifferentAccount(EthAccount account);
     }
 
     public class DeploymentGethNode : BaseGethNode, IGethNode
@@ -68,6 +70,21 @@ namespace GethPlugin
             var creator = new NethereumInteractionCreator(log, blockCache, address.Host, address.Port, account.PrivateKey);
             return creator.CreateWorkflow();
         }
+
+        public IGethNode WithDifferentAccount(EthAccount account)
+        {
+            return new DeploymentGethNode(log, blockCache,
+                new GethDeployment(
+                    StartResult.Pod,
+                    StartResult.DiscoveryPort,
+                    StartResult.HttpPort,
+                    StartResult.WsPort,
+                    new GethAccount(
+                        account.EthAddress.Address,
+                        account.PrivateKey
+                    ),
+                    account.PrivateKey));
+        }
     }
 
     public class CustomGethNode : BaseGethNode, IGethNode
@@ -95,6 +112,11 @@ namespace GethPlugin
             throw new NotImplementedException();
         }
 
+        public IGethNode WithDifferentAccount(EthAccount account)
+        {
+            return new CustomGethNode(log, blockCache, gethHost, gethPort, account.PrivateKey);
+        }
+
         protected override NethereumInteraction StartInteraction()
         {
             var creator = new NethereumInteractionCreator(log, blockCache, gethHost, gethPort, privateKey);
@@ -116,7 +138,7 @@ namespace GethPlugin
 
         public Ether GetEthBalance(EthAddress address)
         {
-            return StartInteraction().GetEthBalance(address.Address).Eth();
+            return StartInteraction().GetEthBalance(address.Address).Wei();
         }
 
         public string SendEth(IHasEthAddress owner, Ether eth)
@@ -137,6 +159,11 @@ namespace GethPlugin
         public TResult Call<TFunction, TResult>(string contractAddress, TFunction function, ulong blockNumber) where TFunction : FunctionMessage, new()
         {
             return StartInteraction().Call<TFunction, TResult>(contractAddress, function, blockNumber);
+        }
+
+        public void Call<TFunction>(string contractAddress, TFunction function) where TFunction : FunctionMessage, new()
+        {
+            StartInteraction().Call(contractAddress, function);
         }
 
         public void Call<TFunction>(string contractAddress, TFunction function, ulong blockNumber) where TFunction : FunctionMessage, new()

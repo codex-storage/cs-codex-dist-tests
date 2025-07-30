@@ -4,10 +4,10 @@ namespace KubernetesWorkflow.Types
 {
     public class RunningPod
     {
-        public RunningPod(string id, PodInfo podInfo, StartupConfig startupConfig, StartResult startResult, RunningContainer[] containers)
+        public RunningPod(string id, StartupConfig startupConfig, StartResult startResult, RunningContainer[] containers)
         {
             Id = id;
-            PodInfo = podInfo;
+            PodInfo = null!;
             StartupConfig = startupConfig;
             StartResult = startResult;
             Containers = containers;
@@ -16,7 +16,7 @@ namespace KubernetesWorkflow.Types
         }
 
         public string Id { get; }
-        public PodInfo PodInfo { get; }
+        public PodInfo PodInfo { get; private set; }
         public StartupConfig StartupConfig { get; }
         public StartResult StartResult { get; }
         public RunningContainer[] Containers { get; }
@@ -29,6 +29,11 @@ namespace KubernetesWorkflow.Types
 
         [JsonIgnore]
         public bool IsStopped { get; internal set; }
+
+        public void Initialize(PodInfo podInfo)
+        {
+            PodInfo = podInfo;
+        }
 
         public string Describe()
         {

@@ -95,7 +95,10 @@ namespace ArgsUniform
             }
             else
             {
-                if (uniformProperty.PropertyType == typeof(string) || uniformProperty.PropertyType == typeof(int))
+                if (
+                    uniformProperty.PropertyType == typeof(string) || 
+                    uniformProperty.PropertyType == typeof(int) ||
+                    uniformProperty.PropertyType == typeof(decimal))
                 {
                     uniformProperty.SetValue(result, Convert.ChangeType(value, uniformProperty.PropertyType));
                     return true;

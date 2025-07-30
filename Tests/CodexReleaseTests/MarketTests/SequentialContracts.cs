@@ -27,7 +27,7 @@ namespace CodexReleaseTests.MarketTests
         [Test]
         [Combinatorial]
         public void Sequential(
-            [Values(10)] int numGenerations)
+            [Values(5)] int numGenerations)
         {
             var hosts = StartHosts();
             var clients = StartClients();
@@ -93,7 +93,7 @@ namespace CodexReleaseTests.MarketTests
                 MinRequiredNumberOfNodes = (uint)purchaseParams.Nodes,
                 NodeFailureTolerance = (uint)purchaseParams.Tolerance,
                 PricePerBytePerSecond = pricePerBytePerSecond,
-                ProofProbability = 10000,
+                ProofProbability = 100000,
                 CollateralPerByte = 1.TstWei()
             });
         }

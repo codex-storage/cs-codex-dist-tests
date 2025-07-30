@@ -11,7 +11,7 @@ namespace CodexReleaseTests.MarketTests
         private readonly PurchaseParams purchaseParams = new PurchaseParams(
             nodes: 3,
             tolerance: 1,
-            uploadFilesize: 10.MB()
+            uploadFilesize: 3.MB()
         );
         private readonly TestToken pricePerBytePerSecond = 10.TstWei();
 

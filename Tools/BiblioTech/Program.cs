@@ -4,10 +4,7 @@ using BiblioTech.Commands;
 using BiblioTech.Rewards;
 using Discord;
 using Discord.WebSocket;
-using DiscordRewards;
 using Logging;
-using Nethereum.Model;
-using Newtonsoft.Json;
 
 namespace BiblioTech
 {

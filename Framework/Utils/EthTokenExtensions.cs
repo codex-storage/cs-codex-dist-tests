@@ -1,15 +1,17 @@
-﻿namespace Utils
+﻿using System.Numerics;
+
+namespace Utils
 {
     public class Ether : IComparable<Ether>
     {
-        public Ether(decimal wei)
+        public Ether(BigInteger wei)
         {
             Wei = wei;
             Eth = wei / TokensIntExtensions.WeiPerEth;
         }
 
-        public decimal Wei { get; }
-        public decimal Eth { get; }
+        public BigInteger Wei { get; }
+        public BigInteger Eth { get; }
 
         public int CompareTo(Ether? other)
         {
@@ -75,7 +77,7 @@
 
     public static class TokensIntExtensions
     {
-        public const decimal WeiPerEth = 1000000000000000000;
+        public static readonly BigInteger WeiPerEth = new BigInteger(1000000000000000000);
 
         public static Ether Eth(this int i)
         {
@@ -89,10 +91,22 @@
 
         public static Ether Eth(this decimal i)
         {
-            return new Ether(i * WeiPerEth);
+            var a = new BigInteger(i);
+            return new Ether(a * WeiPerEth);
         }
 
         public static Ether Wei(this decimal i)
+        {
+            var a = new BigInteger(i);
+            return new Ether(a);
+        }
+
+        public static Ether Eth(this BigInteger i)
+        {
+            return new Ether(i * WeiPerEth);
+        }
+
+        public static Ether Wei(this BigInteger i)
         {
             return new Ether(i);
         }

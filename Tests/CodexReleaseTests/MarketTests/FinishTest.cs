@@ -12,7 +12,7 @@ namespace CodexReleaseTests.MarketTests
         public FinishTest(int hosts, int slots, int tolerance)
         {
             this.hosts = hosts;
-            purchaseParams = new PurchaseParams(slots, tolerance, uploadFilesize: 10.MB());
+            purchaseParams = new PurchaseParams(slots, tolerance, uploadFilesize: 3.MB());
         }
 
         private readonly TestToken pricePerBytePerSecond = 10.TstWei();

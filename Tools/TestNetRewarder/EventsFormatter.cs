@@ -2,6 +2,7 @@
 using CodexContractsPlugin.ChainMonitor;
 using CodexContractsPlugin.Marketplace;
 using DiscordRewards;
+using Nethereum.Hex.HexConvertors.Extensions;
 using System.Globalization;
 using System.Numerics;
 using Utils;
@@ -237,14 +238,15 @@ namespace TestNetRewarder
 
         private string FormatRequestId(IChainStateRequest request)
         {
-            return FormatRequestId(request.Request.Id);
+            return FormatRequestId(request.RequestId);
         }
 
-        private string FormatRequestId(string id)
+        private string FormatRequestId(byte[] id)
         {
+            var str = id.ToHex();
             return
-                $"({emojiMaps.StringToEmojis(id, 3)})" +
-                $"`{id}`";
+                $"({emojiMaps.StringToEmojis(str, 3)})" +
+                $"`{str}`";
         }
 
         private string BytesToHexString(byte[] bytes)

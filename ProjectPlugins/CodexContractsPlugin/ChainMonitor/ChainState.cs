@@ -116,25 +116,22 @@ namespace CodexContractsPlugin.ChainMonitor
             ApplyTimeImplicitEvents(blockNumber, eventsUtc);
         }
 
-        private void ApplyEvent(Request request)
+        private void ApplyEvent(StorageRequestedEventDTO @event)
         {
-            if (requests.Any(r => Equal(r.Request.RequestId, request.RequestId)))
+            if (requests.Any(r => Equal(r.RequestId, @event.RequestId)))
             {
-                var r = FindRequest(request);
+                var r = FindRequest(@event);
                 if (r == null) throw new Exception("ChainState is inconsistent. Received already-known requestId that's not known.");
-
-                if (request.Block.BlockNumber != r.Request.Block.BlockNumber) throw new Exception("Same request found in different blocks.");
-                if (request.Client != r.Request.Client) throw new Exception("Same request belongs to different clients.");
-                if (request.Content.Cid.ToHex() != r.Request.Content.Cid.ToHex()) throw new Exception("Same request has different CIDs.");
-
+                if (@event.Block.BlockNumber != @event.Block.BlockNumber) throw new Exception("Same request found in different blocks.");
                 log.Log("Received the same request-creation event multiple times.");
                 return;
             }
 
-            var newRequest = new ChainStateRequest(log, request, RequestState.New);
+            var request = contracts.GetRequest(@event.RequestId);
+            var newRequest = new ChainStateRequest(log, @event.RequestId, @event.Block, request, RequestState.New);
             requests.Add(newRequest);
 
-            handler.OnNewRequest(new RequestEvent(request.Block, newRequest));
+            handler.OnNewRequest(new RequestEvent(@event.Block, newRequest));
         }
 
         private void ApplyEvent(RequestFulfilledEventDTO @event)
@@ -209,22 +206,22 @@ namespace CodexContractsPlugin.ChainMonitor
             }
         }
 
-        private ChainStateRequest? FindRequest(IHasRequestId request)
+        private ChainStateRequest? FindRequest(IHasBlockAndRequestId hasBoth)
         {
-            var r = requests.SingleOrDefault(r => Equal(r.Request.RequestId, request.RequestId));
+            var r = requests.SingleOrDefault(r => Equal(r.RequestId, hasBoth.RequestId));
             if (r != null) return r;
            
             try
             {
-                var req = contracts.GetRequest(request.RequestId);
-                var state = contracts.GetRequestState(req);
-                var newRequest = new ChainStateRequest(log, req, state);
+                var req = contracts.GetRequest(hasBoth.RequestId);
+                var state = contracts.GetRequestState(hasBoth.RequestId);
+                var newRequest = new ChainStateRequest(log, hasBoth.RequestId, hasBoth.Block, req, state);
                 requests.Add(newRequest);
                 return newRequest;
             }
             catch (Exception ex)
             {
-                var msg = "Failed to get request from chain: " + ex;
+                var msg = $"Failed to get request with id '{hasBoth.RequestId.ToHex()}' from chain: {ex}";
                 log.Error(msg);
                 handler.OnError(msg);
                 return null;

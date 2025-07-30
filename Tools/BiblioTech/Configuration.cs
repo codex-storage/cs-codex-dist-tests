@@ -30,7 +30,7 @@ namespace BiblioTech
         public int RewardApiPort { get; set; } = 31080;
 
         [Uniform("send-eth", "se", "SENDETH", true, "Amount of Eth send by the mint command.")]
-        public int SendEth { get; set; } = 10;
+        public decimal SendEth { get; set; } = 10.0m;
 
         [Uniform("mint-tt", "mt", "MINTTT", true, "Amount of TSTWEI minted by the mint command.")]
         public BigInteger MintTT { get; set; } = 1073741824;
@@ -43,6 +43,9 @@ namespace BiblioTech
 
         [Uniform("codex-endpoint-auth", "cea", "CODEXENDPOINTAUTH", false, "Codex endpoint basic auth. Colon separated username and password. (default: empty, no auth used.)")]
         public string CodexEndpointAuth { get; set; } = "";
+
+        [Uniform("transaction-link-format", "tlf", "TRANSACTIONLINKFORMAT", false, "Format of links to transactions on the blockchain. Use '<ID>' to inject the transaction ID into this string. (default 'https://explorer.testnet.codex.storage/tx/<ID>')")]
+        public string TransactionLinkFormat { get; set; } = "https://explorer.testnet.codex.storage/tx/<ID>";
 
         #region Role Rewards
 

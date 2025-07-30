@@ -60,7 +60,16 @@ namespace GethPlugin
 
         private static string Retry(Func<string> fetch)
         {
-            return Time.Retry(fetch, nameof(GethContainerInfoExtractor));
+            // This class is the first moment where we interact with our new geth container.
+            // K8s might be moving pods and/or setting up new VMs.
+            // So we apply a generous retry timeout.
+            var retry = new Retry(nameof(GethContainerInfoExtractor),
+                maxTimeout: TimeSpan.FromMinutes(15.0),
+                sleepAfterFail: TimeSpan.FromSeconds(20.0),
+                onFail: f => { },
+                failFast: false);
+
+            return retry.Run(fetch);
         }
     }
 
