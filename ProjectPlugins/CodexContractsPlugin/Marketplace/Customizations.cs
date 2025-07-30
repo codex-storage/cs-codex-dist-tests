@@ -17,48 +17,45 @@ namespace CodexContractsPlugin.Marketplace
         byte[] RequestId { get; set; }
     }
 
+    public interface IHasBlockAndRequestId : IHasBlock, IHasRequestId
+    {
+    }
+
     public interface IHasSlotIndex
     {
         ulong SlotIndex { get; set; }
     }
 
-    public partial class Request : RequestBase, IHasBlock, IHasRequestId
+    public partial class Request
     {
-        [JsonIgnore]
-        public BlockTimeEntry Block { get; set; }
-        public byte[] RequestId { get; set; }
-
         public EthAddress ClientAddress { get { return new EthAddress(Client); } }
-
-        [JsonIgnore]
-        public string Id
-        {
-            get
-            {
-                return BitConverter.ToString(RequestId).Replace("-", "").ToLowerInvariant();
-            }
-        }
     }
 
-    public partial class RequestFulfilledEventDTO : IHasBlock, IHasRequestId
+    public partial class StorageRequestedEventDTO : IHasBlockAndRequestId
     {
         [JsonIgnore]
         public BlockTimeEntry Block { get; set; }
     }
 
-    public partial class RequestCancelledEventDTO : IHasBlock, IHasRequestId
+    public partial class RequestFulfilledEventDTO : IHasBlockAndRequestId
     {
         [JsonIgnore]
         public BlockTimeEntry Block { get; set; }
     }
 
-    public partial class RequestFailedEventDTO : IHasBlock, IHasRequestId
+    public partial class RequestCancelledEventDTO : IHasBlockAndRequestId
     {
         [JsonIgnore]
         public BlockTimeEntry Block { get; set; }
     }
 
-    public partial class SlotFilledEventDTO : IHasBlock, IHasRequestId, IHasSlotIndex
+    public partial class RequestFailedEventDTO : IHasBlockAndRequestId
+    {
+        [JsonIgnore]
+        public BlockTimeEntry Block { get; set; }
+    }
+
+    public partial class SlotFilledEventDTO : IHasBlockAndRequestId, IHasSlotIndex
     {
         [JsonIgnore]
         public BlockTimeEntry Block { get; set; }
@@ -70,13 +67,13 @@ namespace CodexContractsPlugin.Marketplace
         }
     }
 
-    public partial class SlotFreedEventDTO : IHasBlock, IHasRequestId, IHasSlotIndex
+    public partial class SlotFreedEventDTO : IHasBlockAndRequestId, IHasSlotIndex
     {
         [JsonIgnore]
         public BlockTimeEntry Block { get; set; }
     }
 
-    public partial class SlotReservationsFullEventDTO : IHasBlock, IHasRequestId, IHasSlotIndex
+    public partial class SlotReservationsFullEventDTO : IHasBlockAndRequestId, IHasSlotIndex
     {
         [JsonIgnore]
         public BlockTimeEntry Block { get; set; }
@@ -88,7 +85,7 @@ namespace CodexContractsPlugin.Marketplace
         public BlockTimeEntry Block { get; set; }
     }
 
-    public partial class ReserveSlotFunction : IHasBlock, IHasRequestId, IHasSlotIndex
+    public partial class ReserveSlotFunction : IHasBlockAndRequestId, IHasSlotIndex
     {
         [JsonIgnore]
         public BlockTimeEntry Block { get; set; }
@@ -96,8 +93,23 @@ namespace CodexContractsPlugin.Marketplace
 
     public partial class MarketplaceConfig : IMarketplaceConfigInput
     {
-        public int MaxNumberOfSlashes => this.Collateral.MaxNumberOfSlashes;
-        public TimeSpan PeriodDuration => TimeSpan.FromSeconds(this.Proofs.Period);
+        public int MaxNumberOfSlashes
+        {
+            get
+            {
+                if (Collateral == null) return -1;
+                return Collateral.MaxNumberOfSlashes;
+            }
+        }
+
+        public TimeSpan PeriodDuration
+        {
+            get
+            {
+                if (Proofs == null) return TimeSpan.MinValue;
+                return TimeSpan.FromSeconds(this.Proofs.Period);
+            }
+        }
     }
 }
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.

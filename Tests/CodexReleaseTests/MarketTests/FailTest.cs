@@ -21,7 +21,7 @@ namespace CodexReleaseTests.MarketTests
         [Test]
         [Combinatorial]
         public void Fail(
-            [Values([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16])] int rerun
+            [Rerun] int rerun
         )
         {
             var hosts = StartHosts();
@@ -68,7 +68,7 @@ namespace CodexReleaseTests.MarketTests
 
         private IStoragePurchaseContract CreateStorageRequest(ICodexNode client)
         {
-            var cid = client.UploadFile(GenerateTestFile(5.MB()));
+            var cid = client.UploadFile(GenerateTestFile(3.MB()));
             return client.Marketplace.RequestStorage(new StoragePurchaseRequest(cid)
             {
                 Duration = HostAvailabilityMaxDuration / 2,

@@ -1,32 +1,27 @@
-using CodexClient;
+﻿using CodexClient;
 using CodexReleaseTests.Utils;
 using NUnit.Framework;
 using Utils;
 
 namespace CodexReleaseTests.MarketTests
 {
-    [TestFixture(5, 3, 1)]
-    [TestFixture(10, 8, 4)]
-    public class FinishTest : MarketplaceAutoBootstrapDistTest
+    public class MaxCapacityTest : MarketplaceAutoBootstrapDistTest
     {
-        public FinishTest(int hosts, int slots, int tolerance)
-        {
-            this.hosts = hosts;
-            purchaseParams = new PurchaseParams(slots, tolerance, uploadFilesize: 3.MB());
-        }
-
         private readonly TestToken pricePerBytePerSecond = 10.TstWei();
-        private readonly int hosts;
-        private readonly PurchaseParams purchaseParams;
+        private readonly PurchaseParams purchaseParams = new PurchaseParams(
+            nodes: 10,
+            tolerance: 5,
+            uploadFilesize: 10.MB()
+        );
 
-        protected override int NumberOfHosts => hosts;
+        protected override int NumberOfHosts => purchaseParams.Nodes / 2;
         protected override int NumberOfClients => 1;
-        protected override ByteSize HostAvailabilitySize => purchaseParams.SlotSize.Multiply(5.1);
+        protected override ByteSize HostAvailabilitySize => purchaseParams.SlotSize.Multiply(2.1);
         protected override TimeSpan HostAvailabilityMaxDuration => GetContractDuration() * 2;
 
         [Test]
         [Combinatorial]
-        public void Finish(
+        public void TwoSlotsEach(
             [Rerun] int rerun
         )
         {
@@ -41,13 +36,6 @@ namespace CodexReleaseTests.MarketTests
 
             WaitForContractStarted(request);
             AssertContractSlotsAreFilledByHosts(request, hosts);
-
-            request.WaitForStorageContractFinished();
-
-            AssertClientHasPaidForContract(pricePerBytePerSecond, client, request, hosts);
-            AssertHostsWerePaidForContract(pricePerBytePerSecond, request, hosts);
-            AssertHostsCollateralsAreUnchanged(hosts);
-            AssertHostAvailabilitiesAreEmpty(hosts);
         }
 
         private IStoragePurchaseContract CreateStorageRequest(ICodexNode client)

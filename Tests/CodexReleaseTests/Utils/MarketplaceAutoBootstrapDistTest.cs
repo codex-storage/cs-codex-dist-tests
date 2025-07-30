@@ -176,8 +176,7 @@ namespace CodexReleaseTests.Utils
             var result = new ChainMonitor(log, contracts, startUtc);
             result.Start(() =>
             {
-                log.Error("Failure in chain monitor. No chain updates after this point.");
-                //Assert.Fail("Failure in chain monitor.");
+                Assert.Fail("Failure in chain monitor.");
             });
             return result;
         }
@@ -262,10 +261,15 @@ namespace CodexReleaseTests.Utils
             var fills = events.GetSlotFilledEvents();
             return fills.Select(f =>
             {
-                var host = possibleHosts.Single(h => h.EthAddress.Address == f.Host.Address);
+                // We can encounter a fill event that's from an old host.
+                // We must disregard those.
+                var host = possibleHosts.SingleOrDefault(h => h.EthAddress.Address == f.Host.Address);
+                if (host == null) return null;
                 return new SlotFill(f, host);
-
-            }).ToArray();
+            })
+            .Where(f => f != null)
+            .Cast<SlotFill>()
+            .ToArray();
         }
 
         protected void AssertClientHasPaidForContract(TestToken pricePerBytePerSecond, ICodexNode client, IStoragePurchaseContract contract, ICodexNodeGroup hosts)
@@ -363,7 +367,7 @@ namespace CodexReleaseTests.Utils
             return Time.Retry(() =>
             {
                 var events = GetContracts().GetEvents(GetTestRunTimeRange());
-                var submitEvent = events.GetStorageRequests().SingleOrDefault(e => e.RequestId.ToHex(false) == contract.PurchaseId);
+                var submitEvent = events.GetStorageRequestedEvents().SingleOrDefault(e => e.RequestId.ToHex() == contract.PurchaseId);
                 if (submitEvent == null)
                 {
                     // We're too early.
@@ -402,12 +406,21 @@ namespace CodexReleaseTests.Utils
 
         protected void AssertContractIsOnChain(IStoragePurchaseContract contract)
         {
+            // Check the creation event.
             AssertOnChainEvents(events =>
             {
-                var onChainRequests = events.GetStorageRequests();
-                if (onChainRequests.Any(r => r.Id == contract.PurchaseId)) return;
+                var onChainRequests = events.GetStorageRequestedEvents();
+                if (onChainRequests.Any(r => r.RequestId.ToHex() == contract.PurchaseId)) return;
                 throw new Exception($"OnChain request {contract.PurchaseId} not found...");
             }, nameof(AssertContractIsOnChain));
+
+            // Check that the getRequest call returns it.
+            var rid = contract.PurchaseId.HexToByteArray();
+            var r = GetContracts().GetRequest(rid);
+            if (r == null) throw new Exception($"Failed to get Request from {nameof(GetRequestFunction)}");
+            Assert.That(r.Ask.Duration, Is.EqualTo(contract.Purchase.Duration.TotalSeconds));
+            Assert.That(r.Ask.Slots, Is.EqualTo(contract.Purchase.MinRequiredNumberOfNodes));
+            Assert.That(((int)r.Ask.ProofProbability), Is.EqualTo(contract.Purchase.ProofProbability));
         }
 
         protected void AssertOnChainEvents(Action<ICodexContractsEvents> onEvents, string description)
@@ -444,7 +457,7 @@ namespace CodexReleaseTests.Utils
             float downtime = numBlocksInDowntimeSegment;
             float window = 256.0f;
             var chanceOfDowntime = downtime / window;
-            return 1.0f + chanceOfDowntime + chanceOfDowntime;
+            return 1.0f + (5.0f * chanceOfDowntime);
         }
         public class SlotFill
         {

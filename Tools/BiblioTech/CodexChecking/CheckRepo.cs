@@ -1,16 +1,20 @@
-﻿using Newtonsoft.Json;
+﻿using Logging;
+using Newtonsoft.Json;
+using Utils;
 
 namespace BiblioTech.CodexChecking
 {
     public class CheckRepo
     {
         private const string modelFilename = "model.json";
+        private readonly ILog log;
         private readonly Configuration config;
         private readonly object _lock = new object();
         private CheckRepoModel? model = null;
 
-        public CheckRepo(Configuration config)
+        public CheckRepo(ILog log, Configuration config)
         {
+            this.log = log;
             this.config = config;
         }
 
@@ -18,20 +22,32 @@ namespace BiblioTech.CodexChecking
         {
             lock (_lock)
             {
-                if (model == null) LoadModel();
-
-                var existing = model.Reports.SingleOrDefault(r  => r.UserId == userId);
-                if (existing == null)
+                var sw = System.Diagnostics.Stopwatch.StartNew();
+                try
                 {
-                    var newEntry = new CheckReport
+                    if (model == null) LoadModel();
+
+                    var existing = model.Reports.SingleOrDefault(r => r.UserId == userId);
+                    if (existing == null)
                     {
-                        UserId = userId,
-                    };
-                    model.Reports.Add(newEntry);
-                    SaveChanges();
-                    return newEntry;
+                        var newEntry = new CheckReport
+                        {
+                            UserId = userId,
+                        };
+                        model.Reports.Add(newEntry);
+                        SaveChanges();
+                        return newEntry;
+                    }
+                    return existing;
                 }
-                return existing;
+                finally
+                {
+                    var elapsed = sw.Elapsed;
+                    if (elapsed > TimeSpan.FromMilliseconds(500))
+                    {
+                        log.Log($"Warning {nameof(GetOrCreate)} took {Time.FormatDuration(elapsed)}");
+                    }
+                }
             }
         }
 

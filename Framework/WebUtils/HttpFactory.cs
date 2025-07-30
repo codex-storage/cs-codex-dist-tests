@@ -7,12 +7,14 @@ namespace WebUtils
         IHttp CreateHttp(string id, Action<HttpClient> onClientCreated);
         IHttp CreateHttp(string id, Action<HttpClient> onClientCreated, IWebCallTimeSet timeSet);
         IHttp CreateHttp(string id);
+
+        IWebCallTimeSet WebCallTimeSet { get; }
     }
 
     public class HttpFactory : IHttpFactory
     {
         private readonly ILog log;
-        private readonly IWebCallTimeSet defaultTimeSet;
+        private readonly IWebCallTimeSet timeSet;
         private readonly Action<HttpClient> factoryOnClientCreated;
 
         public HttpFactory(ILog log)
@@ -33,13 +35,15 @@ namespace WebUtils
         public HttpFactory(ILog log, IWebCallTimeSet defaultTimeSet, Action<HttpClient> onClientCreated)
         {
             this.log = log;
-            this.defaultTimeSet = defaultTimeSet;
-            this.factoryOnClientCreated = onClientCreated;
+            timeSet = defaultTimeSet;
+            factoryOnClientCreated = onClientCreated;
         }
+
+        public IWebCallTimeSet WebCallTimeSet => timeSet;
 
         public IHttp CreateHttp(string id, Action<HttpClient> onClientCreated)
         {
-            return CreateHttp(id, onClientCreated, defaultTimeSet);
+            return CreateHttp(id, onClientCreated, timeSet);
         }
 
         public IHttp CreateHttp(string id, Action<HttpClient> onClientCreated, IWebCallTimeSet ts)
@@ -53,7 +57,7 @@ namespace WebUtils
 
         public IHttp CreateHttp(string id)
         {
-            return new Http(id, log, defaultTimeSet, factoryOnClientCreated);
+            return new Http(id, log, timeSet, factoryOnClientCreated);
         }
 
         private static void DoNothing(HttpClient client)

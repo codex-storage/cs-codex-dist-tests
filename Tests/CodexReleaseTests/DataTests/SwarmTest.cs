@@ -7,15 +7,22 @@ using Utils;
 
 namespace CodexReleaseTests.DataTests
 {
-    [TestFixture]
+    [TestFixture(2, 10)]
+    [TestFixture(5, 20)]
+    [TestFixture(10, 20)]
     public class SwarmTests : AutoBootstrapDistTest
     {
+        private readonly int numberOfNodes;
+        private readonly int filesizeMb;
+
+        public SwarmTests(int numberOfNodes, int filesizeMb)
+        {
+            this.numberOfNodes = numberOfNodes;
+            this.filesizeMb = filesizeMb;
+        }
+
         [Test]
-        [Combinatorial]
-        public void SmallSwarm(
-            [Values(2)] int numberOfNodes,
-            [Values(10)] int filesizeMb
-        )
+        public void Swarm()
         {
             var filesize = filesizeMb.MB();
             var nodes = StartCodex(numberOfNodes);
@@ -28,11 +35,7 @@ namespace CodexReleaseTests.DataTests
         }
 
         [Test]
-        [Combinatorial]
-        public void StreamlessSmallSwarm(
-            [Values(2)] int numberOfNodes,
-            [Values(10)] int filesizeMb
-        )
+        public void StreamlessSwarm()
         {
             var filesize = filesizeMb.MB();
             var nodes = StartCodex(numberOfNodes);
@@ -86,7 +89,7 @@ namespace CodexReleaseTests.DataTests
                     var file = remaining.PickOneRandom();
                     try
                     {
-                        var dl = node.DownloadContent(file.Cid);
+                        var dl = node.DownloadContent(file.Cid, TimeSpan.FromMinutes(30));
                         lock (file.Lock)
                         {
                             file.Downloaded.Add(dl);

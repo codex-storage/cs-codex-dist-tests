@@ -18,7 +18,7 @@ namespace BiblioTech.Commands
         }
 
         public override string Name => "checkdownload";
-        public override string StartingMessage => RandomBusyMessage.Get();
+        public override string StartingMessage => "Connecting to the testnet... Please be patient... " + RandomBusyMessage.Get();
         public override string Description => "Checks the download connectivity of your Codex node.";
         public override CommandOption[] Options => [contentOption];
 

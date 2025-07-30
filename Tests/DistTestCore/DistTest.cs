@@ -179,14 +179,32 @@ namespace DistTestCore
 
         private IWebCallTimeSet GetWebCallTimeSet()
         {
+            if (IsRunningInCluster())
+            {
+                Log(" > Detected we're running in the cluster. Using long webCall timeset.");
+                return new LongWebCallTimeSet();
+            }
+
             if (ShouldUseLongTimeouts()) return new LongWebCallTimeSet();
             return new DefaultWebCallTimeSet();
         }
 
         private IK8sTimeSet GetK8sTimeSet()
         {
+            if (IsRunningInCluster())
+            {
+                Log(" > Detected we're running in the cluster. Using long kubernetes timeset.");
+                return new LongK8sTimeSet();
+            }
+
             if (ShouldUseLongTimeouts()) return new LongK8sTimeSet();
             return new DefaultK8sTimeSet();
+        }
+
+        private bool IsRunningInCluster()
+        {
+            var testType = Environment.GetEnvironmentVariable("TEST_TYPE");
+            return testType == "release-tests";
         }
 
         private bool ShouldWaitForCleanup()
@@ -256,7 +274,7 @@ namespace DistTestCore
 
         private string GetCurrentTestName()
         {
-            return $"[{TestContext.CurrentContext.Test.Name}]";
+            return $"[{NameUtils.GetRawFixtureName()}:{NameUtils.GetTestMethodName()}]";
         }
 
         public DistTestResult GetTestResult()

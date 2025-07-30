@@ -28,10 +28,11 @@ namespace DistTestCore
         public static string GetRawFixtureName()
         {
             var test = TestContext.CurrentContext.Test;
-            if (test.ClassName!.Contains("AdhocContext")) return "none";
-            var className = test.ClassName!.Substring(test.ClassName.LastIndexOf('.') + 1);
-            className += FormatArguments(test);
-            return className.Replace('.', '-');
+            var fullName = test.FullName;
+            if (fullName.Contains("AdhocContext")) return "none";
+            var name = fullName.Substring(0, fullName.LastIndexOf('.'));
+            name += FormatArguments(test);
+            return name.Replace('.', '-').Replace(',', '-');
         }
 
         public static string GetCategoryName()

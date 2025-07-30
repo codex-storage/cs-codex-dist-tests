@@ -1,4 +1,6 @@
-﻿namespace TraceContract
+﻿using Nethereum.Hex.HexConvertors.Extensions;
+
+namespace TraceContract
 {
     public class Input
     {
@@ -15,6 +17,16 @@
 
                     // started:
                     //"066df09a3a2e2587cfd577a0e96186c915b113d02b331b06e56f808494cff2b4";
+            }
+        }
+
+        public byte[] RequestId
+        {
+            get
+            {
+                var r = PurchaseId.HexToByteArray();
+                if (r == null || r.Length != 32) throw new ArgumentException(nameof(PurchaseId));
+                return r;
             }
         }
     }

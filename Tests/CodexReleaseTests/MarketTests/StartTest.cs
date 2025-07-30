@@ -11,7 +11,7 @@ namespace CodexReleaseTests.MarketTests
         private readonly PurchaseParams purchaseParams = new PurchaseParams(
             nodes: 3,
             tolerance: 1,
-            uploadFilesize: 10.MB()
+            uploadFilesize: 3.MB()
         );
         private readonly TestToken pricePerBytePerSecond = 10.TstWei();
 
@@ -23,7 +23,7 @@ namespace CodexReleaseTests.MarketTests
         [Test]
         [Combinatorial]
         public void Start(
-            [Values([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16])] int rerun
+            [Rerun] int rerun
         )
         {
             var hosts = StartHosts();

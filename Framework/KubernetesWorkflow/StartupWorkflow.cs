@@ -61,8 +61,7 @@ namespace KubernetesWorkflow
                 var startResult = controller.BringOnline(recipes, location);
                 var containers = CreateContainers(startResult, recipes, startupConfig);
 
-                var info = GetPodInfo(startResult.Deployment);
-                var rc = new RunningPod(Guid.NewGuid().ToString(), info, startupConfig, startResult, containers);
+                var rc = new RunningPod(Guid.NewGuid().ToString(), startupConfig, startResult, containers);
                 cluster.Configuration.Hooks.OnContainersStarted(rc);
 
                 if (startResult.ExternalService != null)
@@ -73,7 +72,7 @@ namespace KubernetesWorkflow
             });
         }
 
-        public void WaitUntilOnline(RunningPod rc)
+        public PodInfo WaitUntilOnline(RunningPod rc)
         {
             K8s(controller =>
             {
@@ -82,6 +81,8 @@ namespace KubernetesWorkflow
                     controller.WaitUntilOnline(c);
                 }
             });
+
+            return GetPodInfo(rc.StartResult.Deployment);
         }
 
         public PodInfo GetPodInfo(RunningDeployment deployment)

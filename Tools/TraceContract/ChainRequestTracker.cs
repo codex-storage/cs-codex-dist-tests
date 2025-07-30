@@ -1,6 +1,7 @@
 ﻿using System.Numerics;
 using BlockchainUtils;
 using CodexContractsPlugin.ChainMonitor;
+using Nethereum.Hex.HexConvertors.Extensions;
 using Utils;
 
 namespace TraceContract
@@ -70,11 +71,11 @@ namespace TraceContract
             }
         }
 
-        public void OnSlotFilled(RequestEvent requestEvent, EthAddress host, BigInteger slotIndex)
+        public void OnSlotFilled(RequestEvent requestEvent, EthAddress host, BigInteger slotIndex, bool isRepair)
         {
             if (IsMyRequest(requestEvent))
             {
-                output.LogSlotFilled(requestEvent, host, slotIndex);
+                output.LogSlotFilled(requestEvent, host, slotIndex, isRepair);
             }
         }
 
@@ -96,7 +97,7 @@ namespace TraceContract
 
         private bool IsMyRequest(RequestEvent requestEvent)
         {
-            return requestId == requestEvent.Request.Request.Id.ToLowerInvariant();
+            return requestId == requestEvent.Request.RequestId.ToHex().ToLowerInvariant();
         }
     }
 

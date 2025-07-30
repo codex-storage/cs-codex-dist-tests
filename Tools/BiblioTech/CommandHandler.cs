@@ -6,7 +6,6 @@ using BiblioTech.Rewards;
 using Logging;
 using BiblioTech.CodexChecking;
 using Nethereum.Model;
-using static Org.BouncyCastle.Math.EC.ECCurve;
 
 namespace BiblioTech
 {

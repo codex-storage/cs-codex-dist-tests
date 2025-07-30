@@ -1,6 +1,7 @@
 ﻿using BlockchainUtils;
 using CodexContractsPlugin.Marketplace;
 using Logging;
+using Nethereum.Hex.HexConvertors.Extensions;
 using System.Numerics;
 using Utils;
 
@@ -13,7 +14,7 @@ namespace CodexContractsPlugin.ChainMonitor
         void OnRequestFulfilled(RequestEvent requestEvent);
         void OnRequestCancelled(RequestEvent requestEvent);
         void OnRequestFailed(RequestEvent requestEvent);
-        void OnSlotFilled(RequestEvent requestEvent, EthAddress host, BigInteger slotIndex);
+        void OnSlotFilled(RequestEvent requestEvent, EthAddress host, BigInteger slotIndex, bool isRepair);
         void OnSlotFreed(RequestEvent requestEvent, BigInteger slotIndex);
         void OnSlotReservationsFull(RequestEvent requestEvent, BigInteger slotIndex);
         void OnProofSubmitted(BlockTimeEntry block, string id);
@@ -115,15 +116,22 @@ namespace CodexContractsPlugin.ChainMonitor
             ApplyTimeImplicitEvents(blockNumber, eventsUtc);
         }
 
-        private void ApplyEvent(Request request)
+        private void ApplyEvent(StorageRequestedEventDTO @event)
         {
-            if (requests.Any(r => Equal(r.Request.RequestId, request.RequestId)))
-                throw new Exception("Received NewRequest event for id that already exists.");
+            if (requests.Any(r => Equal(r.RequestId, @event.RequestId)))
+            {
+                var r = FindRequest(@event);
+                if (r == null) throw new Exception("ChainState is inconsistent. Received already-known requestId that's not known.");
+                if (@event.Block.BlockNumber != @event.Block.BlockNumber) throw new Exception("Same request found in different blocks.");
+                log.Log("Received the same request-creation event multiple times.");
+                return;
+            }
 
-            var newRequest = new ChainStateRequest(log, request, RequestState.New);
+            var request = contracts.GetRequest(@event.RequestId);
+            var newRequest = new ChainStateRequest(log, @event.RequestId, @event.Block, request, RequestState.New);
             requests.Add(newRequest);
 
-            handler.OnNewRequest(new RequestEvent(request.Block, newRequest));
+            handler.OnNewRequest(new RequestEvent(@event.Block, newRequest));
         }
 
         private void ApplyEvent(RequestFulfilledEventDTO @event)
@@ -154,16 +162,18 @@ namespace CodexContractsPlugin.ChainMonitor
         {
             var r = FindRequest(@event);
             if (r == null) return;
-            r.Hosts.Add(@event.Host, (int)@event.SlotIndex);
+            var slotIndex = (int)@event.SlotIndex;
+            var isRepair = !r.Hosts.IsFilled(slotIndex) && r.Hosts.WasPreviouslyFilled(slotIndex);
+            r.Hosts.HostFillsSlot(@event.Host, slotIndex);
             r.Log($"[{@event.Block.BlockNumber}] SlotFilled (host:'{@event.Host}', slotIndex:{@event.SlotIndex})");
-            handler.OnSlotFilled(new RequestEvent(@event.Block, r), @event.Host, @event.SlotIndex);
+            handler.OnSlotFilled(new RequestEvent(@event.Block, r), @event.Host, @event.SlotIndex, isRepair);
         }
 
         private void ApplyEvent(SlotFreedEventDTO @event)
         {
             var r = FindRequest(@event);
             if (r == null) return;
-            r.Hosts.RemoveHost((int)@event.SlotIndex);
+            r.Hosts.SlotFreed((int)@event.SlotIndex);
             r.Log($"[{@event.Block.BlockNumber}] SlotFreed (slotIndex:{@event.SlotIndex})");
             handler.OnSlotFreed(new RequestEvent(@event.Block, r), @event.SlotIndex);
         }
@@ -196,22 +206,22 @@ namespace CodexContractsPlugin.ChainMonitor
             }
         }
 
-        private ChainStateRequest? FindRequest(IHasRequestId request)
+        private ChainStateRequest? FindRequest(IHasBlockAndRequestId hasBoth)
         {
-            var r = requests.SingleOrDefault(r => Equal(r.Request.RequestId, request.RequestId));
+            var r = requests.SingleOrDefault(r => Equal(r.RequestId, hasBoth.RequestId));
             if (r != null) return r;
            
             try
             {
-                var req = contracts.GetRequest(request.RequestId);
-                var state = contracts.GetRequestState(req);
-                var newRequest = new ChainStateRequest(log, req, state);
+                var req = contracts.GetRequest(hasBoth.RequestId);
+                var state = contracts.GetRequestState(hasBoth.RequestId);
+                var newRequest = new ChainStateRequest(log, hasBoth.RequestId, hasBoth.Block, req, state);
                 requests.Add(newRequest);
                 return newRequest;
             }
             catch (Exception ex)
             {
-                var msg = "Failed to get request from chain: " + ex;
+                var msg = $"Failed to get request with id '{hasBoth.RequestId.ToHex()}' from chain: {ex}";
                 log.Error(msg);
                 handler.OnError(msg);
                 return null;

@@ -1,4 +1,5 @@
-﻿using BlockchainUtils;
+﻿using System.Numerics;
+using BlockchainUtils;
 using Logging;
 using Nethereum.ABI.FunctionEncoding.Attributes;
 using Nethereum.Contracts;
@@ -22,25 +23,26 @@ namespace NethereumWorkflow
             this.blockCache = blockCache;
         }
 
-        public string SendEth(string toAddress, decimal ethAmount)
+
+        public string SendEth(string toAddress, BigInteger ethAmount)
         {
             log.Debug();
-            var receipt = Time.Wait(web3.Eth.GetEtherTransferService().TransferEtherAndWaitForReceiptAsync(toAddress, ethAmount));
+            var receipt = Time.Wait(web3.Eth.GetEtherTransferService().TransferEtherAndWaitForReceiptAsync(toAddress, ((decimal)ethAmount)));
             if (!receipt.Succeeded()) throw new Exception("Unable to send Eth");
             return receipt.TransactionHash;
         }
 
-        public decimal GetEthBalance()
+        public BigInteger GetEthBalance()
         {
             log.Debug();
             return GetEthBalance(web3.TransactionManager.Account.Address);
         }
 
-        public decimal GetEthBalance(string address)
+        public BigInteger GetEthBalance(string address)
         {
             log.Debug();
             var balance = Time.Wait(web3.Eth.GetBalance.SendRequestAsync(address));
-            return Web3.Convert.FromWei(balance.Value);
+            return balance.Value;
         }
 
         public TResult Call<TFunction, TResult>(string contractAddress, TFunction function) where TFunction : FunctionMessage, new()
@@ -55,6 +57,13 @@ namespace NethereumWorkflow
             log.Debug(typeof(TFunction).ToString());
             var handler = web3.Eth.GetContractQueryHandler<TFunction>();
             return Time.Wait(handler.QueryAsync<TResult>(contractAddress, function, new BlockParameter(blockNumber)));
+        }
+
+        public void Call<TFunction>(string contractAddress, TFunction function) where TFunction : FunctionMessage, new()
+        {
+            log.Debug(typeof(TFunction).ToString());
+            var handler = web3.Eth.GetContractQueryHandler<TFunction>();
+            Time.Wait(handler.QueryRawAsync(contractAddress, function));
         }
 
         public void Call<TFunction>(string contractAddress, TFunction function, ulong blockNumber) where TFunction : FunctionMessage, new()
@@ -110,15 +119,29 @@ namespace NethereumWorkflow
 
         public List<EventLog<TEvent>> GetEvents<TEvent>(string address, ulong fromBlockNumber, ulong toBlockNumber) where TEvent : IEventDTO, new()
         {
-            var eventHandler = web3.Eth.GetEvent<TEvent>(address);
+            var logs = new List<FilterLog>();
+            var p = web3.Processing.Logs.CreateProcessor(
+                action: logs.Add,
+                minimumBlockConfirmations: 1,
+                criteria: l => l.IsLogForEvent<TEvent>()
+            );
+
             var from = new BlockParameter(fromBlockNumber);
             var to = new BlockParameter(toBlockNumber);
-            var blockFilter = Time.Wait(eventHandler.CreateFilterBlockRangeAsync(from, to));
-            return Time.Wait(eventHandler.GetAllChangesAsync(blockFilter));
+            var ct = new CancellationTokenSource().Token;
+            Time.Wait(p.ExecuteAsync(toBlockNumber: to.BlockNumber, cancellationToken: ct, startAtBlockNumberIfNotProcessed: from.BlockNumber));
+
+            return logs
+                .Where(l => l.IsLogForEvent<TEvent>())
+                .Select(l => l.DecodeEvent<TEvent>())
+                .ToList();
         }
 
         public BlockInterval ConvertTimeRangeToBlockRange(TimeRange timeRange)
         {
+            if (timeRange.To - timeRange.From < TimeSpan.FromSeconds(1.0))
+                throw new Exception(nameof(ConvertTimeRangeToBlockRange) + ": Time range too small.");
+
             var wrapper = new Web3Wrapper(web3, log);
             var blockTimeFinder = new BlockTimeFinder(blockCache, wrapper, log);
 

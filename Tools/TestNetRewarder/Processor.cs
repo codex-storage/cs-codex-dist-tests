@@ -25,7 +25,7 @@ namespace TestNetRewarder
             if (config.ProofReportHours < 1) throw new Exception("ProofReportHours must be one or greater");
 
             builder = new RequestBuilder();
-            eventsFormatter = new EventsFormatter(config);
+            eventsFormatter = new EventsFormatter(config, contracts.Deployment.Config);
 
             chainState = new ChainState(log, contracts, eventsFormatter, config.HistoryStartUtc,
                 doProofPeriodMonitoring: config.ShowProofPeriodReports > 0);

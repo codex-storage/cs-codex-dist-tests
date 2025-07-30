@@ -18,7 +18,7 @@ namespace BiblioTech.Commands
         }
 
         public override string Name => "checkupload";
-        public override string StartingMessage => RandomBusyMessage.Get();
+        public override string StartingMessage => "Connecting to the testnet... Please be patient... " + RandomBusyMessage.Get();
         public override string Description => "Checks the upload connectivity of your Codex node.";
         public override CommandOption[] Options => [cidOption];
 

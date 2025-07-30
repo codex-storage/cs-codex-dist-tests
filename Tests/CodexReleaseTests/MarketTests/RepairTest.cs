@@ -29,13 +29,11 @@ namespace CodexReleaseTests.MarketTests
 
         #endregion
 
-        [Ignore("Test is ready. Waiting for repair implementation. " +
-            "Slots are never freed because proofs are never marked as missing. Issue: https://github.com/codex-storage/nim-codex/issues/1153")]
         [Test]
         [Combinatorial]
         public void RollingRepairSingleFailure(
-            [Values([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16])] int rerun,
-            [Values(10)] int numFailures)
+            [Rerun] int rerun,
+            [Values(5)] int numFailures)
         {
             var hosts = StartHosts().ToList();
             var client = StartClients().Single();
@@ -98,7 +96,7 @@ namespace CodexReleaseTests.MarketTests
         private void WaitForNewSlotFilledEvent(IStoragePurchaseContract contract, ulong slotIndex)
         {
             Log(nameof(WaitForNewSlotFilledEvent));
-            var start = DateTime.UtcNow;
+            var start = DateTime.UtcNow - TimeSpan.FromSeconds(10.0);
             var timeout = contract.Purchase.Expiry;
 
             while (DateTime.UtcNow < start + timeout)
@@ -122,6 +120,7 @@ namespace CodexReleaseTests.MarketTests
                 if (matches.Length == 1)
                 {
                     Log($"Found the correct new slotFilled event: {matches[0].ToString()}");
+                    return;
                 }
 
                 Thread.Sleep(TimeSpan.FromSeconds(15));

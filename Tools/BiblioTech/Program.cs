@@ -4,10 +4,7 @@ using BiblioTech.Commands;
 using BiblioTech.Rewards;
 using Discord;
 using Discord.WebSocket;
-using DiscordRewards;
 using Logging;
-using Nethereum.Model;
-using Newtonsoft.Json;
 
 namespace BiblioTech
 {
@@ -88,7 +85,7 @@ namespace BiblioTech
             client = new DiscordSocketClient();
             client.Log += ClientLog;
 
-            var checkRepo = new CheckRepo(Config);
+            var checkRepo = new CheckRepo(Log, Config);
             var codexWrapper = new CodexWrapper(Log, Config);
             var checker = new CodexTwoWayChecker(Log, Config, checkRepo, codexWrapper);
             var notifyCommand = new NotifyCommand();

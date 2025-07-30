@@ -7,7 +7,7 @@ namespace CodexContractsPlugin
 {
     public class CodexContractsContainerRecipe : ContainerRecipeFactory
     {
-        public const string MarketplaceAddressFilename = "/hardhat/deployments/codexdisttestnetwork/Marketplace.json";
+        public const string DeployedAddressesFilename = "/hardhat/ignition/deployments/chain-789988/deployed_addresses.json";
         public const string MarketplaceArtifactFilename = "/hardhat/artifacts/contracts/Marketplace.sol/Marketplace.json";
         private readonly DebugInfoVersion versionInfo;
 

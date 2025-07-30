@@ -21,32 +21,72 @@ namespace BiblioTech.CodexChecking
 
             var httpFactory = CreateHttpFactory();
             factory = new CodexNodeFactory(log, httpFactory, dataDir: config.DataPath);
+
+            Task.Run(CheckCodexNode);
         }
 
-        public void OnCodex(Action<ICodexNode> action)
+        public T? OnCodex<T>(Func<ICodexNode, T> func) where T : class
         {
             lock (codexLock)
             {
-                action(Get());
+                if (currentCodexNode == null) return null;
+                return func(currentCodexNode);
             }
         }
 
-        public T OnCodex<T>(Func<ICodexNode, T> func)
+        private void CheckCodexNode()
         {
-            lock (codexLock)
+            Thread.Sleep(TimeSpan.FromSeconds(10.0));
+
+            while (true)
             {
-                return func(Get());
+                lock (codexLock)
+                {
+                    var newNode = GetNewCodexNode();
+                    if (newNode != null && currentCodexNode == null) ShowConnectionRestored();
+                    if (newNode == null && currentCodexNode != null) ShowConnectionLost();
+                    currentCodexNode = newNode;
+                }
+
+                Thread.Sleep(TimeSpan.FromMinutes(15.0));
             }
         }
 
-        private ICodexNode Get()
+        private ICodexNode? GetNewCodexNode()
         {
-            if (currentCodexNode == null)
+            try
             {
-                currentCodexNode = CreateCodex();
-            }
+                if (currentCodexNode != null)
+                {
+                    try
+                    {
+                        // Current instance is responsive? Keep it.
+                        var info = currentCodexNode.GetDebugInfo();
+                        if (info != null && info.Version != null &&
+                            !string.IsNullOrEmpty(info.Version.Revision)) return currentCodexNode;
+                    }
+                    catch
+                    {
+                    }
+                }
 
-            return currentCodexNode;
+                return CreateCodex();
+            }
+            catch (Exception ex)
+            {
+                log.Error("Exception when trying to check codex node: " + ex.Message);
+                return null;
+            }
+        }
+
+        private void ShowConnectionLost()
+        {
+            Program.AdminChecker.SendInAdminChannel("Codex node connection lost.");
+        }
+
+        private void ShowConnectionRestored()
+        {
+            Program.AdminChecker.SendInAdminChannel("Codex node connection restored.");
         }
 
         private ICodexNode CreateCodex()
@@ -70,16 +110,34 @@ namespace BiblioTech.CodexChecking
         {
             if (string.IsNullOrEmpty(config.CodexEndpointAuth) || !config.CodexEndpointAuth.Contains(":"))
             {
-                return new HttpFactory(log);
+                return new HttpFactory(log, new SnappyTimeSet());
             }
 
             var tokens = config.CodexEndpointAuth.Split(':');
             if (tokens.Length != 2) throw new Exception("Expected '<username>:<password>' in CodexEndpointAuth parameter.");
 
-            return new HttpFactory(log, onClientCreated: client =>
+            return new HttpFactory(log, new SnappyTimeSet(), onClientCreated: client =>
             {
                 client.SetBasicAuthentication(tokens[0], tokens[1]);
             });
+        }
+
+        public class SnappyTimeSet : IWebCallTimeSet
+        {
+            public TimeSpan HttpCallRetryDelay()
+            {
+                return TimeSpan.FromSeconds(1.0);
+            }
+
+            public TimeSpan HttpCallTimeout()
+            {
+                return TimeSpan.FromSeconds(3.0);
+            }
+
+            public TimeSpan HttpRetryTimeout()
+            {
+                return TimeSpan.FromSeconds(12.0);
+            }
         }
     }
 }

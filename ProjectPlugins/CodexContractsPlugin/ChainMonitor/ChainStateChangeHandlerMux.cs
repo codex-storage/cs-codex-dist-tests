@@ -38,9 +38,9 @@ namespace CodexContractsPlugin.ChainMonitor
             foreach (var handler in Handlers) handler.OnRequestFulfilled(requestEvent);
         }
 
-        public void OnSlotFilled(RequestEvent requestEvent, EthAddress host, BigInteger slotIndex)
+        public void OnSlotFilled(RequestEvent requestEvent, EthAddress host, BigInteger slotIndex, bool isRepair)
         {
-            foreach (var handler in Handlers) handler.OnSlotFilled(requestEvent, host, slotIndex);
+            foreach (var handler in Handlers) handler.OnSlotFilled(requestEvent, host, slotIndex, isRepair);
         }
 
         public void OnSlotFreed(RequestEvent requestEvent, BigInteger slotIndex)

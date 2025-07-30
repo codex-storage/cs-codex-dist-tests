@@ -1,4 +1,5 @@
 ﻿using Logging;
+using Nethereum.Hex.HexConvertors.Extensions;
 using Utils;
 
 namespace CodexContractsPlugin.ChainMonitor
@@ -46,7 +47,7 @@ namespace CodexContractsPlugin.ChainMonitor
             {
                 for (ulong slotIndex = 0; slotIndex < request.Request.Ask.Slots; slotIndex++)
                 {
-                    var state = contracts.GetProofState(request.Request, slotIndex, lastBlockInPeriod, periodNumber);
+                    var state = contracts.GetProofState(request.RequestId, slotIndex, lastBlockInPeriod, periodNumber);
 
                     total++;
                     if (state.Required)
@@ -116,7 +117,7 @@ namespace CodexContractsPlugin.ChainMonitor
             var missed = "None";
             if (MissedProofs.Length > 0)
             {
-                missed = string.Join("+", MissedProofs.Select(p => $"{p.FormatHost()} missed {p.Request.Request.Id} slot {p.SlotIndex}"));
+                missed = string.Join("+", MissedProofs.Select(p => $"{p.FormatHost()} missed {p.Request.RequestId.ToHex()} slot {p.SlotIndex}"));
             }
             return $"Period:{PeriodNumber}=[Slots:{TotalNumSlots},ProofsRequired:{TotalProofsRequired},ProofsMissed:{missed}]";
         }

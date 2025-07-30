@@ -120,7 +120,7 @@ namespace ExperimentalTests.BasicTests
             //Thread.Sleep(GethContainerRecipe.BlockInterval * blocks);
 
             AssertBalance(contracts, client, Is.LessThan(clientInitialBalance), "Buyer was not charged for storage.");
-            Assert.That(contracts.GetRequestState(request), Is.EqualTo(RequestState.Finished));
+            Assert.That(contracts.GetRequestState(request.RequestId), Is.EqualTo(RequestState.Finished));
         }
 
         private TrackedFile CreateFile(ByteSize fileSize)
@@ -148,24 +148,25 @@ namespace ExperimentalTests.BasicTests
             }, purchase.Expiry + TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(5), "Checking SlotFilled events");
         }
 
-        private void AssertStorageRequest(Request request, StoragePurchaseRequest purchase, ICodexContracts contracts, ICodexNode buyer)
+        private void AssertStorageRequest(StorageRequestedEventDTO request, StoragePurchaseRequest purchase, ICodexContracts contracts, ICodexNode buyer)
         {
-            Assert.That(contracts.GetRequestState(request), Is.EqualTo(RequestState.Started));
-            Assert.That(request.ClientAddress, Is.EqualTo(buyer.EthAddress));
+            Assert.That(contracts.GetRequestState(request.RequestId), Is.EqualTo(RequestState.Started));
+            var r = contracts.GetRequest(request.RequestId);
+            Assert.That(r.ClientAddress, Is.EqualTo(buyer.EthAddress));
             Assert.That(request.Ask.Slots, Is.EqualTo(purchase.MinRequiredNumberOfNodes));
         }
 
-        private Request GetOnChainStorageRequest(ICodexContracts contracts, IGethNode geth)
+        private StorageRequestedEventDTO GetOnChainStorageRequest(ICodexContracts contracts, IGethNode geth)
         {
             var events = contracts.GetEvents(GetTestRunTimeRange());
-            var requests = events.GetStorageRequests();
+            var requests = events.GetStorageRequestedEvents();
             Assert.That(requests.Length, Is.EqualTo(1));
             return requests.Single();
         }
 
-        private void AssertContractSlot(ICodexContracts contracts, Request request, int contractSlotIndex)
+        private void AssertContractSlot(ICodexContracts contracts, StorageRequestedEventDTO request, int contractSlotIndex)
         {
-            var slotHost = contracts.GetSlotHost(request, contractSlotIndex);
+            var slotHost = contracts.GetSlotHost(request.RequestId, contractSlotIndex);
             Assert.That(slotHost?.Address, Is.Not.Null);
         }
     }
