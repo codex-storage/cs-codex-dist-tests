@@ -1,16 +1,19 @@
 ﻿using BlockchainUtils;
 using Core;
 using KubernetesWorkflow;
+using Logging;
 
 namespace GethPlugin
 {
     public class GethStarter
     {
         private readonly IPluginTools tools;
+        private readonly ILog log;
 
         public GethStarter(IPluginTools tools)
         {
             this.tools = tools;
+            log = new LogPrefixer(tools.GetLog(), $"({nameof(GethStarter)}) ");
         }
 
         public GethDeployment StartGeth(GethStartupConfig gethStartupConfig)
@@ -26,7 +29,7 @@ namespace GethPlugin
             if (containers.Containers.Length != 1) throw new InvalidOperationException("Expected 1 Geth bootstrap node to be created. Test infra failure.");
             var container = containers.Containers[0];
 
-            var extractor = new GethContainerInfoExtractor(tools.GetLog(), workflow, container);
+            var extractor = new GethContainerInfoExtractor(log, workflow, container);
             var account = extractor.ExtractAccounts().Accounts.First();
             var pubKey = extractor.ExtractPubKey();
 
@@ -45,12 +48,14 @@ namespace GethPlugin
         public IGethNode WrapGethContainer(GethDeployment startResult, BlockCache blockCache)
         {
             startResult = SerializeGate.Gate(startResult);
-            return new DeploymentGethNode(tools.GetLog(), blockCache, startResult);
+            var node = new DeploymentGethNode(tools.GetLog(), blockCache, startResult);
+            Log($"EthAddress: {node.CurrentAddress}");
+            return node;
         }
 
         private void Log(string msg)
         {
-            tools.GetLog().Log(msg);
+            log.Log(msg);
         }
     }
 }

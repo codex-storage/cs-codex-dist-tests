@@ -1,6 +1,7 @@
 ﻿using BlockchainUtils;
 using Logging;
 using Nethereum.Web3;
+using Utils;
 
 namespace NethereumWorkflow
 {
@@ -25,6 +26,12 @@ namespace NethereumWorkflow
         {
             log.Debug("Starting interaction to " + ip + ":" + port);
             return new NethereumInteraction(log, CreateWeb3(), blockCache);
+        }
+
+        public EthAddress GetEthAddress()
+        {
+            var account = new Nethereum.Web3.Accounts.Account(privateKey);
+            return new EthAddress(account.Address);
         }
 
         private Web3 CreateWeb3()
