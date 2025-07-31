@@ -59,7 +59,7 @@ namespace CodexContractsPlugin
             return gethNode.Call<BalanceOfFunction, BigInteger>(tokenAddress, function).ToDecimal();
         }
 
-        public void TransferTestTokens(string tokenAddress, string toAccount, BigInteger amount)
+        public string TransferTestTokens(string tokenAddress, string toAccount, BigInteger amount)
         {
             log.Debug($"({tokenAddress}) {toAccount} {amount}");
             var function = new TransferFunction
@@ -68,7 +68,7 @@ namespace CodexContractsPlugin
                 Value = amount
             };
 
-            gethNode.SendTransaction(tokenAddress, function);
+            return gethNode.SendTransaction(tokenAddress, function);
         }
 
         public GetRequestOutputDTO GetRequest(string marketplaceAddress, byte[] requestId)

@@ -35,6 +35,9 @@ namespace BiblioTech
         [Uniform("mint-tt", "mt", "MINTTT", true, "Amount of TSTWEI minted by the mint command.")]
         public BigInteger MintTT { get; set; } = 1073741824;
 
+        [Uniform("send-tt", "st", "SENDTT", true, "Amount of TSTWEI sent from the bot account by the mint command.")]
+        public BigInteger SendTT { get; set; } = 1073741824;
+
         [Uniform("no-discord", "nd", "NODISCORD", false, "For debugging: Bypasses all Discord API calls.")]
         public int NoDiscord { get; set; } = 0;
 

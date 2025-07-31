@@ -91,11 +91,11 @@ namespace BiblioTech
                     {
                         if (me.EthReceived != null)
                         {
-                            result.Add($"{me.Utc.ToString("o")} - Sent {me.EthReceived.TokenAmount} to {me.UsedAddress}. ({me.EthReceived.TransactionHash})");
+                            result.Add($"{me.Utc.ToString("o")} - {me.EthReceived.ToString()} to {me.UsedAddress}. ({me.EthReceived.TransactionHash})");
                         }
                         if (me.TestTokensMinted != null)
                         {
-                            result.Add($"{me.Utc.ToString("o")} - Minted {me.TestTokensMinted.TokenAmount} to {me.UsedAddress}. ({me.TestTokensMinted.TransactionHash})");
+                            result.Add($"{me.Utc.ToString("o")} - {me.TestTokensMinted.ToString()} to {me.UsedAddress}. ({me.TestTokensMinted.TransactionHash})");
                         }
                     }
                 }

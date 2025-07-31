@@ -2,19 +2,25 @@
 {
     public class Transaction<T>
     {
-        public Transaction(T tokenAmount, string transactionHash)
+        public Transaction(T amountSent, T amountMinted, string transactionHash)
         {
-            TokenAmount = tokenAmount;
+            AmountSent = amountSent;
+            AmountMinted = amountMinted;
             TransactionHash = transactionHash;
         }
 
-        public T TokenAmount { get; }
+        public T AmountSent { get; }
+        public T AmountMinted { get; }
         public string TransactionHash { get; }
 
         public override string ToString()
         {
-            if (TokenAmount == null) return "NULL";
-            return TokenAmount.ToString()!;
+            var result = "";
+            if (AmountSent == null) result += "sent:null";
+            else result += "send:" + AmountSent.ToString();
+            if (AmountMinted == null) result += " minted:null";
+            else result += " minted:" + AmountMinted.ToString();
+            return result;
         }
     }
 }
