@@ -8,15 +8,14 @@ namespace BiblioTech
     {
         protected override async Task Invoke(CommandContext context)
         {
-            var gethConnector = GetGeth();
-            if (gethConnector == null)
+            if (Program.GethLink == null)
             {
                 await context.Followup("Blockchain operations are (temporarily) unavailable.");
                 return;
             }
 
-            var gethNode = gethConnector.GethNode;
-            var contracts = gethConnector.CodexContracts;
+            var gethNode = Program.GethLink.Node;
+            var contracts = Program.GethLink.Contracts;
 
             if (!contracts.IsDeployed())
             {
@@ -25,19 +24,6 @@ namespace BiblioTech
             }
 
             await Execute(context, gethNode, contracts);
-        }
-
-        private GethConnector.GethConnector? GetGeth()
-        {
-            try
-            {
-                return GethConnector.GethConnector.Initialize(Program.Log);
-            }
-            catch (Exception ex)
-            {
-                Program.Log.Error("Failed to initialize geth connector: " + ex);
-                return null;
-            }
         }
 
         protected abstract Task Execute(CommandContext context, IGethNode gethNode, ICodexContracts contracts);
