@@ -19,7 +19,7 @@ namespace BiblioTech.Commands
 
         public override string Name => "mint";
         public override string StartingMessage => RandomBusyMessage.Get();
-        public override string Description => "Mint some TestTokens and send some Eth to the user if their balance is low.";
+        public override string Description => "Transfer and/or mint some TestTokens and Eth to the user if their balance is low.";
         public override CommandOption[] Options => new[] { optionalUser };
 
         protected override async Task Execute(CommandContext context, IGethNode gethNode, ICodexContracts contracts)
