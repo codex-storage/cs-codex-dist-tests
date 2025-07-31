@@ -9,6 +9,7 @@ namespace BiblioTech.Commands
         private readonly ReportCommand reportCommand = new ReportCommand();
         private readonly WhoIsCommand whoIsCommand = new WhoIsCommand();
         private readonly LogReplaceCommand logReplaceCommand;
+        private readonly BalanceCommand balanceCommand = new BalanceCommand();
 
         public AdminCommand(CustomReplacement replacement)
         {
@@ -19,13 +20,14 @@ namespace BiblioTech.Commands
         public override string StartingMessage => "...";
         public override string Description => "Admins only.";
 
-        public override CommandOption[] Options => new CommandOption[]
-        {
+        public override CommandOption[] Options =>
+        [
             clearCommand,
             reportCommand,
             whoIsCommand,
-            logReplaceCommand
-        };
+            logReplaceCommand,
+            balanceCommand
+        ];
 
         protected override async Task Invoke(CommandContext context)
         {
@@ -45,6 +47,7 @@ namespace BiblioTech.Commands
             await reportCommand.CommandHandler(context);
             await whoIsCommand.CommandHandler(context);
             await logReplaceCommand.CommandHandler(context);
+            await balanceCommand.CommandHandler(context);
         }
 
         public class ClearUserAssociationCommand : SubCommandOption
@@ -180,6 +183,33 @@ namespace BiblioTech.Commands
                     replacement.Add(from, to);
                     await context.Followup($"Replace added '{from}' -->> '{to}'.");
                 }
+            }
+        }
+    
+        public class BalanceCommand : SubCommandOption
+        {
+            public BalanceCommand()
+                : base(name: "balance",
+               description: "Shows ETH and TST balance of the bot.")
+            {
+            }
+
+            protected override async Task onSubCommand(CommandContext context)
+            {
+                if (Program.GethLink == null)
+                {
+                    await context.Followup("Geth connection not available.");
+                    return;
+                }
+
+                var node = Program.GethLink.Node;
+                var contracts = Program.GethLink.Contracts;
+
+                var address = node.CurrentAddress;
+                var eth = node.GetEthBalance();
+                var tst = contracts.GetTestTokenBalance(address);
+
+                await context.Followup($"Bot account ({address}) has {eth} and {tst}");
             }
         }
     }

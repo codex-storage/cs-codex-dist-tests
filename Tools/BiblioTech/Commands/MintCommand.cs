@@ -19,7 +19,7 @@ namespace BiblioTech.Commands
 
         public override string Name => "mint";
         public override string StartingMessage => RandomBusyMessage.Get();
-        public override string Description => "Mint some TestTokens and send some Eth to the user if their balance is low.";
+        public override string Description => "Transfer and/or mint some TestTokens and Eth to the user if their balance is low.";
         public override CommandOption[] Options => new[] { optionalUser };
 
         protected override async Task Execute(CommandContext context, IGethNode gethNode, ICodexContracts contracts)
@@ -38,10 +38,10 @@ namespace BiblioTech.Commands
             Transaction<Ether>? sentEth = null;
             Transaction<TestToken>? mintedTokens = null;
 
-            await Task.Run(() =>
+            await Task.Run(async () =>
             {
                 sentEth = ProcessEth(gethNode, addr, report);
-                mintedTokens = ProcessTokens(contracts, addr, report);
+                mintedTokens = await ProcessTestTokens(contracts, addr, report);
             });
 
             var reportLine = string.Join(Environment.NewLine, report);
@@ -51,49 +51,88 @@ namespace BiblioTech.Commands
             await context.Followup(reportLine);
         }
 
-        private string Format<T>(Transaction<T>? transaction)
+        private async Task<Transaction<TestToken>?> ProcessTestTokens(ICodexContracts contracts, EthAddress addr, List<string> report)
         {
-            if (transaction == null) return "-";
-            return transaction.ToString();
-        }
-
-        private Transaction<TestToken>? ProcessTokens(ICodexContracts contracts, EthAddress addr, List<string> report)
-        {
-            if (ShouldMintTestTokens(contracts, addr))
+            if (IsTestTokenBalanceOverLimit(contracts, addr))
             {
-                var tokens = Program.Config.MintTT.TstWei();
-                var transaction = contracts.MintTestTokens(addr, tokens);
-                report.Add($"Minted {tokens} {FormatTransactionLink(transaction)}");
-                return new Transaction<TestToken>(tokens, transaction);
+                report.Add("TestToken balance over threshold. (No TestTokens sent or minted.)");
+                return null;
             }
-            
-            report.Add("TestToken balance over threshold. (No TestTokens minted.)");
-            return null;
+
+            var sent = await TransferTestTokens(contracts, addr, report);
+            var minted = MintTestTokens(contracts, addr, report);
+
+            return new Transaction<TestToken>(sent.Item1, minted.Item1, $"{sent.Item2},{minted.Item2}");
         }
 
         private Transaction<Ether>? ProcessEth(IGethNode gethNode, EthAddress addr, List<string> report)
         {
-            if (ShouldSendEth(gethNode, addr))
+            if (IsEthBalanceOverLimit(gethNode, addr))
             {
-                var eth = Program.Config.SendEth.Eth();
-                var transaction = gethNode.SendEth(addr, eth);
-                report.Add($"Sent {eth} {FormatTransactionLink(transaction)}");
-                return new Transaction<Ether>(eth, transaction);
+                report.Add("Eth balance is over threshold. (No Eth sent.)");
+                return null;
             }
-            report.Add("Eth balance is over threshold. (No Eth sent.)");
-            return null;
+            var eth = Program.Config.SendEth.Eth();
+            var transaction = gethNode.SendEth(addr, eth);
+            report.Add($"Sent {eth} {FormatTransactionLink(transaction)}");
+            return new Transaction<Ether>(eth, 0.Eth(), transaction);
         }
 
-        private bool ShouldMintTestTokens(ICodexContracts contracts, EthAddress addr)
+        private (TestToken, string) MintTestTokens(ICodexContracts contracts, EthAddress addr, List<string> report)
         {
-            var testTokens = contracts.GetTestTokenBalance(addr);
-            return testTokens < Program.Config.MintTT.TstWei();
+            if (Program.Config.MintTT < 1) return (0.TstWei(), string.Empty);
+            var tokens = Program.Config.MintTT.TstWei();
+            var transaction = contracts.MintTestTokens(addr, tokens);
+            report.Add($"Minted {tokens} {FormatTransactionLink(transaction)}");
+            return (tokens, transaction);
         }
 
-        private bool ShouldSendEth(IGethNode gethNode, EthAddress addr)
+        private async Task<(TestToken, string)> TransferTestTokens(ICodexContracts contracts, EthAddress addr, List<string> report)
+        {
+            var nothing = (0.TstWei(), string.Empty);
+            if (Program.Config.SendTT < 1) return nothing;
+            if (Program.GethLink == null)
+            {
+                report.Add("Transaction operations are currently not available.");
+                return nothing;
+            }
+
+            try
+            {
+                var amount = Program.Config.SendTT.TstWei();
+                if (contracts.GetTestTokenBalance(Program.GethLink.Node.CurrentAddress).TstWei <= amount.TstWei)
+                {
+                    report.Add("Unable to send TestTokens: Bot doesn't have enough! (Admins have been notified)");
+                    await Program.AdminChecker.SendInAdminChannel($"{nameof(MintCommand)} failed: Bot has insufficient tokens.");
+                    return nothing;
+                }
+
+                var transaction = contracts.TransferTestTokens(addr, amount);
+                report.Add($"Transferred {amount} {FormatTransactionLink(transaction)}");
+                return (amount, transaction);
+            }
+            catch (Exception ex)
+            {
+                report.Add("I'm sorry! Something went unexpectedly wrong. (Admins have been notified)");
+                await Program.AdminChecker.SendInAdminChannel($"{nameof(MintCommand)} failed with: {ex}");
+            }
+            return nothing;
+        }
+
+        private bool IsEthBalanceOverLimit(IGethNode gethNode, EthAddress addr)
         {
             var eth = gethNode.GetEthBalance(addr);
-            return ((decimal)eth.Eth) < Program.Config.SendEth;
+            return ((decimal)eth.Eth) > Program.Config.SendEth;
+        }
+
+        private bool IsTestTokenBalanceOverLimit(ICodexContracts contracts, EthAddress addr)
+        {
+            var testTokens = contracts.GetTestTokenBalance(addr);
+
+            if (Program.Config.MintTT > 0 && testTokens > Program.Config.MintTT.TstWei()) return true;
+            if (Program.Config.SendTT > 0 && testTokens > Program.Config.SendTT.TstWei()) return true;
+
+            return false;
         }
 
         private string FormatTransactionLink(string transaction)

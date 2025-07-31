@@ -13,6 +13,7 @@ namespace GethPlugin
     public interface IGethNode : IHasContainer
     {
         GethDeployment StartResult { get; }
+        EthAddress CurrentAddress { get; }
 
         Ether GetEthBalance();
         Ether GetEthBalance(IHasEthAddress address);
@@ -46,10 +47,12 @@ namespace GethPlugin
             this.log = log;
             this.blockCache = blockCache;
             StartResult = startResult;
+            CurrentAddress = new EthAddress(startResult.Account.Account);
         }
 
         public GethDeployment StartResult { get; }
         public RunningContainer Container => StartResult.Container;
+        public EthAddress CurrentAddress { get; }
 
         public GethBootstrapNode GetBootstrapRecord()
         {
@@ -97,6 +100,7 @@ namespace GethPlugin
 
         public GethDeployment StartResult => throw new NotImplementedException();
         public RunningContainer Container => throw new NotImplementedException();
+        public EthAddress CurrentAddress { get; }
 
         public CustomGethNode(ILog log, BlockCache blockCache, string gethHost, int gethPort, string privateKey)
         {
@@ -105,6 +109,9 @@ namespace GethPlugin
             this.gethHost = gethHost;
             this.gethPort = gethPort;
             this.privateKey = privateKey;
+
+            var creator = new NethereumInteractionCreator(log, blockCache, gethHost, gethPort, privateKey);
+            CurrentAddress = creator.GetEthAddress();
         }
 
         public GethBootstrapNode GetBootstrapRecord()

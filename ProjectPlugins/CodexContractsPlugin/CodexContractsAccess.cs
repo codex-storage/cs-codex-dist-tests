@@ -20,7 +20,7 @@ namespace CodexContractsPlugin
         string MintTestTokens(EthAddress ethAddress, TestToken testTokens);
         TestToken GetTestTokenBalance(IHasEthAddress owner);
         TestToken GetTestTokenBalance(EthAddress ethAddress);
-        void TransferTestTokens(EthAddress to, TestToken amount);
+        string TransferTestTokens(EthAddress to, TestToken amount);
 
         ICodexContractsEvents GetEvents(TimeRange timeRange);
         ICodexContractsEvents GetEvents(BlockInterval blockInterval);
@@ -96,9 +96,9 @@ namespace CodexContractsPlugin
             return balance.TstWei();
         }
 
-        public void TransferTestTokens(EthAddress to, TestToken amount)
+        public string TransferTestTokens(EthAddress to, TestToken amount)
         {
-            StartInteraction().TransferTestTokens(Deployment.TokenAddress, to.Address, amount.TstWei);
+            return StartInteraction().TransferTestTokens(Deployment.TokenAddress, to.Address, amount.TstWei);
         }
 
         public ICodexContractsEvents GetEvents(TimeRange timeRange)

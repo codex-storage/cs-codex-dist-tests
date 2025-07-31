@@ -21,6 +21,7 @@ namespace BiblioTech
         public static ChainActivityHandler ChainActivityHandler { get; set; } = null!;
         public static ChainEventsSender EventsSender { get; set; } = null!;
         public static ILog Log { get; private set; } = null!;
+        public static GethLink? GethLink { get; private set; } = null;
 
         public static Task Main(string[] args)
         {
@@ -31,6 +32,8 @@ namespace BiblioTech
                 new FileLog(Path.Combine(Config.LogPath, "discordbot")),
                 new ConsoleLog()
             );
+
+            GethLink = GethLink.Create();
 
             Dispatcher = new CallDispatcher(Log);
 
