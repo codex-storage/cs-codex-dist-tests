@@ -60,7 +60,7 @@ namespace BiblioTech.Commands
             }
 
             var sent = await TransferTestTokens(contracts, addr, report);
-            var minted = MintTestTokens(contracts, addr, report);
+            var minted = await MintTestTokens(contracts, addr, report);
 
             return new Transaction<TestToken>(sent.Item1, minted.Item1, $"{sent.Item2},{minted.Item2}");
         }
@@ -78,13 +78,24 @@ namespace BiblioTech.Commands
             return new Transaction<Ether>(eth, 0.Eth(), transaction);
         }
 
-        private (TestToken, string) MintTestTokens(ICodexContracts contracts, EthAddress addr, List<string> report)
+        private async Task<(TestToken, string)> MintTestTokens(ICodexContracts contracts, EthAddress addr, List<string> report)
         {
-            if (Program.Config.MintTT < 1) return (0.TstWei(), string.Empty);
-            var tokens = Program.Config.MintTT.TstWei();
-            var transaction = contracts.MintTestTokens(addr, tokens);
-            report.Add($"Minted {tokens} {FormatTransactionLink(transaction)}");
-            return (tokens, transaction);
+            var nothing = (0.TstWei(), string.Empty);
+            if (Program.Config.MintTT < 1) return nothing;
+
+            try
+            {
+                var tokens = Program.Config.MintTT.TstWei();
+                var transaction = contracts.MintTestTokens(addr, tokens);
+                report.Add($"Minted {tokens} {FormatTransactionLink(transaction)}");
+                return (tokens, transaction);
+            }
+            catch (Exception ex)
+            {
+                report.Add("Minter: I'm sorry! Something went unexpectedly wrong. (Admins have been notified)");
+                await Program.AdminChecker.SendInAdminChannel($"{nameof(MintCommand)} {nameof(MintTestTokens)} failed with: {ex}");
+            }
+            return nothing;
         }
 
         private async Task<(TestToken, string)> TransferTestTokens(ICodexContracts contracts, EthAddress addr, List<string> report)
@@ -113,8 +124,8 @@ namespace BiblioTech.Commands
             }
             catch (Exception ex)
             {
-                report.Add("I'm sorry! Something went unexpectedly wrong. (Admins have been notified)");
-                await Program.AdminChecker.SendInAdminChannel($"{nameof(MintCommand)} failed with: {ex}");
+                report.Add("Transfer: I'm sorry! Something went unexpectedly wrong. (Admins have been notified)");
+                await Program.AdminChecker.SendInAdminChannel($"{nameof(MintCommand)} {nameof(TransferTestTokens)} failed with: {ex}");
             }
             return nothing;
         }

@@ -173,7 +173,7 @@ namespace DistTestCore
             if (!string.IsNullOrEmpty(result.Message))
             {
                 Log(result.Message);
-                Log($"{result.StackTrace}");
+                Log($"{Environment.NewLine}{result.StackTrace}");
             }
         }
 
