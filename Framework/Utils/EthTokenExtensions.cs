@@ -82,18 +82,19 @@ namespace Utils
 
         public static Ether Eth(this int i)
         {
-            return Eth(Convert.ToDecimal(i));
+            return Eth(new BigInteger(i));
         }
 
         public static Ether Wei(this int i)
         {
-            return Wei(Convert.ToDecimal(i));
+            return Wei(new BigInteger(i));
         }
 
         public static Ether Eth(this decimal i)
         {
-            var a = new BigInteger(i);
-            return new Ether(a * WeiPerEth);
+            var asWei = i * ((decimal)WeiPerEth);
+            var a = new BigInteger(asWei);
+            return new Ether(a);
         }
 
         public static Ether Wei(this decimal i)
