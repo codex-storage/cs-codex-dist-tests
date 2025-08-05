@@ -36,6 +36,7 @@ namespace Utils
             if (Eth > 0) tokens.Add($"{Eth} Eth");
             if (weiOnly > 0) tokens.Add($"{weiOnly} Wei");
 
+            if (tokens.Count == 0) return "0 Eth + 0 Wei";
             return string.Join(" + ", tokens);
         }
 

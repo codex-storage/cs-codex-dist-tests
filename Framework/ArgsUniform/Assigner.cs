@@ -100,7 +100,7 @@ namespace ArgsUniform
                     uniformProperty.PropertyType == typeof(int) ||
                     uniformProperty.PropertyType == typeof(decimal))
                 {
-                    uniformProperty.SetValue(result, Convert.ChangeType(value, uniformProperty.PropertyType));
+                    uniformProperty.SetValue(result, Convert.ChangeType(value, uniformProperty.PropertyType, CultureInfo.InvariantCulture));
                     return true;
                 }
                 else

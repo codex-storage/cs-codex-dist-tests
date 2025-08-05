@@ -37,7 +37,8 @@ namespace Utils
             var tokens = new List<string>();
             if (Tst > 0) tokens.Add($"{Tst} TST");
             if (weiOnly > 0) tokens.Add($"{weiOnly} TSTWEI");
-
+            
+            if (tokens.Count == 0) return "0 TST + 0 TSTWEI";
             return string.Join(" + ", tokens);
         }
 
