@@ -24,7 +24,7 @@
 
         public void Debug(string message = "", int skipFrames = 0)
         {
-            backingLog.Debug(GetPrefix() + message, skipFrames);
+            backingLog.Debug(GetPrefix() + message, skipFrames + 1);
         }
 
         public void Error(string message)

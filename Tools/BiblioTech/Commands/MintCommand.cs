@@ -1,6 +1,7 @@
 ﻿using BiblioTech.Options;
 using CodexContractsPlugin;
 using GethPlugin;
+using Logging;
 using Utils;
 
 namespace BiblioTech.Commands
@@ -11,10 +12,12 @@ namespace BiblioTech.Commands
             description: "If set, mint tokens for this user. (Optional, admin-only)",
             isRequired: false);
         private readonly UserAssociateCommand userAssociateCommand;
+        private readonly ILog log;
 
         public MintCommand(UserAssociateCommand userAssociateCommand)
         {
             this.userAssociateCommand = userAssociateCommand;
+            log = Program.Log;
         }
 
         public override string Name => "mint";
@@ -33,6 +36,7 @@ namespace BiblioTech.Commands
                 return;
             }
 
+            log.Debug($"Running mint command for {userId} with address {addr}...");
             var report = new List<string>();
 
             Transaction<Ether>? sentEth = null;
@@ -55,6 +59,7 @@ namespace BiblioTech.Commands
         {
             if (IsTestTokenBalanceOverLimit(contracts, addr))
             {
+                log.Debug("TestToken balance is over threshold.");
                 report.Add("TestToken balance over threshold. (No TestTokens sent or minted.)");
                 return null;
             }
@@ -69,10 +74,12 @@ namespace BiblioTech.Commands
         {
             if (IsEthBalanceOverLimit(gethNode, addr))
             {
+                log.Debug("Eth balance is over threshold.");
                 report.Add("Eth balance is over threshold. (No Eth sent.)");
                 return null;
             }
             var eth = Program.Config.SendEth.Eth();
+            log.Debug($"Sending {eth}...");
             var transaction = gethNode.SendEth(addr, eth);
             report.Add($"Sent {eth} {FormatTransactionLink(transaction)}");
             return new Transaction<Ether>(eth, 0.Eth(), transaction);
@@ -81,11 +88,16 @@ namespace BiblioTech.Commands
         private async Task<(TestToken, string)> MintTestTokens(ICodexContracts contracts, EthAddress addr, List<string> report)
         {
             var nothing = (0.TstWei(), string.Empty);
-            if (Program.Config.MintTT < 1) return nothing;
+            if (Program.Config.MintTT < 1)
+            {
+                log.Debug("Skip minting TST: configured amount is less than 1.");
+                return nothing;
+            }
 
             try
             {
                 var tokens = Program.Config.MintTT.TstWei();
+                log.Debug($"Minting {tokens}...");
                 var transaction = contracts.MintTestTokens(addr, tokens);
                 report.Add($"Minted {tokens} {FormatTransactionLink(transaction)}");
                 return (tokens, transaction);
@@ -101,23 +113,31 @@ namespace BiblioTech.Commands
         private async Task<(TestToken, string)> TransferTestTokens(ICodexContracts contracts, EthAddress addr, List<string> report)
         {
             var nothing = (0.TstWei(), string.Empty);
-            if (Program.Config.SendTT < 1) return nothing;
+            if (Program.Config.SendTT < 1)
+            {
+                log.Debug("Skip transferring TST: configured amount is less than 1.");
+                return nothing;
+            }
             if (Program.GethLink == null)
             {
+                log.Debug("Skip transferring TST: GethLink not available.");
                 report.Add("Transaction operations are currently not available.");
                 return nothing;
             }
 
             try
             {
+                var current = contracts.GetTestTokenBalance(Program.GethLink.Node.CurrentAddress);
                 var amount = Program.Config.SendTT.TstWei();
-                if (contracts.GetTestTokenBalance(Program.GethLink.Node.CurrentAddress).TstWei <= amount.TstWei)
+                if (current.TstWei <= amount.TstWei)
                 {
+                    log.Debug($"Unable to transfer TST: Bot has: {current} - Transfer amount: {amount}");
                     report.Add("Unable to send TestTokens: Bot doesn't have enough! (Admins have been notified)");
                     await Program.AdminChecker.SendInAdminChannel($"{nameof(MintCommand)} failed: Bot has insufficient tokens.");
                     return nothing;
                 }
 
+                log.Debug($"Sending {amount}...");
                 var transaction = contracts.TransferTestTokens(addr, amount);
                 report.Add($"Transferred {amount} {FormatTransactionLink(transaction)}");
                 return (amount, transaction);
