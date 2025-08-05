@@ -153,7 +153,7 @@ namespace BiblioTech.Commands
         private bool IsEthBalanceOverLimit(IGethNode gethNode, EthAddress addr)
         {
             var eth = gethNode.GetEthBalance(addr);
-            return ((decimal)eth.Eth) > Program.Config.SendEth;
+            return eth > Program.Config.SendEth.Eth();
         }
 
         private bool IsTestTokenBalanceOverLimit(ICodexContracts contracts, EthAddress addr)
