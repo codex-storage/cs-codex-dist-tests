@@ -155,7 +155,7 @@ namespace GethPlugin
 
         public string SendEth(EthAddress account, Ether eth)
         {
-            return StartInteraction().SendEth(account.Address, eth.Eth);
+            return StartInteraction().SendEth(account.Address, eth);
         }
 
         public TResult Call<TFunction, TResult>(string contractAddress, TFunction function) where TFunction : FunctionMessage, new()

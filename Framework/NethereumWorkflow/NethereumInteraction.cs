@@ -25,11 +25,17 @@ namespace NethereumWorkflow
             this.blockCache = blockCache;
         }
 
-        public string SendEth(string toAddress, BigInteger ethAmount)
+        public string SendEth(string toAddress, Ether eth)
+        {
+            var asDecimal = ((decimal)eth.Wei) / (decimal)TokensIntExtensions.WeiPerEth;
+            return SendEth(toAddress, asDecimal);
+        }
+
+        public string SendEth(string toAddress, decimal ethAmount)
         {
             return DebugLogWrap(() =>
             {
-                var receipt = Time.Wait(web3.Eth.GetEtherTransferService().TransferEtherAndWaitForReceiptAsync(toAddress, ((decimal)ethAmount)));
+                var receipt = Time.Wait(web3.Eth.GetEtherTransferService().TransferEtherAndWaitForReceiptAsync(toAddress, ethAmount));
                 if (!receipt.Succeeded()) throw new Exception("Unable to send Eth");
                 return receipt.TransactionHash;
             }, nameof(SendEth));

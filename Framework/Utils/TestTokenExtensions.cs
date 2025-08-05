@@ -95,11 +95,6 @@ namespace Utils
             return new TestToken(i);
         }
 
-        public static TestToken TstWei(this string s)
-        {
-            return new TestToken(BigInteger.Parse(s));
-        }
-
         public static TestToken Tst(this int i)
         {
             return Tst(Convert.ToDecimal(i));
@@ -107,17 +102,14 @@ namespace Utils
 
         public static TestToken Tst(this decimal i)
         {
-            return new TestToken(new BigInteger(i) * TestToken.WeiFactor);
+            var v = i * ((decimal)TestToken.WeiFactor);
+
+            return new TestToken(new BigInteger(v));
         }
 
         public static TestToken Tst(this BigInteger i)
         {
             return new TestToken(i * TestToken.WeiFactor);
-        }
-
-        public static TestToken Tst(this string s)
-        {
-            return new TestToken(BigInteger.Parse(s) * TestToken.WeiFactor);
         }
     }
 }
