@@ -1,0 +1,56 @@
+﻿using CodexClient;
+using CodexTests;
+using FileUtils;
+using NUnit.Framework;
+using Utils;
+
+namespace CodexReleaseTests.DataTests
+{
+    [TestFixture]
+    public class TheseusTest : AutoBootstrapDistTest
+    {
+        private readonly List<ICodexNode> nodes = new List<ICodexNode>();
+        private TrackedFile file = null!;
+        private ContentId cid = new ContentId();
+
+        [SetUp]
+        public void Setup()
+        {
+            file = GenerateTestFile(10.MB());
+        }
+
+        [Test]
+        [Combinatorial]
+        public void Theseus(
+            [Values(10)] int steps)
+        {
+            nodes.AddRange(StartCodex(3));
+            cid = nodes.First().UploadFile(file);
+
+            AllNodesHaveFile();
+
+            for (var i = 0; i < steps; i++)
+            {
+                Log($"{nameof(Theseus)} step {i}");
+                nodes[i].Stop(waitTillStopped: true);
+                nodes.RemoveAt(0);
+
+                nodes.Add(StartCodex());
+
+                AllNodesHaveFile();
+            }
+        }
+
+        private void AllNodesHaveFile()
+        {
+            Log($"{nameof(AllNodesHaveFile)} [{string.Join(",", nodes.Select(n => n.GetName()))}]");
+            foreach (var n in nodes) HasFile(n);
+        }
+
+        private void HasFile(ICodexNode n)
+        {
+            var downloaded = n.DownloadContent(cid);
+            file.AssertIsEqual(downloaded);
+        }
+    }
+}
