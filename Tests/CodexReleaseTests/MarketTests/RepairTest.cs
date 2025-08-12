@@ -33,8 +33,10 @@ namespace CodexReleaseTests.MarketTests
         [Combinatorial]
         public void RollingRepairSingleFailure(
             [Rerun] int rerun,
-            [Values(5)] int numFailures)
+            [Values(10)] int numFailures)
         {
+            Assert.That(numFailures, Is.GreaterThan(NumberOfHosts));
+
             var hosts = StartHosts().ToList();
             var client = StartClients().Single();
             StartValidator();
@@ -43,9 +45,12 @@ namespace CodexReleaseTests.MarketTests
             contract.WaitForStorageContractStarted();
             // All slots are filled.
 
+            client.Stop(waitTillStopped: true);
+
             for (var i = 0; i < numFailures; i++)
             {
                 Log($"Failure step: {i}");
+                Log($"Running hosts: [{string.Join(", ", hosts.Select(h => h.GetName()))}]");
 
                 // Start a new host. Add it to the back of the list:
                 hosts.Add(StartOneHost());
@@ -66,9 +71,10 @@ namespace CodexReleaseTests.MarketTests
 
         private void WaitForSlotFreedEvent(IStoragePurchaseContract contract, ulong slotIndex)
         {
-            Log(nameof(WaitForSlotFreedEvent));
             var start = DateTime.UtcNow;
             var timeout = CalculateContractFailTimespan();
+
+            Log($"{nameof(WaitForSlotFreedEvent)} {Time.FormatDuration(timeout)} requestId: '{contract.PurchaseId.ToLowerInvariant()}' slotIndex: {slotIndex}");
 
             while (DateTime.UtcNow < start + timeout)
             {
@@ -78,7 +84,10 @@ namespace CodexReleaseTests.MarketTests
 
                 foreach (var free in slotsFreed)
                 {
-                    if (free.RequestId.ToHex().ToLowerInvariant() == contract.PurchaseId.ToLowerInvariant())
+                    var freedId = free.RequestId.ToHex().ToLowerInvariant();
+                    Log($"Free for requestId '{freedId}' slotIndex: {free.SlotIndex}");
+
+                    if (freedId == contract.PurchaseId.ToLowerInvariant())
                     {
                         if (free.SlotIndex == slotIndex)
                         {

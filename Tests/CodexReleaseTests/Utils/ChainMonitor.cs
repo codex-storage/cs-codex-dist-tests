@@ -1,6 +1,7 @@
 ﻿using CodexContractsPlugin;
 using CodexContractsPlugin.ChainMonitor;
 using Logging;
+using Utils;
 
 namespace CodexReleaseTests.Utils
 {
@@ -44,7 +45,7 @@ namespace CodexReleaseTests.Utils
             var state = new ChainState(log, contracts, new DoNothingThrowingChainEventHandler(), startUtc, doProofPeriodMonitoring: true);
             Thread.Sleep(updateInterval);
 
-            log.Log("Chain monitoring started");
+            log.Log($"Chain monitoring started. Update interval: {Time.FormatDuration(updateInterval)}");
             while (!cts.IsCancellationRequested)
             {
                 try
