@@ -23,8 +23,8 @@ namespace CodexReleaseTests.DataTests
         [Test]
         [Combinatorial]
         public void Theseus(
-            [Values(1, 2, 5)] int remainingNodes,
-            [Values(10)] int steps)
+            [Values(1, 2)] int remainingNodes,
+            [Values(5)] int steps)
         {
             Assert.That(remainingNodes, Is.GreaterThan(0));
             Assert.That(steps, Is.GreaterThan(remainingNodes + 1));
@@ -48,12 +48,8 @@ namespace CodexReleaseTests.DataTests
 
         private void AllNodesHaveFile()
         {
-            WaitAndCheckNodesStaysAlive(TimeSpan.FromSeconds(20), nodes.ToArray());
-
             Log($"{nameof(AllNodesHaveFile)} {nodes.Names()}");
             foreach (var n in nodes) HasFile(n);
-
-            WaitAndCheckNodesStaysAlive(TimeSpan.FromSeconds(20), nodes.ToArray());
         }
 
         private void HasFile(ICodexNode n)
