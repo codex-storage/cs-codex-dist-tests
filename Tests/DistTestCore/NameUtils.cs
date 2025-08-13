@@ -32,7 +32,7 @@ namespace DistTestCore
             if (fullName.Contains("AdhocContext")) return "none";
             var name = fullName.Substring(0, fullName.LastIndexOf('.'));
             name += FormatArguments(test);
-            return name.Replace('.', '-').Replace(',', '-');
+            return ReplaceInvalidCharacters(name);
         }
 
         public static string GetCategoryName()
@@ -80,7 +80,10 @@ namespace DistTestCore
                 .Replace("-dist-tests", "")
                 .Replace(":", "_")
                 .Replace("/", "_")
-                .Replace("\\", "_");
+                .Replace("\\", "_")
+                .Replace("\"", "")
+                .Replace('.', '-')
+                .Replace(',', '-');
         }
 
         private static string DetermineFolder(LogConfig config, DateTime start)

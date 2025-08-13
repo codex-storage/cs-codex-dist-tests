@@ -22,9 +22,13 @@ namespace CodexReleaseTests.DataTests
         [Test]
         [Combinatorial]
         public void Theseus(
+            [Values(1, 2, 5)] int remainingNodes,
             [Values(10)] int steps)
         {
-            nodes.AddRange(StartCodex(3));
+            Assert.That(remainingNodes, Is.GreaterThan(0));
+            Assert.That(steps, Is.GreaterThan(remainingNodes + 1));
+
+            nodes.AddRange(StartCodex(remainingNodes + 1));
             cid = nodes.First().UploadFile(file);
 
             AllNodesHaveFile();
