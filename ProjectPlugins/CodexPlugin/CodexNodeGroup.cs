@@ -57,9 +57,14 @@ namespace CodexPlugin
             return Nodes.GetEnumerator();
         }
 
-        public string Describe()
+        public string Names()
         {
-            return $"group:[{string.Join(",", Nodes.Select(n => n.GetName()))}]";
+            return $"[{string.Join(",", Nodes.Select(n => n.GetName()))}]";
+        }
+
+        public override string ToString()
+        {
+            return Names();
         }
 
         public void EnsureOnline()
@@ -74,6 +79,19 @@ namespace CodexPlugin
             }
 
             Version = first;
+        }
+    }
+
+    public static class CodexNodeGroupExtensions
+    {
+        public static string Names(this ICodexNode[] nodes)
+        {
+            return $"[{string.Join(",", nodes.Select(n => n.GetName()))}]";
+        }
+
+        public static string Names(this List<ICodexNode> nodes)
+        {
+            return $"[{string.Join(",", nodes.Select(n => n.GetName()))}]";
         }
     }
 }

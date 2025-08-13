@@ -222,8 +222,7 @@ namespace CodexNetDeployer
             }
             else
             {
-                Log(
-                    $"Check failed. The following containers have crashed: {string.Join(",", crashes.Select(c => c.GetName()))}");
+                Log($"Check failed. The following containers have crashed: {crashes.Names()}");
                 throw new Exception("Deployment failed: One or more containers crashed.");
             }
         }

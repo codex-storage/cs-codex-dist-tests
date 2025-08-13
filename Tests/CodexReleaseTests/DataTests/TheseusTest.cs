@@ -1,4 +1,5 @@
 ﻿using CodexClient;
+using CodexPlugin;
 using CodexTests;
 using FileUtils;
 using NUnit.Framework;
@@ -36,7 +37,7 @@ namespace CodexReleaseTests.DataTests
             for (var i = 0; i < steps; i++)
             {
                 Log($"{nameof(Theseus)} step {i}");
-                nodes[i].Stop(waitTillStopped: true);
+                nodes[0].Stop(waitTillStopped: true);
                 nodes.RemoveAt(0);
 
                 nodes.Add(StartCodex());
@@ -47,8 +48,12 @@ namespace CodexReleaseTests.DataTests
 
         private void AllNodesHaveFile()
         {
-            Log($"{nameof(AllNodesHaveFile)} [{string.Join(",", nodes.Select(n => n.GetName()))}]");
+            WaitAndCheckNodesStaysAlive(TimeSpan.FromSeconds(20), nodes.ToArray());
+
+            Log($"{nameof(AllNodesHaveFile)} {nodes.Names()}");
             foreach (var n in nodes) HasFile(n);
+
+            WaitAndCheckNodesStaysAlive(TimeSpan.FromSeconds(20), nodes.ToArray());
         }
 
         private void HasFile(ICodexNode n)

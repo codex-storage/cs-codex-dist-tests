@@ -1,4 +1,5 @@
 ﻿using CodexClient;
+using CodexPlugin;
 using Logging;
 using NUnit.Framework;
 
@@ -30,7 +31,7 @@ namespace CodexTests.Helpers
 
         private void AssertFullyConnected(ICodexNode[] nodes)
         {
-            Log($"Asserting '{implementation.Description()}' for nodes: '{string.Join(",", nodes.Select(n => n.GetName()))}'...");
+            Log($"Asserting '{implementation.Description()}' for nodes: '{nodes.Names()}'...");
             Assert.That(nodes.Length, Is.GreaterThan(1));
 
             var entries = CreateEntries(nodes);
@@ -50,7 +51,7 @@ namespace CodexTests.Helpers
             }
             else
             {
-                Log($"'{implementation.Description()}' = Success! for nodes: {string.Join(",", nodes.Select(n => n.GetName()))}");
+                Log($"'{implementation.Description()}' = Success! for nodes: {nodes.Names()}");
             }
         }
 

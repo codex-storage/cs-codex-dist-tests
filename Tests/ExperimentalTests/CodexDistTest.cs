@@ -16,6 +16,7 @@ using Newtonsoft.Json;
 using NUnit.Framework;
 using NUnit.Framework.Constraints;
 using OverwatchTranscript;
+using Utils;
 
 namespace CodexTests
 {
@@ -128,16 +129,25 @@ namespace CodexTests
 
         public void WaitAndCheckNodesStaysAlive(TimeSpan duration, params ICodexNode[] nodes)
         {
+            Log($"{nameof(WaitAndCheckNodesStaysAlive)} {Time.FormatDuration(duration)}...");
+
+            var timeout = TimeSpan.FromSeconds(3.0);
+            Assert.That(duration.TotalSeconds, Is.GreaterThan(timeout.TotalSeconds));
+
             var start = DateTime.UtcNow;
             while ((DateTime.UtcNow - start) < duration)
             {
-                Thread.Sleep(5000);
+                Thread.Sleep(timeout);
                 foreach (var node in nodes)
                 {
+                    Assert.That(node.HasCrashed(), Is.False);
+
                     var info = node.GetDebugInfo();
                     Assert.That(!string.IsNullOrEmpty(info.Id));
                 }
             }
+
+            Log($"{nameof(WaitAndCheckNodesStaysAlive)} OK");
         }
 
         public void AssertNodesContainFile(ContentId cid, ICodexNodeGroup nodes)
@@ -147,11 +157,15 @@ namespace CodexTests
 
         public void AssertNodesContainFile(ContentId cid, params ICodexNode[] nodes)
         {
+            Log($"{nameof(AssertNodesContainFile)} {nodes.Names()} {cid}...");
+
             foreach (var node in nodes)
             {
                 var localDatasets = node.LocalFiles();
                 CollectionAssert.Contains(localDatasets.Content.Select(c => c.Cid), cid);
             }
+
+            Log($"{nameof(AssertNodesContainFile)} OK");
         }
 
         private string GetBasicNodeStatus(ICodexNode node)
