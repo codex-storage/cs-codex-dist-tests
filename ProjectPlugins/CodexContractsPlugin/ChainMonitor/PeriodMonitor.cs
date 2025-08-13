@@ -41,8 +41,8 @@ namespace CodexContractsPlugin.ChainMonitor
         private void CreateReportForPeriod(ulong lastBlockInPeriod, ulong periodNumber, IChainStateRequest[] requests)
         {
             ulong total = 0;
-            ulong required = 0;
-            var missed = new List<PeriodProofMissed>();
+            var required = new List<PeriodProof>();
+            var missed = new List<PeriodProof>();
             foreach (var request in requests)
             {
                 for (ulong slotIndex = 0; slotIndex < request.Request.Ask.Slots; slotIndex++)
@@ -52,17 +52,19 @@ namespace CodexContractsPlugin.ChainMonitor
                     total++;
                     if (state.Required)
                     {
-                        required++;
+                        var idx = Convert.ToInt32(slotIndex);
+                        var host = request.Hosts.GetHost(idx);
+                        var proof = new PeriodProof(host, request, idx);
+
+                        required.Add(proof);
                         if (state.Missing)
                         {
-                            var idx = Convert.ToInt32(slotIndex);
-                            var host = request.Hosts.GetHost(idx);
-                            missed.Add(new PeriodProofMissed(host, request, idx));
+                            missed.Add(proof);
                         }
                     }
                 }
             }
-            var report = new PeriodReport(periodNumber, total, required, missed.ToArray());
+            var report = new PeriodReport(periodNumber, total, required.ToArray(), missed.ToArray());
             log.Log($"Period report: {report}");
             reports.Add(report);
         }
@@ -87,45 +89,48 @@ namespace CodexContractsPlugin.ChainMonitor
 
         private void CalcStats()
         {
-            IsEmpty = Reports.All(r => r.TotalProofsRequired == 0);
+            IsEmpty = Reports.All(r => r.ProofsRequired.Length == 0);
             if (Reports.Length == 0) return;
 
             PeriodLow = Reports.Min(r => r.PeriodNumber);
             PeriodHigh = Reports.Max(r => r.PeriodNumber);
             AverageNumSlots = Reports.Average(r => Convert.ToSingle(r.TotalNumSlots));
-            AverageNumProofsRequired = Reports.Average(r => Convert.ToSingle(r.TotalProofsRequired));
+            AverageNumProofsRequired = Reports.Average(r => Convert.ToSingle(r.ProofsRequired.Length));
         }
     }
 
     public class PeriodReport
     {
-        public PeriodReport(ulong periodNumber, ulong totalNumSlots, ulong totalProofsRequired, PeriodProofMissed[] missedProofs)
+        public PeriodReport(ulong periodNumber, ulong totalNumSlots, PeriodProof[] proofsRequired, PeriodProof[] missedProofs)
         {
             PeriodNumber = periodNumber;
             TotalNumSlots = totalNumSlots;
-            TotalProofsRequired = totalProofsRequired;
+            ProofsRequired = proofsRequired;
             MissedProofs = missedProofs;
         }
 
         public ulong PeriodNumber { get; }
         public ulong TotalNumSlots { get; }
-        public ulong TotalProofsRequired { get; }
-        public PeriodProofMissed[] MissedProofs { get; }
+        public PeriodProof[] ProofsRequired { get; }
+        public PeriodProof[] MissedProofs { get; }
 
         public override string ToString()
         {
-            var missed = "None";
-            if (MissedProofs.Length > 0)
-            {
-                missed = string.Join("+", MissedProofs.Select(p => $"{p.FormatHost()} missed {p.Request.RequestId.ToHex()} slot {p.SlotIndex}"));
-            }
-            return $"Period:{PeriodNumber}=[Slots:{TotalNumSlots},ProofsRequired:{TotalProofsRequired},ProofsMissed:{missed}]";
+            var required = Describe(ProofsRequired);
+            var missed = Describe(MissedProofs);
+            return $"Period:{PeriodNumber}=[Slots:{TotalNumSlots},ProofsRequired:{required},ProofsMissed:{missed}]";
+        }
+
+        private string Describe(PeriodProof[] proofs)
+        {
+            if (proofs.Length == 0) return "None";
+            return string.Join("+", proofs.Select(p => $"{p.FormatHost()} - {p.Request.RequestId.ToHex()} slot {p.SlotIndex}"));
         }
     }
 
-    public class PeriodProofMissed
+    public class PeriodProof
     {
-        public PeriodProofMissed(EthAddress? host, IChainStateRequest request, int slotIndex)
+        public PeriodProof(EthAddress? host, IChainStateRequest request, int slotIndex)
         {
             Host = host;
             Request = request;

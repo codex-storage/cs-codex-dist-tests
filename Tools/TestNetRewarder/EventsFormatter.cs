@@ -178,7 +178,7 @@ namespace TestNetRewarder
             }
         }
 
-        private void DescribeMissedProof(List<string> lines, PeriodProofMissed missedProof)
+        private void DescribeMissedProof(List<string> lines, PeriodProof missedProof)
         {
             lines.Add($"[{missedProof.FormatHost()}] missed proof for {FormatRequestId(missedProof.Request)} (slotIndex: {missedProof.SlotIndex})");
         }

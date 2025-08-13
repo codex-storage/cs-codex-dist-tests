@@ -172,7 +172,7 @@ namespace CodexContractsPlugin
             var required = IsProofRequired(slotId, blockNumber);
             if (!required) return new ProofState(false, false);
 
-            var missing = IsProofMissing(slotId, blockNumber, period);
+            var missing = IsProofMissing(slotId, period, blockNumber);
             return new ProofState(required, missing);
         }
 
@@ -202,16 +202,19 @@ namespace CodexContractsPlugin
             return result.ReturnValue1;
         }
 
-        private bool IsProofMissing(byte[] slotId, ulong blockNumber, ulong period)
+        private bool IsProofMissing(byte[] slotId, ulong period, ulong blockNumber)
         {
             try
             {
-                var funcB = new MarkProofAsMissingFunction
+                var func = new CanMarkProofAsMissingFunction
                 {
                     SlotId = slotId,
                     Period = period
                 };
-                gethNode.Call(Deployment.MarketplaceAddress, funcB, blockNumber);
+
+                var result = gethNode.Call<CanMarkProofAsMissingFunction, bool>(Deployment.MarketplaceAddress, func, blockNumber);
+
+                var a = 0;
             }
             catch (AggregateException exc)
             {

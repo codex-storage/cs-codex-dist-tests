@@ -22,7 +22,7 @@ namespace CodexReleaseTests.MarketTests
             Assert.That(purchaseParams.Nodes, Is.LessThan(NumberOfHosts));
         }
 
-        protected override int NumberOfHosts => 5;
+        protected override int NumberOfHosts => 6;
         protected override int NumberOfClients => 1;
         protected override ByteSize HostAvailabilitySize => purchaseParams.SlotSize.Multiply(1.1); // Each host can hold 1 slot.
         protected override TimeSpan HostAvailabilityMaxDuration => TimeSpan.FromDays(5.0);
@@ -46,6 +46,17 @@ namespace CodexReleaseTests.MarketTests
             // All slots are filled.
 
             client.Stop(waitTillStopped: true);
+
+            // Hold this situation 
+            Log("Holding initial situation to ensure contract is stable...");
+            var config = GetContracts().Deployment.Config;
+            WaitAndCheckNodesStaysAlive(config.PeriodDuration * 5, hosts);
+
+            if (contract.GetStatus() == null ||
+                contract.GetStatus()!.State == StoragePurchaseState.Failed)
+            {
+                Assert.Fail("Contract did not survive waiting period.");
+            }
 
             for (var i = 0; i < numFailures; i++)
             {

@@ -127,6 +127,11 @@ namespace CodexTests
             WaitAndCheckNodesStaysAlive(duration, nodes.ToArray());
         }
 
+        public void WaitAndCheckNodesStaysAlive(TimeSpan duration, List<ICodexNode> nodes)
+        {
+            WaitAndCheckNodesStaysAlive(duration, nodes.ToArray());
+        }
+
         public void WaitAndCheckNodesStaysAlive(TimeSpan duration, params ICodexNode[] nodes)
         {
             Log($"{nameof(WaitAndCheckNodesStaysAlive)} {Time.FormatDuration(duration)}...");
