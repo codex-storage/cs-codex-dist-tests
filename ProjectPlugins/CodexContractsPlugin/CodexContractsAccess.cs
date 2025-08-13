@@ -4,6 +4,7 @@ using GethPlugin;
 using Logging;
 using Nethereum.ABI;
 using Nethereum.Contracts;
+using Nethereum.Hex.HexConvertors.Extensions;
 using Nethereum.Util;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
@@ -29,21 +30,18 @@ namespace CodexContractsPlugin
         Request GetRequest(byte[] requestId);
         ulong GetPeriodNumber(DateTime utc);
         void WaitUntilNextPeriod();
-        ProofState GetProofState(byte[] requestId, decimal slotIndex, ulong blockNumber, ulong period);
+        ProofState GetProofState(byte[] requestId, decimal slotIndex, ulong period);
+        byte[] GetSlotId(byte[] requestId, decimal slotIndex);
 
         ICodexContracts WithDifferentGeth(IGethNode node);
     }
 
-    public class ProofState
+    public enum ProofState
     {
-        public ProofState(bool required, bool missing)
-        {
-            Required = required;
-            Missing = missing;
-        }
-
-        public bool Required { get; }
-        public bool Missing { get; }
+        NotRequired,
+        NotMissed,
+        MissedNotMarked,
+        MissedAndMarked,
     }
 
     [JsonConverter(typeof(StringEnumConverter))]
@@ -165,15 +163,14 @@ namespace CodexContractsPlugin
             Thread.Sleep(TimeSpan.FromSeconds(secondsLeft + 1));
         }
 
-        public ProofState GetProofState(byte[] requestId, decimal slotIndex, ulong blockNumber, ulong period)
+        public ProofState GetProofState(byte[] requestId, decimal slotIndex, ulong period)
         {
             var slotId = GetSlotId(requestId, slotIndex);
 
-            var required = IsProofRequired(slotId, blockNumber);
-            if (!required) return new ProofState(false, false);
+            var required = IsProofRequired(slotId);
+            if (!required) return ProofState.NotRequired;
 
-            var missing = IsProofMissing(slotId, period, blockNumber);
-            return new ProofState(required, missing);
+            return IsProofMissing(slotId, period);
         }
 
         public ICodexContracts WithDifferentGeth(IGethNode node)
@@ -181,7 +178,7 @@ namespace CodexContractsPlugin
             return new CodexContractsAccess(log, node, Deployment);
         }
 
-        private byte[] GetSlotId(byte[] requestId, decimal slotIndex)
+        public byte[] GetSlotId(byte[] requestId, decimal slotIndex)
         {
             var encoder = new ABIEncode();
             var encoded = encoder.GetABIEncoded(
@@ -192,17 +189,37 @@ namespace CodexContractsPlugin
             return Sha3Keccack.Current.CalculateHash(encoded);
         }
 
-        private bool IsProofRequired(byte[] slotId, ulong blockNumber)
+        private bool IsProofRequired(byte[] slotId)
         {
             var func = new IsProofRequiredFunction
             {
                 Id = slotId
             };
-            var result = gethNode.Call<IsProofRequiredFunction, IsProofRequiredOutputDTO>(Deployment.MarketplaceAddress, func, blockNumber);
+            var result = gethNode.Call<IsProofRequiredFunction, IsProofRequiredOutputDTO>(Deployment.MarketplaceAddress, func);
             return result.ReturnValue1;
         }
 
-        private bool IsProofMissing(byte[] slotId, ulong period, ulong blockNumber)
+        private ProofState IsProofMissing(byte[] slotId, ulong period)
+        {
+            // In case of a missed proof, one of two things can be true:
+            // 1 - The proof was missed but no validator marked it as missing:
+            //     We can see this by calling "canMarkProofAsMissing" and it returns true/doesn't throw.
+            // 2 - The proof was missed and it was marked as missing by a validator:
+            //     We can see this by a successful call to "MarkProofAsMissing" on-chain.
+
+            if (CallCanMarkProofAsMissing(slotId, period))
+            {
+                return ProofState.MissedNotMarked;
+            }
+            if (WasMarkProofAsMissingCalled(slotId, period))
+            {
+                return ProofState.MissedAndMarked;
+            }
+
+            return ProofState.NotMissed;
+        }
+
+        private bool CallCanMarkProofAsMissing(byte[] slotId, ulong period)
         {
             try
             {
@@ -212,9 +229,9 @@ namespace CodexContractsPlugin
                     Period = period
                 };
 
-                var result = gethNode.Call<CanMarkProofAsMissingFunction, bool>(Deployment.MarketplaceAddress, func, blockNumber);
+                gethNode.Call<CanMarkProofAsMissingFunction>(Deployment.MarketplaceAddress, func);
 
-                var a = 0;
+                return true;
             }
             catch (AggregateException exc)
             {
@@ -227,7 +244,25 @@ namespace CodexContractsPlugin
                 }
                 throw;
             }
-            return true;
+        }
+
+        private bool WasMarkProofAsMissingCalled(byte[] slotId, ulong period)
+        {
+            var now = DateTime.UtcNow;
+            var currentPeriod = new TimeRange(now - Deployment.Config.PeriodDuration, now);
+            var interval = gethNode.ConvertTimeRangeToBlockRange(currentPeriod);
+            var slot = slotId.ToHex().ToLowerInvariant();
+
+            var found = false;
+            gethNode.IterateFunctionCalls<MarkProofAsMissingFunction>(interval, (b, fn) =>
+            {
+                if (fn.Period == period && fn.SlotId.ToHex().ToLowerInvariant() == slot)
+                {
+                    found = true;
+                }
+            });
+
+            return found;
         }
 
         private ContractInteractions StartInteraction()

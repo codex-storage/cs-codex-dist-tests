@@ -1,5 +1,6 @@
 ﻿using Logging;
 using Nethereum.Hex.HexConvertors.Extensions;
+using Nethereum.Model;
 using Utils;
 
 namespace CodexContractsPlugin.ChainMonitor
@@ -17,7 +18,7 @@ namespace CodexContractsPlugin.ChainMonitor
             this.contracts = contracts;
         }
 
-        public void Update(ulong blockNumber, DateTime eventUtc, IChainStateRequest[] requests)
+        public void Update(DateTime eventUtc, IChainStateRequest[] requests)
         {
             var period = contracts.GetPeriodNumber(eventUtc);
             if (!currentPeriod.HasValue)
@@ -27,7 +28,7 @@ namespace CodexContractsPlugin.ChainMonitor
             }
             if (period == currentPeriod.Value) return;
 
-            CreateReportForPeriod(blockNumber - 1, currentPeriod.Value, requests);
+            CreateReportForPeriod(currentPeriod.Value, requests);
             currentPeriod = period;
         }
 
@@ -38,34 +39,25 @@ namespace CodexContractsPlugin.ChainMonitor
             return new PeriodMonitorResult(result);
         }
 
-        private void CreateReportForPeriod(ulong lastBlockInPeriod, ulong periodNumber, IChainStateRequest[] requests)
+        private void CreateReportForPeriod(ulong periodNumber, IChainStateRequest[] requests)
         {
             ulong total = 0;
-            var required = new List<PeriodProof>();
-            var missed = new List<PeriodProof>();
+            var periodProofs = new List<PeriodProof>();
             foreach (var request in requests)
             {
                 for (ulong slotIndex = 0; slotIndex < request.Request.Ask.Slots; slotIndex++)
                 {
-                    var state = contracts.GetProofState(request.RequestId, slotIndex, lastBlockInPeriod, periodNumber);
+                    var state = contracts.GetProofState(request.RequestId, slotIndex, periodNumber);
 
                     total++;
-                    if (state.Required)
-                    {
-                        var idx = Convert.ToInt32(slotIndex);
-                        var host = request.Hosts.GetHost(idx);
-                        var proof = new PeriodProof(host, request, idx);
-
-                        required.Add(proof);
-                        if (state.Missing)
-                        {
-                            missed.Add(proof);
-                        }
-                    }
+                    var idx = Convert.ToInt32(slotIndex);
+                    var host = request.Hosts.GetHost(idx);
+                    var proof = new PeriodProof(host, request, idx, state);
+                    periodProofs.Add(proof);
                 }
             }
-            var report = new PeriodReport(periodNumber, total, required.ToArray(), missed.ToArray());
-            log.Log($"Period report: {report}");
+            var report = new PeriodReport(periodNumber, total, periodProofs.ToArray());
+            report.Log(log);
             reports.Add(report);
         }
     }
@@ -89,62 +81,77 @@ namespace CodexContractsPlugin.ChainMonitor
 
         private void CalcStats()
         {
-            IsEmpty = Reports.All(r => r.ProofsRequired.Length == 0);
+            IsEmpty = Reports.All(r => r.PeriodProofs.Length == 0);
             if (Reports.Length == 0) return;
 
             PeriodLow = Reports.Min(r => r.PeriodNumber);
             PeriodHigh = Reports.Max(r => r.PeriodNumber);
             AverageNumSlots = Reports.Average(r => Convert.ToSingle(r.TotalNumSlots));
-            AverageNumProofsRequired = Reports.Average(r => Convert.ToSingle(r.ProofsRequired.Length));
+            AverageNumProofsRequired = Reports.Average(r => Convert.ToSingle(r.PeriodProofs.Count(p => p.State != ProofState.NotRequired)));
         }
     }
 
     public class PeriodReport
     {
-        public PeriodReport(ulong periodNumber, ulong totalNumSlots, PeriodProof[] proofsRequired, PeriodProof[] missedProofs)
+        public PeriodReport(ulong periodNumber, ulong totalNumSlots, PeriodProof[] periodProofs)
         {
             PeriodNumber = periodNumber;
             TotalNumSlots = totalNumSlots;
-            ProofsRequired = proofsRequired;
-            MissedProofs = missedProofs;
+            PeriodProofs = periodProofs;
         }
 
         public ulong PeriodNumber { get; }
         public ulong TotalNumSlots { get; }
-        public PeriodProof[] ProofsRequired { get; }
-        public PeriodProof[] MissedProofs { get; }
+        public PeriodProof[] PeriodProofs { get; }
 
-        public override string ToString()
+        public PeriodProof[] GetMissedProofs()
         {
-            var required = Describe(ProofsRequired);
-            var missed = Describe(MissedProofs);
-            return $"Period:{PeriodNumber}=[Slots:{TotalNumSlots},ProofsRequired:{required},ProofsMissed:{missed}]";
+            return PeriodProofs.Where(p => p.State == ProofState.MissedAndMarked || p.State == ProofState.MissedNotMarked).ToArray();
         }
 
-        private string Describe(PeriodProof[] proofs)
+        public void Log(ILog log)
         {
-            if (proofs.Length == 0) return "None";
-            return string.Join("+", proofs.Select(p => $"{p.FormatHost()} - {p.Request.RequestId.ToHex()} slot {p.SlotIndex}"));
+            log.Log($"Period report: {PeriodNumber}");
+            log.Log($"   - Slots: {TotalNumSlots}");
+            foreach (var p in PeriodProofs)
+            {
+                log.Log($"   - {p.Describe()}");
+            }
+        }
+
+        private void Log(ILog log, PeriodProof[] proofs)
+        {
+            if (proofs.Length == 0) return;
+            foreach (var p in proofs)
+            {
+            }
         }
     }
 
     public class PeriodProof
     {
-        public PeriodProof(EthAddress? host, IChainStateRequest request, int slotIndex)
+        public PeriodProof(EthAddress? host, IChainStateRequest request, int slotIndex, ProofState state)
         {
             Host = host;
             Request = request;
             SlotIndex = slotIndex;
+            State = state;
         }
 
         public EthAddress? Host { get; }
         public IChainStateRequest Request { get; }
         public int SlotIndex { get; }
+        public ProofState State { get; }
 
         public string FormatHost()
         {
             if (Host == null) return "Unknown host";
             return Host.Address;
+        }
+
+        public string Describe()
+        {
+            return $"{FormatHost()} - {Request.RequestId.ToHex()} slotIndex:{SlotIndex} => {State}";
         }
     }
 }

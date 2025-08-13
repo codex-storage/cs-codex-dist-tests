@@ -1,6 +1,7 @@
 ﻿using BlockchainUtils;
 using CodexContractsPlugin.Marketplace;
 using Logging;
+using Nethereum.Contracts;
 using Nethereum.Hex.HexConvertors.Extensions;
 using System.Numerics;
 using Utils;
@@ -92,17 +93,17 @@ namespace CodexContractsPlugin.ChainMonitor
             {
                 var blockEvents = events.All.Where(e => e.Block.BlockNumber == b).ToArray();
                 ApplyEvents(b, blockEvents, eventUtc);
-                UpdatePeriodMonitor(b, eventUtc);
+                UpdatePeriodMonitor(eventUtc);
 
                 eventUtc += spanPerBlock;
             }
         }
 
-        private void UpdatePeriodMonitor(ulong blockNumber, DateTime eventUtc)
+        private void UpdatePeriodMonitor(DateTime eventUtc)
         {
             if (!doProofPeriodMonitoring) return;
             var activeRequests = requests.Where(r => r.State == RequestState.Started).ToArray();
-            PeriodMonitor.Update(blockNumber, eventUtc, activeRequests);
+            PeriodMonitor.Update(eventUtc, activeRequests);
         }
 
         private void ApplyEvents(ulong blockNumber, IHasBlock[] blockEvents, DateTime eventsUtc)
@@ -189,8 +190,29 @@ namespace CodexContractsPlugin.ChainMonitor
         private void ApplyEvent(ProofSubmittedEventDTO @event)
         {
             var id = Base58.Encode(@event.Id);
-            log.Log($"[{@event.Block.BlockNumber}] Proof submitted (id:{id})");
+
+            var proofOrigin = SearchForProofOrigin(id);
+
+            log.Log($"[{@event.Block.BlockNumber}] Proof submitted (id:{id} {proofOrigin})");
             handler.OnProofSubmitted(@event.Block, id);
+        }
+
+        private string SearchForProofOrigin(string slotId)
+        {
+            foreach (var r in requests)
+            {
+                for (decimal slotIndex = 0; slotIndex < r.Request.Ask.Slots; slotIndex++)
+                {
+                    var thisSlotId = contracts.GetSlotId(r.RequestId, slotIndex);
+                    var id = Base58.Encode(thisSlotId);
+
+                    if (id.ToLowerInvariant() == slotId.ToLowerInvariant())
+                    {
+                        return $"({r.RequestId.ToHex()} slotIndex:{slotIndex})";
+                    }
+                }
+            }
+            return "(Could not identify proof requestId + slot)";
         }
 
         private void ApplyTimeImplicitEvents(ulong blockNumber, DateTime eventsUtc)

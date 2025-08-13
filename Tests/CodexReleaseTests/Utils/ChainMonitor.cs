@@ -71,8 +71,8 @@ namespace CodexReleaseTests.Utils
             if (reports.IsEmpty) return;
 
             var slots = reports.Reports.Sum(r => Convert.ToInt32(r.TotalNumSlots));
-            var required = reports.Reports.Sum(r => Convert.ToInt32(r.ProofsRequired.Length));
-            var missed = reports.Reports.Sum(r => r.MissedProofs.Length);
+            var required = reports.Reports.Sum(r => Convert.ToInt32(r.PeriodProofs.Count(p => p.State != ProofState.NotRequired)));
+            var missed = reports.Reports.Sum(r => r.GetMissedProofs().Length);
 
             log.Log($"Proof report: Slots={slots} Required={required} Missed={missed}");
         }

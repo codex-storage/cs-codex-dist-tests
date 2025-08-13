@@ -150,14 +150,14 @@ namespace TestNetRewarder
 
         private void AddMissedProofDetails(List<string> lines, PeriodReport[] reports)
         {
-            var reportsWithMissedProofs = reports.Where(r => r.MissedProofs.Length > 0).ToArray();
+            var reportsWithMissedProofs = reports.Where(r => r.GetMissedProofs().Any()).ToArray();
             if (reportsWithMissedProofs.Length < 1)
             {
                 lines.Add($"No proofs were missed {emojiMaps.NoProofsMissed}");
                 return;
             }
 
-            var totalMissed = reportsWithMissedProofs.Sum(r => r.MissedProofs.Length);
+            var totalMissed = reportsWithMissedProofs.Sum(r => r.GetMissedProofs().Length);
             if (totalMissed > 10)
             {
                 lines.Add($"[{totalMissed}] proofs were missed {emojiMaps.ManyProofsMissed}");
@@ -172,7 +172,7 @@ namespace TestNetRewarder
 
         private void DescribeMissedProof(List<string> lines, PeriodReport report)
         {
-            foreach (var missedProof in report.MissedProofs)
+            foreach (var missedProof in report.GetMissedProofs())
             {
                 DescribeMissedProof(lines, missedProof);
             }
