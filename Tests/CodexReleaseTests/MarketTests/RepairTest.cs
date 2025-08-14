@@ -1,4 +1,5 @@
 ﻿using CodexClient;
+using CodexContractsPlugin;
 using CodexReleaseTests.Utils;
 using Nethereum.Hex.HexConvertors.Extensions;
 using NUnit.Framework;
@@ -51,12 +52,9 @@ namespace CodexReleaseTests.MarketTests
             Log("Holding initial situation to ensure contract is stable...");
             var config = GetContracts().Deployment.Config;
             WaitAndCheckNodesStaysAlive(config.PeriodDuration * 5, hosts);
-
-            if (contract.GetStatus() == null ||
-                contract.GetStatus()!.State == StoragePurchaseState.Failed)
-            {
-                Assert.Fail("Contract did not survive waiting period.");
-            }
+            
+            var requestState = GetContracts().GetRequestState(contract.PurchaseId.HexToByteArray());
+            Assert.That(requestState, Is.Not.EqualTo(RequestState.Failed));
 
             for (var i = 0; i < numFailures; i++)
             {
