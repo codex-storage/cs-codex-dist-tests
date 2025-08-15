@@ -22,7 +22,7 @@ namespace CodexReleaseTests.Utils
         {
             var geth = StartGethNode(s => s.IsMiner());
             var contracts = Ci.StartCodexContracts(geth, BootstrapNode.Version);
-            var monitor = SetupChainMonitor(GetTestLog(), contracts, GetTestRunTimeRange().From);
+            var monitor = SetupChainMonitor(GetTestLog(), geth, contracts, GetTestRunTimeRange().From);
             handle = new MarketplaceHandle(geth, contracts, monitor);
         }
 
@@ -169,11 +169,11 @@ namespace CodexReleaseTests.Utils
             });
         }
 
-        private ChainMonitor? SetupChainMonitor(ILog log, ICodexContracts contracts, DateTime startUtc)
+        private ChainMonitor? SetupChainMonitor(ILog log, IGethNode gethNode, ICodexContracts contracts, DateTime startUtc)
         {
             if (!MonitorChainState) return null;
 
-            var result = new ChainMonitor(log, contracts, startUtc);
+            var result = new ChainMonitor(log, gethNode, contracts, startUtc);
             result.Start(() =>
             {
                 Assert.Fail("Failure in chain monitor.");

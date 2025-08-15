@@ -1,5 +1,6 @@
 ﻿using BlockchainUtils;
 using CodexContractsPlugin.Marketplace;
+using GethPlugin;
 using Logging;
 using Nethereum.Contracts;
 using Nethereum.Hex.HexConvertors.Extensions;
@@ -42,14 +43,14 @@ namespace CodexContractsPlugin.ChainMonitor
         private readonly IChainStateChangeHandler handler;
         private readonly bool doProofPeriodMonitoring;
 
-        public ChainState(ILog log, ICodexContracts contracts, IChainStateChangeHandler changeHandler, DateTime startUtc, bool doProofPeriodMonitoring)
+        public ChainState(ILog log, IGethNode geth, ICodexContracts contracts, IChainStateChangeHandler changeHandler, DateTime startUtc, bool doProofPeriodMonitoring)
         {
             this.log = new LogPrefixer(log, "(ChainState) ");
             this.contracts = contracts;
             handler = changeHandler;
             this.doProofPeriodMonitoring = doProofPeriodMonitoring;
             TotalSpan = new TimeRange(startUtc, startUtc);
-            PeriodMonitor = new PeriodMonitor(log, contracts);
+            PeriodMonitor = new PeriodMonitor(log, contracts, geth);
         }
 
         public TimeRange TotalSpan { get; private set; }

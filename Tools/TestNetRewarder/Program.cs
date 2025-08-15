@@ -31,7 +31,7 @@ namespace TestNetRewarder
             if (connector == null) throw new Exception("Invalid Geth information");
 
             BotClient = new BotClient(Config, Log);
-            processor = new Processor(Config, BotClient, connector.CodexContracts, Log);
+            processor = new Processor(Config, BotClient, connector.GethNode, connector.CodexContracts, Log);
 
             EnsurePath(Config.DataPath);
             EnsurePath(Config.LogPath);

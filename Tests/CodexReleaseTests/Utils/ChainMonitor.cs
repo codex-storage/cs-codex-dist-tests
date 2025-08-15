@@ -1,5 +1,6 @@
 ﻿using CodexContractsPlugin;
 using CodexContractsPlugin.ChainMonitor;
+using GethPlugin;
 using Logging;
 using Utils;
 
@@ -8,20 +9,22 @@ namespace CodexReleaseTests.Utils
     public class ChainMonitor
     {
         private readonly ILog log;
+        private readonly IGethNode gethNode;
         private readonly ICodexContracts contracts;
         private readonly DateTime startUtc;
         private readonly TimeSpan updateInterval;
         private CancellationTokenSource cts = new CancellationTokenSource();
         private Task worker = Task.CompletedTask;
 
-        public ChainMonitor(ILog log, ICodexContracts contracts, DateTime startUtc)
-            : this(log, contracts, startUtc, TimeSpan.FromSeconds(3.0))
+        public ChainMonitor(ILog log, IGethNode gethNode, ICodexContracts contracts, DateTime startUtc)
+            : this(log, gethNode, contracts, startUtc, TimeSpan.FromSeconds(3.0))
         {
         }
 
-        public ChainMonitor(ILog log, ICodexContracts contracts, DateTime startUtc, TimeSpan updateInterval)
+        public ChainMonitor(ILog log, IGethNode gethNode, ICodexContracts contracts, DateTime startUtc, TimeSpan updateInterval)
         {
             this.log = log;
+            this.gethNode = gethNode;
             this.contracts = contracts;
             this.startUtc = startUtc;
             this.updateInterval = updateInterval;
@@ -42,7 +45,7 @@ namespace CodexReleaseTests.Utils
 
         private void Worker(Action onFailure)
         {
-            var state = new ChainState(log, contracts, new DoNothingThrowingChainEventHandler(), startUtc, doProofPeriodMonitoring: true);
+            var state = new ChainState(log, gethNode, contracts, new DoNothingThrowingChainEventHandler(), startUtc, doProofPeriodMonitoring: true);
             Thread.Sleep(updateInterval);
 
             log.Log($"Chain monitoring started. Update interval: {Time.FormatDuration(updateInterval)}");
@@ -66,15 +69,6 @@ namespace CodexReleaseTests.Utils
         private void UpdateChainState(ChainState state)
         {
             state.Update();
-
-            var reports = state.PeriodMonitor.GetAndClearReports();
-            if (reports.IsEmpty) return;
-
-            var slots = reports.Reports.Sum(r => Convert.ToInt32(r.TotalNumSlots));
-            var required = reports.Reports.Sum(r => Convert.ToInt32(r.PeriodProofs.Count(p => p.State != ProofState.NotRequired)));
-            var missed = reports.Reports.Sum(r => r.GetMissedProofs().Length);
-
-            log.Log($"Proof report: Slots={slots} Required={required} Missed={missed}");
         }
     }
 }

@@ -1,7 +1,12 @@
-﻿using Logging;
+﻿using CodexContractsPlugin.Marketplace;
+using GethPlugin;
+using Logging;
+using Nethereum.Contracts;
 using Nethereum.Hex.HexConvertors.Extensions;
 using Nethereum.Model;
-using Utils;
+using Nethereum.RPC.Eth.DTOs;
+using Newtonsoft.Json;
+using System.Reflection;
 
 namespace CodexContractsPlugin.ChainMonitor
 {
@@ -9,27 +14,29 @@ namespace CodexContractsPlugin.ChainMonitor
     {
         private readonly ILog log;
         private readonly ICodexContracts contracts;
+        private readonly IGethNode geth;
         private readonly List<PeriodReport> reports = new List<PeriodReport>();
-        private ulong? currentPeriod = null;
+        private CurrentPeriod? currentPeriod = null;
 
-        public PeriodMonitor(ILog log, ICodexContracts contracts)
+        public PeriodMonitor(ILog log, ICodexContracts contracts, IGethNode geth)
         {
             this.log = log;
             this.contracts = contracts;
+            this.geth = geth;
         }
 
         public void Update(DateTime eventUtc, IChainStateRequest[] requests)
         {
-            var period = contracts.GetPeriodNumber(eventUtc);
-            if (!currentPeriod.HasValue)
+            var periodNumber = contracts.GetPeriodNumber(eventUtc);
+            if (currentPeriod == null)
             {
-                currentPeriod = period;
+                currentPeriod = CreateCurrentPeriod(periodNumber, requests);
                 return;
             }
-            if (period == currentPeriod.Value) return;
+            if (periodNumber == currentPeriod.PeriodNumber) return;
 
-            CreateReportForPeriod(currentPeriod.Value, requests);
-            currentPeriod = period;
+            CreateReportForPeriod(currentPeriod, requests);
+            currentPeriod = CreateCurrentPeriod(periodNumber, requests);
         }
 
         public PeriodMonitorResult GetAndClearReports()
@@ -39,26 +46,76 @@ namespace CodexContractsPlugin.ChainMonitor
             return new PeriodMonitorResult(result);
         }
 
-        private void CreateReportForPeriod(ulong periodNumber, IChainStateRequest[] requests)
+        private CurrentPeriod CreateCurrentPeriod(ulong periodNumber, IChainStateRequest[] requests)
         {
-            ulong total = 0;
-            var periodProofs = new List<PeriodProof>();
+            var result = new CurrentPeriod(periodNumber);
+            ForEachActiveSlot(requests, (request, slotIndex) =>
+            {
+                if (contracts.IsProofRequired(request.RequestId, slotIndex))
+                {
+                    var idx = Convert.ToInt32(slotIndex);
+                    var host = request.Hosts.GetHost(idx);
+                    if (host != null)
+                    {
+                        result.RequiredProofs.Add(new PeriodRequiredProof(host, request, idx));
+                    }
+                }
+            });
+
+            return result;
+        }
+
+        private void CreateReportForPeriod(CurrentPeriod currentPeriod, IChainStateRequest[] requests)
+        {
+            // Fetch function calls during period. Format report.
+            var timeRange = contracts.GetPeriodTimeRange(currentPeriod.PeriodNumber);
+            var blockRange = geth.ConvertTimeRangeToBlockRange(timeRange);
+
+            // MarkProofAsMissingFunction
+            // SubmitProofFunction
+            // FreeSlot1Function
+            // FreeSlotFunction
+
+            var callReports = new List<FunctionCallReport>();
+            geth.IterateTransactions(blockRange, (t, blkI, blkUtc) =>
+            {
+                CreateFunctionCallReport<MarkProofAsMissingFunction>(callReports, t, blkUtc);
+                CreateFunctionCallReport<SubmitProofFunction>(callReports, t, blkUtc);
+                CreateFunctionCallReport<FreeSlot1Function>(callReports, t, blkUtc);
+                CreateFunctionCallReport<FreeSlotFunction>(callReports, t, blkUtc);
+            });
+
+            var report = new PeriodReport(
+                new ProofPeriod(
+                    currentPeriod.PeriodNumber,
+                    timeRange.From,
+                    timeRange.To),
+                currentPeriod.RequiredProofs.ToArray(),
+                callReports.ToArray());
+
+            report.Log(log);
+            reports.Add(report);
+        }
+
+        private void CreateFunctionCallReport<TFunc>(List<FunctionCallReport> reports, Transaction t, DateTime blockUtc) where TFunc : FunctionMessage, new()
+        {
+            if (t.IsTransactionForFunctionMessage<TFunc>())
+            {
+                var func = t.DecodeTransactionToFunctionMessage<TFunc>();
+
+                reports.Add(new FunctionCallReport(blockUtc, typeof(TFunc).Name, JsonConvert.SerializeObject(func)));
+            }
+        }
+
+        private void ForEachActiveSlot(IChainStateRequest[] requests, Action<IChainStateRequest, ulong> action)
+        {
             foreach (var request in requests)
             {
                 for (ulong slotIndex = 0; slotIndex < request.Request.Ask.Slots; slotIndex++)
                 {
-                    var state = contracts.GetProofState(request.RequestId, slotIndex, periodNumber);
-
-                    total++;
-                    var idx = Convert.ToInt32(slotIndex);
-                    var host = request.Hosts.GetHost(idx);
-                    var proof = new PeriodProof(host, request, idx, state);
-                    periodProofs.Add(proof);
+                    action(request, slotIndex);
                 }
             }
-            var report = new PeriodReport(periodNumber, total, periodProofs.ToArray());
-            report.Log(log);
-            reports.Add(report);
         }
     }
 
@@ -67,91 +124,19 @@ namespace CodexContractsPlugin.ChainMonitor
         public PeriodMonitorResult(PeriodReport[] reports)
         {
             Reports = reports;
-
-            CalcStats();
         }
 
         public PeriodReport[] Reports { get; }
-
-        public bool IsEmpty { get; private set; }
-        public ulong PeriodLow { get; private set; }
-        public ulong PeriodHigh { get; private set; }
-        public float AverageNumSlots { get; private set; }
-        public float AverageNumProofsRequired { get; private set; }
-
-        private void CalcStats()
-        {
-            IsEmpty = Reports.All(r => r.PeriodProofs.Length == 0);
-            if (Reports.Length == 0) return;
-
-            PeriodLow = Reports.Min(r => r.PeriodNumber);
-            PeriodHigh = Reports.Max(r => r.PeriodNumber);
-            AverageNumSlots = Reports.Average(r => Convert.ToSingle(r.TotalNumSlots));
-            AverageNumProofsRequired = Reports.Average(r => Convert.ToSingle(r.PeriodProofs.Count(p => p.State != ProofState.NotRequired)));
-        }
     }
 
-    public class PeriodReport
+    public class CurrentPeriod
     {
-        public PeriodReport(ulong periodNumber, ulong totalNumSlots, PeriodProof[] periodProofs)
+        public CurrentPeriod(ulong periodNumber)
         {
             PeriodNumber = periodNumber;
-            TotalNumSlots = totalNumSlots;
-            PeriodProofs = periodProofs;
         }
 
         public ulong PeriodNumber { get; }
-        public ulong TotalNumSlots { get; }
-        public PeriodProof[] PeriodProofs { get; }
-
-        public PeriodProof[] GetMissedProofs()
-        {
-            return PeriodProofs.Where(p => p.State == ProofState.MissedAndMarked || p.State == ProofState.MissedNotMarked).ToArray();
-        }
-
-        public void Log(ILog log)
-        {
-            log.Log($"Period report: {PeriodNumber}");
-            log.Log($"   - Slots: {TotalNumSlots}");
-            foreach (var p in PeriodProofs)
-            {
-                log.Log($"   - {p.Describe()}");
-            }
-        }
-
-        private void Log(ILog log, PeriodProof[] proofs)
-        {
-            if (proofs.Length == 0) return;
-            foreach (var p in proofs)
-            {
-            }
-        }
-    }
-
-    public class PeriodProof
-    {
-        public PeriodProof(EthAddress? host, IChainStateRequest request, int slotIndex, ProofState state)
-        {
-            Host = host;
-            Request = request;
-            SlotIndex = slotIndex;
-            State = state;
-        }
-
-        public EthAddress? Host { get; }
-        public IChainStateRequest Request { get; }
-        public int SlotIndex { get; }
-        public ProofState State { get; }
-
-        public string FormatHost()
-        {
-            if (Host == null) return "Unknown host";
-            return Host.Address;
-        }
-
-        public string Describe()
-        {
-            return $"{FormatHost()} - {Request.RequestId.ToHex()} slotIndex:{SlotIndex} => {State}";
-        }
+        public List<PeriodRequiredProof> RequiredProofs { get; } = new List<PeriodRequiredProof>();
     }
 }

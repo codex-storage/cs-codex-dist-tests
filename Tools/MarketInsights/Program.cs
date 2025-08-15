@@ -22,7 +22,7 @@ namespace MarketInsights
             var connector = GethConnector.GethConnector.Initialize(appState.Log);
             if (connector == null) throw new Exception("Invalid Geth information");
 
-            var updater = new Updater(appState, connector.CodexContracts, cts.Token);
+            var updater = new Updater(appState, connector.GethNode, connector.CodexContracts, cts.Token);
 
             var builder = WebApplication.CreateBuilder(args);
 

@@ -47,9 +47,10 @@ namespace TraceContract
             var entryPoint = new EntryPoint(log, new KubernetesWorkflow.Configuration(null, TimeSpan.FromMinutes(1.0), TimeSpan.FromSeconds(10.0), "_Unused!_"), Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData));
             entryPoint.Announce();
             var ci = entryPoint.CreateInterface();
-            var contracts = ConnectCodexContracts(ci);
+            var geth = ConnectGethNode();
+            var contracts = ConnectCodexContracts(ci, geth);
 
-            var chainTracer = new ChainTracer(log, contracts, input, output);
+            var chainTracer = new ChainTracer(log, geth, contracts, input, output);
             var requestTimeRange = chainTracer.TraceChainTimeline();
 
             Log("Downloading storage nodes logs for the request timerange...");
@@ -61,12 +62,15 @@ namespace TraceContract
             Log("Done");
         }
 
-        private ICodexContracts ConnectCodexContracts(CoreInterface ci)
+        private IGethNode ConnectGethNode()
         {
             var account = EthAccountGenerator.GenerateNew();
             var blockCache = new BlockCache();
-            var geth = new CustomGethNode(log, blockCache, config.RpcEndpoint, config.GethPort, account.PrivateKey);
+            return new CustomGethNode(log, blockCache, config.RpcEndpoint, config.GethPort, account.PrivateKey);
+        }
 
+        private ICodexContracts ConnectCodexContracts(CoreInterface ci, IGethNode geth)
+        {
             var deployment = new CodexContractsDeployment(
                 config: new MarketplaceConfig(),
                 marketplaceAddress: config.MarketplaceAddress,

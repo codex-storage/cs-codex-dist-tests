@@ -91,7 +91,8 @@ namespace DistTestCore
             return Path.Join(
                config.LogRoot,
                $"{start.Year}-{Pad(start.Month)}",
-               Pad(start.Day));
+               Pad(start.Day),
+               $"{Pad(start.Hour)}-{Pad(start.Minute)}-{Pad(start.Second)}");
         }
 
         private static string Pad(int n)

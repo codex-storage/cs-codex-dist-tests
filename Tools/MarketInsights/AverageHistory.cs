@@ -1,5 +1,6 @@
 ﻿using CodexContractsPlugin;
 using CodexContractsPlugin.ChainMonitor;
+using GethPlugin;
 using TestNetRewarder;
 using Utils;
 
@@ -13,11 +14,11 @@ namespace MarketInsights
         private readonly int maxContributions;
         private readonly ChainState chainState;
 
-        public AverageHistory(AppState appState, ICodexContracts contracts, int maxContributions)
+        public AverageHistory(AppState appState, IGethNode geth, ICodexContracts contracts, int maxContributions)
         {
             this.appState = appState;
             this.maxContributions = maxContributions;
-            chainState = new ChainState(appState.Log, contracts, mux, appState.Config.HistoryStartUtc,
+            chainState = new ChainState(appState.Log, geth, contracts, mux, appState.Config.HistoryStartUtc,
                 doProofPeriodMonitoring: false);
         }
 
