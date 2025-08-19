@@ -71,11 +71,6 @@ namespace CodexContractsPlugin.ChainMonitor
             var timeRange = contracts.GetPeriodTimeRange(currentPeriod.PeriodNumber);
             var blockRange = geth.ConvertTimeRangeToBlockRange(timeRange);
 
-            // MarkProofAsMissingFunction
-            // SubmitProofFunction
-            // FreeSlot1Function
-            // FreeSlotFunction
-
             var callReports = new List<FunctionCallReport>();
             geth.IterateTransactions(blockRange, (t, blkI, blkUtc) =>
             {

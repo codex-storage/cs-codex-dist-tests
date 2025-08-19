@@ -3,6 +3,7 @@ using Core;
 using KubernetesWorkflow.Types;
 using Logging;
 using Nethereum.ABI.FunctionEncoding.Attributes;
+using Nethereum.BlockchainProcessing.BlockStorage.Entities.Mapping;
 using Nethereum.Contracts;
 using Nethereum.RPC.Eth.DTOs;
 using NethereumWorkflow;
