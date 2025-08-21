@@ -19,7 +19,7 @@ namespace MarketInsights
             this.appState = appState;
             this.maxContributions = maxContributions;
             chainState = new ChainState(appState.Log, geth, contracts, mux, appState.Config.HistoryStartUtc,
-                doProofPeriodMonitoring: false);
+                doProofPeriodMonitoring: false, new DoNothingPeriodMonitorEventHandler());
         }
 
         public MarketTimeSegment[] Segments { get; private set; } = Array.Empty<MarketTimeSegment>();

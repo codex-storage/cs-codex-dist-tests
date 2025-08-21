@@ -43,9 +43,11 @@ namespace CodexReleaseTests.Utils
             if (worker.Exception != null) throw worker.Exception;
         }
 
+        public IPeriodMonitorEventHandler PeriodMonitorEventHandler { get; set; } = new DoNothingPeriodMonitorEventHandler();
+
         private void Worker(Action onFailure)
         {
-            var state = new ChainState(log, gethNode, contracts, new DoNothingThrowingChainEventHandler(), startUtc, doProofPeriodMonitoring: true);
+            var state = new ChainState(log, gethNode, contracts, new DoNothingThrowingChainEventHandler(), startUtc, true, PeriodMonitorEventHandler);
             Thread.Sleep(updateInterval);
 
             log.Log($"Chain monitoring started. Update interval: {Time.FormatDuration(updateInterval)}");

@@ -63,7 +63,7 @@ namespace TraceContract
             var utc = request.Block.Utc.AddMinutes(-1.0);
             var tracker = new ChainRequestTracker(output, input.PurchaseId);
             var ignoreLog = new NullLog();
-            var chainState = new ChainState(ignoreLog, geth, contracts, tracker, utc, false);
+            var chainState = new ChainState(ignoreLog, geth, contracts, tracker, utc, false, new DoNothingPeriodMonitorEventHandler());
 
             var atNow = false;
             while (!tracker.IsFinished && !atNow)

@@ -42,6 +42,12 @@ namespace CodexReleaseTests.Utils
             return handle.Contracts;
         }
 
+        protected ChainMonitor GetChainMonitor()
+        {
+            if (handle.ChainMonitor == null) throw new Exception($"Make sure {nameof(MonitorChainState)} is set to true.");
+            return handle.ChainMonitor;
+        }
+
         protected TimeSpan GetPeriodDuration()
         {
             var config = GetContracts().Deployment.Config;

@@ -29,7 +29,7 @@ namespace TestNetRewarder
             eventsFormatter = new EventsFormatter(config, contracts.Deployment.Config);
 
             chainState = new ChainState(log, geth, contracts, eventsFormatter, config.HistoryStartUtc,
-                doProofPeriodMonitoring: config.ShowProofPeriodReports > 0);
+                doProofPeriodMonitoring: config.ShowProofPeriodReports > 0, new DoNothingPeriodMonitorEventHandler());
         }
 
         public async Task Initialize()

@@ -10,19 +10,26 @@ using System.Reflection;
 
 namespace CodexContractsPlugin.ChainMonitor
 {
+    public interface IPeriodMonitorEventHandler
+    {
+        void OnPeriodReport(PeriodReport report);
+    }
+
     public class PeriodMonitor
     {
         private readonly ILog log;
         private readonly ICodexContracts contracts;
         private readonly IGethNode geth;
+        private readonly IPeriodMonitorEventHandler eventHandler;
         private readonly List<PeriodReport> reports = new List<PeriodReport>();
         private CurrentPeriod? currentPeriod = null;
 
-        public PeriodMonitor(ILog log, ICodexContracts contracts, IGethNode geth)
+        public PeriodMonitor(ILog log, ICodexContracts contracts, IGethNode geth, IPeriodMonitorEventHandler eventHandler)
         {
             this.log = log;
             this.contracts = contracts;
             this.geth = geth;
+            this.eventHandler = eventHandler;
         }
 
         public void Update(DateTime eventUtc, IChainStateRequest[] requests)
@@ -55,9 +62,10 @@ namespace CodexContractsPlugin.ChainMonitor
                 {
                     var idx = Convert.ToInt32(slotIndex);
                     var host = request.Hosts.GetHost(idx);
+                    var slotId = contracts.GetSlotId(request.RequestId, slotIndex);
                     if (host != null)
                     {
-                        result.RequiredProofs.Add(new PeriodRequiredProof(host, request, idx));
+                        result.RequiredProofs.Add(new PeriodRequiredProof(host, request, idx, slotId));
                     }
                 }
             });
@@ -86,6 +94,8 @@ namespace CodexContractsPlugin.ChainMonitor
 
             report.Log(log);
             reports.Add(report);
+
+            eventHandler.OnPeriodReport(report);
         }
 
         private void ForEachActiveSlot(IChainStateRequest[] requests, Action<IChainStateRequest, ulong> action)
@@ -97,6 +107,13 @@ namespace CodexContractsPlugin.ChainMonitor
                     action(request, slotIndex);
                 }
             }
+        }
+    }
+
+    public class DoNothingPeriodMonitorEventHandler : IPeriodMonitorEventHandler
+    {
+        public void OnPeriodReport(PeriodReport report)
+        {
         }
     }
 

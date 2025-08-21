@@ -43,14 +43,14 @@ namespace CodexContractsPlugin.ChainMonitor
         private readonly IChainStateChangeHandler handler;
         private readonly bool doProofPeriodMonitoring;
 
-        public ChainState(ILog log, IGethNode geth, ICodexContracts contracts, IChainStateChangeHandler changeHandler, DateTime startUtc, bool doProofPeriodMonitoring)
+        public ChainState(ILog log, IGethNode geth, ICodexContracts contracts, IChainStateChangeHandler changeHandler, DateTime startUtc, bool doProofPeriodMonitoring, IPeriodMonitorEventHandler periodEventHandler)
         {
             this.log = new LogPrefixer(log, "(ChainState) ");
             this.contracts = contracts;
             handler = changeHandler;
             this.doProofPeriodMonitoring = doProofPeriodMonitoring;
             TotalSpan = new TimeRange(startUtc, startUtc);
-            PeriodMonitor = new PeriodMonitor(log, contracts, geth);
+            PeriodMonitor = new PeriodMonitor(log, contracts, geth, periodEventHandler);
         }
 
         public TimeRange TotalSpan { get; private set; }
