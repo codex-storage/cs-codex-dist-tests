@@ -23,7 +23,7 @@ namespace CodexContractsPlugin.ChainMonitor
             {
                 log.Log($"  Required: {r.Describe()}");
             }
-            log.Log(" - Calls:");
+            log.Log($" - Calls: {FunctionCalls.Length}");
             foreach (var f in FunctionCalls)
             {
                 log.Log($"   - {f.Describe()}");
@@ -33,20 +33,22 @@ namespace CodexContractsPlugin.ChainMonitor
 
     public class FunctionCallReport
     {
-        public FunctionCallReport(DateTime utc, string name, string payload)
+        public FunctionCallReport(DateTime utc, ulong blockNumber, string name, string payload)
         {
             Utc = utc;
+            BlockNumber = blockNumber;
             Name = name;
             Payload = payload;
         }
 
         public DateTime Utc { get; }
+        public ulong BlockNumber { get; }
         public string Name { get; }
         public string Payload { get; }
 
         public string Describe()
         {
-            return $"[{Time.FormatTimestamp(Utc)}] {Name} = \"{Payload}\"";
+            return $"[{Time.FormatTimestamp(Utc)}][{BlockNumber}] {Name} = \"{Payload}\"";
         }
     }
 }

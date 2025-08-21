@@ -4,20 +4,20 @@ namespace CodexContractsPlugin.ChainMonitor
 {
     public class ProofPeriod
     {
-        public ProofPeriod(ulong periodNumber, DateTime startUtc, DateTime endUtc)
+        public ProofPeriod(ulong periodNumber, TimeRange timeRange, BlockInterval blockRange)
         {
             PeriodNumber = periodNumber;
-            StartUtc = startUtc;
-            EndUtc = endUtc;
+            TimeRange = timeRange;
+            BlockRange = blockRange;
         }
 
         public ulong PeriodNumber { get; }
-        public DateTime StartUtc { get; }
-        public DateTime EndUtc { get; }
+        public TimeRange TimeRange { get; }
+        public BlockInterval BlockRange { get; }
 
         public override string ToString()
         {
-            return $"{PeriodNumber} - {Time.FormatTimestamp(StartUtc)} -> {Time.FormatTimestamp(EndUtc)}";
+            return $"{{{PeriodNumber} - {TimeRange} {BlockRange}}}";
         }
     }
 }

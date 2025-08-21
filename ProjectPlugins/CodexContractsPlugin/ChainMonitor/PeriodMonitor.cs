@@ -74,32 +74,18 @@ namespace CodexContractsPlugin.ChainMonitor
             var callReports = new List<FunctionCallReport>();
             geth.IterateTransactions(blockRange, (t, blkI, blkUtc) =>
             {
-                CreateFunctionCallReport<MarkProofAsMissingFunction>(callReports, t, blkUtc);
-                CreateFunctionCallReport<SubmitProofFunction>(callReports, t, blkUtc);
-                CreateFunctionCallReport<FreeSlot1Function>(callReports, t, blkUtc);
-                CreateFunctionCallReport<FreeSlotFunction>(callReports, t, blkUtc);
+                var reporter = new CallReporter(callReports, t, blkUtc, blkI);
+                reporter.Run();
+
             });
 
             var report = new PeriodReport(
-                new ProofPeriod(
-                    currentPeriod.PeriodNumber,
-                    timeRange.From,
-                    timeRange.To),
+                new ProofPeriod(currentPeriod.PeriodNumber, timeRange, blockRange),
                 currentPeriod.RequiredProofs.ToArray(),
                 callReports.ToArray());
 
             report.Log(log);
             reports.Add(report);
-        }
-
-        private void CreateFunctionCallReport<TFunc>(List<FunctionCallReport> reports, Transaction t, DateTime blockUtc) where TFunc : FunctionMessage, new()
-        {
-            if (t.IsTransactionForFunctionMessage<TFunc>())
-            {
-                var func = t.DecodeTransactionToFunctionMessage<TFunc>();
-
-                reports.Add(new FunctionCallReport(blockUtc, typeof(TFunc).Name, JsonConvert.SerializeObject(func)));
-            }
         }
 
         private void ForEachActiveSlot(IChainStateRequest[] requests, Action<IChainStateRequest, ulong> action)
@@ -110,6 +96,65 @@ namespace CodexContractsPlugin.ChainMonitor
                 {
                     action(request, slotIndex);
                 }
+            }
+        }
+    }
+
+    public class CallReporter
+    {
+        private readonly List<FunctionCallReport> reports;
+        private readonly Transaction t;
+        private readonly DateTime blockUtc;
+        private readonly ulong blockNumber;
+
+        public CallReporter(List<FunctionCallReport> reports, Transaction t, DateTime blockUtc, ulong blockNumber)
+        {
+            this.reports = reports;
+            this.t = t;
+            this.blockUtc = blockUtc;
+            this.blockNumber = blockNumber;
+        }
+
+        public void Run()
+        {
+            CreateFunctionCallReport<CanMarkProofAsMissingFunction>();
+            CreateFunctionCallReport<CanReserveSlotFunction>();
+            CreateFunctionCallReport<ConfigurationFunction>();
+            CreateFunctionCallReport<CurrentCollateralFunction>();
+            CreateFunctionCallReport<FillSlotFunction>();
+            CreateFunctionCallReport<FreeSlot1Function>();
+            CreateFunctionCallReport<FreeSlotFunction>();
+            CreateFunctionCallReport<GetActiveSlotFunction>();
+            CreateFunctionCallReport<GetChallengeFunction>();
+            CreateFunctionCallReport<GetHostFunction>();
+            CreateFunctionCallReport<GetPointerFunction>();
+            CreateFunctionCallReport<GetRequestFunction>();
+            CreateFunctionCallReport<IsProofRequiredFunction>();
+            CreateFunctionCallReport<MarkProofAsMissingFunction>();
+            CreateFunctionCallReport<MissingProofsFunction>();
+            CreateFunctionCallReport<MyRequestsFunction>();
+            CreateFunctionCallReport<MySlotsFunction>();
+            CreateFunctionCallReport<RequestEndFunction>();
+            CreateFunctionCallReport<RequestExpiryFunction>();
+            CreateFunctionCallReport<RequestStateFunction>();
+            CreateFunctionCallReport<RequestStorageFunction>();
+            CreateFunctionCallReport<ReserveSlotFunction>();
+            CreateFunctionCallReport<SlotProbabilityFunction>();
+            CreateFunctionCallReport<SlotStateFunction>();
+            CreateFunctionCallReport<SubmitProofFunction>();
+            CreateFunctionCallReport<TokenFunction>();
+            CreateFunctionCallReport<WillProofBeRequiredFunction>();
+            CreateFunctionCallReport<WithdrawFundsFunction>();
+            CreateFunctionCallReport<WithdrawFunds1Function>();
+        }
+
+        private void CreateFunctionCallReport<TFunc>() where TFunc : FunctionMessage, new()
+        {
+            if (t.IsTransactionForFunctionMessage<TFunc>())
+            {
+                var func = t.DecodeTransactionToFunctionMessage<TFunc>();
+
+                reports.Add(new FunctionCallReport(blockUtc, blockNumber, typeof(TFunc).Name, JsonConvert.SerializeObject(func)));
             }
         }
     }
