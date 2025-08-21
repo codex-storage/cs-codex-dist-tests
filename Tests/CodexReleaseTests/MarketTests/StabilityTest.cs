@@ -45,9 +45,10 @@ namespace CodexReleaseTests.MarketTests
             StartValidator();
             var client = StartClients().Single();
             var purchase = CreateStorageRequest(client, minutes);
+            purchase.WaitForStorageContractStarted();
 
             Log($"Contract should remain stable for {minutes} minutes.");
-            Thread.Sleep(TimeSpan.FromSeconds(minutes));
+            Thread.Sleep(TimeSpan.FromMinutes(minutes));
 
             Assert.That(client.GetPurchaseStatus(purchase.PurchaseId)?.State, Is.EqualTo(StoragePurchaseState.Started));
         }
@@ -88,7 +89,7 @@ namespace CodexReleaseTests.MarketTests
             return client.Marketplace.RequestStorage(new StoragePurchaseRequest(cid)
             {
                 Duration = TimeSpan.FromMinutes(minutes) * 1.1,
-                Expiry = TimeSpan.FromMinutes(10.0),
+                Expiry = TimeSpan.FromMinutes(8.0),
                 MinRequiredNumberOfNodes = (uint)purchaseParams.Nodes,
                 NodeFailureTolerance = (uint)purchaseParams.Tolerance,
                 PricePerBytePerSecond = 10.TstWei(),
