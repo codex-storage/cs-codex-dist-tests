@@ -1,5 +1,6 @@
 ﻿using CodexClient;
 using CodexContractsPlugin;
+using CodexContractsPlugin.ChainMonitor;
 using CodexContractsPlugin.Marketplace;
 using CodexPlugin;
 using CodexTests;
@@ -11,7 +12,7 @@ using Utils;
 
 namespace CodexReleaseTests.Utils
 {
-    public abstract class MarketplaceAutoBootstrapDistTest : AutoBootstrapDistTest
+    public abstract class MarketplaceAutoBootstrapDistTest : AutoBootstrapDistTest, IPeriodMonitorEventHandler
     {
         private MarketplaceHandle handle = null!;
         protected const int StartingBalanceTST = 1000;
@@ -60,6 +61,9 @@ namespace CodexReleaseTests.Utils
         protected abstract TimeSpan HostAvailabilityMaxDuration { get; }
         protected virtual bool MonitorChainState { get; } = true;
         protected TimeSpan HostBlockTTL { get; } = TimeSpan.FromMinutes(1.0);
+        protected virtual void OnPeriod(PeriodReport report)
+        {
+        }
 
         public ICodexNodeGroup StartHosts()
         {
@@ -175,56 +179,6 @@ namespace CodexReleaseTests.Utils
             });
         }
 
-        private ChainMonitor? SetupChainMonitor(ILog log, IGethNode gethNode, ICodexContracts contracts, DateTime startUtc)
-        {
-            if (!MonitorChainState) return null;
-
-            var result = new ChainMonitor(log, gethNode, contracts, startUtc);
-            result.Start(() =>
-            {
-                Assert.Fail("Failure in chain monitor.");
-            });
-            return result;
-        }
-
-        private Retry GetBalanceAssertRetry()
-        {
-            return new Retry("AssertBalance",
-                maxTimeout: TimeSpan.FromMinutes(10.0),
-                sleepAfterFail: TimeSpan.FromSeconds(10.0),
-                onFail: f => { },
-                failFast: false);
-        }
-
-        private Retry GetAvailabilitySpaceAssertRetry()
-        {
-            return new Retry("AssertAvailabilitySpace",
-                maxTimeout: HostBlockTTL * 3,
-                sleepAfterFail: TimeSpan.FromSeconds(10.0),
-                onFail: f => { },
-                failFast: false);
-        }
-
-        private TestToken GetTstBalance(ICodexNode node)
-        {
-            return GetContracts().GetTestTokenBalance(node);
-        }
-
-        private TestToken GetTstBalance(EthAddress address)
-        {
-            return GetContracts().GetTestTokenBalance(address);
-        }
-
-        private Ether GetEthBalance(ICodexNode node)
-        {
-            return GetGeth().GetEthBalance(node);
-        }
-
-        private Ether GetEthBalance(EthAddress address)
-        {
-            return GetGeth().GetEthBalance(address);
-        }
-
         public ICodexNodeGroup StartClients()
         {
             return StartClients(s => { });
@@ -251,6 +205,11 @@ namespace CodexReleaseTests.Utils
                     .AsValidator()
                 )
             );
+        }
+
+        public void OnPeriodReport(PeriodReport report)
+        {
+            OnPeriod(report);
         }
 
         public SlotFill[] GetOnChainSlotFills(IEnumerable<ICodexNode> possibleHosts, string purchaseId)
@@ -349,6 +308,56 @@ namespace CodexReleaseTests.Utils
                 }
                 throw;
             }
+        }
+
+        private ChainMonitor? SetupChainMonitor(ILog log, IGethNode gethNode, ICodexContracts contracts, DateTime startUtc)
+        {
+            if (!MonitorChainState) return null;
+
+            var result = new ChainMonitor(log, gethNode, contracts, this, startUtc);
+            result.Start(() =>
+            {
+                Assert.Fail("Failure in chain monitor.");
+            });
+            return result;
+        }
+
+        private Retry GetBalanceAssertRetry()
+        {
+            return new Retry("AssertBalance",
+                maxTimeout: TimeSpan.FromMinutes(10.0),
+                sleepAfterFail: TimeSpan.FromSeconds(10.0),
+                onFail: f => { },
+                failFast: false);
+        }
+
+        private Retry GetAvailabilitySpaceAssertRetry()
+        {
+            return new Retry("AssertAvailabilitySpace",
+                maxTimeout: HostBlockTTL * 3,
+                sleepAfterFail: TimeSpan.FromSeconds(10.0),
+                onFail: f => { },
+                failFast: false);
+        }
+
+        private TestToken GetTstBalance(ICodexNode node)
+        {
+            return GetContracts().GetTestTokenBalance(node);
+        }
+
+        private TestToken GetTstBalance(EthAddress address)
+        {
+            return GetContracts().GetTestTokenBalance(address);
+        }
+
+        private Ether GetEthBalance(ICodexNode node)
+        {
+            return GetGeth().GetEthBalance(node);
+        }
+
+        private Ether GetEthBalance(EthAddress address)
+        {
+            return GetGeth().GetEthBalance(address);
         }
 
         private TestToken GetContractFinalCost(TestToken pricePerBytePerSecond, IStoragePurchaseContract contract, ICodexNodeGroup hosts)
@@ -465,6 +474,7 @@ namespace CodexReleaseTests.Utils
             var chanceOfDowntime = downtime / window;
             return 1.0f + (5.0f * chanceOfDowntime);
         }
+
         public class SlotFill
         {
             public SlotFill(SlotFilledEventDTO slotFilledEvent, ICodexNode host)

@@ -19,9 +19,10 @@ namespace CodexContractsPlugin.ChainMonitor
         public void Log(ILog log)
         {
             log.Log($"Period report: {Period}");
+            log.Log($" - Proofs required: {Required.Length}");
             foreach (var r in Required)
             {
-                log.Log($"  Required: {r.Describe()}");
+                log.Log($"   - {r.Describe()}");
             }
             log.Log($" - Calls: {FunctionCalls.Length}");
             foreach (var f in FunctionCalls)

@@ -11,21 +11,23 @@ namespace CodexReleaseTests.Utils
         private readonly ILog log;
         private readonly IGethNode gethNode;
         private readonly ICodexContracts contracts;
+        private readonly IPeriodMonitorEventHandler periodMonitorEventHandler;
         private readonly DateTime startUtc;
         private readonly TimeSpan updateInterval;
         private CancellationTokenSource cts = new CancellationTokenSource();
         private Task worker = Task.CompletedTask;
 
-        public ChainMonitor(ILog log, IGethNode gethNode, ICodexContracts contracts, DateTime startUtc)
-            : this(log, gethNode, contracts, startUtc, TimeSpan.FromSeconds(3.0))
+        public ChainMonitor(ILog log, IGethNode gethNode, ICodexContracts contracts, IPeriodMonitorEventHandler periodMonitorEventHandler, DateTime startUtc)
+            : this(log, gethNode, contracts, periodMonitorEventHandler, startUtc, TimeSpan.FromSeconds(3.0))
         {
         }
 
-        public ChainMonitor(ILog log, IGethNode gethNode, ICodexContracts contracts, DateTime startUtc, TimeSpan updateInterval)
+        public ChainMonitor(ILog log, IGethNode gethNode, ICodexContracts contracts, IPeriodMonitorEventHandler periodMonitorEventHandler, DateTime startUtc, TimeSpan updateInterval)
         {
             this.log = log;
             this.gethNode = gethNode;
             this.contracts = contracts;
+            this.periodMonitorEventHandler = periodMonitorEventHandler;
             this.startUtc = startUtc;
             this.updateInterval = updateInterval;
         }
@@ -43,11 +45,9 @@ namespace CodexReleaseTests.Utils
             if (worker.Exception != null) throw worker.Exception;
         }
 
-        public IPeriodMonitorEventHandler PeriodMonitorEventHandler { get; set; } = new DoNothingPeriodMonitorEventHandler();
-
         private void Worker(Action onFailure)
         {
-            var state = new ChainState(log, gethNode, contracts, new DoNothingThrowingChainEventHandler(), startUtc, true, PeriodMonitorEventHandler);
+            var state = new ChainState(log, gethNode, contracts, new DoNothingThrowingChainEventHandler(), startUtc, true, periodMonitorEventHandler);
             Thread.Sleep(updateInterval);
 
             log.Log($"Chain monitoring started. Update interval: {Time.FormatDuration(updateInterval)}");

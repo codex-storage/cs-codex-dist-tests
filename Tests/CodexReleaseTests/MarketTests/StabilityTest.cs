@@ -10,7 +10,7 @@ using Utils;
 namespace CodexReleaseTests.MarketTests
 {
     [TestFixture]
-    public class StabilityTest : MarketplaceAutoBootstrapDistTest, IPeriodMonitorEventHandler
+    public class StabilityTest : MarketplaceAutoBootstrapDistTest
     {
         #region Setup
 
@@ -32,36 +32,63 @@ namespace CodexReleaseTests.MarketTests
 
         #endregion
 
+        private int numPeriods = 0;
+        private bool proofWasMissed = false;
+
         [Test]
         [Combinatorial]
         public void Stability(
             [Values(10, 120)] int minutes)
         {
-            Assert.That(HostAvailabilityMaxDuration, Is.GreaterThan(TimeSpan.FromMinutes(minutes * 1.1)));
+            var mins = TimeSpan.FromMinutes(minutes);
+            var periodDuration = GetContracts().Deployment.Config.PeriodDuration;
+            Assert.That(HostAvailabilityMaxDuration, Is.GreaterThan(mins * 1.1));
 
-            GetChainMonitor().PeriodMonitorEventHandler = this;
+            numPeriods = 0;
+            proofWasMissed = false;
 
             StartHosts();
             StartValidator();
             var client = StartClients().Single();
-            var purchase = CreateStorageRequest(client, minutes);
+            var purchase = CreateStorageRequest(client, mins);
             purchase.WaitForStorageContractStarted();
 
-            Log($"Contract should remain stable for {minutes} minutes.");
-            Thread.Sleep(TimeSpan.FromMinutes(minutes));
+            Log($"Contract should remain stable for {Time.FormatDuration(mins)}.");
+            var endUtc = DateTime.UtcNow + mins;
+            while (DateTime.UtcNow < endUtc)
+            {
+                Thread.Sleep(TimeSpan.FromSeconds(10));
+                if (proofWasMissed)
+                {
+                    // We wait because we want to log calls to MarkProofAsMissing.
+                    Thread.Sleep(periodDuration * 1.1);
+                    Assert.Fail("Proof was missed.");
+                }
+            }
 
-            Assert.That(client.GetPurchaseStatus(purchase.PurchaseId)?.State, Is.EqualTo(StoragePurchaseState.Started));
+            var minNumPeriod = (mins / periodDuration) - 1.0;
+            Log($"{numPeriods} periods elapsed. Expected at least {minNumPeriod} periods.");
+            Assert.That(numPeriods, Is.GreaterThanOrEqualTo(minNumPeriod));
+
+            var status = client.GetPurchaseStatus(purchase.PurchaseId);
+            if (status == null) throw new Exception("Purchase status not found");
+            Assert.That(status.IsStarted || status.IsFinished);
         }
 
-        public void OnPeriodReport(PeriodReport report)
+        protected override void OnPeriod(PeriodReport report)
         {
+            numPeriods++;
+
             // For each required proof, there should be a submit call.
+            var calls = GetSubmitProofCalls(report);
             foreach (var required in report.Required)
             {
-                var matchingCall = GetMatchingSubmitProofCall(report, required);
-
-                Assert.That(matchingCall.FromAddress.ToLowerInvariant(), Is.EqualTo(required.Host.Address.ToLowerInvariant()));
-                Assert.That(matchingCall.Id.ToHex(), Is.EqualTo(required.SlotId.ToHex()));
+                var matchingCall = GetMatchingSubmitProofCall(calls, required);
+                if (matchingCall == null)
+                {
+                    Log($"A proof was missed for {required.Describe()}. Failing test after a delay so chain events have time to log...");
+                    proofWasMissed = true;
+                }
             }
 
             // There can't be any calls to mark a proof as missed.
@@ -72,23 +99,43 @@ namespace CodexReleaseTests.MarketTests
             }
         }
 
-        private SubmitProofFunction GetMatchingSubmitProofCall(PeriodReport report, PeriodRequiredProof required)
+        private SubmitProofFunction? GetMatchingSubmitProofCall(SubmitProofFunction[] calls, PeriodRequiredProof required)
         {
-            var submitCall = nameof(SubmitProofFunction);
-            var call = report.FunctionCalls.SingleOrDefault(f => f.Name == submitCall);
-            if (call == null) throw new Exception("Call to submitProof not found for " + required.Describe());
-            var callObj = JsonConvert.DeserializeObject<SubmitProofFunction>(call.Payload);
-            if (callObj == null) throw new Exception("Unable to deserialize call object");
-            return callObj;
+            foreach (var call in calls)
+            {
+                if (
+                    call.Id.SequenceEqual(required.SlotId) &&
+                    call.FromAddress.ToLowerInvariant() == required.Host.Address.ToLowerInvariant()
+                )
+                {
+                    return call;
+                }
+            }
+
+            return null;
         }
 
-        private IStoragePurchaseContract CreateStorageRequest(ICodexNode client, int minutes)
+        private SubmitProofFunction[] GetSubmitProofCalls(PeriodReport report)
+        {
+            var submitCall = nameof(SubmitProofFunction);
+            var calls = report.FunctionCalls.Where(f => f.Name == submitCall).ToArray();
+            var callObjs = calls.Select(call => JsonConvert.DeserializeObject<SubmitProofFunction>(call.Payload)).ToArray();
+            Log($"SubmitProof calls: {callObjs.Length}");
+            foreach (var c in callObjs)
+            {
+                Log($" - slotId:{c.Id.ToHex()} host:{c.FromAddress}");
+            }
+
+            return callObjs!;
+        }
+
+        private IStoragePurchaseContract CreateStorageRequest(ICodexNode client, TimeSpan minutes)
         {
             var cid = client.UploadFile(GenerateTestFile(purchaseParams.UploadFilesize));
             var config = GetContracts().Deployment.Config;
             return client.Marketplace.RequestStorage(new StoragePurchaseRequest(cid)
             {
-                Duration = TimeSpan.FromMinutes(minutes) * 1.1,
+                Duration = minutes * 1.1,
                 Expiry = TimeSpan.FromMinutes(8.0),
                 MinRequiredNumberOfNodes = (uint)purchaseParams.Nodes,
                 NodeFailureTolerance = (uint)purchaseParams.Tolerance,

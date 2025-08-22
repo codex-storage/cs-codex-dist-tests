@@ -20,7 +20,7 @@ namespace CodexContractsPlugin.ChainMonitor
 
         public string Describe()
         {
-            return $"{Request.RequestId.ToHex()} slotIndex:{SlotIndex} by {Host}";
+            return $"{Request.RequestId.ToHex()} slotId:{SlotId.ToHex()} slotIndex:{SlotIndex} by {Host}";
         }
     }
 }
