@@ -51,16 +51,20 @@ namespace CodexReleaseTests.MarketTests
             {
                 Thread.Sleep(TimeSpan.FromSeconds(1));
                 var requiredSlotIndices = new List<int>();
+                var willRequireSlotIndices = new List<int>();
                 for (var i = 0; i < numSlots; i++)
                 {
                     if (GetContracts().IsProofRequired(requestId, i)) requiredSlotIndices.Add(i);
+                    if (GetContracts().WillProofBeRequired(requestId, i)) willRequireSlotIndices.Add(i);
                 }
 
                 var periodNumber = GetContracts().GetPeriodNumber(DateTime.UtcNow);
                 var blockNumber = GetGeth().GetSyncedBlockNumber();
                 Log($"[{blockNumber?.ToString().PadLeft(4, '0')}]" +
-                    $"{periodNumber.ToString().PadLeft(12, '0')} => " +
-                    $"{string.Join(",", requiredSlotIndices.Select(i => i.ToString()))}");
+                    $"{periodNumber.ToString().PadLeft(12, '0')} => Required now: " +
+                    $"[{string.Join(",", requiredSlotIndices.Select(i => i.ToString()))}] " +
+                    $"Will be required: " +
+                    $"[{string.Join(",", willRequireSlotIndices.Select(i => i.ToString()))}]");
 
                 //var num = currentPeriod.PeriodNumber;
                 //if (!map.ContainsKey(num))

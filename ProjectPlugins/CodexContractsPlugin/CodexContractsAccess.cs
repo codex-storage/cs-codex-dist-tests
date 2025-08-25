@@ -32,6 +32,7 @@ namespace CodexContractsPlugin
         TimeRange GetPeriodTimeRange(ulong periodNumber);
         void WaitUntilNextPeriod();
         bool IsProofRequired(byte[] requestId, decimal slotIndex);
+        bool WillProofBeRequired(byte[] requestId, decimal slotIndex);
         byte[] GetSlotId(byte[] requestId, decimal slotIndex);
 
         ICodexContracts WithDifferentGeth(IGethNode node);
@@ -172,6 +173,12 @@ namespace CodexContractsPlugin
             return IsProofRequired(slotId);
         }
 
+        public bool WillProofBeRequired(byte[] requestId, decimal slotIndex)
+        {
+            var slotId = GetSlotId(requestId, slotIndex);
+            return WillProofBeRequired(slotId);
+        }
+
         public ICodexContracts WithDifferentGeth(IGethNode node)
         {
             return new CodexContractsAccess(log, node, Deployment);
@@ -195,6 +202,16 @@ namespace CodexContractsPlugin
                 Id = slotId
             };
             var result = gethNode.Call<IsProofRequiredFunction, IsProofRequiredOutputDTO>(Deployment.MarketplaceAddress, func);
+            return result.ReturnValue1;
+        }
+
+        private bool WillProofBeRequired(byte[] slotId)
+        {
+            var func = new WillProofBeRequiredFunction
+            {
+                Id = slotId
+            };
+            var result = gethNode.Call<WillProofBeRequiredFunction, WillProofBeRequiredOutputDTO>(Deployment.MarketplaceAddress, func);
             return result.ReturnValue1;
         }
 
