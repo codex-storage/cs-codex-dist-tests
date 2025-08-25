@@ -92,10 +92,21 @@ namespace CodexContractsPlugin
             Log("Synced. Codex SmartContracts deployed. Getting configuration...");
 
             var config = GetMarketplaceConfiguration(marketplaceAddress, gethNode);
-
             Log("Got config: " + JsonConvert.SerializeObject(config));
 
+            ConfigShouldEqual(config.Proofs.Period, CodexContractsContainerRecipe.PeriodSeconds, "Period");
+            ConfigShouldEqual(config.Proofs.Timeout, CodexContractsContainerRecipe.TimeoutSeconds, "Timeout");
+            ConfigShouldEqual(config.Proofs.Downtime, CodexContractsContainerRecipe.DowntimeSeconds, "Downtime");
+
             return new CodexContractsDeployment(config, marketplaceAddress, abi, tokenAddress);
+        }
+
+        private void ConfigShouldEqual(ulong value, int expected, string name)
+        {
+            if (Convert.ToInt32(value) != expected)
+            {
+                throw new Exception($"Config value '{name}' should be deployed as '{expected}' but was '{value}'");
+            }
         }
 
         private MarketplaceConfig GetMarketplaceConfiguration(string marketplaceAddress, IGethNode gethNode)
