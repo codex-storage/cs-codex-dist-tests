@@ -58,7 +58,8 @@ namespace CodexContractsPlugin.ChainMonitor
             var result = new CurrentPeriod(periodNumber);
             ForEachActiveSlot(requests, (request, slotIndex) =>
             {
-                if (contracts.IsProofRequired(request.RequestId, slotIndex))
+                if (contracts.IsProofRequired(request.RequestId, slotIndex) ||
+                    contracts.WillProofBeRequired(request.RequestId, slotIndex))
                 {
                     var idx = Convert.ToInt32(slotIndex);
                     var host = request.Hosts.GetHost(idx);
