@@ -20,5 +20,10 @@
         public DateTime From { get; }
         public DateTime To { get; }
         public TimeSpan Duration { get; }
+
+        public override string ToString()
+        {
+            return $"{Time.FormatTimestamp(From)} -> {Time.FormatTimestamp(To)} ({Time.FormatDuration(Duration)})";
+        }
     }
 }

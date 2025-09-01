@@ -1,6 +1,7 @@
 ﻿using CodexContractsPlugin;
 using CodexContractsPlugin.ChainMonitor;
 using CodexContractsPlugin.Marketplace;
+using GethPlugin;
 using Logging;
 using Nethereum.Hex.HexConvertors.Extensions;
 using Nethereum.Model;
@@ -11,13 +12,15 @@ namespace TraceContract
     public class ChainTracer
     {
         private readonly ILog log;
+        private readonly IGethNode geth;
         private readonly ICodexContracts contracts;
         private readonly Input input;
         private readonly Output output;
 
-        public ChainTracer(ILog log, ICodexContracts contracts, Input input, Output output)
+        public ChainTracer(ILog log, IGethNode geth, ICodexContracts contracts, Input input, Output output)
         {
             this.log = log;
+            this.geth = geth;
             this.contracts = contracts;
             this.input = input;
             this.output = output;
@@ -60,7 +63,7 @@ namespace TraceContract
             var utc = request.Block.Utc.AddMinutes(-1.0);
             var tracker = new ChainRequestTracker(output, input.PurchaseId);
             var ignoreLog = new NullLog();
-            var chainState = new ChainState(ignoreLog, contracts, tracker, utc, false);
+            var chainState = new ChainState(ignoreLog, geth, contracts, tracker, utc, false, new DoNothingPeriodMonitorEventHandler());
 
             var atNow = false;
             while (!tracker.IsFinished && !atNow)

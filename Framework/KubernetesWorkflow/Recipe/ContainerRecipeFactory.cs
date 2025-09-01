@@ -1,4 +1,5 @@
-﻿using Utils;
+﻿using System.Globalization;
+using Utils;
 
 namespace KubernetesWorkflow.Recipe
 {
@@ -86,6 +87,11 @@ namespace KubernetesWorkflow.Recipe
         protected void AddEnvVar(string name, string value)
         {
             envVars.Add(factory.CreateEnvVar(name, value));
+        }
+
+        protected void AddEnvVar(string name, int value)
+        {
+            envVars.Add(factory.CreateEnvVar(name, value.ToString(CultureInfo.InvariantCulture)));
         }
 
         protected void AddEnvVar(string name, Port value)

@@ -92,10 +92,29 @@ namespace CodexContractsPlugin
             Log("Synced. Codex SmartContracts deployed. Getting configuration...");
 
             var config = GetMarketplaceConfiguration(marketplaceAddress, gethNode);
-
             Log("Got config: " + JsonConvert.SerializeObject(config));
 
+            ConfigShouldEqual(config.Proofs.Period, CodexContractsContainerRecipe.PeriodSeconds, "Period");
+            ConfigShouldEqual(config.Proofs.Timeout, CodexContractsContainerRecipe.TimeoutSeconds, "Timeout");
+            ConfigShouldEqual(config.Proofs.Downtime, CodexContractsContainerRecipe.DowntimeSeconds, "Downtime");
+
             return new CodexContractsDeployment(config, marketplaceAddress, abi, tokenAddress);
+        }
+
+        private void ConfigShouldEqual(ulong value, int expected, string name)
+        {
+            if (Convert.ToInt32(value) != expected)
+            {
+                // Merge todo: https://github.com/codex-storage/nim-codex/pull/1303
+                // Once this is merged, the contract config values are settable via env-vars.
+                // This plugin is already updated to set the config vars to values compatible with a
+                // 1-second block frequency. AND it will read back the config and assert it is deployed correctly.
+                // This is waiting for that merge.
+
+                // Replace log with assert WHEN MERGED:
+                // throw new Exception($"Config value '{name}' should be deployed as '{expected}' but was '{value}'");
+                Log($"MERGE TODO. Config value '{name}' should be deployed as '{expected}' but was '{value}'");
+            }
         }
 
         private MarketplaceConfig GetMarketplaceConfiguration(string marketplaceAddress, IGethNode gethNode)

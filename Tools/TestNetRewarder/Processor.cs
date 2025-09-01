@@ -1,5 +1,6 @@
 ﻿using CodexContractsPlugin;
 using CodexContractsPlugin.ChainMonitor;
+using GethPlugin;
 using Logging;
 using Utils;
 
@@ -15,7 +16,7 @@ namespace TestNetRewarder
         private readonly ILog log;
         private DateTime lastPeriodUpdateUtc;
 
-        public Processor(Configuration config, BotClient client, ICodexContracts contracts, ILog log)
+        public Processor(Configuration config, BotClient client, IGethNode geth, ICodexContracts contracts, ILog log)
         {
             this.config = config;
             this.client = client;
@@ -27,8 +28,8 @@ namespace TestNetRewarder
             builder = new RequestBuilder();
             eventsFormatter = new EventsFormatter(config, contracts.Deployment.Config);
 
-            chainState = new ChainState(log, contracts, eventsFormatter, config.HistoryStartUtc,
-                doProofPeriodMonitoring: config.ShowProofPeriodReports > 0);
+            chainState = new ChainState(log, geth, contracts, eventsFormatter, config.HistoryStartUtc,
+                doProofPeriodMonitoring: config.ShowProofPeriodReports > 0, new DoNothingPeriodMonitorEventHandler());
         }
 
         public async Task Initialize()

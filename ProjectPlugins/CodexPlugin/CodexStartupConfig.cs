@@ -85,8 +85,11 @@ namespace CodexPlugin
                 {
                     "JSONRPC-WS-CLIENT",
                     "JSONRPC-HTTP-CLIENT",
-                    "codex",
-                    "repostore"
+                };
+
+                var alwaysIgnoreTopics = new []
+                {
+                    "JSONRPC-CLIENT"
                 };
 
                 level = $"{level};" +
@@ -94,7 +97,8 @@ namespace CodexPlugin
                     $"{CustomTopics.Libp2p.ToString()!.ToLowerInvariant()}:{string.Join(",", libp2pTopics)};" +
                     $"{CustomTopics.ContractClock.ToString().ToLowerInvariant()}:{string.Join(",", contractClockTopics)};" +
                     $"{CustomTopics.JsonSerialize.ToString().ToLowerInvariant()}:{string.Join(",", jsonSerializeTopics)};" +
-                    $"{CustomTopics.MarketplaceInfra.ToString().ToLowerInvariant()}:{string.Join(",", marketplaceInfraTopics)}";
+                    $"{CustomTopics.MarketplaceInfra.ToString().ToLowerInvariant()}:{string.Join(",", marketplaceInfraTopics)};" +
+                    $"{CodexLogLevel.Error.ToString()}:{string.Join(",", alwaysIgnoreTopics)}";
 
                 if (CustomTopics.BlockExchange != null)
                 {

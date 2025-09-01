@@ -123,17 +123,18 @@ namespace TestNetRewarder
 
         public void ProcessPeriodReports(PeriodMonitorResult reports)
         {
-            if (reports.IsEmpty) return;
+            //if (reports.IsEmpty) return;
 
-            var lines = new List<string> {
-                $"Periods: [{reports.PeriodLow} ... {reports.PeriodHigh}]",
-                $"Average number of slots: {reports.AverageNumSlots.ToString("F2")}",
-                $"Average number of proofs required: {reports.AverageNumProofsRequired.ToString("F2")}"
-            };
+            //var lines = new List<string> {
+            //    $"Periods: [{reports.PeriodLow} ... {reports.PeriodHigh}]",
+            //    $"Average number of slots: {reports.AverageNumSlots.ToString("F2")}",
+            //    $"Average number of proofs required: {reports.AverageNumProofsRequired.ToString("F2")}"
+            //};
 
-            AddMissedProofDetails(lines, reports.Reports);
+            // AddMissedProofDetails(lines, reports.Reports);
+            // todo!
 
-            AddBlock(0, $"{emojiMaps.ProofReport} **Proof system report**", lines.ToArray());
+            //AddBlock(0, $"{emojiMaps.ProofReport} **Proof system report**", lines.ToArray());
         }
 
         private string GetSlotFilledIcon(bool isRepair)
@@ -148,40 +149,40 @@ namespace TestNetRewarder
             return $"Slot Filled";
         }
 
-        private void AddMissedProofDetails(List<string> lines, PeriodReport[] reports)
-        {
-            var reportsWithMissedProofs = reports.Where(r => r.GetMissedProofs().Any()).ToArray();
-            if (reportsWithMissedProofs.Length < 1)
-            {
-                lines.Add($"No proofs were missed {emojiMaps.NoProofsMissed}");
-                return;
-            }
+        //private void AddMissedProofDetails(List<string> lines, PeriodReport[] reports)
+        //{
+        //    var reportsWithMissedProofs = reports.Where(r => r.GetMissedProofs().Any()).ToArray();
+        //    if (reportsWithMissedProofs.Length < 1)
+        //    {
+        //        lines.Add($"No proofs were missed {emojiMaps.NoProofsMissed}");
+        //        return;
+        //    }
 
-            var totalMissed = reportsWithMissedProofs.Sum(r => r.GetMissedProofs().Length);
-            if (totalMissed > 10)
-            {
-                lines.Add($"[{totalMissed}] proofs were missed {emojiMaps.ManyProofsMissed}");
-                return;
-            }
+        //    var totalMissed = reportsWithMissedProofs.Sum(r => r.GetMissedProofs().Length);
+        //    if (totalMissed > 10)
+        //    {
+        //        lines.Add($"[{totalMissed}] proofs were missed {emojiMaps.ManyProofsMissed}");
+        //        return;
+        //    }
 
-            foreach (var report in reportsWithMissedProofs)
-            {
-                DescribeMissedProof(lines, report);
-            }
-        }
+        //    foreach (var report in reportsWithMissedProofs)
+        //    {
+        //        DescribeMissedProof(lines, report);
+        //    }
+        //}
 
-        private void DescribeMissedProof(List<string> lines, PeriodReport report)
-        {
-            foreach (var missedProof in report.GetMissedProofs())
-            {
-                DescribeMissedProof(lines, missedProof);
-            }
-        }
+        //private void DescribeMissedProof(List<string> lines, PeriodReport report)
+        //{
+        //    foreach (var missedProof in report.GetMissedProofs())
+        //    {
+        //        DescribeMissedProof(lines, missedProof);
+        //    }
+        //}
 
-        private void DescribeMissedProof(List<string> lines, PeriodProof missedProof)
-        {
-            lines.Add($"[{missedProof.FormatHost()}] missed proof for {FormatRequestId(missedProof.Request)} (slotIndex: {missedProof.SlotIndex})");
-        }
+        //private void DescribeMissedProof(List<string> lines, PeriodRequiredProof missedProof)
+        //{
+        //    lines.Add($"[{missedProof.FormatHost()}] missed proof for {FormatRequestId(missedProof.Request)} (slotIndex: {missedProof.SlotIndex})");
+        //}
 
         private void AddRequestBlock(RequestEvent requestEvent, string icon, string eventName, params string[] content)
         {

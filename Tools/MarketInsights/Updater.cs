@@ -1,4 +1,5 @@
 ﻿using CodexContractsPlugin;
+using GethPlugin;
 using TestNetRewarder;
 
 namespace MarketInsights
@@ -11,13 +12,13 @@ namespace MarketInsights
         private readonly Tracker[] trackers;
         private readonly AverageHistory averageHistory;
 
-        public Updater(AppState appState, ICodexContracts contracts, CancellationToken ct)
+        public Updater(AppState appState, IGethNode geth, ICodexContracts contracts, CancellationToken ct)
         {
             this.appState = appState;
             this.ct = ct;
 
             trackers = CreateTrackers();
-            averageHistory = new AverageHistory(appState, contracts, trackers.Max(t => t.NumberOfSegments));
+            averageHistory = new AverageHistory(appState, geth, contracts, trackers.Max(t => t.NumberOfSegments));
         }
 
         private Tracker[] CreateTrackers()

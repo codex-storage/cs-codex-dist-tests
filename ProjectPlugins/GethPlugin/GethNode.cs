@@ -3,6 +3,7 @@ using Core;
 using KubernetesWorkflow.Types;
 using Logging;
 using Nethereum.ABI.FunctionEncoding.Attributes;
+using Nethereum.BlockchainProcessing.BlockStorage.Entities.Mapping;
 using Nethereum.Contracts;
 using Nethereum.RPC.Eth.DTOs;
 using NethereumWorkflow;
@@ -33,6 +34,7 @@ namespace GethPlugin
         List<EventLog<TEvent>> GetEvents<TEvent>(string address, TimeRange timeRange) where TEvent : IEventDTO, new();
         BlockInterval ConvertTimeRangeToBlockRange(TimeRange timeRange);
         BlockTimeEntry GetBlockForNumber(ulong number);
+        void IterateTransactions(BlockInterval blockRange, Action<Transaction, ulong, DateTime> action);
         void IterateFunctionCalls<TFunc>(BlockInterval blockInterval, Action<BlockTimeEntry, TFunc> onCall) where TFunc : FunctionMessage, new();
         IGethNode WithDifferentAccount(EthAccount account);
     }
@@ -223,26 +225,35 @@ namespace GethPlugin
             return StartInteraction().GetBlockWithTransactions(number);
         }
 
-        public void IterateFunctionCalls<TFunc>(BlockInterval blockRange, Action<BlockTimeEntry, TFunc> onCall) where TFunc : FunctionMessage, new()
+        public void IterateTransactions(BlockInterval blockRange, Action<Transaction, ulong, DateTime> action)
         {
             var i = StartInteraction();
             for (var blkI = blockRange.From; blkI <= blockRange.To; blkI++)
             {
                 var blk = i.GetBlockWithTransactions(blkI);
+                var blkUtc = DateTimeOffset.FromUnixTimeSeconds(blk.Timestamp.ToLong()).UtcDateTime;
 
                 foreach (var t in blk.Transactions)
                 {
-                    if (t.IsTransactionForFunctionMessage<TFunc>())
-                    {
-                        var func = t.DecodeTransactionToFunctionMessage<TFunc>();
-                        if (func != null)
-                        {
-                            var b = GetBlockForNumber(blkI);
-                            onCall(b, func);
-                        }
-                    }
+                    action(t, blkI, blkUtc);
                 }
             }
+        }
+
+        public void IterateFunctionCalls<TFunc>(BlockInterval blockRange, Action<BlockTimeEntry, TFunc> onCall) where TFunc : FunctionMessage, new()
+        {
+            IterateTransactions(blockRange, (t, blkI, blkUtc) =>
+            {
+                if (t.IsTransactionForFunctionMessage<TFunc>())
+                {
+                    var func = t.DecodeTransactionToFunctionMessage<TFunc>();
+                    if (func != null)
+                    {
+                        var b = GetBlockForNumber(blkI);
+                        onCall(b, func);
+                    }
+                }
+            });
         }
 
         protected abstract NethereumInteraction StartInteraction();

@@ -6,6 +6,7 @@ namespace CodexClient
     {
         BytesPerSecond? GetUploadSpeed();
         BytesPerSecond? GetDownloadSpeed();
+        ITransferSpeeds Combine(ITransferSpeeds? other);
     }
 
     public class TransferSpeeds : ITransferSpeeds
@@ -33,6 +34,18 @@ namespace CodexClient
         {
             if (!downloads.Any()) return null;
             return downloads.Average();
+        }
+
+        public ITransferSpeeds Combine(ITransferSpeeds? other)
+        {
+            if (other == null) return this;
+            var o = (TransferSpeeds)other;
+            var result = new TransferSpeeds();
+            result.uploads.AddRange(uploads);
+            result.uploads.AddRange(o.uploads);
+            result.downloads.AddRange(downloads);
+            result.downloads.AddRange(o.downloads);
+            return result;
         }
 
         private static BytesPerSecond Convert(ByteSize size, TimeSpan duration)
