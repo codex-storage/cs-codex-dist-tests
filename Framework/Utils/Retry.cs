@@ -98,6 +98,7 @@
             private void CheckMaximums()
             {
                 if (Duration() > maxTimeout) Fail();
+                if (tryNumber > 30) Fail();
 
                 // If we have a few very fast failures, retrying won't help us. There's probably something wrong with our operation.
                 // In this case, don't wait the full duration and fail quickly.
