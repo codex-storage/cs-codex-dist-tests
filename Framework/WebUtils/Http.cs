@@ -79,10 +79,25 @@ namespace WebUtils
 
         private HttpClient GetClient()
         {
-            var client = new HttpClient();
-            client.Timeout = timeSet.HttpCallTimeout();
-            onClientCreated(client);
-            return client;
+            return HttpClientSingleton.Get(timeSet.HttpCallTimeout(), onClientCreated);
+        }
+    }
+
+    public static class HttpClientSingleton
+    {
+        private static readonly Dictionary<TimeSpan, HttpClient> instances = new();
+
+        public static HttpClient Get(TimeSpan timeout, Action<HttpClient> onClientCreated)
+        {
+            if (!instances.ContainsKey(timeout))
+            {
+                var client = new HttpClient();
+                client.Timeout = timeout;
+                onClientCreated(client);
+                instances.Add(timeout, client);
+            }
+
+            return instances[timeout];
         }
     }
 }

@@ -4,12 +4,15 @@ using Logging;
 using NUnit.Framework;
 using Utils;
 
-namespace CodexReleaseTests.DataTests
+namespace CodexReleaseTests.DataTests.DHT
 {
     [Ignore("work in progress")]
-    [TestFixture(10,  10000)]
+    [TestFixture(10, 1000)]
     [TestFixture(50, 1000)]
-    [TestFixture(100,  1000)]
+    [TestFixture(10, 10000)]
+    [TestFixture(20, 10000)]
+    [TestFixture(30, 10000)]
+    [TestFixture(50, 10000)]
     public class DhtTest : AutoBootstrapDistTest
     {
         public DhtTest(int nodes, int files)
@@ -50,7 +53,6 @@ namespace CodexReleaseTests.DataTests
                     node.DownloadContent(cids.PickOneRandom());
                 });
 
-                Log(Time.FormatDuration(timing));
                 Assert.That(timing, Is.LessThan(maxDownloadDuration));
             }
         }
